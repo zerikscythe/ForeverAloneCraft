@@ -308,46 +308,50 @@ modules/
 
       model/
         BotProfile.h
-        BotProfile.cpp
         BotAbstractState.h
-        BotAbstractState.cpp
         RivalGuildProfile.h
-        RivalGuildProfile.cpp
         EncounterTypes.h
+        (etc. — plain value types only)
 
       planner/
         SpawnSelector.h
-        SpawnSelector.cpp
         EncounterPlanner.h
-        EncounterPlanner.cpp
         GroupStateResolver.h
-        GroupStateResolver.cpp
         RivalAggressionResolver.h
-        RivalAggressionResolver.cpp
         RespawnCooldownPolicy.h
-        RespawnCooldownPolicy.cpp
+        SimplePartyRosterPlanner.{h,cpp}
+        SimpleZonePopulationPlanner.{h,cpp}
 
       integration/
-        AzerothWorldFacade.h
-        AzerothWorldFacade.cpp
-        LivingWorldHooks.h
-        LivingWorldHooks.cpp
+        WorldReadContext.h          <- value types for read queries
+        WorldCommitAction.h         <- explicit mutation records
+        AzerothWorldFacade.h        <- pure-virtual read interface
+        AzerothWorldFacade*.cpp     <- real AC-backed implementation
+                                       (lives here, not in planner/)
 
       service/
-        LivingWorldManager.h
-        LivingWorldManager.cpp
-        RivalGuildService.h
-        RivalGuildService.cpp
-        PartyBotService.h
-        PartyBotService.cpp
-        ProgressionAwarePopulationService.h
-        ProgressionAwarePopulationService.cpp
+        LivingWorldManager.{h,cpp}
+        PartyBotService.{h,cpp}
+        RivalGuildService.{h,cpp}
+        ProgressionAwarePopulationService.{h,cpp}
 
       script/
+        LivingWorldCommandGrammar.{h,cpp}  <- pure parser, testable
+        LivingWorldCommandScript.cpp       <- registers .lwbot in AC
         LivingWorldWorldScript.cpp
         LivingWorldPlayerScript.cpp
         LivingWorldCreatureScript.cpp
 ```
+
+Current state as of the first foundation + first-service slice:
+- `integration/` contains `WorldReadContext.h`, `WorldCommitAction.h`, and
+  `AzerothWorldFacade.h`. A real AC-backed facade implementation is not
+  written yet; tests use a fake subclass.
+- `service/` contains `LivingWorldManager` and `PartyBotService`. Neither
+  executes world mutation; they produce `WorldCommitAction` records.
+- `script/` contains `LivingWorldCommandGrammar.{h,cpp}` as a pure
+  parser; the actual `CommandScript` that registers `.lwbot` in the
+  server has not been written yet.
 
 This exact structure can change, but the separation should remain.
 

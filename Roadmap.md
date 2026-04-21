@@ -195,60 +195,75 @@ independent from direct AzerothCore world mutation.
 
 ## Phase 4: Integration and World Adapters
 
-**Overall Status: Not Started**
+**Overall Status: Partial**
 
 This phase begins the first real bridge from planner outputs into AzerothCore
 runtime state, while still keeping mutation centralized and thin.
 
 ### 6) AzerothCore Integration Layer
 
-**Overall Status: Not Started**
+**Overall Status: Partial**
 
 #### Subtasks
 
-6.1 Define an `AzerothWorldFacade` or equivalent thin adapter — **Not Started**
-- Responsibilities should include read/query operations first:
-  - nearby player context
-  - zone/map lookup
-  - existing party/group state
-  - available spawn anchor data
+6.1 Define an `AzerothWorldFacade` or equivalent thin adapter — **Partial**
+- Pure-virtual `integration::AzerothWorldFacade` now exists covering initial
+  read queries: player context, spawn anchors in zone, character-online
+  check.
+- Real AzerothCore-backed implementation is still deferred; a test-only
+  fake is in place and drives service tests.
 
-6.2 Separate read context from write actions — **Not Started**
-- Planner-facing world snapshots should be read-only value inputs.
-- Mutation should be represented as explicit actions/commands.
+6.2 Separate read context from write actions — **Complete**
+- `integration::WorldReadContext.h` provides value-only input types
+  (`PlayerWorldContext`, `PartySnapshot`, `SpawnAnchor`, etc.).
+- Mutations are expressed only via the discriminated
+  `integration::WorldCommitAction` variant.
 
-6.3 Define world commit action types — **Not Started**
-- Examples:
-  - spawn roster body
-  - despawn body
-  - attach to group
-  - update abstract state
-  - enqueue encounter
+6.3 Define world commit action types — **Partial**
+- Initial action records in place:
+  - `SpawnRosterBodyAction`
+  - `DespawnRosterBodyAction`
+  - `AttachToPartyAction`
+  - `UpdateAbstractStateAction`
+  - `EnqueueEncounterAction`
+- Despawn/encounter actions are defined but not yet emitted by any service.
 
-6.4 Add safety rules for authoritative world mutation — **Not Started**
-- No planner should mutate world state directly.
-- All commit paths should be centralized in one service boundary.
+6.4 Add safety rules for authoritative world mutation — **Partial**
+- Architectural rule is in place: the service layer is the only place that
+  may produce `WorldCommitAction` values, and nothing executes them yet.
+- A single authoritative commit layer still needs to be written before the
+  first mutation lands.
 
 ---
 
 ## Phase 5: Orchestration and Runtime Services
 
-**Overall Status: Not Started**
+**Overall Status: Partial**
 
 ### 7) High-Level Services
 
-**Overall Status: Not Started**
+**Overall Status: Partial**
 
 #### Subtasks
 
-7.1 Introduce `LivingWorldManager` — **Not Started**
-- Own lifecycle, update scheduling, and subsystem coordination.
+7.1 Introduce `LivingWorldManager` — **Partial**
+- Minimal `service::LivingWorldManager` exists. It owns a reference to the
+  facade, a `SimplePartyRosterPlanner`, and the first `PartyBotService`.
+- Update scheduling and multi-subsystem coordination are not implemented
+  yet.
 
 7.2 Introduce `WorldPopulationService` — **Not Started**
 - Player-local ambient population orchestration.
 
-7.3 Introduce `PartyBotService` — **Not Started**
-- Converts party roster plans into active runtime behavior.
+7.3 Introduce `PartyBotService` — **Partial**
+- `service::PartyBotService` is implemented. It resolves the player
+  context via the facade, enforces the "alt already online" rule,
+  delegates to the party roster planner, and translates an approved plan
+  into explicit `WorldCommitAction` records.
+- World-facing commit execution is intentionally not implemented.
+- Unit tests in `test/PartyBotServiceTest.cpp` exercise approval,
+  rejection, dead-player, and alt-already-online paths against a fake
+  facade.
 
 7.4 Introduce `RivalGuildService` — **Not Started**
 - Own recurring rival guild identity and encounter continuity.
@@ -272,15 +287,19 @@ design and foundation code.
 #### Subtasks
 
 8.1 Define player-facing roster flow — **Partial**
-- Current foundation supports planning concepts for party roster requests.
-- Final command UX is not implemented yet.
+- `service::PartyBotService::DispatchRosterRequest` is the first supported
+  end-to-end path: request in, structured result + commit actions out.
+- Final in-game command UX is not implemented yet.
 
-8.2 Implement first command surface for controllable bots — **Not Started**
-- Initial command goals:
-  - spawn roster bot
-  - dismiss roster bot
-  - list available roster entries
-  - switch control/possession target
+8.2 Implement first command surface for controllable bots — **Partial**
+- Backend grammar parser exists: `script::ParseLivingWorldCommand`
+  recognises `.lwbot roster list`, `.lwbot roster request <id>`, and
+  `.lwbot roster dismiss <id>`, producing a structured `ParsedCommand`
+  result consumable by both a chat command script and a future addon
+  message channel.
+- The AzerothCore `CommandScript` that registers these commands into the
+  server and wires them to `PartyBotService` is still pending.
+- Switch control/possession target is still not implemented.
 
 8.3 Add party slot/rule validation — **Not Started**
 - Enforce:
@@ -432,33 +451,44 @@ design and foundation code.
 
 ## Immediate Next Implementation Slice
 
-1. **Introduce the first integration-layer read facade**
-- Add an AzerothCore-facing read-only adapter that can gather the minimum world
-  context needed by planners without mutating state.
+The previous "read facade + commit-ready outputs + first service + command
+grammar" slice has landed in skeleton form. The next pass should bring the
+slice into an actually player-visible state:
 
-2. **Define commit-ready planner outputs**
-- Tighten the output contracts for roster and population planning so the next
-  service layer can consume explicit actions instead of vague suggestions.
+1. **Implement a real AzerothCore-backed `AzerothWorldFacade`**
+- Concrete subclass that resolves `PlayerWorldContext` from the live
+  `ObjectAccessor` / `Player` objects.
+- Back `IsCharacterOnline` with the real session registry.
+- Keep all AzerothCore includes behind the integration layer; planners and
+  services must stay server-include-free.
 
-3. **Implement the first orchestration service**
-- Add a minimal `PartyBotService` or `LivingWorldManager` that can:
-  - receive a player roster request
-  - assemble planner inputs
-  - call the planner
-  - return a clear plan/result without spawning yet
+2. **Add a `LivingWorldCommandScript` in `src/script/`**
+- Register the `.lwbot` chat command with AzerothCore.
+- Route arguments through `script::ParseLivingWorldCommand` and hand the
+  result to `PartyBotService::DispatchRosterRequest`.
+- Render approved / rejected results as concise chat output now; the
+  addon-friendly machine response can follow.
 
-4. **Add the first command-driven roster request path**
-- Wire a small safe command surface that exercises the new service boundary
-  without yet performing full world mutation.
+3. **Introduce the authoritative commit layer**
+- Single class that consumes `WorldCommitAction` records and performs the
+  real server mutation. Services must never mutate world state outside
+  this class.
+- Start with `SpawnRosterBodyAction` and `AttachToPartyAction`; leave
+  despawn / encounter pipelines for the slice after.
 
-5. **Plan persistence before account-alt runtime work**
-- Define ownership, save, and conflict rules before implementing alt-derived
-  live bodies.
+4. **Plan persistence before account-alt runtime work**
+- Define ownership, save, and conflict rules before implementing alt-
+  derived live bodies. This must land before the commit layer actually
+  spawns an alt.
+
+5. **Expand planner coverage as consumers appear**
+- Once the commit layer is live, upgrade `SimpleZonePopulationPlanner`
+  with scoring, cooldowns, and phase filtering (see §5.3, §5.4, §5.5).
 
 6. **Keep economy/event/progression additions modular**
 - The simulated AH, event reaction, and milestone-unlock systems should be
-  implemented as separate policy/service tracks rather than folded into the
-  first party bot runtime slice.
+  implemented as separate policy/service tracks rather than folded into
+  the first party bot runtime slice.
 
 ---
 

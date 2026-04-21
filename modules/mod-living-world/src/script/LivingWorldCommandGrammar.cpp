@@ -1,0 +1,148 @@
+#include "script/LivingWorldCommandGrammar.h"
+
+#include <cctype>
+#include <charconv>
+
+namespace living_world
+{
+namespace script
+{
+namespace
+{
+CommandParseError MakeError(CommandParseErrorKind kind, std::string detail)
+{
+    CommandParseError error;
+    error.kind = kind;
+    error.detail = std::move(detail);
+    return error;
+}
+
+// Trim ASCII whitespace from both ends. Chat input on 3.3.5a is byte
+// oriented; multibyte-aware trimming would only add risk here.
+std::string_view TrimWhitespace(std::string_view input)
+{
+    while (!input.empty() &&
+           std::isspace(static_cast<unsigned char>(input.front())))
+    {
+        input.remove_prefix(1);
+    }
+    while (!input.empty() &&
+           std::isspace(static_cast<unsigned char>(input.back())))
+    {
+        input.remove_suffix(1);
+    }
+    return input;
+}
+
+// Consume the next whitespace-delimited token. The remaining view is
+// updated in place; returns an empty view when nothing is left.
+std::string_view ConsumeToken(std::string_view& remaining)
+{
+    remaining = TrimWhitespace(remaining);
+    if (remaining.empty())
+    {
+        return {};
+    }
+
+    std::size_t end = 0;
+    while (end < remaining.size() &&
+           !std::isspace(static_cast<unsigned char>(remaining[end])))
+    {
+        ++end;
+    }
+
+    std::string_view token = remaining.substr(0, end);
+    remaining.remove_prefix(end);
+    return token;
+}
+
+bool ParseUInt64(std::string_view token, std::uint64_t& out)
+{
+    if (token.empty())
+    {
+        return false;
+    }
+    std::uint64_t value = 0;
+    auto result = std::from_chars(
+        token.data(), token.data() + token.size(), value);
+    if (result.ec != std::errc{} ||
+        result.ptr != token.data() + token.size())
+    {
+        return false;
+    }
+    out = value;
+    return true;
+}
+
+ParsedCommand ParseRosterVerb(
+    std::string_view verb, std::string_view remaining)
+{
+    if (verb == "list")
+    {
+        return RosterListCommand{};
+    }
+
+    if (verb == "request" || verb == "dismiss")
+    {
+        std::string_view idToken = ConsumeToken(remaining);
+        if (idToken.empty())
+        {
+            return MakeError(
+                CommandParseErrorKind::MissingArgument,
+                "rosterEntryId required");
+        }
+
+        std::uint64_t rosterEntryId = 0;
+        if (!ParseUInt64(idToken, rosterEntryId) || rosterEntryId == 0)
+        {
+            return MakeError(
+                CommandParseErrorKind::InvalidArgument,
+                "rosterEntryId must be a positive integer");
+        }
+
+        if (verb == "request")
+        {
+            RosterRequestCommand cmd;
+            cmd.rosterEntryId = rosterEntryId;
+            return cmd;
+        }
+
+        RosterDismissCommand cmd;
+        cmd.rosterEntryId = rosterEntryId;
+        return cmd;
+    }
+
+    return MakeError(
+        CommandParseErrorKind::UnknownVerb,
+        std::string("unknown roster verb: ") + std::string(verb));
+}
+} // namespace
+
+ParsedCommand ParseLivingWorldCommand(std::string_view arguments)
+{
+    std::string_view remaining = TrimWhitespace(arguments);
+    if (remaining.empty())
+    {
+        return MakeError(CommandParseErrorKind::Empty, "no command given");
+    }
+
+    std::string_view subsystem = ConsumeToken(remaining);
+    if (subsystem != "roster")
+    {
+        return MakeError(
+            CommandParseErrorKind::UnknownSubsystem,
+            std::string("unknown subsystem: ") + std::string(subsystem));
+    }
+
+    std::string_view verb = ConsumeToken(remaining);
+    if (verb.empty())
+    {
+        return MakeError(
+            CommandParseErrorKind::MissingArgument,
+            "roster verb required (list/request/dismiss)");
+    }
+
+    return ParseRosterVerb(verb, remaining);
+}
+} // namespace script
+} // namespace living_world
