@@ -142,8 +142,8 @@ struct CoordPair
 
     CoordPair& normalize()
     {
-        x_coord = std::min(x_coord, LIMIT - 1);
-        y_coord = std::min(y_coord, LIMIT - 1);
+        x_coord = (std::min)(x_coord, LIMIT - 1);
+        y_coord = (std::min)(y_coord, LIMIT - 1);
         return *this;
     }
 
@@ -176,8 +176,8 @@ namespace Acore
     template<class RET_TYPE, int CENTER_VAL>
     inline RET_TYPE Compute(float x, float y, float size)
     {
-        int gx = std::max<int>(0, (CENTER_VAL - x / size));
-        int gy = std::max<int>(0, (CENTER_VAL - y / size));
+        int gx = (std::max<int>)(0, (CENTER_VAL - x / size));
+        int gy = (std::max<int>)(0, (CENTER_VAL - y / size));
 
         return RET_TYPE(gx, gy);
     }

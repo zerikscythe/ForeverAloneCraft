@@ -1,0 +1,66 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 23,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "vs2022-debug",
+      "displayName": "VS2022 Debug",
+      "description": "Known-good Windows/MSVC configure preset for AzerothCore on this workspace.",
+      "generator": "Visual Studio 17 2022",
+      "binaryDir": "${sourceDir}/out/build-vs2022",
+      "architecture": {
+        "value": "x64"
+      },
+      "cacheVariables": {
+        "BUILD_TESTING": "ON",
+        "Boost_ROOT": "D:/tools/vcpkg/installed/x64-windows",
+        "OPENSSL_ROOT_DIR": "D:/tools/vcpkg/installed/x64-windows",
+        "MYSQL_ROOT_DIR": "D:/tools/vcpkg/installed/x64-windows",
+        "MYSQL_INCLUDE_DIR": "D:/tools/vcpkg/installed/x64-windows/include/mysql",
+        "MYSQL_LIBRARY": "D:/tools/vcpkg/installed/x64-windows/lib/libmysql.lib",
+        "LIBLZMA_INCLUDE_DIR": "D:/tools/vcpkg/installed/x64-windows/include",
+        "LIBLZMA_LIBRARY": "D:/tools/vcpkg/installed/x64-windows/lib/lzma.lib",
+        "LIBLZMA_HAS_AUTO_DECODER": "TRUE",
+        "LIBLZMA_HAS_EASY_ENCODER": "TRUE",
+        "LIBLZMA_HAS_LZMA_PRESET": "TRUE",
+        "CMAKE_CXX_FLAGS": "/DWIN32 /D_WINDOWS /EHsc /utf-8 /I\"D:/tools/vcpkg/installed/x64-windows/include\"",
+        "CMAKE_C_FLAGS": "/DWIN32 /D_WINDOWS /utf-8 /I\"D:/tools/vcpkg/installed/x64-windows/include\""
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "vs2022-debug-worldserver",
+      "displayName": "Build worldserver (Debug)",
+      "configurePreset": "vs2022-debug",
+      "configuration": "Debug",
+      "targets": [
+        "worldserver"
+      ]
+    },
+    {
+      "name": "vs2022-debug-unit-tests",
+      "displayName": "Build unit_tests (Debug)",
+      "configurePreset": "vs2022-debug",
+      "configuration": "Debug",
+      "targets": [
+        "unit_tests"
+      ]
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "vs2022-debug-ctest",
+      "displayName": "CTest Debug",
+      "configurePreset": "vs2022-debug",
+      "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

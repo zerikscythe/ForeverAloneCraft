@@ -146,16 +146,24 @@ endif()
 CU_RUN_HOOK("AFTER_SRC_LOAD")
 
 if (BUILD_TESTING AND BUILD_APPLICATION_WORLDSERVER)
-    # we use these flags to get code coverage
-    set(UNIT_TEST_CXX_FLAGS "-fprofile-arcs -ftest-coverage -fno-inline")
+    set(UNIT_TEST_CXX_FLAGS "")
 
-    # enable additional flags for GCC.
-    if ( CMAKE_CXX_COMPILER_ID MATCHES GNU )
-        set(UNIT_TEST_CXX_FLAGS "${UNIT_TEST_CXX_FLAGS} -fno-inline-small-functions -fno-default-inline")
+    # Coverage flags are compiler-specific and should not bleed into MSVC builds.
+    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        set(UNIT_TEST_CXX_FLAGS "-fprofile-arcs -ftest-coverage -fno-inline")
+
+        # enable additional flags for GCC.
+        if (CMAKE_CXX_COMPILER_ID MATCHES GNU)
+            set(UNIT_TEST_CXX_FLAGS "${UNIT_TEST_CXX_FLAGS} -fno-inline-small-functions -fno-default-inline")
+        endif()
     endif()
 
-    message("Unit tests code coverage: enabling ${UNIT_TEST_CXX_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${UNIT_TEST_CXX_FLAGS}")
+    if (UNIT_TEST_CXX_FLAGS)
+        message("Unit tests code coverage: enabling ${UNIT_TEST_CXX_FLAGS}")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${UNIT_TEST_CXX_FLAGS}")
+    else()
+        message("Unit tests code coverage: no compiler-specific coverage flags enabled for ${CMAKE_CXX_COMPILER_ID}")
+    endif()
 
     include(src/cmake/googletest.cmake)
     fetch_googletest(
@@ -166,15 +174,17 @@ if (BUILD_TESTING AND BUILD_APPLICATION_WORLDSERVER)
     enable_testing()
     add_subdirectory(src/test)
 
-    add_custom_target(coverage DEPENDS coverage_command)
+    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        add_custom_target(coverage DEPENDS coverage_command)
 
-    add_custom_command(OUTPUT coverage_command
-        # Run unit tests.
-        COMMAND ctest
-        # Run the graphical front-end for code coverage.
-        COMMAND lcov    --directory src --capture --output-file coverage.info
-        COMMAND lcov    --remove coverage.info '/usr/*' '${CMAKE_BINARY_DIR}/googletest/*' '${CMAKE_CURRENT_SOURCE_DIR}/src/test/*' --output-file coverage.info
-        COMMAND genhtml -o ${CMAKE_CURRENT_SOURCE_DIR}/coverage-report coverage.info
-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-        )
+        add_custom_command(OUTPUT coverage_command
+            # Run unit tests.
+            COMMAND ctest
+            # Run the graphical front-end for code coverage.
+            COMMAND lcov    --directory src --capture --output-file coverage.info
+            COMMAND lcov    --remove coverage.info '/usr/*' '${CMAKE_BINARY_DIR}/googletest/*' '${CMAKE_CURRENT_SOURCE_DIR}/src/test/*' --output-file coverage.info
+            COMMAND genhtml -o ${CMAKE_CURRENT_SOURCE_DIR}/coverage-report coverage.info
+            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+            )
+    endif()
 endif()

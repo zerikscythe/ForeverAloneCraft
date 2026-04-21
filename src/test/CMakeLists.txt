@@ -23,6 +23,11 @@ add_executable(
         ${PRIVATE_SOURCES}
 )
 
+if(MSVC)
+    # Keep MSVC test compiles from contending on the shared program database.
+    target_compile_options(unit_tests PRIVATE /FS)
+endif()
+
 target_link_libraries(
         unit_tests
         game
@@ -51,9 +56,46 @@ if(TARGET modules)
     target_link_libraries(unit_tests modules)
 endif()
 
-add_test(
-        NAME
-        unit
-        COMMAND
-        ${CMAKE_BINARY_DIR}/src/test/unit_tests
-)
+if(WIN32)
+    set(UNIT_TEST_RUNTIME_PATHS
+            "$<TARGET_FILE_DIR:unit_tests>"
+    )
+
+    if(DEFINED Boost_ROOT)
+        list(APPEND UNIT_TEST_RUNTIME_PATHS
+                "${Boost_ROOT}/bin"
+                "${Boost_ROOT}/debug/bin"
+        )
+    endif()
+
+    if(DEFINED OPENSSL_ROOT_DIR)
+        list(APPEND UNIT_TEST_RUNTIME_PATHS
+                "${OPENSSL_ROOT_DIR}/bin"
+                "${OPENSSL_ROOT_DIR}/debug/bin"
+        )
+    endif()
+
+    if(DEFINED MYSQL_ROOT_DIR)
+        list(APPEND UNIT_TEST_RUNTIME_PATHS
+                "${MYSQL_ROOT_DIR}/bin"
+                "${MYSQL_ROOT_DIR}/debug/bin"
+        )
+    endif()
+
+    list(REMOVE_DUPLICATES UNIT_TEST_RUNTIME_PATHS)
+    list(JOIN UNIT_TEST_RUNTIME_PATHS ";" UNIT_TEST_RUNTIME_PATH)
+
+    add_test(
+            NAME
+            unit
+            COMMAND
+            ${CMAKE_COMMAND} -E env "PATH=${UNIT_TEST_RUNTIME_PATH};$ENV{PATH}" $<TARGET_FILE:unit_tests>
+    )
+else()
+    add_test(
+            NAME
+            unit
+            COMMAND
+            $<TARGET_FILE:unit_tests>
+    )
+endif()

@@ -24,11 +24,29 @@
 #include <fstream>
 #include <string>
 
-#if WIN32
-    void inline setenv(const char* name, const char* value, int overwrite)
+#ifdef _WIN32
+namespace
+{
+    void SetEnvVar(char const* name, char const* value, int overwrite)
     {
-    _putenv_s(name, value);
+        if (!overwrite)
+        {
+            size_t requiredSize = 0;
+            if (_dupenv_s(nullptr, &requiredSize, name) == 0 && requiredSize > 0)
+                return;
+        }
+
+        _putenv_s(name, value);
     }
+}
+#else
+namespace
+{
+    void SetEnvVar(char const* name, char const* value, int overwrite)
+    {
+        setenv(name, value, overwrite);
+    }
+}
 #endif
 
 std::string CreateConfigWithMap(std::map<std::string, std::string> const& map)
@@ -43,9 +61,8 @@ std::string CreateConfigWithMap(std::map<std::string, std::string> const& map)
         iniStream << itr.first << " = " << itr.second << "\n";
 
     iniStream.close();
-#if WIN32
-    auto tmp = mTempFileAbs.native();
-    return std::string(tmp.begin(), tmp.end());
+#ifdef _WIN32
+    return mTempFileAbs.string();
 #else
     return mTempFileAbs.native();
 #endif
@@ -77,7 +94,7 @@ protected:
 TEST_F(ConfigEnvTest, NestedInt)
 {
     EXPECT_EQ(sConfigMgr->GetOption<int32>("Int.Nested", 10), 4242);
-    setenv("AC_INT_NESTED", "8080", 1);
+    SetEnvVar("AC_INT_NESTED", "8080", 1);
     EXPECT_EQ(sConfigMgr->OverrideWithEnvVariablesIfAny().empty(), false);
     EXPECT_EQ(sConfigMgr->GetOption<int32>("Int.Nested", 10), 8080);
 }
@@ -85,7 +102,7 @@ TEST_F(ConfigEnvTest, NestedInt)
 TEST_F(ConfigEnvTest, SimpleLowerString)
 {
     EXPECT_EQ(sConfigMgr->GetOption<std::string>("lower", ""), "simpleString");
-    setenv("AC_LOWER", "envstring", 1);
+    SetEnvVar("AC_LOWER", "envstring", 1);
     EXPECT_EQ(sConfigMgr->OverrideWithEnvVariablesIfAny().empty(), false);
     EXPECT_EQ(sConfigMgr->GetOption<std::string>("lower", ""), "envstring");
 }
@@ -93,7 +110,7 @@ TEST_F(ConfigEnvTest, SimpleLowerString)
 TEST_F(ConfigEnvTest, SimpleUpperString)
 {
     EXPECT_EQ(sConfigMgr->GetOption<std::string>("UPPER", ""), "simpleString");
-    setenv("AC_UPPER", "envupperstring", 1);
+    SetEnvVar("AC_UPPER", "envupperstring", 1);
     EXPECT_EQ(sConfigMgr->OverrideWithEnvVariablesIfAny().empty(), false);
     EXPECT_EQ(sConfigMgr->GetOption<std::string>("UPPER", ""), "envupperstring");
 }
@@ -101,7 +118,7 @@ TEST_F(ConfigEnvTest, SimpleUpperString)
 TEST_F(ConfigEnvTest, LongNestedNameWithNumber)
 {
     EXPECT_EQ(sConfigMgr->GetOption<float>("SomeLong.NestedNameWithNumber.Like1", 0), 1);
-    setenv("AC_SOME_LONG_NESTED_NAME_WITH_NUMBER_LIKE_1", "42", 1);
+    SetEnvVar("AC_SOME_LONG_NESTED_NAME_WITH_NUMBER_LIKE_1", "42", 1);
     EXPECT_EQ(sConfigMgr->OverrideWithEnvVariablesIfAny().empty(), false);
     EXPECT_EQ(sConfigMgr->GetOption<float>("SomeLong.NestedNameWithNumber.Like1", 0), 42);
 }
@@ -109,20 +126,20 @@ TEST_F(ConfigEnvTest, LongNestedNameWithNumber)
 TEST_F(ConfigEnvTest, ValueWithSeveralUpperlLaters)
 {
     EXPECT_EQ(sConfigMgr->GetOption<int>("GM.InGMList.Level", 1), 50);
-    setenv("AC_GM_IN_GMLIST_LEVEL", "42", 1);
+    SetEnvVar("AC_GM_IN_GMLIST_LEVEL", "42", 1);
     EXPECT_EQ(sConfigMgr->OverrideWithEnvVariablesIfAny().empty(), false);
     EXPECT_EQ(sConfigMgr->GetOption<int>("GM.InGMList.Level", 0), 42);
 }
 
 TEST_F(ConfigEnvTest, StringThatNotExistInConfig)
 {
-    setenv("AC_UNIQUE_STRING", "somevalue", 1);
+    SetEnvVar("AC_UNIQUE_STRING", "somevalue", 1);
     EXPECT_EQ(sConfigMgr->GetOption<std::string>("Unique.String", ""), "somevalue");
 }
 
 TEST_F(ConfigEnvTest, IntThatNotExistInConfig)
 {
-    setenv("AC_UNIQUE_INT", "100", 1);
+    SetEnvVar("AC_UNIQUE_INT", "100", 1);
     EXPECT_EQ(sConfigMgr->GetOption<int>("Unique.Int", 1), 100);
 }
 

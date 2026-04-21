@@ -33,6 +33,7 @@ endif()
 
 # Boost.System is header-only since 1.69; do not require it explicitly.
 find_package(Boost ${BOOST_REQUIRED_VERSION} REQUIRED COMPONENTS filesystem program_options iostreams regex)
+find_package(boost_throw_exception CONFIG REQUIRED)
 
 if(NOT Boost_FOUND)
   if(NOT DEFINED ENV{Boost_ROOT} AND NOT DEFINED Boost_DIR AND NOT DEFINED BOOST_ROOT AND NOT DEFINED BOOSTROOT)
@@ -42,13 +43,33 @@ endif()
 
 add_library(boost INTERFACE)
 
+set(AC_BOOST_LIBRARIES ${Boost_LIBRARIES})
+
+foreach(BOOST_COMPONENT filesystem program_options iostreams regex)
+  if(TARGET Boost::${BOOST_COMPONENT})
+    list(APPEND AC_BOOST_LIBRARIES Boost::${BOOST_COMPONENT})
+  endif()
+endforeach()
+
+if(TARGET Boost::throw_exception)
+  list(APPEND AC_BOOST_LIBRARIES Boost::throw_exception)
+endif()
+
+list(REMOVE_DUPLICATES AC_BOOST_LIBRARIES)
+
 target_link_libraries(boost
   INTERFACE
-    ${Boost_LIBRARIES})
+    ${AC_BOOST_LIBRARIES})
+
+set(AC_BOOST_INCLUDE_DIRS ${Boost_INCLUDE_DIRS})
+
+if(NOT AC_BOOST_INCLUDE_DIRS AND DEFINED Boost_INCLUDE_DIR)
+  list(APPEND AC_BOOST_INCLUDE_DIRS ${Boost_INCLUDE_DIR})
+endif()
 
 target_include_directories(boost
   INTERFACE
-    ${Boost_INCLUDE_DIRS})
+    ${AC_BOOST_INCLUDE_DIRS})
 
 target_compile_definitions(boost
   INTERFACE

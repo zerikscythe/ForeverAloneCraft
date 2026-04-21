@@ -1,0 +1,745 @@
+# AI Assist File - Living World / Bot System for AzerothCore
+_Reference document for AI-assisted development of the custom living-world system_
+
+## Purpose of This File
+
+This file exists to brief any future AI assistant or developer on:
+
+- what this project is trying to accomplish
+- what the custom system should and should not do
+- how code should be structured
+- how changes should be made safely
+- what project files are expected to own which responsibilities
+- how to avoid turning the codebase into a tangled mess
+
+This is intended as a **working engineering brief**, not marketing copy.
+
+---
+
+# 1. Project Summary
+
+The goal is to build a **living-world bot system** for a mostly solo/private World of Warcraft server.
+
+Primary intended target:
+- **AzerothCore 3.3.5a**
+- Modular implementation
+- C++ module-first approach
+- Single codebase that can simulate a **Classic -> TBC -> Wrath** style progression inside a Wrath-era server
+
+This project is **not** trying to recreate retail-authentic population at scale.
+
+Instead, it is trying to create:
+- a believable world population
+- repeatable familiar characters
+- party bots for grouped-feeling solo play
+- rival guild encounters for recurring world-PvP tension
+- a progression-aware world that unlocks over time
+
+This is effectively:
+**a single-player / private-server living-world sandbox built on top of AzerothCore**
+
+---
+
+# 2. Design Goals
+
+## Must achieve
+- Make the world feel populated around the player
+- Support many persistent bot identities, but only a small number active at once
+- Support city life, travelers, gatherers, party bots, and rival guild bots
+- Keep expensive simulation local to the real player
+- Use AzerothCore modules cleanly instead of hard-patching core wherever possible
+- Keep the design maintainable over time
+- Separate data model, decision logic, and emulator integration where possible
+
+## Must avoid
+- Simulating the whole world equally at all times
+- Building everything directly into AzerothCore core files unless absolutely necessary
+- Hardcoding behavior in one giant monolithic file
+- Letting every subsystem know too much about every other subsystem
+- Writing code that assumes bots must behave like perfect real players
+- Constant per-tick expensive logic for every abstract bot
+- Deep coupling to one expansion phase if the goal is phased progression
+
+---
+
+# 3. Core Technical Philosophy
+
+## 3.1 Large abstract roster, small active slice
+
+The system may contain:
+- 1,000 to 2,000+ persistent bot identities
+
+But at any moment only a small number should be:
+- visible
+- spawned
+- pathing
+- fighting
+- gathering
+- interacting with the world
+
+Most bots should live in an **abstract state** most of the time.
+
+## 3.2 CPU is the likely bottleneck
+The main performance concern is not bot records in memory.
+
+The expensive parts are:
+- movement/pathing
+- world queries
+- combat
+- aggro checks
+- line-of-sight / range checks
+- resource-node logic
+- frequent AI decision evaluation
+
+Code should therefore be written to:
+- reduce high-frequency expensive work
+- favor cached decisions where possible
+- keep off-screen simulation cheap
+- centralize expensive state changes
+
+## 3.3 Keep world mutation authoritative
+The system may eventually benefit from worker/background logic, but:
+- world state mutation
+- spawning/despawning
+- combat application
+- node consumption
+- loot ownership
+must remain safe and centralized
+
+Future architecture should favor:
+- background planning
+- authoritative world commit
+
+---
+
+# 4. Functional Scope
+
+The custom system should eventually support the following major features.
+
+## 4.1 Ambient world population
+Examples:
+- city walkers
+- inn sitters
+- mailbox/AH/bank visitors
+- trainer/vendor idlers
+- road travelers
+
+## 4.2 Outdoor activity bots
+Examples:
+- gatherers
+- grinders
+- quest-area wanderers
+- crafters returning to town
+- bots fighting mobs or traveling between camps
+
+## 4.3 Party bots
+Examples:
+- tank companion
+- healer companion
+- DPS companion
+- support / hybrid roles
+
+These help make the server feel grouped and cooperative during solo play.
+
+## 4.4 Rival guild system
+Examples:
+- enemy solo scouts
+- enemy patrols
+- enemy groups up to 5
+- recurring guild-tagged enemies with personalities
+- escalating “them vs us” encounters
+
+## 4.5 Progression-aware world
+Examples:
+- Classic phase
+- TBC phase
+- Wrath phase
+- content gated by progression state
+- bot behavior aware of unlocked content and level caps
+
+---
+
+# 5. Module Strategy
+
+The preferred implementation target is a set of **AzerothCore modules**, not broad direct edits to the server core.
+
+Recommended initial module split:
+
+## 5.1 mod-living-world
+Main dynamic system.
+
+Should own:
+- bot identities
+- abstract state
+- spawn selection
+- city / travel / outdoor encounter planning
+- party bot management rules
+- rival guild management
+- group personality handling
+- encounter cooldowns
+- progression awareness at the behavior layer
+
+## 5.2 mod-living-world-progress
+Progression and content gating support.
+
+Should own:
+- phase flags
+- level cap rules
+- Dark Portal / Northrend unlock rules
+- progression SQL/config gating
+- integration points with living-world logic
+
+## 5.3 Optional integration modules
+Possible later integration with:
+- playerbot systems
+- npcbot systems
+- custom account/character progression support
+
+These should be integrations, not the foundation of the architecture.
+
+---
+
+# 6. Required Separation of Concerns
+
+Future code should be written in layers.
+
+## 6.1 Data / Model Layer
+Contains persistent and runtime state models only.
+
+Examples:
+- BotProfile
+- BotAbstractState
+- BotSpawnContext
+- RivalGuildProfile
+- RivalGuildMember
+- PartyBotProfile
+- EncounterRecord
+- ProgressionPhaseState
+
+Rules:
+- this layer should not perform world actions directly
+- keep it as plain and predictable as possible
+- prefer simple structs/classes with clear ownership
+
+## 6.2 Decision / Planner Layer
+Contains behavior and selection logic.
+
+Examples:
+- SpawnSelector
+- ZonePopulationPlanner
+- EncounterPlanner
+- RivalAggressionResolver
+- PartyRolePlanner
+- GroupStateResolver
+- RespawnCooldownPolicy
+- ProgressionGateResolver
+
+Rules:
+- this layer decides what should happen
+- this layer should avoid direct world mutation
+- this layer should be testable with fake/mock data where possible
+
+## 6.3 Integration / Adapter Layer
+Contains AzerothCore-specific operations.
+
+Examples:
+- querying player zone
+- finding nearby creatures/players
+- spawning/despawning actors
+- issuing combat actions
+- retrieving map/world context
+- checking combat state
+- checking death state
+- trying node interaction
+
+Rules:
+- keep core logic out of this layer
+- this layer should be thin
+- this layer converts planner outputs into server actions
+
+## 6.4 Orchestration Layer
+Owns update flow and high-level coordination.
+
+Examples:
+- LivingWorldManager
+- WorldPopulationService
+- RivalGuildService
+- PartyBotService
+- ProgressionSyncService
+
+Rules:
+- do not let this become a junk drawer
+- orchestration should call planners and adapters, not contain all behavior inline
+
+---
+
+# 7. Suggested Folder / File Layout
+
+Example for `mod-living-world`:
+
+```text
+modules/
+  mod-living-world/
+    conf/
+      mod-living-world.conf.dist
+
+    data/
+      sql/
+        db-world/
+        db-characters/
+
+    src/
+      loader/
+        mod_living_world_loader.cpp
+
+      model/
+        BotProfile.h
+        BotProfile.cpp
+        BotAbstractState.h
+        BotAbstractState.cpp
+        RivalGuildProfile.h
+        RivalGuildProfile.cpp
+        EncounterTypes.h
+
+      planner/
+        SpawnSelector.h
+        SpawnSelector.cpp
+        EncounterPlanner.h
+        EncounterPlanner.cpp
+        GroupStateResolver.h
+        GroupStateResolver.cpp
+        RivalAggressionResolver.h
+        RivalAggressionResolver.cpp
+        RespawnCooldownPolicy.h
+        RespawnCooldownPolicy.cpp
+
+      integration/
+        AzerothWorldFacade.h
+        AzerothWorldFacade.cpp
+        LivingWorldHooks.h
+        LivingWorldHooks.cpp
+
+      service/
+        LivingWorldManager.h
+        LivingWorldManager.cpp
+        RivalGuildService.h
+        RivalGuildService.cpp
+        PartyBotService.h
+        PartyBotService.cpp
+        ProgressionAwarePopulationService.h
+        ProgressionAwarePopulationService.cpp
+
+      script/
+        LivingWorldWorldScript.cpp
+        LivingWorldPlayerScript.cpp
+        LivingWorldCreatureScript.cpp
+```
+
+This exact structure can change, but the separation should remain.
+
+---
+
+# 8. Main Concepts That Must Be Preserved
+
+## 8.1 Persistent bot identity
+Bots should feel like recurring characters, not disposable random spawns.
+
+Each bot should be able to carry:
+- name
+- race/class/faction
+- guild
+- level
+- personality
+- role
+- preferred zones
+- abstract current region
+- cooldowns
+- history
+
+## 8.2 Abstract state first
+Bots should not require live world presence in order to “exist.”
+
+They should maintain:
+- current status
+- bound region
+- death cooldown
+- relocation timer
+- encounter timer
+- city/outdoor preference state
+
+## 8.3 Player-centered population
+The world should feel active near the real player.
+
+Priority population areas:
+1. current player city / hub
+2. current road / travel corridor
+3. current questing zone
+4. nearby adjacent activity
+5. rest of world abstract only
+
+## 8.4 Rival guild continuity
+The rival guild should feel like a recurring opposing group, not random hostile nameless bots.
+
+Important:
+- repeated familiar names
+- shared guild identity
+- mixed spawn sizes
+- group reactions
+- history of encounters
+
+## 8.5 Party bot utility
+Party bots should be reliable enough to support the player without requiring perfect raid AI.
+
+---
+
+# 9. Personality and Group Rules
+
+## 9.1 Personality types
+Current intended base personalities:
+- Indifferent
+- Cautious
+- Aggressive
+
+### Indifferent
+- usually ignores player
+- fights if attacked or ally is attacked
+
+### Cautious
+- notices player
+- may stop and watch
+- may face player
+- may reposition
+- caster may prep buffs
+- may engage if conditions favor it
+
+### Aggressive
+- likely to approach or attack
+- prefers favorable conditions
+- can trigger group escalation
+
+## 9.2 Group state escalation
+Groups may be:
+- Idle
+- Alert
+- Engaged
+
+Rule:
+- if one group member initiates and the player fights back, the group flips to engaged/aggressive mode
+
+This must remain a design anchor unless intentionally revised.
+
+## 9.3 Caster caution behavior
+In caution mode, casters may:
+- stop and face player
+- cast visible self-buffs or prep spells
+- use this both as intimidation and tactical preparation
+
+Do not implement this as spam.
+One or two meaningful actions are enough.
+
+---
+
+# 10. Encounter Design Rules
+
+Encounters should not all become fights.
+
+The system should support:
+- pass-by encounters
+- suspicious observation
+- stalking
+- small skirmishes
+- larger rare clashes
+
+The player should sometimes think:
+- “they noticed me”
+- “they might attack”
+- “they decided not to”
+- “this group is sizing me up”
+
+That tension is valuable.
+
+## Anti-frustration rules
+Avoid:
+- direct teleport ambushes
+- repeated instant re-engagement
+- corpse camping
+- constant unavoidable attacks
+- too many back-to-back rival encounters
+
+---
+
+# 11. Progression Rules
+
+The long-term target is a **Classic -> TBC -> Wrath progression simulation inside a 3.3.5a environment**.
+
+That means:
+
+- the system should not assume all content is always available
+- bot level ranges and zone preferences should eventually become phase-aware
+- rival and ambient populations may differ by phase
+- content gating should be centralized rather than scattered across random files
+
+Progression-sensitive logic belongs in:
+- phase config
+- progression service
+- progression-aware selectors
+
+Avoid hardcoding phase checks everywhere.
+
+---
+
+# 12. How AI Assistants Should Approach Code Changes
+
+Any future AI assistant working on this project should follow these rules.
+
+## 12.1 Do not dump logic into one huge file
+If a requested feature expands responsibility significantly:
+- create or extend a dedicated class/service
+- wire it in cleanly
+- avoid “just add 400 lines to manager.cpp”
+
+## 12.2 Prefer surgical edits
+When editing existing files:
+- change the smallest correct surface area
+- preserve naming style where possible
+- preserve module conventions
+- do not unrelated-refactor half the project unless explicitly requested
+
+## 12.3 Keep comments meaningful
+Add useful comments where:
+- a rule is non-obvious
+- a behavior is intentionally game-design-driven
+- a performance tradeoff exists
+- a future expansion hook is intended
+
+Do not fill files with obvious noise comments.
+
+## 12.4 Preserve modularity
+New features should be added by:
+- extending models
+- extending planners
+- extending services
+- adding hooks/config/sql where needed
+
+Avoid:
+- hidden static globals
+- duplicate policy logic in multiple places
+- one-off hacks that bypass planners/services
+
+## 12.5 Prefer config over hardcoding where tuning will matter
+Things likely to need tuning should live in config/SQL/data:
+- local population caps
+- rival encounter cooldowns
+- party/rival group size weights
+- caution/aggressive probabilities
+- phase gating values
+- respawn timers
+
+---
+
+# 13. How Main Project Files Should Be Edited
+
+This section is specifically for AI or developer guidance.
+
+## 13.1 Loader file
+The loader file should:
+- register scripts/services cleanly
+- remain small
+- not contain behavior logic
+
+If the loader starts becoming “smart,” something is in the wrong place.
+
+## 13.2 Script hook files
+Hook files should:
+- respond to AzerothCore hook entry points
+- forward work into services/managers
+- avoid containing full feature logic inline
+
+Example:
+- Player zone changed -> call population service
+- Player died -> call encounter cooldown service
+- World update tick -> call living world manager
+
+Hook files are entry points, not the full system.
+
+## 13.3 Manager/service files
+Manager/service files should:
+- coordinate subsystems
+- call planners
+- call adapters
+- own lifecycle/state orchestration
+
+They should **not** become endless switchboards of hardcoded behavior.
+
+If a service begins owning too many unrelated rules:
+- split out planner/policy/helper classes
+
+## 13.4 Model files
+Model files should:
+- stay plain and stable
+- avoid direct server calls
+- avoid hidden “smart” side effects
+
+## 13.5 Planner/policy files
+These are preferred locations for:
+- spawn scoring
+- aggression logic
+- cooldown calculations
+- progression-aware decisions
+- personality rules
+
+Keep these deterministic and readable.
+
+## 13.6 SQL/config files
+Use SQL/config for:
+- default rosters
+- guild membership
+- progression flags
+- tunable weights
+- per-phase settings
+- optional content gating
+
+Do not bury tuning-only constants in random C++ files unless absolutely necessary.
+
+---
+
+# 14. Editing Discipline for Future AI Code Work
+
+When asked to implement a new feature, the assistant should first determine:
+
+1. Is this a model change?
+2. Is this a planner/policy change?
+3. Is this a service/orchestration change?
+4. Is this a hook/integration change?
+5. Is this a config/sql change?
+6. Is this a progression-aware feature?
+7. Is this likely to need tuning later?
+
+Then place code accordingly.
+
+## Good example
+Feature request:
+“Cautious casters should buff before possible combat.”
+
+Likely changes:
+- personality/planner logic
+- maybe config/tuning values
+- maybe a helper in encounter planner
+- maybe a spell-prep action mapping
+
+Likely **not**:
+- random hardcoded spell logic shoved into the world tick manager
+
+## Good example
+Feature request:
+“Rival guild groups should spawn in sizes of 1 to 5.”
+
+Likely changes:
+- spawn planner
+- group composition policy
+- config weights
+- encounter service
+
+Likely **not**:
+- ad hoc random group-size code repeated in three files
+
+---
+
+# 15. Coding Style Guidance
+
+## Prefer
+- readable names
+- small focused classes
+- explicit ownership
+- low-surprise code paths
+- practical comments
+- predictable update flow
+
+## Avoid
+- giant God classes
+- clever but opaque template/meta tricks unless necessary
+- duplicated logic
+- deeply nested if/else trees for behavior rules
+- cross-layer dependencies that make testing/reasoning hard
+
+---
+
+# 16. Long-Term Extensibility Goals
+
+The system should be written so that future features can be layered in without rewrites.
+
+Possible future additions:
+- named nemesis subgroup inside rival guild
+- profession-aware economic simulation
+- player reputation with rival groups
+- zone-specific rival patrol routes
+- more advanced party formations
+- encounter storytelling/history logs
+- rare world events
+- player-driven phase timing
+- expansion-aware travel changes
+
+The code should not assume the current feature list is the end state.
+
+---
+
+# 17. Practical Development Order
+
+Preferred implementation order:
+
+## Phase 1
+- module skeleton
+- config/sql setup
+- bot profile model
+- abstract state model
+- living world manager
+- simple player zone awareness
+
+## Phase 2
+- local city population
+- simple ambient spawns
+- despawn/respawn timing
+- local population budgets
+
+## Phase 3
+- rival guild roster
+- solo/small-group encounters
+- group alert/engage states
+- personality-driven reactions
+
+## Phase 4
+- party bot support
+- role-based assist/follow behavior
+- basic reliable group play
+
+## Phase 5
+- outdoor gatherers/grinders
+- real node checks where needed
+- progression-aware population behavior
+
+## Phase 6
+- tuning
+- optimization
+- optional worker/planning split
+- richer continuity/history systems
+
+---
+
+# 18. Final Instruction for Future AI Assistants
+
+When working on this project:
+
+- think in systems, not patches
+- preserve modularity
+- keep heavy logic local to the player experience
+- do not over-simulate off-screen actors
+- keep behavior believable rather than perfect
+- prefer one stable extensible codebase over short-term hacks
+- do not assume “more realism” means “more constant simulation”
+- when unsure, place logic in the smallest responsible layer
+
+The goal is not to build a fully autonomous MMO civilization.
+
+The goal is to build a **convincing living-world layer** that makes a mostly solo AzerothCore server feel inhabited, social, and reactive.
+
+That is the target.

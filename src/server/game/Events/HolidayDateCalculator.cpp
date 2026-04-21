@@ -26,6 +26,90 @@ constexpr double DEG_TO_RAD = PI / 180.0;
 // Helper: sin/cos in degrees
 inline double sind(double deg) { return std::sin(deg * DEG_TO_RAD); }
 
+namespace
+{
+    bool IsLeapYear(int year)
+    {
+        return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+    }
+
+    int DaysInMonth(int year, int month)
+    {
+        static int const daysPerMonth[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+        if (month == 2)
+            return IsLeapYear(year) ? 29 : 28;
+
+        return daysPerMonth[month - 1];
+    }
+
+    int DayOfYear(int year, int month, int day)
+    {
+        int dayOfYear = day;
+        for (int currentMonth = 1; currentMonth < month; ++currentMonth)
+            dayOfYear += DaysInMonth(year, currentMonth);
+
+        return dayOfYear;
+    }
+
+    // Howard Hinnant's civil calendar algorithms, adapted for integer date math.
+    int DaysFromCivil(int year, unsigned month, unsigned day)
+    {
+        year -= month <= 2;
+        int const era = (year >= 0 ? year : year - 399) / 400;
+        unsigned const yoe = static_cast<unsigned>(year - era * 400);
+        unsigned const doy = (153 * (month + (month > 2 ? -3 : 9)) + 2) / 5 + day - 1;
+        unsigned const doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+        return era * 146097 + static_cast<int>(doe) - 719468;
+    }
+
+    void CivilFromDays(int z, int& year, unsigned& month, unsigned& day)
+    {
+        z += 719468;
+        int const era = (z >= 0 ? z : z - 146096) / 146097;
+        unsigned const doe = static_cast<unsigned>(z - era * 146097);
+        unsigned const yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+        year = static_cast<int>(yoe) + era * 400;
+        unsigned const doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+        unsigned const mp = (5 * doy + 2) / 153;
+        day = doy - (153 * mp + 2) / 5 + 1;
+        month = mp + (mp < 10 ? 3 : -9);
+        year += (month <= 2);
+    }
+
+    int WeekdayFromCivil(int year, unsigned month, unsigned day)
+    {
+        int const days = DaysFromCivil(year, month, day);
+        int weekday = (days + 4) % 7;
+        if (weekday < 0)
+            weekday += 7;
+
+        return weekday;
+    }
+
+    std::tm BuildTm(int year, int month, int day)
+    {
+        std::tm result = {};
+        result.tm_year = year - 1900;
+        result.tm_mon = month - 1;
+        result.tm_mday = day;
+        result.tm_wday = WeekdayFromCivil(year, static_cast<unsigned>(month), static_cast<unsigned>(day));
+        result.tm_yday = DayOfYear(year, month, day) - 1;
+        result.tm_isdst = -1;
+        return result;
+    }
+
+    std::tm AddDays(std::tm const& date, int offsetDays)
+    {
+        int year = date.tm_year + 1900;
+        unsigned month = static_cast<unsigned>(date.tm_mon + 1);
+        unsigned day = static_cast<unsigned>(date.tm_mday);
+
+        int const shiftedDays = DaysFromCivil(year, month, day) + offsetDays;
+        CivilFromDays(shiftedDays, year, month, day);
+        return BuildTm(year, static_cast<int>(month), static_cast<int>(day));
+    }
+}
+
 // Static holiday rules configuration
 static const std::vector<HolidayRule> HolidayRules = {
     // Lunar Festival: Chinese New Year - 1 day (event starts day before CNY)
@@ -100,50 +184,26 @@ std::tm HolidayDateCalculator::CalculateEasterSunday(int year)
     int const month = (h + l - 7 * m + 114) / 31;
     int const day = ((h + l - 7 * m + 114) % 31) + 1;
 
-    std::tm result = {};
-    result.tm_year = year - 1900;
-    result.tm_mon = month - 1;
-    result.tm_mday = day;
-    mktime(&result); // Normalize and fill in other fields
-
-    return result;
+    return BuildTm(year, month, day);
 }
 
 std::tm HolidayDateCalculator::CalculateNthWeekday(int year, int month, Weekday weekday, int n)
 {
     // Start with first day of the month
-    std::tm date = {};
-    date.tm_year = year - 1900;
-    date.tm_mon = month - 1;
-    date.tm_mday = 1;
-    mktime(&date);
+    std::tm date = BuildTm(year, month, 1);
 
     // Find first occurrence of the target weekday
     int const daysUntilWeekday = (static_cast<int>(weekday) - date.tm_wday + 7) % 7;
-    date.tm_mday = 1 + daysUntilWeekday;
-
-    // Move to nth occurrence
-    date.tm_mday += (n - 1) * 7;
-
-    mktime(&date); // Normalize (handles month overflow)
-    return date;
+    return AddDays(date, daysUntilWeekday + ((n - 1) * 7));
 }
 
 std::tm HolidayDateCalculator::CalculateWeekdayOnOrAfter(int year, int month, int day, Weekday weekday)
 {
-    // Start with the specified date
-    std::tm date = {};
-    date.tm_year = year - 1900;
-    date.tm_mon = month - 1;
-    date.tm_mday = day;
-    mktime(&date);
+    std::tm date = BuildTm(year, month, day);
 
     // Find days until the target weekday (0 if already on that day)
     int const daysUntilWeekday = (static_cast<int>(weekday) - date.tm_wday + 7) % 7;
-    date.tm_mday += daysUntilWeekday;
-
-    mktime(&date); // Normalize
-    return date;
+    return AddDays(date, daysUntilWeekday);
 }
 
 // ============================================================================
@@ -420,67 +480,48 @@ std::tm HolidayDateCalculator::CalculateHolidayDate(const HolidayRule& rule, int
     {
         case HolidayCalculationType::FIXED_DATE:
         {
-            result.tm_year = year - 1900;
-            result.tm_mon = rule.month - 1;
-            result.tm_mday = rule.day;
-            mktime(&result);
+            result = BuildTm(year, rule.month, rule.day);
             break;
         }
         case HolidayCalculationType::NTH_WEEKDAY:
         {
             result = CalculateNthWeekday(year, rule.month, static_cast<Weekday>(rule.weekday), rule.day);
             if (rule.offset != 0)
-            {
-                result.tm_mday += rule.offset;
-                mktime(&result); // Normalize
-            }
+                result = AddDays(result, rule.offset);
             break;
         }
         case HolidayCalculationType::EASTER_OFFSET:
         {
             result = CalculateEasterSunday(year);
-            result.tm_mday += rule.offset;
-            mktime(&result); // Normalize
+            result = AddDays(result, rule.offset);
             break;
         }
         case HolidayCalculationType::LUNAR_NEW_YEAR:
         {
             result = CalculateLunarNewYear(year);
             if (rule.offset != 0)
-            {
-                result.tm_mday += rule.offset;
-                mktime(&result); // Normalize
-            }
+                result = AddDays(result, rule.offset);
             break;
         }
         case HolidayCalculationType::WEEKDAY_ON_OR_AFTER:
         {
             result = CalculateWeekdayOnOrAfter(year, rule.month, rule.day, static_cast<Weekday>(rule.weekday));
             if (rule.offset != 0)
-            {
-                result.tm_mday += rule.offset;
-                mktime(&result); // Normalize
-            }
+                result = AddDays(result, rule.offset);
             break;
         }
         case HolidayCalculationType::AUTUMN_EQUINOX:
         {
             result = CalculateAutumnEquinox(year);
             if (rule.offset != 0)
-            {
-                result.tm_mday += rule.offset;
-                mktime(&result); // Normalize
-            }
+                result = AddDays(result, rule.offset);
             break;
         }
         case HolidayCalculationType::WINTER_SOLSTICE:
         {
             result = CalculateWinterSolstice(year);
             if (rule.offset != 0)
-            {
-                result.tm_mday += rule.offset;
-                mktime(&result); // Normalize
-            }
+                result = AddDays(result, rule.offset);
             break;
         }
         case HolidayCalculationType::DARKMOON_FAIRE:

@@ -52,6 +52,49 @@ protected:
     {
         return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
     }
+
+    std::tm AddDaysPortable(std::tm date, int offsetDays)
+    {
+        auto daysInMonth = [this](int year, int month)
+        {
+            int days[] = { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+            if (month == 2 && IsLeapYear(year))
+                return 29;
+
+            return days[month];
+        };
+
+        int year = date.tm_year + 1900;
+        int month = date.tm_mon + 1;
+        int day = date.tm_mday + offsetDays;
+
+        while (day > daysInMonth(year, month))
+        {
+            day -= daysInMonth(year, month);
+            ++month;
+            if (month > 12)
+            {
+                month = 1;
+                ++year;
+            }
+        }
+
+        while (day < 1)
+        {
+            --month;
+            if (month < 1)
+            {
+                month = 12;
+                --year;
+            }
+            day += daysInMonth(year, month);
+        }
+
+        date.tm_year = year - 1900;
+        date.tm_mon = month - 1;
+        date.tm_mday = day;
+        return date;
+    }
 };
 
 // ============================================================
@@ -309,9 +352,7 @@ TEST_F(HolidayDateCalculatorTest, Noblegarden_DayAfterEaster_1900_2200)
         std::tm easter = HolidayDateCalculator::CalculateEasterSunday(year);
 
         // Calculate expected Noblegarden date (Easter + 1)
-        std::tm expectedNoblegarden = easter;
-        expectedNoblegarden.tm_mday += 1;
-        mktime(&expectedNoblegarden); // Normalize (handles month rollover)
+        std::tm expectedNoblegarden = AddDaysPortable(easter, 1);
 
         // Get calculated Noblegarden from holiday rule
         HolidayRule noblegarden = { 181, HolidayCalculationType::EASTER_OFFSET, 0, 0, 0, 1 };

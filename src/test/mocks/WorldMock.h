@@ -23,8 +23,10 @@
 #include "IWorld.h"
 #include "gmock/gmock.h"
 
+#if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
 
 inline void AddScripts() {}
 
@@ -86,6 +88,8 @@ public:
     MOCK_METHOD(void, SetRealmName, (std::string name), ());
     MOCK_METHOD(void, RemoveOldCorpses, ());
 };
+#if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic pop
+#endif
 
 #endif //AZEROTHCORE_WORLDMOCK_H
