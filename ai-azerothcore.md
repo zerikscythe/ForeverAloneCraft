@@ -325,9 +325,11 @@ modules/
       integration/
         WorldReadContext.h          <- value types for read queries
         WorldCommitAction.h         <- explicit mutation records
-        AzerothWorldFacade.h        <- pure-virtual read interface
+        AzerothWorldFacade.h        <- pure-virtual world read interface
         AzerothWorldFacade*.cpp     <- real AC-backed implementation
                                        (lives here, not in planner/)
+        RosterRepository.h          <- pure-virtual roster lookup
+        RosterRepository*.cpp       <- real SQL/config-backed impl
 
       service/
         LivingWorldManager.{h,cpp}
@@ -344,11 +346,14 @@ modules/
 ```
 
 Current state as of the first foundation + first-service slice:
-- `integration/` contains `WorldReadContext.h`, `WorldCommitAction.h`, and
-  `AzerothWorldFacade.h`. A real AC-backed facade implementation is not
-  written yet; tests use a fake subclass.
-- `service/` contains `LivingWorldManager` and `PartyBotService`. Neither
-  executes world mutation; they produce `WorldCommitAction` records.
+- `integration/` contains `WorldReadContext.h`, `WorldCommitAction.h`,
+  `AzerothWorldFacade.h`, and `RosterRepository.h`. Real AC-backed and
+  SQL/config-backed implementations are not written yet; tests use fake
+  subclasses for both.
+- `service/` contains `LivingWorldManager` and `PartyBotService`. The
+  service resolves roster entries through `RosterRepository` scoped to
+  the requesting account. Neither class executes world mutation; they
+  produce `WorldCommitAction` records.
 - `script/` contains `LivingWorldCommandGrammar.{h,cpp}` as a pure
   parser; the actual `CommandScript` that registers `.lwbot` in the
   server has not been written yet.

@@ -210,8 +210,11 @@ runtime state, while still keeping mutation centralized and thin.
 - Pure-virtual `integration::AzerothWorldFacade` now exists covering initial
   read queries: player context, spawn anchors in zone, character-online
   check.
-- Real AzerothCore-backed implementation is still deferred; a test-only
-  fake is in place and drives service tests.
+- Pure-virtual `integration::RosterRepository` covers persistent-roster
+  lookup (list-by-account, find-by-id-scoped-to-account). Scoping every
+  query by account is the cross-account safety guarantee.
+- Real AzerothCore-backed implementations are still deferred; test-only
+  fakes for both are in place and drive service tests.
 
 6.2 Separate read context from write actions — **Complete**
 - `integration::WorldReadContext.h` provides value-only input types
@@ -257,13 +260,14 @@ runtime state, while still keeping mutation centralized and thin.
 
 7.3 Introduce `PartyBotService` — **Partial**
 - `service::PartyBotService` is implemented. It resolves the player
-  context via the facade, enforces the "alt already online" rule,
-  delegates to the party roster planner, and translates an approved plan
-  into explicit `WorldCommitAction` records.
+  context via the facade, looks up the requested entry through the
+  `RosterRepository` scoped to the requesting account, enforces the
+  "alt already online" rule, delegates to the party roster planner, and
+  translates an approved plan into explicit `WorldCommitAction` records.
 - World-facing commit execution is intentionally not implemented.
-- Unit tests in `test/PartyBotServiceTest.cpp` exercise approval,
-  rejection, dead-player, and alt-already-online paths against a fake
-  facade.
+- Unit tests in `test/PartyBotServiceTest.cpp` cover: no player context,
+  entry not found, cross-account scoping, approved-with-three-actions,
+  alt-already-online, and dead-player paths against fake adapters.
 
 7.4 Introduce `RivalGuildService` — **Not Started**
 - Own recurring rival guild identity and encounter continuity.
@@ -462,30 +466,36 @@ slice into an actually player-visible state:
 - Keep all AzerothCore includes behind the integration layer; planners and
   services must stay server-include-free.
 
-2. **Add a `LivingWorldCommandScript` in `src/script/`**
+2. **Implement a real `RosterRepository` backed by SQL / config**
+- First pass can be config-seeded entries plus account-alt lookup from
+  the characters DB, keyed by account.
+- Must preserve the cross-account scoping guarantee established by the
+  interface (never return another account's entries).
+
+3. **Add a `LivingWorldCommandScript` in `src/script/`**
 - Register the `.lwbot` chat command with AzerothCore.
 - Route arguments through `script::ParseLivingWorldCommand` and hand the
   result to `PartyBotService::DispatchRosterRequest`.
 - Render approved / rejected results as concise chat output now; the
   addon-friendly machine response can follow.
 
-3. **Introduce the authoritative commit layer**
+4. **Introduce the authoritative commit layer**
 - Single class that consumes `WorldCommitAction` records and performs the
   real server mutation. Services must never mutate world state outside
   this class.
 - Start with `SpawnRosterBodyAction` and `AttachToPartyAction`; leave
   despawn / encounter pipelines for the slice after.
 
-4. **Plan persistence before account-alt runtime work**
+5. **Plan persistence before account-alt runtime work**
 - Define ownership, save, and conflict rules before implementing alt-
   derived live bodies. This must land before the commit layer actually
   spawns an alt.
 
-5. **Expand planner coverage as consumers appear**
+6. **Expand planner coverage as consumers appear**
 - Once the commit layer is live, upgrade `SimpleZonePopulationPlanner`
   with scoring, cooldowns, and phase filtering (see §5.3, §5.4, §5.5).
 
-6. **Keep economy/event/progression additions modular**
+7. **Keep economy/event/progression additions modular**
 - The simulated AH, event reaction, and milestone-unlock systems should be
   implemented as separate policy/service tracks rather than folded into
   the first party bot runtime slice.

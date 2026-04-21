@@ -2,9 +2,9 @@
 
 // Top-level coordinator for the living-world module. In this slice it owns
 // the minimum wiring needed to exercise the first orchestration flow:
-//   - a reference to the AzerothWorldFacade implementation in use
+//   - references to the external adapters (facade + roster repository)
 //   - a concrete PartyRosterPlanner
-//   - a PartyBotService built on top of those two
+//   - a PartyBotService built on top of the above
 //
 // Later slices will grow this class to own update scheduling, zone
 // population, rival guild management, and progression sync. Keep it thin -
@@ -13,6 +13,7 @@
 // them together and owns their lifetime.
 
 #include "integration/AzerothWorldFacade.h"
+#include "integration/RosterRepository.h"
 #include "planner/SimplePartyRosterPlanner.h"
 #include "service/PartyBotService.h"
 
@@ -23,17 +24,21 @@ namespace service
 class LivingWorldManager
 {
 public:
-    // The facade reference must outlive the manager. Module loaders are
-    // expected to own the concrete facade instance and pass it in here.
-    explicit LivingWorldManager(integration::AzerothWorldFacade const& facade);
+    // Both adapter references must outlive the manager. Module loaders
+    // are expected to own the concrete facade and repository instances
+    // and pass them in here.
+    LivingWorldManager(
+        integration::AzerothWorldFacade const& facade,
+        integration::RosterRepository const& rosterRepository);
 
-    // Access points for the wired services. Returned as references because
-    // callers should not rebuild these ad hoc - a single instance per
-    // manager is the intended lifecycle.
+    // Access points for the wired services. Returned as references
+    // because callers should not rebuild these ad hoc - a single
+    // instance per manager is the intended lifecycle.
     PartyBotService const& GetPartyBotService() const { return _partyBotService; }
 
 private:
     integration::AzerothWorldFacade const& _facade;
+    integration::RosterRepository const& _rosterRepository;
     planner::SimplePartyRosterPlanner _partyRosterPlanner;
     PartyBotService _partyBotService;
 };

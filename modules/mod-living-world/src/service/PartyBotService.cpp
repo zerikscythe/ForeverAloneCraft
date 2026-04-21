@@ -1,6 +1,7 @@
 #include "service/PartyBotService.h"
 
 #include "model/PlayerRosterContext.h"
+#include "model/RosterEntry.h"
 
 namespace living_world
 {
@@ -81,13 +82,15 @@ std::vector<integration::WorldCommitAction> BuildCommitActions(
 
 PartyBotService::PartyBotService(
     integration::AzerothWorldFacade const& facade,
+    integration::RosterRepository const& rosterRepository,
     planner::PartyRosterPlanner const& plannerImpl)
-    : _facade(facade), _planner(plannerImpl)
+    : _facade(facade),
+      _rosterRepository(rosterRepository),
+      _planner(plannerImpl)
 {
 }
 
 PartyBotDispatchResult PartyBotService::DispatchRosterRequest(
-    std::vector<model::RosterEntry> const& rosterEntries,
     model::PlayerRosterRequest const& request) const
 {
     std::optional<integration::PlayerWorldContext> worldContext =
@@ -99,29 +102,32 @@ PartyBotDispatchResult PartyBotService::DispatchRosterRequest(
             planner::PartyRosterFailureReason::RequesterUnavailable);
     }
 
+    std::optional<model::RosterEntry> entry =
+        _rosterRepository.FindRosterEntryForAccount(
+            request.requesterAccountId, request.requestedRosterEntryId);
+
+    if (!entry)
+    {
+        return BuildRejection(
+            planner::PartyRosterFailureReason::RosterEntryNotFound);
+    }
+
     // Enforce the "alt already online" rule before the planner runs. The
     // planner is intentionally ignorant of live online state so it stays
     // testable with pure data inputs.
-    for (model::RosterEntry const& entry : rosterEntries)
+    if (entry->source == model::RosterEntrySource::AccountAlt &&
+        _facade.IsCharacterOnline(entry->characterGuid))
     {
-        if (entry.rosterEntryId != request.requestedRosterEntryId)
-        {
-            continue;
-        }
-        if (entry.source == model::RosterEntrySource::AccountAlt &&
-            _facade.IsCharacterOnline(entry.characterGuid))
-        {
-            return BuildRejection(
-                planner::PartyRosterFailureReason::RosterEntryAlreadySummoned);
-        }
-        break;
+        return BuildRejection(
+            planner::PartyRosterFailureReason::RosterEntryAlreadySummoned);
     }
 
     model::PlayerRosterContext plannerContext =
         BuildPlannerContext(*worldContext);
 
+    std::vector<model::RosterEntry> plannerInput { *entry };
     planner::PartyRosterPlan plan =
-        _planner.BuildPlan(rosterEntries, request, plannerContext);
+        _planner.BuildPlan(plannerInput, request, plannerContext);
 
     PartyBotDispatchResult result;
     result.plan = plan;

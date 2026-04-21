@@ -1,4 +1,5 @@
 #include "integration/AzerothWorldFacade.h"
+#include "integration/RosterRepository.h"
 #include "service/PartyBotService.h"
 #include "planner/SimplePartyRosterPlanner.h"
 #include "gtest/gtest.h"
@@ -63,6 +64,52 @@ private:
     std::unordered_set<std::uint64_t> _onlineCharacters;
 };
 
+// Test-only repository. Stores roster entries keyed by the account that
+// owns them so lookup scoping is enforced exactly like the real backend
+// will enforce it.
+class FakeRosterRepository : public integration::RosterRepository
+{
+public:
+    void AddEntry(std::uint32_t accountId, model::RosterEntry entry)
+    {
+        _entriesByAccount[accountId].push_back(std::move(entry));
+    }
+
+    std::vector<model::RosterEntry> GetRosterEntriesForAccount(
+        std::uint32_t accountId) const override
+    {
+        auto it = _entriesByAccount.find(accountId);
+        if (it == _entriesByAccount.end())
+        {
+            return {};
+        }
+        return it->second;
+    }
+
+    std::optional<model::RosterEntry> FindRosterEntryForAccount(
+        std::uint32_t accountId,
+        std::uint64_t rosterEntryId) const override
+    {
+        auto it = _entriesByAccount.find(accountId);
+        if (it == _entriesByAccount.end())
+        {
+            return std::nullopt;
+        }
+        for (model::RosterEntry const& entry : it->second)
+        {
+            if (entry.rosterEntryId == rosterEntryId)
+            {
+                return entry;
+            }
+        }
+        return std::nullopt;
+    }
+
+private:
+    std::unordered_map<std::uint32_t, std::vector<model::RosterEntry>>
+        _entriesByAccount;
+};
+
 integration::PlayerWorldContext BuildPlayerContext(
     std::uint64_t characterGuid, std::uint32_t accountId, std::uint32_t zoneId)
 {
@@ -96,15 +143,16 @@ model::RosterEntry BuildAccountAlt(
 TEST(PartyBotServiceTest, RejectsWhenFacadeHasNoPlayerContext)
 {
     FakeAzerothWorldFacade facade;
+    FakeRosterRepository repository;
     planner::SimplePartyRosterPlanner plannerImpl;
-    PartyBotService service(facade, plannerImpl);
+    PartyBotService service(facade, repository, plannerImpl);
 
     model::PlayerRosterRequest request;
     request.requesterCharacterGuid = 42;
     request.requesterAccountId = 7;
     request.requestedRosterEntryId = 1;
 
-    PartyBotDispatchResult result = service.DispatchRosterRequest({}, request);
+    PartyBotDispatchResult result = service.DispatchRosterRequest(request);
 
     EXPECT_FALSE(result.isApproved);
     EXPECT_EQ(result.failureReason,
@@ -112,11 +160,56 @@ TEST(PartyBotServiceTest, RejectsWhenFacadeHasNoPlayerContext)
     EXPECT_TRUE(result.commitActions.empty());
 }
 
+TEST(PartyBotServiceTest, RejectsWhenRepositoryHasNoMatchingEntry)
+{
+    FakeAzerothWorldFacade facade;
+    FakeRosterRepository repository;
+    planner::SimplePartyRosterPlanner plannerImpl;
+    PartyBotService service(facade, repository, plannerImpl);
+
+    facade.SetPlayerContext(42, BuildPlayerContext(42, 7, 12));
+
+    model::PlayerRosterRequest request;
+    request.requesterCharacterGuid = 42;
+    request.requesterAccountId = 7;
+    request.requestedRosterEntryId = 99;
+
+    PartyBotDispatchResult result = service.DispatchRosterRequest(request);
+
+    EXPECT_FALSE(result.isApproved);
+    EXPECT_EQ(result.failureReason,
+              planner::PartyRosterFailureReason::RosterEntryNotFound);
+}
+
+TEST(PartyBotServiceTest, RepositoryScopesLookupToRequestingAccount)
+{
+    FakeAzerothWorldFacade facade;
+    FakeRosterRepository repository;
+    planner::SimplePartyRosterPlanner plannerImpl;
+    PartyBotService service(facade, repository, plannerImpl);
+
+    facade.SetPlayerContext(42, BuildPlayerContext(42, 7, 12));
+    // Entry 55 belongs to account 13, not 7.
+    repository.AddEntry(13, BuildAccountAlt(55, 13, 9001));
+
+    model::PlayerRosterRequest request;
+    request.requesterCharacterGuid = 42;
+    request.requesterAccountId = 7;
+    request.requestedRosterEntryId = 55;
+
+    PartyBotDispatchResult result = service.DispatchRosterRequest(request);
+
+    EXPECT_FALSE(result.isApproved);
+    EXPECT_EQ(result.failureReason,
+              planner::PartyRosterFailureReason::RosterEntryNotFound);
+}
+
 TEST(PartyBotServiceTest, ApprovedRequestEmitsSpawnAttachAndStateActions)
 {
     FakeAzerothWorldFacade facade;
+    FakeRosterRepository repository;
     planner::SimplePartyRosterPlanner plannerImpl;
-    PartyBotService service(facade, plannerImpl);
+    PartyBotService service(facade, repository, plannerImpl);
 
     auto ctx = BuildPlayerContext(42, 7, 1519);
     ctx.position.mapId = 0;
@@ -125,7 +218,7 @@ TEST(PartyBotServiceTest, ApprovedRequestEmitsSpawnAttachAndStateActions)
     ctx.position.z = 50.0f;
     facade.SetPlayerContext(42, ctx);
 
-    model::RosterEntry alt = BuildAccountAlt(55, 7, 9001);
+    repository.AddEntry(7, BuildAccountAlt(55, 7, 9001));
 
     model::PlayerRosterRequest request;
     request.requesterCharacterGuid = 42;
@@ -135,8 +228,7 @@ TEST(PartyBotServiceTest, ApprovedRequestEmitsSpawnAttachAndStateActions)
     request.spawnAtPlayerLocation = true;
     request.addToPlayerParty = true;
 
-    PartyBotDispatchResult result =
-        service.DispatchRosterRequest({ alt }, request);
+    PartyBotDispatchResult result = service.DispatchRosterRequest(request);
 
     ASSERT_TRUE(result.isApproved);
     ASSERT_EQ(result.commitActions.size(), 3u);
@@ -167,21 +259,20 @@ TEST(PartyBotServiceTest, ApprovedRequestEmitsSpawnAttachAndStateActions)
 TEST(PartyBotServiceTest, RejectsAccountAltAlreadyOnline)
 {
     FakeAzerothWorldFacade facade;
+    FakeRosterRepository repository;
     planner::SimplePartyRosterPlanner plannerImpl;
-    PartyBotService service(facade, plannerImpl);
+    PartyBotService service(facade, repository, plannerImpl);
 
     facade.SetPlayerContext(42, BuildPlayerContext(42, 7, 12));
     facade.SetCharacterOnline(9001, true);
-
-    model::RosterEntry alt = BuildAccountAlt(55, 7, 9001);
+    repository.AddEntry(7, BuildAccountAlt(55, 7, 9001));
 
     model::PlayerRosterRequest request;
     request.requesterCharacterGuid = 42;
     request.requesterAccountId = 7;
     request.requestedRosterEntryId = 55;
 
-    PartyBotDispatchResult result =
-        service.DispatchRosterRequest({ alt }, request);
+    PartyBotDispatchResult result = service.DispatchRosterRequest(request);
 
     EXPECT_FALSE(result.isApproved);
     EXPECT_EQ(result.failureReason,
@@ -192,22 +283,21 @@ TEST(PartyBotServiceTest, RejectsAccountAltAlreadyOnline)
 TEST(PartyBotServiceTest, DeadPlayerCannotControlCompanions)
 {
     FakeAzerothWorldFacade facade;
+    FakeRosterRepository repository;
     planner::SimplePartyRosterPlanner plannerImpl;
-    PartyBotService service(facade, plannerImpl);
+    PartyBotService service(facade, repository, plannerImpl);
 
     auto ctx = BuildPlayerContext(42, 7, 12);
     ctx.isDead = true;
     facade.SetPlayerContext(42, ctx);
-
-    model::RosterEntry alt = BuildAccountAlt(55, 7, 9001);
+    repository.AddEntry(7, BuildAccountAlt(55, 7, 9001));
 
     model::PlayerRosterRequest request;
     request.requesterCharacterGuid = 42;
     request.requesterAccountId = 7;
     request.requestedRosterEntryId = 55;
 
-    PartyBotDispatchResult result =
-        service.DispatchRosterRequest({ alt }, request);
+    PartyBotDispatchResult result = service.DispatchRosterRequest(request);
 
     EXPECT_FALSE(result.isApproved);
     EXPECT_EQ(result.failureReason,
