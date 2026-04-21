@@ -10,6 +10,9 @@
 !/modules/CMakeLists.txt
 !/modules/*.h
 !/modules/*.cmake
+# First-party modules live in-tree and must not be ignored.
+!/modules/mod-living-world/
+!/modules/mod-living-world/**
 /build*/
 /var/*
 !/var/build/.gitkeep
