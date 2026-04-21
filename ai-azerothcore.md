@@ -141,6 +141,9 @@ Examples:
 
 These help make the server feel grouped and cooperative during solo play.
 
+Party bots should eventually run structured combat-profile data rather than
+growing into hardcoded one-off class logic.
+
 ## 4.4 Rival guild system
 Examples:
 - enemy solo scouts
@@ -239,6 +242,12 @@ Rules:
 - this layer should avoid direct world mutation
 - this layer should be testable with fake/mock data where possible
 
+Combat-profile selection belongs here as well:
+- choose class/role/level-band profile
+- apply loadout assumptions
+- apply player overrides
+- resolve the next intended action candidate
+
 ## 6.3 Integration / Adapter Layer
 Contains AzerothCore-specific operations.
 
@@ -270,6 +279,11 @@ Examples:
 Rules:
 - do not let this become a junk drawer
 - orchestration should call planners and adapters, not contain all behavior inline
+
+Combat execution should follow the same rule:
+- orchestration/service updates active combat state
+- planner resolves the intended action
+- adapter/integration performs the actual cast or item use attempt
 
 ---
 
@@ -389,6 +403,17 @@ Important:
 
 ## 8.5 Party bot utility
 Party bots should be reliable enough to support the player without requiring perfect raid AI.
+
+## 8.6 Combat behavior should be data-authored
+Combat behavior should eventually be authored as structured data:
+- class-aware
+- role/type-aware
+- level-band-aware
+- loadout-aware
+- player-overridable
+
+Bots should behave like role-driven agents executing prioritized rules, not
+like giant hardcoded class switches.
 
 ---
 
@@ -683,6 +708,153 @@ The code should not assume the current feature list is the end state.
 
 ---
 
+# 16A. Bot Control and Combat Profiles
+
+The current intended player-facing control model is:
+- command-driven first
+- addon-assisted as the primary long-term UX
+- structured combat-profile editing rather than freeform scripting
+
+## 16A.1 Keep control layers separate
+
+The bot system should be split into three distinct control layers:
+
+### Roster layer
+Answers:
+- who is available
+- who is active
+- who belongs to the player
+- who is in the party
+
+### Behavior layer
+Answers:
+- follow / hold / assist / autonomous
+- passive / defensive / aggressive
+- whether the player is possessing the bot or only commanding it
+
+### Combat-profile layer
+Answers:
+- what the bot does inside combat
+- priority rules
+- maintenance logic
+- utility logic
+- racial and trinket usage
+- player overrides
+
+These layers should not collapse into one giant command surface.
+
+## 16A.2 Addon-first command philosophy
+
+Text commands should be treated as the backend control protocol for a future
+UI addon, not the final UX.
+
+That means the system should prefer:
+- stable bot/runtime IDs
+- stable stance/mode enums
+- structured state snapshots
+- machine-friendly command grammar
+- predictable acknowledgements/results
+
+## 16A.3 Combat-profile behavior model
+
+When a bot enters combat, behavior should resolve from:
+- class
+- role/type
+- level band
+- race
+- loadout assumptions
+- runtime context
+- optional player override
+
+The expected loop is:
+1. gather combat context
+2. evaluate structured rules in priority order
+3. choose the first valid action
+4. execute it through the integration layer
+
+This should behave like a prioritized rule engine, not a static rotation list.
+
+## 16A.4 Combat-profile data direction
+
+Profiles should eventually be serialized in separate files, likely JSON, with
+one profile per class/type/level band.
+
+Expected dimensions:
+- class
+- role/type
+- optional subtype/spec style
+- level range
+- loadout profile
+- behavior flags
+- maintenance rules
+- combat rules
+- utility rules
+- racial rules
+- trinket rules
+
+## 16A.5 Level-band strategy
+
+Support 5 to 10 level chunks, but prefer 10-level bands as the baseline.
+Split into 5-level bands only where meaningful power spikes justify the extra
+authoring cost.
+
+## 16A.6 Loadout-aware doctrine
+
+Combat profiles should account for loadout assumptions such as:
+- one-hand + shield
+- two-hander
+- dual wield
+- ranged emphasis
+- caster vs melee orientation
+- stat bias / gear intent
+
+Loadout should influence behavior selection, not only presentation.
+
+## 16A.7 Player-editable overrides
+
+Players should be able to tweak bot combat behavior through the addon, but
+within structured guardrails.
+
+Safe editable areas:
+- priority order
+- enabled/disabled actions
+- health/mana thresholds
+- utility aggressiveness
+- maintenance toggles
+- racial use policy
+- trinket use policy
+
+Early implementation should avoid arbitrary script execution.
+
+## 16A.8 External combat doctrine vs local runtime truth
+
+External sites such as Wowhead and Icy Veins are acceptable sources for combat
+doctrine only:
+- role identity
+- rotation philosophy
+- cooldown timing concepts
+- buff/debuff priorities
+- racial/trinket ideas
+- loadout assumptions
+
+They are not the runtime source of truth for:
+- exact spell IDs
+- exact item IDs
+- exact local DB values
+- what the bot actually knows or has equipped
+
+Use them to derive concepts, then convert those concepts into internal profile
+data. The local emulator/runtime remains authoritative for executable values.
+
+## 16A.9 Recommended authoring pipeline
+
+1. Read external class-guide doctrine
+2. Convert doctrine into internal structured combat-profile data
+3. Validate against local AzerothCore/runtime truth
+4. Execute only what is legal and available
+
+---
+
 # 17. Practical Development Order
 
 Preferred implementation order:
@@ -723,6 +895,16 @@ Preferred implementation order:
 - optional worker/planning split
 - richer continuity/history systems
 
+## Phase 7
+- simulated economy / AH seeding
+- event-aware market and population changes
+- milestone-driven progression unlocks
+
+## Phase 8
+- deeper continuity systems
+- richer world-history reactions
+- optional special progression events
+
 ---
 
 # 18. Final Instruction for Future AI Assistants
@@ -743,3 +925,52 @@ The goal is not to build a fully autonomous MMO civilization.
 The goal is to build a **convincing living-world layer** that makes a mostly solo AzerothCore server feel inhabited, social, and reactive.
 
 That is the target.
+
+---
+
+# 19. Additional Design Threads To Preserve
+
+The following ideas were added later from adjacent design notes and should be
+treated as valid future directions for this project.
+
+## 19.1 Simulated economy should be policy-driven
+
+The server may eventually support a believable Auction House / economy layer,
+but it should avoid overengineering a full fake-player economy.
+
+Preferred design direction:
+- seeded supply
+- market absorption for player auctions
+- event-aware demand shifts
+- progression-aware stock pools
+- soft stock rotation rather than rigid player-style expiration for all seeded
+  inventory
+
+Avoid assuming we need:
+- full bot-wallet simulation
+- fully autonomous buyer/seller negotiation
+- per-tick market recalculation
+
+## 19.2 Events should influence population and supply
+
+Active world or seasonal events should eventually be able to affect:
+- city crowding
+- travel routes
+- stock pools
+- rival/ambient behavior
+- local activity weighting
+
+This should remain data- and policy-driven, not hardcoded into one-off hooks.
+
+## 19.3 Progression should be able to react to player accomplishments
+
+Long-term progression should not be forced to depend only on wall-clock timing.
+
+The architecture should leave room for milestone-driven progression such as:
+- boss kill unlock flags
+- special unlock events
+- AQ-style special gating flows
+- phase-sensitive population/economy changes
+
+If implemented, this belongs in centralized progression data/services rather
+than scattered checks across unrelated behavior code.
