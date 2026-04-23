@@ -2,11 +2,15 @@
 
 #include "Chat.h"
 #include "CommandScript.h"
+#include "Creature.h"
 #include "DatabaseEnv.h"
 #include "Group.h"
+#include "Map.h"
+#include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "Player.h"
 #include "SharedDefines.h"
+#include "TemporarySummon.h"
 #include "integration/AzerothWorldFacade.h"
 #include "integration/RosterRepository.h"
 #include "integration/WorldCommitAction.h"
@@ -20,6 +24,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -31,6 +36,29 @@ namespace script
 {
 namespace
 {
+constexpr std::uint32_t MaleAltCompanionTemplateEntry = 111;
+constexpr std::uint32_t FemaleAltCompanionTemplateEntry = 112;
+constexpr float AltCompanionFollowDistance = 2.5f;
+constexpr float AltCompanionFollowAngle = 3.14159f;
+
+struct AccountAltSummary
+{
+    std::uint64_t characterGuid = 0;
+    std::string name;
+    std::uint8_t gender = 0;
+    std::uint8_t level = 1;
+};
+
+struct CommitExecutionSummary
+{
+    std::uint32_t spawned = 0;
+    std::uint32_t attachedToFollow = 0;
+    std::uint32_t skipped = 0;
+    std::uint32_t failed = 0;
+};
+
+std::unordered_map<std::uint64_t, ObjectGuid> SpawnedRosterBodies;
+
 model::BotFaction ToBotFaction(std::uint8_t raceId)
 {
     TeamId const teamId = Player::TeamIdForRace(raceId);
@@ -169,6 +197,183 @@ std::string_view ToActionText(integration::WorldCommitAction const& action)
     }
 
     return "unknown action";
+}
+
+std::optional<AccountAltSummary> LoadAccountAltSummary(
+    std::uint64_t characterGuid)
+{
+    QueryResult result = CharacterDatabase.Query(
+        "SELECT guid, name, gender, level FROM characters WHERE guid = {} LIMIT 1",
+        characterGuid);
+    if (!result)
+    {
+        return std::nullopt;
+    }
+
+    Field const* fields = result->Fetch();
+    AccountAltSummary summary;
+    summary.characterGuid = fields[0].Get<std::uint64_t>();
+    summary.name = fields[1].Get<std::string>();
+    summary.gender = fields[2].Get<std::uint8_t>();
+    summary.level = fields[3].Get<std::uint8_t>();
+    return summary;
+}
+
+Creature* FindActiveRosterBody(
+    Player* player,
+    std::uint64_t rosterEntryId)
+{
+    auto const itr = SpawnedRosterBodies.find(rosterEntryId);
+    if (itr == SpawnedRosterBodies.end())
+    {
+        return nullptr;
+    }
+
+    Creature* body = player->GetMap()->GetCreature(itr->second);
+    if (!body || !body->IsAlive())
+    {
+        SpawnedRosterBodies.erase(itr);
+        return nullptr;
+    }
+
+    return body;
+}
+
+bool ExecuteSpawnRosterBodyAction(
+    ChatHandler* handler,
+    Player* requester,
+    integration::SpawnRosterBodyAction const& action)
+{
+    if (action.source != model::RosterEntrySource::AccountAlt)
+    {
+        handler->PSendSysMessage(
+            "LivingWorld skipped generic roster body {}; only account-alt spawning is wired.",
+            action.rosterEntryId);
+        return false;
+    }
+
+    if (Creature* existing = FindActiveRosterBody(requester, action.rosterEntryId))
+    {
+        existing->GetMotionMaster()->MoveFollow(
+            requester,
+            AltCompanionFollowDistance,
+            AltCompanionFollowAngle);
+        handler->PSendSysMessage(
+            "LivingWorld roster entry {} is already spawned and following.",
+            action.rosterEntryId);
+        return true;
+    }
+
+    std::optional<AccountAltSummary> summary =
+        LoadAccountAltSummary(action.characterGuid);
+    if (!summary)
+    {
+        handler->PSendSysMessage(
+            "LivingWorld failed to load account-alt character {}.",
+            action.characterGuid);
+        return false;
+    }
+
+    std::uint32_t const templateEntry = summary->gender == 1
+        ? FemaleAltCompanionTemplateEntry
+        : MaleAltCompanionTemplateEntry;
+    Position const spawnPosition = requester->GetNearPosition(2.0f, 0.0f);
+
+    TempSummon* summon = requester->GetMap()->SummonCreature(
+        templateEntry,
+        spawnPosition,
+        nullptr,
+        0,
+        requester);
+    if (!summon)
+    {
+        handler->PSendSysMessage(
+            "LivingWorld failed to summon roster entry {}.",
+            action.rosterEntryId);
+        return false;
+    }
+
+    summon->SetName(summary->name);
+    summon->SetLevel(summary->level);
+    summon->SetFaction(requester->GetFaction());
+    summon->SetReactState(REACT_PASSIVE);
+    summon->SetFullHealth();
+    summon->GetMotionMaster()->MoveFollow(
+        requester,
+        AltCompanionFollowDistance,
+        AltCompanionFollowAngle);
+
+    SpawnedRosterBodies[action.rosterEntryId] = summon->GetGUID();
+    handler->PSendSysMessage(
+        "LivingWorld spawned {} as a temporary account-alt companion.",
+        summary->name);
+    return true;
+}
+
+bool ExecuteAttachToPartyAction(
+    ChatHandler* handler,
+    Player* requester,
+    integration::AttachToPartyAction const& action)
+{
+    Creature* body = FindActiveRosterBody(requester, action.rosterEntryId);
+    if (!body)
+    {
+        handler->PSendSysMessage(
+            "LivingWorld could not attach roster entry {}; no active body was found.",
+            action.rosterEntryId);
+        return false;
+    }
+
+    body->GetMotionMaster()->MoveFollow(
+        requester,
+        AltCompanionFollowDistance,
+        AltCompanionFollowAngle);
+    handler->PSendSysMessage(
+        "LivingWorld attached roster entry {} as a follower. Real party membership is not wired yet.",
+        action.rosterEntryId);
+    return true;
+}
+
+CommitExecutionSummary ExecuteCommitActions(
+    ChatHandler* handler,
+    Player* requester,
+    std::vector<integration::WorldCommitAction> const& actions)
+{
+    CommitExecutionSummary summary;
+    for (integration::WorldCommitAction const& action : actions)
+    {
+        if (integration::SpawnRosterBodyAction const* spawn =
+            std::get_if<integration::SpawnRosterBodyAction>(&action))
+        {
+            if (ExecuteSpawnRosterBodyAction(handler, requester, *spawn))
+            {
+                ++summary.spawned;
+            }
+            else
+            {
+                ++summary.failed;
+            }
+            continue;
+        }
+
+        if (integration::AttachToPartyAction const* attach =
+            std::get_if<integration::AttachToPartyAction>(&action))
+        {
+            if (ExecuteAttachToPartyAction(handler, requester, *attach))
+            {
+                ++summary.attachedToFollow;
+            }
+            else
+            {
+                ++summary.failed;
+            }
+            continue;
+        }
+
+        ++summary.skipped;
+    }
+
+    return summary;
 }
 
 model::RosterEntry BuildRosterEntry(
@@ -385,14 +590,16 @@ void RenderRosterRequest(
     handler->PSendSysMessage(
         "LivingWorld roster request approved for entry {}.",
         command.rosterEntryId);
+    CommitExecutionSummary const execution = ExecuteCommitActions(
+        handler,
+        player,
+        result.commitActions);
     handler->PSendSysMessage(
-        "Generated {} commit action(s); execution is not wired yet.",
-        result.commitActions.size());
-
-    for (integration::WorldCommitAction const& action : result.commitActions)
-    {
-        handler->PSendSysMessage("  - {}", ToActionText(action));
-    }
+        "LivingWorld commit result: spawned {}, attached {}, skipped {}, failed {}.",
+        execution.spawned,
+        execution.attachedToFollow,
+        execution.skipped,
+        execution.failed);
 }
 
 void RenderDismissPlaceholder(
