@@ -551,20 +551,27 @@ in `ManualReviewRequired`.
 exceeded level cap, small money gain, exceeded money cap, and both
 checks failing together.
 
-### D) Sync executor, later and gated
+### D) Sync executor — **Complete**
 
-Only after the planner and sanity checker are tested should we add the DB
-executor that copies clone progress back to the source character. It must run
-inside transactions, be idempotent, write audit state, and mark records as
-`SyncingBack` before mutation and `Active`/clean only after success.
+`service::AccountAltSyncExecutor` executes the domain-restricted progress copy
+inside a `SyncingBack` state guard. Implementation details:
 
-The first sync executor should be limited to:
-- level
-- XP
-- money
+- Constructs a target snapshot from the clone, limited to `domainsToSync`.
+- Marks runtime `SyncingBack` and saves before any write (crash-safe).
+- Calls `integration::CharacterProgressSyncRepository::SyncProgressToCharacter`
+  to UPDATE `characters` (level, xp, money) using `DirectExecute` so the row
+  is committed before a bot session loads the character.
+- Marks runtime `Active` with the new source snapshot after success.
+- Returns false on executor write failure; coordinator then returns
+  `ManualReviewRequired`.
+
+`AccountAltRuntimeCoordinator::PlanSpawn` now calls the executor inline when
+`SyncCloneToSource` is the plan, and returns `SpawnUsingPersistentClone` on
+success. The `RecoveryRequired` spawn decision kind is no longer reachable in
+the clone-ahead path.
 
 Inventory, equipment, bank, achievements, quests, reputation, and mail remain
-future slices with their own sanity and ownership rules.
+blocked until they have domain-specific sanity rules and ownership checks.
 
 ### E) Startup/player-login recovery pass
 
@@ -746,7 +753,31 @@ group is clean regardless of whether the bot was kicked or timed out.
 
 ---
 
-## Completed Slice: Account-Alt Sanity Checker
+## Completed Slice: Account-Alt Sync Executor
+
+See section D of "Immediate Next Implementation Slice" above for full detail.
+
+---
+
+## Immediate Next: Startup Recovery Pass (Section E)
+
+On player login, list all `living_world_account_alt_runtime` records for the
+account. For each record:
+- `cloneCharacterGuid == 0` and `state == Active`: transitional mode, no action
+- `state == SyncingBack`: the executor was interrupted — run the executor again
+  (idempotent by design)
+- `state == Active` with a materialized clone: check if clone is ahead and run
+  the normal PlanSpawn path (sanity → sync or reuse)
+- `state == Failed`: surface to the player for manual review
+
+This pass belongs in `LivingWorldPlayerScript::OnPlayerLogin` (owner login, not
+bot login) and should be lightweight — load snapshots and build recovery plans,
+but only execute writes when the state is `SyncingBack` (i.e., mid-sync crash
+recovery).
+
+---
+
+## Completed Slice: Account-Alt Sync Executor
 
 See section C of "Immediate Next Implementation Slice" above for full detail.
 

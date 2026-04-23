@@ -1305,8 +1305,72 @@ deterministic and produces no orphaned registry entries or group slots.
 
 ### 22.5 What remains for multi-bot support
 
-Currently `BotPlayerRegistry::FindBotForOwner` returns the single active bot
-for an owner. When multiple bots per owner are supported, dismiss will need to
-accept a roster-entry ID and route to the correct bot. The grammar already
-carries `rosterEntryId`; the registry lookup is the only piece that will need
-to change.
+---
+
+## 23. Clone-to-source sync executor
+
+### 23.1 Design goals
+
+The sync executor is the first slice that actually writes clone progress back
+to the source character. Three invariants govern it:
+
+1. **SyncingBack guard**: the runtime state is set to `SyncingBack` and
+   persisted before any character write. A crash between the state write and the
+   character write leaves a recoverable record; a startup recovery pass can
+   detect `SyncingBack` and retry.
+2. **Domain gating**: only domains listed in `domainsToSync` are copied.
+   Fields not in the approved list keep the source character's existing values.
+3. **DirectExecute**: `SqlCharacterProgressSyncRepository` uses
+   `CharacterDatabase.DirectExecute()` so the UPDATE is committed before
+   control returns. This ensures the characters row is durable before a bot
+   session loads it.
+
+### 23.2 Execution sequence
+
+```
+AccountAltRuntimeCoordinator::PlanSpawn
+  sanity check passes, plan = SyncCloneToSource
+    → AccountAltSyncExecutor::Execute(runtime, cloneSnapshot, domainsToSync)
+        1. runtime.state = SyncingBack  → SaveRuntime
+        2. build target snapshot (clone fields for approved domains)
+        3. SqlCharacterProgressSyncRepository::SyncProgressToCharacter
+             DirectExecute: UPDATE characters SET level, xp, money WHERE guid=sourceGuid
+        4. runtime.sourceSnapshot = target, runtime.state = Active → SaveRuntime
+        5. return true
+    ← SpawnUsingPersistentClone
+  on executor failure → ManualReviewRequired (state stays SyncingBack for recovery)
+```
+
+### 23.3 Layer placement
+
+```
+LivingWorldCommandScript  (executes on world thread, map thread context)
+  └─ AccountAltRuntimeCoordinator  (orchestration: decision + sync trigger)
+       └─ AccountAltSyncExecutor   (service: state machine)
+            ├─ AccountAltRuntimeRepository  (runtime record I/O)
+            └─ CharacterProgressSyncRepository  (character row write)
+                  └─ SqlCharacterProgressSyncRepository  (DirectExecute impl)
+```
+
+### 23.4 What the startup recovery pass should do (not yet implemented)
+
+When an owner player logs in, `OnPlayerLogin` (non-bot path) should:
+1. Query `living_world_account_alt_runtime` WHERE `source_account_id = accountId`.
+2. For each record with `state = SyncingBack`: reload snapshots and re-run
+   `AccountAltSyncExecutor::Execute` — idempotent because we re-derive the
+   target from fresh snapshots.
+3. For other states: surface to the player via chat (e.g., "your alt X has an
+   active runtime — use `.lwbot roster request <id>` to resume").
+
+This pass does not exist yet. The `SyncingBack` state is correctly persisted so
+the data is safe across restarts; the pass just needs to be wired.
+
+### 23.5 Sync domain scope
+
+Currently synced: `Experience` (level + XP) and `Money`.
+Not synced, not safe without additional rules:
+- `Inventory` — item duplication/deletion risk
+- `Equipment` — same
+- `Reputation` — faction relation edge cases
+- `Quests` — quest state machine conflicts
+- `Mail` — item attachment ownership
