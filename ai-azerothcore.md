@@ -1220,6 +1220,15 @@ The first observation layer for item domains now exists as well:
   and malformed equipment slot/container layouts, and only approves the
   `Equipment` sync domain when the snapshots are structurally sane. Inventory
   and bank remain observed-but-blocked until they get their own domain rules.
+- `integration::SqlCharacterEquipmentSyncRepository` is the first item-domain
+  write repository. It deletes the source character's equipped-slot rows,
+  duplicates clone equipped `item_instance` rows with fresh item guids owned by
+  the source character, and reinserts them into slots 0-18 inside one DB
+  transaction. Wrapped gift-backed items are blocked for now.
+- `service::AccountAltEquipmentSyncExecutor` mirrors the existing progress
+  executor state machine: mark `SyncingBack`, call the repository, then mark
+  `Active` on success. It is intentionally not yet wired into the live account-
+  alt recovery planner.
 
 ### 21.2 Recovery sequence
 

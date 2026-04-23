@@ -794,6 +794,13 @@ Current implementation status:
   uncategorized storage state, and equipment slot/container shape, and only
   approves the `Equipment` sync domain when the snapshots are structurally
   sane.
+- `SqlCharacterEquipmentSyncRepository` and
+  `AccountAltEquipmentSyncExecutor` now provide the first transactional
+  equipment-only write path by duplicating clone equipped `item_instance` rows
+  onto the source character with new item guids.
+- This equipment executor is intentionally not wired into live recovery yet;
+  the next slice should connect it through a higher-level item recovery plan
+  after snapshot + sanity results are plumbed together.
 
 After those read/sanity layers exist, the next follow-on slice should be the
 first transactional equipment/inventory sync executor.
