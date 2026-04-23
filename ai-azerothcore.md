@@ -362,6 +362,17 @@ Current state as of the first foundation + first runtime command slice:
   service resolves roster entries through `RosterRepository` scoped to
   the requesting account. Neither class executes world mutation; they
   produce `WorldCommitAction` records.
+- Account-alt runtime work has started with a pure service seam:
+  `model/AccountAltRuntime.h`,
+  `integration/AccountAltRuntimeRepository.h`,
+  `integration/BotAccountPoolRepository.h`, and
+  `service/AccountAltRuntimeService.{h,cpp}`. This path intentionally uses
+  bot-owned account-pool accounts for live clones instead of rewriting
+  AzerothCore's account login/session limit. The service decides whether to
+  prepare a new clone, reuse an active clone, recover an interrupted clone, or
+  block when no bot account is available. It also records source/clone progress
+  snapshots so recovery does not overwrite newer clone progress with stale
+  source data.
 - `script/` contains `LivingWorldCommandGrammar.{h,cpp}` as a pure
   parser and `LivingWorldCommandScript.cpp` as the first AzerothCore
   command surface. `.lwbot roster list` reads account alts from the
@@ -370,8 +381,15 @@ Current state as of the first foundation + first runtime command slice:
   `WorldCommitAction` intent. `.lwbot roster dismiss <id>` is still a
   placeholder.
 - No living-world code executes party-bot world mutation yet. The next core
-  slice should introduce the authoritative commit executor that consumes
-  `WorldCommitAction` records and performs the server-side spawn/attach work.
+  slice should introduce account-alt SQL-backed runtime repositories and then
+  the authoritative commit executor that consumes `WorldCommitAction` records
+  and performs the server-side spawn/attach work.
+- Session feasibility note: a fake "always logged in" account implemented as a
+  null-socket `WorldSession` is not viable as-is. `WorldSession::Update`
+  returns false when `m_Socket` is null, and `WorldSessionMgr` removes that
+  session. Normal active session storage is keyed by account id and kicks the
+  previous session for the same account, so the safer runtime design is a pool
+  of bot-owned accounts, one live clone per bot account.
 - Local runtime validation has reached a working end-to-end WotLK install:
   MySQL 8, authserver, worldserver, extracted dbc/maps/vmaps/mmaps, client
   login, character creation, and starting-zone entry. This validates the

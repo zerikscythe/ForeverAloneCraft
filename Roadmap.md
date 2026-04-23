@@ -334,23 +334,35 @@ design and foundation code.
 
 ### 9) Account Alt Support
 
-**Overall Status: Not Started**
+**Overall Status: Partial**
 
 #### Subtasks
 
 9.1 Define owned-alt eligibility rules — **Not Started**
 - Only alts from the player's account should be eligible.
 
-9.2 Define runtime representation for account-derived roster entries — **Not Started**
+9.2 Define runtime representation for account-derived roster entries — **Partial**
+- `model::AccountAltRuntimeRecord` and
+  `service::AccountAltRuntimeService` now define the first clone-account
+  lifecycle seam: prepare a new runtime clone, reuse an active clone, recover
+  an interrupted clone, or block when no bot account is available.
+- Runtime clones are intended to live on bot-owned account-pool accounts rather
+  than by rewriting AzerothCore's one-active-session-per-account assumption.
 
-9.3 Define progression for XP / items / rep ownership — **Not Started**
-- This is a core design promise and should be planned before implementation.
+9.3 Define progression for XP / items / rep ownership — **Partial**
+- The runtime model now carries source/clone progress snapshots and marks the
+  clone as authoritative during recovery when clone progress is ahead of the
+  current source snapshot. Item, reputation, quest, and mail sync rules remain
+  unimplemented.
 
-9.4 Block conflicting login/runtime states — **Not Started**
+9.4 Block conflicting login/runtime states — **Partial**
 - Need explicit rules for:
   - alt already online
   - alt already active as bot
   - persistence/save timing
+- `PartyBotService` already blocks owned alts that are online as normal
+  characters. `AccountAltRuntimeService` now blocks/reuses/recovers existing
+  runtime records before reserving a new bot account.
 
 9.5 Decide whether generic bots and account alts share one runtime pipeline — **Not Started**
 
@@ -481,10 +493,16 @@ mutation:
 - Start with `SpawnRosterBodyAction` and `AttachToPartyAction`; leave
   despawn / encounter pipelines for the slice after.
 
-2. **Plan persistence before account-alt runtime work**
-- Define ownership, save, and conflict rules before implementing alt-
-  derived live bodies. This must land before the commit layer actually
-  spawns an alt.
+2. **Implement account-alt runtime persistence and bot account pool SQL**
+- The pure service seam exists. Next, add `db-auth` / `db-characters` backing
+  tables or repository implementations for:
+  - bot account pool reservation
+  - source-to-clone runtime records
+  - crash recovery state
+  - source/clone progress snapshots
+- Do not attempt a socketless "always logged in" account session; current
+  AzerothCore session cleanup removes null-socket sessions, and normal session
+  storage is keyed by account id.
 
 3. **Harden the runtime command surface**
 - Keep `.lwbot roster list` and `.lwbot roster request <id>` usable in-game.
