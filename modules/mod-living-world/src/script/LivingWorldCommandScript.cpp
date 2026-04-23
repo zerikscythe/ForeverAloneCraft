@@ -705,12 +705,34 @@ void RenderRosterRequest(
         execution.failed);
 }
 
-void RenderDismissPlaceholder(
+void RenderDismissBot(
     ChatHandler* handler,
     RosterDismissCommand const& command)
 {
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld dismiss requires an in-game player.");
+        return;
+    }
+
+    Player* bot = service::BotPlayerRegistry::Instance().FindBotForOwner(
+        player->GetGUID());
+    if (!bot)
+    {
+        handler->PSendSysMessage(
+            "LivingWorld no active bot found for roster entry {}.",
+            command.rosterEntryId);
+        return;
+    }
+
+    if (Group* group = bot->GetGroup())
+        group->RemoveMember(bot->GetGUID(), GROUP_REMOVEMETHOD_LEAVE);
+
+    bot->GetSession()->KickPlayer("LivingWorld roster dismiss");
     handler->PSendSysMessage(
-        "LivingWorld dismiss for entry {} is parsed but not implemented yet.",
+        "LivingWorld dismissed bot for roster entry {}.",
         command.rosterEntryId);
 }
 
@@ -744,7 +766,7 @@ bool HandleParsedCommand(
     if (RosterDismissCommand const* command =
         std::get_if<RosterDismissCommand>(&parsed))
     {
-        RenderDismissPlaceholder(handler, *command);
+        RenderDismissBot(handler, *command);
         return true;
     }
 

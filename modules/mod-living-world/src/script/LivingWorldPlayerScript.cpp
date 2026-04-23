@@ -2,12 +2,35 @@
 #include "service/BotPlayerRegistry.h"
 
 #include "DatabaseEnv.h"
+#include "Group.h"
+#include "GroupMgr.h"
 #include "ObjectAccessor.h"
 #include "Player.h"
 #include "ScriptMgr.h"
 #include "WorldSession.h"
 
 #include <optional>
+
+namespace
+{
+void AddBotToOwnerGroup(Player* bot, Player* owner)
+{
+    Group* group = owner->GetGroup();
+    if (!group)
+    {
+        group = new Group();
+        if (!group->Create(owner))
+        {
+            delete group;
+            return;
+        }
+        sGroupMgr->AddGroup(group);
+    }
+    if (group->IsFull())
+        return;
+    group->AddMember(bot);
+}
+} // namespace
 
 class LivingWorldPlayerScript final : public PlayerScript
 {
@@ -34,6 +57,7 @@ public:
         if (owner)
         {
             living_world::ai::ScheduleCompanionAI(player, owner);
+            AddBotToOwnerGroup(player, owner);
         }
     }
 
@@ -44,6 +68,9 @@ public:
         {
             return;
         }
+
+        if (Group* group = player->GetGroup())
+            group->RemoveMember(player->GetGUID(), GROUP_REMOVEMETHOD_LEAVE);
 
         living_world::service::BotPlayerRegistry::Instance()
             .UnregisterBotPlayer(player);
