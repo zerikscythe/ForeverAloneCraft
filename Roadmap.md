@@ -157,7 +157,8 @@ independent from direct AzerothCore world mutation.
   - `PartyRosterPlanner`
 
 4.2 Keep planners free of direct emulator mutation — **Complete**
-- Current planner layer is still interface/stub oriented.
+- Current planner layer performs richer pure-logic filtering/scoring but still
+  does not mutate AzerothCore state directly.
 - World mutation remains out of scope at this stage.
 
 4.3 Define planner input/output contracts more explicitly — **Partial**
@@ -175,21 +176,30 @@ independent from direct AzerothCore world mutation.
 #### Subtasks
 
 5.1 Add a minimal population planner stub — **Complete**
-- `SimpleZonePopulationPlanner` exists as an initial proof of separation.
+- `SimpleZonePopulationPlanner` exists as a testable pure-logic population
+  planner.
 
 5.2 Add a minimal party roster planner stub — **Complete**
 - `SimplePartyRosterPlanner` exists as a small testable planner slice.
 
-5.3 Expand stubs into policy-driven planners — **Not Started**
-- Next versions should move from "proof of separation" toward:
-  - score-based selection
-  - weighted role choice
+5.3 Expand stubs into policy-driven planners — **Partial**
+- `SimpleZonePopulationPlanner` now owns the first useful policy pass:
+  - score-based reprioritization before budget trimming
   - cooldown-aware suppression
-  - phase-aware filtering
+  - spawned/dead/relocating suppression
+  - activity gating from spawn context
+  - unlocked-zone / nearby-zone filtering
+- Remaining work should move scoring weights and policy knobs into config/data
+  as real consumers appear.
 
 5.4 Add rival-group planning logic — **Not Started**
 
-5.5 Add progression-aware gating logic to planner outputs — **Not Started**
+5.5 Add progression-aware gating logic to planner outputs — **Partial**
+- The zone population planner now respects `ProgressionGateResolver` plus
+  `ProgressionPhaseState::unlockedZoneIds` for the player zone and candidate
+  profile zone preferences.
+- Broader phase-aware behavior across party/rival/economy services remains
+  future work.
 
 ---
 
@@ -491,9 +501,11 @@ slice into an actually player-visible state:
   derived live bodies. This must land before the commit layer actually
   spawns an alt.
 
-6. **Expand planner coverage as consumers appear**
-- Once the commit layer is live, upgrade `SimpleZonePopulationPlanner`
-  with scoring, cooldowns, and phase filtering (see §5.3, §5.4, §5.5).
+6. **Move planner policies toward config/data as consumers appear**
+- `SimpleZonePopulationPlanner` now has the first scoring, cooldown, activity,
+  and unlocked-zone filtering pass. The next planner work should avoid piling
+  on hardcoded weights; extract policy knobs into config/data once the runtime
+  service path needs tuning.
 
 7. **Keep economy/event/progression additions modular**
 - The simulated AH, event reaction, and milestone-unlock systems should be

@@ -350,6 +350,12 @@ Current state as of the first foundation + first-service slice:
   `AzerothWorldFacade.h`, and `RosterRepository.h`. Real AC-backed and
   SQL/config-backed implementations are not written yet; tests use fake
   subclasses for both.
+- `planner/` contains `SimpleZonePopulationPlanner` and
+  `SimplePartyRosterPlanner`. The zone planner now performs planner-owned
+  eligibility filtering from abstract state plus progression/unlocked-zone
+  checks, then reprioritizes selector output with simple scores before
+  budget trimming. The weights are still code-local and should eventually
+  move to config/data.
 - `service/` contains `LivingWorldManager` and `PartyBotService`. The
   service resolves roster entries through `RosterRepository` scoped to
   the requesting account. Neither class executes world mutation; they
@@ -357,6 +363,11 @@ Current state as of the first foundation + first-service slice:
 - `script/` contains `LivingWorldCommandGrammar.{h,cpp}` as a pure
   parser; the actual `CommandScript` that registers `.lwbot` in the
   server has not been written yet.
+- Local runtime validation has reached a working end-to-end WotLK install:
+  MySQL 8, authserver, worldserver, extracted dbc/maps/vmaps/mmaps, client
+  login, character creation, and starting-zone entry. This validates the
+  environment for party-bot runtime work, but the install/deploy scripts live
+  outside the repo under `D:\Wow Private\WotLK`.
 
 This exact structure can change, but the separation should remain.
 

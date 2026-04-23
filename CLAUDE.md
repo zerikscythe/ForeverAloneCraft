@@ -8,6 +8,22 @@ AzerothCore is an open-source MMORPG server emulator for World of Warcraft patch
 
 ## Build Commands
 
+### Local runtime deployment
+
+- Keep the repo as the build/development workspace.
+- The local playable WotLK deployment lives outside the repo at
+  `D:\Wow Private\WotLK`.
+- `D:\Wow Private\WotLK\Server` contains the deployed auth/world binaries,
+  runtime DLLs, configs, logs, crashes, and extracted `data/`.
+- `D:\Wow Private\WotLK\Client` contains the playable 3.3.5a client.
+- Helper scripts in `D:\Wow Private\WotLK`:
+  - `Pull Newest.ps1` pulls/builds/deploys updated server binaries.
+  - `Launch-ClientWithServers.ps1` starts auth/world, launches the client, and
+    stops servers when the client exits.
+  - `Shutdown-Servers.ps1` stops auth/world manually.
+- MySQL is installed as Windows service `MySQL80Acore` and listens on
+  `127.0.0.1:3306` for this local setup.
+
 ### Configure and build (out-of-source build required)
 
 - Skip building unless explicitly requested.
