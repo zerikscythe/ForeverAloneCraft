@@ -345,11 +345,13 @@ modules/
         LivingWorldCreatureScript.cpp
 ```
 
-Current state as of the first foundation + first-service slice:
+Current state as of the first foundation + first runtime command slice:
 - `integration/` contains `WorldReadContext.h`, `WorldCommitAction.h`,
-  `AzerothWorldFacade.h`, and `RosterRepository.h`. Real AC-backed and
-  SQL/config-backed implementations are not written yet; tests use fake
-  subclasses for both.
+  `AzerothWorldFacade.h`, and `RosterRepository.h`. Tests use fake
+  subclasses. The current runtime command script includes thin AC-backed
+  adapter implementations for player context, online checks, and account-alt
+  roster lookup; extract them into dedicated integration files once more
+  command/service consumers appear.
 - `planner/` contains `SimpleZonePopulationPlanner` and
   `SimplePartyRosterPlanner`. The zone planner now performs planner-owned
   eligibility filtering from abstract state plus progression/unlocked-zone
@@ -361,8 +363,15 @@ Current state as of the first foundation + first-service slice:
   the requesting account. Neither class executes world mutation; they
   produce `WorldCommitAction` records.
 - `script/` contains `LivingWorldCommandGrammar.{h,cpp}` as a pure
-  parser; the actual `CommandScript` that registers `.lwbot` in the
-  server has not been written yet.
+  parser and `LivingWorldCommandScript.cpp` as the first AzerothCore
+  command surface. `.lwbot roster list` reads account alts from the
+  characters DB; `.lwbot roster request <id>` routes through
+  `PartyBotService` and prints approved / rejected output plus
+  `WorldCommitAction` intent. `.lwbot roster dismiss <id>` is still a
+  placeholder.
+- No living-world code executes party-bot world mutation yet. The next core
+  slice should introduce the authoritative commit executor that consumes
+  `WorldCommitAction` records and performs the server-side spawn/attach work.
 - Local runtime validation has reached a working end-to-end WotLK install:
   MySQL 8, authserver, worldserver, extracted dbc/maps/vmaps/mmaps, client
   login, character creation, and starting-zone entry. This validates the

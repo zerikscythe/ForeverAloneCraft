@@ -1,0 +1,445 @@
+#include "script/LivingWorldCommandGrammar.h"
+
+#include "Chat.h"
+#include "CommandScript.h"
+#include "DatabaseEnv.h"
+#include "Group.h"
+#include "ObjectAccessor.h"
+#include "Player.h"
+#include "SharedDefines.h"
+#include "integration/AzerothWorldFacade.h"
+#include "integration/RosterRepository.h"
+#include "integration/WorldCommitAction.h"
+#include "model/PlayerRosterRequest.h"
+#include "model/RosterEntry.h"
+#include "planner/PlannerTypes.h"
+#include "planner/SimplePartyRosterPlanner.h"
+#include "service/PartyBotService.h"
+
+#include <cstdint>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <variant>
+#include <vector>
+
+using namespace Acore::ChatCommands;
+
+namespace living_world
+{
+namespace script
+{
+namespace
+{
+model::BotFaction ToBotFaction(std::uint8_t raceId)
+{
+    TeamId const teamId = Player::TeamIdForRace(raceId);
+    if (teamId == TEAM_ALLIANCE)
+    {
+        return model::BotFaction::Alliance;
+    }
+
+    if (teamId == TEAM_HORDE)
+    {
+        return model::BotFaction::Horde;
+    }
+
+    return model::BotFaction::Neutral;
+}
+
+model::BotRole ToDefaultRole(std::uint8_t classId)
+{
+    switch (classId)
+    {
+        case CLASS_PRIEST:
+        case CLASS_DRUID:
+        case CLASS_PALADIN:
+        case CLASS_SHAMAN:
+            return model::BotRole::Support;
+        case CLASS_WARRIOR:
+        case CLASS_DEATH_KNIGHT:
+            return model::BotRole::Tank;
+        default:
+            return model::BotRole::Damage;
+    }
+}
+
+std::string_view ToFailureText(
+    planner::PartyRosterFailureReason reason)
+{
+    switch (reason)
+    {
+        case planner::PartyRosterFailureReason::None:
+            return "none";
+        case planner::PartyRosterFailureReason::RequesterUnavailable:
+            return "requester unavailable";
+        case planner::PartyRosterFailureReason::RosterEntryNotFound:
+            return "roster entry not found";
+        case planner::PartyRosterFailureReason::RosterEntryDisabled:
+            return "roster entry disabled";
+        case planner::PartyRosterFailureReason::RosterEntryAlreadySummoned:
+            return "roster entry already online/summoned";
+        case planner::PartyRosterFailureReason::PartyFull:
+            return "party is full";
+        case planner::PartyRosterFailureReason::OwnershipMismatch:
+            return "roster entry belongs to another account";
+        case planner::PartyRosterFailureReason::DirectControlNotSupported:
+            return "direct control not supported";
+    }
+
+    return "unknown failure";
+}
+
+std::string_view ToParseErrorText(CommandParseErrorKind kind)
+{
+    switch (kind)
+    {
+        case CommandParseErrorKind::Empty:
+            return "empty command";
+        case CommandParseErrorKind::UnknownSubsystem:
+            return "unknown subsystem";
+        case CommandParseErrorKind::UnknownVerb:
+            return "unknown verb";
+        case CommandParseErrorKind::MissingArgument:
+            return "missing argument";
+        case CommandParseErrorKind::InvalidArgument:
+            return "invalid argument";
+    }
+
+    return "parse error";
+}
+
+std::string_view ToSourceText(model::RosterEntrySource source)
+{
+    switch (source)
+    {
+        case model::RosterEntrySource::GenericBot:
+            return "generic";
+        case model::RosterEntrySource::AccountAlt:
+            return "account-alt";
+    }
+
+    return "unknown";
+}
+
+std::string_view ToActionText(integration::WorldCommitAction const& action)
+{
+    if (std::holds_alternative<integration::SpawnRosterBodyAction>(action))
+    {
+        return "spawn roster body";
+    }
+
+    if (std::holds_alternative<integration::AttachToPartyAction>(action))
+    {
+        return "attach to party";
+    }
+
+    if (std::holds_alternative<integration::UpdateAbstractStateAction>(action))
+    {
+        return "update abstract state";
+    }
+
+    return "unknown action";
+}
+
+model::RosterEntry BuildRosterEntry(
+    Field const* fields,
+    std::uint32_t ownerAccountId)
+{
+    std::uint64_t const guid = fields[0].Get<std::uint64_t>();
+    std::string const name = fields[1].Get<std::string>();
+    std::uint8_t const raceId = fields[2].Get<std::uint8_t>();
+    std::uint8_t const classId = fields[3].Get<std::uint8_t>();
+    std::uint8_t const level = fields[4].Get<std::uint8_t>();
+
+    model::RosterEntry entry;
+    entry.rosterEntryId = guid;
+    entry.source = model::RosterEntrySource::AccountAlt;
+    entry.ownerAccountId = ownerAccountId;
+    entry.characterGuid = guid;
+    entry.isEnabled = true;
+    entry.isAlreadySummoned =
+        ObjectAccessor::FindPlayerByLowGUID(static_cast<ObjectGuid::LowType>(guid)) != nullptr;
+
+    entry.controllableProfile.profile.botId = guid;
+    entry.controllableProfile.profile.name = name;
+    entry.controllableProfile.profile.raceId = raceId;
+    entry.controllableProfile.profile.classId = classId;
+    entry.controllableProfile.profile.faction = ToBotFaction(raceId);
+    entry.controllableProfile.profile.level = level;
+    entry.controllableProfile.profile.guildName = "Account Alts";
+    entry.controllableProfile.profile.personality =
+        model::BotPersonality::Indifferent;
+    entry.controllableProfile.profile.preferredRole = ToDefaultRole(classId);
+    entry.controllableProfile.canBePlayerControlled = false;
+    entry.controllableProfile.canEarnProgression = true;
+    entry.controllableProfile.canJoinPlayerParty = true;
+    return entry;
+}
+
+class AccountAltRosterRepository final : public integration::RosterRepository
+{
+public:
+    std::vector<model::RosterEntry> GetRosterEntriesForAccount(
+        std::uint32_t accountId) const override
+    {
+        std::vector<model::RosterEntry> entries;
+        QueryResult result = CharacterDatabase.Query(
+            "SELECT guid, name, race, class, level FROM characters "
+            "WHERE account = {} ORDER BY name ASC",
+            accountId);
+
+        if (!result)
+        {
+            return entries;
+        }
+
+        do
+        {
+            entries.push_back(BuildRosterEntry(result->Fetch(), accountId));
+        } while (result->NextRow());
+
+        return entries;
+    }
+
+    std::optional<model::RosterEntry> FindRosterEntryForAccount(
+        std::uint32_t accountId,
+        std::uint64_t rosterEntryId) const override
+    {
+        QueryResult result = CharacterDatabase.Query(
+            "SELECT guid, name, race, class, level FROM characters "
+            "WHERE account = {} AND guid = {} LIMIT 1",
+            accountId,
+            rosterEntryId);
+
+        if (!result)
+        {
+            return std::nullopt;
+        }
+
+        return BuildRosterEntry(result->Fetch(), accountId);
+    }
+};
+
+class LiveAzerothWorldFacade final : public integration::AzerothWorldFacade
+{
+public:
+    std::optional<integration::PlayerWorldContext> GetPlayerContext(
+        std::uint64_t characterGuid) const override
+    {
+        Player* player = ObjectAccessor::FindPlayerByLowGUID(
+            static_cast<ObjectGuid::LowType>(characterGuid));
+        if (!player || !player->GetSession())
+        {
+            return std::nullopt;
+        }
+
+        integration::PlayerWorldContext context;
+        context.identity.characterGuid = player->GetGUID().GetCounter();
+        context.identity.accountId = player->GetSession()->GetAccountId();
+        context.position.mapId = player->GetMapId();
+        context.position.zoneId = player->GetZoneId();
+        context.position.areaId = player->GetAreaId();
+        context.position.x = player->GetPositionX();
+        context.position.y = player->GetPositionY();
+        context.position.z = player->GetPositionZ();
+        context.position.orientation = player->GetOrientation();
+        context.isInWorld = player->IsInWorld();
+        context.isInCombat = player->IsInCombat();
+        context.isDead = player->isDead();
+        context.canControlCompanions = !context.isInCombat;
+
+        if (Group const* group = player->GetGroup())
+        {
+            context.party.maxPartyMembers = group->isRaidGroup()
+                ? MAXRAIDSIZE
+                : MAXGROUPSIZE;
+
+            for (Group::MemberSlot const& member : group->GetMemberSlots())
+            {
+                integration::PartyMemberSnapshot snapshot;
+                snapshot.characterGuid = member.guid.GetCounter();
+                snapshot.isOnline =
+                    ObjectAccessor::FindPlayer(member.guid) != nullptr;
+                snapshot.isBotControlled = false;
+                context.party.members.push_back(snapshot);
+            }
+        }
+        else
+        {
+            context.party.maxPartyMembers = MAXGROUPSIZE;
+        }
+
+        return context;
+    }
+
+    std::vector<integration::SpawnAnchor> GetSpawnAnchorsInZone(
+        std::uint32_t) const override
+    {
+        return {};
+    }
+
+    bool IsCharacterOnline(std::uint64_t characterGuid) const override
+    {
+        return ObjectAccessor::FindPlayerByLowGUID(
+            static_cast<ObjectGuid::LowType>(characterGuid)) != nullptr;
+    }
+};
+
+void RenderRosterList(ChatHandler* handler)
+{
+    WorldSession* session = handler->GetSession();
+    if (!session)
+    {
+        handler->SendErrorMessage("LivingWorld roster commands require an in-game session.");
+        return;
+    }
+
+    AccountAltRosterRepository repository;
+    std::vector<model::RosterEntry> entries =
+        repository.GetRosterEntriesForAccount(session->GetAccountId());
+
+    if (entries.empty())
+    {
+        handler->PSendSysMessage("LivingWorld roster: no account characters found.");
+        return;
+    }
+
+    handler->PSendSysMessage("LivingWorld roster entries:");
+    for (model::RosterEntry const& entry : entries)
+    {
+        model::BotProfile const& profile = entry.controllableProfile.profile;
+        handler->PSendSysMessage(
+            "  [{}] {} lvl {} class {} ({}){}",
+            entry.rosterEntryId,
+            profile.name,
+            static_cast<std::uint32_t>(profile.level),
+            static_cast<std::uint32_t>(profile.classId),
+            ToSourceText(entry.source),
+            entry.isAlreadySummoned ? " online" : "");
+    }
+}
+
+void RenderRosterRequest(
+    ChatHandler* handler,
+    RosterRequestCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld roster requests require an in-game player.");
+        return;
+    }
+
+    LiveAzerothWorldFacade facade;
+    AccountAltRosterRepository repository;
+    planner::SimplePartyRosterPlanner planner;
+    service::PartyBotService service(facade, repository, planner);
+
+    model::PlayerRosterRequest request;
+    request.requesterCharacterGuid = player->GetGUID().GetCounter();
+    request.requesterAccountId = session->GetAccountId();
+    request.requestedRosterEntryId = command.rosterEntryId;
+
+    service::PartyBotDispatchResult result =
+        service.DispatchRosterRequest(request);
+
+    if (!result.isApproved)
+    {
+        handler->PSendSysMessage(
+            "LivingWorld roster request rejected: {}.",
+            ToFailureText(result.failureReason));
+        return;
+    }
+
+    handler->PSendSysMessage(
+        "LivingWorld roster request approved for entry {}.",
+        command.rosterEntryId);
+    handler->PSendSysMessage(
+        "Generated {} commit action(s); execution is not wired yet.",
+        result.commitActions.size());
+
+    for (integration::WorldCommitAction const& action : result.commitActions)
+    {
+        handler->PSendSysMessage("  - {}", ToActionText(action));
+    }
+}
+
+void RenderDismissPlaceholder(
+    ChatHandler* handler,
+    RosterDismissCommand const& command)
+{
+    handler->PSendSysMessage(
+        "LivingWorld dismiss for entry {} is parsed but not implemented yet.",
+        command.rosterEntryId);
+}
+
+bool HandleParsedCommand(
+    ChatHandler* handler,
+    ParsedCommand const& parsed)
+{
+    if (CommandParseError const* error =
+        std::get_if<CommandParseError>(&parsed))
+    {
+        handler->PSendSysMessage(
+            "LivingWorld command error: {} ({})",
+            ToParseErrorText(error->kind),
+            error->detail);
+        return false;
+    }
+
+    if (std::get_if<RosterListCommand>(&parsed))
+    {
+        RenderRosterList(handler);
+        return true;
+    }
+
+    if (RosterRequestCommand const* command =
+        std::get_if<RosterRequestCommand>(&parsed))
+    {
+        RenderRosterRequest(handler, *command);
+        return true;
+    }
+
+    if (RosterDismissCommand const* command =
+        std::get_if<RosterDismissCommand>(&parsed))
+    {
+        RenderDismissPlaceholder(handler, *command);
+        return true;
+    }
+
+    return false;
+}
+} // namespace
+} // namespace script
+} // namespace living_world
+
+class LivingWorldCommandScript final : public CommandScript
+{
+public:
+    LivingWorldCommandScript() : CommandScript("LivingWorldCommandScript") { }
+
+    ChatCommandTable GetCommands() const override
+    {
+        static ChatCommandTable commandTable =
+        {
+            { "lwbot", HandleLivingWorldCommand, SEC_PLAYER, Console::No }
+        };
+
+        return commandTable;
+    }
+
+private:
+    static bool HandleLivingWorldCommand(ChatHandler* handler, char const* args)
+    {
+        return living_world::script::HandleParsedCommand(
+            handler,
+            living_world::script::ParseLivingWorldCommand(args ? args : ""));
+    }
+};
+
+void AddSC_LivingWorldCommandScript()
+{
+    new LivingWorldCommandScript();
+}

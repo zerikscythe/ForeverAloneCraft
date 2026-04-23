@@ -303,7 +303,8 @@ design and foundation code.
 8.1 Define player-facing roster flow — **Partial**
 - `service::PartyBotService::DispatchRosterRequest` is the first supported
   end-to-end path: request in, structured result + commit actions out.
-- Final in-game command UX is not implemented yet.
+- A first in-game command UX exists through `.lwbot roster ...`; it is
+  intentionally read/intent-only until an authoritative commit executor lands.
 
 8.2 Implement first command surface for controllable bots — **Partial**
 - Backend grammar parser exists: `script::ParseLivingWorldCommand`
@@ -311,8 +312,11 @@ design and foundation code.
   `.lwbot roster dismiss <id>`, producing a structured `ParsedCommand`
   result consumable by both a chat command script and a future addon
   message channel.
-- The AzerothCore `CommandScript` that registers these commands into the
-  server and wires them to `PartyBotService` is still pending.
+- `script::LivingWorldCommandScript` registers `.lwbot` with AzerothCore,
+  lists account-alt roster entries from the characters DB, scopes lookup to
+  the requesting account, routes requests through `PartyBotService`, and
+  renders approved / rejected planner output plus commit-action intent.
+- The command does not execute world mutation yet.
 - Switch control/possession target is still not implemented.
 
 8.3 Add party slot/rule validation — **Not Started**
@@ -466,48 +470,36 @@ design and foundation code.
 ## Immediate Next Implementation Slice
 
 The previous "read facade + commit-ready outputs + first service + command
-grammar" slice has landed in skeleton form. The next pass should bring the
-slice into an actually player-visible state:
+grammar + command script" slice has landed in player-visible, read/intent-only
+form. The next pass should turn those approved intents into safe server
+mutation:
 
-1. **Implement a real AzerothCore-backed `AzerothWorldFacade`**
-- Concrete subclass that resolves `PlayerWorldContext` from the live
-  `ObjectAccessor` / `Player` objects.
-- Back `IsCharacterOnline` with the real session registry.
-- Keep all AzerothCore includes behind the integration layer; planners and
-  services must stay server-include-free.
-
-2. **Implement a real `RosterRepository` backed by SQL / config**
-- First pass can be config-seeded entries plus account-alt lookup from
-  the characters DB, keyed by account.
-- Must preserve the cross-account scoping guarantee established by the
-  interface (never return another account's entries).
-
-3. **Add a `LivingWorldCommandScript` in `src/script/`**
-- Register the `.lwbot` chat command with AzerothCore.
-- Route arguments through `script::ParseLivingWorldCommand` and hand the
-  result to `PartyBotService::DispatchRosterRequest`.
-- Render approved / rejected results as concise chat output now; the
-  addon-friendly machine response can follow.
-
-4. **Introduce the authoritative commit layer**
+1. **Introduce the authoritative commit layer**
 - Single class that consumes `WorldCommitAction` records and performs the
   real server mutation. Services must never mutate world state outside
   this class.
 - Start with `SpawnRosterBodyAction` and `AttachToPartyAction`; leave
   despawn / encounter pipelines for the slice after.
 
-5. **Plan persistence before account-alt runtime work**
+2. **Plan persistence before account-alt runtime work**
 - Define ownership, save, and conflict rules before implementing alt-
   derived live bodies. This must land before the commit layer actually
   spawns an alt.
 
-6. **Move planner policies toward config/data as consumers appear**
+3. **Harden the runtime command surface**
+- Keep `.lwbot roster list` and `.lwbot roster request <id>` usable in-game.
+- Add command tests around chat rendering / permission behavior once a thin
+  test seam is available.
+- Leave `.lwbot roster dismiss <id>` as a placeholder until despawn commit
+  actions exist.
+
+4. **Move planner policies toward config/data as consumers appear**
 - `SimpleZonePopulationPlanner` now has the first scoring, cooldown, activity,
   and unlocked-zone filtering pass. The next planner work should avoid piling
   on hardcoded weights; extract policy knobs into config/data once the runtime
   service path needs tuning.
 
-7. **Keep economy/event/progression additions modular**
+5. **Keep economy/event/progression additions modular**
 - The simulated AH, event reaction, and milestone-unlock systems should be
   implemented as separate policy/service tracks rather than folded into
   the first party bot runtime slice.
