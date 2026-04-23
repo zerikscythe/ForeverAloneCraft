@@ -790,6 +790,10 @@ Current implementation status:
   domains.
 - `CharacterItemSnapshotClassifier` has unit coverage for equipment,
   inventory, bank, and nested bag classification.
+- `CharacterItemSanityChecker` now validates duplicate item guids,
+  uncategorized storage state, and equipment slot/container shape, and only
+  approves the `Equipment` sync domain when the snapshots are structurally
+  sane.
 
 After those read/sanity layers exist, the next follow-on slice should be the
 first transactional equipment/inventory sync executor.

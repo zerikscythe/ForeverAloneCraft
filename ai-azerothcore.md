@@ -1215,6 +1215,11 @@ The first observation layer for item domains now exists as well:
 - `service::CharacterItemSnapshotClassifier` is the pure seam for slot/domain
   mapping and should be reused by future equipment/inventory/bank sanity
   rules.
+- `service::CharacterItemSanityChecker` is the next pure validation seam. It
+  currently rejects duplicate/missing item guids, uncategorized storage state,
+  and malformed equipment slot/container layouts, and only approves the
+  `Equipment` sync domain when the snapshots are structurally sane. Inventory
+  and bank remain observed-but-blocked until they get their own domain rules.
 
 ### 21.2 Recovery sequence
 
