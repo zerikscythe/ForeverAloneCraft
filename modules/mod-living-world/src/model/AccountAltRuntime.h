@@ -91,6 +91,7 @@ struct AccountAltRuntimeRequest
 {
     std::uint32_t sourceAccountId = 0;
     std::uint64_t sourceCharacterGuid = 0;
+    std::uint64_t ownerCharacterGuid = 0;
     std::string sourceCharacterName;
     CharacterProgressSnapshot sourceSnapshot;
 };

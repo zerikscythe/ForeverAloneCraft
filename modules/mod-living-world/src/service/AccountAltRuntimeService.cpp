@@ -102,6 +102,7 @@ model::AccountAltRuntimeDecision AccountAltRuntimeService::PrepareRuntime(
     model::AccountAltRuntimeRecord runtime;
     runtime.sourceAccountId = request.sourceAccountId;
     runtime.sourceCharacterGuid = request.sourceCharacterGuid;
+    runtime.ownerCharacterGuid = request.ownerCharacterGuid;
     runtime.cloneAccountId = lease->accountId;
     runtime.sourceCharacterName = request.sourceCharacterName;
     runtime.reservedSourceCharacterName =

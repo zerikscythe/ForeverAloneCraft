@@ -507,6 +507,14 @@ The repository contract now needs a SQL-backed implementation for:
 - list recoverable records for an account on player login
 - save state/snapshot transitions transactionally
 
+Current implementation status:
+- `SqlAccountAltRuntimeRepository` can read/write
+  `living_world_account_alt_runtime`.
+- `SqlCharacterProgressSnapshotRepository` can read level, XP, and money from
+  `characters`.
+- These are intentionally not wired into the command spawn path yet; the next
+  slice should connect them before `BotSessionFactory` queues a login.
+
 ### B) Recovery planning before spawning
 
 Before `.lwbot roster request <id>` queues a bot login, route account-alt

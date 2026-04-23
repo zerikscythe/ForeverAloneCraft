@@ -97,6 +97,7 @@ model::AccountAltRuntimeRequest BuildRequest()
     model::AccountAltRuntimeRequest request;
     request.sourceAccountId = 7;
     request.sourceCharacterGuid = 9001;
+    request.ownerCharacterGuid = 42;
     request.sourceCharacterName = "Tester";
     request.sourceSnapshot.level = 10;
     request.sourceSnapshot.experience = 200;
@@ -124,6 +125,7 @@ TEST(AccountAltRuntimeServiceTest,
     EXPECT_EQ(pool.lastSourceAccountId, 7u);
     EXPECT_EQ(pool.lastSourceCharacterGuid, 9001u);
     EXPECT_EQ(decision.runtime->cloneAccountId, 700u);
+    EXPECT_EQ(decision.runtime->ownerCharacterGuid, 42u);
     EXPECT_EQ(decision.runtime->sourceCharacterName, "Tester");
     EXPECT_EQ(decision.runtime->cloneCharacterName, "Tester");
     EXPECT_EQ(decision.runtime->reservedSourceCharacterName.size(), 12u);

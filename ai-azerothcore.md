@@ -1181,6 +1181,11 @@ references character GUIDs and clone state. It should track:
 The auth DB `living_world_bot_account_pool` remains only the account lease
 surface. It should not become the source of truth for clone progress.
 
+`SqlAccountAltRuntimeRepository` is the concrete module-side repository for
+this table. `SqlCharacterProgressSnapshotRepository` is the first read-only
+snapshot adapter and intentionally reads only level, XP, and money from
+`characters`.
+
 ### 21.2 Recovery sequence
 
 On player login, and before any account-alt spawn:
