@@ -75,6 +75,23 @@ public:
     int reserveCalls = 0;
 };
 
+class FakeCloneMaterializer final
+    : public integration::CharacterCloneMaterializer
+{
+public:
+    integration::CharacterCloneMaterializationResult MaterializeClone(
+        model::AccountAltRuntimeRecord const& runtime) override
+    {
+        requestedRuntime = runtime;
+        ++materializeCalls;
+        return result;
+    }
+
+    std::optional<model::AccountAltRuntimeRecord> requestedRuntime;
+    integration::CharacterCloneMaterializationResult result;
+    int materializeCalls = 0;
+};
+
 class FakeSyncRepository final
     : public integration::CharacterProgressSyncRepository
 {
@@ -138,16 +155,23 @@ TEST(AccountAltRuntimeCoordinatorTest, NewRuntimeUsesReservedAccount)
 {
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
+    FakeCloneMaterializer cloneMaterializer;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
     AccountAltRecoveryService recoveryService;
 
     botAccountPoolRepository.lease = model::BotAccountLease { 701, "BOT701" };
     snapshotRepository.sourceSnapshot = Snapshot(10, 200, 1000);
+    cloneMaterializer.result.succeeded = true;
+    cloneMaterializer.result.cloneCharacterGuid = 8001;
+    cloneMaterializer.result.cloneCharacterName = "Lwtester";
+    cloneMaterializer.result.cloneSnapshot = Snapshot(10, 200, 1000);
+    cloneMaterializer.result.reason = "materialized persistent clone character";
 
     AccountAltRuntimeCoordinator coordinator(
         runtimeRepository,
         botAccountPoolRepository,
+        cloneMaterializer,
         snapshotRepository,
         syncRepository,
         recoveryService);
@@ -159,11 +183,13 @@ TEST(AccountAltRuntimeCoordinatorTest, NewRuntimeUsesReservedAccount)
         "Tester");
 
     EXPECT_EQ(decision.kind,
-              AccountAltSpawnDecisionKind::SpawnUsingReservedAccount);
+              AccountAltSpawnDecisionKind::SpawnUsingPersistentClone);
     EXPECT_EQ(decision.botAccountId, 701u);
-    EXPECT_EQ(decision.spawnCharacterGuid, 9001u);
+    EXPECT_EQ(decision.spawnCharacterGuid, 8001u);
     ASSERT_TRUE(runtimeRepository.savedRuntime);
     EXPECT_EQ(runtimeRepository.savedRuntime->ownerCharacterGuid, 42u);
+    EXPECT_EQ(runtimeRepository.savedRuntime->cloneCharacterGuid, 8001u);
+    EXPECT_EQ(cloneMaterializer.materializeCalls, 1);
 }
 
 TEST(AccountAltRuntimeCoordinatorTest,
@@ -171,6 +197,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
 {
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
+    FakeCloneMaterializer cloneMaterializer;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
     AccountAltRecoveryService recoveryService;
@@ -182,10 +209,16 @@ TEST(AccountAltRuntimeCoordinatorTest,
     runtime.state = model::AccountAltRuntimeState::Active;
     runtimeRepository.Seed(runtime);
     snapshotRepository.sourceSnapshot = Snapshot(10, 200, 1000);
+    cloneMaterializer.result.succeeded = true;
+    cloneMaterializer.result.cloneCharacterGuid = 8001;
+    cloneMaterializer.result.cloneCharacterName = "Lwtester";
+    cloneMaterializer.result.cloneSnapshot = Snapshot(10, 200, 1000);
+    cloneMaterializer.result.reason = "materialized persistent clone character";
 
     AccountAltRuntimeCoordinator coordinator(
         runtimeRepository,
         botAccountPoolRepository,
+        cloneMaterializer,
         snapshotRepository,
         syncRepository,
         recoveryService);
@@ -197,9 +230,11 @@ TEST(AccountAltRuntimeCoordinatorTest,
         "Tester");
 
     EXPECT_EQ(decision.kind,
-              AccountAltSpawnDecisionKind::SpawnUsingReservedAccount);
+              AccountAltSpawnDecisionKind::SpawnUsingPersistentClone);
     EXPECT_EQ(decision.botAccountId, 701u);
+    EXPECT_EQ(decision.spawnCharacterGuid, 8001u);
     EXPECT_EQ(runtimeRepository.saveCalls, 1);
+    EXPECT_EQ(cloneMaterializer.materializeCalls, 1);
 }
 
 TEST(AccountAltRuntimeCoordinatorTest,
@@ -207,6 +242,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
 {
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
+    FakeCloneMaterializer cloneMaterializer;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
     AccountAltRecoveryService recoveryService;
@@ -225,6 +261,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
     AccountAltRuntimeCoordinator coordinator(
         runtimeRepository,
         botAccountPoolRepository,
+        cloneMaterializer,
         snapshotRepository,
         syncRepository,
         recoveryService);
@@ -244,6 +281,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
 {
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
+    FakeCloneMaterializer cloneMaterializer;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
     AccountAltRecoveryService recoveryService;
@@ -262,6 +300,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
     AccountAltRuntimeCoordinator coordinator(
         runtimeRepository,
         botAccountPoolRepository,
+        cloneMaterializer,
         snapshotRepository,
         syncRepository,
         recoveryService);
@@ -282,6 +321,37 @@ TEST(AccountAltRuntimeCoordinatorTest,
     ASSERT_TRUE(runtimeRepository.savedRuntime);
     EXPECT_EQ(runtimeRepository.savedRuntime->state,
               model::AccountAltRuntimeState::Active);
+}
+
+TEST(AccountAltRuntimeCoordinatorTest, BlocksWhenCloneMaterializationFails)
+{
+    FakeRuntimeRepository runtimeRepository;
+    FakeBotAccountPoolRepository botAccountPoolRepository;
+    FakeCloneMaterializer cloneMaterializer;
+    FakeSnapshotRepository snapshotRepository;
+    FakeSyncRepository syncRepository;
+    AccountAltRecoveryService recoveryService;
+
+    botAccountPoolRepository.lease = model::BotAccountLease { 701, "BOT701" };
+    snapshotRepository.sourceSnapshot = Snapshot(10, 200, 1000);
+    cloneMaterializer.result.reason = "bot account has too many characters";
+
+    AccountAltRuntimeCoordinator coordinator(
+        runtimeRepository,
+        botAccountPoolRepository,
+        cloneMaterializer,
+        snapshotRepository,
+        syncRepository,
+        recoveryService);
+
+    AccountAltSpawnDecision decision = coordinator.PlanSpawn(
+        7,
+        9001,
+        42,
+        "Tester");
+
+    EXPECT_EQ(decision.kind, AccountAltSpawnDecisionKind::Blocked);
+    EXPECT_EQ(decision.reason, "bot account has too many characters");
 }
 } // namespace service
 } // namespace living_world

@@ -520,8 +520,9 @@ Current implementation status:
   `characters`.
 - `AccountAltRuntimeCoordinator` now wires those repositories into the
   account-alt spawn path before `BotSessionFactory` queues a login.
-- In the current transitional mode, existing runtimes without a materialized
-  clone character reuse the same reserved bot account deterministically.
+- `SqlCharacterCloneMaterializer` now uses AzerothCore's `PlayerDump`
+  import/export path to create or reuse a persistent clone character on the
+  reserved bot account before spawn.
 - If a materialized clone exists and appears ahead of the source snapshot, the
   command path now blocks the spawn for manual review instead of guessing.
 - Clone-to-source sync writes now exist for level / XP / money only, gated by
@@ -766,24 +767,23 @@ See section D of "Immediate Next Implementation Slice" above for full detail.
 
 ---
 
-## Immediate Next: Persistent Clone Materialization
+## Immediate Next: Inventory / Equipment / Bank Domain Planning
 
-The recovery path is now in place for progress-only syncs, but the system is
-still in a transitional mode when `cloneCharacterGuid == 0`: it reuses the
-reserved bot account and spawns the source character body rather than a true
-persistent clone.
+Persistent clone materialization is now in place: new or incomplete runtimes
+create/reuse a real clone character on the reserved bot account before spawn
+and persist `cloneCharacterGuid` for later recovery.
 
-The next milestone is to materialize and bind the first persistent clone
-character on the reserved bot account:
-- create or locate a dedicated clone character on the bot-owned account
-- persist `cloneCharacterGuid` and clone identity metadata in
-  `living_world_account_alt_runtime`
-- keep source-vs-clone naming/ownership explicit so future inventory/equipment
-  sync can reason about authoritative state safely
-- preserve the current crash-safe recovery rules for level / XP / money
+The next milestone is to expand beyond progress-only sync safely:
+- define read-only snapshot loaders for equipment, bag inventory, and bank
+  inventory
+- add domain-specific sanity checks for item ownership, slot consistency, and
+  duplicate/loss prevention
+- keep writes disabled for those domains until the snapshot and sanity layers
+  are proven
+- preserve the current level / XP / money crash-recovery path unchanged
 
-Once clone materialization exists, the next follow-on slice should be
-domain-specific sync expansion for equipment, inventory, and bank data.
+After those read/sanity layers exist, the next follow-on slice should be the
+first transactional equipment/inventory sync executor.
 
 ---
 

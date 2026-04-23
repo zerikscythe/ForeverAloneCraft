@@ -1194,11 +1194,17 @@ snapshot adapter and intentionally reads only level, XP, and money from
 repositories. It currently supports:
 
 - prepare a new reserved runtime account
-- reuse an already reserved runtime account before clone materialization
+- materialize or reuse a persistent clone character on the reserved bot account
 - block clone-ahead states for manual review
 
 It now executes clone-to-source sync for level / XP / money only, gated by the
 sanity checker and the sync executor. Broader domains remain blocked.
+
+`integration::SqlCharacterCloneMaterializer` now wraps AzerothCore's
+`PlayerDumpWriter` / `PlayerDumpReader` to create the first persistent clone.
+It reuses an existing clone by reserved name when present, otherwise imports a
+new clone onto the bot-owned account and returns the persisted clone guid plus
+its snapshot.
 
 ### 21.2 Recovery sequence
 

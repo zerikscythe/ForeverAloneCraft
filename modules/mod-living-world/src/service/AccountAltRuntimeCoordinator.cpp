@@ -22,10 +22,12 @@ AccountAltSpawnDecision BuildBlockedDecision(std::string reason)
 AccountAltRuntimeCoordinator::AccountAltRuntimeCoordinator(
     integration::AccountAltRuntimeRepository& runtimeRepository,
     integration::BotAccountPoolRepository& botAccountPoolRepository,
+    integration::CharacterCloneMaterializer& cloneMaterializer,
     integration::CharacterProgressSnapshotRepository const& snapshotRepository,
     integration::CharacterProgressSyncRepository& syncRepository,
     AccountAltRecoveryService const& recoveryService)
     : _runtimeRepository(runtimeRepository),
+      _cloneMaterializer(cloneMaterializer),
       _snapshotRepository(snapshotRepository),
       _syncRepository(syncRepository),
       _recoveryService(recoveryService),
@@ -73,13 +75,26 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
         }
 
         AccountAltSpawnDecision spawnDecision;
+        model::AccountAltRuntimeRecord runtime = *runtimeDecision.runtime;
+        integration::CharacterCloneMaterializationResult cloneResult =
+            _cloneMaterializer.MaterializeClone(runtime);
+        if (!cloneResult.succeeded)
+        {
+            return BuildBlockedDecision(cloneResult.reason);
+        }
+
+        runtime.cloneCharacterGuid = cloneResult.cloneCharacterGuid;
+        runtime.cloneCharacterName = cloneResult.cloneCharacterName;
+        runtime.cloneSnapshot = cloneResult.cloneSnapshot;
+        runtime.state = model::AccountAltRuntimeState::Active;
+        _runtimeRepository.SaveRuntime(runtime);
+
         spawnDecision.kind =
-            AccountAltSpawnDecisionKind::SpawnUsingReservedAccount;
-        spawnDecision.runtime = *runtimeDecision.runtime;
-        spawnDecision.botAccountId =
-            runtimeDecision.runtime->cloneAccountId;
-        spawnDecision.spawnCharacterGuid = sourceCharacterGuid;
-        spawnDecision.reason = "prepared new reserved runtime account";
+            AccountAltSpawnDecisionKind::SpawnUsingPersistentClone;
+        spawnDecision.runtime = runtime;
+        spawnDecision.botAccountId = runtime.cloneAccountId;
+        spawnDecision.spawnCharacterGuid = runtime.cloneCharacterGuid;
+        spawnDecision.reason = cloneResult.reason;
         return spawnDecision;
     }
 
@@ -87,21 +102,27 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
     runtime.ownerCharacterGuid = ownerCharacterGuid;
     runtime.sourceSnapshot = *sourceSnapshot;
 
-    // Transitional mode: until clone materialization exists, keep using the
-    // reserved runtime account for the source character and persist who last
-    // requested it. This gives deterministic bot-account reuse now and leaves
-    // durable records for the later clone phase.
     if (runtime.cloneCharacterGuid == 0)
     {
+        integration::CharacterCloneMaterializationResult cloneResult =
+            _cloneMaterializer.MaterializeClone(runtime);
+        if (!cloneResult.succeeded)
+        {
+            return BuildBlockedDecision(cloneResult.reason);
+        }
+
+        runtime.cloneCharacterGuid = cloneResult.cloneCharacterGuid;
+        runtime.cloneCharacterName = cloneResult.cloneCharacterName;
+        runtime.cloneSnapshot = cloneResult.cloneSnapshot;
+        runtime.state = model::AccountAltRuntimeState::Active;
         _runtimeRepository.SaveRuntime(runtime);
 
         AccountAltSpawnDecision decision;
-        decision.kind = AccountAltSpawnDecisionKind::SpawnUsingReservedAccount;
+        decision.kind = AccountAltSpawnDecisionKind::SpawnUsingPersistentClone;
         decision.runtime = runtime;
         decision.botAccountId = runtime.cloneAccountId;
-        decision.spawnCharacterGuid = sourceCharacterGuid;
-        decision.reason =
-            "reusing reserved runtime account before clone materialization";
+        decision.spawnCharacterGuid = runtime.cloneCharacterGuid;
+        decision.reason = cloneResult.reason;
         return decision;
     }
 
