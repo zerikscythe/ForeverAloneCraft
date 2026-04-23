@@ -390,6 +390,12 @@ Current state as of the first foundation + first runtime command slice:
   sites. The bot account pool design is still correct — bot sessions use
   separate bot-owned accounts, not the player's account — but the session
   lifecycle is enabled by the core patch rather than being blocked by it.
+- Account-alt crash recovery is the next safety boundary. The model now
+  distinguishes recovery plans and sync domains so clone-to-source writes can
+  be gated by sanity checks instead of blindly copying character data. The
+  first implementation should recover XP/level/money only; inventory,
+  equipment, reputation, quests, and mail need separate domain rules before
+  any destructive write path exists.
 - Local runtime validation has reached a working end-to-end WotLK install:
   MySQL 8, authserver, worldserver, extracted dbc/maps/vmaps/mmaps, client
   login, character creation, and starting-zone entry. This validates the
@@ -1146,3 +1152,69 @@ is a temporary stand-in. Once `BotSessionFactory` is wired in,
 `ExecuteSpawnRosterBodyAction` for `AccountAlt` source entries should call
 `BotSessionFactory::SpawnBotPlayer`. The TempSummon fallback can remain for
 generic bot entries that do not map to a real character.
+
+---
+
+## 21. Account-alt runtime recovery and data-loss prevention
+
+The long-term account-alt model is persistent clone first:
+
+- The player-owned source character remains the canonical identity.
+- A bot-owned account-pool account hosts a persistent clone character.
+- Runtime state records which source/clone pair was last used and which owner
+  character requested it.
+- A crash, client disconnect, or worldserver stop should leave enough data for
+  the next player session to decide whether to reuse, recover, sync, or block.
+
+### 21.1 Durable runtime table
+
+`living_world_account_alt_runtime` belongs in the characters DB because it
+references character GUIDs and clone state. It should track:
+
+- `source_account_id`, `source_character_guid`
+- `owner_character_guid` for the last player character that requested the bot
+- `clone_account_id`, `clone_character_guid`
+- runtime `state`
+- source and clone snapshots for level, XP, and money
+- last clean sync and last recovery-check timestamps
+
+The auth DB `living_world_bot_account_pool` remains only the account lease
+surface. It should not become the source of truth for clone progress.
+
+### 21.2 Recovery sequence
+
+On player login, and before any account-alt spawn:
+
+1. List recoverable runtime records for the account.
+2. Load current source and clone snapshots.
+3. Build a pure `AccountAltRecoveryPlan`.
+4. If the clone is not ahead, reuse the persistent clone.
+5. If the clone is ahead, run sanity checks before any write.
+6. If sanity checks fail, block and require manual review.
+7. If sanity checks pass, sync only the approved domains.
+
+### 21.3 Sync domains and first safe scope
+
+Sync must be domain-gated. The current domain list is:
+
+- XP / level
+- money
+- inventory
+- equipment
+- reputation
+- quests
+- mail
+
+First implementation should sync only XP/level and money. Inventory,
+equipment, reputation, quests, and mail must remain blocked until they have
+domain-specific sanity rules, transaction strategy, and duplicate/loss
+prevention.
+
+### 21.4 Non-negotiable safety rules
+
+- Never blindly copy clone rows over source rows.
+- Never run clone-to-source sync without a persisted runtime record.
+- Mark a runtime `SyncingBack` before mutation and clear it only after commit.
+- Make sync idempotent so repeated recovery after a crash is safe.
+- Prefer blocking/manual review over guessing when ownership or snapshots do
+  not match.

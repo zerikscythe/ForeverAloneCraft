@@ -32,6 +32,17 @@ public:
         return _runtime;
     }
 
+    std::vector<model::AccountAltRuntimeRecord> ListRecoverableForAccount(
+        std::uint32_t sourceAccountId) const override
+    {
+        if (!_runtime || _runtime->sourceAccountId != sourceAccountId)
+        {
+            return {};
+        }
+
+        return { *_runtime };
+    }
+
     void SaveRuntime(
         model::AccountAltRuntimeRecord const& runtime) override
     {

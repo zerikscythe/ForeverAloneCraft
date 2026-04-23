@@ -348,12 +348,19 @@ design and foundation code.
   an interrupted clone, or block when no bot account is available.
 - Runtime clones are intended to live on bot-owned account-pool accounts rather
   than by rewriting AzerothCore's one-active-session-per-account assumption.
+- `AccountAltRecoveryService` now defines the first pure recovery-plan seam:
+  clone progress can be reused, blocked, routed to manual review, or synced
+  back to the source only after sanity checks identify safe domains.
 
 9.3 Define progression for XP / items / rep ownership — **Partial**
 - The runtime model now carries source/clone progress snapshots and marks the
   clone as authoritative during recovery when clone progress is ahead of the
   current source snapshot. Item, reputation, quest, and mail sync rules remain
   unimplemented.
+- Sync-domain types now distinguish XP, money, inventory, equipment,
+  reputation, quests, and mail. Only XP/money-level style progress should be
+  treated as first-pass syncable; inventory-like domains remain explicitly
+  gated behind future sanity rules.
 
 9.4 Block conflicting login/runtime states — **Partial**
 - Need explicit rules for:
@@ -429,6 +436,9 @@ design and foundation code.
 #### Subtasks
 
 13.1 Add initial `db-world` / `db-characters` schema for living-world data — **Not Started**
+- Pending characters-DB schema now exists for
+  `living_world_account_alt_runtime`, but no SQL-backed repository or sync
+  executor is wired yet.
 
 13.2 Define tunable config values — **Not Started**
 - Examples:
@@ -481,10 +491,61 @@ design and foundation code.
 
 ## Immediate Next Implementation Slice
 
+The null-socket bot-session slice has landed. The next milestone is durable
+account-alt recovery so crashes do not strand progress on bot-owned clone
+characters or overwrite good source-character data.
+
+### A) Persistent runtime records
+
+Add and wire `living_world_account_alt_runtime` in the characters DB. This
+records the source account/character, the last owner character that requested
+the bot, the bot account, the clone character, runtime state, source/clone
+progress snapshots, and last clean sync/recovery timestamps.
+
+The repository contract now needs a SQL-backed implementation for:
+- find by source account + source character
+- list recoverable records for an account on player login
+- save state/snapshot transitions transactionally
+
+### B) Recovery planning before spawning
+
+Before `.lwbot roster request <id>` queues a bot login, route account-alt
+entries through the runtime service and recovery planner:
+- no existing runtime: reserve a bot account and prepare a persistent clone
+- active runtime: reuse the clone rather than allocate a new account
+- interrupted runtime: build a recovery plan before spawning
+- failed/incomplete runtime: block rather than guessing
+
+### C) Sanity-check layer
+
+Add a read-only sanity checker before any clone-to-source write. The checker
+should compare source and clone identity/progress and return approved sync
+domains. Initial safe domains should be XP, level, and money only. Inventory,
+equipment, reputation, quests, and mail require separate rules because they
+can corrupt ownership or duplicate/delete items if copied blindly.
+
+### D) Sync executor, later and gated
+
+Only after the planner and sanity checker are tested should we add the DB
+executor that copies clone progress back to the source character. It must run
+inside transactions, be idempotent, write audit state, and mark records as
+`SyncingBack` before mutation and `Active`/clean only after success.
+
+### E) Startup/player-login recovery pass
+
+On player login, list recoverable runtime records for the account. For each
+record, either reuse the persistent clone, queue a safe sync plan, or mark it
+for manual review. This gives the new session a deterministic answer to "what
+bots/accounts were last used?"
+
+---
+
+## Completed Slice: Bot Player Sessions
+
 The architecture decision for real bot players has been made and fully audited
 (see `ai-azerothcore.md` section 20). The previous note saying "do not attempt
 a socketless session" is superseded — a minimal core patch makes it viable.
-The next slice implements that patch and connects it to the module.
+This slice implemented that patch and connected it to the module.
 
 ### A) Core patch — WorldSession bot mode (4 files, all small)
 

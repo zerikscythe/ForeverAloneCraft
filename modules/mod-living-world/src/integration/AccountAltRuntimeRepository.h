@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <optional>
+#include <vector>
 
 namespace living_world
 {
@@ -21,6 +22,9 @@ public:
     FindBySourceCharacter(
         std::uint32_t sourceAccountId,
         std::uint64_t sourceCharacterGuid) const = 0;
+
+    virtual std::vector<model::AccountAltRuntimeRecord>
+    ListRecoverableForAccount(std::uint32_t sourceAccountId) const = 0;
 
     virtual void SaveRuntime(
         model::AccountAltRuntimeRecord const& runtime) = 0;
