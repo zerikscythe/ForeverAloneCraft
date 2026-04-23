@@ -14,12 +14,18 @@
 #include "integration/AzerothWorldFacade.h"
 #include "integration/BotSessionFactory.h"
 #include "integration/RosterRepository.h"
+#include "integration/SqlAccountAltRuntimeRepository.h"
+#include "integration/SqlBotAccountPoolRepository.h"
+#include "integration/SqlCharacterProgressSnapshotRepository.h"
 #include "integration/WorldCommitAction.h"
+#include "model/AccountAltRuntime.h"
 #include "model/PlayerRosterRequest.h"
 #include "model/RosterEntry.h"
 #include "planner/PlannerTypes.h"
 #include "planner/SimplePartyRosterPlanner.h"
 #include "service/BotPlayerRegistry.h"
+#include "service/AccountAltRecoveryService.h"
+#include "service/AccountAltRuntimeCoordinator.h"
 #include "service/PartyBotService.h"
 
 #include <cstdint>
@@ -51,6 +57,11 @@ struct CommitExecutionSummary
 };
 
 std::unordered_map<std::uint64_t, ObjectGuid> SpawnedRosterBodies;
+
+struct AccountAltSummary
+{
+    std::string name;
+};
 
 model::BotFaction ToBotFaction(std::uint8_t raceId)
 {
@@ -210,6 +221,42 @@ std::string_view ToBotSpawnStatusText(
     return "unknown bot spawn status";
 }
 
+std::string_view ToAccountAltSpawnDecisionText(
+    service::AccountAltSpawnDecisionKind kind)
+{
+    switch (kind)
+    {
+        case service::AccountAltSpawnDecisionKind::SpawnUsingReservedAccount:
+            return "spawn using reserved runtime account";
+        case service::AccountAltSpawnDecisionKind::SpawnUsingPersistentClone:
+            return "spawn using persistent clone";
+        case service::AccountAltSpawnDecisionKind::RecoveryRequired:
+            return "recovery required";
+        case service::AccountAltSpawnDecisionKind::ManualReviewRequired:
+            return "manual review required";
+        case service::AccountAltSpawnDecisionKind::Blocked:
+            return "blocked";
+    }
+
+    return "unknown runtime decision";
+}
+
+std::optional<AccountAltSummary> LoadAccountAltSummary(
+    std::uint64_t characterGuid)
+{
+    QueryResult result = CharacterDatabase.Query(
+        "SELECT name FROM characters WHERE guid = {} LIMIT 1",
+        characterGuid);
+    if (!result)
+    {
+        return std::nullopt;
+    }
+
+    AccountAltSummary summary;
+    summary.name = (*result)[0].Get<std::string>();
+    return summary;
+}
+
 Creature* FindActiveRosterBody(
     Player* player,
     std::uint64_t rosterEntryId)
@@ -295,9 +342,45 @@ bool ExecuteSpawnRosterBodyAction(
         return true;
     }
 
+    integration::SqlAccountAltRuntimeRepository runtimeRepository;
+    integration::SqlBotAccountPoolRepository botAccountPoolRepository;
+    integration::SqlCharacterProgressSnapshotRepository snapshotRepository;
+    service::AccountAltRecoveryService recoveryService;
+    service::AccountAltRuntimeCoordinator coordinator(
+        runtimeRepository,
+        botAccountPoolRepository,
+        snapshotRepository,
+        recoveryService);
+
+    std::optional<AccountAltSummary> summary =
+        LoadAccountAltSummary(action.characterGuid);
+    std::string sourceCharacterName =
+        summary ? summary->name : std::string("unknown");
+
+    service::AccountAltSpawnDecision spawnDecision = coordinator.PlanSpawn(
+        requester->GetSession()->GetAccountId(),
+        action.characterGuid,
+        requester->GetGUID().GetCounter(),
+        sourceCharacterName);
+
+    if (spawnDecision.kind !=
+        service::AccountAltSpawnDecisionKind::SpawnUsingReservedAccount &&
+        spawnDecision.kind !=
+        service::AccountAltSpawnDecisionKind::SpawnUsingPersistentClone)
+    {
+        handler->PSendSysMessage(
+            "LivingWorld blocked account-alt spawn for entry {}: {} ({})",
+            action.rosterEntryId,
+            ToAccountAltSpawnDecisionText(spawnDecision.kind),
+            spawnDecision.reason);
+        return false;
+    }
+
     integration::BotSessionSpawnResult const spawnResult =
-        integration::BotSessionFactory::SpawnBotPlayer(
-            ObjectGuid::Create<HighGuid::Player>(action.characterGuid),
+        integration::BotSessionFactory::SpawnBotPlayerOnAccount(
+            spawnDecision.botAccountId,
+            ObjectGuid::Create<HighGuid::Player>(
+                spawnDecision.spawnCharacterGuid),
             requester->GetGUID());
     if (spawnResult.status != integration::BotSessionSpawnStatus::SpawnQueued)
     {
@@ -309,9 +392,10 @@ bool ExecuteSpawnRosterBodyAction(
     }
 
     handler->PSendSysMessage(
-        "LivingWorld queued account-alt bot login for entry {} using bot account {}.",
+        "LivingWorld queued account-alt bot login for entry {} using bot account {} ({}).",
         action.rosterEntryId,
-        spawnResult.botAccountId);
+        spawnResult.botAccountId,
+        ToAccountAltSpawnDecisionText(spawnDecision.kind));
     return true;
 }
 

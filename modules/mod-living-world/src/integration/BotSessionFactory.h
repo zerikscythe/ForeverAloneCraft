@@ -27,6 +27,11 @@ struct BotSessionSpawnResult
 class BotSessionFactory
 {
 public:
+    static BotSessionSpawnResult SpawnBotPlayerOnAccount(
+        std::uint32_t botAccountId,
+        ObjectGuid characterGuid,
+        ObjectGuid ownerCharacterGuid);
+
     static BotSessionSpawnResult SpawnBotPlayer(
         ObjectGuid characterGuid,
         ObjectGuid ownerCharacterGuid);

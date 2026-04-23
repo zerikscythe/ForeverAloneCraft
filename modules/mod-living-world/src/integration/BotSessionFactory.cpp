@@ -106,6 +106,32 @@ BotSessionSpawnResult BotSessionFactory::SpawnBotPlayer(
         return result;
     }
 
+    return SpawnBotPlayerOnAccount(
+        account->id,
+        characterGuid,
+        ownerCharacterGuid);
+}
+
+BotSessionSpawnResult BotSessionFactory::SpawnBotPlayerOnAccount(
+    std::uint32_t botAccountId,
+    ObjectGuid characterGuid,
+    ObjectGuid ownerCharacterGuid)
+{
+    BotSessionSpawnResult result;
+    if (!characterGuid.IsPlayer() || !ownerCharacterGuid.IsPlayer())
+    {
+        result.status = BotSessionSpawnStatus::InvalidCharacterGuid;
+        return result;
+    }
+
+    std::optional<BotAccountInfo> account = LoadBotAccountInfo(botAccountId);
+    if (!account)
+    {
+        result.status = BotSessionSpawnStatus::BotAccountNotFound;
+        result.botAccountId = botAccountId;
+        return result;
+    }
+
     std::string accountName = account->name;
     auto session = new WorldSession(
         account->id,
