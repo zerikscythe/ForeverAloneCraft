@@ -402,6 +402,11 @@ public:
     bool PlayerLogout() const { return m_playerLogout; }
     bool PlayerRecentlyLoggedOut() const { return m_playerRecentlyLogout; }
     bool PlayerLogoutWithSave() const { return m_playerLogout && m_playerSave; }
+    void EnableBotMode() { m_isBotSession = true; }
+    bool IsBotSession() const { return m_isBotSession; }
+    void SetBotLoginTarget(ObjectGuid guid) { m_botLoginTarget = guid; }
+    ObjectGuid GetBotLoginTarget() const { return m_botLoginTarget; }
+    bool StartBotLogin(ObjectGuid const& guid);
 
     void ReadAddonsInfo(ByteBuffer& data);
     void SendAddonsInfo();
@@ -1219,6 +1224,8 @@ private:
     ObjectGuid::LowType m_GUIDLow;                     // set logined or recently logout player (while m_playerRecentlyLogout set)
     Player* _player;
     std::shared_ptr<WorldSocket> m_Socket;
+    bool m_isBotSession = false;
+    ObjectGuid m_botLoginTarget;
     std::string m_Address;
 
     AccountTypes _security;

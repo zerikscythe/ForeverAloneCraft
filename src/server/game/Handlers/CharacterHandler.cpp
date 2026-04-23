@@ -270,6 +270,22 @@ void WorldSession::HandleCharEnumOpcode(WorldPacket& /*recvData*/)
     _queryProcessor.AddCallback(CharacterDatabase.AsyncQuery(stmt).WithPreparedCallback(std::bind(&WorldSession::HandleCharEnum, this, std::placeholders::_1)));
 }
 
+bool WorldSession::StartBotLogin(ObjectGuid const& guid)
+{
+    ASSERT(m_isBotSession);
+
+    auto holder = std::make_shared<LoginQueryHolder>(GetAccountId(), guid);
+    if (!holder->Initialize())
+        return false;
+
+    m_playerLoading = true;
+    AddQueryHolderCallback(CharacterDatabase.DelayQueryHolder(holder)).AfterComplete([this](SQLQueryHolderBase const& h)
+    {
+        HandlePlayerLoginFromDB(static_cast<LoginQueryHolder const&>(h));
+    });
+    return true;
+}
+
 void WorldSession::HandleCharCreateOpcode(WorldPacket& recvData)
 {
     std::shared_ptr<CharacterCreateInfo> createInfo = std::make_shared<CharacterCreateInfo>();

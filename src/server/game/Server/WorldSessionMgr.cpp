@@ -332,6 +332,9 @@ void WorldSessionMgr::AddSession_(WorldSession* session)
 
     session->InitializeSession();
 
+    if (session->IsBotSession() && session->GetBotLoginTarget().IsPlayer())
+        session->StartBotLogin(session->GetBotLoginTarget());
+
     UpdateMaxSessionCounters();
 }
 

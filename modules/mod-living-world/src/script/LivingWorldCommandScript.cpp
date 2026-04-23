@@ -12,12 +12,14 @@
 #include "SharedDefines.h"
 #include "TemporarySummon.h"
 #include "integration/AzerothWorldFacade.h"
+#include "integration/BotSessionFactory.h"
 #include "integration/RosterRepository.h"
 #include "integration/WorldCommitAction.h"
 #include "model/PlayerRosterRequest.h"
 #include "model/RosterEntry.h"
 #include "planner/PlannerTypes.h"
 #include "planner/SimplePartyRosterPlanner.h"
+#include "service/BotPlayerRegistry.h"
 #include "service/PartyBotService.h"
 
 #include <cstdint>
@@ -37,17 +39,8 @@ namespace script
 namespace
 {
 constexpr std::uint32_t MaleAltCompanionTemplateEntry = 111;
-constexpr std::uint32_t FemaleAltCompanionTemplateEntry = 112;
 constexpr float AltCompanionFollowDistance = 2.5f;
 constexpr float AltCompanionFollowAngle = 3.14159f;
-
-struct AccountAltSummary
-{
-    std::uint64_t characterGuid = 0;
-    std::string name;
-    std::uint8_t gender = 0;
-    std::uint8_t level = 1;
-};
 
 struct CommitExecutionSummary
 {
@@ -199,24 +192,22 @@ std::string_view ToActionText(integration::WorldCommitAction const& action)
     return "unknown action";
 }
 
-std::optional<AccountAltSummary> LoadAccountAltSummary(
-    std::uint64_t characterGuid)
+std::string_view ToBotSpawnStatusText(
+    integration::BotSessionSpawnStatus status)
 {
-    QueryResult result = CharacterDatabase.Query(
-        "SELECT guid, name, gender, level FROM characters WHERE guid = {} LIMIT 1",
-        characterGuid);
-    if (!result)
+    switch (status)
     {
-        return std::nullopt;
+        case integration::BotSessionSpawnStatus::SpawnQueued:
+            return "spawn queued";
+        case integration::BotSessionSpawnStatus::NoAvailableBotAccount:
+            return "no available bot account";
+        case integration::BotSessionSpawnStatus::BotAccountNotFound:
+            return "bot account not found";
+        case integration::BotSessionSpawnStatus::InvalidCharacterGuid:
+            return "invalid character guid";
     }
 
-    Field const* fields = result->Fetch();
-    AccountAltSummary summary;
-    summary.characterGuid = fields[0].Get<std::uint64_t>();
-    summary.name = fields[1].Get<std::string>();
-    summary.gender = fields[2].Get<std::uint8_t>();
-    summary.level = fields[3].Get<std::uint8_t>();
-    return summary;
+    return "unknown bot spawn status";
 }
 
 Creature* FindActiveRosterBody(
@@ -246,67 +237,81 @@ bool ExecuteSpawnRosterBodyAction(
 {
     if (action.source != model::RosterEntrySource::AccountAlt)
     {
-        handler->PSendSysMessage(
-            "LivingWorld skipped generic roster body {}; only account-alt spawning is wired.",
-            action.rosterEntryId);
-        return false;
-    }
+        if (Creature* existing = FindActiveRosterBody(requester, action.rosterEntryId))
+        {
+            existing->GetMotionMaster()->MoveFollow(
+                requester,
+                AltCompanionFollowDistance,
+                AltCompanionFollowAngle);
+            handler->PSendSysMessage(
+                "LivingWorld generic roster entry {} is already spawned and following.",
+                action.rosterEntryId);
+            return true;
+        }
 
-    if (Creature* existing = FindActiveRosterBody(requester, action.rosterEntryId))
-    {
-        existing->GetMotionMaster()->MoveFollow(
+        std::uint32_t const templateEntry = MaleAltCompanionTemplateEntry;
+        Position const spawnPosition = requester->GetNearPosition(2.0f, 0.0f);
+        TempSummon* summon = requester->GetMap()->SummonCreature(
+            templateEntry,
+            spawnPosition,
+            nullptr,
+            0,
+            requester);
+        if (!summon)
+        {
+            handler->PSendSysMessage(
+                "LivingWorld failed to summon generic roster entry {}.",
+                action.rosterEntryId);
+            return false;
+        }
+
+        summon->SetFaction(requester->GetFaction());
+        summon->SetReactState(REACT_PASSIVE);
+        summon->SetFullHealth();
+        summon->GetMotionMaster()->MoveFollow(
             requester,
             AltCompanionFollowDistance,
             AltCompanionFollowAngle);
+
+        SpawnedRosterBodies[action.rosterEntryId] = summon->GetGUID();
         handler->PSendSysMessage(
-            "LivingWorld roster entry {} is already spawned and following.",
+            "LivingWorld spawned generic roster entry {} with the temporary fallback.",
             action.rosterEntryId);
         return true;
     }
 
-    std::optional<AccountAltSummary> summary =
-        LoadAccountAltSummary(action.characterGuid);
-    if (!summary)
+    Player* existingBot =
+        service::BotPlayerRegistry::Instance().FindBotForOwner(
+            requester->GetGUID());
+    if (existingBot)
     {
+        existingBot->GetMotionMaster()->MoveFollow(
+            requester,
+            AltCompanionFollowDistance,
+            AltCompanionFollowAngle);
         handler->PSendSysMessage(
-            "LivingWorld failed to load account-alt character {}.",
-            action.characterGuid);
-        return false;
-    }
-
-    std::uint32_t const templateEntry = summary->gender == 1
-        ? FemaleAltCompanionTemplateEntry
-        : MaleAltCompanionTemplateEntry;
-    Position const spawnPosition = requester->GetNearPosition(2.0f, 0.0f);
-
-    TempSummon* summon = requester->GetMap()->SummonCreature(
-        templateEntry,
-        spawnPosition,
-        nullptr,
-        0,
-        requester);
-    if (!summon)
-    {
-        handler->PSendSysMessage(
-            "LivingWorld failed to summon roster entry {}.",
+            "LivingWorld roster entry {} is already active as a bot player and following.",
             action.rosterEntryId);
+        return true;
+    }
+
+    integration::BotSessionSpawnResult const spawnResult =
+        integration::BotSessionFactory::SpawnBotPlayer(
+            ObjectGuid::Create<HighGuid::Player>(action.characterGuid),
+            requester->GetGUID());
+    if (spawnResult.status != integration::BotSessionSpawnStatus::SpawnQueued)
+    {
+        handler->PSendSysMessage(
+            "LivingWorld failed to queue account-alt bot login for entry {}: {}.",
+            action.rosterEntryId,
+            ToBotSpawnStatusText(spawnResult.status));
         return false;
     }
 
-    summon->SetName(summary->name);
-    summon->SetLevel(summary->level);
-    summon->SetFaction(requester->GetFaction());
-    summon->SetReactState(REACT_PASSIVE);
-    summon->SetFullHealth();
-    summon->GetMotionMaster()->MoveFollow(
-        requester,
-        AltCompanionFollowDistance,
-        AltCompanionFollowAngle);
-
-    SpawnedRosterBodies[action.rosterEntryId] = summon->GetGUID();
     handler->PSendSysMessage(
-        "LivingWorld spawned {} as a temporary account-alt companion.",
-        summary->name);
+        "LivingWorld queued account-alt bot login for entry {} using bot account {}.",
+        action.rosterEntryId,
+        spawnResult.botAccountId);
     return true;
 }
 
@@ -318,10 +323,24 @@ bool ExecuteAttachToPartyAction(
     Creature* body = FindActiveRosterBody(requester, action.rosterEntryId);
     if (!body)
     {
+        if (Player* bot =
+            service::BotPlayerRegistry::Instance().FindBotForOwner(
+                requester->GetGUID()))
+        {
+            bot->GetMotionMaster()->MoveFollow(
+                requester,
+                AltCompanionFollowDistance,
+                AltCompanionFollowAngle);
+            handler->PSendSysMessage(
+                "LivingWorld attached roster entry {} as a bot-player follower. Real party membership is not wired yet.",
+                action.rosterEntryId);
+            return true;
+        }
+
         handler->PSendSysMessage(
-            "LivingWorld could not attach roster entry {}; no active body was found.",
+            "LivingWorld queued roster entry {}; bot login is still pending.",
             action.rosterEntryId);
-        return false;
+        return true;
     }
 
     body->GetMotionMaster()->MoveFollow(

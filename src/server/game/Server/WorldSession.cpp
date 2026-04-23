@@ -580,7 +580,7 @@ bool WorldSession::Update(uint32 diff, PacketFilter& updater)
             m_Socket = nullptr;
         }
 
-        if (!m_Socket)
+        if (!m_Socket && (!m_isBotSession || IsKicked()))
         {
             return false;                                       //Will remove this session from the world session map
         }
