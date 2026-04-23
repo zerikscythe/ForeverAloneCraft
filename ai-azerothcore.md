@@ -396,6 +396,10 @@ Current state as of the first foundation + first runtime command slice:
   first implementation should recover XP/level/money only; inventory,
   equipment, reputation, quests, and mail need separate domain rules before
   any destructive write path exists.
+- `LivingWorldCommandScript` now routes account-alt spawn requests through
+  `AccountAltRuntimeCoordinator` before `BotSessionFactory`. This means runtime
+  records and snapshots are consulted first, reserved bot accounts are reused
+  deterministically, and clone-ahead cases are blocked for manual review.
 - Local runtime validation has reached a working end-to-end WotLK install:
   MySQL 8, authserver, worldserver, extracted dbc/maps/vmaps/mmaps, client
   login, character creation, and starting-zone entry. This validates the
@@ -1185,6 +1189,15 @@ surface. It should not become the source of truth for clone progress.
 this table. `SqlCharacterProgressSnapshotRepository` is the first read-only
 snapshot adapter and intentionally reads only level, XP, and money from
 `characters`.
+
+`AccountAltRuntimeCoordinator` is the orchestration seam above those
+repositories. It currently supports:
+
+- prepare a new reserved runtime account
+- reuse an already reserved runtime account before clone materialization
+- block clone-ahead states for manual review
+
+It does not yet execute clone-to-source sync.
 
 ### 21.2 Recovery sequence
 

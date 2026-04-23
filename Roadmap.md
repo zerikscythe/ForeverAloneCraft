@@ -512,8 +512,13 @@ Current implementation status:
   `living_world_account_alt_runtime`.
 - `SqlCharacterProgressSnapshotRepository` can read level, XP, and money from
   `characters`.
-- These are intentionally not wired into the command spawn path yet; the next
-  slice should connect them before `BotSessionFactory` queues a login.
+- `AccountAltRuntimeCoordinator` now wires those repositories into the
+  account-alt spawn path before `BotSessionFactory` queues a login.
+- In the current transitional mode, existing runtimes without a materialized
+  clone character reuse the same reserved bot account deterministically.
+- If a materialized clone exists and appears ahead of the source snapshot, the
+  command path now blocks the spawn for manual review instead of guessing.
+- Actual clone-to-source sync writes are still intentionally not implemented.
 
 ### B) Recovery planning before spawning
 
@@ -538,6 +543,14 @@ Only after the planner and sanity checker are tested should we add the DB
 executor that copies clone progress back to the source character. It must run
 inside transactions, be idempotent, write audit state, and mark records as
 `SyncingBack` before mutation and `Active`/clean only after success.
+
+The first sync executor should be limited to:
+- level
+- XP
+- money
+
+Inventory, equipment, bank, achievements, quests, reputation, and mail remain
+future slices with their own sanity and ownership rules.
 
 ### E) Startup/player-login recovery pass
 
