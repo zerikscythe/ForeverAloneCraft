@@ -384,12 +384,12 @@ Current state as of the first foundation + first runtime command slice:
   slice should introduce account-alt SQL-backed runtime repositories and then
   the authoritative commit executor that consumes `WorldCommitAction` records
   and performs the server-side spawn/attach work.
-- Session feasibility note: a fake "always logged in" account implemented as a
-  null-socket `WorldSession` is not viable as-is. `WorldSession::Update`
-  returns false when `m_Socket` is null, and `WorldSessionMgr` removes that
-  session. Normal active session storage is keyed by account id and kicks the
-  previous session for the same account, so the safer runtime design is a pool
-  of bot-owned accounts, one live clone per bot account.
+- Session feasibility note: a null-socket `WorldSession` IS viable with a
+  minimal core patch (see section 20). The previous note saying it was not
+  viable has been superseded by a full audit of all socket-liveness check
+  sites. The bot account pool design is still correct — bot sessions use
+  separate bot-owned accounts, not the player's account — but the session
+  lifecycle is enabled by the core patch rather than being blocked by it.
 - Local runtime validation has reached a working end-to-end WotLK install:
   MySQL 8, authserver, worldserver, extracted dbc/maps/vmaps/mmaps, client
   login, character creation, and starting-zone entry. This validates the
@@ -1021,3 +1021,128 @@ The architecture should leave room for milestone-driven progression such as:
 
 If implemented, this belongs in centralized progression data/services rather
 than scattered checks across unrelated behavior code.
+
+---
+
+# 20. Bot Session Architecture — Audit and Decision
+
+This section documents the architecture decision made for spawning account-alt
+companions as real `Player` objects rather than `TempSummon` creatures.
+
+## 20.1 The two options considered
+
+**Option A — Bot account pool with a null-socket WorldSession**
+Each active bot alt runs as a real `Player` loaded from a bot-owned account.
+The session has no real network socket; AI code drives the player directly
+by calling `Player` methods on the map thread.
+
+**Option B — Multi-character-per-account unlock**
+Relax AzerothCore's one-session-per-account constraint so the same account
+can have multiple characters active simultaneously.
+
+Option B was ruled out. The session map (`WorldSessionMgr::_sessions`) is
+keyed by account ID. Allowing multiple sessions per account would require
+changing the map type, auditing every `FindSession(accountId)` callsite, and
+altering the auth server session-key model. The blast radius is too wide and
+the risk to real-player sessions is non-trivial.
+
+**Option A was chosen.** Bot sessions use separate bot-owned accounts from the
+pool, so no session-map collisions occur with the requesting player.
+
+## 20.2 Full socket-liveness check site audit
+
+Every location that could remove or kill a null-socket `WorldSession` was
+audited. Results:
+
+| Site | Code | Null-socket behavior | Action needed |
+|------|------|----------------------|---------------|
+| `WorldSession::Update` line 583 | `if (!m_Socket) return false;` | **Kills session** | Guard with bot-mode flag |
+| `WorldSessionMgr::UpdateSessions` line 117 | `HandleSocketClosed()` checks `m_Socket &&` | Returns false, session left alone | None |
+| `WorldSession::Update` line 363 | Idle-close checks `&& m_Socket` | Skipped when null | None |
+| `WorldSession::Update` line 381 | Packet loop checks `while (m_Socket &&` | Loop skipped — correct | None |
+| `WorldSession::Update` line 565 | Warden update checks `m_Socket &&` | Skipped | None |
+| `WorldSession::Update` line 575 | Socket-close detect checks `m_Socket &&` | Skipped | None |
+| `WorldSession::Update` line 570 | `ShouldLogOut` checks `_logoutTime > 0` | Always false for bot | None |
+| `KickPlayer` | Sets `IsKicked() = true`, calls `CloseSocket` if socket | No socket close; kick flag still set | Guard must also respect `IsKicked()` |
+
+**Exactly one guard line is needed in core.** The complete guard:
+```cpp
+// WorldSession.cpp — in Update(), replacing:  if (!m_Socket) return false;
+if (!m_Socket && (!m_isBotSession || IsKicked()))
+    return false;
+```
+This keeps bot sessions alive through normal world ticks and allows explicit
+kicks to still remove them cleanly.
+
+## 20.3 Core changes required (minimal, surgical)
+
+Four files. All changes are additive except the single guard line above.
+
+**`src/server/game/Server/WorldSession.h`**
+- Add to private members:
+  - `bool m_isBotSession = false;`
+  - `ObjectGuid m_botLoginTarget;`
+- Add to public interface:
+  - `void EnableBotMode() { m_isBotSession = true; }`
+  - `bool IsBotSession() const { return m_isBotSession; }`
+  - `void SetBotLoginTarget(ObjectGuid guid) { m_botLoginTarget = guid; }`
+  - `ObjectGuid GetBotLoginTarget() const { return m_botLoginTarget; }`
+  - `bool StartBotLogin(ObjectGuid const& guid);` (declaration only)
+
+**`src/server/game/Server/WorldSession.cpp`**
+- One guard line as shown above in `Update()`.
+
+**`src/server/game/Handlers/CharacterHandler.cpp`**
+- Add `WorldSession::StartBotLogin` implementation. It uses the file-local
+  `LoginQueryHolder` class (already defined there) to queue the async character
+  load, which calls back into the existing `HandlePlayerLoginFromDB`. All
+  `SendPacket` calls inside that handler are already null-socket safe.
+
+**`src/server/game/Server/WorldSessionMgr.cpp`**
+- In `AddSession_()`, after the existing `session->InitializeSession()` call:
+  ```cpp
+  if (session->IsBotSession() && session->GetBotLoginTarget().IsPlayer())
+      session->StartBotLogin(session->GetBotLoginTarget());
+  ```
+
+## 20.4 Module-side architecture
+
+Once the core patch is in place, the module needs these new pieces:
+
+**`integration/BotSessionFactory`** — queries `acore_auth.account` for bot
+account details, constructs the `WorldSession` with null socket, calls
+`EnableBotMode()` + `SetBotLoginTarget()`, then calls
+`sWorldSessionMgr->AddSession()`. The `AddSession_` hook then triggers
+`StartBotLogin` on the world-update thread.
+
+**`service/BotPlayerRegistry`** — maps `ownerCharGuid → Player*` for active
+bot companions. Populated from `PlayerScript::OnLogin` when
+`player->GetSession()->IsBotSession()` is true.
+
+**`ai/CompanionAI`** — a `BasicEvent` subclass scheduled on the bot player's
+own `m_Events` processor so it runs on the map thread (thread-safe). Each
+tick (~500 ms): assist combat by attacking the owner's current target; follow
+when idle. Class-specific spell casting is the next slice after this.
+
+**`script/LivingWorldPlayerScript`** — thin `PlayerScript` hook. On `OnLogin`,
+checks `IsBotSession()`, registers with `BotPlayerRegistry`, and schedules
+the first `CompanionAIEvent`.
+
+**`script/LivingWorldWorldScript`** — stub for future world-tick orchestration.
+
+## 20.5 Thread-safety rule for bot player AI
+
+Bot player AI MUST run on the map thread. The correct pattern is:
+- Schedule AI as a `BasicEvent` on `botPlayer->m_Events`
+- Inside `Execute()`, run the AI logic, then reschedule a new event before
+  returning `true` (which deletes the current event)
+- Never drive bot player AI from `WorldScript::OnUpdate` without dispatching
+  through the map thread
+
+## 20.6 What the TempSummon path becomes
+
+The existing `TempSummon` (template 111/112) spawn in `LivingWorldCommandScript`
+is a temporary stand-in. Once `BotSessionFactory` is wired in,
+`ExecuteSpawnRosterBodyAction` for `AccountAlt` source entries should call
+`BotSessionFactory::SpawnBotPlayer`. The TempSummon fallback can remain for
+generic bot entries that do not map to a real character.

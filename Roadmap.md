@@ -481,35 +481,133 @@ design and foundation code.
 
 ## Immediate Next Implementation Slice
 
-The previous "read facade + commit-ready outputs + first service + command
-grammar + command script" slice has landed in player-visible, read/intent-only
-form. The next pass should turn those approved intents into safe server
-mutation:
+The architecture decision for real bot players has been made and fully audited
+(see `ai-azerothcore.md` section 20). The previous note saying "do not attempt
+a socketless session" is superseded — a minimal core patch makes it viable.
+The next slice implements that patch and connects it to the module.
 
-1. **Introduce the authoritative commit layer**
-- Single class that consumes `WorldCommitAction` records and performs the
-  real server mutation. Services must never mutate world state outside
-  this class.
-- Start with `SpawnRosterBodyAction` and `AttachToPartyAction`; leave
-  despawn / encounter pipelines for the slice after.
+### A) Core patch — WorldSession bot mode (4 files, all small)
 
-2. **Implement account-alt runtime persistence and bot account pool SQL**
-- The pure service seam exists. Next, add `db-auth` / `db-characters` backing
-  tables or repository implementations for:
-  - bot account pool reservation
-  - source-to-clone runtime records
-  - crash recovery state
-  - source/clone progress snapshots
-- Do not attempt a socketless "always logged in" account session; current
-  AzerothCore session cleanup removes null-socket sessions, and normal session
-  storage is keyed by account id.
+This is the foundational change everything else builds on.
 
-3. **Harden the runtime command surface**
-- Keep `.lwbot roster list` and `.lwbot roster request <id>` usable in-game.
-- Add command tests around chat rendering / permission behavior once a thin
-  test seam is available.
-- Leave `.lwbot roster dismiss <id>` as a placeholder until despawn commit
-  actions exist.
+**`src/server/game/Server/WorldSession.h`**
+- Add private member `bool m_isBotSession = false;`
+- Add private member `ObjectGuid m_botLoginTarget;`
+- Add public `void EnableBotMode() { m_isBotSession = true; }`
+- Add public `bool IsBotSession() const { return m_isBotSession; }`
+- Add public `void SetBotLoginTarget(ObjectGuid guid) { m_botLoginTarget = guid; }`
+- Add public `ObjectGuid GetBotLoginTarget() const { return m_botLoginTarget; }`
+- Add public declaration `bool StartBotLogin(ObjectGuid const& guid);`
+
+**`src/server/game/Server/WorldSession.cpp`** — one guard in `Update()`:
+```cpp
+// Change: if (!m_Socket) return false;
+// To:
+if (!m_Socket && (!m_isBotSession || IsKicked()))
+    return false;
+```
+
+**`src/server/game/Handlers/CharacterHandler.cpp`** — new method alongside
+the existing login handlers. Uses the already-defined local `LoginQueryHolder`
+class:
+```cpp
+bool WorldSession::StartBotLogin(ObjectGuid const& guid)
+{
+    ASSERT(m_isBotSession);
+    auto holder = std::make_shared<LoginQueryHolder>(GetAccountId(), guid);
+    if (!holder->Initialize())
+        return false;
+    m_playerLoading = true;
+    CharacterDatabase.DelayQueryHolder(holder,
+        [this](std::shared_ptr<CharacterDatabaseQueryHolder> h)
+        {
+            HandlePlayerLoginFromDB(static_cast<LoginQueryHolder&>(*h));
+        });
+    return true;
+}
+```
+
+**`src/server/game/Server/WorldSessionMgr.cpp`** — three lines at the end of
+`AddSession_()`, after the existing `session->InitializeSession()` call:
+```cpp
+if (session->IsBotSession() && session->GetBotLoginTarget().IsPlayer())
+    session->StartBotLogin(session->GetBotLoginTarget());
+```
+
+All `SendPacket` calls inside `HandlePlayerLoginFromDB` and
+`SendInitialPacketsBeforeAddToMap` / `SendInitialPacketsAfterAddToMap` are
+already no-ops for null-socket sessions — no additional changes needed there.
+
+### B) Module — BotSessionFactory (new integration class)
+
+New file: `modules/mod-living-world/src/integration/BotSessionFactory.h/.cpp`
+
+The factory queries `acore_auth.account` for the bot account details
+(name, expansion, locale), constructs a `WorldSession` with a null socket,
+calls `EnableBotMode()` and `SetBotLoginTarget(characterGuid)`, then calls
+`sWorldSessionMgr->AddSession(session)`. The `AddSession_` hook then triggers
+`StartBotLogin` automatically.
+
+Bot accounts are separate accounts in `acore_auth.account` — never the same
+account as the requesting player. The session map is keyed by account ID so
+there is no collision with the player's session.
+
+### C) Module — BotPlayerRegistry (new service class)
+
+New file: `modules/mod-living-world/src/service/BotPlayerRegistry.h/.cpp`
+
+Tracks active bot players: `ownerCharGuid → botPlayer*`. Updated when a bot
+player enters the world via `PlayerScript::OnLogin` (detecting `IsBotSession()`
+on the player's session). Provides lookup for the companion AI tick.
+
+### D) Module — CompanionAI (new ai class)
+
+New file: `modules/mod-living-world/src/ai/CompanionAI.h/.cpp`
+
+Drives a real `Player*` as a companion. Scheduled as a repeating
+`BasicEvent` on the bot player's own event processor so it runs on the map
+thread (thread-safe). Each tick (~500 ms):
+- If owner is in combat and bot has no target: `bot->Attack(owner->GetVictim())`
+- If owner leaves combat: `bot->AttackStop()` + re-issue `MoveFollow`
+- If not in combat and bot is too far: `MoveFollow(owner, 2.0f, M_PI)`
+
+Class-specific spell behavior is the next slice after this one lands.
+
+### E) Module — script hooks
+
+New file: `modules/mod-living-world/src/script/LivingWorldPlayerScript.cpp`
+- `OnLogin`: if `player->GetSession()->IsBotSession()`, register with
+  `BotPlayerRegistry` and schedule the first `CompanionAIEvent` on the player.
+
+New file: `modules/mod-living-world/src/script/LivingWorldWorldScript.cpp`
+- Reserved for future world-tick orchestration. Stub only in this slice.
+
+### F) Module — command script update
+
+`LivingWorldCommandScript.cpp` `ExecuteSpawnRosterBodyAction` currently
+spawns a `TempSummon` with template 111/112 as a stand-in. Replace with a
+call to `BotSessionFactory::SpawnBotPlayer(botAccountId, characterGuid,
+ownerGuid)`. The template 111/112 path can remain as a fallback for generic
+(non-account-alt) roster entries.
+
+### G) SQL
+
+`data/sql/updates/pending_db_auth/` — bot account pool reservation table:
+```sql
+CREATE TABLE IF NOT EXISTS `living_world_bot_account_pool` (
+    `account_id`   INT UNSIGNED NOT NULL,
+    `is_available` TINYINT(1)   NOT NULL DEFAULT 1,
+    `reserved_for` BIGINT UNSIGNED NULL,
+    PRIMARY KEY (`account_id`)
+) ENGINE=InnoDB;
+```
+
+Bot account rows in `acore_auth.account` must be created manually for initial
+testing. The factory reads from this pool table to select a free account.
+
+---
+
+### Planner / command / progression work (unchanged priority)
 
 4. **Move planner policies toward config/data as consumers appear**
 - `SimpleZonePopulationPlanner` now has the first scoring, cooldown, activity,
@@ -521,6 +619,11 @@ mutation:
 - The simulated AH, event reaction, and milestone-unlock systems should be
   implemented as separate policy/service tracks rather than folded into
   the first party bot runtime slice.
+
+6. **Harden the runtime command surface**
+- Keep `.lwbot roster list` and `.lwbot roster request <id>` usable in-game.
+- Leave `.lwbot roster dismiss <id>` as a placeholder until despawn commit
+  actions exist.
 
 ---
 
