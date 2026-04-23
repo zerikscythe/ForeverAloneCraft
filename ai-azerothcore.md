@@ -1206,6 +1206,16 @@ It reuses an existing clone by reserved name when present, otherwise imports a
 new clone onto the bot-owned account and returns the persisted clone guid plus
 its snapshot.
 
+The first observation layer for item domains now exists as well:
+- `model::CharacterItemSnapshot` groups read-only item state into equipment,
+  inventory, bank, and other buckets.
+- `integration::SqlCharacterItemSnapshotRepository` reads
+  `character_inventory` + `item_instance` and classifies nested bag contents
+  based on the root bag domain.
+- `service::CharacterItemSnapshotClassifier` is the pure seam for slot/domain
+  mapping and should be reused by future equipment/inventory/bank sanity
+  rules.
+
 ### 21.2 Recovery sequence
 
 On player login, and before any account-alt spawn:

@@ -782,6 +782,15 @@ The next milestone is to expand beyond progress-only sync safely:
   are proven
 - preserve the current level / XP / money crash-recovery path unchanged
 
+Current implementation status:
+- `model::CharacterItemSnapshot` now provides a read-only item-state shape for
+  equipment, inventory, bank, and uncategorized items.
+- `SqlCharacterItemSnapshotRepository` reads `character_inventory` joined to
+  `item_instance` and classifies nested bag contents into inventory-vs-bank
+  domains.
+- `CharacterItemSnapshotClassifier` has unit coverage for equipment,
+  inventory, bank, and nested bag classification.
+
 After those read/sanity layers exist, the next follow-on slice should be the
 first transactional equipment/inventory sync executor.
 
