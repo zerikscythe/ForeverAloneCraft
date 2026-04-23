@@ -64,6 +64,35 @@ model::BotRole ToDefaultRole(std::uint8_t classId)
     }
 }
 
+std::string_view ToClassName(std::uint8_t classId)
+{
+    switch (classId)
+    {
+        case CLASS_WARRIOR:
+            return "Warrior";
+        case CLASS_PALADIN:
+            return "Paladin";
+        case CLASS_HUNTER:
+            return "Hunter";
+        case CLASS_ROGUE:
+            return "Rogue";
+        case CLASS_PRIEST:
+            return "Priest";
+        case CLASS_DEATH_KNIGHT:
+            return "Death Knight";
+        case CLASS_SHAMAN:
+            return "Shaman";
+        case CLASS_MAGE:
+            return "Mage";
+        case CLASS_WARLOCK:
+            return "Warlock";
+        case CLASS_DRUID:
+            return "Druid";
+        default:
+            return "Unknown";
+    }
+}
+
 std::string_view ToFailureText(
     planner::PartyRosterFailureReason reason)
 {
@@ -310,11 +339,11 @@ void RenderRosterList(ChatHandler* handler)
     {
         model::BotProfile const& profile = entry.controllableProfile.profile;
         handler->PSendSysMessage(
-            "  [{}] {} lvl {} class {} ({}){}",
+            "  [{}] {} lvl {} {} ({}){}",
             entry.rosterEntryId,
             profile.name,
             static_cast<std::uint32_t>(profile.level),
-            static_cast<std::uint32_t>(profile.classId),
+            ToClassName(profile.classId),
             ToSourceText(entry.source),
             entry.isAlreadySummoned ? " online" : "");
     }
