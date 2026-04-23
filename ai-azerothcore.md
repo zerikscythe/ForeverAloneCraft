@@ -1197,7 +1197,8 @@ repositories. It currently supports:
 - reuse an already reserved runtime account before clone materialization
 - block clone-ahead states for manual review
 
-It does not yet execute clone-to-source sync.
+It now executes clone-to-source sync for level / XP / money only, gated by the
+sanity checker and the sync executor. Broader domains remain blocked.
 
 ### 21.2 Recovery sequence
 
@@ -1352,18 +1353,21 @@ LivingWorldCommandScript  (executes on world thread, map thread context)
                   └─ SqlCharacterProgressSyncRepository  (DirectExecute impl)
 ```
 
-### 23.4 What the startup recovery pass should do (not yet implemented)
+### 23.4 What the startup recovery pass does
 
-When an owner player logs in, `OnPlayerLogin` (non-bot path) should:
-1. Query `living_world_account_alt_runtime` WHERE `source_account_id = accountId`.
-2. For each record with `state = SyncingBack`: reload snapshots and re-run
-   `AccountAltSyncExecutor::Execute` — idempotent because we re-derive the
-   target from fresh snapshots.
-3. For other states: surface to the player via chat (e.g., "your alt X has an
-   active runtime — use `.lwbot roster request <id>` to resume").
+When an owner player logs in, `LivingWorldPlayerScript::OnPlayerLogin`
+(non-bot path) now:
+1. Queries `living_world_account_alt_runtime` for the source account.
+2. For each record with `state = SyncingBack`: reloads source/clone snapshots,
+   re-runs sanity checks, and retries `AccountAltSyncExecutor::Execute`.
+3. For active materialized clones: builds the recovery plan and surfaces counts
+   for pending recovery, manual review, and blocked runtimes through login
+   messages.
 
-This pass does not exist yet. The `SyncingBack` state is correctly persisted so
-the data is safe across restarts; the pass just needs to be wired.
+This pass intentionally stays lightweight:
+- it only performs writes for runtimes already marked `SyncingBack`
+- it does not auto-run broader clone-ahead recovery for `Active` runtimes
+- it leaves inventory / equipment / bank / quest-like domains untouched
 
 ### 23.5 Sync domain scope
 

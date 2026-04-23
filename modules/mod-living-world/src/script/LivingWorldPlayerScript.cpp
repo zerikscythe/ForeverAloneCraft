@@ -1,4 +1,10 @@
+#include "Chat.h"
 #include "ai/CompanionAI.h"
+#include "integration/SqlAccountAltRuntimeRepository.h"
+#include "integration/SqlCharacterProgressSnapshotRepository.h"
+#include "integration/SqlCharacterProgressSyncRepository.h"
+#include "service/AccountAltRecoveryService.h"
+#include "service/AccountAltStartupRecoveryService.h"
 #include "service/BotPlayerRegistry.h"
 
 #include "DatabaseEnv.h"
@@ -13,6 +19,54 @@
 
 namespace
 {
+void RunOwnerStartupRecovery(Player* player)
+{
+    if (!player || !player->GetSession())
+    {
+        return;
+    }
+
+    living_world::integration::SqlAccountAltRuntimeRepository runtimeRepository;
+    living_world::integration::SqlCharacterProgressSnapshotRepository
+        snapshotRepository;
+    living_world::integration::SqlCharacterProgressSyncRepository syncRepository;
+    living_world::service::AccountAltRecoveryService recoveryService;
+    living_world::service::AccountAltStartupRecoveryService startupRecoveryService(
+        runtimeRepository,
+        snapshotRepository,
+        syncRepository,
+        recoveryService);
+
+    living_world::service::AccountAltStartupRecoverySummary summary =
+        startupRecoveryService.RecoverForAccount(
+            player->GetSession()->GetAccountId());
+    if (summary.scanned == 0)
+    {
+        return;
+    }
+
+    ChatHandler handler(player->GetSession());
+    if (summary.recoveredSyncs > 0)
+    {
+        handler.PSendSysMessage(
+            "LivingWorld recovered {} interrupted account-alt sync(s) on login.",
+            summary.recoveredSyncs);
+    }
+    if (summary.pendingRecovery > 0)
+    {
+        handler.PSendSysMessage(
+            "LivingWorld found {} account-alt runtime(s) that still need recovery before reuse.",
+            summary.pendingRecovery);
+    }
+    if (summary.manualReviewRequired > 0 || summary.blocked > 0)
+    {
+        handler.PSendSysMessage(
+            "LivingWorld found {} runtime(s) needing manual review and {} blocked runtime(s).",
+            summary.manualReviewRequired,
+            summary.blocked);
+    }
+}
+
 void AddBotToOwnerGroup(Player* bot, Player* owner)
 {
     Group* group = owner->GetGroup();
@@ -39,9 +93,14 @@ public:
 
     void OnPlayerLogin(Player* player) override
     {
-        if (!player || !player->GetSession() ||
-            !player->GetSession()->IsBotSession())
+        if (!player || !player->GetSession())
         {
+            return;
+        }
+
+        if (!player->GetSession()->IsBotSession())
+        {
+            RunOwnerStartupRecovery(player);
             return;
         }
 

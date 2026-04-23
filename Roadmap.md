@@ -370,6 +370,10 @@ design and foundation code.
 - `PartyBotService` already blocks owned alts that are online as normal
   characters. `AccountAltRuntimeService` now blocks/reuses/recovers existing
   runtime records before reserving a new bot account.
+- `LivingWorldPlayerScript::OnPlayerLogin` now runs a lightweight owner-login
+  recovery pass. It retries `SyncingBack` progress-only runtimes, reports
+  pending recovery when a materialized clone is ahead, and surfaces manual
+  review / blocked counts without performing broader destructive sync.
 
 9.5 Decide whether generic bots and account alts share one runtime pipeline — **Not Started**
 
@@ -435,10 +439,12 @@ design and foundation code.
 
 #### Subtasks
 
-13.1 Add initial `db-world` / `db-characters` schema for living-world data — **Not Started**
-- Pending characters-DB schema now exists for
-  `living_world_account_alt_runtime`, but no SQL-backed repository or sync
-  executor is wired yet.
+13.1 Add initial `db-world` / `db-characters` schema for living-world data — **Partial**
+- `living_world_account_alt_runtime` now has a SQL-backed repository,
+  progress snapshot loader, progress sync repository/executor, and owner-login
+  startup recovery pass for `SyncingBack` crash retries.
+- Remaining work is broader clone lifecycle persistence and additional sync
+  domains beyond progress-only recovery.
 
 13.2 Define tunable config values — **Not Started**
 - Examples:
@@ -518,7 +524,8 @@ Current implementation status:
   clone character reuse the same reserved bot account deterministically.
 - If a materialized clone exists and appears ahead of the source snapshot, the
   command path now blocks the spawn for manual review instead of guessing.
-- Actual clone-to-source sync writes are still intentionally not implemented.
+- Clone-to-source sync writes now exist for level / XP / money only, gated by
+  `AccountAltSanityChecker` and `AccountAltSyncExecutor`.
 
 ### B) Recovery planning before spawning
 
@@ -759,21 +766,24 @@ See section D of "Immediate Next Implementation Slice" above for full detail.
 
 ---
 
-## Immediate Next: Startup Recovery Pass (Section E)
+## Immediate Next: Persistent Clone Materialization
 
-On player login, list all `living_world_account_alt_runtime` records for the
-account. For each record:
-- `cloneCharacterGuid == 0` and `state == Active`: transitional mode, no action
-- `state == SyncingBack`: the executor was interrupted — run the executor again
-  (idempotent by design)
-- `state == Active` with a materialized clone: check if clone is ahead and run
-  the normal PlanSpawn path (sanity → sync or reuse)
-- `state == Failed`: surface to the player for manual review
+The recovery path is now in place for progress-only syncs, but the system is
+still in a transitional mode when `cloneCharacterGuid == 0`: it reuses the
+reserved bot account and spawns the source character body rather than a true
+persistent clone.
 
-This pass belongs in `LivingWorldPlayerScript::OnPlayerLogin` (owner login, not
-bot login) and should be lightweight — load snapshots and build recovery plans,
-but only execute writes when the state is `SyncingBack` (i.e., mid-sync crash
-recovery).
+The next milestone is to materialize and bind the first persistent clone
+character on the reserved bot account:
+- create or locate a dedicated clone character on the bot-owned account
+- persist `cloneCharacterGuid` and clone identity metadata in
+  `living_world_account_alt_runtime`
+- keep source-vs-clone naming/ownership explicit so future inventory/equipment
+  sync can reason about authoritative state safely
+- preserve the current crash-safe recovery rules for level / XP / money
+
+Once clone materialization exists, the next follow-on slice should be
+domain-specific sync expansion for equipment, inventory, and bank data.
 
 ---
 
