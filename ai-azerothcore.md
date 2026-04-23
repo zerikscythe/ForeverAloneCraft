@@ -1236,3 +1236,77 @@ prevention.
 - Make sync idempotent so repeated recovery after a crash is safe.
 - Prefer blocking/manual review over guessing when ownership or snapshots do
   not match.
+
+---
+
+## 22. Bot party membership and dismiss
+
+### 22.1 Why explicit group management is required
+
+`WorldSession::LogoutPlayer` guards its automatic group-removal block with
+`m_Socket &&`. Bot sessions use a null socket, so the auto-removal is skipped.
+Without explicit removal, dismissed or crashed bots stay in the group slot
+forever. All bot group changes must therefore be done by module code, not
+relied on from core.
+
+### 22.2 Group join on bot login
+
+`LivingWorldPlayerScript::OnPlayerLogin` calls the module-local helper
+`AddBotToOwnerGroup(bot, owner)` after `ScheduleCompanionAI`.
+
+```
+AddBotToOwnerGroup:
+  group = owner->GetGroup()
+  if (!group)
+      group = new Group()
+      if (!group->Create(owner)) { delete group; return; }
+      sGroupMgr->AddGroup(group)
+  if (group->IsFull()) return
+  group->AddMember(bot)
+```
+
+`Group::Create` initialises the group with the owner as leader and persists it
+through `GroupMgr`. `AddMember` wires in the bot as a real member so the
+client party frame shows it immediately.
+
+### 22.3 Group removal on bot logout
+
+`OnPlayerLogout` removes the bot before unregistering it:
+
+```cpp
+if (Group* group = player->GetGroup())
+    group->RemoveMember(player->GetGUID(), GROUP_REMOVEMETHOD_LEAVE);
+```
+
+`GROUP_REMOVEMETHOD_LEAVE` is used (not KICK) because the bot leaving is a
+clean departure, not a punishment. The group remains alive for the owner if
+other members are still present.
+
+### 22.4 Dismiss flow
+
+`.lwbot roster dismiss <id>` resolves to `RenderDismissBot`:
+
+1. `BotPlayerRegistry::FindBotForOwner(player->GetGUID())` — look up active bot.
+2. `group->RemoveMember(bot->GetGUID(), GROUP_REMOVEMETHOD_LEAVE)` — clean party.
+3. `bot->GetSession()->KickPlayer("LivingWorld roster dismiss")` — sets
+   `IsKicked() = true`.
+
+The kick flag is read on the next worldserver update tick by the guard in
+`WorldSession::Update`:
+
+```cpp
+if (!m_Socket && (!m_isBotSession || IsKicked()))
+    return false;
+```
+
+Returning false from `Update` triggers `LogoutPlayer` → `OnPlayerLogout` hook
+→ `UnregisterBotPlayer` + bot-pool DB release. The sequence is fully
+deterministic and produces no orphaned registry entries or group slots.
+
+### 22.5 What remains for multi-bot support
+
+Currently `BotPlayerRegistry::FindBotForOwner` returns the single active bot
+for an owner. When multiple bots per owner are supported, dismiss will need to
+accept a roster-entry ID and route to the correct bot. The grammar already
+carries `rosterEntryId`; the registry lookup is the only piece that will need
+to change.

@@ -1,4 +1,5 @@
 #include "service/AccountAltRuntimeCoordinator.h"
+#include "service/AccountAltSanityChecker.h"
 
 #include <utility>
 
@@ -108,17 +109,16 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
         return BuildBlockedDecision("clone snapshot could not be loaded");
     }
 
-    model::AccountAltSanityCheckResult conservativeSanity;
-    conservativeSanity.passed = false;
-    conservativeSanity.failures.push_back(
-        "sanity-check executor is not implemented yet");
+    AccountAltSanityChecker checker;
+    model::AccountAltSanityCheckResult sanity =
+        checker.Check(*sourceSnapshot, *cloneSnapshot);
 
     model::AccountAltRecoveryPlan recoveryPlan =
         _recoveryService.BuildRecoveryPlan(
             runtime,
             *sourceSnapshot,
             *cloneSnapshot,
-            conservativeSanity);
+            sanity);
 
     AccountAltSpawnDecision decision;
     decision.runtime = runtime;

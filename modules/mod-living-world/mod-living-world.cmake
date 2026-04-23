@@ -5,6 +5,7 @@ set_property(GLOBAL APPEND PROPERTY ACORE_MODULE_TEST_SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/test/AccountAltRuntimeServiceTest.cpp
   ${CMAKE_CURRENT_LIST_DIR}/test/AccountAltRecoveryServiceTest.cpp
   ${CMAKE_CURRENT_LIST_DIR}/test/AccountAltRuntimeCoordinatorTest.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/test/AccountAltSanityCheckerTest.cpp
   ${CMAKE_CURRENT_LIST_DIR}/test/LivingWorldCommandGrammarTest.cpp)
 
 set_property(GLOBAL APPEND PROPERTY ACORE_MODULE_TEST_INCLUDES

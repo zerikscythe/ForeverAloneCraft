@@ -529,13 +529,27 @@ entries through the runtime service and recovery planner:
 - interrupted runtime: build a recovery plan before spawning
 - failed/incomplete runtime: block rather than guessing
 
-### C) Sanity-check layer
+### C) Sanity-check layer — **Complete**
 
-Add a read-only sanity checker before any clone-to-source write. The checker
-should compare source and clone identity/progress and return approved sync
-domains. Initial safe domains should be XP, level, and money only. Inventory,
-equipment, reputation, quests, and mail require separate rules because they
-can corrupt ownership or duplicate/delete items if copied blindly.
+`service::AccountAltSanityChecker` compares source and clone snapshots and
+returns an `AccountAltSanityCheckResult` with approved sync domains.
+
+Rules implemented:
+- Level delta must not exceed 5 (a conservative per-session cap). Larger
+  deltas indicate a data anomaly and send the runtime to manual review.
+- Money gain must not exceed 5,000,000 copper (500 gold). Gains above the
+  cap are similarly sent to manual review.
+- Approved safe domains when both pass: `Experience` and `Money`.
+- Inventory, equipment, reputation, quests, and mail are never approved here.
+
+`AccountAltRuntimeCoordinator::PlanSpawn` now calls the checker instead of
+the previous hardcoded `passed = false` stub, so clone-ahead runtimes with
+plausible progress will reach `SyncCloneToSource` instead of always landing
+in `ManualReviewRequired`.
+
+7 unit tests cover: equal snapshots, small level gain, exact delta cap,
+exceeded level cap, small money gain, exceeded money cap, and both
+checks failing together.
 
 ### D) Sync executor, later and gated
 
@@ -686,6 +700,55 @@ CREATE TABLE IF NOT EXISTS `living_world_bot_account_pool` (
 
 Bot account rows in `acore_auth.account` must be created manually for initial
 testing. The factory reads from this pool table to select a free account.
+
+---
+
+## Completed Slice: Party Membership + Dismiss
+
+The bot player now joins the owner's real `Group` on login and is cleanly
+removed from it on logout or dismiss.
+
+### A) OnPlayerLogin — group join
+
+`LivingWorldPlayerScript::OnPlayerLogin` calls `AddBotToOwnerGroup(bot, owner)`
+immediately after `ScheduleCompanionAI`. The helper:
+- Reads `owner->GetGroup()`. If none exists, creates one via `Group::Create`
+  and registers it with `sGroupMgr->AddGroup`.
+- Skips if the group is already full (`IsFull()`).
+- Calls `group->AddMember(bot)`.
+
+This makes the bot a real party member in the client UI from the moment it
+enters the world.
+
+### B) OnPlayerLogout — explicit group removal
+
+`LogoutPlayer` in core skips automatic group removal when the session has no
+socket (the `m_Socket &&` guard around the group-removal block). Bot sessions
+have no socket, so they were silently left in groups forever.
+
+`OnPlayerLogout` now explicitly calls:
+```cpp
+if (Group* group = player->GetGroup())
+    group->RemoveMember(player->GetGUID(), GROUP_REMOVEMETHOD_LEAVE);
+```
+This fires before `UnregisterBotPlayer` and the bot-pool DB release so the
+group is clean regardless of whether the bot was kicked or timed out.
+
+### C) `.lwbot roster dismiss <id>` — real implementation
+
+`RenderDismissBot` replaced the old `RenderDismissPlaceholder`. It:
+1. Looks up the owner's active bot via `BotPlayerRegistry::FindBotForOwner`.
+2. Removes the bot from its group with `GROUP_REMOVEMETHOD_LEAVE`.
+3. Calls `bot->GetSession()->KickPlayer("LivingWorld roster dismiss")` — this
+   sets `IsKicked()=true`, which causes the null-socket guard in
+   `WorldSession::Update` to return false on the next tick, triggering
+   `LogoutPlayer` and the full cleanup chain.
+
+---
+
+## Completed Slice: Account-Alt Sanity Checker
+
+See section C of "Immediate Next Implementation Slice" above for full detail.
 
 ---
 
