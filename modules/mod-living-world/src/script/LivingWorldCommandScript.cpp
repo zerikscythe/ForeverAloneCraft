@@ -17,6 +17,7 @@
 #include "integration/SqlAccountAltRuntimeRepository.h"
 #include "integration/SqlBotAccountPoolRepository.h"
 #include "integration/SqlCharacterProgressSnapshotRepository.h"
+#include "integration/SqlCharacterProgressSyncRepository.h"
 #include "integration/WorldCommitAction.h"
 #include "model/AccountAltRuntime.h"
 #include "model/PlayerRosterRequest.h"
@@ -345,11 +346,13 @@ bool ExecuteSpawnRosterBodyAction(
     integration::SqlAccountAltRuntimeRepository runtimeRepository;
     integration::SqlBotAccountPoolRepository botAccountPoolRepository;
     integration::SqlCharacterProgressSnapshotRepository snapshotRepository;
+    integration::SqlCharacterProgressSyncRepository syncRepository;
     service::AccountAltRecoveryService recoveryService;
     service::AccountAltRuntimeCoordinator coordinator(
         runtimeRepository,
         botAccountPoolRepository,
         snapshotRepository,
+        syncRepository,
         recoveryService);
 
     std::optional<AccountAltSummary> summary =

@@ -3,6 +3,7 @@
 
 #include <optional>
 #include <vector>
+#include <utility>
 
 namespace living_world
 {
@@ -74,6 +75,26 @@ public:
     int reserveCalls = 0;
 };
 
+class FakeSyncRepository final
+    : public integration::CharacterProgressSyncRepository
+{
+public:
+    bool SyncProgressToCharacter(
+        std::uint64_t characterGuid,
+        model::CharacterProgressSnapshot const& snapshot) override
+    {
+        lastSyncedGuid = characterGuid;
+        lastSyncedSnapshot = snapshot;
+        ++syncCalls;
+        return shouldSucceed;
+    }
+
+    std::uint64_t lastSyncedGuid = 0;
+    std::optional<model::CharacterProgressSnapshot> lastSyncedSnapshot;
+    int syncCalls = 0;
+    bool shouldSucceed = true;
+};
+
 class FakeSnapshotRepository final
     : public integration::CharacterProgressSnapshotRepository
 {
@@ -118,6 +139,7 @@ TEST(AccountAltRuntimeCoordinatorTest, NewRuntimeUsesReservedAccount)
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeSnapshotRepository snapshotRepository;
+    FakeSyncRepository syncRepository;
     AccountAltRecoveryService recoveryService;
 
     botAccountPoolRepository.lease = model::BotAccountLease { 701, "BOT701" };
@@ -127,6 +149,7 @@ TEST(AccountAltRuntimeCoordinatorTest, NewRuntimeUsesReservedAccount)
         runtimeRepository,
         botAccountPoolRepository,
         snapshotRepository,
+        syncRepository,
         recoveryService);
 
     AccountAltSpawnDecision decision = coordinator.PlanSpawn(
@@ -149,6 +172,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeSnapshotRepository snapshotRepository;
+    FakeSyncRepository syncRepository;
     AccountAltRecoveryService recoveryService;
 
     model::AccountAltRuntimeRecord runtime;
@@ -163,6 +187,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
         runtimeRepository,
         botAccountPoolRepository,
         snapshotRepository,
+        syncRepository,
         recoveryService);
 
     AccountAltSpawnDecision decision = coordinator.PlanSpawn(
@@ -177,11 +202,13 @@ TEST(AccountAltRuntimeCoordinatorTest,
     EXPECT_EQ(runtimeRepository.saveCalls, 1);
 }
 
-TEST(AccountAltRuntimeCoordinatorTest, ExistingCloneAheadRequiresManualReview)
+TEST(AccountAltRuntimeCoordinatorTest,
+     ExistingCloneAheadBeyondCapRequiresManualReview)
 {
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeSnapshotRepository snapshotRepository;
+    FakeSyncRepository syncRepository;
     AccountAltRecoveryService recoveryService;
 
     model::AccountAltRuntimeRecord runtime;
@@ -192,12 +219,14 @@ TEST(AccountAltRuntimeCoordinatorTest, ExistingCloneAheadRequiresManualReview)
     runtime.state = model::AccountAltRuntimeState::Active;
     runtimeRepository.Seed(runtime);
     snapshotRepository.sourceSnapshot = Snapshot(10, 200, 1000);
-    snapshotRepository.cloneSnapshot = Snapshot(11, 0, 1500);
+    // Level delta = 10, exceeds the sanity cap of 5 → manual review.
+    snapshotRepository.cloneSnapshot = Snapshot(20, 0, 1500);
 
     AccountAltRuntimeCoordinator coordinator(
         runtimeRepository,
         botAccountPoolRepository,
         snapshotRepository,
+        syncRepository,
         recoveryService);
 
     AccountAltSpawnDecision decision = coordinator.PlanSpawn(
@@ -206,8 +235,53 @@ TEST(AccountAltRuntimeCoordinatorTest, ExistingCloneAheadRequiresManualReview)
         42,
         "Tester");
 
-    EXPECT_EQ(decision.kind,
-              AccountAltSpawnDecisionKind::ManualReviewRequired);
+    EXPECT_EQ(decision.kind, AccountAltSpawnDecisionKind::ManualReviewRequired);
+    EXPECT_EQ(syncRepository.syncCalls, 0);
+}
+
+TEST(AccountAltRuntimeCoordinatorTest,
+     ExistingCloneAheadWithinCapSyncsAndSpawns)
+{
+    FakeRuntimeRepository runtimeRepository;
+    FakeBotAccountPoolRepository botAccountPoolRepository;
+    FakeSnapshotRepository snapshotRepository;
+    FakeSyncRepository syncRepository;
+    AccountAltRecoveryService recoveryService;
+
+    model::AccountAltRuntimeRecord runtime;
+    runtime.sourceAccountId = 7;
+    runtime.sourceCharacterGuid = 9001;
+    runtime.cloneAccountId = 701;
+    runtime.cloneCharacterGuid = 8001;
+    runtime.state = model::AccountAltRuntimeState::Active;
+    runtimeRepository.Seed(runtime);
+    snapshotRepository.sourceSnapshot = Snapshot(10, 200, 1000);
+    // Level delta = 2, money gain = 500 copper — both within sanity caps.
+    snapshotRepository.cloneSnapshot = Snapshot(12, 500, 1500);
+
+    AccountAltRuntimeCoordinator coordinator(
+        runtimeRepository,
+        botAccountPoolRepository,
+        snapshotRepository,
+        syncRepository,
+        recoveryService);
+
+    AccountAltSpawnDecision decision = coordinator.PlanSpawn(
+        7,
+        9001,
+        42,
+        "Tester");
+
+    EXPECT_EQ(decision.kind, AccountAltSpawnDecisionKind::SpawnUsingPersistentClone);
+    EXPECT_EQ(syncRepository.syncCalls, 1);
+    EXPECT_EQ(syncRepository.lastSyncedGuid, 9001u);
+    ASSERT_TRUE(syncRepository.lastSyncedSnapshot);
+    EXPECT_EQ(syncRepository.lastSyncedSnapshot->level, 12u);
+    EXPECT_EQ(syncRepository.lastSyncedSnapshot->money, 1500u);
+    // Runtime should end up Active after sync.
+    ASSERT_TRUE(runtimeRepository.savedRuntime);
+    EXPECT_EQ(runtimeRepository.savedRuntime->state,
+              model::AccountAltRuntimeState::Active);
 }
 } // namespace service
 } // namespace living_world

@@ -3,6 +3,7 @@
 #include "integration/AccountAltRuntimeRepository.h"
 #include "integration/BotAccountPoolRepository.h"
 #include "integration/CharacterProgressSnapshotRepository.h"
+#include "integration/CharacterProgressSyncRepository.h"
 #include "model/AccountAltRuntime.h"
 #include "service/AccountAltRecoveryService.h"
 #include "service/AccountAltRuntimeService.h"
@@ -41,6 +42,7 @@ public:
         integration::AccountAltRuntimeRepository& runtimeRepository,
         integration::BotAccountPoolRepository& botAccountPoolRepository,
         integration::CharacterProgressSnapshotRepository const& snapshotRepository,
+        integration::CharacterProgressSyncRepository& syncRepository,
         AccountAltRecoveryService const& recoveryService);
 
     AccountAltSpawnDecision PlanSpawn(
@@ -52,6 +54,7 @@ public:
 private:
     integration::AccountAltRuntimeRepository& _runtimeRepository;
     integration::CharacterProgressSnapshotRepository const& _snapshotRepository;
+    integration::CharacterProgressSyncRepository& _syncRepository;
     AccountAltRecoveryService const& _recoveryService;
     AccountAltRuntimeService _runtimeService;
 };

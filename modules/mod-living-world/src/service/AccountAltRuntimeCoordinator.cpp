@@ -1,5 +1,6 @@
 #include "service/AccountAltRuntimeCoordinator.h"
 #include "service/AccountAltSanityChecker.h"
+#include "service/AccountAltSyncExecutor.h"
 
 #include <utility>
 
@@ -22,9 +23,11 @@ AccountAltRuntimeCoordinator::AccountAltRuntimeCoordinator(
     integration::AccountAltRuntimeRepository& runtimeRepository,
     integration::BotAccountPoolRepository& botAccountPoolRepository,
     integration::CharacterProgressSnapshotRepository const& snapshotRepository,
+    integration::CharacterProgressSyncRepository& syncRepository,
     AccountAltRecoveryService const& recoveryService)
     : _runtimeRepository(runtimeRepository),
       _snapshotRepository(snapshotRepository),
+      _syncRepository(syncRepository),
       _recoveryService(recoveryService),
       _runtimeService(runtimeRepository, botAccountPoolRepository)
 {
@@ -133,8 +136,18 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
                 AccountAltSpawnDecisionKind::SpawnUsingPersistentClone;
             return decision;
         case model::AccountAltRecoveryPlanKind::SyncCloneToSource:
-            decision.kind = AccountAltSpawnDecisionKind::RecoveryRequired;
+        {
+            AccountAltSyncExecutor executor(_runtimeRepository, _syncRepository);
+            if (!executor.Execute(runtime, *cloneSnapshot, recoveryPlan.domainsToSync))
+            {
+                decision.kind = AccountAltSpawnDecisionKind::ManualReviewRequired;
+                decision.reason = "sync execution failed; manual review required";
+                return decision;
+            }
+            decision.kind = AccountAltSpawnDecisionKind::SpawnUsingPersistentClone;
+            decision.reason = "sync succeeded; clone is current";
             return decision;
+        }
         case model::AccountAltRecoveryPlanKind::ManualReview:
             decision.kind = AccountAltSpawnDecisionKind::ManualReviewRequired;
             return decision;
