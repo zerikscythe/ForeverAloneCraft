@@ -59,6 +59,7 @@ model::AccountAltRuntimeDecision BuildExistingRuntimeDecision(
         case model::AccountAltRuntimeState::PreparingClone:
         case model::AccountAltRuntimeState::Recovering:
         case model::AccountAltRuntimeState::SyncingBack:
+        case model::AccountAltRuntimeState::SyncingEquipment:
             decision.kind =
                 model::AccountAltRuntimeDecisionKind::RecoverCloneBeforeUse;
             break;

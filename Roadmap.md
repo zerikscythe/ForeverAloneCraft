@@ -798,9 +798,13 @@ Current implementation status:
   `AccountAltEquipmentSyncExecutor` now provide the first transactional
   equipment-only write path by duplicating clone equipped `item_instance` rows
   onto the source character with new item guids.
-- This equipment executor is intentionally not wired into live recovery yet;
-  the next slice should connect it through a higher-level item recovery plan
-  after snapshot + sanity results are plumbed together.
+- `AccountAltItemRecoveryService` now plans `NoAction`,
+  `SyncEquipmentToSource`, or `ManualReview` from item-sanity results.
+- `AccountAltRuntimeCoordinator` now runs item snapshot loading, item sanity,
+  and equipment recovery after progress recovery succeeds or when the clone is
+  otherwise reusable.
+- `AccountAltStartupRecoveryService` now distinguishes `SyncingBack`
+  (progress retry) from `SyncingEquipment` (equipment retry) on owner login.
 
 After those read/sanity layers exist, the next follow-on slice should be the
 first transactional equipment/inventory sync executor.

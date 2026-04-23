@@ -1,6 +1,8 @@
 #include "Chat.h"
 #include "ai/CompanionAI.h"
 #include "integration/SqlAccountAltRuntimeRepository.h"
+#include "integration/SqlCharacterEquipmentSyncRepository.h"
+#include "integration/SqlCharacterItemSnapshotRepository.h"
 #include "integration/SqlCharacterProgressSnapshotRepository.h"
 #include "integration/SqlCharacterProgressSyncRepository.h"
 #include "service/AccountAltRecoveryService.h"
@@ -27,12 +29,18 @@ void RunOwnerStartupRecovery(Player* player)
     }
 
     living_world::integration::SqlAccountAltRuntimeRepository runtimeRepository;
+    living_world::integration::SqlCharacterItemSnapshotRepository
+        itemSnapshotRepository;
+    living_world::integration::SqlCharacterEquipmentSyncRepository
+        equipmentSyncRepository;
     living_world::integration::SqlCharacterProgressSnapshotRepository
         snapshotRepository;
     living_world::integration::SqlCharacterProgressSyncRepository syncRepository;
     living_world::service::AccountAltRecoveryService recoveryService;
     living_world::service::AccountAltStartupRecoveryService startupRecoveryService(
         runtimeRepository,
+        itemSnapshotRepository,
+        equipmentSyncRepository,
         snapshotRepository,
         syncRepository,
         recoveryService);

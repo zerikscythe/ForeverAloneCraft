@@ -73,7 +73,7 @@ model::AccountAltRuntimeRecord BuildRuntime()
 }
 } // namespace
 
-TEST(AccountAltEquipmentSyncExecutorTest, MarksSyncingBackThenActiveOnSuccess)
+TEST(AccountAltEquipmentSyncExecutorTest, MarksSyncingEquipmentThenActiveOnSuccess)
 {
     FakeRuntimeRepository runtimeRepository;
     FakeEquipmentSyncRepository equipmentSyncRepository;
@@ -96,7 +96,7 @@ TEST(AccountAltEquipmentSyncExecutorTest, MarksSyncingBackThenActiveOnSuccess)
     EXPECT_EQ(runtimeRepository.saveCalls, 2);
 }
 
-TEST(AccountAltEquipmentSyncExecutorTest, LeavesSyncingBackOnFailure)
+TEST(AccountAltEquipmentSyncExecutorTest, LeavesSyncingEquipmentOnFailure)
 {
     FakeRuntimeRepository runtimeRepository;
     FakeEquipmentSyncRepository equipmentSyncRepository;
@@ -116,7 +116,7 @@ TEST(AccountAltEquipmentSyncExecutorTest, LeavesSyncingBackOnFailure)
     EXPECT_EQ(equipmentSyncRepository.syncCalls, 1);
     ASSERT_TRUE(runtimeRepository.savedRuntime);
     EXPECT_EQ(runtimeRepository.savedRuntime->state,
-              model::AccountAltRuntimeState::SyncingBack);
+              model::AccountAltRuntimeState::SyncingEquipment);
     EXPECT_EQ(runtimeRepository.saveCalls, 1);
 }
 } // namespace service

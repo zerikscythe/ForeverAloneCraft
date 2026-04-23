@@ -3,6 +3,8 @@
 #include "integration/AccountAltRuntimeRepository.h"
 #include "integration/BotAccountPoolRepository.h"
 #include "integration/CharacterCloneMaterializer.h"
+#include "integration/CharacterEquipmentSyncRepository.h"
+#include "integration/CharacterItemSnapshotRepository.h"
 #include "integration/CharacterProgressSnapshotRepository.h"
 #include "integration/CharacterProgressSyncRepository.h"
 #include "model/AccountAltRuntime.h"
@@ -43,6 +45,8 @@ public:
         integration::AccountAltRuntimeRepository& runtimeRepository,
         integration::BotAccountPoolRepository& botAccountPoolRepository,
         integration::CharacterCloneMaterializer& cloneMaterializer,
+        integration::CharacterItemSnapshotRepository const& itemSnapshotRepository,
+        integration::CharacterEquipmentSyncRepository& equipmentSyncRepository,
         integration::CharacterProgressSnapshotRepository const& snapshotRepository,
         integration::CharacterProgressSyncRepository& syncRepository,
         AccountAltRecoveryService const& recoveryService);
@@ -56,6 +60,8 @@ public:
 private:
     integration::AccountAltRuntimeRepository& _runtimeRepository;
     integration::CharacterCloneMaterializer& _cloneMaterializer;
+    integration::CharacterItemSnapshotRepository const& _itemSnapshotRepository;
+    integration::CharacterEquipmentSyncRepository& _equipmentSyncRepository;
     integration::CharacterProgressSnapshotRepository const& _snapshotRepository;
     integration::CharacterProgressSyncRepository& _syncRepository;
     AccountAltRecoveryService const& _recoveryService;

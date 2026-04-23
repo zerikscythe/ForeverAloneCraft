@@ -2,8 +2,8 @@
 #include "gtest/gtest.h"
 
 #include <optional>
-#include <vector>
 #include <utility>
+#include <vector>
 
 namespace living_world
 {
@@ -92,6 +92,50 @@ public:
     int materializeCalls = 0;
 };
 
+class FakeItemSnapshotRepository final
+    : public integration::CharacterItemSnapshotRepository
+{
+public:
+    std::optional<model::CharacterItemSnapshot> LoadSnapshot(
+        std::uint64_t characterGuid) const override
+    {
+        if (characterGuid == sourceGuid)
+        {
+            return sourceSnapshot;
+        }
+
+        if (characterGuid == cloneGuid)
+        {
+            return cloneSnapshot;
+        }
+
+        return std::nullopt;
+    }
+
+    std::uint64_t sourceGuid = 9001;
+    std::uint64_t cloneGuid = 8001;
+    std::optional<model::CharacterItemSnapshot> sourceSnapshot;
+    std::optional<model::CharacterItemSnapshot> cloneSnapshot;
+};
+
+class FakeEquipmentSyncRepository final
+    : public integration::CharacterEquipmentSyncRepository
+{
+public:
+    bool SyncEquipmentToCharacter(
+        std::uint64_t,
+        model::CharacterItemSnapshot const&,
+        std::uint64_t,
+        model::CharacterItemSnapshot const&) override
+    {
+        ++syncCalls;
+        return shouldSucceed;
+    }
+
+    int syncCalls = 0;
+    bool shouldSucceed = true;
+};
+
 class FakeSyncRepository final
     : public integration::CharacterProgressSyncRepository
 {
@@ -156,6 +200,8 @@ TEST(AccountAltRuntimeCoordinatorTest, NewRuntimeUsesReservedAccount)
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
+    FakeItemSnapshotRepository itemSnapshotRepository;
+    FakeEquipmentSyncRepository equipmentSyncRepository;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
     AccountAltRecoveryService recoveryService;
@@ -172,6 +218,8 @@ TEST(AccountAltRuntimeCoordinatorTest, NewRuntimeUsesReservedAccount)
         runtimeRepository,
         botAccountPoolRepository,
         cloneMaterializer,
+        itemSnapshotRepository,
+        equipmentSyncRepository,
         snapshotRepository,
         syncRepository,
         recoveryService);
@@ -198,6 +246,8 @@ TEST(AccountAltRuntimeCoordinatorTest,
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
+    FakeItemSnapshotRepository itemSnapshotRepository;
+    FakeEquipmentSyncRepository equipmentSyncRepository;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
     AccountAltRecoveryService recoveryService;
@@ -219,6 +269,8 @@ TEST(AccountAltRuntimeCoordinatorTest,
         runtimeRepository,
         botAccountPoolRepository,
         cloneMaterializer,
+        itemSnapshotRepository,
+        equipmentSyncRepository,
         snapshotRepository,
         syncRepository,
         recoveryService);
@@ -243,6 +295,8 @@ TEST(AccountAltRuntimeCoordinatorTest,
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
+    FakeItemSnapshotRepository itemSnapshotRepository;
+    FakeEquipmentSyncRepository equipmentSyncRepository;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
     AccountAltRecoveryService recoveryService;
@@ -255,13 +309,14 @@ TEST(AccountAltRuntimeCoordinatorTest,
     runtime.state = model::AccountAltRuntimeState::Active;
     runtimeRepository.Seed(runtime);
     snapshotRepository.sourceSnapshot = Snapshot(10, 200, 1000);
-    // Level delta = 10, exceeds the sanity cap of 5 → manual review.
     snapshotRepository.cloneSnapshot = Snapshot(20, 0, 1500);
 
     AccountAltRuntimeCoordinator coordinator(
         runtimeRepository,
         botAccountPoolRepository,
         cloneMaterializer,
+        itemSnapshotRepository,
+        equipmentSyncRepository,
         snapshotRepository,
         syncRepository,
         recoveryService);
@@ -282,6 +337,8 @@ TEST(AccountAltRuntimeCoordinatorTest,
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
+    FakeItemSnapshotRepository itemSnapshotRepository;
+    FakeEquipmentSyncRepository equipmentSyncRepository;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
     AccountAltRecoveryService recoveryService;
@@ -294,13 +351,16 @@ TEST(AccountAltRuntimeCoordinatorTest,
     runtime.state = model::AccountAltRuntimeState::Active;
     runtimeRepository.Seed(runtime);
     snapshotRepository.sourceSnapshot = Snapshot(10, 200, 1000);
-    // Level delta = 2, money gain = 500 copper — both within sanity caps.
     snapshotRepository.cloneSnapshot = Snapshot(12, 500, 1500);
+    itemSnapshotRepository.sourceSnapshot = model::CharacterItemSnapshot {};
+    itemSnapshotRepository.cloneSnapshot = model::CharacterItemSnapshot {};
 
     AccountAltRuntimeCoordinator coordinator(
         runtimeRepository,
         botAccountPoolRepository,
         cloneMaterializer,
+        itemSnapshotRepository,
+        equipmentSyncRepository,
         snapshotRepository,
         syncRepository,
         recoveryService);
@@ -311,16 +371,17 @@ TEST(AccountAltRuntimeCoordinatorTest,
         42,
         "Tester");
 
-    EXPECT_EQ(decision.kind, AccountAltSpawnDecisionKind::SpawnUsingPersistentClone);
+    EXPECT_EQ(decision.kind,
+              AccountAltSpawnDecisionKind::SpawnUsingPersistentClone);
     EXPECT_EQ(syncRepository.syncCalls, 1);
     EXPECT_EQ(syncRepository.lastSyncedGuid, 9001u);
     ASSERT_TRUE(syncRepository.lastSyncedSnapshot);
     EXPECT_EQ(syncRepository.lastSyncedSnapshot->level, 12u);
     EXPECT_EQ(syncRepository.lastSyncedSnapshot->money, 1500u);
-    // Runtime should end up Active after sync.
     ASSERT_TRUE(runtimeRepository.savedRuntime);
     EXPECT_EQ(runtimeRepository.savedRuntime->state,
               model::AccountAltRuntimeState::Active);
+    EXPECT_EQ(equipmentSyncRepository.syncCalls, 0);
 }
 
 TEST(AccountAltRuntimeCoordinatorTest, BlocksWhenCloneMaterializationFails)
@@ -328,6 +389,8 @@ TEST(AccountAltRuntimeCoordinatorTest, BlocksWhenCloneMaterializationFails)
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
+    FakeItemSnapshotRepository itemSnapshotRepository;
+    FakeEquipmentSyncRepository equipmentSyncRepository;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
     AccountAltRecoveryService recoveryService;
@@ -340,6 +403,8 @@ TEST(AccountAltRuntimeCoordinatorTest, BlocksWhenCloneMaterializationFails)
         runtimeRepository,
         botAccountPoolRepository,
         cloneMaterializer,
+        itemSnapshotRepository,
+        equipmentSyncRepository,
         snapshotRepository,
         syncRepository,
         recoveryService);
@@ -352,6 +417,66 @@ TEST(AccountAltRuntimeCoordinatorTest, BlocksWhenCloneMaterializationFails)
 
     EXPECT_EQ(decision.kind, AccountAltSpawnDecisionKind::Blocked);
     EXPECT_EQ(decision.reason, "bot account has too many characters");
+}
+
+TEST(AccountAltRuntimeCoordinatorTest, ReuseCloneRunsEquipmentRecoveryWhenApproved)
+{
+    FakeRuntimeRepository runtimeRepository;
+    FakeBotAccountPoolRepository botAccountPoolRepository;
+    FakeCloneMaterializer cloneMaterializer;
+    FakeItemSnapshotRepository itemSnapshotRepository;
+    FakeEquipmentSyncRepository equipmentSyncRepository;
+    FakeSnapshotRepository snapshotRepository;
+    FakeSyncRepository syncRepository;
+    AccountAltRecoveryService recoveryService;
+
+    model::AccountAltRuntimeRecord runtime;
+    runtime.sourceAccountId = 7;
+    runtime.sourceCharacterGuid = 9001;
+    runtime.cloneAccountId = 701;
+    runtime.cloneCharacterGuid = 8001;
+    runtime.state = model::AccountAltRuntimeState::Active;
+    runtimeRepository.Seed(runtime);
+    snapshotRepository.sourceSnapshot = Snapshot(10, 200, 1000);
+    snapshotRepository.cloneSnapshot = Snapshot(10, 200, 1000);
+
+    model::CharacterItemSnapshot sourceItems;
+    model::CharacterItemSnapshot cloneItems;
+    model::CharacterItemSnapshotEntry sourceMainHand;
+    sourceMainHand.itemGuid = 1001;
+    sourceMainHand.itemEntry = 5001;
+    sourceMainHand.itemCount = 1;
+    sourceMainHand.slot = 15;
+    sourceMainHand.domain = model::CharacterItemStorageDomain::Equipment;
+    sourceItems.equipmentItems.push_back(sourceMainHand);
+
+    model::CharacterItemSnapshotEntry cloneMainHand = sourceMainHand;
+    cloneMainHand.itemGuid = 2001;
+    cloneMainHand.itemEntry = 5002;
+    cloneItems.equipmentItems.push_back(cloneMainHand);
+
+    itemSnapshotRepository.sourceSnapshot = sourceItems;
+    itemSnapshotRepository.cloneSnapshot = cloneItems;
+
+    AccountAltRuntimeCoordinator coordinator(
+        runtimeRepository,
+        botAccountPoolRepository,
+        cloneMaterializer,
+        itemSnapshotRepository,
+        equipmentSyncRepository,
+        snapshotRepository,
+        syncRepository,
+        recoveryService);
+
+    AccountAltSpawnDecision decision = coordinator.PlanSpawn(
+        7,
+        9001,
+        42,
+        "Tester");
+
+    EXPECT_EQ(decision.kind,
+              AccountAltSpawnDecisionKind::SpawnUsingPersistentClone);
+    EXPECT_EQ(equipmentSyncRepository.syncCalls, 1);
 }
 } // namespace service
 } // namespace living_world

@@ -29,6 +29,8 @@ model::AccountAltRuntimeState FromDbState(std::uint8_t state)
             return model::AccountAltRuntimeState::Recovering;
         case 4:
             return model::AccountAltRuntimeState::Failed;
+        case 5:
+            return model::AccountAltRuntimeState::SyncingEquipment;
         default:
             return model::AccountAltRuntimeState::Failed;
     }

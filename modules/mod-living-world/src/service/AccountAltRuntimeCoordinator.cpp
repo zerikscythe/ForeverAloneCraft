@@ -1,6 +1,9 @@
 #include "service/AccountAltRuntimeCoordinator.h"
+#include "service/AccountAltEquipmentSyncExecutor.h"
+#include "service/AccountAltItemRecoveryService.h"
 #include "service/AccountAltSanityChecker.h"
 #include "service/AccountAltSyncExecutor.h"
+#include "service/CharacterItemSanityChecker.h"
 
 #include <utility>
 
@@ -17,17 +20,29 @@ AccountAltSpawnDecision BuildBlockedDecision(std::string reason)
     decision.reason = std::move(reason);
     return decision;
 }
+
+AccountAltSpawnDecision BuildManualReviewDecision(std::string reason)
+{
+    AccountAltSpawnDecision decision;
+    decision.kind = AccountAltSpawnDecisionKind::ManualReviewRequired;
+    decision.reason = std::move(reason);
+    return decision;
+}
 } // namespace
 
 AccountAltRuntimeCoordinator::AccountAltRuntimeCoordinator(
     integration::AccountAltRuntimeRepository& runtimeRepository,
     integration::BotAccountPoolRepository& botAccountPoolRepository,
     integration::CharacterCloneMaterializer& cloneMaterializer,
+    integration::CharacterItemSnapshotRepository const& itemSnapshotRepository,
+    integration::CharacterEquipmentSyncRepository& equipmentSyncRepository,
     integration::CharacterProgressSnapshotRepository const& snapshotRepository,
     integration::CharacterProgressSyncRepository& syncRepository,
     AccountAltRecoveryService const& recoveryService)
     : _runtimeRepository(runtimeRepository),
       _cloneMaterializer(cloneMaterializer),
+      _itemSnapshotRepository(itemSnapshotRepository),
+      _equipmentSyncRepository(equipmentSyncRepository),
       _snapshotRepository(snapshotRepository),
       _syncRepository(syncRepository),
       _recoveryService(recoveryService),
@@ -150,12 +165,77 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
     decision.spawnCharacterGuid = runtime.cloneCharacterGuid;
     decision.reason = recoveryPlan.reason;
 
+    auto applyItemRecovery =
+        [&](model::AccountAltRuntimeRecord const& currentRuntime)
+        -> AccountAltSpawnDecision
+    {
+        std::optional<model::CharacterItemSnapshot> sourceItems =
+            _itemSnapshotRepository.LoadSnapshot(currentRuntime.sourceCharacterGuid);
+        std::optional<model::CharacterItemSnapshot> cloneItems =
+            _itemSnapshotRepository.LoadSnapshot(currentRuntime.cloneCharacterGuid);
+        if (!sourceItems || !cloneItems)
+        {
+            return BuildBlockedDecision("item snapshots could not be loaded");
+        }
+
+        CharacterItemSanityChecker itemChecker;
+        model::AccountAltSanityCheckResult itemSanity =
+            itemChecker.Check(*sourceItems, *cloneItems);
+        AccountAltItemRecoveryService itemRecoveryService;
+        model::AccountAltItemRecoveryPlan itemPlan =
+            itemRecoveryService.BuildRecoveryPlan(itemSanity);
+
+        switch (itemPlan.kind)
+        {
+            case model::AccountAltItemRecoveryPlanKind::NoAction:
+            {
+                AccountAltSpawnDecision itemDecision;
+                itemDecision.kind =
+                    AccountAltSpawnDecisionKind::SpawnUsingPersistentClone;
+                itemDecision.runtime = currentRuntime;
+                itemDecision.botAccountId = currentRuntime.cloneAccountId;
+                itemDecision.spawnCharacterGuid =
+                    currentRuntime.cloneCharacterGuid;
+                itemDecision.reason = itemPlan.reason;
+                return itemDecision;
+            }
+            case model::AccountAltItemRecoveryPlanKind::SyncEquipmentToSource:
+            {
+                AccountAltEquipmentSyncExecutor equipmentExecutor(
+                    _runtimeRepository,
+                    _equipmentSyncRepository);
+                if (!equipmentExecutor.Execute(
+                        currentRuntime,
+                        *sourceItems,
+                        *cloneItems))
+                {
+                    return BuildManualReviewDecision(
+                        "equipment sync execution failed");
+                }
+
+                AccountAltSpawnDecision itemDecision;
+                itemDecision.kind =
+                    AccountAltSpawnDecisionKind::SpawnUsingPersistentClone;
+                itemDecision.runtime = currentRuntime;
+                itemDecision.botAccountId = currentRuntime.cloneAccountId;
+                itemDecision.spawnCharacterGuid =
+                    currentRuntime.cloneCharacterGuid;
+                itemDecision.reason = itemPlan.reason;
+                return itemDecision;
+            }
+            case model::AccountAltItemRecoveryPlanKind::ManualReview:
+                return BuildManualReviewDecision(itemPlan.reason);
+            case model::AccountAltItemRecoveryPlanKind::Blocked:
+                return BuildBlockedDecision(itemPlan.reason);
+        }
+
+        return BuildBlockedDecision("unknown item recovery decision");
+    };
+
     switch (recoveryPlan.kind)
     {
         case model::AccountAltRecoveryPlanKind::ReuseClone:
-            decision.kind =
-                AccountAltSpawnDecisionKind::SpawnUsingPersistentClone;
-            return decision;
+            return applyItemRecovery(runtime);
         case model::AccountAltRecoveryPlanKind::SyncCloneToSource:
         {
             AccountAltSyncExecutor executor(_runtimeRepository, _syncRepository);
@@ -165,9 +245,8 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
                 decision.reason = "sync execution failed; manual review required";
                 return decision;
             }
-            decision.kind = AccountAltSpawnDecisionKind::SpawnUsingPersistentClone;
-            decision.reason = "sync succeeded; clone is current";
-            return decision;
+            runtime.sourceSnapshot = *cloneSnapshot;
+            return applyItemRecovery(runtime);
         }
         case model::AccountAltRecoveryPlanKind::ManualReview:
             decision.kind = AccountAltSpawnDecisionKind::ManualReviewRequired;

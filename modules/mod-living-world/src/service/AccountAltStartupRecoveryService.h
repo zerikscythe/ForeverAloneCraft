@@ -1,6 +1,8 @@
 #pragma once
 
 #include "integration/AccountAltRuntimeRepository.h"
+#include "integration/CharacterEquipmentSyncRepository.h"
+#include "integration/CharacterItemSnapshotRepository.h"
 #include "integration/CharacterProgressSnapshotRepository.h"
 #include "integration/CharacterProgressSyncRepository.h"
 #include "service/AccountAltRecoveryService.h"
@@ -29,6 +31,8 @@ class AccountAltStartupRecoveryService
 public:
     AccountAltStartupRecoveryService(
         integration::AccountAltRuntimeRepository& runtimeRepository,
+        integration::CharacterItemSnapshotRepository const& itemSnapshotRepository,
+        integration::CharacterEquipmentSyncRepository& equipmentSyncRepository,
         integration::CharacterProgressSnapshotRepository const& snapshotRepository,
         integration::CharacterProgressSyncRepository& syncRepository,
         AccountAltRecoveryService const& recoveryService);
@@ -38,6 +42,8 @@ public:
 
 private:
     integration::AccountAltRuntimeRepository& _runtimeRepository;
+    integration::CharacterItemSnapshotRepository const& _itemSnapshotRepository;
+    integration::CharacterEquipmentSyncRepository& _equipmentSyncRepository;
     integration::CharacterProgressSnapshotRepository const& _snapshotRepository;
     integration::CharacterProgressSyncRepository& _syncRepository;
     AccountAltRecoveryService const& _recoveryService;

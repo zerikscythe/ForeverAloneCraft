@@ -1226,9 +1226,14 @@ The first observation layer for item domains now exists as well:
   the source character, and reinserts them into slots 0-18 inside one DB
   transaction. Wrapped gift-backed items are blocked for now.
 - `service::AccountAltEquipmentSyncExecutor` mirrors the existing progress
-  executor state machine: mark `SyncingBack`, call the repository, then mark
-  `Active` on success. It is intentionally not yet wired into the live account-
-  alt recovery planner.
+  executor state machine: mark `SyncingEquipment`, call the repository, then
+  mark `Active` on success.
+- `service::AccountAltItemRecoveryService` is the higher-level item recovery
+  seam. It consumes item-sanity results and decides whether to do nothing,
+  sync equipment, or require manual review.
+- `AccountAltRuntimeCoordinator` now applies item recovery after successful
+  progress recovery or on clone reuse. `AccountAltStartupRecoveryService` also
+  understands `SyncingEquipment` and can retry the equipment executor on login.
 
 ### 21.2 Recovery sequence
 

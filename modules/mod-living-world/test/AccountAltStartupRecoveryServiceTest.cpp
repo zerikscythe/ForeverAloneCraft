@@ -81,6 +81,50 @@ public:
     std::optional<model::CharacterProgressSnapshot> cloneSnapshot;
 };
 
+class FakeItemSnapshotRepository final
+    : public integration::CharacterItemSnapshotRepository
+{
+public:
+    std::optional<model::CharacterItemSnapshot> LoadSnapshot(
+        std::uint64_t characterGuid) const override
+    {
+        if (characterGuid == sourceGuid)
+        {
+            return sourceSnapshot;
+        }
+
+        if (characterGuid == cloneGuid)
+        {
+            return cloneSnapshot;
+        }
+
+        return std::nullopt;
+    }
+
+    std::uint64_t sourceGuid = 9001;
+    std::uint64_t cloneGuid = 8001;
+    std::optional<model::CharacterItemSnapshot> sourceSnapshot;
+    std::optional<model::CharacterItemSnapshot> cloneSnapshot;
+};
+
+class FakeEquipmentSyncRepository final
+    : public integration::CharacterEquipmentSyncRepository
+{
+public:
+    bool SyncEquipmentToCharacter(
+        std::uint64_t,
+        model::CharacterItemSnapshot const&,
+        std::uint64_t,
+        model::CharacterItemSnapshot const&) override
+    {
+        ++syncCalls;
+        return shouldSucceed;
+    }
+
+    int syncCalls = 0;
+    bool shouldSucceed = true;
+};
+
 class FakeSyncRepository final
     : public integration::CharacterProgressSyncRepository
 {
@@ -132,6 +176,8 @@ model::CharacterProgressSnapshot Snapshot(
 TEST(AccountAltStartupRecoveryServiceTest, RetriesInterruptedSyncOnLogin)
 {
     FakeRuntimeRepository runtimeRepository;
+    FakeItemSnapshotRepository itemSnapshotRepository;
+    FakeEquipmentSyncRepository equipmentSyncRepository;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
     AccountAltRecoveryService recoveryService;
@@ -140,9 +186,13 @@ TEST(AccountAltStartupRecoveryServiceTest, RetriesInterruptedSyncOnLogin)
         BuildRuntime(model::AccountAltRuntimeState::SyncingBack));
     snapshotRepository.sourceSnapshot = Snapshot(10, 200, 1000);
     snapshotRepository.cloneSnapshot = Snapshot(12, 500, 1500);
+    itemSnapshotRepository.sourceSnapshot = model::CharacterItemSnapshot {};
+    itemSnapshotRepository.cloneSnapshot = model::CharacterItemSnapshot {};
 
     AccountAltStartupRecoveryService service(
         runtimeRepository,
+        itemSnapshotRepository,
+        equipmentSyncRepository,
         snapshotRepository,
         syncRepository,
         recoveryService);
@@ -165,6 +215,8 @@ TEST(AccountAltStartupRecoveryServiceTest,
      FlagsManualReviewWhenInterruptedSyncLooksImplausible)
 {
     FakeRuntimeRepository runtimeRepository;
+    FakeItemSnapshotRepository itemSnapshotRepository;
+    FakeEquipmentSyncRepository equipmentSyncRepository;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
     AccountAltRecoveryService recoveryService;
@@ -173,9 +225,13 @@ TEST(AccountAltStartupRecoveryServiceTest,
         BuildRuntime(model::AccountAltRuntimeState::SyncingBack));
     snapshotRepository.sourceSnapshot = Snapshot(10, 200, 1000);
     snapshotRepository.cloneSnapshot = Snapshot(20, 0, 1500);
+    itemSnapshotRepository.sourceSnapshot = model::CharacterItemSnapshot {};
+    itemSnapshotRepository.cloneSnapshot = model::CharacterItemSnapshot {};
 
     AccountAltStartupRecoveryService service(
         runtimeRepository,
+        itemSnapshotRepository,
+        equipmentSyncRepository,
         snapshotRepository,
         syncRepository,
         recoveryService);
@@ -192,6 +248,8 @@ TEST(AccountAltStartupRecoveryServiceTest,
      ReportsPendingRecoveryWithoutWritingForActiveCloneAheadRuntime)
 {
     FakeRuntimeRepository runtimeRepository;
+    FakeItemSnapshotRepository itemSnapshotRepository;
+    FakeEquipmentSyncRepository equipmentSyncRepository;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
     AccountAltRecoveryService recoveryService;
@@ -200,9 +258,13 @@ TEST(AccountAltStartupRecoveryServiceTest,
         BuildRuntime(model::AccountAltRuntimeState::Active));
     snapshotRepository.sourceSnapshot = Snapshot(10, 200, 1000);
     snapshotRepository.cloneSnapshot = Snapshot(12, 500, 1500);
+    itemSnapshotRepository.sourceSnapshot = model::CharacterItemSnapshot {};
+    itemSnapshotRepository.cloneSnapshot = model::CharacterItemSnapshot {};
 
     AccountAltStartupRecoveryService service(
         runtimeRepository,
+        itemSnapshotRepository,
+        equipmentSyncRepository,
         snapshotRepository,
         syncRepository,
         recoveryService);

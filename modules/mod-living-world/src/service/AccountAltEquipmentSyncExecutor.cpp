@@ -18,7 +18,7 @@ bool AccountAltEquipmentSyncExecutor::Execute(
     model::CharacterItemSnapshot const& cloneSnapshot)
 {
     model::AccountAltRuntimeRecord mutableRuntime = runtime;
-    mutableRuntime.state = model::AccountAltRuntimeState::SyncingBack;
+    mutableRuntime.state = model::AccountAltRuntimeState::SyncingEquipment;
     _runtimeRepository.SaveRuntime(mutableRuntime);
 
     if (!_equipmentSyncRepository.SyncEquipmentToCharacter(

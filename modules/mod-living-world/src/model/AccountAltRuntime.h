@@ -19,7 +19,8 @@ enum class AccountAltRuntimeState
     Active,
     SyncingBack,
     Recovering,
-    Failed
+    Failed,
+    SyncingEquipment
 };
 
 enum class AccountAltRuntimeDecisionKind
@@ -47,6 +48,14 @@ enum class AccountAltRecoveryPlanKind
     NoAction,
     ReuseClone,
     SyncCloneToSource,
+    ManualReview,
+    Blocked
+};
+
+enum class AccountAltItemRecoveryPlanKind
+{
+    NoAction,
+    SyncEquipmentToSource,
     ManualReview,
     Blocked
 };
@@ -110,6 +119,14 @@ struct AccountAltRecoveryPlan
     AccountAltRuntimeRecord runtime;
     bool cloneProgressIsAhead = false;
     bool requiresSanityCheck = false;
+    std::vector<AccountAltSyncDomain> domainsToSync;
+    std::string reason;
+};
+
+struct AccountAltItemRecoveryPlan
+{
+    AccountAltItemRecoveryPlanKind kind =
+        AccountAltItemRecoveryPlanKind::NoAction;
     std::vector<AccountAltSyncDomain> domainsToSync;
     std::string reason;
 };
