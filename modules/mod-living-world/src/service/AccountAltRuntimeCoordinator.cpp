@@ -1,11 +1,14 @@
 #include "service/AccountAltRuntimeCoordinator.h"
 #include "Log.h"
 #include "service/AccountAltEquipmentSyncExecutor.h"
+#include "service/AccountAltBankSyncExecutor.h"
+#include "service/AccountAltInventorySyncExecutor.h"
 #include "service/AccountAltItemRecoveryService.h"
 #include "service/AccountAltSanityChecker.h"
 #include "service/AccountAltSyncExecutor.h"
 #include "service/CharacterItemSanityChecker.h"
 
+#include <algorithm>
 #include <utility>
 
 namespace living_world
@@ -36,17 +39,23 @@ AccountAltRuntimeCoordinator::AccountAltRuntimeCoordinator(
     integration::BotAccountPoolRepository& botAccountPoolRepository,
     integration::CharacterCloneMaterializer& cloneMaterializer,
     integration::CharacterItemSnapshotRepository const& itemSnapshotRepository,
+    integration::CharacterInventorySyncRepository& inventorySyncRepository,
+    integration::CharacterBankSyncRepository& bankSyncRepository,
     integration::CharacterEquipmentSyncRepository& equipmentSyncRepository,
     integration::CharacterProgressSnapshotRepository const& snapshotRepository,
     integration::CharacterProgressSyncRepository& syncRepository,
-    AccountAltRecoveryService const& recoveryService)
+    AccountAltRecoveryService const& recoveryService,
+    AccountAltItemRecoveryOptions itemRecoveryOptions)
     : _runtimeRepository(runtimeRepository),
       _cloneMaterializer(cloneMaterializer),
       _itemSnapshotRepository(itemSnapshotRepository),
+      _inventorySyncRepository(inventorySyncRepository),
+      _bankSyncRepository(bankSyncRepository),
       _equipmentSyncRepository(equipmentSyncRepository),
       _snapshotRepository(snapshotRepository),
       _syncRepository(syncRepository),
       _recoveryService(recoveryService),
+      _itemRecoveryOptions(itemRecoveryOptions),
       _runtimeService(runtimeRepository, botAccountPoolRepository)
 {
 }
@@ -274,7 +283,7 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
         CharacterItemSanityChecker itemChecker;
         model::AccountAltSanityCheckResult itemSanity =
             itemChecker.Check(*sourceItems, *cloneItems);
-        AccountAltItemRecoveryService itemRecoveryService;
+        AccountAltItemRecoveryService itemRecoveryService(_itemRecoveryOptions);
         model::AccountAltItemRecoveryPlan itemPlan =
             itemRecoveryService.BuildRecoveryPlan(itemSanity);
 
@@ -320,6 +329,67 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
                         currentRuntime.runtimeId);
                     return BuildManualReviewDecision(
                         "equipment sync execution failed");
+                }
+
+                AccountAltSpawnDecision itemDecision;
+                itemDecision.kind =
+                    AccountAltSpawnDecisionKind::SpawnUsingPersistentClone;
+                itemDecision.runtime = currentRuntime;
+                itemDecision.botAccountId = currentRuntime.cloneAccountId;
+                itemDecision.spawnCharacterGuid =
+                    currentRuntime.cloneCharacterGuid;
+                itemDecision.reason = itemPlan.reason;
+                return itemDecision;
+            }
+            case model::AccountAltItemRecoveryPlanKind::SyncBagDomainsToSource:
+            {
+                auto const shouldSyncDomain =
+                    [&](model::AccountAltSyncDomain domain) -> bool
+                {
+                    return std::find(
+                               itemPlan.domainsToSync.begin(),
+                               itemPlan.domainsToSync.end(),
+                               domain) != itemPlan.domainsToSync.end();
+                };
+
+                if (shouldSyncDomain(model::AccountAltSyncDomain::Inventory))
+                {
+                    AccountAltInventorySyncExecutor inventoryExecutor(
+                        _runtimeRepository,
+                        _inventorySyncRepository);
+                    if (!inventoryExecutor.Execute(
+                            currentRuntime,
+                            *sourceItems,
+                            *cloneItems))
+                    {
+                        LOG_ERROR(
+                            "server.worldserver",
+                            "[LivingWorldDebug] PlanSpawn inventory sync failed "
+                            "runtimeId={}",
+                            currentRuntime.runtimeId);
+                        return BuildManualReviewDecision(
+                            "inventory sync execution failed");
+                    }
+                }
+
+                if (shouldSyncDomain(model::AccountAltSyncDomain::Bank))
+                {
+                    AccountAltBankSyncExecutor bankExecutor(
+                        _runtimeRepository,
+                        _bankSyncRepository);
+                    if (!bankExecutor.Execute(
+                            currentRuntime,
+                            *sourceItems,
+                            *cloneItems))
+                    {
+                        LOG_ERROR(
+                            "server.worldserver",
+                            "[LivingWorldDebug] PlanSpawn bank sync failed "
+                            "runtimeId={}",
+                            currentRuntime.runtimeId);
+                        return BuildManualReviewDecision(
+                            "bank sync execution failed");
+                    }
                 }
 
                 AccountAltSpawnDecision itemDecision;

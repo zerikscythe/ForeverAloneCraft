@@ -55,6 +55,21 @@ TEST(AccountAltItemRecoveryServiceTest, BlocksInventoryUntilBagSyncExists)
     EXPECT_EQ(plan.domainsToSync[0], model::AccountAltSyncDomain::Inventory);
 }
 
+TEST(AccountAltItemRecoveryServiceTest, RequestsInventorySyncWhenPolicyEnablesIt)
+{
+    AccountAltItemRecoveryService service(
+        AccountAltItemRecoveryOptions { true, false });
+    model::AccountAltSanityCheckResult sanity;
+    sanity.passed = true;
+    sanity.safeDomains.push_back(model::AccountAltSyncDomain::Inventory);
+
+    model::AccountAltItemRecoveryPlan plan = service.BuildRecoveryPlan(sanity);
+
+    EXPECT_EQ(plan.kind, model::AccountAltItemRecoveryPlanKind::SyncBagDomainsToSource);
+    ASSERT_EQ(plan.domainsToSync.size(), 1u);
+    EXPECT_EQ(plan.domainsToSync[0], model::AccountAltSyncDomain::Inventory);
+}
+
 TEST(AccountAltItemRecoveryServiceTest, BlocksBankUntilBankSyncExists)
 {
     AccountAltItemRecoveryService service;
@@ -67,6 +82,23 @@ TEST(AccountAltItemRecoveryServiceTest, BlocksBankUntilBankSyncExists)
     EXPECT_EQ(plan.kind, model::AccountAltItemRecoveryPlanKind::Blocked);
     ASSERT_EQ(plan.domainsToSync.size(), 1u);
     EXPECT_EQ(plan.domainsToSync[0], model::AccountAltSyncDomain::Bank);
+}
+
+TEST(AccountAltItemRecoveryServiceTest, RequestsInventoryAndBankSyncWhenPolicyEnablesBoth)
+{
+    AccountAltItemRecoveryService service(
+        AccountAltItemRecoveryOptions { true, true });
+    model::AccountAltSanityCheckResult sanity;
+    sanity.passed = true;
+    sanity.safeDomains.push_back(model::AccountAltSyncDomain::Inventory);
+    sanity.safeDomains.push_back(model::AccountAltSyncDomain::Bank);
+
+    model::AccountAltItemRecoveryPlan plan = service.BuildRecoveryPlan(sanity);
+
+    EXPECT_EQ(plan.kind, model::AccountAltItemRecoveryPlanKind::SyncBagDomainsToSource);
+    ASSERT_EQ(plan.domainsToSync.size(), 2u);
+    EXPECT_EQ(plan.domainsToSync[0], model::AccountAltSyncDomain::Inventory);
+    EXPECT_EQ(plan.domainsToSync[1], model::AccountAltSyncDomain::Bank);
 }
 } // namespace service
 } // namespace living_world

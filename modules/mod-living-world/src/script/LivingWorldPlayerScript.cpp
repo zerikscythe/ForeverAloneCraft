@@ -1,7 +1,9 @@
 #include "Chat.h"
 #include "ai/CompanionAI.h"
 #include "integration/SqlAccountAltRuntimeRepository.h"
+#include "integration/SqlCharacterBankSyncRepository.h"
 #include "integration/SqlCharacterEquipmentSyncRepository.h"
+#include "integration/SqlCharacterInventorySyncRepository.h"
 #include "integration/SqlCharacterItemSnapshotRepository.h"
 #include "integration/SqlCharacterNameLeaseRepository.h"
 #include "integration/SqlCharacterProgressSnapshotRepository.h"
@@ -33,6 +35,10 @@ void RunOwnerStartupRecovery(Player* player)
     living_world::integration::SqlAccountAltRuntimeRepository runtimeRepository;
     living_world::integration::SqlCharacterItemSnapshotRepository
         itemSnapshotRepository;
+    living_world::integration::SqlCharacterInventorySyncRepository
+        inventorySyncRepository;
+    living_world::integration::SqlCharacterBankSyncRepository
+        bankSyncRepository;
     living_world::integration::SqlCharacterEquipmentSyncRepository
         equipmentSyncRepository;
     living_world::integration::SqlCharacterProgressSnapshotRepository
@@ -42,6 +48,8 @@ void RunOwnerStartupRecovery(Player* player)
     living_world::service::AccountAltStartupRecoveryService startupRecoveryService(
         runtimeRepository,
         itemSnapshotRepository,
+        inventorySyncRepository,
+        bankSyncRepository,
         equipmentSyncRepository,
         snapshotRepository,
         syncRepository,
@@ -122,6 +130,10 @@ void RunBotDismissalRecovery(Player* player)
     living_world::integration::SqlAccountAltRuntimeRepository runtimeRepository;
     living_world::integration::SqlCharacterItemSnapshotRepository
         itemSnapshotRepository;
+    living_world::integration::SqlCharacterInventorySyncRepository
+        inventorySyncRepository;
+    living_world::integration::SqlCharacterBankSyncRepository
+        bankSyncRepository;
     living_world::integration::SqlCharacterEquipmentSyncRepository
         equipmentSyncRepository;
     living_world::integration::SqlCharacterNameLeaseRepository
@@ -133,6 +145,8 @@ void RunBotDismissalRecovery(Player* player)
     living_world::service::AccountAltDismissalService dismissalService(
         runtimeRepository,
         itemSnapshotRepository,
+        inventorySyncRepository,
+        bankSyncRepository,
         equipmentSyncRepository,
         nameLeaseRepository,
         snapshotRepository,

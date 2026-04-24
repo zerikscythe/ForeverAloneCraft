@@ -1,10 +1,14 @@
 #include "service/AccountAltStartupRecoveryService.h"
 
+#include "service/AccountAltBankSyncExecutor.h"
 #include "service/AccountAltEquipmentSyncExecutor.h"
+#include "service/AccountAltInventorySyncExecutor.h"
 #include "service/AccountAltItemRecoveryService.h"
 #include "service/AccountAltSanityChecker.h"
 #include "service/AccountAltSyncExecutor.h"
 #include "service/CharacterItemSanityChecker.h"
+
+#include <algorithm>
 
 namespace living_world
 {
@@ -13,16 +17,22 @@ namespace service
 AccountAltStartupRecoveryService::AccountAltStartupRecoveryService(
     integration::AccountAltRuntimeRepository& runtimeRepository,
     integration::CharacterItemSnapshotRepository const& itemSnapshotRepository,
+    integration::CharacterInventorySyncRepository& inventorySyncRepository,
+    integration::CharacterBankSyncRepository& bankSyncRepository,
     integration::CharacterEquipmentSyncRepository& equipmentSyncRepository,
     integration::CharacterProgressSnapshotRepository const& snapshotRepository,
     integration::CharacterProgressSyncRepository& syncRepository,
-    AccountAltRecoveryService const& recoveryService)
+    AccountAltRecoveryService const& recoveryService,
+    AccountAltItemRecoveryOptions itemRecoveryOptions)
     : _runtimeRepository(runtimeRepository),
       _itemSnapshotRepository(itemSnapshotRepository),
+      _inventorySyncRepository(inventorySyncRepository),
+      _bankSyncRepository(bankSyncRepository),
       _equipmentSyncRepository(equipmentSyncRepository),
       _snapshotRepository(snapshotRepository),
       _syncRepository(syncRepository),
-      _recoveryService(recoveryService)
+      _recoveryService(recoveryService),
+      _itemRecoveryOptions(itemRecoveryOptions)
 {
 }
 
@@ -34,10 +44,16 @@ AccountAltStartupRecoveryService::RecoverForAccount(
     AccountAltSanityChecker checker;
     AccountAltSyncExecutor executor(_runtimeRepository, _syncRepository);
     CharacterItemSanityChecker itemChecker;
-    AccountAltItemRecoveryService itemRecoveryService;
+    AccountAltItemRecoveryService itemRecoveryService(_itemRecoveryOptions);
     AccountAltEquipmentSyncExecutor equipmentExecutor(
         _runtimeRepository,
         _equipmentSyncRepository);
+    AccountAltInventorySyncExecutor inventoryExecutor(
+        _runtimeRepository,
+        _inventorySyncRepository);
+    AccountAltBankSyncExecutor bankExecutor(
+        _runtimeRepository,
+        _bankSyncRepository);
 
     for (model::AccountAltRuntimeRecord const& runtime :
          _runtimeRepository.ListRecoverableForAccount(sourceAccountId))
@@ -126,10 +142,57 @@ AccountAltStartupRecoveryService::RecoverForAccount(
             continue;
         }
 
-        if (runtime.state == model::AccountAltRuntimeState::SyncingInventory ||
-            runtime.state == model::AccountAltRuntimeState::SyncingBank)
+        if (runtime.state == model::AccountAltRuntimeState::SyncingInventory)
         {
-            ++summary.blocked;
+            model::AccountAltItemRecoveryPlan itemPlan =
+                itemRecoveryService.BuildRecoveryPlan(itemSanity);
+            if (itemPlan.kind !=
+                    model::AccountAltItemRecoveryPlanKind::SyncBagDomainsToSource ||
+                std::find(
+                    itemPlan.domainsToSync.begin(),
+                    itemPlan.domainsToSync.end(),
+                    model::AccountAltSyncDomain::Inventory) ==
+                    itemPlan.domainsToSync.end())
+            {
+                ++summary.blocked;
+                continue;
+            }
+
+            if (inventoryExecutor.Execute(runtime, *sourceItems, *cloneItems))
+            {
+                ++summary.recoveredSyncs;
+            }
+            else
+            {
+                ++summary.manualReviewRequired;
+            }
+            continue;
+        }
+
+        if (runtime.state == model::AccountAltRuntimeState::SyncingBank)
+        {
+            model::AccountAltItemRecoveryPlan itemPlan =
+                itemRecoveryService.BuildRecoveryPlan(itemSanity);
+            if (itemPlan.kind !=
+                    model::AccountAltItemRecoveryPlanKind::SyncBagDomainsToSource ||
+                std::find(
+                    itemPlan.domainsToSync.begin(),
+                    itemPlan.domainsToSync.end(),
+                    model::AccountAltSyncDomain::Bank) ==
+                    itemPlan.domainsToSync.end())
+            {
+                ++summary.blocked;
+                continue;
+            }
+
+            if (bankExecutor.Execute(runtime, *sourceItems, *cloneItems))
+            {
+                ++summary.recoveredSyncs;
+            }
+            else
+            {
+                ++summary.manualReviewRequired;
+            }
             continue;
         }
 
@@ -165,6 +228,9 @@ AccountAltStartupRecoveryService::RecoverForAccount(
         switch (itemPlan.kind)
         {
             case model::AccountAltItemRecoveryPlanKind::SyncEquipmentToSource:
+                ++summary.pendingRecovery;
+                break;
+            case model::AccountAltItemRecoveryPlanKind::SyncBagDomainsToSource:
                 ++summary.pendingRecovery;
                 break;
             case model::AccountAltItemRecoveryPlanKind::ManualReview:

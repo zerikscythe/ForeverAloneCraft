@@ -139,6 +139,42 @@ public:
     bool shouldSucceed = true;
 };
 
+class FakeInventorySyncRepository final
+    : public integration::CharacterInventorySyncRepository
+{
+public:
+    bool SyncInventoryToCharacter(
+        std::uint64_t,
+        model::CharacterItemSnapshot const&,
+        std::uint64_t,
+        model::CharacterItemSnapshot const&) override
+    {
+        ++syncCalls;
+        return shouldSucceed;
+    }
+
+    int syncCalls = 0;
+    bool shouldSucceed = true;
+};
+
+class FakeBankSyncRepository final
+    : public integration::CharacterBankSyncRepository
+{
+public:
+    bool SyncBankToCharacter(
+        std::uint64_t,
+        model::CharacterItemSnapshot const&,
+        std::uint64_t,
+        model::CharacterItemSnapshot const&) override
+    {
+        ++syncCalls;
+        return shouldSucceed;
+    }
+
+    int syncCalls = 0;
+    bool shouldSucceed = true;
+};
+
 class FakeSyncRepository final
     : public integration::CharacterProgressSyncRepository
 {
@@ -191,6 +227,8 @@ TEST(AccountAltStartupRecoveryServiceTest, RetriesInterruptedSyncOnLogin)
 {
     FakeRuntimeRepository runtimeRepository;
     FakeItemSnapshotRepository itemSnapshotRepository;
+    FakeInventorySyncRepository inventorySyncRepository;
+    FakeBankSyncRepository bankSyncRepository;
     FakeEquipmentSyncRepository equipmentSyncRepository;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
@@ -206,6 +244,8 @@ TEST(AccountAltStartupRecoveryServiceTest, RetriesInterruptedSyncOnLogin)
     AccountAltStartupRecoveryService service(
         runtimeRepository,
         itemSnapshotRepository,
+        inventorySyncRepository,
+        bankSyncRepository,
         equipmentSyncRepository,
         snapshotRepository,
         syncRepository,
@@ -230,6 +270,8 @@ TEST(AccountAltStartupRecoveryServiceTest,
 {
     FakeRuntimeRepository runtimeRepository;
     FakeItemSnapshotRepository itemSnapshotRepository;
+    FakeInventorySyncRepository inventorySyncRepository;
+    FakeBankSyncRepository bankSyncRepository;
     FakeEquipmentSyncRepository equipmentSyncRepository;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
@@ -245,6 +287,8 @@ TEST(AccountAltStartupRecoveryServiceTest,
     AccountAltStartupRecoveryService service(
         runtimeRepository,
         itemSnapshotRepository,
+        inventorySyncRepository,
+        bankSyncRepository,
         equipmentSyncRepository,
         snapshotRepository,
         syncRepository,
@@ -263,6 +307,8 @@ TEST(AccountAltStartupRecoveryServiceTest,
 {
     FakeRuntimeRepository runtimeRepository;
     FakeItemSnapshotRepository itemSnapshotRepository;
+    FakeInventorySyncRepository inventorySyncRepository;
+    FakeBankSyncRepository bankSyncRepository;
     FakeEquipmentSyncRepository equipmentSyncRepository;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
@@ -278,6 +324,8 @@ TEST(AccountAltStartupRecoveryServiceTest,
     AccountAltStartupRecoveryService service(
         runtimeRepository,
         itemSnapshotRepository,
+        inventorySyncRepository,
+        bankSyncRepository,
         equipmentSyncRepository,
         snapshotRepository,
         syncRepository,
@@ -289,6 +337,58 @@ TEST(AccountAltStartupRecoveryServiceTest,
     EXPECT_EQ(summary.pendingRecovery, 1u);
     EXPECT_EQ(summary.recoveredSyncs, 0u);
     EXPECT_EQ(syncRepository.syncCalls, 0);
+}
+
+TEST(AccountAltStartupRecoveryServiceTest,
+     RetriesInterruptedInventorySyncWhenPolicyEnablesIt)
+{
+    FakeRuntimeRepository runtimeRepository;
+    FakeItemSnapshotRepository itemSnapshotRepository;
+    FakeInventorySyncRepository inventorySyncRepository;
+    FakeBankSyncRepository bankSyncRepository;
+    FakeEquipmentSyncRepository equipmentSyncRepository;
+    FakeSnapshotRepository snapshotRepository;
+    FakeSyncRepository syncRepository;
+    AccountAltRecoveryService recoveryService;
+
+    runtimeRepository.runtimes.push_back(
+        BuildRuntime(model::AccountAltRuntimeState::SyncingInventory));
+    snapshotRepository.sourceSnapshot = Snapshot(10, 200, 1000);
+    snapshotRepository.cloneSnapshot = Snapshot(10, 200, 1000);
+
+    model::CharacterItemSnapshot sourceItems;
+    model::CharacterItemSnapshot cloneItems;
+    model::CharacterItemSnapshotEntry sourceBag;
+    sourceBag.itemGuid = 1001;
+    sourceBag.itemEntry = 5001;
+    sourceBag.itemCount = 1;
+    sourceBag.slot = 19;
+    sourceBag.domain = model::CharacterItemStorageDomain::Inventory;
+    sourceItems.inventoryItems.push_back(sourceBag);
+    model::CharacterItemSnapshotEntry cloneBag = sourceBag;
+    cloneBag.itemGuid = 2001;
+    cloneBag.itemEntry = 5002;
+    cloneItems.inventoryItems.push_back(cloneBag);
+    itemSnapshotRepository.sourceSnapshot = sourceItems;
+    itemSnapshotRepository.cloneSnapshot = cloneItems;
+
+    AccountAltStartupRecoveryService service(
+        runtimeRepository,
+        itemSnapshotRepository,
+        inventorySyncRepository,
+        bankSyncRepository,
+        equipmentSyncRepository,
+        snapshotRepository,
+        syncRepository,
+        recoveryService,
+        AccountAltItemRecoveryOptions { true, false });
+
+    AccountAltStartupRecoverySummary summary = service.RecoverForAccount(7);
+
+    EXPECT_EQ(summary.scanned, 1u);
+    EXPECT_EQ(summary.recoveredSyncs, 1u);
+    EXPECT_EQ(inventorySyncRepository.syncCalls, 1);
+    EXPECT_EQ(bankSyncRepository.syncCalls, 0);
 }
 } // namespace service
 } // namespace living_world

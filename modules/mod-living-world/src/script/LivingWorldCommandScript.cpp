@@ -17,7 +17,9 @@
 #include "integration/SqlAccountAltRuntimeRepository.h"
 #include "integration/SqlBotAccountPoolRepository.h"
 #include "integration/SqlCharacterCloneMaterializer.h"
+#include "integration/SqlCharacterBankSyncRepository.h"
 #include "integration/SqlCharacterEquipmentSyncRepository.h"
+#include "integration/SqlCharacterInventorySyncRepository.h"
 #include "integration/SqlCharacterItemSnapshotRepository.h"
 #include "integration/SqlCharacterProgressSnapshotRepository.h"
 #include "integration/SqlCharacterProgressSyncRepository.h"
@@ -361,6 +363,8 @@ bool ExecuteSpawnRosterBodyAction(
     integration::SqlBotAccountPoolRepository botAccountPoolRepository;
     integration::SqlCharacterCloneMaterializer cloneMaterializer;
     integration::SqlCharacterItemSnapshotRepository itemSnapshotRepository;
+    integration::SqlCharacterInventorySyncRepository inventorySyncRepository;
+    integration::SqlCharacterBankSyncRepository bankSyncRepository;
     integration::SqlCharacterEquipmentSyncRepository equipmentSyncRepository;
     integration::SqlCharacterProgressSnapshotRepository snapshotRepository;
     integration::SqlCharacterProgressSyncRepository syncRepository;
@@ -370,6 +374,8 @@ bool ExecuteSpawnRosterBodyAction(
         botAccountPoolRepository,
         cloneMaterializer,
         itemSnapshotRepository,
+        inventorySyncRepository,
+        bankSyncRepository,
         equipmentSyncRepository,
         snapshotRepository,
         syncRepository,

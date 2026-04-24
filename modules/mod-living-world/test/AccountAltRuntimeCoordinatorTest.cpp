@@ -147,6 +147,42 @@ public:
     bool shouldSucceed = true;
 };
 
+class FakeInventorySyncRepository final
+    : public integration::CharacterInventorySyncRepository
+{
+public:
+    bool SyncInventoryToCharacter(
+        std::uint64_t,
+        model::CharacterItemSnapshot const&,
+        std::uint64_t,
+        model::CharacterItemSnapshot const&) override
+    {
+        ++syncCalls;
+        return shouldSucceed;
+    }
+
+    int syncCalls = 0;
+    bool shouldSucceed = true;
+};
+
+class FakeBankSyncRepository final
+    : public integration::CharacterBankSyncRepository
+{
+public:
+    bool SyncBankToCharacter(
+        std::uint64_t,
+        model::CharacterItemSnapshot const&,
+        std::uint64_t,
+        model::CharacterItemSnapshot const&) override
+    {
+        ++syncCalls;
+        return shouldSucceed;
+    }
+
+    int syncCalls = 0;
+    bool shouldSucceed = true;
+};
+
 class FakeSyncRepository final
     : public integration::CharacterProgressSyncRepository
 {
@@ -212,6 +248,8 @@ TEST(AccountAltRuntimeCoordinatorTest, NewRuntimeUsesReservedAccount)
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
     FakeItemSnapshotRepository itemSnapshotRepository;
+    FakeInventorySyncRepository inventorySyncRepository;
+    FakeBankSyncRepository bankSyncRepository;
     FakeEquipmentSyncRepository equipmentSyncRepository;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
@@ -230,6 +268,8 @@ TEST(AccountAltRuntimeCoordinatorTest, NewRuntimeUsesReservedAccount)
         botAccountPoolRepository,
         cloneMaterializer,
         itemSnapshotRepository,
+        inventorySyncRepository,
+        bankSyncRepository,
         equipmentSyncRepository,
         snapshotRepository,
         syncRepository,
@@ -258,6 +298,8 @@ TEST(AccountAltRuntimeCoordinatorTest,
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
     FakeItemSnapshotRepository itemSnapshotRepository;
+    FakeInventorySyncRepository inventorySyncRepository;
+    FakeBankSyncRepository bankSyncRepository;
     FakeEquipmentSyncRepository equipmentSyncRepository;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
@@ -281,6 +323,8 @@ TEST(AccountAltRuntimeCoordinatorTest,
         botAccountPoolRepository,
         cloneMaterializer,
         itemSnapshotRepository,
+        inventorySyncRepository,
+        bankSyncRepository,
         equipmentSyncRepository,
         snapshotRepository,
         syncRepository,
@@ -307,6 +351,8 @@ TEST(AccountAltRuntimeCoordinatorTest,
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
     FakeItemSnapshotRepository itemSnapshotRepository;
+    FakeInventorySyncRepository inventorySyncRepository;
+    FakeBankSyncRepository bankSyncRepository;
     FakeEquipmentSyncRepository equipmentSyncRepository;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
@@ -327,6 +373,8 @@ TEST(AccountAltRuntimeCoordinatorTest,
         botAccountPoolRepository,
         cloneMaterializer,
         itemSnapshotRepository,
+        inventorySyncRepository,
+        bankSyncRepository,
         equipmentSyncRepository,
         snapshotRepository,
         syncRepository,
@@ -349,6 +397,8 @@ TEST(AccountAltRuntimeCoordinatorTest,
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
     FakeItemSnapshotRepository itemSnapshotRepository;
+    FakeInventorySyncRepository inventorySyncRepository;
+    FakeBankSyncRepository bankSyncRepository;
     FakeEquipmentSyncRepository equipmentSyncRepository;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
@@ -371,6 +421,8 @@ TEST(AccountAltRuntimeCoordinatorTest,
         botAccountPoolRepository,
         cloneMaterializer,
         itemSnapshotRepository,
+        inventorySyncRepository,
+        bankSyncRepository,
         equipmentSyncRepository,
         snapshotRepository,
         syncRepository,
@@ -401,6 +453,8 @@ TEST(AccountAltRuntimeCoordinatorTest, BlocksWhenCloneMaterializationFails)
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
     FakeItemSnapshotRepository itemSnapshotRepository;
+    FakeInventorySyncRepository inventorySyncRepository;
+    FakeBankSyncRepository bankSyncRepository;
     FakeEquipmentSyncRepository equipmentSyncRepository;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
@@ -415,6 +469,8 @@ TEST(AccountAltRuntimeCoordinatorTest, BlocksWhenCloneMaterializationFails)
         botAccountPoolRepository,
         cloneMaterializer,
         itemSnapshotRepository,
+        inventorySyncRepository,
+        bankSyncRepository,
         equipmentSyncRepository,
         snapshotRepository,
         syncRepository,
@@ -436,6 +492,8 @@ TEST(AccountAltRuntimeCoordinatorTest, ReuseCloneRunsEquipmentRecoveryWhenApprov
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
     FakeItemSnapshotRepository itemSnapshotRepository;
+    FakeInventorySyncRepository inventorySyncRepository;
+    FakeBankSyncRepository bankSyncRepository;
     FakeEquipmentSyncRepository equipmentSyncRepository;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
@@ -474,6 +532,8 @@ TEST(AccountAltRuntimeCoordinatorTest, ReuseCloneRunsEquipmentRecoveryWhenApprov
         botAccountPoolRepository,
         cloneMaterializer,
         itemSnapshotRepository,
+        inventorySyncRepository,
+        bankSyncRepository,
         equipmentSyncRepository,
         snapshotRepository,
         syncRepository,
@@ -488,6 +548,137 @@ TEST(AccountAltRuntimeCoordinatorTest, ReuseCloneRunsEquipmentRecoveryWhenApprov
     EXPECT_EQ(decision.kind,
               AccountAltSpawnDecisionKind::SpawnUsingPersistentClone);
     EXPECT_EQ(equipmentSyncRepository.syncCalls, 1);
+}
+
+TEST(AccountAltRuntimeCoordinatorTest,
+     ReuseCloneKeepsInventoryRecoveryBlockedByDefaultPolicy)
+{
+    FakeRuntimeRepository runtimeRepository;
+    FakeBotAccountPoolRepository botAccountPoolRepository;
+    FakeCloneMaterializer cloneMaterializer;
+    FakeItemSnapshotRepository itemSnapshotRepository;
+    FakeInventorySyncRepository inventorySyncRepository;
+    FakeBankSyncRepository bankSyncRepository;
+    FakeEquipmentSyncRepository equipmentSyncRepository;
+    FakeSnapshotRepository snapshotRepository;
+    FakeSyncRepository syncRepository;
+    AccountAltRecoveryService recoveryService;
+
+    model::AccountAltRuntimeRecord runtime;
+    runtime.sourceAccountId = 7;
+    runtime.sourceCharacterGuid = 9001;
+    runtime.cloneAccountId = 701;
+    runtime.cloneCharacterGuid = 8001;
+    runtime.state = model::AccountAltRuntimeState::Active;
+    runtimeRepository.Seed(runtime);
+    snapshotRepository.sourceSnapshot = Snapshot(10, 200, 1000);
+    snapshotRepository.cloneSnapshot = Snapshot(10, 200, 1000);
+
+    model::CharacterItemSnapshot sourceItems;
+    model::CharacterItemSnapshot cloneItems;
+    model::CharacterItemSnapshotEntry sourceBag;
+    sourceBag.itemGuid = 1001;
+    sourceBag.itemEntry = 5001;
+    sourceBag.itemCount = 1;
+    sourceBag.slot = 19;
+    sourceBag.domain = model::CharacterItemStorageDomain::Inventory;
+    sourceItems.inventoryItems.push_back(sourceBag);
+
+    model::CharacterItemSnapshotEntry cloneBag = sourceBag;
+    cloneBag.itemGuid = 2001;
+    cloneBag.itemEntry = 5002;
+    cloneItems.inventoryItems.push_back(cloneBag);
+
+    itemSnapshotRepository.sourceSnapshot = sourceItems;
+    itemSnapshotRepository.cloneSnapshot = cloneItems;
+
+    AccountAltRuntimeCoordinator coordinator(
+        runtimeRepository,
+        botAccountPoolRepository,
+        cloneMaterializer,
+        itemSnapshotRepository,
+        inventorySyncRepository,
+        bankSyncRepository,
+        equipmentSyncRepository,
+        snapshotRepository,
+        syncRepository,
+        recoveryService);
+
+    AccountAltSpawnDecision decision = coordinator.PlanSpawn(
+        7,
+        9001,
+        42,
+        "Tester");
+
+    EXPECT_EQ(decision.kind, AccountAltSpawnDecisionKind::Blocked);
+    EXPECT_EQ(inventorySyncRepository.syncCalls, 0);
+}
+
+TEST(AccountAltRuntimeCoordinatorTest,
+     ReuseCloneRunsInventoryRecoveryWhenPolicyEnablesIt)
+{
+    FakeRuntimeRepository runtimeRepository;
+    FakeBotAccountPoolRepository botAccountPoolRepository;
+    FakeCloneMaterializer cloneMaterializer;
+    FakeItemSnapshotRepository itemSnapshotRepository;
+    FakeInventorySyncRepository inventorySyncRepository;
+    FakeBankSyncRepository bankSyncRepository;
+    FakeEquipmentSyncRepository equipmentSyncRepository;
+    FakeSnapshotRepository snapshotRepository;
+    FakeSyncRepository syncRepository;
+    AccountAltRecoveryService recoveryService;
+
+    model::AccountAltRuntimeRecord runtime;
+    runtime.sourceAccountId = 7;
+    runtime.sourceCharacterGuid = 9001;
+    runtime.cloneAccountId = 701;
+    runtime.cloneCharacterGuid = 8001;
+    runtime.state = model::AccountAltRuntimeState::Active;
+    runtimeRepository.Seed(runtime);
+    snapshotRepository.sourceSnapshot = Snapshot(10, 200, 1000);
+    snapshotRepository.cloneSnapshot = Snapshot(10, 200, 1000);
+
+    model::CharacterItemSnapshot sourceItems;
+    model::CharacterItemSnapshot cloneItems;
+    model::CharacterItemSnapshotEntry sourceBag;
+    sourceBag.itemGuid = 1001;
+    sourceBag.itemEntry = 5001;
+    sourceBag.itemCount = 1;
+    sourceBag.slot = 19;
+    sourceBag.domain = model::CharacterItemStorageDomain::Inventory;
+    sourceItems.inventoryItems.push_back(sourceBag);
+
+    model::CharacterItemSnapshotEntry cloneBag = sourceBag;
+    cloneBag.itemGuid = 2001;
+    cloneBag.itemEntry = 5002;
+    cloneItems.inventoryItems.push_back(cloneBag);
+
+    itemSnapshotRepository.sourceSnapshot = sourceItems;
+    itemSnapshotRepository.cloneSnapshot = cloneItems;
+
+    AccountAltRuntimeCoordinator coordinator(
+        runtimeRepository,
+        botAccountPoolRepository,
+        cloneMaterializer,
+        itemSnapshotRepository,
+        inventorySyncRepository,
+        bankSyncRepository,
+        equipmentSyncRepository,
+        snapshotRepository,
+        syncRepository,
+        recoveryService,
+        AccountAltItemRecoveryOptions { true, false });
+
+    AccountAltSpawnDecision decision = coordinator.PlanSpawn(
+        7,
+        9001,
+        42,
+        "Tester");
+
+    EXPECT_EQ(decision.kind,
+              AccountAltSpawnDecisionKind::SpawnUsingPersistentClone);
+    EXPECT_EQ(inventorySyncRepository.syncCalls, 1);
+    EXPECT_EQ(bankSyncRepository.syncCalls, 0);
 }
 } // namespace service
 } // namespace living_world

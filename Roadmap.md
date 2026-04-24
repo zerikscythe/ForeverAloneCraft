@@ -832,16 +832,23 @@ Current implementation status:
   - `AccountAltBankSyncExecutor`
 - Those seams duplicate `item_instance` rows, remap nested container GUIDs, and
   rewrite `character_inventory` rows transactionally, but they are not wired
-  into live recovery planning yet.
+  into default live recovery yet.
+- `AccountAltItemRecoveryService` now has explicit bag-domain policy gating:
+  it can plan inventory/bank recovery when enabled, but the default policy keeps
+  those domains blocked.
+- `AccountAltRuntimeCoordinator`, `AccountAltStartupRecoveryService`, and
+  `AccountAltDismissalService` now understand bag-domain recovery plans and can
+  execute the inventory/bank sync executors when policy allows it, while still
+  staying default-off on the live path.
 - `AccountAltRuntimeCoordinator` now runs item snapshot loading, item sanity,
   and equipment recovery after progress recovery succeeds or when the clone is
   otherwise reusable.
 - `AccountAltStartupRecoveryService` now distinguishes `SyncingBack`
   (progress retry) from `SyncingEquipment` (equipment retry) on owner login.
 
-After this, the next follow-on slice should be planner integration for those
-bag/bank executors behind an explicit feature gate or manual-only path, still
-kept out of default live recovery until runtime validation is possible.
+After this, the next follow-on slice should be a real config surface for that
+bag-domain policy plus richer nested-container/manual-review rules before those
+domains are ever enabled by default.
 
 ---
 

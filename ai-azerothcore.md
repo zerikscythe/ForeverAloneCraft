@@ -1273,9 +1273,14 @@ The first observation layer for item domains now exists as well:
   next-layer plumbing only: duplicate item instances, remap nested container
   GUIDs, and rewrite `character_inventory` transactionally for inventory or
   bank domains.
-- `AccountAltRuntimeCoordinator` now applies item recovery after successful
-  progress recovery or on clone reuse. `AccountAltStartupRecoveryService` also
-  understands `SyncingEquipment` and can retry the equipment executor on login.
+- `AccountAltItemRecoveryService` now owns the explicit bag-domain policy seam.
+  It can return a bag-domain sync plan when inventory/bank deltas are sane and
+  policy enables them, or keep those domains blocked by default.
+- `AccountAltRuntimeCoordinator`, `AccountAltStartupRecoveryService`, and
+  `AccountAltDismissalService` now all understand bag-domain recovery plans and
+  can route them into the inventory/bank executors when policy allows it.
+  The default policy remains conservative: inventory/bank sync stays disabled
+  on the live path until runtime validation is possible.
 
 ### 21.2 Recovery sequence
 

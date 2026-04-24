@@ -59,6 +59,7 @@ enum class AccountAltItemRecoveryPlanKind
 {
     NoAction,
     SyncEquipmentToSource,
+    SyncBagDomainsToSource,
     ManualReview,
     Blocked
 };
