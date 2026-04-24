@@ -1504,3 +1504,56 @@ Not synced, not safe without additional rules:
 - `Reputation` — faction relation edge cases
 - `Quests` — quest state machine conflicts
 - `Mail` — item attachment ownership
+
+---
+
+## 24. Bag-domain policy surface and container sanity tightening
+
+### 24.1 Config-driven policy
+
+`mod-living-world.conf.dist` now exposes:
+```
+LivingWorld.AccountAlt.EnableInventorySync = 0
+LivingWorld.AccountAlt.EnableBankSync = 0
+```
+
+Both default to 0 (disabled). All three service construction sites that accept
+`AccountAltItemRecoveryOptions` read these values via
+`sConfigMgr->GetOption<bool>` at construction time:
+- `AccountAltRuntimeCoordinator` in `LivingWorldCommandScript`
+- `AccountAltStartupRecoveryService` in `LivingWorldPlayerScript`
+- `AccountAltDismissalService` in `LivingWorldPlayerScript`
+
+This replaces the previous hardcoded struct default (always disabled) with a
+real operator-controlled knob while keeping the safe default.
+
+### 24.2 Per-container item cap
+
+`CharacterItemSanityChecker::Check` now rejects any snapshot where a single
+bag container holds more than 36 items. 36 is the maximum slot count of any
+bag in WoW 3.3.5a. Items inside bags are counted by their `containerGuid`; if
+any guid accumulates more than 36 children, the check adds:
+`"inventory/bank snapshot has a container exceeding the bag size cap"`.
+
+### 24.3 Bag-container-change detection
+
+`AccountAltSanityCheckResult` has a new `bagContainersChanged` field.
+`CharacterItemSanityChecker::Check` computes it by comparing the itemEntry of
+bag containers at root inventory bag slots (19–22) and root bank bag slots
+(67–73) between source and clone. It is computed unconditionally — even when
+other checks fail — so the recovery service has the information regardless.
+
+`AccountAltItemRecoveryService::BuildRecoveryPlan` uses this field to route to
+`ManualReview` when `bagContainersChanged` is true and inventory or bank domains
+differ. This blocks automated sync when the bags themselves changed, since the
+inventory/bank sync executors remap container GUIDs and the result could be
+unexpected if the root bags are a different type than what was recorded.
+
+### 24.4 Safety line
+
+- Inventory/bank sync remains disabled by default in conf.dist.
+- Even when enabled by config, bag-container-change detection causes ManualReview
+  to take priority over SyncBagDomainsToSource.
+- The next step before enabling inventory/bank sync in any live config is runtime
+  verification: exercise the full spawn → dismiss → startup recovery cycle and
+  confirm source characters are in correct state after each step.

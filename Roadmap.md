@@ -777,30 +777,65 @@ See section D of "Immediate Next Implementation Slice" above for full detail.
 
 ---
 
-## Immediate Next: Bag-Domain Policy Surface and Runtime Validation Prep
+## Completed Slice: Bag-Domain Policy Surface and Container Tightening
 
-Persistent clone materialization is now in place: new or incomplete runtimes
-create/reuse a real clone character on the reserved bot account before spawn
-and persist `cloneCharacterGuid` for later recovery.
+### A) Config-driven bag-domain policy — **Complete**
 
-Dismiss/logout recovery is now wired into the exact-name lifecycle:
-- bot logout resolves the runtime by `cloneCharacterGuid`
-- safe progress recovery can run before cleanup
-- equipment recovery can run before cleanup
-- cautious source-name reclaim now runs through the dedicated name-lease
-  repository before the bot lease is released
-- bag-domain recovery plumbing is now also understood by the dismissal,
-  startup, and spawn orchestration paths, but remains policy-disabled by
-  default
+`mod-living-world.conf.dist` now exposes two operator-controlled knobs:
+- `LivingWorld.AccountAlt.EnableInventorySync = 0`
+- `LivingWorld.AccountAlt.EnableBankSync = 0`
 
-The next milestone is to turn the current hardcoded bag-domain policy seam into
-a real operator-controlled surface, while keeping default behavior
-conservative. That means:
-- add a real config/manual-control surface for inventory/bank recovery
-- keep bag/bank sync disabled by default until runtime validation is possible
-- tighten nested-container/manual-review rules around the bag domains
-- prepare a runtime verification checklist for spawn, dismiss, name reclaim,
-  and clone-to-source sync
+Both default to disabled. All three service construction sites that accept
+`AccountAltItemRecoveryOptions` — `AccountAltRuntimeCoordinator` in
+`LivingWorldCommandScript`, and `AccountAltStartupRecoveryService` /
+`AccountAltDismissalService` in `LivingWorldPlayerScript` — now read these
+values via `sConfigMgr->GetOption<bool>` and pass them through instead of
+using the hardcoded struct default.
+
+### B) Per-container item cap — **Complete**
+
+`CharacterItemSanityChecker` now rejects snapshots where any single bag
+container holds more than 36 items. 36 is the maximum slot count of any bag
+available in WoW 3.3.5a (Glacial Bag / Portable Hole). A snapshot with more
+than 36 items referencing the same container guid fails with:
+`"inventory/bank snapshot has a container exceeding the bag size cap"`.
+
+### C) Bag-container-change detection — **Complete**
+
+`AccountAltSanityCheckResult` has a new `bagContainersChanged` field.
+`CharacterItemSanityChecker::Check` sets it when the bag type (itemEntry) at
+any root inventory bag slot (19–22) or root bank bag slot (67–73) differs
+between the source and clone snapshots. The field is computed unconditionally
+so the recovery service can use it even when all other checks pass.
+
+`AccountAltItemRecoveryService::BuildRecoveryPlan` now routes to `ManualReview`
+when `bagContainersChanged` is true and inventory or bank domains differ. This
+prevents automated sync when the underlying bag containers themselves changed —
+a case where the container-guid remapping done by the sync executor could
+produce unexpected layouts that require human review.
+
+Tests added:
+- `RejectsExcessiveContainerSize` — 37 items inside one bag fails
+- `SetsBagContainersChangedWhenInventoryBagsDiffer` — different bag type at slot 19
+- `SetsBagContainersChangedWhenBankBagsDiffer` — different bag type at slot 67
+- `DoesNotSetBagContainersChangedWhenOnlyContentsDiffer` — same bag type, different contents
+- `RequiresManualReviewWhenBagContainersChangedEvenIfPolicyEnabled` — ManualReview overrides policy
+
+---
+
+## Immediate Next: Runtime Verification and End-to-End Testing Prep
+
+The config surface and tighter sanity rules are now in place. The remaining
+work before any bag-domain sync can be considered for default-on is:
+
+- **Runtime verification pass**: exercise the full spawn → dismiss → startup
+  recovery cycle on a live server and confirm that name reclaim, progress sync,
+  and equipment sync leave source characters in correct state
+- **Bot-session session-key validation**: verify that null-socket bot sessions
+  survive a worldserver restart scenario correctly
+- **Manual test checklist**: document and execute the dismiss/logout
+  lifecycle, source-name reclaim, and clone-to-source sync for at least one
+  account alt before enabling inventory/bank sync in any live config
 
 Current implementation status:
 - `model::CharacterItemSnapshot` now provides a read-only item-state shape for

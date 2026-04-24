@@ -2,6 +2,7 @@
 
 #include "Chat.h"
 #include "CommandScript.h"
+#include "Config.h"
 #include "Creature.h"
 #include "DatabaseEnv.h"
 #include "Group.h"
@@ -369,6 +370,11 @@ bool ExecuteSpawnRosterBodyAction(
     integration::SqlCharacterProgressSnapshotRepository snapshotRepository;
     integration::SqlCharacterProgressSyncRepository syncRepository;
     service::AccountAltRecoveryService recoveryService;
+    service::AccountAltItemRecoveryOptions itemRecoveryOptions;
+    itemRecoveryOptions.enableInventorySync =
+        sConfigMgr->GetOption<bool>("LivingWorld.AccountAlt.EnableInventorySync", false);
+    itemRecoveryOptions.enableBankSync =
+        sConfigMgr->GetOption<bool>("LivingWorld.AccountAlt.EnableBankSync", false);
     service::AccountAltRuntimeCoordinator coordinator(
         runtimeRepository,
         botAccountPoolRepository,
@@ -379,7 +385,8 @@ bool ExecuteSpawnRosterBodyAction(
         equipmentSyncRepository,
         snapshotRepository,
         syncRepository,
-        recoveryService);
+        recoveryService,
+        itemRecoveryOptions);
 
     std::optional<AccountAltSummary> summary =
         LoadAccountAltSummary(action.characterGuid);

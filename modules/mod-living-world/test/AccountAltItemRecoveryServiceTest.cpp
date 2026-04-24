@@ -100,5 +100,20 @@ TEST(AccountAltItemRecoveryServiceTest, RequestsInventoryAndBankSyncWhenPolicyEn
     EXPECT_EQ(plan.domainsToSync[0], model::AccountAltSyncDomain::Inventory);
     EXPECT_EQ(plan.domainsToSync[1], model::AccountAltSyncDomain::Bank);
 }
+
+TEST(AccountAltItemRecoveryServiceTest, RequiresManualReviewWhenBagContainersChangedEvenIfPolicyEnabled)
+{
+    AccountAltItemRecoveryService service(
+        AccountAltItemRecoveryOptions { true, true });
+    model::AccountAltSanityCheckResult sanity;
+    sanity.passed = true;
+    sanity.bagContainersChanged = true;
+    sanity.safeDomains.push_back(model::AccountAltSyncDomain::Inventory);
+
+    model::AccountAltItemRecoveryPlan plan = service.BuildRecoveryPlan(sanity);
+
+    EXPECT_EQ(plan.kind, model::AccountAltItemRecoveryPlanKind::ManualReview);
+    EXPECT_TRUE(plan.domainsToSync.empty());
+}
 } // namespace service
 } // namespace living_world

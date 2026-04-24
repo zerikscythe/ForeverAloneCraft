@@ -1,4 +1,5 @@
 #include "Chat.h"
+#include "Config.h"
 #include "ai/CompanionAI.h"
 #include "integration/SqlAccountAltRuntimeRepository.h"
 #include "integration/SqlCharacterBankSyncRepository.h"
@@ -45,6 +46,11 @@ void RunOwnerStartupRecovery(Player* player)
         snapshotRepository;
     living_world::integration::SqlCharacterProgressSyncRepository syncRepository;
     living_world::service::AccountAltRecoveryService recoveryService;
+    living_world::service::AccountAltItemRecoveryOptions itemRecoveryOptions;
+    itemRecoveryOptions.enableInventorySync =
+        sConfigMgr->GetOption<bool>("LivingWorld.AccountAlt.EnableInventorySync", false);
+    itemRecoveryOptions.enableBankSync =
+        sConfigMgr->GetOption<bool>("LivingWorld.AccountAlt.EnableBankSync", false);
     living_world::service::AccountAltStartupRecoveryService startupRecoveryService(
         runtimeRepository,
         itemSnapshotRepository,
@@ -53,7 +59,8 @@ void RunOwnerStartupRecovery(Player* player)
         equipmentSyncRepository,
         snapshotRepository,
         syncRepository,
-        recoveryService);
+        recoveryService,
+        itemRecoveryOptions);
 
     living_world::service::AccountAltStartupRecoverySummary summary =
         startupRecoveryService.RecoverForAccount(
@@ -142,6 +149,11 @@ void RunBotDismissalRecovery(Player* player)
         snapshotRepository;
     living_world::integration::SqlCharacterProgressSyncRepository syncRepository;
     living_world::service::AccountAltRecoveryService recoveryService;
+    living_world::service::AccountAltItemRecoveryOptions itemRecoveryOptions;
+    itemRecoveryOptions.enableInventorySync =
+        sConfigMgr->GetOption<bool>("LivingWorld.AccountAlt.EnableInventorySync", false);
+    itemRecoveryOptions.enableBankSync =
+        sConfigMgr->GetOption<bool>("LivingWorld.AccountAlt.EnableBankSync", false);
     living_world::service::AccountAltDismissalService dismissalService(
         runtimeRepository,
         itemSnapshotRepository,
@@ -151,7 +163,8 @@ void RunBotDismissalRecovery(Player* player)
         nameLeaseRepository,
         snapshotRepository,
         syncRepository,
-        recoveryService);
+        recoveryService,
+        itemRecoveryOptions);
 
     dismissalService.DismissClone(player->GetGUID().GetCounter());
 }

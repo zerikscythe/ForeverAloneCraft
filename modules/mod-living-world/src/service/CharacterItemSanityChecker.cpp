@@ -1,6 +1,7 @@
 #include "service/CharacterItemSanityChecker.h"
 
 #include <array>
+#include <cstddef>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -215,6 +216,54 @@ bool BankDiffers(
     return BuildItemMultiset(sourceSnapshot.bankItems) !=
            BuildItemMultiset(cloneSnapshot.bankItems);
 }
+
+// WoW 3.3.5a maximum bag capacity — Glacial Bag and Portable Hole are 36 slots.
+constexpr std::size_t kMaxItemsPerContainer = 36;
+
+bool HasExcessiveContainerSize(model::CharacterItemSnapshot const& snapshot)
+{
+    std::unordered_map<std::uint64_t, std::size_t> counts;
+    auto countNested = [&](std::vector<model::CharacterItemSnapshotEntry> const& items)
+    {
+        for (model::CharacterItemSnapshotEntry const& item : items)
+            if (item.containerGuid != 0)
+                ++counts[item.containerGuid];
+    };
+    countNested(snapshot.inventoryItems);
+    countNested(snapshot.bankItems);
+    for (auto const& [guid, count] : counts)
+        if (count > kMaxItemsPerContainer)
+            return true;
+    return false;
+}
+
+// Compares the bag containers at root inventory slots 19-22 and root bank slots
+// 67-73 between source and clone. Returns true when any bag type differs so the
+// recovery service can escalate to ManualReview rather than auto-syncing bag
+// contents that depend on a changed container layout.
+bool BagContainersChanged(
+    model::CharacterItemSnapshot const& sourceSnapshot,
+    model::CharacterItemSnapshot const& cloneSnapshot)
+{
+    auto inventoryBags = [](model::CharacterItemSnapshot const& snap)
+    {
+        std::array<std::uint32_t, 4> bags {};
+        for (model::CharacterItemSnapshotEntry const& item : snap.inventoryItems)
+            if (item.containerGuid == 0 && item.slot >= 19 && item.slot <= 22)
+                bags[item.slot - 19] = item.itemEntry;
+        return bags;
+    };
+    auto bankBags = [](model::CharacterItemSnapshot const& snap)
+    {
+        std::array<std::uint32_t, 7> bags {};
+        for (model::CharacterItemSnapshotEntry const& item : snap.bankItems)
+            if (item.containerGuid == 0 && item.slot >= 67 && item.slot <= 73)
+                bags[item.slot - 67] = item.itemEntry;
+        return bags;
+    };
+    return inventoryBags(sourceSnapshot) != inventoryBags(cloneSnapshot) ||
+           bankBags(sourceSnapshot) != bankBags(cloneSnapshot);
+}
 } // namespace
 
 model::AccountAltSanityCheckResult CharacterItemSanityChecker::Check(
@@ -242,6 +291,14 @@ model::AccountAltSanityCheckResult CharacterItemSanityChecker::Check(
     {
         result.failures.push_back("inventory/bank snapshot has invalid container shape");
     }
+
+    if (HasExcessiveContainerSize(sourceSnapshot) || HasExcessiveContainerSize(cloneSnapshot))
+    {
+        result.failures.push_back(
+            "inventory/bank snapshot has a container exceeding the bag size cap");
+    }
+
+    result.bagContainersChanged = BagContainersChanged(sourceSnapshot, cloneSnapshot);
 
     if (result.failures.empty() &&
         EquipmentDiffers(sourceSnapshot, cloneSnapshot))

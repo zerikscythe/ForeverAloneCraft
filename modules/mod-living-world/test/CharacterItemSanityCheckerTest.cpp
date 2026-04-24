@@ -180,5 +180,88 @@ TEST(CharacterItemSanityCheckerTest, RejectsBankItemInsideInventoryContainer)
     EXPECT_FALSE(result.passed);
     EXPECT_FALSE(result.failures.empty());
 }
+
+TEST(CharacterItemSanityCheckerTest, RejectsExcessiveContainerSize)
+{
+    CharacterItemSanityChecker checker;
+    model::CharacterItemSnapshot source;
+    model::CharacterItemSnapshot clone;
+
+    clone.inventoryItems.push_back(
+        Item(5000, 19, 7001, model::CharacterItemStorageDomain::Inventory));
+    for (std::uint8_t i = 0; i < 37; ++i)
+    {
+        auto nested = Item(static_cast<std::uint64_t>(1000 + i), i, 5001,
+                           model::CharacterItemStorageDomain::Inventory);
+        nested.containerGuid = 5000;
+        clone.inventoryItems.push_back(nested);
+    }
+
+    model::AccountAltSanityCheckResult result = checker.Check(source, clone);
+
+    EXPECT_FALSE(result.passed);
+    EXPECT_FALSE(result.failures.empty());
+}
+
+TEST(CharacterItemSanityCheckerTest, SetsBagContainersChangedWhenInventoryBagsDiffer)
+{
+    CharacterItemSanityChecker checker;
+    model::CharacterItemSnapshot source;
+    model::CharacterItemSnapshot clone;
+
+    source.inventoryItems.push_back(
+        Item(1001, 19, 6501, model::CharacterItemStorageDomain::Inventory));
+    clone.inventoryItems.push_back(
+        Item(2001, 19, 6502, model::CharacterItemStorageDomain::Inventory));
+
+    model::AccountAltSanityCheckResult result = checker.Check(source, clone);
+
+    EXPECT_TRUE(result.passed);
+    EXPECT_TRUE(result.bagContainersChanged);
+}
+
+TEST(CharacterItemSanityCheckerTest, SetsBagContainersChangedWhenBankBagsDiffer)
+{
+    CharacterItemSanityChecker checker;
+    model::CharacterItemSnapshot source;
+    model::CharacterItemSnapshot clone;
+
+    source.bankItems.push_back(
+        Item(1001, 67, 6501, model::CharacterItemStorageDomain::Bank));
+    clone.bankItems.push_back(
+        Item(2001, 67, 6502, model::CharacterItemStorageDomain::Bank));
+
+    model::AccountAltSanityCheckResult result = checker.Check(source, clone);
+
+    EXPECT_TRUE(result.passed);
+    EXPECT_TRUE(result.bagContainersChanged);
+}
+
+TEST(CharacterItemSanityCheckerTest, DoesNotSetBagContainersChangedWhenOnlyContentsDiffer)
+{
+    CharacterItemSanityChecker checker;
+    model::CharacterItemSnapshot source;
+    model::CharacterItemSnapshot clone;
+
+    // Same bag type at slot 19 in both snapshots.
+    source.inventoryItems.push_back(
+        Item(1001, 19, 6501, model::CharacterItemStorageDomain::Inventory));
+    clone.inventoryItems.push_back(
+        Item(2001, 19, 6501, model::CharacterItemStorageDomain::Inventory));
+
+    // Different items inside the bags.
+    auto srcItem = Item(3001, 0, 7001, model::CharacterItemStorageDomain::Inventory);
+    srcItem.containerGuid = 1001;
+    source.inventoryItems.push_back(srcItem);
+
+    auto cloneItem = Item(4001, 0, 7002, model::CharacterItemStorageDomain::Inventory);
+    cloneItem.containerGuid = 2001;
+    clone.inventoryItems.push_back(cloneItem);
+
+    model::AccountAltSanityCheckResult result = checker.Check(source, clone);
+
+    EXPECT_TRUE(result.passed);
+    EXPECT_FALSE(result.bagContainersChanged);
+}
 } // namespace service
 } // namespace living_world

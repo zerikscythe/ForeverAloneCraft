@@ -96,6 +96,7 @@ struct AccountAltRuntimeRecord
 struct AccountAltSanityCheckResult
 {
     bool passed = false;
+    bool bagContainersChanged = false;
     std::vector<AccountAltSyncDomain> safeDomains;
     std::vector<std::string> failures;
 };

@@ -35,6 +35,14 @@ model::AccountAltItemRecoveryPlan AccountAltItemRecoveryService::BuildRecoveryPl
     if (inventoryItr != sanityCheck.safeDomains.end() ||
         bankItr != sanityCheck.safeDomains.end())
     {
+        if (sanityCheck.bagContainersChanged)
+        {
+            plan.kind = model::AccountAltItemRecoveryPlanKind::ManualReview;
+            plan.reason =
+                "bag container structure changed between source and clone";
+            return plan;
+        }
+
         if (inventoryItr != sanityCheck.safeDomains.end())
         {
             plan.domainsToSync.push_back(model::AccountAltSyncDomain::Inventory);
