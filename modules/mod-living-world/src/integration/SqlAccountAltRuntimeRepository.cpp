@@ -32,6 +32,10 @@ model::AccountAltRuntimeState FromDbState(std::uint8_t state)
             return model::AccountAltRuntimeState::Failed;
         case 5:
             return model::AccountAltRuntimeState::SyncingEquipment;
+        case 6:
+            return model::AccountAltRuntimeState::SyncingInventory;
+        case 7:
+            return model::AccountAltRuntimeState::SyncingBank;
         default:
             return model::AccountAltRuntimeState::Failed;
     }
@@ -125,7 +129,7 @@ SqlAccountAltRuntimeRepository::ListRecoverableForAccount(
     QueryResult result = CharacterDatabase.Query(
         "SELECT {} FROM living_world_account_alt_runtime "
         "WHERE source_account_id = {} "
-        "AND state IN (0, 1, 2, 3) "
+        "AND state IN (0, 1, 2, 3, 6, 7) "
         "ORDER BY updated_at ASC",
         RuntimeSelectColumns,
         sourceAccountId);

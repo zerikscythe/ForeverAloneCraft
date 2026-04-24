@@ -126,6 +126,13 @@ AccountAltStartupRecoveryService::RecoverForAccount(
             continue;
         }
 
+        if (runtime.state == model::AccountAltRuntimeState::SyncingInventory ||
+            runtime.state == model::AccountAltRuntimeState::SyncingBank)
+        {
+            ++summary.blocked;
+            continue;
+        }
+
         model::AccountAltRecoveryPlan recoveryPlan =
             _recoveryService.BuildRecoveryPlan(
                 runtime,

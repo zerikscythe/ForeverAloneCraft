@@ -1262,6 +1262,17 @@ The first observation layer for item domains now exists as well:
   seam. It consumes item-sanity results and decides whether to do nothing,
   sync equipment, block unsupported inventory/bank deltas, or require manual
   review.
+- Disabled write seams now exist for bag domains:
+  - `integration::CharacterInventorySyncRepository` /
+    `SqlCharacterInventorySyncRepository`
+  - `integration::CharacterBankSyncRepository` /
+    `SqlCharacterBankSyncRepository`
+  - `service::AccountAltInventorySyncExecutor`
+  - `service::AccountAltBankSyncExecutor`
+- These are intentionally not wired into the live planner yet. They are the
+  next-layer plumbing only: duplicate item instances, remap nested container
+  GUIDs, and rewrite `character_inventory` transactionally for inventory or
+  bank domains.
 - `AccountAltRuntimeCoordinator` now applies item recovery after successful
   progress recovery or on clone reuse. `AccountAltStartupRecoveryService` also
   understands `SyncingEquipment` and can retry the equipment executor on login.
@@ -1299,6 +1310,9 @@ Inventory and bank now have the first planning-only rules:
 - detect when those domains differ
 - validate root-slot and container-chain plausibility
 - block with a clear planner reason until dedicated write executors exist
+
+Those dedicated executors now exist in code, but they should remain disabled in
+the live recovery path until runtime validation is possible.
 
 ### 21.4 Non-negotiable safety rules
 

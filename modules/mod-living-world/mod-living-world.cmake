@@ -8,6 +8,8 @@ set_property(GLOBAL APPEND PROPERTY ACORE_MODULE_TEST_SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/test/AccountAltStartupRecoveryServiceTest.cpp
   ${CMAKE_CURRENT_LIST_DIR}/test/AccountAltDismissalServiceTest.cpp
   ${CMAKE_CURRENT_LIST_DIR}/test/AccountAltEquipmentSyncExecutorTest.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/test/AccountAltInventorySyncExecutorTest.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/test/AccountAltBankSyncExecutorTest.cpp
   ${CMAKE_CURRENT_LIST_DIR}/test/AccountAltItemRecoveryServiceTest.cpp
   ${CMAKE_CURRENT_LIST_DIR}/test/AccountAltSanityCheckerTest.cpp
   ${CMAKE_CURRENT_LIST_DIR}/test/CharacterItemSnapshotClassifierTest.cpp

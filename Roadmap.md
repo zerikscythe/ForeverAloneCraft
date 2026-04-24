@@ -823,14 +823,25 @@ Current implementation status:
   results.
 - Inventory/bank differences are now explicitly detected and blocked with a
   clear planner reason until dedicated bag/bank executors exist.
+- Disabled bag/bank write seams now exist:
+  - `CharacterInventorySyncRepository` +
+    `SqlCharacterInventorySyncRepository`
+  - `CharacterBankSyncRepository` +
+    `SqlCharacterBankSyncRepository`
+  - `AccountAltInventorySyncExecutor`
+  - `AccountAltBankSyncExecutor`
+- Those seams duplicate `item_instance` rows, remap nested container GUIDs, and
+  rewrite `character_inventory` rows transactionally, but they are not wired
+  into live recovery planning yet.
 - `AccountAltRuntimeCoordinator` now runs item snapshot loading, item sanity,
   and equipment recovery after progress recovery succeeds or when the clone is
   otherwise reusable.
 - `AccountAltStartupRecoveryService` now distinguishes `SyncingBack`
   (progress retry) from `SyncingEquipment` (equipment retry) on owner login.
 
-After this, the next follow-on slice should be repository/executor seams for
-inventory and bank, still kept disabled until runtime validation is possible.
+After this, the next follow-on slice should be planner integration for those
+bag/bank executors behind an explicit feature gate or manual-only path, still
+kept out of default live recovery until runtime validation is possible.
 
 ---
 

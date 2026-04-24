@@ -20,7 +20,9 @@ enum class AccountAltRuntimeState
     SyncingBack,
     Recovering,
     Failed,
-    SyncingEquipment
+    SyncingEquipment,
+    SyncingInventory,
+    SyncingBank
 };
 
 enum class AccountAltRuntimeDecisionKind
