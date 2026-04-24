@@ -20,12 +20,16 @@
 #include "ObjectAccessor.h"
 #include "Player.h"
 #include "ScriptMgr.h"
+#include "TradeData.h"
 #include "WorldSession.h"
 
 #include <optional>
+#include <unordered_set>
 
 namespace
 {
+std::unordered_set<std::uint64_t> s_openedControlledTradeWindows;
+
 void RunOwnerStartupRecovery(Player* player)
 {
     if (!player || !player->GetSession())
@@ -48,9 +52,9 @@ void RunOwnerStartupRecovery(Player* player)
     living_world::service::AccountAltRecoveryService recoveryService;
     living_world::service::AccountAltItemRecoveryOptions itemRecoveryOptions;
     itemRecoveryOptions.enableInventorySync =
-        sConfigMgr->GetOption<bool>("LivingWorld.AccountAlt.EnableInventorySync", false);
+        sConfigMgr->GetOption<bool>("LivingWorld.AccountAlt.EnableInventorySync", true);
     itemRecoveryOptions.enableBankSync =
-        sConfigMgr->GetOption<bool>("LivingWorld.AccountAlt.EnableBankSync", false);
+        sConfigMgr->GetOption<bool>("LivingWorld.AccountAlt.EnableBankSync", true);
     living_world::service::AccountAltStartupRecoveryService startupRecoveryService(
         runtimeRepository,
         itemSnapshotRepository,
@@ -110,6 +114,79 @@ void AddBotToOwnerGroup(Player* bot, Player* owner)
     group->AddMember(bot);
 }
 
+Player* FindOwnerControlledTradeBot(Player* owner)
+{
+    if (!owner)
+    {
+        return nullptr;
+    }
+
+    TradeData* ownerTrade = owner->GetTradeData();
+    if (!ownerTrade)
+    {
+        return nullptr;
+    }
+
+    Player* bot = ownerTrade->GetTrader();
+    if (!bot || !bot->GetSession() || !bot->GetSession()->IsBotSession())
+    {
+        return nullptr;
+    }
+
+    if (living_world::service::BotPlayerRegistry::Instance().FindBotForOwner(
+            owner->GetGUID()) != bot)
+    {
+        return nullptr;
+    }
+
+    return bot;
+}
+
+void MaybeAutoAcceptControlledBotTrade(Player* owner)
+{
+    if (!owner || !owner->GetSession() || owner->GetSession()->IsBotSession())
+    {
+        return;
+    }
+
+    std::uint64_t const ownerGuid = owner->GetGUID().GetCounter();
+    TradeData* ownerTrade = owner->GetTradeData();
+    if (!ownerTrade)
+    {
+        s_openedControlledTradeWindows.erase(ownerGuid);
+        return;
+    }
+
+    Player* bot = FindOwnerControlledTradeBot(owner);
+    if (!bot || !bot->IsWithinDistInMap(owner, TRADE_DISTANCE, false))
+    {
+        return;
+    }
+
+    TradeData* botTrade = bot->GetTradeData();
+    if (!botTrade || botTrade->GetTrader() != owner)
+    {
+        return;
+    }
+
+    if (!s_openedControlledTradeWindows.contains(ownerGuid))
+    {
+        WorldPacket packet;
+        bot->GetSession()->HandleBeginTradeOpcode(packet);
+        s_openedControlledTradeWindows.insert(ownerGuid);
+        return;
+    }
+
+    if (!ownerTrade->IsAccepted() || ownerTrade->IsInAcceptProcess() ||
+        botTrade->IsAccepted() || botTrade->IsInAcceptProcess())
+    {
+        return;
+    }
+
+    WorldPacket packet;
+    bot->GetSession()->HandleAcceptTradeOpcode(packet);
+}
+
 void DismissOwnerBot(Player* player)
 {
     Player* bot = living_world::service::BotPlayerRegistry::Instance()
@@ -124,7 +201,10 @@ void DismissOwnerBot(Player* player)
         group->RemoveMember(bot->GetGUID(), GROUP_REMOVEMETHOD_LEAVE);
     }
 
-    bot->GetSession()->KickPlayer("LivingWorld owner logout");
+    if (!bot->GetSession()->PlayerLogout())
+    {
+        bot->GetSession()->LogoutPlayer(true);
+    }
 }
 
 void RunBotDismissalRecovery(Player* player)
@@ -151,9 +231,9 @@ void RunBotDismissalRecovery(Player* player)
     living_world::service::AccountAltRecoveryService recoveryService;
     living_world::service::AccountAltItemRecoveryOptions itemRecoveryOptions;
     itemRecoveryOptions.enableInventorySync =
-        sConfigMgr->GetOption<bool>("LivingWorld.AccountAlt.EnableInventorySync", false);
+        sConfigMgr->GetOption<bool>("LivingWorld.AccountAlt.EnableInventorySync", true);
     itemRecoveryOptions.enableBankSync =
-        sConfigMgr->GetOption<bool>("LivingWorld.AccountAlt.EnableBankSync", false);
+        sConfigMgr->GetOption<bool>("LivingWorld.AccountAlt.EnableBankSync", true);
     living_world::service::AccountAltDismissalService dismissalService(
         runtimeRepository,
         itemSnapshotRepository,
@@ -211,11 +291,9 @@ public:
             return;
         }
 
+        s_openedControlledTradeWindows.erase(player->GetGUID().GetCounter());
         if (!player->GetSession()->IsBotSession())
-        {
-            DismissOwnerBot(player);
             return;
-        }
 
         if (Group* group = player->GetGroup())
             group->RemoveMember(player->GetGUID(), GROUP_REMOVEMETHOD_LEAVE);
@@ -224,6 +302,22 @@ public:
 
         living_world::service::BotPlayerRegistry::Instance()
             .UnregisterBotPlayer(player);
+    }
+
+    void OnPlayerUpdate(Player* player, uint32 /*diff*/) override
+    {
+        MaybeAutoAcceptControlledBotTrade(player);
+    }
+
+    void OnPlayerBeforeLogout(Player* player) override
+    {
+        if (!player || !player->GetSession() || player->GetSession()->IsBotSession())
+        {
+            return;
+        }
+
+        s_openedControlledTradeWindows.erase(player->GetGUID().GetCounter());
+        DismissOwnerBot(player);
     }
 };
 

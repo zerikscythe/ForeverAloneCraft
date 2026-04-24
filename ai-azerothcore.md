@@ -378,8 +378,8 @@ Current state as of the first foundation + first runtime command slice:
   command surface. `.lwbot roster list` reads account alts from the
   characters DB; `.lwbot roster request <id>` routes through
   `PartyBotService` and prints approved / rejected output plus
-  `WorldCommitAction` intent. `.lwbot roster dismiss <id>` is still a
-  placeholder.
+  `WorldCommitAction` intent. `.lwbot roster dismiss <id>` now resolves to the
+  real bot-session logout path rather than remaining a placeholder.
 - No living-world code executes party-bot world mutation yet. The next core
   slice should introduce account-alt SQL-backed runtime repositories and then
   the authoritative commit executor that consumes `WorldCommitAction` records
@@ -400,6 +400,20 @@ Current state as of the first foundation + first runtime command slice:
   `AccountAltRuntimeCoordinator` before `BotSessionFactory`. This means runtime
   records and snapshots are consulted first, reserved bot accounts are reused
   deterministically, and clone-ahead cases are blocked for manual review.
+- `LivingWorldPlayerScript` now contains the first live item-transfer test seam
+  for controlled account-alt bots: when a real owner starts a trade with their
+  currently registered bot-session clone, the script auto-runs the bot's stock
+  begin-trade handler so the trade window actually opens, then later auto-runs
+  the stock accept handler after the owner clicks accept. This keeps bag-space
+  and trade-validity checks inside the native trade flow while letting us
+  exercise inventory persistence in-game without a custom mail or debug command
+  path.
+- Do not dismiss controlled bot-session clones with `KickPlayer()` from owner
+  shutdown flows. Socketless bot sessions can be dropped before
+  `LogoutPlayer()` runs, which skips the account-alt dismissal recovery work.
+  The owner-triggered path now starts in `OnPlayerBeforeLogout` and explicitly
+  calls `botSession->LogoutPlayer(true)` so clone recovery, item sync, and name
+  release execute on the normal bot logout path.
 - Local runtime validation has reached a working end-to-end WotLK install:
   MySQL 8, authserver, worldserver, extracted dbc/maps/vmaps/mmaps, client
   login, character creation, and starting-zone entry. This validates the
@@ -1289,8 +1303,8 @@ The first observation layer for item domains now exists as well:
 - `AccountAltRuntimeCoordinator`, `AccountAltStartupRecoveryService`, and
   `AccountAltDismissalService` now all understand bag-domain recovery plans and
   can route them into the inventory/bank executors when policy allows it.
-  The default policy remains conservative: inventory/bank sync stays disabled
-  on the live path until runtime validation is possible.
+  The current default policy now enables inventory/bank sync on the live path
+  so account alts keep persistent item state with their source character.
 - `service::AccountAltDismissalService` is now the main bot-logout recovery
   seam. It resolves runtimes by clone guid, runs safe progress recovery, runs
   item-domain recovery where allowed, restores names through the name-lease
@@ -1336,8 +1350,8 @@ Inventory and bank now have the first planning and execution rules:
 - otherwise block with a clear planner reason
 
 Those dedicated executors now exist in code and are understood by the runtime
-services, but they should remain disabled by default until runtime validation
-is possible.
+services, and they now default on in live config/fallbacks. Manual-review
+escalation for bag-container changes is the primary guardrail.
 
 ### 21.4 Non-negotiable safety rules
 
@@ -1405,16 +1419,16 @@ other members are still present.
 
 1. `BotPlayerRegistry::FindBotForOwner(player->GetGUID())` — look up active bot.
 2. `group->RemoveMember(bot->GetGUID(), GROUP_REMOVEMETHOD_LEAVE)` — clean party.
-3. `bot->GetSession()->KickPlayer("LivingWorld roster dismiss")` — sets
-   `IsKicked() = true`.
+3. `bot->GetSession()->LogoutPlayer(true)` - runs the stock logout path
+   immediately for the socketless bot session.
 
-The kick flag is read on the next worldserver update tick by the guard in
-`WorldSession::Update`:
+This directly triggers the normal `LogoutPlayer` -> `OnPlayerBeforeLogout` ->
+`OnPlayerLogout` sequence for the bot, so dismissal recovery, item sync, name
+release, registry cleanup, and group cleanup all happen in one authoritative
+path.
 
-```cpp
-if (!m_Socket && (!m_isBotSession || IsKicked()))
-    return false;
-```
+Using `KickPlayer()` here is incorrect for socketless bot sessions because they
+can be dropped before the logout pipeline runs.
 
 Returning false from `Update` triggers `LogoutPlayer` → `OnPlayerLogout` hook
 → `UnregisterBotPlayer` + bot-pool DB release. The sequence is fully
@@ -1536,11 +1550,11 @@ Still not safe without additional rules:
 
 `mod-living-world.conf.dist` now exposes:
 ```
-LivingWorld.AccountAlt.EnableInventorySync = 0
-LivingWorld.AccountAlt.EnableBankSync = 0
+LivingWorld.AccountAlt.EnableInventorySync = 1
+LivingWorld.AccountAlt.EnableBankSync = 1
 ```
 
-Both default to 0 (disabled). All three service construction sites that accept
+Both now default to 1 (enabled). All three service construction sites that accept
 `AccountAltItemRecoveryOptions` read these values via
 `sConfigMgr->GetOption<bool>` at construction time:
 - `AccountAltRuntimeCoordinator` in `LivingWorldCommandScript`
@@ -1579,7 +1593,8 @@ unexpected if the root bags are a different type than what was recorded.
 
 ### 24.4 Safety line
 
-- Inventory/bank sync remains disabled by default in conf.dist.
+- Inventory/bank sync is enabled by default in conf.dist and in the
+  `sConfigMgr->GetOption<bool>(..., true)` fallbacks used by the runtime code.
 - Even when enabled by config, bag-container-change detection causes ManualReview
   to take priority over SyncBagDomainsToSource.
 - Bag equality must stay based on logical container paths, not raw
@@ -1590,3 +1605,18 @@ unexpected if the root bags are a different type than what was recorded.
 - The next step before enabling inventory/bank sync in any live config is runtime
   verification: exercise the full spawn → dismiss → startup recovery cycle and
   confirm source characters are in correct state after each step.
+
+Practical note for future edits and tests:
+- if a test or fake snapshot is trying to represent "same bag, different
+  contents", keep the root bag itemEntry the same and change an item inside the
+  bag instead
+- changing the bag itemEntry itself at root inventory slots (19-22) or root
+  bank slots (67-73) now intentionally triggers `bagContainersChanged` and
+  should lead to ManualReview
+
+Build note:
+- `AccountAltRuntimeCoordinator.h` exposes
+  `AccountAltItemRecoveryOptions` in the public constructor signature, so that
+  header must include `service/AccountAltItemRecoveryService.h`
+- including it only in the `.cpp` is not enough because command/startup
+  callers instantiate the coordinator directly

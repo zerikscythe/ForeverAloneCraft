@@ -10,6 +10,7 @@
 #include "integration/CharacterProgressSnapshotRepository.h"
 #include "integration/CharacterProgressSyncRepository.h"
 #include "model/AccountAltRuntime.h"
+#include "service/AccountAltItemRecoveryService.h"
 #include "service/AccountAltRecoveryService.h"
 #include "service/AccountAltRuntimeService.h"
 

@@ -375,8 +375,20 @@ TEST(AccountAltStartupRecoveryServiceTest,
     sourceItems.inventoryItems.push_back(sourceBag);
     model::CharacterItemSnapshotEntry cloneBag = sourceBag;
     cloneBag.itemGuid = 2001;
-    cloneBag.itemEntry = 5002;
     cloneItems.inventoryItems.push_back(cloneBag);
+    model::CharacterItemSnapshotEntry sourceBagItem;
+    sourceBagItem.itemGuid = 1002;
+    sourceBagItem.itemEntry = 6001;
+    sourceBagItem.itemCount = 1;
+    sourceBagItem.containerGuid = sourceBag.itemGuid;
+    sourceBagItem.slot = 0;
+    sourceBagItem.domain = model::CharacterItemStorageDomain::Inventory;
+    sourceItems.inventoryItems.push_back(sourceBagItem);
+    model::CharacterItemSnapshotEntry cloneBagItem = sourceBagItem;
+    cloneBagItem.itemGuid = 2002;
+    cloneBagItem.itemEntry = 6002;
+    cloneBagItem.containerGuid = cloneBag.itemGuid;
+    cloneItems.inventoryItems.push_back(cloneBagItem);
     itemSnapshotRepository.sourceSnapshot = sourceItems;
     itemSnapshotRepository.cloneSnapshot = cloneItems;
 

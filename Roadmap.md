@@ -377,6 +377,17 @@ design and foundation code.
   recovery pass. It retries `SyncingBack` progress-only runtimes, reports
   pending recovery when a materialized clone is ahead, and surfaces manual
   review / blocked counts without performing broader destructive sync.
+- `LivingWorldPlayerScript::OnPlayerUpdate` now drives the stock trade flow for
+  owner-controlled bot-session clones: it auto-opens the trade window on the
+  bot side, then auto-confirms only after the real player clicks accept. The
+  bot still uses AzerothCore's native trade handlers, so inventory-space and
+  trade-validity checks remain authoritative. This is the current in-game test
+  seam for account-alt inventory persistence.
+- Owner-triggered clone dismissal now starts from
+  `LivingWorldPlayerScript::OnPlayerBeforeLogout`, and it calls the bot
+  session's real `LogoutPlayer(true)` path rather than `KickPlayer()`. This is
+  important for socketless bot sessions because recovery/name-release/item-sync
+  work lives on the normal logout path.
 
 9.5 Decide whether generic bots and account alts share one runtime pipeline — **Not Started**
 
@@ -740,16 +751,17 @@ immediately after `ScheduleCompanionAI`. The helper:
 This makes the bot a real party member in the client UI from the moment it
 enters the world.
 
-### B) OnPlayerLogout — owner dismiss + bot cleanup
+### B) Owner/bot logout hooks - dismiss + cleanup
 
 `LogoutPlayer` in core skips automatic group removal when the session has no
 socket (the `m_Socket &&` guard around the group-removal block). Bot sessions
 have no socket, so they were silently left in groups forever.
 
-`OnPlayerLogout` currently has two responsibilities:
-- owner logout kicks the active bot so it does not remain in-world with a null
-  owner
-- bot logout explicitly removes the bot from the group before unregistering it
+`LivingWorldPlayerScript` now splits the responsibilities across the safe hooks:
+- `OnPlayerBeforeLogout` on the real owner starts controlled-bot dismissal
+  early and calls the bot session's real `LogoutPlayer(true)` path.
+- `OnPlayerLogout` on the bot explicitly removes the bot from the group before
+  unregistering it and running dismissal recovery.
 
 The bot branch explicitly calls:
 ```cpp
@@ -757,17 +769,17 @@ if (Group* group = player->GetGroup())
     group->RemoveMember(player->GetGUID(), GROUP_REMOVEMETHOD_LEAVE);
 ```
 This fires before `UnregisterBotPlayer` and the bot-pool DB release so the
-group is clean regardless of whether the bot was kicked or timed out.
+group is clean before clone recovery/name-release/item-sync work runs.
 
-### C) `.lwbot roster dismiss <id>` — real implementation
+### C) `.lwbot roster dismiss <id>` - real implementation
 
 `RenderDismissBot` replaced the old `RenderDismissPlaceholder`. It:
 1. Looks up the owner's active bot via `BotPlayerRegistry::FindBotForOwner`.
 2. Removes the bot from its group with `GROUP_REMOVEMETHOD_LEAVE`.
-3. Calls `bot->GetSession()->KickPlayer("LivingWorld roster dismiss")` — this
-   sets `IsKicked()=true`, which causes the null-socket guard in
-   `WorldSession::Update` to return false on the next tick, triggering
-   `LogoutPlayer` and the full cleanup chain.
+3. Calls `bot->GetSession()->LogoutPlayer(true)` so the stock logout pipeline
+   runs immediately for the socketless bot session, triggering
+   `OnPlayerBeforeLogout`/`OnPlayerLogout`, clone dismissal recovery, and
+   registry cleanup in the same authoritative path.
 
 ---
 
@@ -782,10 +794,12 @@ See section D of "Immediate Next Implementation Slice" above for full detail.
 ### A) Config-driven bag-domain policy — **Complete**
 
 `mod-living-world.conf.dist` now exposes two operator-controlled knobs:
-- `LivingWorld.AccountAlt.EnableInventorySync = 0`
-- `LivingWorld.AccountAlt.EnableBankSync = 0`
+- `LivingWorld.AccountAlt.EnableInventorySync = 1`
+- `LivingWorld.AccountAlt.EnableBankSync = 1`
 
-Both default to disabled. All three service construction sites that accept
+Both now default to enabled so account alts keep persistent inventory and bank
+state with their source character unless an operator explicitly turns them off.
+All three service construction sites that accept
 `AccountAltItemRecoveryOptions` — `AccountAltRuntimeCoordinator` in
 `LivingWorldCommandScript`, and `AccountAltStartupRecoveryService` /
 `AccountAltDismissalService` in `LivingWorldPlayerScript` — now read these
@@ -845,6 +859,13 @@ Tests added:
 - duplicate nested container slots are rejected
 - equipment sync is planned before blocked inventory when both domains differ
 
+Important fixture note for future agents:
+- tests that intend to model "inventory contents changed" must keep the root
+  bag container type the same on source and clone
+- changing the itemEntry of the bag in slots 19-22 or 67-73 is now treated as
+  a real bag-container change and should correctly route to manual review
+  instead of bag sync
+
 ---
 
 ## Immediate Next: Runtime Verification and End-to-End Testing Prep
@@ -899,14 +920,14 @@ Current implementation status:
   rewrite `character_inventory` rows transactionally, but they are not wired
   into default live recovery yet.
 - `AccountAltItemRecoveryService` now has explicit bag-domain policy gating:
-  it can plan inventory/bank recovery when enabled, but the default policy keeps
-  those domains blocked. Equipment recovery is evaluated before bag-domain
+  it can plan inventory/bank recovery when enabled, and the current default
+  policy now enables those domains. Equipment recovery is evaluated before bag-domain
   blocking so safe gear recovery still proceeds when inventory/bank sync is
   disabled.
 - `AccountAltRuntimeCoordinator`, `AccountAltStartupRecoveryService`, and
   `AccountAltDismissalService` now understand bag-domain recovery plans and can
-  execute the inventory/bank sync executors when policy allows it, while still
-  staying default-off on the live path.
+  execute the inventory/bank sync executors when policy allows it. The current
+  live default is now on.
 - `AccountAltDismissalSummary` now reports per-domain item results so callers can
   distinguish progress sync from equipment, inventory, and bank recovery.
 - `AccountAltRuntimeCoordinator` now runs item snapshot loading, item sanity,
@@ -920,10 +941,10 @@ Current implementation status:
   `recoveredSyncs` count.
 
 Important current safety line:
-- inventory/bank execution exists in code, but the default policy still blocks
-  those domains on the live path
-- another agent should not silently enable bag-domain sync by default without
-  a deliberate config/manual-control surface and runtime testing
+- inventory/bank execution now defaults on for the live path so account alts
+  keep persistent item state with their source character
+- bag-container-change detection and manual-review escalation are now the main
+  safeguards against unsafe automatic bag sync
 
 After this, the next follow-on slice should be:
 1. a real config/manual surface for bag-domain policy
@@ -954,8 +975,8 @@ See section C of "Immediate Next Implementation Slice" above for full detail.
 
 6. **Harden the runtime command surface**
 - Keep `.lwbot roster list` and `.lwbot roster request <id>` usable in-game.
-- Leave `.lwbot roster dismiss <id>` as a placeholder until despawn commit
-  actions exist.
+- Keep `.lwbot roster dismiss <id>` aligned with the bot-session logout path so
+  clone recovery and name/item sync stay authoritative.
 
 ---
 

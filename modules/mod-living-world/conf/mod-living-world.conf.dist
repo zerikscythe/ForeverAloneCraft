@@ -5,18 +5,18 @@
 #
 #    LivingWorld.AccountAlt.EnableInventorySync
 #        Allow clone-to-source inventory bag sync during bot dismiss and startup recovery.
-#        Keep disabled until the inventory sync path has been runtime-validated on a live server.
-#        Enabling without validation risks item duplication or loss.
+#        Enabled by default so account alts keep persistent inventory state with
+#        their source character across spawn, dismiss, and recovery flows.
 #
-#        Default: 0 (disabled)
+#        Default: 1 (enabled)
 #
 #    LivingWorld.AccountAlt.EnableBankSync
 #        Allow clone-to-source bank bag sync during bot dismiss and startup recovery.
-#        Keep disabled until the bank sync path has been runtime-validated on a live server.
-#        Enabling without validation risks item duplication or loss.
+#        Enabled by default so account alts keep persistent bank state with
+#        their source character across spawn, dismiss, and recovery flows.
 #
-#        Default: 0 (disabled)
+#        Default: 1 (enabled)
 ###################################################################################################
 
-LivingWorld.AccountAlt.EnableInventorySync = 0
-LivingWorld.AccountAlt.EnableBankSync = 0
+LivingWorld.AccountAlt.EnableInventorySync = 1
+LivingWorld.AccountAlt.EnableBankSync = 1

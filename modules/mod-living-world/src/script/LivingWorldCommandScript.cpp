@@ -372,9 +372,9 @@ bool ExecuteSpawnRosterBodyAction(
     service::AccountAltRecoveryService recoveryService;
     service::AccountAltItemRecoveryOptions itemRecoveryOptions;
     itemRecoveryOptions.enableInventorySync =
-        sConfigMgr->GetOption<bool>("LivingWorld.AccountAlt.EnableInventorySync", false);
+        sConfigMgr->GetOption<bool>("LivingWorld.AccountAlt.EnableInventorySync", true);
     itemRecoveryOptions.enableBankSync =
-        sConfigMgr->GetOption<bool>("LivingWorld.AccountAlt.EnableBankSync", false);
+        sConfigMgr->GetOption<bool>("LivingWorld.AccountAlt.EnableBankSync", true);
     service::AccountAltRuntimeCoordinator coordinator(
         runtimeRepository,
         botAccountPoolRepository,
