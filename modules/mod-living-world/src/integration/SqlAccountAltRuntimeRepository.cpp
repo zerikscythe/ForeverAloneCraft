@@ -99,6 +99,24 @@ SqlAccountAltRuntimeRepository::FindBySourceCharacter(
     return BuildRecord(result->Fetch());
 }
 
+std::optional<model::AccountAltRuntimeRecord>
+SqlAccountAltRuntimeRepository::FindByCloneCharacter(
+    std::uint64_t cloneCharacterGuid) const
+{
+    QueryResult result = CharacterDatabase.Query(
+        "SELECT {} FROM living_world_account_alt_runtime "
+        "WHERE clone_character_guid = {} "
+        "LIMIT 1",
+        RuntimeSelectColumns,
+        cloneCharacterGuid);
+    if (!result)
+    {
+        return std::nullopt;
+    }
+
+    return BuildRecord(result->Fetch());
+}
+
 std::vector<model::AccountAltRuntimeRecord>
 SqlAccountAltRuntimeRepository::ListRecoverableForAccount(
     std::uint32_t sourceAccountId) const

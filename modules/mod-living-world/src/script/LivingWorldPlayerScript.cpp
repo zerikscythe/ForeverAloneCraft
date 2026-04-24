@@ -3,8 +3,10 @@
 #include "integration/SqlAccountAltRuntimeRepository.h"
 #include "integration/SqlCharacterEquipmentSyncRepository.h"
 #include "integration/SqlCharacterItemSnapshotRepository.h"
+#include "integration/SqlCharacterNameLeaseRepository.h"
 #include "integration/SqlCharacterProgressSnapshotRepository.h"
 #include "integration/SqlCharacterProgressSyncRepository.h"
+#include "service/AccountAltDismissalService.h"
 #include "service/AccountAltRecoveryService.h"
 #include "service/AccountAltStartupRecoveryService.h"
 #include "service/BotPlayerRegistry.h"
@@ -92,6 +94,53 @@ void AddBotToOwnerGroup(Player* bot, Player* owner)
         return;
     group->AddMember(bot);
 }
+
+void DismissOwnerBot(Player* player)
+{
+    Player* bot = living_world::service::BotPlayerRegistry::Instance()
+                      .FindBotForOwner(player->GetGUID());
+    if (!bot || !bot->GetSession())
+    {
+        return;
+    }
+
+    if (Group* group = bot->GetGroup())
+    {
+        group->RemoveMember(bot->GetGUID(), GROUP_REMOVEMETHOD_LEAVE);
+    }
+
+    bot->GetSession()->KickPlayer("LivingWorld owner logout");
+}
+
+void RunBotDismissalRecovery(Player* player)
+{
+    if (!player || !player->GetSession())
+    {
+        return;
+    }
+
+    living_world::integration::SqlAccountAltRuntimeRepository runtimeRepository;
+    living_world::integration::SqlCharacterItemSnapshotRepository
+        itemSnapshotRepository;
+    living_world::integration::SqlCharacterEquipmentSyncRepository
+        equipmentSyncRepository;
+    living_world::integration::SqlCharacterNameLeaseRepository
+        nameLeaseRepository;
+    living_world::integration::SqlCharacterProgressSnapshotRepository
+        snapshotRepository;
+    living_world::integration::SqlCharacterProgressSyncRepository syncRepository;
+    living_world::service::AccountAltRecoveryService recoveryService;
+    living_world::service::AccountAltDismissalService dismissalService(
+        runtimeRepository,
+        itemSnapshotRepository,
+        equipmentSyncRepository,
+        nameLeaseRepository,
+        snapshotRepository,
+        syncRepository,
+        recoveryService);
+
+    dismissalService.DismissClone(player->GetGUID().GetCounter());
+}
 } // namespace
 
 class LivingWorldPlayerScript final : public PlayerScript
@@ -137,18 +186,14 @@ public:
 
         if (!player->GetSession()->IsBotSession())
         {
-            // Owner logout — kick any active bot so it doesn't float in the
-            // world indefinitely with a null owner on every AI tick.
-            Player* bot =
-                living_world::service::BotPlayerRegistry::Instance()
-                    .FindBotForOwner(player->GetGUID());
-            if (bot)
-                bot->GetSession()->KickPlayer("LivingWorld owner logout");
+            DismissOwnerBot(player);
             return;
         }
 
         if (Group* group = player->GetGroup())
             group->RemoveMember(player->GetGUID(), GROUP_REMOVEMETHOD_LEAVE);
+
+        RunBotDismissalRecovery(player);
 
         living_world::service::BotPlayerRegistry::Instance()
             .UnregisterBotPlayer(player);

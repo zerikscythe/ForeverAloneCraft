@@ -7,10 +7,10 @@ namespace living_world
 {
 namespace service
 {
-// Conservative item-domain sanity checker. For now it only approves the
-// Equipment sync domain when both snapshots have structurally valid equipment
-// state. Inventory and bank remain observed-but-blocked until they have their
-// own dedicated duplicate/loss prevention rules.
+// Conservative item-domain sanity checker. It validates equipment plus
+// inventory/bank container shape, duplicate ownership, and storage-domain
+// consistency. Only equipment is currently executable; inventory/bank can be
+// observed and planned but remain blocked until dedicated write paths exist.
 class CharacterItemSanityChecker
 {
 public:

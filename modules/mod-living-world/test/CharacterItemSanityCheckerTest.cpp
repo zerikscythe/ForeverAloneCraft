@@ -109,5 +109,76 @@ TEST(CharacterItemSanityCheckerTest, RejectsInvalidEquipmentShape)
     EXPECT_FALSE(result.passed);
     EXPECT_FALSE(result.failures.empty());
 }
+
+TEST(CharacterItemSanityCheckerTest, ApprovesInventoryDomainWhenBagContentsDiffer)
+{
+    CharacterItemSanityChecker checker;
+    model::CharacterItemSnapshot source;
+    model::CharacterItemSnapshot clone;
+
+    source.inventoryItems.push_back(
+        Item(1001, 20, 5001, model::CharacterItemStorageDomain::Inventory));
+    clone.inventoryItems.push_back(
+        Item(2001, 20, 5002, model::CharacterItemStorageDomain::Inventory));
+
+    model::AccountAltSanityCheckResult result = checker.Check(source, clone);
+
+    EXPECT_TRUE(result.passed);
+    ASSERT_EQ(result.safeDomains.size(), 1u);
+    EXPECT_EQ(result.safeDomains[0], model::AccountAltSyncDomain::Inventory);
+}
+
+TEST(CharacterItemSanityCheckerTest, ApprovesBankDomainWhenBankContentsDiffer)
+{
+    CharacterItemSanityChecker checker;
+    model::CharacterItemSnapshot source;
+    model::CharacterItemSnapshot clone;
+
+    source.bankItems.push_back(
+        Item(1001, 39, 5001, model::CharacterItemStorageDomain::Bank));
+    clone.bankItems.push_back(
+        Item(2001, 39, 5002, model::CharacterItemStorageDomain::Bank));
+
+    model::AccountAltSanityCheckResult result = checker.Check(source, clone);
+
+    EXPECT_TRUE(result.passed);
+    ASSERT_EQ(result.safeDomains.size(), 1u);
+    EXPECT_EQ(result.safeDomains[0], model::AccountAltSyncDomain::Bank);
+}
+
+TEST(CharacterItemSanityCheckerTest, RejectsInventoryItemWithMissingContainer)
+{
+    CharacterItemSanityChecker checker;
+    model::CharacterItemSnapshot source;
+    model::CharacterItemSnapshot clone;
+
+    auto nested =
+        Item(1001, 1, 5001, model::CharacterItemStorageDomain::Inventory);
+    nested.containerGuid = 9999;
+    clone.inventoryItems.push_back(nested);
+
+    model::AccountAltSanityCheckResult result = checker.Check(source, clone);
+
+    EXPECT_FALSE(result.passed);
+    EXPECT_FALSE(result.failures.empty());
+}
+
+TEST(CharacterItemSanityCheckerTest, RejectsBankItemInsideInventoryContainer)
+{
+    CharacterItemSanityChecker checker;
+    model::CharacterItemSnapshot source;
+    model::CharacterItemSnapshot clone;
+
+    clone.inventoryItems.push_back(
+        Item(3001, 20, 6001, model::CharacterItemStorageDomain::Inventory));
+    auto bankNested = Item(1001, 1, 5001, model::CharacterItemStorageDomain::Bank);
+    bankNested.containerGuid = 3001;
+    clone.bankItems.push_back(bankNested);
+
+    model::AccountAltSanityCheckResult result = checker.Check(source, clone);
+
+    EXPECT_FALSE(result.passed);
+    EXPECT_FALSE(result.failures.empty());
+}
 } // namespace service
 } // namespace living_world

@@ -37,6 +37,7 @@ enum class AccountAltSyncDomain
     Experience,
     Money,
     Inventory,
+    Bank,
     Equipment,
     Reputation,
     Quests,

@@ -740,13 +740,18 @@ immediately after `ScheduleCompanionAI`. The helper:
 This makes the bot a real party member in the client UI from the moment it
 enters the world.
 
-### B) OnPlayerLogout — explicit group removal
+### B) OnPlayerLogout — owner dismiss + bot cleanup
 
 `LogoutPlayer` in core skips automatic group removal when the session has no
 socket (the `m_Socket &&` guard around the group-removal block). Bot sessions
 have no socket, so they were silently left in groups forever.
 
-`OnPlayerLogout` now explicitly calls:
+`OnPlayerLogout` currently has two responsibilities:
+- owner logout kicks the active bot so it does not remain in-world with a null
+  owner
+- bot logout explicitly removes the bot from the group before unregistering it
+
+The bot branch explicitly calls:
 ```cpp
 if (Group* group = player->GetGroup())
     group->RemoveMember(player->GetGUID(), GROUP_REMOVEMETHOD_LEAVE);
@@ -783,17 +788,17 @@ Name presentation has started moving toward exact source-name reuse:
   name
 - the reserved generated name is now the parked hidden name for the offline
   source alt during clone materialization
-- restore/reclaim of the original source name on dismiss/logout is still
-  future work and should be implemented as part of the broader recovery path
+- restore/reclaim of the original source name on dismiss/logout is the next
+  concrete lifecycle slice and should happen in the same deterministic bot
+  logout path as clone-to-source sync
 
-The next milestone is to expand beyond progress-only sync safely:
-- define read-only snapshot loaders for equipment, bag inventory, and bank
-  inventory
-- add domain-specific sanity checks for item ownership, slot consistency, and
-  duplicate/loss prevention
-- keep writes disabled for those domains until the snapshot and sanity layers
-  are proven
-- preserve the current level / XP / money crash-recovery path unchanged
+The next milestone is to make dismiss/logout safe end-to-end:
+- hook bot logout into a dedicated dismissal recovery service
+- sync safe domains back to the source before the bot lease is released
+- reclaim the live character name back to the source and park the clone under
+  its reserved hidden name
+- then continue expanding beyond progress-only sync with inventory/bank domain
+  planning
 
 Current implementation status:
 - `model::CharacterItemSnapshot` now provides a read-only item-state shape for
@@ -804,23 +809,28 @@ Current implementation status:
 - `CharacterItemSnapshotClassifier` has unit coverage for equipment,
   inventory, bank, and nested bag classification.
 - `CharacterItemSanityChecker` now validates duplicate item guids,
-  uncategorized storage state, and equipment slot/container shape, and only
-  approves the `Equipment` sync domain when the snapshots are structurally
-  sane.
+  uncategorized storage state, equipment slot/container shape, and
+  inventory/bank container plausibility.
+- It now surfaces `Equipment`, `Inventory`, and `Bank` as planning domains
+  when the snapshots are structurally sane, though only `Equipment` has a
+  write path today.
 - `SqlCharacterEquipmentSyncRepository` and
   `AccountAltEquipmentSyncExecutor` now provide the first transactional
   equipment-only write path by duplicating clone equipped `item_instance` rows
   onto the source character with new item guids.
 - `AccountAltItemRecoveryService` now plans `NoAction`,
-  `SyncEquipmentToSource`, or `ManualReview` from item-sanity results.
+  `SyncEquipmentToSource`, `Blocked`, or `ManualReview` from item-sanity
+  results.
+- Inventory/bank differences are now explicitly detected and blocked with a
+  clear planner reason until dedicated bag/bank executors exist.
 - `AccountAltRuntimeCoordinator` now runs item snapshot loading, item sanity,
   and equipment recovery after progress recovery succeeds or when the clone is
   otherwise reusable.
 - `AccountAltStartupRecoveryService` now distinguishes `SyncingBack`
   (progress retry) from `SyncingEquipment` (equipment retry) on owner login.
 
-After those read/sanity layers exist, the next follow-on slice should be the
-first transactional equipment/inventory sync executor.
+After this, the next follow-on slice should be repository/executor seams for
+inventory and bank, still kept disabled until runtime validation is possible.
 
 ---
 

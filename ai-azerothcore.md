@@ -587,6 +587,25 @@ When editing existing files:
 - preserve module conventions
 - do not unrelated-refactor half the project unless explicitly requested
 
+## 12.2.1 Re-examining docs must start with a remote sync check
+If the user asks to "re-examine the .mds", "get back up to speed from the
+docs", "review the roadmap/agent file again", or similar wording, do not
+assume the current checkout is the newest codebase.
+
+Required first step:
+- run `git fetch` for the repo
+- compare local `HEAD` to the remote branch tip before trusting the docs
+
+If local `HEAD` is behind the remote branch:
+- say so explicitly
+- do not continue doc/code analysis as if the local checkout were current
+- either fast-forward to the remote tip or work from a fresh clone, whichever
+  is safer for the current workspace state
+
+This rule exists because the roadmap/agent files are only useful if read
+against the newest branch state. A stale local checkout can make the docs look
+incorrect when the real issue is that the local repo is behind.
+
 ## 12.3 Keep comments meaningful
 Add useful comments where:
 - a rule is non-obvious
@@ -1227,9 +1246,10 @@ The first observation layer for item domains now exists as well:
   rules.
 - `service::CharacterItemSanityChecker` is the next pure validation seam. It
   currently rejects duplicate/missing item guids, uncategorized storage state,
-  and malformed equipment slot/container layouts, and only approves the
-  `Equipment` sync domain when the snapshots are structurally sane. Inventory
-  and bank remain observed-but-blocked until they get their own domain rules.
+  malformed equipment slot/container layouts, and invalid inventory/bank
+  container chains. It now surfaces `Equipment`, `Inventory`, and `Bank` as
+  planning domains when the snapshots are structurally sane, though only
+  `Equipment` has an executable write path.
 - `integration::SqlCharacterEquipmentSyncRepository` is the first item-domain
   write repository. It deletes the source character's equipped-slot rows,
   duplicates clone equipped `item_instance` rows with fresh item guids owned by
@@ -1240,7 +1260,8 @@ The first observation layer for item domains now exists as well:
   mark `Active` on success.
 - `service::AccountAltItemRecoveryService` is the higher-level item recovery
   seam. It consumes item-sanity results and decides whether to do nothing,
-  sync equipment, or require manual review.
+  sync equipment, block unsupported inventory/bank deltas, or require manual
+  review.
 - `AccountAltRuntimeCoordinator` now applies item recovery after successful
   progress recovery or on clone reuse. `AccountAltStartupRecoveryService` also
   understands `SyncingEquipment` and can retry the equipment executor on login.
@@ -1273,6 +1294,11 @@ First implementation should sync only XP/level and money. Inventory,
 equipment, reputation, quests, and mail must remain blocked until they have
 domain-specific sanity rules, transaction strategy, and duplicate/loss
 prevention.
+
+Inventory and bank now have the first planning-only rules:
+- detect when those domains differ
+- validate root-slot and container-chain plausibility
+- block with a clear planner reason until dedicated write executors exist
 
 ### 21.4 Non-negotiable safety rules
 
@@ -1315,7 +1341,13 @@ AddBotToOwnerGroup:
 through `GroupMgr`. `AddMember` wires in the bot as a real member so the
 client party frame shows it immediately.
 
-### 22.3 Group removal on bot logout
+### 22.3 Owner logout initiates dismiss
+
+`LivingWorldPlayerScript::OnPlayerLogout` already kicks the active bot when the
+real owner logs out. That is the correct place to begin the dismiss lifecycle:
+owner logout should not leave the clone standing in-world with no owner.
+
+### 22.4 Group removal on bot logout
 
 `OnPlayerLogout` removes the bot before unregistering it:
 
@@ -1328,7 +1360,7 @@ if (Group* group = player->GetGroup())
 clean departure, not a punishment. The group remains alive for the owner if
 other members are still present.
 
-### 22.4 Dismiss flow
+### 22.5 Dismiss flow
 
 `.lwbot roster dismiss <id>` resolves to `RenderDismissBot`:
 
@@ -1349,7 +1381,26 @@ Returning false from `Update` triggers `LogoutPlayer` → `OnPlayerLogout` hook
 → `UnregisterBotPlayer` + bot-pool DB release. The sequence is fully
 deterministic and produces no orphaned registry entries or group slots.
 
-### 22.5 What remains for multi-bot support
+### 22.6 Next lifecycle gap: sync + name reclaim on bot logout
+
+This exact-name branch now has a sharper remaining gap than before:
+- spawn already parks the offline source alt under
+  `reservedSourceCharacterName`
+- the runtime clone already takes over `sourceCharacterName`
+- dismiss/logout still needs the inverse path
+
+The missing dismiss lifecycle should:
+1. find the runtime by `clone_character_guid`
+2. sync approved progress/item domains from clone back to source
+3. rename the source back to `sourceCharacterName`
+4. park the clone back under `reservedSourceCharacterName`
+5. only then release the bot-account lease
+
+That reclaim step should be cautious and state-checked. If the current DB names
+do not match the expected leased layout, it should block/manual-review rather
+than guessing.
+
+### 22.7 What remains for multi-bot support
 
 ---
 

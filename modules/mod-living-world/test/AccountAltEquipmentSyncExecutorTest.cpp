@@ -21,6 +21,12 @@ public:
         return std::nullopt;
     }
 
+    std::optional<model::AccountAltRuntimeRecord> FindByCloneCharacter(
+        std::uint64_t) const override
+    {
+        return std::nullopt;
+    }
+
     std::vector<model::AccountAltRuntimeRecord> ListRecoverableForAccount(
         std::uint32_t) const override
     {

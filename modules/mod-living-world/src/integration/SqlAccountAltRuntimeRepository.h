@@ -14,6 +14,9 @@ public:
         std::uint32_t sourceAccountId,
         std::uint64_t sourceCharacterGuid) const override;
 
+    std::optional<model::AccountAltRuntimeRecord> FindByCloneCharacter(
+        std::uint64_t cloneCharacterGuid) const override;
+
     std::vector<model::AccountAltRuntimeRecord> ListRecoverableForAccount(
         std::uint32_t sourceAccountId) const override;
 

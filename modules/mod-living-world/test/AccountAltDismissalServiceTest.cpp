@@ -1,8 +1,7 @@
-#include "service/AccountAltStartupRecoveryService.h"
+#include "service/AccountAltDismissalService.h"
 #include "gtest/gtest.h"
 
 #include <optional>
-#include <utility>
 #include <vector>
 
 namespace living_world
@@ -19,54 +18,53 @@ public:
         std::uint32_t sourceAccountId,
         std::uint64_t sourceCharacterGuid) const override
     {
-        for (model::AccountAltRuntimeRecord const& runtime : runtimes)
+        if (!_runtime ||
+            _runtime->sourceAccountId != sourceAccountId ||
+            _runtime->sourceCharacterGuid != sourceCharacterGuid)
         {
-            if (runtime.sourceAccountId == sourceAccountId &&
-                runtime.sourceCharacterGuid == sourceCharacterGuid)
-            {
-                return runtime;
-            }
+            return std::nullopt;
         }
 
-        return std::nullopt;
+        return _runtime;
     }
 
     std::optional<model::AccountAltRuntimeRecord> FindByCloneCharacter(
         std::uint64_t cloneCharacterGuid) const override
     {
-        for (model::AccountAltRuntimeRecord const& runtime : runtimes)
+        if (!_runtime || _runtime->cloneCharacterGuid != cloneCharacterGuid)
         {
-            if (runtime.cloneCharacterGuid == cloneCharacterGuid)
-            {
-                return runtime;
-            }
+            return std::nullopt;
         }
 
-        return std::nullopt;
+        return _runtime;
     }
 
     std::vector<model::AccountAltRuntimeRecord> ListRecoverableForAccount(
         std::uint32_t sourceAccountId) const override
     {
-        std::vector<model::AccountAltRuntimeRecord> results;
-        for (model::AccountAltRuntimeRecord const& runtime : runtimes)
+        if (!_runtime || _runtime->sourceAccountId != sourceAccountId)
         {
-            if (runtime.sourceAccountId == sourceAccountId)
-            {
-                results.push_back(runtime);
-            }
+            return {};
         }
 
-        return results;
+        return { *_runtime };
     }
 
     void SaveRuntime(model::AccountAltRuntimeRecord const& runtime) override
     {
+        _runtime = runtime;
         savedRuntimes.push_back(runtime);
     }
 
-    std::vector<model::AccountAltRuntimeRecord> runtimes;
+    void Seed(model::AccountAltRuntimeRecord runtime)
+    {
+        _runtime = runtime;
+    }
+
     std::vector<model::AccountAltRuntimeRecord> savedRuntimes;
+
+private:
+    std::optional<model::AccountAltRuntimeRecord> _runtime;
 };
 
 class FakeSnapshotRepository final
@@ -159,18 +157,36 @@ public:
     bool shouldSucceed = true;
 };
 
-model::AccountAltRuntimeRecord BuildRuntime(model::AccountAltRuntimeState state)
+class FakeNameLeaseRepository final
+    : public integration::CharacterNameLeaseRepository
+{
+public:
+    bool RestoreSourceNameLease(
+        model::AccountAltRuntimeRecord const&) override
+    {
+        ++restoreCalls;
+        return shouldSucceed;
+    }
+
+    int restoreCalls = 0;
+    bool shouldSucceed = true;
+};
+
+model::AccountAltRuntimeRecord BuildRuntime()
 {
     model::AccountAltRuntimeRecord runtime;
-    runtime.runtimeId = 101;
     runtime.sourceAccountId = 7;
     runtime.sourceCharacterGuid = 9001;
     runtime.cloneAccountId = 701;
     runtime.cloneCharacterGuid = 8001;
-    runtime.state = state;
+    runtime.sourceCharacterName = "Tester";
+    runtime.reservedSourceCharacterName = "Lwtester";
+    runtime.cloneCharacterName = "Lwtester";
+    runtime.state = model::AccountAltRuntimeState::Active;
     runtime.sourceSnapshot.level = 10;
     runtime.sourceSnapshot.experience = 200;
     runtime.sourceSnapshot.money = 1000;
+    runtime.cloneSnapshot = runtime.sourceSnapshot;
     return runtime;
 }
 
@@ -187,108 +203,77 @@ model::CharacterProgressSnapshot Snapshot(
 }
 } // namespace
 
-TEST(AccountAltStartupRecoveryServiceTest, RetriesInterruptedSyncOnLogin)
+TEST(AccountAltDismissalServiceTest, SyncsProgressAndRestoresNamesOnDismiss)
 {
     FakeRuntimeRepository runtimeRepository;
     FakeItemSnapshotRepository itemSnapshotRepository;
     FakeEquipmentSyncRepository equipmentSyncRepository;
+    FakeNameLeaseRepository nameLeaseRepository;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
     AccountAltRecoveryService recoveryService;
 
-    runtimeRepository.runtimes.push_back(
-        BuildRuntime(model::AccountAltRuntimeState::SyncingBack));
+    runtimeRepository.Seed(BuildRuntime());
     snapshotRepository.sourceSnapshot = Snapshot(10, 200, 1000);
     snapshotRepository.cloneSnapshot = Snapshot(12, 500, 1500);
     itemSnapshotRepository.sourceSnapshot = model::CharacterItemSnapshot {};
     itemSnapshotRepository.cloneSnapshot = model::CharacterItemSnapshot {};
 
-    AccountAltStartupRecoveryService service(
+    AccountAltDismissalService service(
         runtimeRepository,
         itemSnapshotRepository,
         equipmentSyncRepository,
+        nameLeaseRepository,
         snapshotRepository,
         syncRepository,
         recoveryService);
 
-    AccountAltStartupRecoverySummary summary = service.RecoverForAccount(7);
+    AccountAltDismissalSummary summary = service.DismissClone(8001);
 
-    EXPECT_EQ(summary.scanned, 1u);
-    EXPECT_EQ(summary.recoveredSyncs, 1u);
-    EXPECT_EQ(summary.manualReviewRequired, 0u);
+    EXPECT_TRUE(summary.runtimeFound);
+    EXPECT_TRUE(summary.progressSynced);
+    EXPECT_FALSE(summary.equipmentSynced);
+    EXPECT_TRUE(summary.namesRestored);
+    EXPECT_FALSE(summary.manualReviewRequired);
+    EXPECT_FALSE(summary.blocked);
     EXPECT_EQ(syncRepository.syncCalls, 1);
     EXPECT_EQ(syncRepository.lastSyncedGuid, 9001u);
-    ASSERT_TRUE(syncRepository.lastSyncedSnapshot);
-    EXPECT_EQ(syncRepository.lastSyncedSnapshot->level, 12u);
-    ASSERT_EQ(runtimeRepository.savedRuntimes.size(), 2u);
-    EXPECT_EQ(runtimeRepository.savedRuntimes.back().state,
-              model::AccountAltRuntimeState::Active);
+    EXPECT_EQ(nameLeaseRepository.restoreCalls, 1);
 }
 
-TEST(AccountAltStartupRecoveryServiceTest,
-     FlagsManualReviewWhenInterruptedSyncLooksImplausible)
+TEST(AccountAltDismissalServiceTest, FlagsManualReviewButStillRestoresNames)
 {
     FakeRuntimeRepository runtimeRepository;
     FakeItemSnapshotRepository itemSnapshotRepository;
     FakeEquipmentSyncRepository equipmentSyncRepository;
+    FakeNameLeaseRepository nameLeaseRepository;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
     AccountAltRecoveryService recoveryService;
 
-    runtimeRepository.runtimes.push_back(
-        BuildRuntime(model::AccountAltRuntimeState::SyncingBack));
+    runtimeRepository.Seed(BuildRuntime());
     snapshotRepository.sourceSnapshot = Snapshot(10, 200, 1000);
     snapshotRepository.cloneSnapshot = Snapshot(20, 0, 1500);
     itemSnapshotRepository.sourceSnapshot = model::CharacterItemSnapshot {};
     itemSnapshotRepository.cloneSnapshot = model::CharacterItemSnapshot {};
 
-    AccountAltStartupRecoveryService service(
+    AccountAltDismissalService service(
         runtimeRepository,
         itemSnapshotRepository,
         equipmentSyncRepository,
+        nameLeaseRepository,
         snapshotRepository,
         syncRepository,
         recoveryService);
 
-    AccountAltStartupRecoverySummary summary = service.RecoverForAccount(7);
+    AccountAltDismissalSummary summary = service.DismissClone(8001);
 
-    EXPECT_EQ(summary.scanned, 1u);
-    EXPECT_EQ(summary.recoveredSyncs, 0u);
-    EXPECT_EQ(summary.manualReviewRequired, 1u);
+    EXPECT_TRUE(summary.runtimeFound);
+    EXPECT_FALSE(summary.progressSynced);
+    EXPECT_TRUE(summary.manualReviewRequired);
+    EXPECT_TRUE(summary.namesRestored);
     EXPECT_EQ(syncRepository.syncCalls, 0);
-}
-
-TEST(AccountAltStartupRecoveryServiceTest,
-     ReportsPendingRecoveryWithoutWritingForActiveCloneAheadRuntime)
-{
-    FakeRuntimeRepository runtimeRepository;
-    FakeItemSnapshotRepository itemSnapshotRepository;
-    FakeEquipmentSyncRepository equipmentSyncRepository;
-    FakeSnapshotRepository snapshotRepository;
-    FakeSyncRepository syncRepository;
-    AccountAltRecoveryService recoveryService;
-
-    runtimeRepository.runtimes.push_back(
-        BuildRuntime(model::AccountAltRuntimeState::Active));
-    snapshotRepository.sourceSnapshot = Snapshot(10, 200, 1000);
-    snapshotRepository.cloneSnapshot = Snapshot(12, 500, 1500);
-    itemSnapshotRepository.sourceSnapshot = model::CharacterItemSnapshot {};
-    itemSnapshotRepository.cloneSnapshot = model::CharacterItemSnapshot {};
-
-    AccountAltStartupRecoveryService service(
-        runtimeRepository,
-        itemSnapshotRepository,
-        equipmentSyncRepository,
-        snapshotRepository,
-        syncRepository,
-        recoveryService);
-
-    AccountAltStartupRecoverySummary summary = service.RecoverForAccount(7);
-
-    EXPECT_EQ(summary.scanned, 1u);
-    EXPECT_EQ(summary.pendingRecovery, 1u);
-    EXPECT_EQ(summary.recoveredSyncs, 0u);
-    EXPECT_EQ(syncRepository.syncCalls, 0);
+    EXPECT_EQ(nameLeaseRepository.restoreCalls, 1);
 }
 } // namespace service
 } // namespace living_world

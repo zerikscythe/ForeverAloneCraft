@@ -23,6 +23,9 @@ public:
         std::uint32_t sourceAccountId,
         std::uint64_t sourceCharacterGuid) const = 0;
 
+    virtual std::optional<model::AccountAltRuntimeRecord>
+    FindByCloneCharacter(std::uint64_t cloneCharacterGuid) const = 0;
+
     virtual std::vector<model::AccountAltRuntimeRecord>
     ListRecoverableForAccount(std::uint32_t sourceAccountId) const = 0;
 

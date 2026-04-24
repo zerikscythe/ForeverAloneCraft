@@ -18,6 +18,30 @@ model::AccountAltItemRecoveryPlan AccountAltItemRecoveryService::BuildRecoveryPl
         return plan;
     }
 
+    auto const inventoryItr = std::find(
+        sanityCheck.safeDomains.begin(),
+        sanityCheck.safeDomains.end(),
+        model::AccountAltSyncDomain::Inventory);
+    auto const bankItr = std::find(
+        sanityCheck.safeDomains.begin(),
+        sanityCheck.safeDomains.end(),
+        model::AccountAltSyncDomain::Bank);
+    if (inventoryItr != sanityCheck.safeDomains.end() ||
+        bankItr != sanityCheck.safeDomains.end())
+    {
+        plan.kind = model::AccountAltItemRecoveryPlanKind::Blocked;
+        plan.reason = "inventory/bank differs but bag-domain sync is not enabled yet";
+        if (inventoryItr != sanityCheck.safeDomains.end())
+        {
+            plan.domainsToSync.push_back(model::AccountAltSyncDomain::Inventory);
+        }
+        if (bankItr != sanityCheck.safeDomains.end())
+        {
+            plan.domainsToSync.push_back(model::AccountAltSyncDomain::Bank);
+        }
+        return plan;
+    }
+
     auto const equipmentItr = std::find(
         sanityCheck.safeDomains.begin(),
         sanityCheck.safeDomains.end(),
