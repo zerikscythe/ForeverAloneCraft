@@ -1253,9 +1253,11 @@ The first observation layer for item domains now exists as well:
 - `service::CharacterItemSanityChecker` is the next pure validation seam. It
   currently rejects duplicate/missing item guids, uncategorized storage state,
   malformed equipment slot/container layouts, and invalid inventory/bank
-  container chains. It now surfaces `Equipment`, `Inventory`, and `Bank` as
-  planning domains when the snapshots are structurally sane, though only
-  `Equipment` has an executable write path.
+  container chains. It also rejects duplicate nested slots inside a container.
+  It now surfaces `Equipment`, `Inventory`, and `Bank` as planning domains when
+  the snapshots are structurally sane. Inventory/bank comparison uses logical
+  container paths rather than raw item GUIDs, because source and clone bag/item
+  GUIDs are expected to differ even when the layout is equivalent.
 - `integration::SqlCharacterEquipmentSyncRepository` is the first item-domain
   write repository. It deletes the source character's equipped-slot rows,
   duplicates clone equipped `item_instance` rows with fresh item guids owned by
@@ -1267,7 +1269,9 @@ The first observation layer for item domains now exists as well:
 - `service::AccountAltItemRecoveryService` is the higher-level item recovery
   seam. It consumes item-sanity results and decides whether to do nothing,
   sync equipment, sync bag domains when policy allows, block unsupported
-  inventory/bank deltas, or require manual review.
+  inventory/bank deltas, or require manual review. Equipment is planned before
+  bag-domain blocking so disabled inventory/bank sync does not prevent approved
+  equipment recovery.
 - Bag-domain write seams now exist for:
   - `integration::CharacterInventorySyncRepository` /
     `SqlCharacterInventorySyncRepository`
@@ -1291,6 +1295,10 @@ The first observation layer for item domains now exists as well:
   seam. It resolves runtimes by clone guid, runs safe progress recovery, runs
   item-domain recovery where allowed, restores names through the name-lease
   repository, and only then lets cleanup continue.
+- `integration::SqlCharacterNameLeaseRepository` intentionally permits the
+  logging-out clone to still be visible during bot logout. It still blocks if
+  the source character is connected or owns an offline session, but it no
+  longer blocks itself on the clone that triggered dismissal recovery.
 
 ### 21.2 Recovery sequence
 
@@ -1500,6 +1508,11 @@ This pass intentionally stays lightweight:
 - it does not auto-run new inventory/equipment/bank recovery for `Active`
   runtimes that have not already entered a guarded syncing state
 
+Important implementation note: `SqlAccountAltRuntimeRepository::
+ListRecoverableForAccount` must include all interrupted sync states, including
+`SyncingEquipment` (`state = 5`). A prior review found that omitting this state
+made the equipment retry path unreachable after a crash.
+
 ### 23.5 Sync domain scope
 
 Currently synced on the main progress path: `Experience` (level + XP) and
@@ -1569,6 +1582,8 @@ unexpected if the root bags are a different type than what was recorded.
 - Inventory/bank sync remains disabled by default in conf.dist.
 - Even when enabled by config, bag-container-change detection causes ManualReview
   to take priority over SyncBagDomainsToSource.
+- Bag equality must stay based on logical container paths, not raw
+  `containerGuid`, because cloned items naturally get fresh GUIDs.
 - Dismissal and startup-recovery summaries now report per-domain recovery
   outcomes so command/script callers can tell whether equipment, inventory, or
   bank sync actually ran.

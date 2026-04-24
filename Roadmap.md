@@ -803,7 +803,7 @@ a conservative 32-slot limit rather than assuming oversized bag capacity. A
 snapshot that exceeds the resolved container capacity fails with:
 `"inventory/bank snapshot has a container exceeding the bag size cap"`.
 
-### C) Bag-container-change detection — **Complete**
+### C) Bag-container-change detection - **Complete**
 
 `AccountAltSanityCheckResult` has a new `bagContainersChanged` field.
 `CharacterItemSanityChecker::Check` sets it when the bag type (itemEntry) at
@@ -818,11 +818,32 @@ a case where the container-guid remapping done by the sync executor could
 produce unexpected layouts that require human review.
 
 Tests added:
-- `RejectsExcessiveContainerSize` — 37 items inside one bag fails
-- `SetsBagContainersChangedWhenInventoryBagsDiffer` — different bag type at slot 19
-- `SetsBagContainersChangedWhenBankBagsDiffer` — different bag type at slot 67
-- `DoesNotSetBagContainersChangedWhenOnlyContentsDiffer` — same bag type, different contents
-- `RequiresManualReviewWhenBagContainersChangedEvenIfPolicyEnabled` — ManualReview overrides policy
+- `RejectsExcessiveContainerSize` - 37 items inside one bag fails
+- `SetsBagContainersChangedWhenInventoryBagsDiffer` - different bag type at slot 19
+- `SetsBagContainersChangedWhenBankBagsDiffer` - different bag type at slot 67
+- `DoesNotSetBagContainersChangedWhenOnlyContentsDiffer` - same bag type, different contents
+- `RequiresManualReviewWhenBagContainersChangedEvenIfPolicyEnabled` - ManualReview overrides policy
+
+### D) Review-fix hardening pass - **Complete**
+
+The account-alt recovery path received a focused review-fix pass after the
+bag-domain policy work. Fixes landed:
+- name reclaim no longer rejects the logging-out clone itself, so the normal
+  bot logout path can restore the source name during dismissal
+- `SyncingEquipment` is included in `ListRecoverableForAccount`, so interrupted
+  equipment sync can actually be retried on owner login
+- inventory/bank snapshot comparison now uses logical container paths instead
+  of clone-specific item GUIDs, preventing false differences when source and
+  clone bags have the same layout but different GUIDs
+- item sanity now rejects duplicate nested slots inside the same container
+- equipment recovery now takes priority when equipment and bag domains both
+  differ, so disabled inventory/bank sync does not block approved equipment
+  recovery
+
+Tests added:
+- logical bag contents match across different source/clone GUIDs
+- duplicate nested container slots are rejected
+- equipment sync is planned before blocked inventory when both domains differ
 
 ---
 
@@ -850,9 +871,11 @@ Current implementation status:
   inventory, bank, and nested bag classification.
 - `CharacterItemSanityChecker` now validates duplicate item guids,
   uncategorized storage state, equipment slot/container shape, and
-  inventory/bank container plausibility.
+  inventory/bank container plausibility, including duplicate nested slots.
 - It now surfaces `Equipment`, `Inventory`, and `Bank` as planning domains
-  when the snapshots are structurally sane.
+  when the snapshots are structurally sane. Inventory/bank comparisons use
+  logical container paths so source-vs-clone item GUID differences do not
+  create false recovery work.
 - `SqlCharacterEquipmentSyncRepository` and
   `AccountAltEquipmentSyncExecutor` now provide the first transactional
   equipment-only write path by duplicating clone equipped `item_instance` rows
@@ -877,7 +900,9 @@ Current implementation status:
   into default live recovery yet.
 - `AccountAltItemRecoveryService` now has explicit bag-domain policy gating:
   it can plan inventory/bank recovery when enabled, but the default policy keeps
-  those domains blocked.
+  those domains blocked. Equipment recovery is evaluated before bag-domain
+  blocking so safe gear recovery still proceeds when inventory/bank sync is
+  disabled.
 - `AccountAltRuntimeCoordinator`, `AccountAltStartupRecoveryService`, and
   `AccountAltDismissalService` now understand bag-domain recovery plans and can
   execute the inventory/bank sync executors when policy allows it, while still
