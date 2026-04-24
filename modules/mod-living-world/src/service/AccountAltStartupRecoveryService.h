@@ -30,9 +30,9 @@ struct AccountAltStartupRecoverySummary
 };
 
 // Performs a lightweight owner-login recovery pass over persisted account-alt
-// runtimes. It only executes writes for runtimes already marked SyncingBack;
-// all other clone-ahead cases are surfaced as pending recovery for the normal
-// spawn path to handle later.
+// runtimes. It only executes writes for runtimes already marked as an
+// interrupted sync state; all other clone-ahead cases are surfaced as pending
+// recovery for the normal spawn path to handle later.
 class AccountAltStartupRecoveryService
 {
 public:

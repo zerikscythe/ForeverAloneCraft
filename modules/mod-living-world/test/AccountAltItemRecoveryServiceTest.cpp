@@ -19,6 +19,22 @@ TEST(AccountAltItemRecoveryServiceTest, RequestsEquipmentSyncWhenApproved)
     EXPECT_EQ(plan.domainsToSync[0], model::AccountAltSyncDomain::Equipment);
 }
 
+TEST(AccountAltItemRecoveryServiceTest,
+     RequestsEquipmentBeforeBlockedInventoryWhenBothDiffer)
+{
+    AccountAltItemRecoveryService service;
+    model::AccountAltSanityCheckResult sanity;
+    sanity.passed = true;
+    sanity.safeDomains.push_back(model::AccountAltSyncDomain::Inventory);
+    sanity.safeDomains.push_back(model::AccountAltSyncDomain::Equipment);
+
+    model::AccountAltItemRecoveryPlan plan = service.BuildRecoveryPlan(sanity);
+
+    EXPECT_EQ(plan.kind, model::AccountAltItemRecoveryPlanKind::SyncEquipmentToSource);
+    ASSERT_EQ(plan.domainsToSync.size(), 1u);
+    EXPECT_EQ(plan.domainsToSync[0], model::AccountAltSyncDomain::Equipment);
+}
+
 TEST(AccountAltItemRecoveryServiceTest, RequiresManualReviewWhenSanityFails)
 {
     AccountAltItemRecoveryService service;

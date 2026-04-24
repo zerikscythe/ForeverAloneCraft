@@ -5,6 +5,7 @@
 
 #include <array>
 #include <cstddef>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -88,6 +89,7 @@ bool IsValidRootBankSlot(std::uint8_t slot)
 bool HasInvalidContainerShape(model::CharacterItemSnapshot const& snapshot)
 {
     auto const index = BuildItemIndex(snapshot);
+    std::unordered_set<std::string> occupiedNestedSlots;
 
     auto validateItems =
         [&](std::vector<model::CharacterItemSnapshotEntry> const& items,
@@ -130,6 +132,14 @@ bool HasInvalidContainerShape(model::CharacterItemSnapshot const& snapshot)
 
             auto const itr = index.find(item.containerGuid);
             if (itr == index.end())
+            {
+                return true;
+            }
+
+            std::string const nestedSlotKey =
+                std::to_string(item.containerGuid) + ":" +
+                std::to_string(item.slot);
+            if (!occupiedNestedSlots.insert(nestedSlotKey).second)
             {
                 return true;
             }
@@ -188,14 +198,48 @@ bool EquipmentDiffers(
     return sourceSlots != cloneSlots;
 }
 
+std::string BuildLogicalLocation(
+    model::CharacterItemSnapshotEntry const& item,
+    std::unordered_map<std::uint64_t, model::CharacterItemSnapshotEntry const*> const& index)
+{
+    if (item.containerGuid == 0)
+    {
+        return "root:" + std::to_string(item.slot);
+    }
+
+    std::string path = std::to_string(item.slot);
+    std::uint64_t containerGuid = item.containerGuid;
+    std::unordered_set<std::uint64_t> visited;
+    while (containerGuid != 0)
+    {
+        if (!visited.insert(containerGuid).second)
+        {
+            return "cycle";
+        }
+
+        auto const itr = index.find(containerGuid);
+        if (itr == index.end())
+        {
+            return "missing";
+        }
+
+        model::CharacterItemSnapshotEntry const& container = *itr->second;
+        path = std::to_string(container.slot) + "/" + path;
+        containerGuid = container.containerGuid;
+    }
+
+    return "root:" + path;
+}
+
 template <typename TItems>
-std::unordered_map<std::string, std::uint32_t> BuildItemMultiset(TItems const& items)
+std::unordered_map<std::string, std::uint32_t> BuildItemMultiset(
+    TItems const& items,
+    std::unordered_map<std::uint64_t, model::CharacterItemSnapshotEntry const*> const& index)
 {
     std::unordered_map<std::string, std::uint32_t> counts;
     for (model::CharacterItemSnapshotEntry const& item : items)
     {
-        std::string key = std::to_string(item.containerGuid) + ":" +
-                          std::to_string(item.slot) + ":" +
+        std::string key = BuildLogicalLocation(item, index) + ":" +
                           std::to_string(item.itemEntry) + ":" +
                           std::to_string(item.itemCount);
         ++counts[key];
@@ -208,16 +252,24 @@ bool InventoryDiffers(
     model::CharacterItemSnapshot const& sourceSnapshot,
     model::CharacterItemSnapshot const& cloneSnapshot)
 {
-    return BuildItemMultiset(sourceSnapshot.inventoryItems) !=
-           BuildItemMultiset(cloneSnapshot.inventoryItems);
+    return BuildItemMultiset(
+               sourceSnapshot.inventoryItems,
+               BuildItemIndex(sourceSnapshot)) !=
+           BuildItemMultiset(
+               cloneSnapshot.inventoryItems,
+               BuildItemIndex(cloneSnapshot));
 }
 
 bool BankDiffers(
     model::CharacterItemSnapshot const& sourceSnapshot,
     model::CharacterItemSnapshot const& cloneSnapshot)
 {
-    return BuildItemMultiset(sourceSnapshot.bankItems) !=
-           BuildItemMultiset(cloneSnapshot.bankItems);
+    return BuildItemMultiset(
+               sourceSnapshot.bankItems,
+               BuildItemIndex(sourceSnapshot)) !=
+           BuildItemMultiset(
+               cloneSnapshot.bankItems,
+               BuildItemIndex(cloneSnapshot));
 }
 
 // Real bag capacity should come from the item template. When template metadata

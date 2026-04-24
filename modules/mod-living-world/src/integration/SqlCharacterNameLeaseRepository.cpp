@@ -55,11 +55,8 @@ bool SqlCharacterNameLeaseRepository::RestoreSourceNameLease(
         ObjectGuid::Create<HighGuid::Player>(runtime.cloneCharacterGuid);
 
     if (ObjectAccessor::FindConnectedPlayer(sourceGuid) ||
-        ObjectAccessor::FindConnectedPlayer(cloneGuid) ||
         sWorldSessionMgr->FindOfflineSessionForCharacterGUID(
-            runtime.sourceCharacterGuid) ||
-        sWorldSessionMgr->FindOfflineSessionForCharacterGUID(
-            runtime.cloneCharacterGuid))
+            runtime.sourceCharacterGuid))
     {
         return false;
     }

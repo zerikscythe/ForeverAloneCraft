@@ -129,7 +129,7 @@ SqlAccountAltRuntimeRepository::ListRecoverableForAccount(
     QueryResult result = CharacterDatabase.Query(
         "SELECT {} FROM living_world_account_alt_runtime "
         "WHERE source_account_id = {} "
-        "AND state IN (0, 1, 2, 3, 6, 7) "
+        "AND state IN (0, 1, 2, 3, 5, 6, 7) "
         "ORDER BY updated_at ASC",
         RuntimeSelectColumns,
         sourceAccountId);

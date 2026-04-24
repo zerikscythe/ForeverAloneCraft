@@ -128,6 +128,34 @@ TEST(CharacterItemSanityCheckerTest, ApprovesInventoryDomainWhenBagContentsDiffe
     EXPECT_EQ(result.safeDomains[0], model::AccountAltSyncDomain::Inventory);
 }
 
+TEST(CharacterItemSanityCheckerTest,
+     DoesNotApproveInventoryWhenLogicalBagContentsMatchAcrossDifferentGuids)
+{
+    CharacterItemSanityChecker checker;
+    model::CharacterItemSnapshot source;
+    model::CharacterItemSnapshot clone;
+
+    source.inventoryItems.push_back(
+        Item(1001, 19, 6501, model::CharacterItemStorageDomain::Inventory));
+    clone.inventoryItems.push_back(
+        Item(2001, 19, 6501, model::CharacterItemStorageDomain::Inventory));
+
+    auto sourceNested =
+        Item(3001, 0, 7001, model::CharacterItemStorageDomain::Inventory);
+    sourceNested.containerGuid = 1001;
+    source.inventoryItems.push_back(sourceNested);
+
+    auto cloneNested =
+        Item(4001, 0, 7001, model::CharacterItemStorageDomain::Inventory);
+    cloneNested.containerGuid = 2001;
+    clone.inventoryItems.push_back(cloneNested);
+
+    model::AccountAltSanityCheckResult result = checker.Check(source, clone);
+
+    EXPECT_TRUE(result.passed);
+    EXPECT_TRUE(result.safeDomains.empty());
+}
+
 TEST(CharacterItemSanityCheckerTest, ApprovesBankDomainWhenBankContentsDiffer)
 {
     CharacterItemSanityChecker checker;
@@ -144,6 +172,30 @@ TEST(CharacterItemSanityCheckerTest, ApprovesBankDomainWhenBankContentsDiffer)
     EXPECT_TRUE(result.passed);
     ASSERT_EQ(result.safeDomains.size(), 1u);
     EXPECT_EQ(result.safeDomains[0], model::AccountAltSyncDomain::Bank);
+}
+
+TEST(CharacterItemSanityCheckerTest, RejectsDuplicateNestedContainerSlots)
+{
+    CharacterItemSanityChecker checker;
+    model::CharacterItemSnapshot source;
+    model::CharacterItemSnapshot clone;
+
+    clone.inventoryItems.push_back(
+        Item(5000, 19, 7001, model::CharacterItemStorageDomain::Inventory));
+    auto first = Item(1001, 0, 5001,
+                      model::CharacterItemStorageDomain::Inventory);
+    first.containerGuid = 5000;
+    clone.inventoryItems.push_back(first);
+
+    auto second = Item(1002, 0, 5002,
+                       model::CharacterItemStorageDomain::Inventory);
+    second.containerGuid = 5000;
+    clone.inventoryItems.push_back(second);
+
+    model::AccountAltSanityCheckResult result = checker.Check(source, clone);
+
+    EXPECT_FALSE(result.passed);
+    EXPECT_FALSE(result.failures.empty());
 }
 
 TEST(CharacterItemSanityCheckerTest, RejectsInventoryItemWithMissingContainer)

@@ -24,6 +24,18 @@ model::AccountAltItemRecoveryPlan AccountAltItemRecoveryService::BuildRecoveryPl
         return plan;
     }
 
+    auto const equipmentItr = std::find(
+        sanityCheck.safeDomains.begin(),
+        sanityCheck.safeDomains.end(),
+        model::AccountAltSyncDomain::Equipment);
+    if (equipmentItr != sanityCheck.safeDomains.end())
+    {
+        plan.kind = model::AccountAltItemRecoveryPlanKind::SyncEquipmentToSource;
+        plan.domainsToSync.push_back(model::AccountAltSyncDomain::Equipment);
+        plan.reason = "equipment differs and item sanity checks passed";
+        return plan;
+    }
+
     auto const inventoryItr = std::find(
         sanityCheck.safeDomains.begin(),
         sanityCheck.safeDomains.end(),
@@ -69,18 +81,6 @@ model::AccountAltItemRecoveryPlan AccountAltItemRecoveryService::BuildRecoveryPl
 
         plan.kind = model::AccountAltItemRecoveryPlanKind::SyncBagDomainsToSource;
         plan.reason = "inventory/bank differs and bag-domain sync is enabled";
-        return plan;
-    }
-
-    auto const equipmentItr = std::find(
-        sanityCheck.safeDomains.begin(),
-        sanityCheck.safeDomains.end(),
-        model::AccountAltSyncDomain::Equipment);
-    if (equipmentItr != sanityCheck.safeDomains.end())
-    {
-        plan.kind = model::AccountAltItemRecoveryPlanKind::SyncEquipmentToSource;
-        plan.domainsToSync.push_back(model::AccountAltSyncDomain::Equipment);
-        plan.reason = "equipment differs and item sanity checks passed";
         return plan;
     }
 
