@@ -130,9 +130,20 @@ public:
 
     void OnPlayerLogout(Player* player) override
     {
-        if (!player || !player->GetSession() ||
-            !player->GetSession()->IsBotSession())
+        if (!player || !player->GetSession())
         {
+            return;
+        }
+
+        if (!player->GetSession()->IsBotSession())
+        {
+            // Owner logout — kick any active bot so it doesn't float in the
+            // world indefinitely with a null owner on every AI tick.
+            Player* bot =
+                living_world::service::BotPlayerRegistry::Instance()
+                    .FindBotForOwner(player->GetGUID());
+            if (bot)
+                bot->GetSession()->KickPlayer("LivingWorld owner logout");
             return;
         }
 
