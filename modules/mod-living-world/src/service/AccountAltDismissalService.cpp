@@ -157,6 +157,10 @@ AccountAltDismissalSummary AccountAltDismissalService::DismissClone(
                         summary.reason = "inventory sync execution failed";
                     }
                 }
+                else
+                {
+                    summary.inventorySynced = true;
+                }
             }
 
             if (shouldSyncDomain(model::AccountAltSyncDomain::Bank))
@@ -171,6 +175,10 @@ AccountAltDismissalSummary AccountAltDismissalService::DismissClone(
                     {
                         summary.reason = "bank sync execution failed";
                     }
+                }
+                else
+                {
+                    summary.bankSynced = true;
                 }
             }
         }

@@ -23,6 +23,8 @@ struct AccountAltDismissalSummary
     bool runtimeFound = false;
     bool progressSynced = false;
     bool equipmentSynced = false;
+    bool inventorySynced = false;
+    bool bankSynced = false;
     bool namesRestored = false;
     bool manualReviewRequired = false;
     bool blocked = false;

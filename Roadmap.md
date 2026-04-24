@@ -849,8 +849,7 @@ Current implementation status:
   uncategorized storage state, equipment slot/container shape, and
   inventory/bank container plausibility.
 - It now surfaces `Equipment`, `Inventory`, and `Bank` as planning domains
-  when the snapshots are structurally sane, though only `Equipment` has a
-  write path today.
+  when the snapshots are structurally sane.
 - `SqlCharacterEquipmentSyncRepository` and
   `AccountAltEquipmentSyncExecutor` now provide the first transactional
   equipment-only write path by duplicating clone equipped `item_instance` rows
@@ -880,12 +879,17 @@ Current implementation status:
   `AccountAltDismissalService` now understand bag-domain recovery plans and can
   execute the inventory/bank sync executors when policy allows it, while still
   staying default-off on the live path.
+- `AccountAltDismissalSummary` now reports per-domain item results so callers can
+  distinguish progress sync from equipment, inventory, and bank recovery.
 - `AccountAltRuntimeCoordinator` now runs item snapshot loading, item sanity,
   and item recovery after progress recovery succeeds or when the clone is
   otherwise reusable.
 - `AccountAltStartupRecoveryService` now distinguishes `SyncingBack`
   (progress retry), `SyncingEquipment`, `SyncingInventory`, and `SyncingBank`
   on owner login.
+- `AccountAltStartupRecoverySummary` now tracks recovered progress,
+  equipment, inventory, and bank syncs separately in addition to the aggregate
+  `recoveredSyncs` count.
 
 Important current safety line:
 - inventory/bank execution exists in code, but the default policy still blocks

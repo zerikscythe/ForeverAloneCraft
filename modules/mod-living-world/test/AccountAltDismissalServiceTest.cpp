@@ -273,6 +273,8 @@ TEST(AccountAltDismissalServiceTest, SyncsProgressAndRestoresNamesOnDismiss)
     EXPECT_TRUE(summary.runtimeFound);
     EXPECT_TRUE(summary.progressSynced);
     EXPECT_FALSE(summary.equipmentSynced);
+    EXPECT_FALSE(summary.inventorySynced);
+    EXPECT_FALSE(summary.bankSynced);
     EXPECT_TRUE(summary.namesRestored);
     EXPECT_FALSE(summary.manualReviewRequired);
     EXPECT_FALSE(summary.blocked);
@@ -314,6 +316,8 @@ TEST(AccountAltDismissalServiceTest, FlagsManualReviewButStillRestoresNames)
 
     EXPECT_TRUE(summary.runtimeFound);
     EXPECT_FALSE(summary.progressSynced);
+    EXPECT_FALSE(summary.inventorySynced);
+    EXPECT_FALSE(summary.bankSynced);
     EXPECT_TRUE(summary.manualReviewRequired);
     EXPECT_TRUE(summary.namesRestored);
     EXPECT_EQ(syncRepository.syncCalls, 0);
@@ -369,6 +373,8 @@ TEST(AccountAltDismissalServiceTest, SyncsInventoryWhenPolicyEnablesIt)
     EXPECT_TRUE(summary.runtimeFound);
     EXPECT_FALSE(summary.manualReviewRequired);
     EXPECT_FALSE(summary.blocked);
+    EXPECT_TRUE(summary.inventorySynced);
+    EXPECT_FALSE(summary.bankSynced);
     EXPECT_TRUE(summary.namesRestored);
     EXPECT_EQ(inventorySyncRepository.syncCalls, 1);
     EXPECT_EQ(bankSyncRepository.syncCalls, 0);

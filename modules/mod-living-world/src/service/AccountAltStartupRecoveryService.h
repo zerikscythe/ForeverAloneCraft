@@ -20,6 +20,10 @@ struct AccountAltStartupRecoverySummary
 {
     std::uint32_t scanned = 0;
     std::uint32_t recoveredSyncs = 0;
+    std::uint32_t recoveredProgressSyncs = 0;
+    std::uint32_t recoveredEquipmentSyncs = 0;
+    std::uint32_t recoveredInventorySyncs = 0;
+    std::uint32_t recoveredBankSyncs = 0;
     std::uint32_t pendingRecovery = 0;
     std::uint32_t manualReviewRequired = 0;
     std::uint32_t blocked = 0;

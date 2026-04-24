@@ -255,6 +255,10 @@ TEST(AccountAltStartupRecoveryServiceTest, RetriesInterruptedSyncOnLogin)
 
     EXPECT_EQ(summary.scanned, 1u);
     EXPECT_EQ(summary.recoveredSyncs, 1u);
+    EXPECT_EQ(summary.recoveredProgressSyncs, 1u);
+    EXPECT_EQ(summary.recoveredEquipmentSyncs, 0u);
+    EXPECT_EQ(summary.recoveredInventorySyncs, 0u);
+    EXPECT_EQ(summary.recoveredBankSyncs, 0u);
     EXPECT_EQ(summary.manualReviewRequired, 0u);
     EXPECT_EQ(syncRepository.syncCalls, 1);
     EXPECT_EQ(syncRepository.lastSyncedGuid, 9001u);
@@ -336,6 +340,10 @@ TEST(AccountAltStartupRecoveryServiceTest,
     EXPECT_EQ(summary.scanned, 1u);
     EXPECT_EQ(summary.pendingRecovery, 1u);
     EXPECT_EQ(summary.recoveredSyncs, 0u);
+    EXPECT_EQ(summary.recoveredProgressSyncs, 0u);
+    EXPECT_EQ(summary.recoveredEquipmentSyncs, 0u);
+    EXPECT_EQ(summary.recoveredInventorySyncs, 0u);
+    EXPECT_EQ(summary.recoveredBankSyncs, 0u);
     EXPECT_EQ(syncRepository.syncCalls, 0);
 }
 
@@ -387,6 +395,10 @@ TEST(AccountAltStartupRecoveryServiceTest,
 
     EXPECT_EQ(summary.scanned, 1u);
     EXPECT_EQ(summary.recoveredSyncs, 1u);
+    EXPECT_EQ(summary.recoveredProgressSyncs, 0u);
+    EXPECT_EQ(summary.recoveredEquipmentSyncs, 0u);
+    EXPECT_EQ(summary.recoveredInventorySyncs, 1u);
+    EXPECT_EQ(summary.recoveredBankSyncs, 0u);
     EXPECT_EQ(inventorySyncRepository.syncCalls, 1);
     EXPECT_EQ(bankSyncRepository.syncCalls, 0);
 }

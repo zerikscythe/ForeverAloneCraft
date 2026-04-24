@@ -1486,21 +1486,31 @@ When an owner player logs in, `LivingWorldPlayerScript::OnPlayerLogin`
 1. Queries `living_world_account_alt_runtime` for the source account.
 2. For each record with `state = SyncingBack`: reloads source/clone snapshots,
    re-runs sanity checks, and retries `AccountAltSyncExecutor::Execute`.
-3. For active materialized clones: builds the recovery plan and surfaces counts
+3. For each record with `state = SyncingEquipment`, `SyncingInventory`, or
+   `SyncingBank`: reloads item snapshots, rebuilds the guarded item-recovery
+   plan, and retries only that specific executor.
+4. For active materialized clones: builds the recovery plan and surfaces counts
    for pending recovery, manual review, and blocked runtimes through login
    messages.
 
 This pass intentionally stays lightweight:
-- it only performs writes for runtimes already marked `SyncingBack`
+- it only performs writes for runtimes already marked `SyncingBack`,
+  `SyncingEquipment`, `SyncingInventory`, or `SyncingBank`
 - it does not auto-run broader clone-ahead recovery for `Active` runtimes
-- it leaves inventory / equipment / bank / quest-like domains untouched
+- it does not auto-run new inventory/equipment/bank recovery for `Active`
+  runtimes that have not already entered a guarded syncing state
 
 ### 23.5 Sync domain scope
 
-Currently synced: `Experience` (level + XP) and `Money`.
-Not synced, not safe without additional rules:
-- `Inventory` — item duplication/deletion risk
-- `Equipment` — same
+Currently synced on the main progress path: `Experience` (level + XP) and
+`Money`.
+
+Additional guarded write paths now exist for:
+- `Equipment` — via explicit item sanity + executor path
+- `Inventory` — via explicit item sanity + policy-gated executor path
+- `Bank` — via explicit item sanity + policy-gated executor path
+
+Still not safe without additional rules:
 - `Reputation` — faction relation edge cases
 - `Quests` — quest state machine conflicts
 - `Mail` — item attachment ownership
@@ -1554,6 +1564,9 @@ unexpected if the root bags are a different type than what was recorded.
 - Inventory/bank sync remains disabled by default in conf.dist.
 - Even when enabled by config, bag-container-change detection causes ManualReview
   to take priority over SyncBagDomainsToSource.
+- Dismissal and startup-recovery summaries now report per-domain recovery
+  outcomes so command/script callers can tell whether equipment, inventory, or
+  bank sync actually ran.
 - The next step before enabling inventory/bank sync in any live config is runtime
   verification: exercise the full spawn → dismiss → startup recovery cycle and
   confirm source characters are in correct state after each step.

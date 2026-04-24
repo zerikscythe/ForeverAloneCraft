@@ -99,6 +99,7 @@ AccountAltStartupRecoveryService::RecoverForAccount(
             if (executor.Execute(runtime, *cloneSnapshot, sanity.safeDomains))
             {
                 ++summary.recoveredSyncs;
+                ++summary.recoveredProgressSyncs;
             }
             else
             {
@@ -134,6 +135,7 @@ AccountAltStartupRecoveryService::RecoverForAccount(
             if (equipmentExecutor.Execute(runtime, *sourceItems, *cloneItems))
             {
                 ++summary.recoveredSyncs;
+                ++summary.recoveredEquipmentSyncs;
             }
             else
             {
@@ -161,6 +163,7 @@ AccountAltStartupRecoveryService::RecoverForAccount(
             if (inventoryExecutor.Execute(runtime, *sourceItems, *cloneItems))
             {
                 ++summary.recoveredSyncs;
+                ++summary.recoveredInventorySyncs;
             }
             else
             {
@@ -188,6 +191,7 @@ AccountAltStartupRecoveryService::RecoverForAccount(
             if (bankExecutor.Execute(runtime, *sourceItems, *cloneItems))
             {
                 ++summary.recoveredSyncs;
+                ++summary.recoveredBankSyncs;
             }
             else
             {
