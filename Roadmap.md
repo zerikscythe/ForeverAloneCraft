@@ -777,28 +777,30 @@ See section D of "Immediate Next Implementation Slice" above for full detail.
 
 ---
 
-## Immediate Next: Inventory / Equipment / Bank Domain Planning
+## Immediate Next: Bag-Domain Policy Surface and Runtime Validation Prep
 
 Persistent clone materialization is now in place: new or incomplete runtimes
 create/reuse a real clone character on the reserved bot account before spawn
 and persist `cloneCharacterGuid` for later recovery.
 
-Name presentation has started moving toward exact source-name reuse:
-- the source alt's real name is now treated as the clone's intended visible
-  name
-- the reserved generated name is now the parked hidden name for the offline
-  source alt during clone materialization
-- restore/reclaim of the original source name on dismiss/logout is the next
-  concrete lifecycle slice and should happen in the same deterministic bot
-  logout path as clone-to-source sync
+Dismiss/logout recovery is now wired into the exact-name lifecycle:
+- bot logout resolves the runtime by `cloneCharacterGuid`
+- safe progress recovery can run before cleanup
+- equipment recovery can run before cleanup
+- cautious source-name reclaim now runs through the dedicated name-lease
+  repository before the bot lease is released
+- bag-domain recovery plumbing is now also understood by the dismissal,
+  startup, and spawn orchestration paths, but remains policy-disabled by
+  default
 
-The next milestone is to make dismiss/logout safe end-to-end:
-- hook bot logout into a dedicated dismissal recovery service
-- sync safe domains back to the source before the bot lease is released
-- reclaim the live character name back to the source and park the clone under
-  its reserved hidden name
-- then continue expanding beyond progress-only sync with inventory/bank domain
-  planning
+The next milestone is to turn the current hardcoded bag-domain policy seam into
+a real operator-controlled surface, while keeping default behavior
+conservative. That means:
+- add a real config/manual-control surface for inventory/bank recovery
+- keep bag/bank sync disabled by default until runtime validation is possible
+- tighten nested-container/manual-review rules around the bag domains
+- prepare a runtime verification checklist for spawn, dismiss, name reclaim,
+  and clone-to-source sync
 
 Current implementation status:
 - `model::CharacterItemSnapshot` now provides a read-only item-state shape for
@@ -818,12 +820,15 @@ Current implementation status:
   `AccountAltEquipmentSyncExecutor` now provide the first transactional
   equipment-only write path by duplicating clone equipped `item_instance` rows
   onto the source character with new item guids.
+- `AccountAltDismissalService` now runs during bot logout and can:
+  - resolve the runtime by clone guid
+  - sync safe progress domains back to the source
+  - sync equipment when approved
+  - restore the source live name through `CharacterNameLeaseRepository`
 - `AccountAltItemRecoveryService` now plans `NoAction`,
-  `SyncEquipmentToSource`, `Blocked`, or `ManualReview` from item-sanity
-  results.
-- Inventory/bank differences are now explicitly detected and blocked with a
-  clear planner reason until dedicated bag/bank executors exist.
-- Disabled bag/bank write seams now exist:
+  `SyncEquipmentToSource`, `SyncBagDomainsToSource`, `Blocked`, or
+  `ManualReview` from item-sanity results.
+- Bag-domain write seams now exist:
   - `CharacterInventorySyncRepository` +
     `SqlCharacterInventorySyncRepository`
   - `CharacterBankSyncRepository` +
@@ -841,14 +846,23 @@ Current implementation status:
   execute the inventory/bank sync executors when policy allows it, while still
   staying default-off on the live path.
 - `AccountAltRuntimeCoordinator` now runs item snapshot loading, item sanity,
-  and equipment recovery after progress recovery succeeds or when the clone is
+  and item recovery after progress recovery succeeds or when the clone is
   otherwise reusable.
 - `AccountAltStartupRecoveryService` now distinguishes `SyncingBack`
-  (progress retry) from `SyncingEquipment` (equipment retry) on owner login.
+  (progress retry), `SyncingEquipment`, `SyncingInventory`, and `SyncingBank`
+  on owner login.
 
-After this, the next follow-on slice should be a real config surface for that
-bag-domain policy plus richer nested-container/manual-review rules before those
-domains are ever enabled by default.
+Important current safety line:
+- inventory/bank execution exists in code, but the default policy still blocks
+  those domains on the live path
+- another agent should not silently enable bag-domain sync by default without
+  a deliberate config/manual-control surface and runtime testing
+
+After this, the next follow-on slice should be:
+1. a real config/manual surface for bag-domain policy
+2. tighter nested-container/manual-review rules
+3. runtime verification of dismiss/logout, name reclaim, and bag safety before
+   any default-on behavior is considered
 
 ---
 

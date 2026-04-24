@@ -1230,10 +1230,16 @@ older hidden-name clone path for legacy runtimes, and otherwise:
 - updates AzerothCore's `CharacterCache` immediately
 - imports the runtime clone under `sourceCharacterName`
 
-This is intentionally only the safer first half of an exact-name system.
-Restore of the original source name on dismiss/logout or recovery is not
-complete yet and should be implemented as a dedicated reclaim step rather than
-by deleting and rebuilding the original character.
+This exact-name path now has both halves in code:
+- spawn parks the offline source alt under `reservedSourceCharacterName` and
+  materializes the runtime clone under the live visible name
+- dismiss/logout routes through a dedicated reclaim step that attempts to give
+  the source alt its live name back and park the clone under the reserved
+  hidden name again
+
+That reclaim step lives behind `CharacterNameLeaseRepository` and is meant to
+be cautious. If the runtime/name state is unexpected, blocking/manual review is
+safer than guessing.
 
 The first observation layer for item domains now exists as well:
 - `model::CharacterItemSnapshot` groups read-only item state into equipment,
@@ -1260,17 +1266,17 @@ The first observation layer for item domains now exists as well:
   mark `Active` on success.
 - `service::AccountAltItemRecoveryService` is the higher-level item recovery
   seam. It consumes item-sanity results and decides whether to do nothing,
-  sync equipment, block unsupported inventory/bank deltas, or require manual
-  review.
-- Disabled write seams now exist for bag domains:
+  sync equipment, sync bag domains when policy allows, block unsupported
+  inventory/bank deltas, or require manual review.
+- Bag-domain write seams now exist for:
   - `integration::CharacterInventorySyncRepository` /
     `SqlCharacterInventorySyncRepository`
   - `integration::CharacterBankSyncRepository` /
     `SqlCharacterBankSyncRepository`
   - `service::AccountAltInventorySyncExecutor`
   - `service::AccountAltBankSyncExecutor`
-- These are intentionally not wired into the live planner yet. They are the
-  next-layer plumbing only: duplicate item instances, remap nested container
+- These now are wired into the orchestration layer, but only through an
+  explicit policy seam. They duplicate item instances, remap nested container
   GUIDs, and rewrite `character_inventory` transactionally for inventory or
   bank domains.
 - `AccountAltItemRecoveryService` now owns the explicit bag-domain policy seam.
@@ -1281,6 +1287,10 @@ The first observation layer for item domains now exists as well:
   can route them into the inventory/bank executors when policy allows it.
   The default policy remains conservative: inventory/bank sync stays disabled
   on the live path until runtime validation is possible.
+- `service::AccountAltDismissalService` is now the main bot-logout recovery
+  seam. It resolves runtimes by clone guid, runs safe progress recovery, runs
+  item-domain recovery where allowed, restores names through the name-lease
+  repository, and only then lets cleanup continue.
 
 ### 21.2 Recovery sequence
 
@@ -1311,13 +1321,15 @@ equipment, reputation, quests, and mail must remain blocked until they have
 domain-specific sanity rules, transaction strategy, and duplicate/loss
 prevention.
 
-Inventory and bank now have the first planning-only rules:
+Inventory and bank now have the first planning and execution rules:
 - detect when those domains differ
 - validate root-slot and container-chain plausibility
-- block with a clear planner reason until dedicated write executors exist
+- route into dedicated executors only when policy explicitly allows it
+- otherwise block with a clear planner reason
 
-Those dedicated executors now exist in code, but they should remain disabled in
-the live recovery path until runtime validation is possible.
+Those dedicated executors now exist in code and are understood by the runtime
+services, but they should remain disabled by default until runtime validation
+is possible.
 
 ### 21.4 Non-negotiable safety rules
 
@@ -1400,26 +1412,25 @@ Returning false from `Update` triggers `LogoutPlayer` → `OnPlayerLogout` hook
 → `UnregisterBotPlayer` + bot-pool DB release. The sequence is fully
 deterministic and produces no orphaned registry entries or group slots.
 
-### 22.6 Next lifecycle gap: sync + name reclaim on bot logout
+### 22.6 Current dismiss/logout lifecycle
 
-This exact-name branch now has a sharper remaining gap than before:
-- spawn already parks the offline source alt under
-  `reservedSourceCharacterName`
-- the runtime clone already takes over `sourceCharacterName`
-- dismiss/logout still needs the inverse path
-
-The missing dismiss lifecycle should:
+The current dismiss lifecycle is:
 1. find the runtime by `clone_character_guid`
 2. sync approved progress/item domains from clone back to source
-3. rename the source back to `sourceCharacterName`
-4. park the clone back under `reservedSourceCharacterName`
-5. only then release the bot-account lease
+3. attempt source-name reclaim through `CharacterNameLeaseRepository`
+4. then continue cleanup and bot-account release
 
-That reclaim step should be cautious and state-checked. If the current DB names
-do not match the expected leased layout, it should block/manual-review rather
-than guessing.
+This is intentionally conservative. If the current DB/runtime names do not
+match the expected leased layout, name reclaim should fail safe rather than
+guess.
 
 ### 22.7 What remains for multi-bot support
+
+The next meaningful gap after the current dismiss lifecycle is not the basic
+logout path anymore. It is:
+- giving bag-domain policy a real config/manual-control surface
+- strengthening nested-container/manual-review rules
+- runtime-verifying name reclaim, dismissal ordering, and bag-domain safety
 
 ---
 
