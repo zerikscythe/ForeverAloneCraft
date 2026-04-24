@@ -1,5 +1,8 @@
 #include "service/CharacterItemSanityChecker.h"
 
+#include "ItemTemplate.h"
+#include "ObjectMgr.h"
+
 #include <array>
 #include <cstddef>
 #include <unordered_map>
@@ -217,11 +220,33 @@ bool BankDiffers(
            BuildItemMultiset(cloneSnapshot.bankItems);
 }
 
-// WoW 3.3.5a maximum bag capacity — Glacial Bag and Portable Hole are 36 slots.
-constexpr std::size_t kMaxItemsPerContainer = 36;
+// Real bag capacity should come from the item template. When template metadata
+// is unavailable (for example, in isolated tests), keep the check conservative
+// rather than assuming oversized retail-era bag capacities.
+constexpr std::size_t kConservativeUnknownBagCapacity = 32;
+
+std::size_t GetContainerCapacity(
+    model::CharacterItemSnapshotEntry const& container)
+{
+    if (container.itemEntry != 0 && sObjectMgr)
+    {
+        if (ItemTemplate const* itemTemplate =
+                sObjectMgr->GetItemTemplate(container.itemEntry))
+        {
+            if (itemTemplate->InventoryType == INVTYPE_BAG &&
+                itemTemplate->ContainerSlots > 0)
+            {
+                return itemTemplate->ContainerSlots;
+            }
+        }
+    }
+
+    return kConservativeUnknownBagCapacity;
+}
 
 bool HasExcessiveContainerSize(model::CharacterItemSnapshot const& snapshot)
 {
+    auto const index = BuildItemIndex(snapshot);
     std::unordered_map<std::uint64_t, std::size_t> counts;
     auto countNested = [&](std::vector<model::CharacterItemSnapshotEntry> const& items)
     {
@@ -231,9 +256,17 @@ bool HasExcessiveContainerSize(model::CharacterItemSnapshot const& snapshot)
     };
     countNested(snapshot.inventoryItems);
     countNested(snapshot.bankItems);
+
     for (auto const& [guid, count] : counts)
-        if (count > kMaxItemsPerContainer)
+    {
+        auto const itr = index.find(guid);
+        if (itr == index.end())
             return true;
+
+        if (count > GetContainerCapacity(*itr->second))
+            return true;
+    }
+
     return false;
 }
 

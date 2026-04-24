@@ -795,9 +795,12 @@ using the hardcoded struct default.
 ### B) Per-container item cap — **Complete**
 
 `CharacterItemSanityChecker` now rejects snapshots where any single bag
-container holds more than 36 items. 36 is the maximum slot count of any bag
-available in WoW 3.3.5a (Glacial Bag / Portable Hole). A snapshot with more
-than 36 items referencing the same container guid fails with:
+container holds more items than that specific bag can legally contain.
+The checker now prefers the container item's `ItemTemplate::ContainerSlots`
+value, so normal bags follow their real slot count and profession bags follow
+their own larger cap. When template metadata is unavailable, it falls back to
+a conservative 32-slot limit rather than assuming oversized bag capacity. A
+snapshot that exceeds the resolved container capacity fails with:
 `"inventory/bank snapshot has a container exceeding the bag size cap"`.
 
 ### C) Bag-container-change detection — **Complete**

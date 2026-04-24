@@ -189,7 +189,7 @@ TEST(CharacterItemSanityCheckerTest, RejectsExcessiveContainerSize)
 
     clone.inventoryItems.push_back(
         Item(5000, 19, 7001, model::CharacterItemStorageDomain::Inventory));
-    for (std::uint8_t i = 0; i < 37; ++i)
+    for (std::uint8_t i = 0; i < 33; ++i)
     {
         auto nested = Item(static_cast<std::uint64_t>(1000 + i), i, 5001,
                            model::CharacterItemStorageDomain::Inventory);

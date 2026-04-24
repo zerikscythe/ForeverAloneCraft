@@ -1540,10 +1540,15 @@ real operator-controlled knob while keeping the safe default.
 ### 24.2 Per-container item cap
 
 `CharacterItemSanityChecker::Check` now rejects any snapshot where a single
-bag container holds more than 36 items. 36 is the maximum slot count of any
-bag in WoW 3.3.5a. Items inside bags are counted by their `containerGuid`; if
-any guid accumulates more than 36 children, the check adds:
+bag container holds more items than that bag's actual capacity. The checker
+looks up the bag item's `ItemTemplate::ContainerSlots` value when available,
+so regular bags and profession bags are validated against their own true slot
+count. Items inside bags are counted by their `containerGuid`; if any guid
+accumulates more children than its resolved capacity, the check adds:
 `"inventory/bank snapshot has a container exceeding the bag size cap"`.
+
+If item-template metadata is unavailable, the checker falls back to a
+conservative 32-slot limit rather than a blanket 36-slot assumption.
 
 ### 24.3 Bag-container-change detection
 
