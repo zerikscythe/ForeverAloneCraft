@@ -1,4 +1,5 @@
 #include "service/AccountAltRuntimeCoordinator.h"
+#include "Log.h"
 #include "service/AccountAltEquipmentSyncExecutor.h"
 #include "service/AccountAltItemRecoveryService.h"
 #include "service/AccountAltSanityChecker.h"
@@ -56,10 +57,25 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
     std::uint64_t ownerCharacterGuid,
     std::string const& sourceCharacterName) const
 {
+    LOG_INFO(
+        "server.worldserver",
+        "[LivingWorldDebug] PlanSpawn start sourceAccountId={} sourceGuid={} "
+        "ownerGuid={} sourceName='{}'",
+        sourceAccountId,
+        sourceCharacterGuid,
+        ownerCharacterGuid,
+        sourceCharacterName);
+
     std::optional<model::CharacterProgressSnapshot> sourceSnapshot =
         _snapshotRepository.LoadSnapshot(sourceCharacterGuid);
     if (!sourceSnapshot)
     {
+        LOG_ERROR(
+            "server.worldserver",
+            "[LivingWorldDebug] PlanSpawn failed source snapshot load "
+            "sourceAccountId={} sourceGuid={}",
+            sourceAccountId,
+            sourceCharacterGuid);
         return BuildBlockedDecision("source character snapshot could not be loaded");
     }
 
@@ -80,6 +96,13 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
             _runtimeService.PrepareRuntime(request);
         if (!runtimeDecision.runtime)
         {
+            LOG_ERROR(
+                "server.worldserver",
+                "[LivingWorldDebug] PlanSpawn runtime preparation failed "
+                "sourceAccountId={} sourceGuid={} decisionKind={}",
+                sourceAccountId,
+                sourceCharacterGuid,
+                static_cast<std::uint32_t>(runtimeDecision.kind));
             if (runtimeDecision.kind ==
                 model::AccountAltRuntimeDecisionKind::BlockedNoBotAccount)
             {
@@ -91,10 +114,25 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
 
         AccountAltSpawnDecision spawnDecision;
         model::AccountAltRuntimeRecord runtime = *runtimeDecision.runtime;
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] PlanSpawn prepared new runtime runtimeId={} "
+            "cloneAccountId={} reservedName='{}' cloneName='{}'",
+            runtime.runtimeId,
+            runtime.cloneAccountId,
+            runtime.reservedSourceCharacterName,
+            runtime.cloneCharacterName);
         integration::CharacterCloneMaterializationResult cloneResult =
             _cloneMaterializer.MaterializeClone(runtime);
         if (!cloneResult.succeeded)
         {
+            LOG_ERROR(
+                "server.worldserver",
+                "[LivingWorldDebug] PlanSpawn clone materialization failed "
+                "runtimeId={} cloneAccountId={} reason='{}'",
+                runtime.runtimeId,
+                runtime.cloneAccountId,
+                cloneResult.reason);
             return BuildBlockedDecision(cloneResult.reason);
         }
 
@@ -110,10 +148,26 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
         spawnDecision.botAccountId = runtime.cloneAccountId;
         spawnDecision.spawnCharacterGuid = runtime.cloneCharacterGuid;
         spawnDecision.reason = cloneResult.reason;
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] PlanSpawn prepared persistent clone "
+            "runtimeId={} cloneAccountId={} cloneGuid={} reason='{}'",
+            runtime.runtimeId,
+            runtime.cloneAccountId,
+            runtime.cloneCharacterGuid,
+            spawnDecision.reason);
         return spawnDecision;
     }
 
     model::AccountAltRuntimeRecord runtime = *existing;
+    LOG_INFO(
+        "server.worldserver",
+        "[LivingWorldDebug] PlanSpawn found existing runtime runtimeId={} "
+        "state={} cloneAccountId={} cloneGuid={}",
+        runtime.runtimeId,
+        static_cast<std::uint32_t>(runtime.state),
+        runtime.cloneAccountId,
+        runtime.cloneCharacterGuid);
     runtime.ownerCharacterGuid = ownerCharacterGuid;
     runtime.sourceSnapshot = *sourceSnapshot;
 
@@ -123,6 +177,13 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
             _cloneMaterializer.MaterializeClone(runtime);
         if (!cloneResult.succeeded)
         {
+            LOG_ERROR(
+                "server.worldserver",
+                "[LivingWorldDebug] PlanSpawn missing-clone materialization failed "
+                "runtimeId={} cloneAccountId={} reason='{}'",
+                runtime.runtimeId,
+                runtime.cloneAccountId,
+                cloneResult.reason);
             return BuildBlockedDecision(cloneResult.reason);
         }
 
@@ -138,6 +199,14 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
         decision.botAccountId = runtime.cloneAccountId;
         decision.spawnCharacterGuid = runtime.cloneCharacterGuid;
         decision.reason = cloneResult.reason;
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] PlanSpawn materialized missing clone "
+            "runtimeId={} cloneAccountId={} cloneGuid={} reason='{}'",
+            runtime.runtimeId,
+            runtime.cloneAccountId,
+            runtime.cloneCharacterGuid,
+            decision.reason);
         return decision;
     }
 
@@ -145,6 +214,12 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
         _snapshotRepository.LoadSnapshot(runtime.cloneCharacterGuid);
     if (!cloneSnapshot)
     {
+        LOG_ERROR(
+            "server.worldserver",
+            "[LivingWorldDebug] PlanSpawn failed clone snapshot load "
+            "runtimeId={} cloneGuid={}",
+            runtime.runtimeId,
+            runtime.cloneCharacterGuid);
         return BuildBlockedDecision("clone snapshot could not be loaded");
     }
 
@@ -158,6 +233,17 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
             *sourceSnapshot,
             *cloneSnapshot,
             sanity);
+
+    LOG_INFO(
+        "server.worldserver",
+        "[LivingWorldDebug] PlanSpawn recovery plan runtimeId={} planKind={} "
+        "reason='{}' sanityPassed={} safeDomains={} failures={}",
+        runtime.runtimeId,
+        static_cast<std::uint32_t>(recoveryPlan.kind),
+        recoveryPlan.reason,
+        sanity.passed,
+        sanity.safeDomains.size(),
+        sanity.failures.size());
 
     AccountAltSpawnDecision decision;
     decision.runtime = runtime;
@@ -175,6 +261,13 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
             _itemSnapshotRepository.LoadSnapshot(currentRuntime.cloneCharacterGuid);
         if (!sourceItems || !cloneItems)
         {
+            LOG_ERROR(
+                "server.worldserver",
+                "[LivingWorldDebug] PlanSpawn item snapshot load failed "
+                "runtimeId={} sourceGuid={} cloneGuid={}",
+                currentRuntime.runtimeId,
+                currentRuntime.sourceCharacterGuid,
+                currentRuntime.cloneCharacterGuid);
             return BuildBlockedDecision("item snapshots could not be loaded");
         }
 
@@ -184,6 +277,17 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
         AccountAltItemRecoveryService itemRecoveryService;
         model::AccountAltItemRecoveryPlan itemPlan =
             itemRecoveryService.BuildRecoveryPlan(itemSanity);
+
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] PlanSpawn item recovery runtimeId={} planKind={} "
+            "reason='{}' sanityPassed={} safeDomains={} failures={}",
+            currentRuntime.runtimeId,
+            static_cast<std::uint32_t>(itemPlan.kind),
+            itemPlan.reason,
+            itemSanity.passed,
+            itemSanity.safeDomains.size(),
+            itemSanity.failures.size());
 
         switch (itemPlan.kind)
         {
@@ -209,6 +313,11 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
                         *sourceItems,
                         *cloneItems))
                 {
+                    LOG_ERROR(
+                        "server.worldserver",
+                        "[LivingWorldDebug] PlanSpawn equipment sync failed "
+                        "runtimeId={}",
+                        currentRuntime.runtimeId);
                     return BuildManualReviewDecision(
                         "equipment sync execution failed");
                 }
@@ -235,17 +344,36 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
     switch (recoveryPlan.kind)
     {
         case model::AccountAltRecoveryPlanKind::ReuseClone:
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] PlanSpawn reusing clone runtimeId={} cloneGuid={}",
+                runtime.runtimeId,
+                runtime.cloneCharacterGuid);
             return applyItemRecovery(runtime);
         case model::AccountAltRecoveryPlanKind::SyncCloneToSource:
         {
             AccountAltSyncExecutor executor(_runtimeRepository, _syncRepository);
             if (!executor.Execute(runtime, *cloneSnapshot, recoveryPlan.domainsToSync))
             {
+                LOG_ERROR(
+                    "server.worldserver",
+                    "[LivingWorldDebug] PlanSpawn progress sync failed "
+                    "runtimeId={} cloneGuid={} domains={}",
+                    runtime.runtimeId,
+                    runtime.cloneCharacterGuid,
+                    recoveryPlan.domainsToSync.size());
                 decision.kind = AccountAltSpawnDecisionKind::ManualReviewRequired;
                 decision.reason = "sync execution failed; manual review required";
                 return decision;
             }
             runtime.sourceSnapshot = *cloneSnapshot;
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] PlanSpawn progress sync succeeded "
+                "runtimeId={} cloneGuid={} domains={}",
+                runtime.runtimeId,
+                runtime.cloneCharacterGuid,
+                recoveryPlan.domainsToSync.size());
             return applyItemRecovery(runtime);
         }
         case model::AccountAltRecoveryPlanKind::ManualReview:

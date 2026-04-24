@@ -1,6 +1,7 @@
 #include "integration/BotSessionFactory.h"
 
 #include "DatabaseEnv.h"
+#include "QueryResult.h"
 #include "Log.h"
 #include "WorldSession.h"
 #include "WorldSessionMgr.h"
@@ -95,6 +96,12 @@ BotSessionSpawnResult BotSessionFactory::SpawnBotPlayer(
     if (!accountId)
     {
         result.status = BotSessionSpawnStatus::NoAvailableBotAccount;
+        LOG_ERROR(
+            "server.worldserver",
+            "[LivingWorldDebug] SpawnBotPlayer failed to reserve bot account "
+            "for ownerGuid={} characterGuid={}",
+            ownerCharacterGuid.GetCounter(),
+            characterGuid.GetCounter());
         return result;
     }
 
@@ -103,8 +110,24 @@ BotSessionSpawnResult BotSessionFactory::SpawnBotPlayer(
     {
         result.status = BotSessionSpawnStatus::BotAccountNotFound;
         result.botAccountId = *accountId;
+        LOG_ERROR(
+            "server.worldserver",
+            "[LivingWorldDebug] SpawnBotPlayer reserved bot account {} but "
+            "account lookup failed for ownerGuid={} characterGuid={}",
+            *accountId,
+            ownerCharacterGuid.GetCounter(),
+            characterGuid.GetCounter());
         return result;
     }
+
+    LOG_INFO(
+        "server.worldserver",
+        "[LivingWorldDebug] SpawnBotPlayer reserved bot account {} ('{}') "
+        "for ownerGuid={} characterGuid={}",
+        account->id,
+        account->name,
+        ownerCharacterGuid.GetCounter(),
+        characterGuid.GetCounter());
 
     return SpawnBotPlayerOnAccount(
         account->id,
@@ -121,6 +144,13 @@ BotSessionSpawnResult BotSessionFactory::SpawnBotPlayerOnAccount(
     if (!characterGuid.IsPlayer() || !ownerCharacterGuid.IsPlayer())
     {
         result.status = BotSessionSpawnStatus::InvalidCharacterGuid;
+        LOG_ERROR(
+            "server.worldserver",
+            "[LivingWorldDebug] SpawnBotPlayerOnAccount invalid guids "
+            "botAccountId={} ownerGuid={} characterGuid={}",
+            botAccountId,
+            ownerCharacterGuid.GetCounter(),
+            characterGuid.GetCounter());
         return result;
     }
 
@@ -129,6 +159,13 @@ BotSessionSpawnResult BotSessionFactory::SpawnBotPlayerOnAccount(
     {
         result.status = BotSessionSpawnStatus::BotAccountNotFound;
         result.botAccountId = botAccountId;
+        LOG_ERROR(
+            "server.worldserver",
+            "[LivingWorldDebug] SpawnBotPlayerOnAccount failed account lookup "
+            "botAccountId={} ownerGuid={} characterGuid={}",
+            botAccountId,
+            ownerCharacterGuid.GetCounter(),
+            characterGuid.GetCounter());
         return result;
     }
 
@@ -156,6 +193,14 @@ BotSessionSpawnResult BotSessionFactory::SpawnBotPlayerOnAccount(
     result.status = BotSessionSpawnStatus::SpawnQueued;
     result.botAccountId = account->id;
     result.botAccountName = accountName;
+    LOG_INFO(
+        "server.worldserver",
+        "[LivingWorldDebug] SpawnBotPlayerOnAccount queueing session "
+        "botAccountId={} botAccountName='{}' ownerGuid={} characterGuid={}",
+        account->id,
+        accountName,
+        ownerCharacterGuid.GetCounter(),
+        characterGuid.GetCounter());
     sWorldSessionMgr->AddSession(session);
     return result;
 }

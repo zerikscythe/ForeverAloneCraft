@@ -152,10 +152,6 @@ public:
 
         living_world::service::BotPlayerRegistry::Instance()
             .UnregisterBotPlayer(player);
-        LoginDatabase.Execute(
-            "UPDATE living_world_bot_account_pool "
-            "SET is_available = 1, reserved_for = NULL WHERE account_id = {};",
-            player->GetSession()->GetAccountId());
     }
 };
 

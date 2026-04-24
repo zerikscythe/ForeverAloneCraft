@@ -1,6 +1,7 @@
 #include "integration/SqlAccountAltRuntimeRepository.h"
 
 #include "DatabaseEnv.h"
+#include "QueryResult.h"
 
 #include <string>
 

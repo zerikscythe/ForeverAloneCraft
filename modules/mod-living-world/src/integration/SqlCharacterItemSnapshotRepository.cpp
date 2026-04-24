@@ -1,6 +1,7 @@
 #include "integration/SqlCharacterItemSnapshotRepository.h"
 
 #include "DatabaseEnv.h"
+#include "QueryResult.h"
 #include "service/CharacterItemSnapshotClassifier.h"
 
 #include <unordered_map>

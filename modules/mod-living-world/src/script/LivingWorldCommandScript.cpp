@@ -174,6 +174,17 @@ std::string_view ToParseErrorText(CommandParseErrorKind kind)
     return "parse error";
 }
 
+void RenderUsage(ChatHandler* handler)
+{
+    handler->PSendSysMessage("LivingWorld usage:");
+    handler->PSendSysMessage("  .lwbot list");
+    handler->PSendSysMessage("  .lwbot request <rosterEntryId>");
+    handler->PSendSysMessage("  .lwbot dismiss <rosterEntryId>");
+    handler->PSendSysMessage("  .lwbot roster list");
+    handler->PSendSysMessage("  .lwbot roster request <rosterEntryId>");
+    handler->PSendSysMessage("  .lwbot roster dismiss <rosterEntryId>");
+}
+
 std::string_view ToSourceText(model::RosterEntrySource source)
 {
     switch (source)
@@ -755,11 +766,18 @@ bool HandleParsedCommand(
     if (CommandParseError const* error =
         std::get_if<CommandParseError>(&parsed))
     {
+        if (error->kind == CommandParseErrorKind::Empty)
+        {
+            RenderUsage(handler);
+            return true;
+        }
+
         handler->PSendSysMessage(
             "LivingWorld command error: {} ({})",
             ToParseErrorText(error->kind),
             error->detail);
-        return false;
+        RenderUsage(handler);
+        return true;
     }
 
     if (std::get_if<RosterListCommand>(&parsed))

@@ -1196,15 +1196,25 @@ repositories. It currently supports:
 - prepare a new reserved runtime account
 - materialize or reuse a persistent clone character on the reserved bot account
 - block clone-ahead states for manual review
+- start the safer exact-name path by parking the offline source alt under its
+  reserved hidden name so the runtime clone can lease the real visible source
+  name
 
 It now executes clone-to-source sync for level / XP / money only, gated by the
 sanity checker and the sync executor. Broader domains remain blocked.
 
 `integration::SqlCharacterCloneMaterializer` now wraps AzerothCore's
 `PlayerDumpWriter` / `PlayerDumpReader` to create the first persistent clone.
-It reuses an existing clone by reserved name when present, otherwise imports a
-new clone onto the bot-owned account and returns the persisted clone guid plus
-its snapshot.
+It reuses an existing clone by visible name when present, falls back to the
+older hidden-name clone path for legacy runtimes, and otherwise:
+- renames the offline source alt to `reservedSourceCharacterName`
+- updates AzerothCore's `CharacterCache` immediately
+- imports the runtime clone under `sourceCharacterName`
+
+This is intentionally only the safer first half of an exact-name system.
+Restore of the original source name on dismiss/logout or recovery is not
+complete yet and should be implemented as a dedicated reclaim step rather than
+by deleting and rebuilding the original character.
 
 The first observation layer for item domains now exists as well:
 - `model::CharacterItemSnapshot` groups read-only item state into equipment,

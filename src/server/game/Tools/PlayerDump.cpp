@@ -950,7 +950,7 @@ DumpReturn PlayerDumpReader::LoadDump(std::istream& input, uint32 account, std::
     if (input.fail() && !input.eof())
         return DUMP_FILE_BROKEN;
 
-    CharacterDatabase.CommitTransaction(trans);
+    CharacterDatabase.DirectCommitTransaction(trans);
 
     // in case of name conflict player has to rename at login anyway
     sCharacterCache->AddCharacterCacheEntry(ObjectGuid(HighGuid::Player, guid), account, name, gender, race, playerClass, level);

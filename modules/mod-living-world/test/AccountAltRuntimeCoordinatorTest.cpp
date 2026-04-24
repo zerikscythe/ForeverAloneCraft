@@ -210,7 +210,7 @@ TEST(AccountAltRuntimeCoordinatorTest, NewRuntimeUsesReservedAccount)
     snapshotRepository.sourceSnapshot = Snapshot(10, 200, 1000);
     cloneMaterializer.result.succeeded = true;
     cloneMaterializer.result.cloneCharacterGuid = 8001;
-    cloneMaterializer.result.cloneCharacterName = "Lwtester";
+    cloneMaterializer.result.cloneCharacterName = "Tester";
     cloneMaterializer.result.cloneSnapshot = Snapshot(10, 200, 1000);
     cloneMaterializer.result.reason = "materialized persistent clone character";
 
@@ -261,7 +261,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
     snapshotRepository.sourceSnapshot = Snapshot(10, 200, 1000);
     cloneMaterializer.result.succeeded = true;
     cloneMaterializer.result.cloneCharacterGuid = 8001;
-    cloneMaterializer.result.cloneCharacterName = "Lwtester";
+    cloneMaterializer.result.cloneCharacterName = "Tester";
     cloneMaterializer.result.cloneSnapshot = Snapshot(10, 200, 1000);
     cloneMaterializer.result.reason = "materialized persistent clone character";
 

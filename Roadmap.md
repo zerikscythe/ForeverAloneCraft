@@ -348,6 +348,9 @@ design and foundation code.
   an interrupted clone, or block when no bot account is available.
 - Runtime clones are intended to live on bot-owned account-pool accounts rather
   than by rewriting AzerothCore's one-active-session-per-account assumption.
+- New clone materialization now begins the safer exact-name path: the offline
+  source alt can be parked under its reserved hidden name so the runtime clone
+  can lease the real player-facing alt name during spawn.
 - `AccountAltRecoveryService` now defines the first pure recovery-plan seam:
   clone progress can be reused, blocked, routed to manual review, or synced
   back to the source only after sanity checks identify safe domains.
@@ -522,7 +525,9 @@ Current implementation status:
   account-alt spawn path before `BotSessionFactory` queues a login.
 - `SqlCharacterCloneMaterializer` now uses AzerothCore's `PlayerDump`
   import/export path to create or reuse a persistent clone character on the
-  reserved bot account before spawn.
+  reserved bot account before spawn. New clone materialization now leases the
+  real source character name to the clone by first parking the offline source
+  alt under its reserved hidden name.
 - If a materialized clone exists and appears ahead of the source snapshot, the
   command path now blocks the spawn for manual review instead of guessing.
 - Clone-to-source sync writes now exist for level / XP / money only, gated by
@@ -772,6 +777,14 @@ See section D of "Immediate Next Implementation Slice" above for full detail.
 Persistent clone materialization is now in place: new or incomplete runtimes
 create/reuse a real clone character on the reserved bot account before spawn
 and persist `cloneCharacterGuid` for later recovery.
+
+Name presentation has started moving toward exact source-name reuse:
+- the source alt's real name is now treated as the clone's intended visible
+  name
+- the reserved generated name is now the parked hidden name for the offline
+  source alt during clone materialization
+- restore/reclaim of the original source name on dismiss/logout is still
+  future work and should be implemented as part of the broader recovery path
 
 The next milestone is to expand beyond progress-only sync safely:
 - define read-only snapshot loaders for equipment, bag inventory, and bank

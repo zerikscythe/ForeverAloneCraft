@@ -20,19 +20,22 @@ bool CloneProgressIsAhead(
     return clone.experience > source.experience;
 }
 
-char ToBase26Letter(std::uint64_t value)
-{
-    return static_cast<char>('a' + (value % 26));
-}
-
 std::string BuildReservedSourceName(std::uint64_t sourceCharacterGuid)
 {
+    // This is the parked hidden name used to move the offline source alt out
+    // of the way while the live clone leases the real visible character name.
+    // Mix position * 7 (prime stride) into each letter choice so that when
+    // sourceCharacterGuid encodes to 0 in the high digits the trailing
+    // characters still vary — preventing long runs of the same letter, which
+    // WoW's CheckPlayerName rejects.
     std::string name = "Lw";
     std::uint64_t value = sourceCharacterGuid;
+    std::uint64_t pos = 0;
     while (name.size() < 12)
     {
-        name.push_back(ToBase26Letter(value));
+        name.push_back(static_cast<char>('a' + (value + pos * 7) % 26));
         value /= 26;
+        ++pos;
     }
     return name;
 }

@@ -126,23 +126,34 @@ ParsedCommand ParseLivingWorldCommand(std::string_view arguments)
         return MakeError(CommandParseErrorKind::Empty, "no command given");
     }
 
-    std::string_view subsystem = ConsumeToken(remaining);
-    if (subsystem != "roster")
+    std::string_view firstToken = ConsumeToken(remaining);
+    if (firstToken == "roster")
     {
-        return MakeError(
-            CommandParseErrorKind::UnknownSubsystem,
-            std::string("unknown subsystem: ") + std::string(subsystem));
+        std::string_view verb = ConsumeToken(remaining);
+        if (verb.empty())
+        {
+            return MakeError(
+                CommandParseErrorKind::MissingArgument,
+                "roster verb required (list/request/dismiss)");
+        }
+
+        return ParseRosterVerb(verb, remaining);
     }
 
-    std::string_view verb = ConsumeToken(remaining);
-    if (verb.empty())
+    // Support the shorter `.lwbot list|request|dismiss` forms in addition to
+    // the original `.lwbot roster ...` grammar. This matches how the command
+    // is being used in game and keeps the parser addon-friendly by treating
+    // `roster` as an optional first subsystem marker for now.
+    if (firstToken == "list" ||
+        firstToken == "request" ||
+        firstToken == "dismiss")
     {
-        return MakeError(
-            CommandParseErrorKind::MissingArgument,
-            "roster verb required (list/request/dismiss)");
+        return ParseRosterVerb(firstToken, remaining);
     }
 
-    return ParseRosterVerb(verb, remaining);
+    return MakeError(
+        CommandParseErrorKind::UnknownSubsystem,
+        std::string("unknown subsystem: ") + std::string(firstToken));
 }
 } // namespace script
 } // namespace living_world

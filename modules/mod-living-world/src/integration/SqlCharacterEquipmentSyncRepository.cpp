@@ -1,7 +1,9 @@
 #include "integration/SqlCharacterEquipmentSyncRepository.h"
 
 #include "DatabaseEnv.h"
+#include "QueryResult.h"
 #include "ObjectMgr.h"
+#include "StringFormat.h"
 
 #include <optional>
 #include <string>
@@ -124,17 +126,19 @@ bool SqlCharacterEquipmentSyncRepository::SyncEquipmentToCharacter(
 
     CharacterDatabase.ExecuteOrAppend(
         trans,
-        "DELETE FROM character_inventory "
-        "WHERE guid = {} AND bag = 0 AND slot BETWEEN 0 AND 18",
-        sourceCharacterGuid);
+        Acore::StringFormat(
+            "DELETE FROM character_inventory "
+            "WHERE guid = {} AND bag = 0 AND slot BETWEEN 0 AND 18",
+            sourceCharacterGuid));
 
     for (model::CharacterItemSnapshotEntry const& item :
          sourceSnapshot.equipmentItems)
     {
         CharacterDatabase.ExecuteOrAppend(
             trans,
-            "DELETE FROM item_instance WHERE guid = {}",
-            item.itemGuid);
+            Acore::StringFormat(
+                "DELETE FROM item_instance WHERE guid = {}",
+                item.itemGuid));
     }
 
     for (CloneEquipmentCopy const& copy : cloneItems)
@@ -151,33 +155,35 @@ bool SqlCharacterEquipmentSyncRepository::SyncEquipmentToCharacter(
 
         CharacterDatabase.ExecuteOrAppend(
             trans,
-            "REPLACE INTO item_instance "
-            "(itemEntry, owner_guid, creatorGuid, giftCreatorGuid, count, "
-            "duration, charges, flags, enchantments, randomPropertyId, "
-            "durability, playedTime, text, guid) "
-            "VALUES ({}, {}, {}, {}, {}, {}, '{}', {}, '{}', {}, {}, {}, '{}', {})",
-            copy.row.itemEntry,
-            sourceCharacterGuid,
-            copy.row.creatorGuid,
-            copy.row.giftCreatorGuid,
-            copy.row.count,
-            copy.row.duration,
-            charges,
-            copy.row.flags,
-            enchantments,
-            copy.row.randomPropertyId,
-            copy.row.durability,
-            copy.row.playedTime,
-            text,
-            newItemGuid);
+            Acore::StringFormat(
+                "REPLACE INTO item_instance "
+                "(itemEntry, owner_guid, creatorGuid, giftCreatorGuid, count, "
+                "duration, charges, flags, enchantments, randomPropertyId, "
+                "durability, playedTime, text, guid) "
+                "VALUES ({}, {}, {}, {}, {}, {}, '{}', {}, '{}', {}, {}, {}, '{}', {})",
+                copy.row.itemEntry,
+                sourceCharacterGuid,
+                copy.row.creatorGuid,
+                copy.row.giftCreatorGuid,
+                copy.row.count,
+                copy.row.duration,
+                charges,
+                copy.row.flags,
+                enchantments,
+                copy.row.randomPropertyId,
+                copy.row.durability,
+                copy.row.playedTime,
+                text,
+                newItemGuid));
 
         CharacterDatabase.ExecuteOrAppend(
             trans,
-            "REPLACE INTO character_inventory (guid, bag, slot, item) "
-            "VALUES ({}, 0, {}, {})",
-            sourceCharacterGuid,
-            static_cast<std::uint32_t>(copy.item.slot),
-            newItemGuid);
+            Acore::StringFormat(
+                "REPLACE INTO character_inventory (guid, bag, slot, item) "
+                "VALUES ({}, 0, {}, {})",
+                sourceCharacterGuid,
+                static_cast<std::uint32_t>(copy.item.slot),
+                newItemGuid));
     }
 
     CharacterDatabase.CommitTransaction(trans);
