@@ -18,9 +18,15 @@ namespace
 constexpr float FollowDistance = 2.0f;
 constexpr float FollowAngle = 3.14159265358979323846f;
 constexpr float RepositionDistance = 8.0f;
-constexpr float HealOwnerThreshold = 75.0f;
-constexpr float HealSelfThreshold = 60.0f;
-constexpr float HybridHealThreshold = 50.0f;
+constexpr float HealOwnerCritical = 50.0f;
+constexpr float HealOwnerModerate = 85.0f;
+constexpr float HealSelfCritical = 40.0f;
+constexpr float HealSelfModerate = 65.0f;
+constexpr float HybridHealThreshold = 70.0f;
+
+// Debuff aura IDs applied to the target by DK rune strikes.
+constexpr std::uint32_t AuraFrostFever = 55095;
+constexpr std::uint32_t AuraBloodPlague = 55078;
 
 enum class BotCombatRole
 {
@@ -63,12 +69,25 @@ std::uint32_t FindBestKnownSpellInChain(Player* bot, std::uint32_t baseSpellId)
     return 0;
 }
 
-// Base spell IDs (rank 1) for the signature heal of each healer class.
-std::uint32_t GetHealSpell(Player* bot)
+// Fast direct heal for when a target drops critically low.
+std::uint32_t GetDirectHealSpell(Player* bot)
 {
     switch (bot->getClass())
     {
-        case CLASS_PRIEST:  return FindBestKnownSpellInChain(bot, 2061); // Flash Heal
+        case CLASS_PRIEST:  return FindBestKnownSpellInChain(bot, 2061);  // Flash Heal
+        case CLASS_DRUID:   return FindBestKnownSpellInChain(bot, 5185);  // Healing Touch
+        case CLASS_PALADIN: return FindBestKnownSpellInChain(bot, 19750); // Flash of Light
+        case CLASS_SHAMAN:  return FindBestKnownSpellInChain(bot, 8004);  // Lesser Healing Wave
+        default:            return 0;
+    }
+}
+
+// Sustained heal or HoT for topping off a moderately damaged target.
+std::uint32_t GetSustainedHealSpell(Player* bot)
+{
+    switch (bot->getClass())
+    {
+        case CLASS_PRIEST:  return FindBestKnownSpellInChain(bot, 139);  // Renew
         case CLASS_DRUID:   return FindBestKnownSpellInChain(bot, 774);  // Rejuvenation
         case CLASS_PALADIN: return FindBestKnownSpellInChain(bot, 635);  // Holy Light
         case CLASS_SHAMAN:  return FindBestKnownSpellInChain(bot, 331);  // Healing Wave
@@ -76,15 +95,94 @@ std::uint32_t GetHealSpell(Player* bot)
     }
 }
 
-// Base spell IDs (rank 1) for the signature ranged damage spell of each class.
-std::uint32_t GetDamageSpell(Player* bot)
+// Returns the best melee-range offensive ability for the bot's class and state.
+std::uint32_t GetMeleeOffensiveSpell(Player* bot, Unit* target)
 {
     switch (bot->getClass())
     {
-        case CLASS_MAGE:    return FindBestKnownSpellInChain(bot, 116);  // Frostbolt
-        case CLASS_WARLOCK: return FindBestKnownSpellInChain(bot, 686);  // Shadow Bolt
-        case CLASS_HUNTER:  return FindBestKnownSpellInChain(bot, 3044); // Arcane Shot
-        default:            return 0;
+        case CLASS_WARRIOR:
+        {
+            std::uint32_t spell = FindBestKnownSpellInChain(bot, 12294); // Mortal Strike
+            if (spell)
+                return spell;
+            spell = FindBestKnownSpellInChain(bot, 23881); // Bloodthirst
+            if (spell)
+                return spell;
+            return FindBestKnownSpellInChain(bot, 78); // Heroic Strike
+        }
+        case CLASS_ROGUE:
+        {
+            if (bot->GetComboPoints() >= 4)
+                return FindBestKnownSpellInChain(bot, 2098); // Eviscerate
+            return FindBestKnownSpellInChain(bot, 1752); // Sinister Strike
+        }
+        case CLASS_DEATH_KNIGHT:
+        {
+            bool const hasFrostFever = target->HasAura(AuraFrostFever);
+            bool const hasBloodPlague = target->HasAura(AuraBloodPlague);
+            if (hasFrostFever && hasBloodPlague && bot->HasSpell(49998))
+                return 49998; // Death Strike — consumes both diseases
+            if (!hasBloodPlague && bot->HasSpell(45462))
+                return 45462; // Plague Strike — applies Blood Plague
+            if (!hasFrostFever && bot->HasSpell(45477))
+                return 45477; // Icy Touch — applies Frost Fever
+            if (bot->HasSpell(49998))
+                return 49998; // Death Strike fallback when diseases are up
+            return 0;
+        }
+        default:
+            return 0;
+    }
+}
+
+// Returns the best short-range DPS ability for hybrid healers acting offensively.
+std::uint32_t GetHybridDamageSpell(Player* bot, Unit* target)
+{
+    switch (bot->getClass())
+    {
+        case CLASS_PALADIN:
+            if (bot->HasSpell(35395)) // Crusader Strike (single rank in WotLK)
+                return 35395;
+            return 0;
+        case CLASS_SHAMAN:
+        {
+            std::uint32_t const flameShock = FindBestKnownSpellInChain(bot, 8050);
+            if (flameShock && !target->HasAura(flameShock))
+                return flameShock; // Apply Flame Shock DoT first
+            return FindBestKnownSpellInChain(bot, 8042); // Earth Shock filler
+        }
+        case CLASS_DRUID:
+        {
+            std::uint32_t const moonfire = FindBestKnownSpellInChain(bot, 8921);
+            if (moonfire && !target->HasAura(moonfire))
+                return moonfire; // Apply Moonfire DoT first
+            return FindBestKnownSpellInChain(bot, 5176); // Wrath filler
+        }
+        default:
+            return 0;
+    }
+}
+
+// Returns the best ranged damage spell, preferring DoTs when not yet applied.
+std::uint32_t GetDamageSpell(Player* bot, Unit* target)
+{
+    switch (bot->getClass())
+    {
+        case CLASS_MAGE:
+            return FindBestKnownSpellInChain(bot, 116); // Frostbolt
+        case CLASS_WARLOCK:
+        {
+            std::uint32_t const corruption = FindBestKnownSpellInChain(bot, 172);
+            if (corruption && !target->HasAura(corruption))
+                return corruption; // Apply Corruption DoT first
+            return FindBestKnownSpellInChain(bot, 686); // Shadow Bolt filler
+        }
+        case CLASS_HUNTER:
+            if (bot->HasSpell(34120)) // Steady Shot (single rank in WotLK)
+                return 34120;
+            return FindBestKnownSpellInChain(bot, 3044); // Arcane Shot fallback
+        default:
+            return 0;
     }
 }
 
@@ -93,18 +191,35 @@ void TickHealer(Player* bot, Player* owner)
     if (bot->IsNonMeleeSpellCast(false))
         return;
 
-    std::uint32_t const spell = GetHealSpell(bot);
-    if (!spell)
-        return;
+    std::uint32_t const directSpell = GetDirectHealSpell(bot);
+    std::uint32_t const sustainedSpell = GetSustainedHealSpell(bot);
 
-    if (owner->GetHealthPct() < HealOwnerThreshold && !owner->HasAura(spell))
+    if (owner->GetHealthPct() < HealOwnerCritical)
     {
-        bot->CastSpell(owner, spell, false);
+        if (directSpell)
+            bot->CastSpell(owner, directSpell, false);
         return;
     }
 
-    if (bot->GetHealthPct() < HealSelfThreshold && !bot->HasAura(spell))
-        bot->CastSpell(bot, spell, false);
+    if (owner->GetHealthPct() < HealOwnerModerate)
+    {
+        if (sustainedSpell && !owner->HasAura(sustainedSpell))
+            bot->CastSpell(owner, sustainedSpell, false);
+        return;
+    }
+
+    if (bot->GetHealthPct() < HealSelfCritical)
+    {
+        if (directSpell)
+            bot->CastSpell(bot, directSpell, false);
+        return;
+    }
+
+    if (bot->GetHealthPct() < HealSelfModerate)
+    {
+        if (sustainedSpell && !bot->HasAura(sustainedSpell))
+            bot->CastSpell(bot, sustainedSpell, false);
+    }
 }
 
 void TickRanged(Player* bot, Unit* target)
@@ -112,7 +227,17 @@ void TickRanged(Player* bot, Unit* target)
     if (bot->IsNonMeleeSpellCast(false))
         return;
 
-    std::uint32_t const spell = GetDamageSpell(bot);
+    std::uint32_t const spell = GetDamageSpell(bot, target);
+    if (spell)
+        bot->CastSpell(target, spell, false);
+}
+
+void TickMelee(Player* bot, Unit* target)
+{
+    if (bot->IsNonMeleeSpellCast(false))
+        return;
+
+    std::uint32_t const spell = GetMeleeOffensiveSpell(bot, target);
     if (spell)
         bot->CastSpell(target, spell, false);
 }
@@ -130,11 +255,26 @@ void Tick(Player* bot, Player* owner)
 
     if (owner->IsInCombat())
     {
-        // Hybrids prioritise healing when the owner drops low, otherwise fight.
-        if (role == BotCombatRole::HybridHealer &&
-            owner->GetHealthPct() < HybridHealThreshold)
+        if (role == BotCombatRole::HybridHealer)
         {
-            TickHealer(bot, owner);
+            if (owner->GetHealthPct() < HybridHealThreshold)
+            {
+                TickHealer(bot, owner);
+                return;
+            }
+
+            if (!bot->GetVictim())
+            {
+                if (Unit* target = owner->GetVictim())
+                    bot->Attack(target, true);
+            }
+
+            if (Unit* target = bot->GetVictim())
+            {
+                std::uint32_t const spell = GetHybridDamageSpell(bot, target);
+                if (spell && !bot->IsNonMeleeSpellCast(false))
+                    bot->CastSpell(target, spell, false);
+            }
             return;
         }
 
@@ -144,8 +284,13 @@ void Tick(Player* bot, Player* owner)
                 bot->Attack(target, true);
         }
 
-        if (role == BotCombatRole::Ranged && bot->GetVictim())
-            TickRanged(bot, bot->GetVictim());
+        if (Unit* target = bot->GetVictim())
+        {
+            if (role == BotCombatRole::Ranged)
+                TickRanged(bot, target);
+            else if (role == BotCombatRole::Melee)
+                TickMelee(bot, target);
+        }
 
         return;
     }
