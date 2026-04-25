@@ -707,6 +707,14 @@ void RenderRosterRequest(
         return;
     }
 
+    std::optional<model::RosterEntry> entry =
+        ResolveBotRosterEntry(session->GetAccountId(), command.botRef);
+    if (!entry)
+    {
+        handler->PSendSysMessage("LivingWorld bot not found in roster.");
+        return;
+    }
+
     LiveAzerothWorldFacade facade;
     AccountAltRosterRepository repository;
     planner::SimplePartyRosterPlanner planner;
@@ -715,7 +723,7 @@ void RenderRosterRequest(
     model::PlayerRosterRequest request;
     request.requesterCharacterGuid = player->GetGUID().GetCounter();
     request.requesterAccountId = session->GetAccountId();
-    request.requestedRosterEntryId = command.rosterEntryId;
+    request.requestedRosterEntryId = entry->rosterEntryId;
 
     service::PartyBotDispatchResult result =
         service.DispatchRosterRequest(request);
@@ -729,8 +737,8 @@ void RenderRosterRequest(
     }
 
     handler->PSendSysMessage(
-        "LivingWorld roster request approved for entry {}.",
-        command.rosterEntryId);
+        "LivingWorld roster request approved for {}.",
+        entry->controllableProfile.profile.name);
     CommitExecutionSummary const execution = ExecuteCommitActions(
         handler,
         player,
@@ -755,13 +763,21 @@ void RenderDismissBot(
         return;
     }
 
+    std::optional<model::RosterEntry> entry =
+        ResolveBotRosterEntry(session->GetAccountId(), command.botRef);
+    if (!entry)
+    {
+        handler->PSendSysMessage("LivingWorld bot not found in roster.");
+        return;
+    }
+
     Player* bot = service::BotPlayerRegistry::Instance().FindBotForOwner(
         player->GetGUID());
     if (!bot)
     {
         handler->PSendSysMessage(
-            "LivingWorld no active bot found for roster entry {}.",
-            command.rosterEntryId);
+            "LivingWorld no active bot found for {}.",
+            entry->controllableProfile.profile.name);
         return;
     }
 
@@ -770,8 +786,8 @@ void RenderDismissBot(
 
     bot->GetSession()->KickPlayer("LivingWorld roster dismiss");
     handler->PSendSysMessage(
-        "LivingWorld dismissed bot for roster entry {}.",
-        command.rosterEntryId);
+        "LivingWorld dismissed {}.",
+        entry->controllableProfile.profile.name);
 }
 
 std::optional<model::RosterEntry> ResolveBotRosterEntry(

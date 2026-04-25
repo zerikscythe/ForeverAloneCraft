@@ -37,43 +37,73 @@ TEST(LivingWorldCommandGrammarTest, ShortListParsesWithoutSubsystem)
     EXPECT_NE(std::get_if<RosterListCommand>(&cmd), nullptr);
 }
 
-TEST(LivingWorldCommandGrammarTest, RosterRequestParsesId)
+TEST(LivingWorldCommandGrammarTest, RosterRequestParsesPosition)
 {
     ParsedCommand cmd = ParseLivingWorldCommand("roster request 42");
 
     auto const* request = std::get_if<RosterRequestCommand>(&cmd);
     ASSERT_NE(request, nullptr);
-    EXPECT_EQ(request->rosterEntryId, 42u);
+    auto const* position = std::get_if<std::uint32_t>(&request->botRef);
+    ASSERT_NE(position, nullptr);
+    EXPECT_EQ(*position, 42u);
 }
 
-TEST(LivingWorldCommandGrammarTest, ShortRequestParsesIdWithoutSubsystem)
+TEST(LivingWorldCommandGrammarTest, RosterRequestParsesName)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("roster request thrall");
+
+    auto const* request = std::get_if<RosterRequestCommand>(&cmd);
+    ASSERT_NE(request, nullptr);
+    auto const* name = std::get_if<std::string>(&request->botRef);
+    ASSERT_NE(name, nullptr);
+    EXPECT_EQ(*name, "Thrall");
+}
+
+TEST(LivingWorldCommandGrammarTest, ShortRequestParsesPositionWithoutSubsystem)
 {
     ParsedCommand cmd = ParseLivingWorldCommand("request 42");
 
     auto const* request = std::get_if<RosterRequestCommand>(&cmd);
     ASSERT_NE(request, nullptr);
-    EXPECT_EQ(request->rosterEntryId, 42u);
+    auto const* position = std::get_if<std::uint32_t>(&request->botRef);
+    ASSERT_NE(position, nullptr);
+    EXPECT_EQ(*position, 42u);
 }
 
-TEST(LivingWorldCommandGrammarTest, RosterDismissParsesId)
+TEST(LivingWorldCommandGrammarTest, RosterDismissParsesPosistion)
 {
     ParsedCommand cmd = ParseLivingWorldCommand("  roster   dismiss   7 ");
 
     auto const* dismiss = std::get_if<RosterDismissCommand>(&cmd);
     ASSERT_NE(dismiss, nullptr);
-    EXPECT_EQ(dismiss->rosterEntryId, 7u);
+    auto const* position = std::get_if<std::uint32_t>(&dismiss->botRef);
+    ASSERT_NE(position, nullptr);
+    EXPECT_EQ(*position, 7u);
 }
 
-TEST(LivingWorldCommandGrammarTest, ShortDismissParsesIdWithoutSubsystem)
+TEST(LivingWorldCommandGrammarTest, ShortDismissParsesPositionWithoutSubsystem)
 {
     ParsedCommand cmd = ParseLivingWorldCommand("dismiss 7");
 
     auto const* dismiss = std::get_if<RosterDismissCommand>(&cmd);
     ASSERT_NE(dismiss, nullptr);
-    EXPECT_EQ(dismiss->rosterEntryId, 7u);
+    auto const* position = std::get_if<std::uint32_t>(&dismiss->botRef);
+    ASSERT_NE(position, nullptr);
+    EXPECT_EQ(*position, 7u);
 }
 
-TEST(LivingWorldCommandGrammarTest, RosterRequestRejectsMissingId)
+TEST(LivingWorldCommandGrammarTest, RosterDismissParsesName)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("dismiss Arthas");
+
+    auto const* dismiss = std::get_if<RosterDismissCommand>(&cmd);
+    ASSERT_NE(dismiss, nullptr);
+    auto const* name = std::get_if<std::string>(&dismiss->botRef);
+    ASSERT_NE(name, nullptr);
+    EXPECT_EQ(*name, "Arthas");
+}
+
+TEST(LivingWorldCommandGrammarTest, RosterRequestRejectsMissingRef)
 {
     ParsedCommand cmd = ParseLivingWorldCommand("roster request");
 
@@ -82,7 +112,7 @@ TEST(LivingWorldCommandGrammarTest, RosterRequestRejectsMissingId)
     EXPECT_EQ(error->kind, CommandParseErrorKind::MissingArgument);
 }
 
-TEST(LivingWorldCommandGrammarTest, RosterRequestRejectsZeroId)
+TEST(LivingWorldCommandGrammarTest, RosterRequestRejectsPositionZero)
 {
     ParsedCommand cmd = ParseLivingWorldCommand("roster request 0");
 
@@ -91,9 +121,9 @@ TEST(LivingWorldCommandGrammarTest, RosterRequestRejectsZeroId)
     EXPECT_EQ(error->kind, CommandParseErrorKind::InvalidArgument);
 }
 
-TEST(LivingWorldCommandGrammarTest, RosterRequestRejectsNonNumericId)
+TEST(LivingWorldCommandGrammarTest, RosterRequestRejectsMixedAlphanumericRef)
 {
-    ParsedCommand cmd = ParseLivingWorldCommand("roster request abc");
+    ParsedCommand cmd = ParseLivingWorldCommand("roster request abc123");
 
     auto const* error = std::get_if<CommandParseError>(&cmd);
     ASSERT_NE(error, nullptr);

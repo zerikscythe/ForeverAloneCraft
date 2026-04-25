@@ -96,9 +96,69 @@ std::string NormalizeCharacterName(std::string_view name)
     return out;
 }
 
-ParsedCommand ParseBotProfileCommand(
-    std::variant<std::uint32_t, std::string> botRef,
-    std::string_view remaining)
+// Parses a bot reference token into a BotRef (position or normalized name).
+// Returns a CommandParseError variant on failure.
+std::variant<BotRef, CommandParseError> ParseBotRef(std::string_view token)
+{
+    if (token.empty())
+        return MakeError(CommandParseErrorKind::MissingArgument, "bot position or name required");
+
+    if (std::isdigit(static_cast<unsigned char>(token.front())))
+    {
+        std::uint64_t position = 0;
+        if (!ParseUInt64(token, position) ||
+            position == 0 ||
+            position > std::numeric_limits<std::uint32_t>::max())
+        {
+            return MakeError(
+                CommandParseErrorKind::InvalidArgument,
+                "bot position must be a positive integer");
+        }
+        return BotRef { static_cast<std::uint32_t>(position) };
+    }
+
+    if (IsAlphaOnly(token))
+        return BotRef { NormalizeCharacterName(token) };
+
+    return MakeError(
+        CommandParseErrorKind::InvalidArgument,
+        "bot must be specified by roster position (number) or character name");
+}
+
+ParsedCommand ParseRosterVerb(
+    std::string_view verb, std::string_view remaining)
+{
+    if (verb == "list")
+        return RosterListCommand{};
+
+    if (verb == "request" || verb == "dismiss")
+    {
+        std::string_view refToken = ConsumeToken(remaining);
+        auto botRefResult = ParseBotRef(refToken);
+
+        if (CommandParseError const* err = std::get_if<CommandParseError>(&botRefResult))
+            return *err;
+
+        BotRef botRef = std::get<BotRef>(std::move(botRefResult));
+
+        if (verb == "request")
+        {
+            RosterRequestCommand cmd;
+            cmd.botRef = std::move(botRef);
+            return cmd;
+        }
+
+        RosterDismissCommand cmd;
+        cmd.botRef = std::move(botRef);
+        return cmd;
+    }
+
+    return MakeError(
+        CommandParseErrorKind::UnknownVerb,
+        std::string("unknown roster verb: ") + std::string(verb));
+}
+
+ParsedCommand ParseBotProfileCommand(BotRef botRef, std::string_view remaining)
 {
     std::string_view verb = ConsumeToken(remaining);
     if (verb != "profile")
@@ -128,49 +188,6 @@ ParsedCommand ParseBotProfileCommand(
     cmd.botRef = std::move(botRef);
     cmd.profileSlot = static_cast<std::uint8_t>(slot);
     return cmd;
-}
-
-ParsedCommand ParseRosterVerb(
-    std::string_view verb, std::string_view remaining)
-{
-    if (verb == "list")
-    {
-        return RosterListCommand{};
-    }
-
-    if (verb == "request" || verb == "dismiss")
-    {
-        std::string_view idToken = ConsumeToken(remaining);
-        if (idToken.empty())
-        {
-            return MakeError(
-                CommandParseErrorKind::MissingArgument,
-                "rosterEntryId required");
-        }
-
-        std::uint64_t rosterEntryId = 0;
-        if (!ParseUInt64(idToken, rosterEntryId) || rosterEntryId == 0)
-        {
-            return MakeError(
-                CommandParseErrorKind::InvalidArgument,
-                "rosterEntryId must be a positive integer");
-        }
-
-        if (verb == "request")
-        {
-            RosterRequestCommand cmd;
-            cmd.rosterEntryId = rosterEntryId;
-            return cmd;
-        }
-
-        RosterDismissCommand cmd;
-        cmd.rosterEntryId = rosterEntryId;
-        return cmd;
-    }
-
-    return MakeError(
-        CommandParseErrorKind::UnknownVerb,
-        std::string("unknown roster verb: ") + std::string(verb));
 }
 } // namespace
 
@@ -207,28 +224,10 @@ ParsedCommand ParseLivingWorldCommand(std::string_view arguments)
         return ParseRosterVerb(firstToken, remaining);
     }
 
-    // `.lwbot <position> profile <slot>` — numeric roster position (1-N).
-    if (std::isdigit(static_cast<unsigned char>(firstToken.front())))
-    {
-        std::uint64_t position = 0;
-        if (!ParseUInt64(firstToken, position) ||
-            position == 0 ||
-            position > std::numeric_limits<std::uint32_t>::max())
-        {
-            return MakeError(
-                CommandParseErrorKind::InvalidArgument,
-                "bot position must be a positive integer");
-        }
-        return ParseBotProfileCommand(
-            static_cast<std::uint32_t>(position), remaining);
-    }
-
-    // `.lwbot <name> profile <slot>` — character name (alpha only, normalized).
-    if (IsAlphaOnly(firstToken))
-    {
-        return ParseBotProfileCommand(
-            NormalizeCharacterName(firstToken), remaining);
-    }
+    // `.lwbot <position|name> profile <slot>` — bot ref followed by profile verb.
+    auto botRefResult = ParseBotRef(firstToken);
+    if (BotRef* botRef = std::get_if<BotRef>(&botRefResult))
+        return ParseBotProfileCommand(std::move(*botRef), remaining);
 
     return MakeError(
         CommandParseErrorKind::UnknownSubsystem,

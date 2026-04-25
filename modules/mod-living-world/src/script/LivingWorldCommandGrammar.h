@@ -27,30 +27,33 @@ namespace living_world
 {
 namespace script
 {
+// Identifies a bot by either its 1-N roster position or its normalized
+// character name (first char upper, rest lower — WoW's enforced format).
+using BotRef = std::variant<std::uint32_t, std::string>;
+
 // "list" — ask the service what roster entries are available to the
 // requesting player. No arguments.
 struct RosterListCommand
 {
 };
 
-// "request" — ask the service to dispatch a roster request by ID.
+// "request" — ask the service to dispatch a roster request.
 struct RosterRequestCommand
 {
-    std::uint64_t rosterEntryId = 0;
+    BotRef botRef;
 };
 
-// "dismiss" — future commit path for tearing down an active body.
+// "dismiss" — tear down an active bot session.
 struct RosterDismissCommand
 {
-    std::uint64_t rosterEntryId = 0;
+    BotRef botRef;
 };
 
 // "<position|name> profile <slot>" — switch a bot's active moveset profile.
-// botRef holds either a 1-N roster position (uint32) or a normalized character
-// name (string, first char upper rest lower). profileSlot is 1-10.
+// profileSlot is 1-10.
 struct BotProfileSetCommand
 {
-    std::variant<std::uint32_t, std::string> botRef;
+    BotRef botRef;
     std::uint8_t profileSlot = 1;
 };
 
