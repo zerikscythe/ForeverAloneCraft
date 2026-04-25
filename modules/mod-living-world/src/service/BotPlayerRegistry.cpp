@@ -88,5 +88,34 @@ std::optional<ObjectGuid> BotPlayerRegistry::FindOwnerForBot(
 
     return ObjectGuid::Create<HighGuid::Player>(itr->second);
 }
+
+std::optional<ObjectGuid> BotPlayerRegistry::FindPendingBotForOwner(
+    ObjectGuid ownerCharacterGuid) const
+{
+    std::lock_guard<std::mutex> guard(_mutex);
+    for (auto const& [botGuid, pendingOwnerGuid] : _pendingOwnersByBot)
+    {
+        if (pendingOwnerGuid == ownerCharacterGuid.GetCounter())
+        {
+            return ObjectGuid::Create<HighGuid::Player>(botGuid);
+        }
+    }
+
+    return std::nullopt;
+}
+
+bool BotPlayerRegistry::IsPendingBotForOwner(
+    ObjectGuid ownerCharacterGuid,
+    ObjectGuid botCharacterGuid) const
+{
+    std::lock_guard<std::mutex> guard(_mutex);
+    auto const itr = _pendingOwnersByBot.find(botCharacterGuid.GetCounter());
+    if (itr == _pendingOwnersByBot.end())
+    {
+        return false;
+    }
+
+    return itr->second == ownerCharacterGuid.GetCounter();
+}
 } // namespace service
 } // namespace living_world

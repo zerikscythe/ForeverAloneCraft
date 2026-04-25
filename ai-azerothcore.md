@@ -16,6 +16,102 @@ This is intended as a **working engineering brief**, not marketing copy.
 
 ---
 
+# Machine-Specific Build Notes
+
+These notes matter because this repo has been used on more than one Windows
+machine with different local paths and different deployed runtime layouts.
+
+## Current known machine
+
+- Hostname: `Vajjination`
+- Repo path: `E:\WoWzers\azerothcore-wotlk`
+- Live server path: `E:\WoWzers\WotLK\Server`
+- vcpkg path used by this machine: `D:\tools\vcpkg\installed\x64-windows`
+
+## Important local nuance
+
+Do not assume an older commit or older local script from another machine will
+configure or deploy correctly on this machine without re-checking paths and
+runtime DLL choices.
+
+The most important issue discovered on `Vajjination` was:
+
+- `RelWithDebInfo` could incorrectly link against debug Boost import libraries
+  (`boost_*mt-gd*`) while still producing a non-debug executable that loaded
+  the release CRT (`MSVCP140.dll`, `VCRUNTIME140.dll`).
+- That mismatch caused `worldserver` to crash very early in startup, inside
+  command-line parsing, before LivingWorld gameplay code had a chance to run.
+- The crash looked like a game/runtime regression at first, but the real cause
+  was dependency alignment on this machine.
+
+## What future agents should verify first on this machine
+
+- Check the generated link line for `worldserver` before assuming a gameplay
+  regression.
+- For `RelWithDebInfo`, verify Boost resolves to release import libraries such
+  as:
+  - `boost_filesystem-vc143-mt-x64-1_90.lib`
+  - `boost_program_options-vc143-mt-x64-1_90.lib`
+- Do not accept a `RelWithDebInfo` build that links to debug Boost libraries
+  such as `boost_*mt-gd*`.
+- If a deployed `worldserver.exe` crashes immediately, inspect imported DLLs
+  before reverting gameplay commits.
+
+## Build/deploy guidance for this machine
+
+- A clean baseline build on `Vajjination` was validated with `BUILD_TESTING=OFF`.
+- If a fresh configure fails, do not immediately blame recent gameplay work.
+  First verify:
+  - Boost imported target resolution
+  - MySQL imported target configuration mapping
+  - local path assumptions inherited from another machine
+- The live server folder may contain a mix of release and debug DLLs from older
+  manual copies. Treat that folder as suspect until imports are verified.
+- `scripts/deploy-local.sh` expects a repo-root `deploy.local` file with the
+  target server path. If `deploy.local` is absent, deployment must be done
+  manually or the file must be created for this machine.
+
+## Living-World spawn safety notes
+
+These came out of debugging duplicate bot requests and roster confusion:
+
+- Do not rely on a fixed cooldown alone to protect spawn requests.
+- `BotPlayerRegistry` now tracks pending bot logins, and command handling
+  should check that in-flight state before attempting a second spawn.
+- If the same bot is requested while login is still pending, the command
+  should report that the entry is already logging in.
+- If a different bot is requested while another login is pending for the same
+  owner, the command should block the second request and ask the user to wait.
+- Roster ordering should stay stable by character `guid` / creation order, not
+  alphabetical name order, so account slots do not reshuffle when a different
+  character logs in.
+- Spawn, dismiss, and profile commands should reject self-targets explicitly
+  rather than silently hiding the logged-in character from the roster.
+
+## Living-World behavior notes
+
+- The bot spawn pipeline is still sensitive to race conditions around clone
+  materialization, runtime state, and party attachment.
+- Future work can support multi-bot macros like "Summon the boys", but that
+  should be done after the spawn pipeline is hardened for batch or queued
+  execution.
+- If a bot appears "already online" unexpectedly, verify whether the command
+  path is pointing at the current active bot, the requested roster slot, or a
+  pending login rather than assuming the spawn itself is broken.
+
+## Practical rule
+
+Before doing commit-by-commit rollback for a startup crash on this machine,
+first prove that:
+
+- the repo configures cleanly on this machine
+- `worldserver` links against the correct config of Boost/MySQL dependencies
+- the deployed server folder is not mixing stale debug DLLs with the new exe
+
+Only after that should an agent treat the problem as a likely code regression.
+
+---
+
 # 1. Project Summary
 
 The goal is to build a **living-world bot system** for a mostly solo/private World of Warcraft server.

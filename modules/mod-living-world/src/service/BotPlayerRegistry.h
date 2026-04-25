@@ -24,6 +24,10 @@ public:
 
     Player* FindBotForOwner(ObjectGuid ownerCharacterGuid) const;
     std::optional<ObjectGuid> FindOwnerForBot(ObjectGuid botCharacterGuid) const;
+    std::optional<ObjectGuid> FindPendingBotForOwner(ObjectGuid ownerCharacterGuid) const;
+    bool IsPendingBotForOwner(
+        ObjectGuid ownerCharacterGuid,
+        ObjectGuid botCharacterGuid) const;
 
 private:
     mutable std::mutex _mutex;

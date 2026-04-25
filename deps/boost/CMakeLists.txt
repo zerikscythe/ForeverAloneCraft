@@ -45,14 +45,48 @@ add_library(boost INTERFACE)
 
 set(AC_BOOST_LIBRARIES ${Boost_LIBRARIES})
 
-foreach(BOOST_COMPONENT filesystem program_options iostreams regex)
-  if(TARGET Boost::${BOOST_COMPONENT})
-    list(APPEND AC_BOOST_LIBRARIES Boost::${BOOST_COMPONENT})
-  endif()
-endforeach()
+if(MSVC)
+  set(AC_BOOST_LIBRARIES)
 
-if(TARGET Boost::throw_exception)
-  list(APPEND AC_BOOST_LIBRARIES Boost::throw_exception)
+  function(ac_append_boost_import_lib target_name)
+    if(NOT TARGET ${target_name})
+      return()
+    endif()
+
+    get_target_property(_boost_implib_release ${target_name} IMPORTED_IMPLIB_RELEASE)
+    get_target_property(_boost_implib_debug ${target_name} IMPORTED_IMPLIB_DEBUG)
+    get_target_property(_boost_location_release ${target_name} IMPORTED_LOCATION_RELEASE)
+    get_target_property(_boost_location_debug ${target_name} IMPORTED_LOCATION_DEBUG)
+
+    if(NOT _boost_implib_release OR _boost_implib_release STREQUAL "_boost_implib_release-NOTFOUND")
+      set(_boost_implib_release "${_boost_location_release}")
+    endif()
+
+    if(NOT _boost_implib_debug OR _boost_implib_debug STREQUAL "_boost_implib_debug-NOTFOUND")
+      set(_boost_implib_debug "${_boost_location_debug}")
+    endif()
+
+    if(_boost_implib_release AND NOT _boost_implib_release STREQUAL "_boost_implib_release-NOTFOUND")
+      list(APPEND AC_BOOST_LIBRARIES
+        "$<$<CONFIG:Debug>:${_boost_implib_debug}>"
+        "$<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:${_boost_implib_release}>")
+      set(AC_BOOST_LIBRARIES "${AC_BOOST_LIBRARIES}" PARENT_SCOPE)
+    endif()
+  endfunction()
+
+  foreach(BOOST_COMPONENT filesystem program_options iostreams regex)
+    ac_append_boost_import_lib(Boost::${BOOST_COMPONENT})
+  endforeach()
+else()
+  foreach(BOOST_COMPONENT filesystem program_options iostreams regex)
+    if(TARGET Boost::${BOOST_COMPONENT})
+      list(APPEND AC_BOOST_LIBRARIES Boost::${BOOST_COMPONENT})
+    endif()
+  endforeach()
+
+  if(TARGET Boost::throw_exception)
+    list(APPEND AC_BOOST_LIBRARIES Boost::throw_exception)
+  endif()
 endif()
 
 list(REMOVE_DUPLICATES AC_BOOST_LIBRARIES)

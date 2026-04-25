@@ -6,6 +6,7 @@
 #include "Creature.h"
 #include "DatabaseEnv.h"
 #include "Group.h"
+#include "GroupMgr.h"
 #include "Map.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
@@ -355,14 +356,76 @@ bool ExecuteSpawnRosterBodyAction(
             requester->GetGUID());
     if (existingBot)
     {
-        existingBot->GetMotionMaster()->MoveFollow(
-            requester,
-            AltCompanionFollowDistance,
-            AltCompanionFollowAngle);
+        if (!existingBot->GetSession() || !existingBot->GetSession()->IsBotSession())
+        {
+            LOG_WARN(
+                "server.worldserver",
+                "[LivingWorld] Spawn continuity: stale registry for owner guid={} "
+                "bot guid={} has invalid session — clearing and re-spawning.",
+                requester->GetGUID().GetCounter(),
+                existingBot->GetGUID().GetCounter());
+            service::BotPlayerRegistry::Instance().UnregisterBotPlayer(existingBot);
+            // fall through to PlanSpawn
+        }
+        else
+        {
+            if (!existingBot->IsInSameGroupWith(requester))
+            {
+                LOG_WARN(
+                    "server.worldserver",
+                    "[LivingWorld] Spawn continuity: bot guid={} live but absent "
+                    "from owner guid={} group — re-adding.",
+                    existingBot->GetGUID().GetCounter(),
+                    requester->GetGUID().GetCounter());
+                Group* group = requester->GetGroup();
+                if (!group)
+                {
+                    group = new Group();
+                    if (group->Create(requester))
+                        sGroupMgr->AddGroup(group);
+                    else
+                    {
+                        delete group;
+                        group = nullptr;
+                    }
+                }
+                if (group && !group->IsFull())
+                    group->AddMember(existingBot);
+            }
+            existingBot->GetMotionMaster()->MoveFollow(
+                requester,
+                AltCompanionFollowDistance,
+                AltCompanionFollowAngle);
+            handler->PSendSysMessage(
+                "LivingWorld roster entry {} is already active as a bot player and following.",
+                action.rosterEntryId);
+            return true;
+        }
+    }
+
+    ObjectGuid const requestedBotGuid =
+        ObjectGuid::Create<HighGuid::Player>(action.characterGuid);
+    if (service::BotPlayerRegistry::Instance().IsPendingBotForOwner(
+            requester->GetGUID(),
+            requestedBotGuid))
+    {
         handler->PSendSysMessage(
-            "LivingWorld roster entry {} is already active as a bot player and following.",
+            "LivingWorld roster entry {} is already logging in; please wait.",
             action.rosterEntryId);
         return true;
+    }
+
+    if (std::optional<ObjectGuid> pendingBotGuid =
+            service::BotPlayerRegistry::Instance().FindPendingBotForOwner(
+                requester->GetGUID()))
+    {
+        if (pendingBotGuid->GetCounter() != requestedBotGuid.GetCounter())
+        {
+            handler->PSendSysMessage(
+                "LivingWorld already has another bot login pending for this owner; please wait.",
+                action.rosterEntryId);
+            return false;
+        }
     }
 
     integration::SqlAccountAltRuntimeRepository runtimeRepository;
@@ -564,7 +627,7 @@ public:
         std::vector<model::RosterEntry> entries;
         QueryResult result = CharacterDatabase.Query(
             "SELECT guid, name, race, class, level FROM characters "
-            "WHERE account = {} ORDER BY name ASC",
+            "WHERE account = {} ORDER BY guid ASC",
             accountId);
 
         if (!result)
@@ -664,18 +727,25 @@ public:
     }
 };
 
+std::vector<model::RosterEntry> BuildVisibleRosterEntries(
+    std::uint32_t accountId)
+{
+    AccountAltRosterRepository repository;
+    return repository.GetRosterEntriesForAccount(accountId);
+}
+
 void RenderRosterList(ChatHandler* handler)
 {
     WorldSession* session = handler->GetSession();
-    if (!session)
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
     {
         handler->SendErrorMessage("LivingWorld roster commands require an in-game session.");
         return;
     }
 
-    AccountAltRosterRepository repository;
     std::vector<model::RosterEntry> entries =
-        repository.GetRosterEntriesForAccount(session->GetAccountId());
+        BuildVisibleRosterEntries(session->GetAccountId());
 
     if (entries.empty())
     {
@@ -716,6 +786,13 @@ void RenderRosterRequest(
     if (!entry)
     {
         handler->PSendSysMessage("LivingWorld bot not found in roster.");
+        return;
+    }
+
+    if (entry->characterGuid == player->GetGUID().GetCounter())
+    {
+        handler->PSendSysMessage(
+            "LivingWorld cannot spawn the character you are currently logged in on.");
         return;
     }
 
@@ -775,6 +852,13 @@ void RenderDismissBot(
         return;
     }
 
+    if (entry->characterGuid == player->GetGUID().GetCounter())
+    {
+        handler->PSendSysMessage(
+            "LivingWorld cannot dismiss the character you are currently logged in on.");
+        return;
+    }
+
     Player* bot = service::BotPlayerRegistry::Instance().FindBotForOwner(
         player->GetGUID());
     if (!bot)
@@ -785,10 +869,20 @@ void RenderDismissBot(
         return;
     }
 
+    if (bot->GetGUID().GetCounter() != entry->characterGuid)
+    {
+        handler->PSendSysMessage(
+            "LivingWorld {} is not the active bot. Active bot is {}.",
+            entry->controllableProfile.profile.name,
+            bot->GetName());
+        return;
+    }
+
     if (Group* group = bot->GetGroup())
         group->RemoveMember(bot->GetGUID(), GROUP_REMOVEMETHOD_LEAVE);
 
-    bot->GetSession()->KickPlayer("LivingWorld roster dismiss");
+    if (!bot->GetSession()->PlayerLogout())
+        bot->GetSession()->LogoutPlayer(true);
     handler->PSendSysMessage(
         "LivingWorld dismissed {}.",
         entry->controllableProfile.profile.name);
@@ -798,9 +892,8 @@ std::optional<model::RosterEntry> ResolveBotRosterEntry(
     std::uint32_t accountId,
     std::variant<std::uint32_t, std::string> const& botRef)
 {
-    AccountAltRosterRepository repository;
     std::vector<model::RosterEntry> entries =
-        repository.GetRosterEntriesForAccount(accountId);
+        BuildVisibleRosterEntries(accountId);
 
     if (std::uint32_t const* position = std::get_if<std::uint32_t>(&botRef))
     {
@@ -833,6 +926,13 @@ void HandleBotProfileSet(
     if (!entry)
     {
         handler->PSendSysMessage("LivingWorld bot not found in roster.");
+        return;
+    }
+
+    if (entry->characterGuid == session->GetPlayer()->GetGUID().GetCounter())
+    {
+        handler->PSendSysMessage(
+            "LivingWorld cannot switch profiles for the character you are currently logged in on.");
         return;
     }
 

@@ -255,6 +255,16 @@ runtime state, while still keeping mutation centralized and thin.
 
 ### 7) High-Level Services
 
+7.0 Spawn race / roster stability note â€” **Partial**
+- Spawn requests should check pending bot login state before queueing a second
+  request for the same owner or bot.
+- Roster numbering should remain stable by character creation order, not
+  alphabetical name order.
+- Self-target actions should be blocked explicitly instead of hiding the
+  logged-in character from the roster list.
+- A future multi-bot "Summon the boys" style macro should use queued or batch
+  spawn orchestration, not overlapping spawn races.
+
 **Overall Status: Partial**
 
 #### Subtasks
