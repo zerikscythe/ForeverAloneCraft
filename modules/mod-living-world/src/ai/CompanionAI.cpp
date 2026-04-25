@@ -6,8 +6,12 @@
 #include "ObjectAccessor.h"
 #include "Player.h"
 #include "SharedDefines.h"
+#include "SpellHistory.h"
 #include "SpellMgr.h"
 #include "Unit.h"
+
+#include <array>
+#include <cmath>
 
 namespace living_world
 {
@@ -15,18 +19,30 @@ namespace ai
 {
 namespace
 {
-constexpr float FollowDistance = 2.0f;
-constexpr float FollowAngle = 3.14159265358979323846f;
-constexpr float RepositionDistance = 8.0f;
-constexpr float HealOwnerCritical = 50.0f;
-constexpr float HealOwnerModerate = 85.0f;
-constexpr float HealSelfCritical = 40.0f;
-constexpr float HealSelfModerate = 65.0f;
-constexpr float HybridHealThreshold = 70.0f;
+// --- Follow / reposition constants ---
+constexpr float FollowDistance        = 2.0f;
+constexpr float FollowAngle           = 3.14159265358979323846f;
+constexpr float RepositionDistance    = 8.0f;
+constexpr float RangedMinDistance     = 8.0f;    // Back away when closer than this
+constexpr float RangedOptimalDistance = 25.0f;   // Target spacing for ranged bots
 
-// Debuff aura IDs applied to the target by DK rune strikes.
-constexpr std::uint32_t AuraFrostFever = 55095;
+// --- Heal thresholds ---
+constexpr float HealOwnerCritical    = 50.0f;
+constexpr float HealOwnerModerate    = 85.0f;
+constexpr float HealSelfCritical     = 40.0f;
+constexpr float HealSelfModerate     = 65.0f;
+constexpr float HybridHealThreshold  = 70.0f;
+
+// --- DK disease aura IDs ---
+constexpr std::uint32_t AuraFrostFever  = 55095;
 constexpr std::uint32_t AuraBloodPlague = 55078;
+
+// --- Priest Weakened Soul debuff: prevents re-shielding for 15 seconds ---
+constexpr std::uint32_t AuraWeakenedSoul = 6788;
+
+// ---------------------------------------------------------------
+// Role classification
+// ---------------------------------------------------------------
 
 enum class BotCombatRole
 {
@@ -55,6 +71,10 @@ BotCombatRole GetCombatRole(std::uint8_t classId)
     }
 }
 
+// ---------------------------------------------------------------
+// Spell utilities
+// ---------------------------------------------------------------
+
 // Walks the spell rank chain from the highest rank downward and returns the
 // first spell ID the bot has learned. Returns 0 if none are known.
 std::uint32_t FindBestKnownSpellInChain(Player* bot, std::uint32_t baseSpellId)
@@ -68,6 +88,34 @@ std::uint32_t FindBestKnownSpellInChain(Player* bot, std::uint32_t baseSpellId)
     }
     return 0;
 }
+
+// Returns true if the target has an aura from any rank of the given spell chain.
+// Works correctly for both single-rank spells and multi-rank chains.
+bool HasAuraFromChain(Unit const* target, std::uint32_t baseSpellId)
+{
+    std::uint32_t candidate = sSpellMgr->GetLastSpellInChain(baseSpellId);
+    while (candidate)
+    {
+        if (target->HasAura(candidate))
+            return true;
+        candidate = sSpellMgr->GetPrevSpellInChain(candidate);
+    }
+    return false;
+}
+
+// Returns true when this bot can still fire mana-based spells. Non-mana
+// users (Warriors, Rogues, DKs) always return true. A caster at zero mana
+// should switch to melee autoattack rather than spamming failed cast attempts.
+bool BotHasManaToFight(Player const* bot)
+{
+    if (bot->GetMaxPower(POWER_MANA) == 0)
+        return true;
+    return bot->GetPower(POWER_MANA) > 0;
+}
+
+// ---------------------------------------------------------------
+// Heal spells
+// ---------------------------------------------------------------
 
 // Fast direct heal for when a target drops critically low.
 std::uint32_t GetDirectHealSpell(Player* bot)
@@ -95,6 +143,10 @@ std::uint32_t GetSustainedHealSpell(Player* bot)
     }
 }
 
+// ---------------------------------------------------------------
+// Offensive spells — melee roles
+// ---------------------------------------------------------------
+
 // Returns the best melee-range offensive ability for the bot's class and state.
 std::uint32_t GetMeleeOffensiveSpell(Player* bot, Unit* target)
 {
@@ -102,38 +154,124 @@ std::uint32_t GetMeleeOffensiveSpell(Player* bot, Unit* target)
     {
         case CLASS_WARRIOR:
         {
-            std::uint32_t spell = FindBestKnownSpellInChain(bot, 12294); // Mortal Strike
+            // Execute: highest-priority finisher at low target health
+            std::uint32_t const execute = FindBestKnownSpellInChain(bot, 5308);
+            if (execute && target->GetHealthPct() < 20.0f)
+                return execute;
+
+            // Mortal Strike (Arms)
+            std::uint32_t spell = FindBestKnownSpellInChain(bot, 12294);
             if (spell)
                 return spell;
-            spell = FindBestKnownSpellInChain(bot, 23881); // Bloodthirst
+
+            // Bloodthirst (Fury)
+            spell = FindBestKnownSpellInChain(bot, 23881);
             if (spell)
                 return spell;
-            return FindBestKnownSpellInChain(bot, 78); // Heroic Strike
+
+            // Rend: apply the bleed DoT when not present on target
+            {
+                std::uint32_t const rend = FindBestKnownSpellInChain(bot, 772);
+                if (rend && !target->HasAura(rend))
+                    return rend;
+            }
+
+            // Heroic Strike: basic melee filler
+            return FindBestKnownSpellInChain(bot, 78);
         }
+
         case CLASS_ROGUE:
         {
-            if (bot->GetComboPoints() >= 4)
-                return FindBestKnownSpellInChain(bot, 2098); // Eviscerate
-            return FindBestKnownSpellInChain(bot, 1752); // Sinister Strike
+            std::uint32_t const snd   = FindBestKnownSpellInChain(bot, 5171); // Slice and Dice
+            std::uint32_t const evisc = FindBestKnownSpellInChain(bot, 2098); // Eviscerate
+            std::uint32_t const ss    = FindBestKnownSpellInChain(bot, 1752); // Sinister Strike
+
+            std::uint8_t const cp = bot->GetComboPoints();
+
+            // At 2+ combo points, apply Slice and Dice when the haste buff is missing
+            if (cp >= 2 && snd && !bot->HasAura(snd))
+                return snd;
+
+            // At 4+ combo points spend with Eviscerate
+            if (cp >= 4 && evisc)
+                return evisc;
+
+            return ss;
         }
+
         case CLASS_DEATH_KNIGHT:
         {
-            bool const hasFrostFever = target->HasAura(AuraFrostFever);
+            bool const hasFrostFever  = target->HasAura(AuraFrostFever);
             bool const hasBloodPlague = target->HasAura(AuraBloodPlague);
-            if (hasFrostFever && hasBloodPlague && bot->HasSpell(49998))
-                return 49998; // Death Strike — consumes both diseases
+
+            // Apply diseases before committing to strike abilities
             if (!hasBloodPlague && bot->HasSpell(45462))
                 return 45462; // Plague Strike — applies Blood Plague
             if (!hasFrostFever && bot->HasSpell(45477))
                 return 45477; // Icy Touch — applies Frost Fever
+
+            // Diseases up: Death Strike when off cooldown (damage + self-heal)
+            if (bot->HasSpell(49998) && !bot->GetSpellHistory()->HasCooldown(49998))
+                return 49998;
+
+            // Death Strike is on cooldown — fill with rune strikes
+            {
+                std::uint32_t const heartStrike = FindBestKnownSpellInChain(bot, 55050);
+                if (heartStrike && !bot->GetSpellHistory()->HasCooldown(heartStrike))
+                    return heartStrike; // Heart Strike
+            }
+            if (bot->HasSpell(45902) && !bot->GetSpellHistory()->HasCooldown(45902))
+                return 45902; // Blood Strike
+
+            // Fallback: let the engine handle the cooldown; autoattack continues
             if (bot->HasSpell(49998))
-                return 49998; // Death Strike fallback when diseases are up
+                return 49998;
             return 0;
         }
+
         default:
             return 0;
     }
 }
+
+// ---------------------------------------------------------------
+// Offensive spells — Paladin seal helpers
+// ---------------------------------------------------------------
+
+// Returns the Paladin's best-known seal to apply, preferring the highest-DPS option.
+std::uint32_t GetPreferredSeal(Player* bot)
+{
+    // Seal of Vengeance (Alliance) / Seal of Corruption (Horde): best sustained DPS seal
+    if (std::uint32_t s = FindBestKnownSpellInChain(bot, 31801)) return s;
+    if (std::uint32_t s = FindBestKnownSpellInChain(bot, 53736)) return s;
+    if (std::uint32_t s = FindBestKnownSpellInChain(bot, 20375)) return s; // Seal of Command
+    if (std::uint32_t s = FindBestKnownSpellInChain(bot, 20154)) return s; // Seal of Righteousness
+    return 0;
+}
+
+// Returns true when the Paladin bot has any seal aura active.
+bool HasSealActive(Player const* bot)
+{
+    static constexpr std::array<std::uint32_t, 7> SealBases = {
+        20154, // Seal of Righteousness
+        20375, // Seal of Command
+        31801, // Seal of Vengeance
+        53736, // Seal of Corruption
+        19854, // Seal of Wisdom
+        20165, // Seal of Light
+        20164, // Seal of Justice
+    };
+    for (std::uint32_t base : SealBases)
+    {
+        if (HasAuraFromChain(bot, base))
+            return true;
+    }
+    return false;
+}
+
+// ---------------------------------------------------------------
+// Offensive spells — hybrid healers acting offensively
+// ---------------------------------------------------------------
 
 // Returns the best short-range DPS ability for hybrid healers acting offensively.
 std::uint32_t GetHybridDamageSpell(Player* bot, Unit* target)
@@ -141,9 +279,30 @@ std::uint32_t GetHybridDamageSpell(Player* bot, Unit* target)
     switch (bot->getClass())
     {
         case CLASS_PALADIN:
-            if (bot->HasSpell(35395)) // Crusader Strike (single rank in WotLK)
+        {
+            // Hammer of Wrath: execute-range burst, requires target below 20% HP
+            std::uint32_t const how = FindBestKnownSpellInChain(bot, 24275);
+            if (how && target->GetHealthPct() < 20.0f
+                && !bot->GetSpellHistory()->HasCooldown(how))
+                return how;
+
+            // Judgement of Light: holy damage + party heal proc on hit
+            std::uint32_t const jol = FindBestKnownSpellInChain(bot, 20271);
+            if (jol && !bot->GetSpellHistory()->HasCooldown(jol))
+                return jol;
+
+            // Consecration: sustained AoE holy damage field
+            std::uint32_t const cons = FindBestKnownSpellInChain(bot, 20116);
+            if (cons && !bot->GetSpellHistory()->HasCooldown(cons))
+                return cons;
+
+            // Crusader Strike: primary single-target melee ability
+            if (bot->HasSpell(35395) && !bot->GetSpellHistory()->HasCooldown(35395))
                 return 35395;
+
             return 0;
+        }
+
         case CLASS_SHAMAN:
         {
             std::uint32_t const flameShock = FindBestKnownSpellInChain(bot, 8050);
@@ -151,6 +310,7 @@ std::uint32_t GetHybridDamageSpell(Player* bot, Unit* target)
                 return flameShock; // Apply Flame Shock DoT first
             return FindBestKnownSpellInChain(bot, 8042); // Earth Shock filler
         }
+
         case CLASS_DRUID:
         {
             std::uint32_t const moonfire = FindBestKnownSpellInChain(bot, 8921);
@@ -158,10 +318,15 @@ std::uint32_t GetHybridDamageSpell(Player* bot, Unit* target)
                 return moonfire; // Apply Moonfire DoT first
             return FindBestKnownSpellInChain(bot, 5176); // Wrath filler
         }
+
         default:
             return 0;
     }
 }
+
+// ---------------------------------------------------------------
+// Offensive spells — ranged roles
+// ---------------------------------------------------------------
 
 // Returns the best ranged damage spell, preferring DoTs when not yet applied.
 std::uint32_t GetDamageSpell(Player* bot, Unit* target)
@@ -170,28 +335,203 @@ std::uint32_t GetDamageSpell(Player* bot, Unit* target)
     {
         case CLASS_MAGE:
             return FindBestKnownSpellInChain(bot, 116); // Frostbolt
+
         case CLASS_WARLOCK:
         {
+            // Curse of Agony: highest-DPS curse, apply first
+            std::uint32_t const coa = FindBestKnownSpellInChain(bot, 980);
+            if (coa && !target->HasAura(coa))
+                return coa;
+
+            // Immolate: fire DoT, apply when missing
+            std::uint32_t const immolate = FindBestKnownSpellInChain(bot, 348);
+            if (immolate && !target->HasAura(immolate))
+                return immolate;
+
+            // Corruption: instant shadow DoT
             std::uint32_t const corruption = FindBestKnownSpellInChain(bot, 172);
             if (corruption && !target->HasAura(corruption))
-                return corruption; // Apply Corruption DoT first
-            return FindBestKnownSpellInChain(bot, 686); // Shadow Bolt filler
+                return corruption;
+
+            // Shadow Bolt: primary filler when all DoTs are rolling
+            return FindBestKnownSpellInChain(bot, 686);
         }
+
         case CLASS_HUNTER:
-            if (bot->HasSpell(34120)) // Steady Shot (single rank in WotLK)
+        {
+            // Serpent Sting: nature DoT, apply when missing
+            std::uint32_t const serpent = FindBestKnownSpellInChain(bot, 1978);
+            if (serpent && !target->HasAura(serpent))
+                return serpent;
+
+            // Multi-Shot: strong filler when off cooldown
+            std::uint32_t const multiShot = FindBestKnownSpellInChain(bot, 2643);
+            if (multiShot && !bot->GetSpellHistory()->HasCooldown(multiShot))
+                return multiShot;
+
+            // Steady Shot: primary ranged filler
+            if (bot->HasSpell(34120))
                 return 34120;
-            return FindBestKnownSpellInChain(bot, 3044); // Arcane Shot fallback
+
+            // Arcane Shot: fallback if Steady Shot is not yet learned
+            return FindBestKnownSpellInChain(bot, 3044);
+        }
+
         default:
             return 0;
     }
 }
+
+// ---------------------------------------------------------------
+// Out-of-combat maintenance
+// ---------------------------------------------------------------
+
+// Applies class-specific maintenance buffs when neither the bot nor the owner
+// is in combat. Called from the idle tick path so buffs are refreshed naturally
+// between pulls without any dedicated buff-loop timers.
+void TryApplyOutOfCombatBuff(Player* bot, Player* owner)
+{
+    if (bot->IsNonMeleeSpellCast(false) || bot->IsInCombat() || owner->IsInCombat())
+        return;
+
+    switch (bot->getClass())
+    {
+        case CLASS_WARRIOR:
+        {
+            // Battle Shout: party-wide AP buff; cast on self, hits all nearby members
+            std::uint32_t const shout = FindBestKnownSpellInChain(bot, 6673);
+            if (shout && !HasAuraFromChain(bot, 6673) && !HasAuraFromChain(owner, 6673))
+                bot->CastSpell(bot, shout, false);
+            break;
+        }
+
+        case CLASS_DEATH_KNIGHT:
+        {
+            // Horn of Winter: party-wide Strength/Agility buff
+            if (bot->HasSpell(57330)
+                && !HasAuraFromChain(bot, 57330)
+                && !HasAuraFromChain(owner, 57330))
+                bot->CastSpell(bot, 57330U, false);
+            break;
+        }
+
+        case CLASS_PALADIN:
+        {
+            // Re-apply seal if it dropped between fights
+            if (!HasSealActive(bot))
+            {
+                std::uint32_t const seal = GetPreferredSeal(bot);
+                if (seal)
+                    bot->CastSpell(bot, seal, false);
+            }
+            break;
+        }
+
+        case CLASS_PRIEST:
+        {
+            // Power Word: Fortitude: Stamina buff; prioritise the owner
+            std::uint32_t const pwf = FindBestKnownSpellInChain(bot, 1243);
+            if (pwf)
+            {
+                if (!HasAuraFromChain(owner, 1243))
+                    bot->CastSpell(owner, pwf, false);
+                else if (!HasAuraFromChain(bot, 1243))
+                    bot->CastSpell(bot, pwf, false);
+            }
+            break;
+        }
+
+        case CLASS_DRUID:
+        {
+            // Mark of the Wild: multi-stat buff; prioritise the owner
+            std::uint32_t const motw = FindBestKnownSpellInChain(bot, 1126);
+            if (motw)
+            {
+                if (!HasAuraFromChain(owner, 1126))
+                    bot->CastSpell(owner, motw, false);
+                else if (!HasAuraFromChain(bot, 1126))
+                    bot->CastSpell(bot, motw, false);
+            }
+            break;
+        }
+
+        case CLASS_MAGE:
+        {
+            // Arcane Intellect: Intellect buff; prioritise the owner
+            std::uint32_t const ai = FindBestKnownSpellInChain(bot, 1459);
+            if (ai)
+            {
+                if (!HasAuraFromChain(owner, 1459))
+                    bot->CastSpell(owner, ai, false);
+                else if (!HasAuraFromChain(bot, 1459))
+                    bot->CastSpell(bot, ai, false);
+            }
+            break;
+        }
+
+        default:
+            break;
+    }
+}
+
+// ---------------------------------------------------------------
+// Motion helpers
+// ---------------------------------------------------------------
+
+// Socketless bot Players have no client-driven movement, so an Attack() call by
+// itself just plants the bot at follow distance swinging at air. The melee /
+// hybrid combat paths must explicitly drive the motion master into chase mode
+// for the current victim. MotionMaster::MoveChase short-circuits when the
+// active generator is already chasing the same target, so this is cheap to
+// re-issue every tick.
+void EnsureChasingVictim(Player* bot, Unit* target)
+{
+    if (!target)
+        return;
+    bot->GetMotionMaster()->MoveChase(target);
+}
+
+// Backs a ranged bot away from a target that has closed to melee range. The
+// bot moves to a point RangedOptimalDistance yards from the target, projected
+// through the current bot position. Only fires when within RangedMinDistance so
+// it does not interrupt normal ranged combat positioning.
+void EnsureRangedPosition(Player* bot, Unit* target)
+{
+    if (bot->GetDistance(target) >= RangedMinDistance)
+        return;
+
+    // Angle pointing from target toward the bot — bot retreats further that way
+    float const angle = target->GetAngle(bot);
+    float const x     = target->GetPositionX() + RangedOptimalDistance * std::cos(angle);
+    float const y     = target->GetPositionY() + RangedOptimalDistance * std::sin(angle);
+    float const z     = target->GetPositionZ();
+    bot->GetMotionMaster()->MovePoint(0, x, y, z);
+}
+
+// ---------------------------------------------------------------
+// Per-role combat ticks
+// ---------------------------------------------------------------
 
 void TickHealer(Player* bot, Player* owner)
 {
     if (bot->IsNonMeleeSpellCast(false))
         return;
 
-    std::uint32_t const directSpell = GetDirectHealSpell(bot);
+    // Power Word: Shield (Priest only): proactive absorb while the owner is in
+    // combat. Applied as soon as the fight starts so damage is partially absorbed
+    // before reactive heals are needed. Weakened Soul prevents re-shielding for
+    // 15 seconds after the absorb is consumed.
+    if (bot->getClass() == CLASS_PRIEST && owner->IsInCombat())
+    {
+        std::uint32_t const pws = FindBestKnownSpellInChain(bot, 17);
+        if (pws && !owner->HasAura(pws) && !owner->HasAura(AuraWeakenedSoul))
+        {
+            bot->CastSpell(owner, pws, false);
+            return;
+        }
+    }
+
+    std::uint32_t const directSpell    = GetDirectHealSpell(bot);
     std::uint32_t const sustainedSpell = GetSustainedHealSpell(bot);
 
     if (owner->GetHealthPct() < HealOwnerCritical)
@@ -242,19 +582,9 @@ void TickMelee(Player* bot, Unit* target)
         bot->CastSpell(target, spell, false);
 }
 
-// Socketless bot Players have no client-driven movement, so an Attack() call by
-// itself just plants the bot at follow distance swinging at air. The melee /
-// hybrid combat paths must explicitly drive the motion master into chase mode
-// for the current victim. MotionMaster::MoveChase short-circuits when the
-// active generator is already chasing the same target, so this is cheap to
-// re-issue every tick.
-void EnsureChasingVictim(Player* bot, Unit* target)
-{
-    if (!target)
-        return;
-
-    bot->GetMotionMaster()->MoveChase(target);
-}
+// ---------------------------------------------------------------
+// Assist target resolution
+// ---------------------------------------------------------------
 
 // Returns true when this unit is something a bot should engage on the owner's
 // behalf: alive, on the same map, hostile to the owner, and currently flagged
@@ -305,6 +635,10 @@ Unit* ResolveAssistTarget(Player* bot, Player* owner)
     return nullptr;
 }
 
+// ---------------------------------------------------------------
+// Main tick
+// ---------------------------------------------------------------
+
 void Tick(Player* bot, Player* owner)
 {
     BotCombatRole const role = GetCombatRole(bot->getClass());
@@ -346,9 +680,23 @@ void Tick(Player* bot, Player* owner)
 
         if (role == BotCombatRole::Ranged)
         {
-            TickRanged(bot, assistTarget);
+            if (!BotHasManaToFight(bot))
+            {
+                // OOM: close to melee and autoattack until mana returns rather
+                // than wasting every tick on failed cast attempts.
+                EnsureChasingVictim(bot, assistTarget);
+            }
+            else if (bot->GetDistance(assistTarget) < RangedMinDistance)
+            {
+                // Target closed to melee range: retreat before resuming casts.
+                EnsureRangedPosition(bot, assistTarget);
+            }
+            else
+            {
+                TickRanged(bot, assistTarget);
+            }
         }
-        else if (role == BotCombatRole::Melee)
+        else // Melee
         {
             EnsureChasingVictim(bot, assistTarget);
             TickMelee(bot, assistTarget);
@@ -364,9 +712,19 @@ void Tick(Player* bot, Player* owner)
         return;
     }
 
-    if (!bot->IsWithinDistInMap(owner, RepositionDistance))
+    // No combat target — apply out-of-combat maintenance buffs, then follow
+    // if the bot has drifted. Guard MoveFollow against interrupting an active
+    // cast started by TryApplyOutOfCombatBuff.
+    TryApplyOutOfCombatBuff(bot, owner);
+
+    if (!bot->IsNonMeleeSpellCast(false)
+        && !bot->IsWithinDistInMap(owner, RepositionDistance))
         bot->GetMotionMaster()->MoveFollow(owner, FollowDistance, FollowAngle);
 }
+
+// ---------------------------------------------------------------
+// Event class
+// ---------------------------------------------------------------
 
 class CompanionAIEvent final : public BasicEvent
 {
@@ -378,7 +736,7 @@ public:
 
     bool Execute(uint64, uint32) override
     {
-        Player* bot = ObjectAccessor::FindPlayer(_botGuid);
+        Player* bot   = ObjectAccessor::FindPlayer(_botGuid);
         Player* owner = ObjectAccessor::FindPlayer(_ownerGuid);
         if (!bot || !owner || !bot->IsInWorld() || !owner->IsInWorld())
             return true;
