@@ -13,6 +13,7 @@
 #include "Player.h"
 #include "SharedDefines.h"
 #include "Common.h"
+#include "Random.h"
 #include "SpellMgr.h"
 #include "Util.h"
 #include "TemporarySummon.h"
@@ -39,6 +40,7 @@
 #include "service/AccountAltRuntimeCoordinator.h"
 #include "service/PartyBotService.h"
 
+#include <array>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -58,6 +60,49 @@ namespace
 constexpr std::uint32_t MaleAltCompanionTemplateEntry = 111;
 constexpr float AltCompanionFollowDistance = 2.5f;
 constexpr float AltCompanionFollowAngle = 3.14159f;
+
+constexpr std::array<std::string_view, 10> BotConfirmPhrases =
+{
+    "No problem.",
+    "Easy enough.",
+    "Sure thing.",
+    "Got it.",
+    "On it.",
+    "You got it, boss.",
+    "Consider it done.",
+    "Right away.",
+    "As you wish.",
+    "Gotcha.",
+};
+
+constexpr std::array<std::string_view, 9> BotDenyPhrases =
+{
+    "Sorry...",
+    "Sorry, boss.",
+    "Nah.",
+    "Maybe later.",
+    "Do I have to?",
+    "Not this time.",
+    "Can't do it.",
+    "I don't know that one.",
+    "That's not gonna happen.",
+};
+
+void BotSayConfirm(Player* bot)
+{
+    if (!bot)
+        return;
+    std::uint32_t const idx = urand(0, static_cast<std::uint32_t>(BotConfirmPhrases.size() - 1));
+    bot->Say(BotConfirmPhrases[idx], LANG_UNIVERSAL);
+}
+
+void BotSayDeny(Player* bot)
+{
+    if (!bot)
+        return;
+    std::uint32_t const idx = urand(0, static_cast<std::uint32_t>(BotDenyPhrases.size() - 1));
+    bot->Say(BotDenyPhrases[idx], LANG_UNIVERSAL);
+}
 
 struct CommitExecutionSummary
 {
@@ -1146,10 +1191,7 @@ void HandleBotCast(
     std::uint32_t const spellId = ResolveSpellByName(bot, command.spellName);
     if (!spellId)
     {
-        handler->PSendSysMessage(
-            "LivingWorld {} does not know '{}'.",
-            bot->GetName(),
-            command.spellName);
+        BotSayDeny(bot);
         return;
     }
 
@@ -1173,13 +1215,13 @@ void HandleBotCast(
         ObjectGuid const selection = player->GetTarget();
         if (!selection)
         {
-            handler->PSendSysMessage("LivingWorld you have no target selected.");
+            BotSayDeny(bot);
             return;
         }
         target = ObjectAccessor::GetUnit(*player, selection);
         if (!target)
         {
-            handler->PSendSysMessage("LivingWorld selected target is not accessible.");
+            BotSayDeny(bot);
             return;
         }
     }
@@ -1188,13 +1230,13 @@ void HandleBotCast(
         ObjectGuid const focus = player->GetGuidValue(PLAYER_FOCUS_TARGET);
         if (!focus)
         {
-            handler->PSendSysMessage("LivingWorld you have no focus target set.");
+            BotSayDeny(bot);
             return;
         }
         target = ObjectAccessor::GetUnit(*player, focus);
         if (!target)
         {
-            handler->PSendSysMessage("LivingWorld focus target is not accessible.");
+            BotSayDeny(bot);
             return;
         }
     }
@@ -1203,19 +1245,13 @@ void HandleBotCast(
         target = ObjectAccessor::FindPlayerByName(*command.targetName);
         if (!target)
         {
-            handler->PSendSysMessage(
-                "LivingWorld player '{}' not found or not online.",
-                *command.targetName);
+            BotSayDeny(bot);
             return;
         }
     }
 
+    BotSayConfirm(bot);
     bot->CastSpell(target, spellId, false);
-    handler->PSendSysMessage(
-        "LivingWorld {} cast {} on {}.",
-        bot->GetName(),
-        command.spellName,
-        target->GetName());
 }
 
 void HandleBotProfileSet(
