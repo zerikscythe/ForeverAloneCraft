@@ -112,20 +112,110 @@ void RunOwnerStartupRecovery(Player* player)
 
 void AddBotToOwnerGroup(Player* bot, Player* owner)
 {
+    if (!bot || !owner)
+    {
+        LOG_WARN(
+            "server.worldserver",
+            "[LivingWorldDebug] AddBotToOwnerGroup skipped for null bot/owner "
+            "bot={} owner={}",
+            bot != nullptr,
+            owner != nullptr);
+        return;
+    }
+
+    if (bot->GetGroup() && bot->IsInSameGroupWith(owner))
+    {
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] AddBotToOwnerGroup bot guid={} owner guid={} "
+            "already share a group; skipping duplicate add.",
+            bot->GetGUID().GetCounter(),
+            owner->GetGUID().GetCounter());
+        return;
+    }
+
+    if (Group* botGroup = bot->GetGroup();
+        botGroup && !bot->IsInSameGroupWith(owner))
+    {
+        LOG_WARN(
+            "server.worldserver",
+            "[LivingWorldDebug] AddBotToOwnerGroup bot guid={} has stale "
+            "group guid={}; removing before owner attach.",
+            bot->GetGUID().GetCounter(),
+            botGroup->GetGUID().GetCounter());
+        botGroup->RemoveMember(bot->GetGUID(), GROUP_REMOVEMETHOD_LEAVE);
+    }
+
     Group* group = owner->GetGroup();
     if (!group)
     {
         group = new Group();
         if (!group->Create(owner))
         {
+            LOG_ERROR(
+                "server.worldserver",
+                "[LivingWorldDebug] AddBotToOwnerGroup failed to create group "
+                "for owner guid={}",
+                owner->GetGUID().GetCounter());
             delete group;
             return;
         }
         sGroupMgr->AddGroup(group);
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] AddBotToOwnerGroup created group guid={} for "
+            "owner guid={}",
+            group->GetGUID().GetCounter(),
+            owner->GetGUID().GetCounter());
     }
+
     if (group->IsFull())
+    {
+        LOG_WARN(
+            "server.worldserver",
+            "[LivingWorldDebug] AddBotToOwnerGroup group guid={} is full for "
+            "owner guid={} bot guid={}",
+            group->GetGUID().GetCounter(),
+            owner->GetGUID().GetCounter(),
+            bot->GetGUID().GetCounter());
         return;
-    group->AddMember(bot);
+    }
+
+    for (Group::MemberSlot const& member : group->GetMemberSlots())
+    {
+        if (member.guid != bot->GetGUID())
+            continue;
+
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] AddBotToOwnerGroup bot guid={} already exists "
+            "in owner group guid={}; skipping duplicate slot.",
+            bot->GetGUID().GetCounter(),
+            group->GetGUID().GetCounter());
+        return;
+    }
+
+    if (!group->AddMember(bot))
+    {
+        LOG_ERROR(
+            "server.worldserver",
+            "[LivingWorldDebug] AddBotToOwnerGroup failed AddMember for bot "
+            "guid={} owner guid={} group guid={}",
+            bot->GetGUID().GetCounter(),
+            owner->GetGUID().GetCounter(),
+            group->GetGUID().GetCounter());
+        return;
+    }
+
+    LOG_INFO(
+        "server.worldserver",
+        "[LivingWorldDebug] AddBotToOwnerGroup added bot guid={} ('{}') to "
+        "owner guid={} ('{}') group guid={}",
+        bot->GetGUID().GetCounter(),
+        bot->GetName(),
+        owner->GetGUID().GetCounter(),
+        owner->GetName(),
+        group->GetGUID().GetCounter());
 }
 
 Player* FindOwnerControlledTradeBot(Player* owner)
@@ -311,6 +401,14 @@ public:
         Player* owner = ObjectAccessor::FindPlayer(*ownerGuid);
         if (owner)
         {
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] BotLoginAttach bot='{}' guid={} owner='{}' "
+                "guid={}",
+                player->GetName(),
+                player->GetGUID().GetCounter(),
+                owner->GetName(),
+                owner->GetGUID().GetCounter());
             living_world::ai::ScheduleCompanionAI(player, owner);
             AddBotToOwnerGroup(player, owner);
         }

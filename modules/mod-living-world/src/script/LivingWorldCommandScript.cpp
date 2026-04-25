@@ -265,6 +265,32 @@ std::string_view ToAccountAltSpawnDecisionText(
     return "unknown runtime decision";
 }
 
+std::string_view ToAccountAltRuntimeStateText(
+    model::AccountAltRuntimeState state)
+{
+    switch (state)
+    {
+        case model::AccountAltRuntimeState::PreparingClone:
+            return "preparing clone";
+        case model::AccountAltRuntimeState::Active:
+            return "active";
+        case model::AccountAltRuntimeState::SyncingBack:
+            return "syncing back";
+        case model::AccountAltRuntimeState::Recovering:
+            return "recovering";
+        case model::AccountAltRuntimeState::Failed:
+            return "failed";
+        case model::AccountAltRuntimeState::SyncingEquipment:
+            return "syncing equipment";
+        case model::AccountAltRuntimeState::SyncingInventory:
+            return "syncing inventory";
+        case model::AccountAltRuntimeState::SyncingBank:
+            return "syncing bank";
+    }
+
+    return "unknown runtime state";
+}
+
 std::optional<AccountAltSummary> LoadAccountAltSummary(
     std::uint64_t characterGuid)
 {
@@ -279,6 +305,77 @@ std::optional<AccountAltSummary> LoadAccountAltSummary(
     AccountAltSummary summary;
     summary.name = (*result)[0].Get<std::string>();
     return summary;
+}
+
+std::optional<model::AccountAltRuntimeRecord> LoadAccountAltRuntimeForSource(
+    std::uint32_t accountId,
+    std::uint64_t sourceCharacterGuid)
+{
+    integration::SqlAccountAltRuntimeRepository runtimeRepository;
+    return runtimeRepository.FindBySourceCharacter(
+        accountId,
+        sourceCharacterGuid);
+}
+
+void RenderAccountAltRuntimeDebug(
+    ChatHandler* handler,
+    char const* label,
+    std::optional<model::AccountAltRuntimeRecord> const& runtime)
+{
+    if (!handler)
+    {
+        return;
+    }
+
+    if (!runtime)
+    {
+        handler->PSendSysMessage(
+            "LivingWorld debug [{}]: no runtime record.",
+            label);
+        return;
+    }
+
+    handler->PSendSysMessage(
+        "LivingWorld debug [{}]: runtime={} state={} ownerGuid={} "
+        "sourceGuid={} cloneGuid={} cloneAccount={}.",
+        label,
+        runtime->runtimeId,
+        ToAccountAltRuntimeStateText(runtime->state),
+        runtime->ownerCharacterGuid,
+        runtime->sourceCharacterGuid,
+        runtime->cloneCharacterGuid,
+        runtime->cloneAccountId);
+    handler->PSendSysMessage(
+        "LivingWorld debug [{}]: source='{}' parked='{}' clone='{}'.",
+        label,
+        runtime->sourceCharacterName,
+        runtime->reservedSourceCharacterName,
+        runtime->cloneCharacterName);
+}
+
+std::uint64_t ResolveActiveDismissGuid(
+    std::uint32_t accountId,
+    model::RosterEntry const& entry,
+    std::optional<model::AccountAltRuntimeRecord> const& runtime = std::nullopt)
+{
+    if (entry.source != model::RosterEntrySource::AccountAlt)
+    {
+        return entry.characterGuid;
+    }
+
+    if (runtime && runtime->cloneCharacterGuid != 0)
+    {
+        return runtime->cloneCharacterGuid;
+    }
+
+    std::optional<model::AccountAltRuntimeRecord> loadedRuntime =
+        LoadAccountAltRuntimeForSource(accountId, entry.characterGuid);
+    if (!loadedRuntime || loadedRuntime->cloneCharacterGuid == 0)
+    {
+        return entry.characterGuid;
+    }
+
+    return loadedRuntime->cloneCharacterGuid;
 }
 
 Creature* FindActiveRosterBody(
@@ -397,8 +494,11 @@ bool ExecuteSpawnRosterBodyAction(
                 AltCompanionFollowDistance,
                 AltCompanionFollowAngle);
             handler->PSendSysMessage(
-                "LivingWorld roster entry {} is already active as a bot player and following.",
-                action.rosterEntryId);
+                "LivingWorld roster entry {} is already active as clone '{}' "
+                "(guid {}).",
+                action.rosterEntryId,
+                existingBot->GetName(),
+                existingBot->GetGUID().GetCounter());
             return true;
         }
     }
@@ -480,6 +580,11 @@ bool ExecuteSpawnRosterBodyAction(
         return false;
     }
 
+    RenderAccountAltRuntimeDebug(
+        handler,
+        "request post-plan",
+        spawnDecision.runtime);
+
     integration::BotSessionSpawnResult const spawnResult =
         integration::BotSessionFactory::SpawnBotPlayerOnAccount(
             spawnDecision.botAccountId,
@@ -496,10 +601,18 @@ bool ExecuteSpawnRosterBodyAction(
     }
 
     handler->PSendSysMessage(
-        "LivingWorld queued account-alt bot login for entry {} using bot account {} ({}).",
+        "LivingWorld queued account-alt bot login for entry {} using bot "
+        "account {} ({}).",
         action.rosterEntryId,
         spawnResult.botAccountId,
         ToAccountAltSpawnDecisionText(spawnDecision.kind));
+    handler->PSendSysMessage(
+        "LivingWorld debug [request queue]: sourceGuid={} cloneGuid={} "
+        "ownerGuid={} source='{}'.",
+        action.characterGuid,
+        spawnDecision.spawnCharacterGuid,
+        requester->GetGUID().GetCounter(),
+        sourceCharacterName);
     return true;
 }
 
@@ -520,8 +633,11 @@ bool ExecuteAttachToPartyAction(
                 AltCompanionFollowDistance,
                 AltCompanionFollowAngle);
             handler->PSendSysMessage(
-                "LivingWorld attached roster entry {} as a bot-player follower. Real party membership is not wired yet.",
-                action.rosterEntryId);
+                "LivingWorld attached roster entry {} as bot-player '{}' "
+                "(guid {}).",
+                action.rosterEntryId,
+                bot->GetName(),
+                bot->GetGUID().GetCounter());
             return true;
         }
 
@@ -796,6 +912,16 @@ void RenderRosterRequest(
         return;
     }
 
+    if (entry->source == model::RosterEntrySource::AccountAlt)
+    {
+        RenderAccountAltRuntimeDebug(
+            handler,
+            "request pre-plan",
+            LoadAccountAltRuntimeForSource(
+                session->GetAccountId(),
+                entry->characterGuid));
+    }
+
     LiveAzerothWorldFacade facade;
     AccountAltRosterRepository repository;
     planner::SimplePartyRosterPlanner planner;
@@ -859,24 +985,60 @@ void RenderDismissBot(
         return;
     }
 
+    std::optional<model::AccountAltRuntimeRecord> runtime;
+    if (entry->source == model::RosterEntrySource::AccountAlt)
+    {
+        runtime = LoadAccountAltRuntimeForSource(
+            session->GetAccountId(),
+            entry->characterGuid);
+        RenderAccountAltRuntimeDebug(handler, "dismiss lookup", runtime);
+    }
+
     Player* bot = service::BotPlayerRegistry::Instance().FindBotForOwner(
         player->GetGUID());
     if (!bot)
     {
-        handler->PSendSysMessage(
-            "LivingWorld no active bot found for {}.",
-            entry->controllableProfile.profile.name);
+        if (runtime && runtime->cloneCharacterGuid != 0)
+        {
+            handler->PSendSysMessage(
+                "LivingWorld no active bot found for {}. Runtime expects clone "
+                "guid {} on bot account {}.",
+                entry->controllableProfile.profile.name,
+                runtime->cloneCharacterGuid,
+                runtime->cloneAccountId);
+        }
+        else
+        {
+            handler->PSendSysMessage(
+                "LivingWorld no active bot found for {}.",
+                entry->controllableProfile.profile.name);
+        }
         return;
     }
 
-    if (bot->GetGUID().GetCounter() != entry->characterGuid)
+    std::uint64_t const activeCharacterGuid = ResolveActiveDismissGuid(
+        session->GetAccountId(),
+        *entry,
+        runtime);
+    if (bot->GetGUID().GetCounter() != activeCharacterGuid)
     {
         handler->PSendSysMessage(
-            "LivingWorld {} is not the active bot. Active bot is {}.",
+            "LivingWorld {} is not the active bot. Expected guid {} but active "
+            "bot is '{}' (guid {}).",
             entry->controllableProfile.profile.name,
-            bot->GetName());
+            activeCharacterGuid,
+            bot->GetName(),
+            bot->GetGUID().GetCounter());
         return;
     }
+
+    handler->PSendSysMessage(
+        "LivingWorld debug [dismiss]: source '{}' guid {} maps to active clone "
+        "'{}' guid {}.",
+        entry->controllableProfile.profile.name,
+        entry->characterGuid,
+        bot->GetName(),
+        bot->GetGUID().GetCounter());
 
     if (Group* group = bot->GetGroup())
         group->RemoveMember(bot->GetGUID(), GROUP_REMOVEMETHOD_LEAVE);

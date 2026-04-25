@@ -77,6 +77,47 @@ std::optional<CharacterCloneMaterializationResult> LoadExistingClone(
     return clone;
 }
 
+std::uint64_t LoadHighestCharacterGuidForAccount(std::uint32_t accountId)
+{
+    QueryResult result = CharacterDatabase.Query(
+        "SELECT COALESCE(MAX(guid), 0) FROM characters WHERE account = {}",
+        accountId);
+    if (!result)
+    {
+        return 0;
+    }
+
+    return result->Fetch()[0].Get<std::uint64_t>();
+}
+
+std::optional<CharacterCloneMaterializationResult> LoadNewestCloneForAccount(
+    std::uint32_t accountId,
+    std::uint64_t previousHighestGuid)
+{
+    QueryResult result = CharacterDatabase.Query(
+        "SELECT guid, name, level, xp, money FROM characters "
+        "WHERE account = {} AND guid > {} "
+        "ORDER BY guid DESC LIMIT 1",
+        accountId,
+        previousHighestGuid);
+    if (!result)
+    {
+        return std::nullopt;
+    }
+
+    Field const* fields = result->Fetch();
+
+    CharacterCloneMaterializationResult clone;
+    clone.succeeded = true;
+    clone.cloneCharacterGuid = fields[0].Get<std::uint64_t>();
+    clone.cloneCharacterName = fields[1].Get<std::string>();
+    clone.cloneSnapshot.level = fields[2].Get<std::uint8_t>();
+    clone.cloneSnapshot.experience = fields[3].Get<std::uint32_t>();
+    clone.cloneSnapshot.money = fields[4].Get<std::uint32_t>();
+    clone.reason = "resolved imported clone from newest account character";
+    return clone;
+}
+
 bool DeleteOfflineCloneCharacter(
     std::uint32_t accountId,
     std::uint64_t cloneCharacterGuid,
@@ -97,6 +138,63 @@ bool DeleteOfflineCloneCharacter(
 
     Player::DeleteFromDB(cloneCharacterGuid, accountId, true, true);
     sCharacterCache->DeleteCharacterCacheEntry(cloneGuid, cloneCharacterName);
+    return true;
+}
+
+// Bot-pool accounts are dedicated to a single live runtime clone at a time.
+// Anything still resident here once we've cleared the runtime's exact-name and
+// legacy hidden-name reuse paths is a leftover from a prior cycle (retired
+// runtime, crashed import, version skew, etc.) and would otherwise accumulate
+// on the account forever. Purge them all before re-importing.
+bool PurgeAccountCharacters(
+    std::uint32_t accountId,
+    std::uint64_t runtimeId,
+    std::uint32_t& deletedCount)
+{
+    deletedCount = 0;
+    if (accountId == 0)
+    {
+        return true;
+    }
+
+    QueryResult result = CharacterDatabase.Query(
+        "SELECT guid, name FROM characters WHERE account = {}",
+        accountId);
+    if (!result)
+    {
+        return true;
+    }
+
+    do
+    {
+        Field const* fields = result->Fetch();
+        std::uint64_t guid = fields[0].Get<std::uint64_t>();
+        std::string name = fields[1].Get<std::string>();
+
+        if (!DeleteOfflineCloneCharacter(accountId, guid, name))
+        {
+            LOG_ERROR(
+                "server.worldserver",
+                "[LivingWorldDebug] MaterializeClone purge failed runtimeId={} "
+                "cloneAccountId={} cloneGuid={} cloneName='{}' (still loaded)",
+                runtimeId,
+                accountId,
+                guid,
+                name);
+            return false;
+        }
+
+        ++deletedCount;
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] MaterializeClone purged stale clone runtimeId={} "
+            "cloneAccountId={} cloneGuid={} cloneName='{}'",
+            runtimeId,
+            accountId,
+            guid,
+            name);
+    } while (result->NextRow());
+
     return true;
 }
 
@@ -360,6 +458,32 @@ SqlCharacterCloneMaterializer::MaterializeClone(
         return result;
     }
 
+    std::uint32_t purgedCount = 0;
+    if (!PurgeAccountCharacters(
+            runtime.cloneAccountId, runtime.runtimeId, purgedCount))
+    {
+        result.reason =
+            "stale clone characters could not be purged before refresh";
+        LOG_ERROR(
+            "server.worldserver",
+            "[LivingWorldDebug] MaterializeClone purge step failed runtimeId={} "
+            "cloneAccountId={} reason='{}'",
+            runtime.runtimeId,
+            runtime.cloneAccountId,
+            result.reason);
+        return result;
+    }
+    if (purgedCount > 0)
+    {
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] MaterializeClone purge summary runtimeId={} "
+            "cloneAccountId={} purged={}",
+            runtime.runtimeId,
+            runtime.cloneAccountId,
+            purgedCount);
+    }
+
     std::string dump;
     DumpReturn dumpStatus =
         PlayerDumpWriter().WriteDumpToString(dump, runtime.sourceCharacterGuid);
@@ -385,6 +509,16 @@ SqlCharacterCloneMaterializer::MaterializeClone(
         dump.size(),
         runtime.cloneAccountId,
         cloneName);
+
+    std::uint64_t const previousHighestCloneGuid =
+        LoadHighestCharacterGuidForAccount(runtime.cloneAccountId);
+    LOG_INFO(
+        "server.worldserver",
+        "[LivingWorldDebug] MaterializeClone pre-import account snapshot "
+        "runtimeId={} targetAccountId={} previousHighestGuid={}",
+        runtime.runtimeId,
+        runtime.cloneAccountId,
+        previousHighestCloneGuid);
 
     DumpReturn loadStatus = PlayerDumpReader().LoadDumpFromString(
         dump,
@@ -417,18 +551,54 @@ SqlCharacterCloneMaterializer::MaterializeClone(
         LoadExistingClone(runtime.cloneAccountId, cloneName);
     if (!created)
     {
-        result.reason = "clone import succeeded but clone lookup failed";
-        LOG_ERROR(
+        LOG_WARN(
             "server.worldserver",
-            "[LivingWorldDebug] MaterializeClone post-import lookup failed "
-            "runtimeId={} targetAccountId={} targetName='{}'",
+            "[LivingWorldDebug] MaterializeClone post-import exact-name lookup "
+            "failed runtimeId={} targetAccountId={} targetName='{}' -- "
+            "attempting newest-character fallback.",
             runtime.runtimeId,
             runtime.cloneAccountId,
             cloneName);
-        return result;
+
+        created = LoadNewestCloneForAccount(
+            runtime.cloneAccountId,
+            previousHighestCloneGuid);
+        if (!created)
+        {
+            result.reason = "clone import succeeded but clone lookup failed";
+            LOG_ERROR(
+                "server.worldserver",
+                "[LivingWorldDebug] MaterializeClone fallback lookup failed "
+                "runtimeId={} targetAccountId={} targetName='{}' "
+                "previousHighestGuid={}",
+                runtime.runtimeId,
+                runtime.cloneAccountId,
+                cloneName,
+                previousHighestCloneGuid);
+            return result;
+        }
+
+        LOG_WARN(
+            "server.worldserver",
+            "[LivingWorldDebug] MaterializeClone recovered imported clone via "
+            "fallback runtimeId={} requestedName='{}' actualName='{}' "
+            "cloneGuid={} level={} xp={} money={}",
+            runtime.runtimeId,
+            cloneName,
+            created->cloneCharacterName,
+            created->cloneCharacterGuid,
+            static_cast<std::uint32_t>(created->cloneSnapshot.level),
+            created->cloneSnapshot.experience,
+            created->cloneSnapshot.money);
+        created->reason =
+            "materialized persistent clone character via fallback lookup";
     }
 
-    created->reason = "materialized persistent clone character";
+    else
+    {
+        created->reason = "materialized persistent clone character";
+    }
+
     LOG_INFO(
         "server.worldserver",
         "[LivingWorldDebug] MaterializeClone created clone runtimeId={} "

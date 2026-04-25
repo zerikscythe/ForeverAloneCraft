@@ -5027,6 +5027,13 @@ bool Player::LoadFromDB(ObjectGuid playerGuid, CharacterDatabaseQueryHolder cons
     // check name limitations
     if (ObjectMgr::CheckPlayerName(m_name) != CHAR_NAME_SUCCESS)
     {
+        LOG_ERROR(
+            "server.worldserver",
+            "[LivingWorldDebug] Player::LoadFromDB invalid login name guid={} "
+            "accountId={} name='{}' -- setting rename flag and aborting load.",
+            guid,
+            GetSession() ? GetSession()->GetAccountId() : 0,
+            m_name);
         CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_ADD_AT_LOGIN_FLAG);
         stmt->SetData(0, uint16(AT_LOGIN_RENAME));
         stmt->SetData(1, guid);

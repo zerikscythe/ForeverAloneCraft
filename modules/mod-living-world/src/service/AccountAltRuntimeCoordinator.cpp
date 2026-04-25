@@ -1,5 +1,13 @@
 #include "service/AccountAltRuntimeCoordinator.h"
+#include "CharacterCache.h"
+#include "DatabaseEnv.h"
 #include "Log.h"
+#include "ObjectAccessor.h"
+#include "ObjectMgr.h"
+#include "Player.h"
+#include "QueryResult.h"
+#include "SharedDefines.h"
+#include "WorldSessionMgr.h"
 #include "service/AccountAltEquipmentSyncExecutor.h"
 #include "service/AccountAltBankSyncExecutor.h"
 #include "service/AccountAltInventorySyncExecutor.h"
@@ -17,6 +25,13 @@ namespace service
 {
 namespace
 {
+struct CloneLoginState
+{
+    std::string name;
+    std::uint16_t atLoginFlags = 0;
+    bool loginNameValid = false;
+};
+
 AccountAltSpawnDecision BuildBlockedDecision(std::string reason)
 {
     AccountAltSpawnDecision decision;
@@ -31,6 +46,54 @@ AccountAltSpawnDecision BuildManualReviewDecision(std::string reason)
     decision.kind = AccountAltSpawnDecisionKind::ManualReviewRequired;
     decision.reason = std::move(reason);
     return decision;
+}
+
+std::optional<CloneLoginState> LoadCloneLoginState(
+    std::uint64_t cloneCharacterGuid)
+{
+    QueryResult result = CharacterDatabase.Query(
+        "SELECT name, at_login FROM characters WHERE guid = {} LIMIT 1",
+        cloneCharacterGuid);
+    if (!result)
+    {
+        return std::nullopt;
+    }
+
+    CloneLoginState state;
+    state.name = result->Fetch()[0].Get<std::string>();
+    state.atLoginFlags = result->Fetch()[1].Get<std::uint16_t>();
+    state.loginNameValid =
+        ObjectMgr::CheckPlayerName(state.name) == CHAR_NAME_SUCCESS;
+    return state;
+}
+
+bool CloneRequiresRefresh(CloneLoginState const& state)
+{
+    return !state.loginNameValid ||
+        (state.atLoginFlags & AT_LOGIN_RENAME) != 0;
+}
+
+bool DeleteOfflineCloneCharacter(
+    std::uint32_t accountId,
+    std::uint64_t cloneCharacterGuid,
+    std::string const& cloneCharacterName)
+{
+    if (cloneCharacterGuid == 0)
+    {
+        return false;
+    }
+
+    ObjectGuid cloneGuid =
+        ObjectGuid::Create<HighGuid::Player>(cloneCharacterGuid);
+    if (ObjectAccessor::FindConnectedPlayer(cloneGuid) ||
+        sWorldSessionMgr->FindOfflineSessionForCharacterGUID(cloneCharacterGuid))
+    {
+        return false;
+    }
+
+    Player::DeleteFromDB(cloneCharacterGuid, accountId, true, true);
+    sCharacterCache->DeleteCharacterCacheEntry(cloneGuid, cloneCharacterName);
+    return true;
 }
 } // namespace
 
@@ -179,6 +242,90 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
         runtime.cloneCharacterGuid);
     runtime.ownerCharacterGuid = ownerCharacterGuid;
     runtime.sourceSnapshot = *sourceSnapshot;
+
+    if (runtime.cloneCharacterGuid != 0)
+    {
+        std::optional<CloneLoginState> cloneLoginState =
+            LoadCloneLoginState(runtime.cloneCharacterGuid);
+        if (!cloneLoginState)
+        {
+            LOG_WARN(
+                "server.worldserver",
+                "[LivingWorldDebug] PlanSpawn runtimeId={} cloneGuid={} is "
+                "missing from characters DB; rematerializing.",
+                runtime.runtimeId,
+                runtime.cloneCharacterGuid);
+            runtime.cloneCharacterGuid = 0;
+            runtime.cloneCharacterName = runtime.sourceCharacterName;
+        }
+        else if (CloneRequiresRefresh(*cloneLoginState))
+        {
+            LOG_WARN(
+                "server.worldserver",
+                "[LivingWorldDebug] PlanSpawn runtimeId={} cloneGuid={} "
+                "cloneName='{}' atLogin={} loginNameValid={} requires "
+                "refresh before bot login.",
+                runtime.runtimeId,
+                runtime.cloneCharacterGuid,
+                cloneLoginState->name,
+                cloneLoginState->atLoginFlags,
+                cloneLoginState->loginNameValid);
+
+            if (!DeleteOfflineCloneCharacter(
+                    runtime.cloneAccountId,
+                    runtime.cloneCharacterGuid,
+                    cloneLoginState->name))
+            {
+                return BuildBlockedDecision(
+                    "clone requires refresh but could not be deleted offline");
+            }
+
+            runtime.cloneCharacterGuid = 0;
+            runtime.cloneCharacterName = runtime.sourceCharacterName;
+            runtime.cloneSnapshot = {};
+        }
+
+        if (runtime.cloneCharacterGuid == 0)
+        {
+            integration::CharacterCloneMaterializationResult cloneResult =
+                _cloneMaterializer.MaterializeClone(runtime);
+            if (!cloneResult.succeeded)
+            {
+                LOG_ERROR(
+                    "server.worldserver",
+                    "[LivingWorldDebug] PlanSpawn clone refresh failed "
+                    "runtimeId={} cloneAccountId={} reason='{}'",
+                    runtime.runtimeId,
+                    runtime.cloneAccountId,
+                    cloneResult.reason);
+                return BuildBlockedDecision(cloneResult.reason);
+            }
+
+            runtime.cloneCharacterGuid = cloneResult.cloneCharacterGuid;
+            runtime.cloneCharacterName = cloneResult.cloneCharacterName;
+            runtime.cloneSnapshot = cloneResult.cloneSnapshot;
+            runtime.state = model::AccountAltRuntimeState::Active;
+            _runtimeRepository.SaveRuntime(runtime);
+
+            AccountAltSpawnDecision refreshedDecision;
+            refreshedDecision.kind =
+                AccountAltSpawnDecisionKind::SpawnUsingPersistentClone;
+            refreshedDecision.runtime = runtime;
+            refreshedDecision.botAccountId = runtime.cloneAccountId;
+            refreshedDecision.spawnCharacterGuid = runtime.cloneCharacterGuid;
+            refreshedDecision.reason = cloneResult.reason;
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] PlanSpawn refreshed clone runtimeId={} "
+                "cloneAccountId={} cloneGuid={} cloneName='{}' reason='{}'",
+                runtime.runtimeId,
+                runtime.cloneAccountId,
+                runtime.cloneCharacterGuid,
+                runtime.cloneCharacterName,
+                refreshedDecision.reason);
+            return refreshedDecision;
+        }
+    }
 
     if (runtime.cloneCharacterGuid == 0)
     {

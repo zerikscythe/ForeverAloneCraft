@@ -96,6 +96,19 @@ bool SqlCharacterNameLeaseRepository::RestoreSourceNameLease(
             QuoteSql(runtime.sourceCharacterName),
             runtime.sourceCharacterGuid));
 
+    // Both characters are leaving the lease swap with a clean, valid name.
+    // Drop AT_LOGIN_RENAME / AT_LOGIN_FIRST so a future PlanSpawn doesn't see a
+    // parked clone as "needs refresh" and force an unnecessary rematerialization
+    // (and so the source can never be force-renamed by the client on next login).
+    // 0x21 == AT_LOGIN_RENAME (0x01) | AT_LOGIN_FIRST (0x20)
+    CharacterDatabase.ExecuteOrAppend(
+        trans,
+        Acore::StringFormat(
+            "UPDATE characters SET at_login = at_login & ~0x21 "
+            "WHERE guid IN ({}, {})",
+            runtime.cloneCharacterGuid,
+            runtime.sourceCharacterGuid));
+
     if (sWorld->getBoolConfig(CONFIG_DECLINED_NAMES_USED))
     {
         CharacterDatabase.ExecuteOrAppend(

@@ -274,9 +274,23 @@ bool WorldSession::StartBotLogin(ObjectGuid const& guid)
 {
     ASSERT(m_isBotSession);
 
+    LOG_INFO(
+        "server.worldserver",
+        "[LivingWorldDebug] StartBotLogin accountId={} botGuid={}",
+        GetAccountId(),
+        guid.GetCounter());
+
     auto holder = std::make_shared<LoginQueryHolder>(GetAccountId(), guid);
     if (!holder->Initialize())
+    {
+        LOG_ERROR(
+            "server.worldserver",
+            "[LivingWorldDebug] StartBotLogin failed to initialize login "
+            "holder accountId={} botGuid={}",
+            GetAccountId(),
+            guid.GetCounter());
         return false;
+    }
 
     m_playerLoading = true;
     AddQueryHolderCallback(CharacterDatabase.DelayQueryHolder(holder)).AfterComplete([this](SQLQueryHolderBase const& h)
@@ -806,6 +820,16 @@ void WorldSession::HandlePlayerLoginFromDB(LoginQueryHolder const& holder)
 {
     ObjectGuid playerGuid = holder.GetGuid();
 
+    if (IsBotSession())
+    {
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] HandlePlayerLoginFromDB start accountId={} "
+            "botGuid={}",
+            GetAccountId(),
+            playerGuid.GetCounter());
+    }
+
     Player* pCurrChar = new Player(this);
     // for send server info and strings (config)
     ChatHandler chH = ChatHandler(pCurrChar->GetSession());
@@ -813,6 +837,15 @@ void WorldSession::HandlePlayerLoginFromDB(LoginQueryHolder const& holder)
     // "GetAccountId() == db stored account id" checked in LoadFromDB (prevent login not own character using cheating tools)
     if (!pCurrChar->LoadFromDB(playerGuid, holder))
     {
+        if (IsBotSession())
+        {
+            LOG_ERROR(
+                "server.worldserver",
+                "[LivingWorldDebug] HandlePlayerLoginFromDB LoadFromDB failed "
+                "accountId={} botGuid={}",
+                GetAccountId(),
+                playerGuid.GetCounter());
+        }
         SetPlayer(nullptr);
         KickPlayer("WorldSession::HandlePlayerLogin Player::LoadFromDB failed"); // disconnect client, player no set to session and it will not deleted or saved at kick
         delete pCurrChar; // delete it manually
