@@ -16,7 +16,8 @@ TEST(LivingWorldCommandGrammarTest, EmptyInputProducesEmptyError)
 
 TEST(LivingWorldCommandGrammarTest, UnknownSubsystemIsRejected)
 {
-    ParsedCommand cmd = ParseLivingWorldCommand("economy list");
+    // Mixed alphanumeric is neither a position nor a name — unknown subsystem.
+    ParsedCommand cmd = ParseLivingWorldCommand("abc123 list");
 
     auto const* error = std::get_if<CommandParseError>(&cmd);
     ASSERT_NE(error, nullptr);

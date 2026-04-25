@@ -224,10 +224,20 @@ ParsedCommand ParseLivingWorldCommand(std::string_view arguments)
         return ParseRosterVerb(firstToken, remaining);
     }
 
-    // `.lwbot <position|name> profile <slot>` — bot ref followed by profile verb.
-    auto botRefResult = ParseBotRef(firstToken);
-    if (BotRef* botRef = std::get_if<BotRef>(&botRefResult))
-        return ParseBotProfileCommand(std::move(*botRef), remaining);
+    // `.lwbot <position> profile <slot>` — digit-leading token is always a position.
+    if (std::isdigit(static_cast<unsigned char>(firstToken.front())))
+    {
+        auto botRefResult = ParseBotRef(firstToken);
+        if (CommandParseError* err = std::get_if<CommandParseError>(&botRefResult))
+            return *err;
+        return ParseBotProfileCommand(
+            std::get<BotRef>(std::move(botRefResult)), remaining);
+    }
+
+    // `.lwbot <name> profile <slot>` — all-alpha token is a character name.
+    if (IsAlphaOnly(firstToken))
+        return ParseBotProfileCommand(
+            BotRef { NormalizeCharacterName(firstToken) }, remaining);
 
     return MakeError(
         CommandParseErrorKind::UnknownSubsystem,
