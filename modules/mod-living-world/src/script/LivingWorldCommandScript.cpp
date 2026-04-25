@@ -70,6 +70,10 @@ struct AccountAltSummary
     std::string name;
 };
 
+std::optional<model::RosterEntry> ResolveBotRosterEntry(
+    std::uint32_t accountId,
+    std::variant<std::uint32_t, std::string> const& botRef);
+
 model::BotFaction ToBotFaction(std::uint8_t raceId)
 {
     TeamId const teamId = Player::TeamIdForRace(raceId);
