@@ -114,3 +114,6 @@ local.properties
 #  !modules/yourmodule
 #
 # ==================
+
+# Per-machine deploy target (see scripts/deploy-local.sh)
+/deploy.local

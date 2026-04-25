@@ -24,6 +24,24 @@ AzerothCore is an open-source MMORPG server emulator for World of Warcraft patch
 - MySQL is installed as Windows service `MySQL80Acore` and listens on
   `127.0.0.1:3306` for this local setup.
 
+### Deploying after a build
+
+After every build, copy the updated binaries to the local server folder:
+
+```bash
+./scripts/deploy-local.sh
+```
+
+The script reads the target path from `deploy.local` in the repo root (gitignored,
+not committed). Each machine creates its own. Format: one absolute path per line.
+
+| Machine | Path in `deploy.local` |
+|---------|------------------------|
+| ZerikPC | `/mnt/e/WoWzers/WotLK/Server` |
+
+If the drive isn't mounted the script will error clearly rather than silently
+skip the copy.
+
 ### Configure and build (out-of-source build required)
 
 - Skip building unless explicitly requested.
