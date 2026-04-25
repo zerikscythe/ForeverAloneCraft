@@ -220,16 +220,16 @@ TEST(LivingWorldCommandGrammarTest, ProfileSetRejectsPositionZero)
     EXPECT_EQ(error->kind, CommandParseErrorKind::InvalidArgument);
 }
 
-TEST(LivingWorldCommandGrammarTest, ProfileSetRejectsWrongVerbAfterPosition)
+TEST(LivingWorldCommandGrammarTest, BotActionRejectsUnknownVerbAfterPosition)
 {
-    ParsedCommand cmd = ParseLivingWorldCommand("2 spell 3");
+    ParsedCommand cmd = ParseLivingWorldCommand("2 dance");
 
     auto const* error = std::get_if<CommandParseError>(&cmd);
     ASSERT_NE(error, nullptr);
     EXPECT_EQ(error->kind, CommandParseErrorKind::UnknownVerb);
 }
 
-TEST(LivingWorldCommandGrammarTest, ProfileSetRejectsMissingVerbAfterName)
+TEST(LivingWorldCommandGrammarTest, BotActionRejectsMissingVerbAfterName)
 {
     ParsedCommand cmd = ParseLivingWorldCommand("Thrall");
 
@@ -240,66 +240,99 @@ TEST(LivingWorldCommandGrammarTest, ProfileSetRejectsMissingVerbAfterName)
 
 // BotCastCommand tests
 
-TEST(LivingWorldCommandGrammarTest, BotCastParsesPositionAndSpellId)
+TEST(LivingWorldCommandGrammarTest, BotCastParsesPositionAndSingleWordSpell)
 {
-    ParsedCommand cmd = ParseLivingWorldCommand("2 33786");
+    ParsedCommand cmd = ParseLivingWorldCommand("2 cast Immolate");
 
     auto const* cast = std::get_if<BotCastCommand>(&cmd);
     ASSERT_NE(cast, nullptr);
     auto const* position = std::get_if<std::uint32_t>(&cast->botRef);
     ASSERT_NE(position, nullptr);
     EXPECT_EQ(*position, 2u);
-    EXPECT_EQ(cast->spellId, 33786u);
+    EXPECT_EQ(cast->spellName, "Immolate");
     EXPECT_FALSE(cast->targetName.has_value());
 }
 
-TEST(LivingWorldCommandGrammarTest, BotCastParsesNameAndSpellId)
+TEST(LivingWorldCommandGrammarTest, BotCastParsesNameAndSingleWordSpell)
 {
-    ParsedCommand cmd = ParseLivingWorldCommand("thrall 33786");
+    ParsedCommand cmd = ParseLivingWorldCommand("thrall cast Immolate");
 
     auto const* cast = std::get_if<BotCastCommand>(&cmd);
     ASSERT_NE(cast, nullptr);
     auto const* name = std::get_if<std::string>(&cast->botRef);
     ASSERT_NE(name, nullptr);
     EXPECT_EQ(*name, "Thrall");
-    EXPECT_EQ(cast->spellId, 33786u);
+    EXPECT_EQ(cast->spellName, "Immolate");
     EXPECT_FALSE(cast->targetName.has_value());
 }
 
-TEST(LivingWorldCommandGrammarTest, BotCastParsesExplicitTargetName)
+TEST(LivingWorldCommandGrammarTest, BotCastParsesMultiWordSpellName)
 {
-    ParsedCommand cmd = ParseLivingWorldCommand("1 33786 arthas");
+    ParsedCommand cmd = ParseLivingWorldCommand("1 cast Death Strike");
 
     auto const* cast = std::get_if<BotCastCommand>(&cmd);
     ASSERT_NE(cast, nullptr);
-    EXPECT_EQ(cast->spellId, 33786u);
+    EXPECT_EQ(cast->spellName, "Death Strike");
+    EXPECT_FALSE(cast->targetName.has_value());
+}
+
+TEST(LivingWorldCommandGrammarTest, BotCastParsesSpellWithOnTarget)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 cast Holy Light on Arthas");
+
+    auto const* cast = std::get_if<BotCastCommand>(&cmd);
+    ASSERT_NE(cast, nullptr);
+    EXPECT_EQ(cast->spellName, "Holy Light");
     ASSERT_TRUE(cast->targetName.has_value());
     EXPECT_EQ(*cast->targetName, "Arthas");
 }
 
-TEST(LivingWorldCommandGrammarTest, BotCastNormalizesSelfKeyword)
+TEST(LivingWorldCommandGrammarTest, BotCastYourselfKeywordNormalized)
 {
-    ParsedCommand cmd = ParseLivingWorldCommand("1 33786 self");
+    // "yourself" → "Yourself": cast on the bot itself
+    ParsedCommand cmd = ParseLivingWorldCommand("1 cast Immolate on yourself");
 
     auto const* cast = std::get_if<BotCastCommand>(&cmd);
     ASSERT_NE(cast, nullptr);
     ASSERT_TRUE(cast->targetName.has_value());
-    EXPECT_EQ(*cast->targetName, "Self");
+    EXPECT_EQ(*cast->targetName, "Yourself");
 }
 
-TEST(LivingWorldCommandGrammarTest, BotCastNormalizesTargetKeyword)
+TEST(LivingWorldCommandGrammarTest, BotCastMeKeywordNormalized)
 {
-    ParsedCommand cmd = ParseLivingWorldCommand("1 33786 target");
+    // "me" → "Me": cast on the owner/player
+    ParsedCommand cmd = ParseLivingWorldCommand("1 cast Holy Light on me");
 
     auto const* cast = std::get_if<BotCastCommand>(&cmd);
     ASSERT_NE(cast, nullptr);
     ASSERT_TRUE(cast->targetName.has_value());
-    EXPECT_EQ(*cast->targetName, "Target");
+    EXPECT_EQ(*cast->targetName, "Me");
+}
+
+TEST(LivingWorldCommandGrammarTest, BotCastMytargetKeywordNormalized)
+{
+    // "mytarget" → "Mytarget": cast on the owner's current target
+    ParsedCommand cmd = ParseLivingWorldCommand("1 cast Immolate on mytarget");
+
+    auto const* cast = std::get_if<BotCastCommand>(&cmd);
+    ASSERT_NE(cast, nullptr);
+    ASSERT_TRUE(cast->targetName.has_value());
+    EXPECT_EQ(*cast->targetName, "Mytarget");
+}
+
+TEST(LivingWorldCommandGrammarTest, BotCastFocusKeywordNormalized)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 cast Immolate on focus");
+
+    auto const* cast = std::get_if<BotCastCommand>(&cmd);
+    ASSERT_NE(cast, nullptr);
+    ASSERT_TRUE(cast->targetName.has_value());
+    EXPECT_EQ(*cast->targetName, "Focus");
 }
 
 TEST(LivingWorldCommandGrammarTest, BotCastNormalizesTargetNameCase)
 {
-    ParsedCommand cmd = ParseLivingWorldCommand("1 33786 SYLVANAS");
+    ParsedCommand cmd = ParseLivingWorldCommand("1 cast Immolate on SYLVANAS");
 
     auto const* cast = std::get_if<BotCastCommand>(&cmd);
     ASSERT_NE(cast, nullptr);
@@ -307,13 +340,32 @@ TEST(LivingWorldCommandGrammarTest, BotCastNormalizesTargetNameCase)
     EXPECT_EQ(*cast->targetName, "Sylvanas");
 }
 
-TEST(LivingWorldCommandGrammarTest, BotCastRejectsSpellIdZero)
+TEST(LivingWorldCommandGrammarTest, BotCastPreservesSpellNameCase)
 {
-    ParsedCommand cmd = ParseLivingWorldCommand("1 0");
+    // Spell names are case-preserved in the grammar (handler does case-insensitive match).
+    ParsedCommand cmd = ParseLivingWorldCommand("1 cast power word shield");
+
+    auto const* cast = std::get_if<BotCastCommand>(&cmd);
+    ASSERT_NE(cast, nullptr);
+    EXPECT_EQ(cast->spellName, "power word shield");
+}
+
+TEST(LivingWorldCommandGrammarTest, BotCastRejectsMissingSpellName)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 cast");
 
     auto const* error = std::get_if<CommandParseError>(&cmd);
     ASSERT_NE(error, nullptr);
-    EXPECT_EQ(error->kind, CommandParseErrorKind::UnknownVerb);
+    EXPECT_EQ(error->kind, CommandParseErrorKind::MissingArgument);
+}
+
+TEST(LivingWorldCommandGrammarTest, BotCastRejectsMissingTargetAfterOn)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 cast Immolate on");
+
+    auto const* error = std::get_if<CommandParseError>(&cmd);
+    ASSERT_NE(error, nullptr);
+    EXPECT_EQ(error->kind, CommandParseErrorKind::MissingArgument);
 }
 } // namespace script
 } // namespace living_world

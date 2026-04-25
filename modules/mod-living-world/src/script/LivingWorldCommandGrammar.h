@@ -12,7 +12,7 @@
 //   .lwbot roster request <rosterEntryId>
 //   .lwbot roster dismiss <rosterEntryId>
 //   .lwbot <position|name> profile <1-10>
-//   .lwbot <position|name> <spellId> [self|target|playername]
+//   .lwbot <position|name> cast <Ability Name> [on <target>]
 //
 // The parser intentionally produces a structured command object rather
 // than executing anything. Parse errors are returned as a dedicated
@@ -76,18 +76,25 @@ struct CommandParseError
     std::string detail;
 };
 
-// "<position|name> <spellId> [target]" — instruct an active bot to cast a
-// specific spell. spellId is the numeric WotLK spell ID. targetName drives
-// where the cast is aimed:
-//   nullopt        → attempt self-cast on the bot
-//   "Self"         → explicit self-cast
-//   "Target"       → the owner's currently-selected unit (player or mob)
-//   anything else  → a normalized character name looked up online
+// "<position|name> cast <Ability Name> [on <target>]"
+//
+// Instructs an active bot to cast a named ability. The spell name is
+// whitespace-joined from all tokens between "cast" and the optional "on"
+// keyword, so multi-word names like "Death Strike" and "Holy Light" work
+// naturally.
+//
+// targetName drives where the cast is aimed (after NormalizeCharacterName):
+//   nullopt      → self-cast on the bot (no "on" clause)
+//   "Yourself"   → explicit self-cast on the bot
+//   "Me"         → the owner/player giving the command
+//   "Mytarget"   → whatever the owner currently has targeted (any unit)
+//   "Focus"      → the owner's focus target
+//   anything else→ a character name looked up online
 struct BotCastCommand
 {
     BotRef botRef;
-    std::uint32_t spellId = 0;
-    std::optional<std::string> targetName; // nullopt = self-cast attempt
+    std::string spellName;                 // as typed, case-preserved
+    std::optional<std::string> targetName; // nullopt = self-cast
 };
 
 using ParsedCommand = std::variant<

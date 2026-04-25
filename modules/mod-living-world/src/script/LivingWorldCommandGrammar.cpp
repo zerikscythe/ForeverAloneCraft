@@ -159,8 +159,8 @@ ParsedCommand ParseRosterVerb(
 }
 
 // Dispatches on the second token after a resolved bot reference:
-//   "profile <1-10>"     → BotProfileSetCommand
-//   "<spellId> [target]" → BotCastCommand
+//   "profile <1-10>"                          → BotProfileSetCommand
+//   "cast <Ability Name> [on <target>]"       → BotCastCommand
 ParsedCommand ParseBotActionCommand(BotRef botRef, std::string_view remaining)
 {
     std::string_view secondToken = ConsumeToken(remaining);
@@ -169,10 +169,10 @@ ParsedCommand ParseBotActionCommand(BotRef botRef, std::string_view remaining)
     {
         return MakeError(
             CommandParseErrorKind::UnknownVerb,
-            "expected 'profile' or a spell ID after the bot reference");
+            "expected 'profile' or 'cast' after the bot reference");
     }
 
-    // "profile <slot>" path — unchanged behaviour.
+    // "profile <slot>" path — unchanged.
     if (secondToken == "profile")
     {
         std::string_view slotToken = ConsumeToken(remaining);
@@ -197,29 +197,59 @@ ParsedCommand ParseBotActionCommand(BotRef botRef, std::string_view remaining)
         return cmd;
     }
 
-    // "<spellId> [target]" path — second token must be a positive integer.
-    std::uint64_t spellId = 0;
-    if (!ParseUInt64(secondToken, spellId) ||
-        spellId == 0 ||
-        spellId > std::numeric_limits<std::uint32_t>::max())
+    // "cast <Ability Name> [on <target>]" path.
+    if (secondToken == "cast")
     {
-        return MakeError(
-            CommandParseErrorKind::UnknownVerb,
-            std::string("expected 'profile' or a spell ID, got: ") +
-                std::string(secondToken));
+        // Collect ability name tokens until "on" (case-insensitive) or end.
+        std::string spellName;
+        std::optional<std::string> targetName;
+
+        while (true)
+        {
+            std::string_view tok = ConsumeToken(remaining);
+            if (tok.empty())
+                break;
+
+            // Case-insensitive "on" check — the target delimiter.
+            bool isOn = tok.size() == 2 &&
+                std::tolower(static_cast<unsigned char>(tok[0])) == 'o' &&
+                std::tolower(static_cast<unsigned char>(tok[1])) == 'n';
+            if (isOn)
+            {
+                std::string_view targetTok = ConsumeToken(remaining);
+                if (targetTok.empty())
+                {
+                    return MakeError(
+                        CommandParseErrorKind::MissingArgument,
+                        "target required after 'on'");
+                }
+                targetName = NormalizeCharacterName(targetTok);
+                break;
+            }
+
+            if (!spellName.empty())
+                spellName += ' ';
+            spellName += tok;
+        }
+
+        if (spellName.empty())
+        {
+            return MakeError(
+                CommandParseErrorKind::MissingArgument,
+                "spell name required after 'cast'");
+        }
+
+        BotCastCommand cmd;
+        cmd.botRef     = std::move(botRef);
+        cmd.spellName  = std::move(spellName);
+        cmd.targetName = std::move(targetName);
+        return cmd;
     }
 
-    // Optional target: self | target | <characterName>
-    std::optional<std::string> targetName;
-    std::string_view targetToken = ConsumeToken(remaining);
-    if (!targetToken.empty())
-        targetName = NormalizeCharacterName(targetToken);
-
-    BotCastCommand cmd;
-    cmd.botRef    = std::move(botRef);
-    cmd.spellId   = static_cast<std::uint32_t>(spellId);
-    cmd.targetName = std::move(targetName);
-    return cmd;
+    return MakeError(
+        CommandParseErrorKind::UnknownVerb,
+        std::string("expected 'profile' or 'cast', got: ") +
+            std::string(secondToken));
 }
 } // namespace
 

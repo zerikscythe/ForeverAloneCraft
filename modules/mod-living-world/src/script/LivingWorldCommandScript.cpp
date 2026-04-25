@@ -12,7 +12,9 @@
 #include "ObjectAccessor.h"
 #include "Player.h"
 #include "SharedDefines.h"
+#include "Common.h"
 #include "SpellMgr.h"
+#include "Util.h"
 #include "TemporarySummon.h"
 #include "integration/AzerothWorldFacade.h"
 #include "integration/BotSessionFactory.h"
@@ -193,7 +195,7 @@ void RenderUsage(ChatHandler* handler)
     handler->PSendSysMessage("  .lwbot roster request <rosterEntryId>");
     handler->PSendSysMessage("  .lwbot roster dismiss <rosterEntryId>");
     handler->PSendSysMessage("  .lwbot <#|name> profile <1-10>");
-    handler->PSendSysMessage("  .lwbot <#|name> <spellId> [self|target|playername]");
+    handler->PSendSysMessage("  .lwbot <#|name> cast <Ability Name> [on yourself|me|mytarget|focus|<name>]");
 }
 
 std::string_view ToSourceText(model::RosterEntrySource source)
@@ -1074,6 +1076,36 @@ std::optional<model::RosterEntry> ResolveBotRosterEntry(
     return std::nullopt;
 }
 
+// Find the highest-rank spell by name that the bot actually knows.
+// SpellInfo::SpellName[LOCALE_enUS] holds the DBC display name.
+std::uint32_t ResolveSpellByName(Player const* bot, std::string const& name)
+{
+    std::uint32_t bestSpellId = 0;
+    std::uint8_t  bestRank    = 0;
+
+    for (auto const& [spellId, playerSpell] : bot->GetSpellMap())
+    {
+        if (!playerSpell || playerSpell->State == PLAYERSPELL_REMOVED)
+            continue;
+
+        SpellInfo const* info = sSpellMgr->GetSpellInfo(spellId);
+        if (!info || !info->SpellName[LOCALE_enUS])
+            continue;
+
+        if (!StringEqualI(info->SpellName[LOCALE_enUS], name))
+            continue;
+
+        std::uint8_t const rank = info->GetRank();
+        if (rank > bestRank)
+        {
+            bestRank    = rank;
+            bestSpellId = spellId;
+        }
+    }
+
+    return bestSpellId;
+}
+
 void HandleBotCast(
     ChatHandler* handler,
     BotCastCommand const& command)
@@ -1111,23 +1143,32 @@ void HandleBotCast(
         return;
     }
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(command.spellId);
-    if (!spellInfo)
+    std::uint32_t const spellId = ResolveSpellByName(bot, command.spellName);
+    if (!spellId)
     {
         handler->PSendSysMessage(
-            "LivingWorld {} is not a valid spell ID.", command.spellId);
+            "LivingWorld {} does not know '{}'.",
+            bot->GetName(),
+            command.spellName);
         return;
     }
 
-    // Resolve target. nullopt and "Self" both mean the bot itself.
-    // "Target" means whatever the owner currently has selected (works for mobs).
-    // Anything else is treated as a character name.
+    // Resolve target from the normalized targetName token:
+    //   (no "on" clause) / "Yourself" → the bot itself
+    //   "Me"       → the owner/player giving the command
+    //   "Mytarget" → whatever the owner currently has targeted (works for mobs)
+    //   "Focus"    → the owner's focus target
+    //   anything else → a character name looked up online
     Unit* target = nullptr;
-    if (!command.targetName.has_value() || *command.targetName == "Self")
+    if (!command.targetName.has_value() || *command.targetName == "Yourself")
     {
         target = bot;
     }
-    else if (*command.targetName == "Target")
+    else if (*command.targetName == "Me")
+    {
+        target = player;
+    }
+    else if (*command.targetName == "Mytarget")
     {
         ObjectGuid const selection = player->GetTarget();
         if (!selection)
@@ -1139,6 +1180,21 @@ void HandleBotCast(
         if (!target)
         {
             handler->PSendSysMessage("LivingWorld selected target is not accessible.");
+            return;
+        }
+    }
+    else if (*command.targetName == "Focus")
+    {
+        ObjectGuid const focus = player->GetGuidValue(PLAYER_FOCUS_TARGET);
+        if (!focus)
+        {
+            handler->PSendSysMessage("LivingWorld you have no focus target set.");
+            return;
+        }
+        target = ObjectAccessor::GetUnit(*player, focus);
+        if (!target)
+        {
+            handler->PSendSysMessage("LivingWorld focus target is not accessible.");
             return;
         }
     }
@@ -1154,11 +1210,11 @@ void HandleBotCast(
         }
     }
 
-    bot->CastSpell(target, command.spellId, false);
+    bot->CastSpell(target, spellId, false);
     handler->PSendSysMessage(
         "LivingWorld {} cast {} on {}.",
         bot->GetName(),
-        command.spellId,
+        command.spellName,
         target->GetName());
 }
 
