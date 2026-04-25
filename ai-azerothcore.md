@@ -517,6 +517,21 @@ Current state as of the first foundation + first runtime command slice:
   materialization on a reserved account deletes stale leftover clone bodies
   before re-importing from the live source, so offline source-side gear/item
   changes do not get misread as clone-authoritative recovery work later.
+- LivingWorld player chat is now intentionally quieter by default. `.lw`
+  exists as a small root command surface for `.lw loglevel <0-3>`, which
+  controls how much LivingWorld feedback is shown in that account's chat frame
+  during the current worldserver run:
+  - `0` = minimal
+  - `1` = normal
+  - `2` = detailed
+  - `3` = trace
+- Full `[LivingWorldDebug]` trace still belongs in the server log regardless of
+  player chat level.
+- Branch-specific command note: this AzerothCore branch does not expose a
+  dedicated `PLAYER_FOCUS_TARGET` field, so `.lwbot ... cast ... on focus`
+  currently falls back to the player's active target.
+- Branch-specific combat note: cooldown checks on `Player` use
+  `HasSpellCooldown(...)`, not `GetSpellHistory()`.
 - Local runtime validation has reached a working end-to-end WotLK install:
   MySQL 8, authserver, worldserver, extracted dbc/maps/vmaps/mmaps, client
   login, character creation, and starting-zone entry. This validates the

@@ -1,6 +1,7 @@
 #include "Chat.h"
 #include "Config.h"
 #include "ai/CompanionAI.h"
+#include "script/LivingWorldChatConfig.h"
 #include "integration/SqlAccountAltRuntimeRepository.h"
 #include "integration/SqlCharacterBankSyncRepository.h"
 #include "integration/SqlCharacterEquipmentSyncRepository.h"
@@ -78,19 +79,28 @@ void RunOwnerStartupRecovery(Player* player)
     ChatHandler handler(player->GetSession());
     if (summary.recoveredSyncs > 0)
     {
-        handler.PSendSysMessage(
+        living_world::script::SendPlayerLog(
+            &handler,
+            static_cast<std::uint8_t>(
+                living_world::script::PlayerChatLogLevel::Normal),
             "LivingWorld recovered {} interrupted account-alt sync(s) on login.",
             summary.recoveredSyncs);
     }
     if (summary.pendingRecovery > 0)
     {
-        handler.PSendSysMessage(
+        living_world::script::SendPlayerLog(
+            &handler,
+            static_cast<std::uint8_t>(
+                living_world::script::PlayerChatLogLevel::Minimal),
             "LivingWorld found {} account-alt runtime(s) that still need recovery before reuse.",
             summary.pendingRecovery);
     }
     if (summary.manualReviewRequired > 0 || summary.blocked > 0)
     {
-        handler.PSendSysMessage(
+        living_world::script::SendPlayerLog(
+            &handler,
+            static_cast<std::uint8_t>(
+                living_world::script::PlayerChatLogLevel::Minimal),
             "LivingWorld found {} runtime(s) needing manual review and {} blocked runtime(s).",
             summary.manualReviewRequired,
             summary.blocked);

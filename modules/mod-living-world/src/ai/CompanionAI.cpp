@@ -6,7 +6,6 @@
 #include "ObjectAccessor.h"
 #include "Player.h"
 #include "SharedDefines.h"
-#include "SpellHistory.h"
 #include "SpellMgr.h"
 #include "Unit.h"
 
@@ -211,16 +210,16 @@ std::uint32_t GetMeleeOffensiveSpell(Player* bot, Unit* target)
                 return 45477; // Icy Touch — applies Frost Fever
 
             // Diseases up: Death Strike when off cooldown (damage + self-heal)
-            if (bot->HasSpell(49998) && !bot->GetSpellHistory()->HasCooldown(49998))
+            if (bot->HasSpell(49998) && !bot->HasSpellCooldown(49998))
                 return 49998;
 
             // Death Strike is on cooldown — fill with rune strikes
             {
                 std::uint32_t const heartStrike = FindBestKnownSpellInChain(bot, 55050);
-                if (heartStrike && !bot->GetSpellHistory()->HasCooldown(heartStrike))
+                if (heartStrike && !bot->HasSpellCooldown(heartStrike))
                     return heartStrike; // Heart Strike
             }
-            if (bot->HasSpell(45902) && !bot->GetSpellHistory()->HasCooldown(45902))
+            if (bot->HasSpell(45902) && !bot->HasSpellCooldown(45902))
                 return 45902; // Blood Strike
 
             // Fallback: let the engine handle the cooldown; autoattack continues
@@ -283,21 +282,21 @@ std::uint32_t GetHybridDamageSpell(Player* bot, Unit* target)
             // Hammer of Wrath: execute-range burst, requires target below 20% HP
             std::uint32_t const how = FindBestKnownSpellInChain(bot, 24275);
             if (how && target->GetHealthPct() < 20.0f
-                && !bot->GetSpellHistory()->HasCooldown(how))
+                && !bot->HasSpellCooldown(how))
                 return how;
 
             // Judgement of Light: holy damage + party heal proc on hit
             std::uint32_t const jol = FindBestKnownSpellInChain(bot, 20271);
-            if (jol && !bot->GetSpellHistory()->HasCooldown(jol))
+            if (jol && !bot->HasSpellCooldown(jol))
                 return jol;
 
             // Consecration: sustained AoE holy damage field
             std::uint32_t const cons = FindBestKnownSpellInChain(bot, 20116);
-            if (cons && !bot->GetSpellHistory()->HasCooldown(cons))
+            if (cons && !bot->HasSpellCooldown(cons))
                 return cons;
 
             // Crusader Strike: primary single-target melee ability
-            if (bot->HasSpell(35395) && !bot->GetSpellHistory()->HasCooldown(35395))
+            if (bot->HasSpell(35395) && !bot->HasSpellCooldown(35395))
                 return 35395;
 
             return 0;
@@ -366,7 +365,7 @@ std::uint32_t GetDamageSpell(Player* bot, Unit* target)
 
             // Multi-Shot: strong filler when off cooldown
             std::uint32_t const multiShot = FindBestKnownSpellInChain(bot, 2643);
-            if (multiShot && !bot->GetSpellHistory()->HasCooldown(multiShot))
+            if (multiShot && !bot->HasSpellCooldown(multiShot))
                 return multiShot;
 
             // Steady Shot: primary ranged filler

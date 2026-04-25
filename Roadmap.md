@@ -326,6 +326,14 @@ design and foundation code.
   lists account-alt roster entries from the characters DB, scopes lookup to
   the requesting account, routes requests through `PartyBotService`, and
   renders approved / rejected planner output plus commit-action intent.
+- `.lw` now exposes a player-local chat verbosity control:
+  `.lw loglevel <0-3>`.
+  Level `0` keeps chat to the minimum LivingWorld gameplay feedback, while
+  higher levels progressively re-enable normal, detailed, and trace-style
+  client chat output.
+- Full `[LivingWorldDebug]` trace remains server-log-first; trace runtime
+  details should not be assumed to appear in the player's chat frame unless
+  the player explicitly raises their LivingWorld chat log level.
 - The command does not execute world mutation yet.
 - Switch control/possession target is still not implemented.
 
