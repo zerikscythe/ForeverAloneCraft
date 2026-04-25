@@ -237,5 +237,83 @@ TEST(LivingWorldCommandGrammarTest, ProfileSetRejectsMissingVerbAfterName)
     ASSERT_NE(error, nullptr);
     EXPECT_EQ(error->kind, CommandParseErrorKind::UnknownVerb);
 }
+
+// BotCastCommand tests
+
+TEST(LivingWorldCommandGrammarTest, BotCastParsesPositionAndSpellId)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("2 33786");
+
+    auto const* cast = std::get_if<BotCastCommand>(&cmd);
+    ASSERT_NE(cast, nullptr);
+    auto const* position = std::get_if<std::uint32_t>(&cast->botRef);
+    ASSERT_NE(position, nullptr);
+    EXPECT_EQ(*position, 2u);
+    EXPECT_EQ(cast->spellId, 33786u);
+    EXPECT_FALSE(cast->targetName.has_value());
+}
+
+TEST(LivingWorldCommandGrammarTest, BotCastParsesNameAndSpellId)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("thrall 33786");
+
+    auto const* cast = std::get_if<BotCastCommand>(&cmd);
+    ASSERT_NE(cast, nullptr);
+    auto const* name = std::get_if<std::string>(&cast->botRef);
+    ASSERT_NE(name, nullptr);
+    EXPECT_EQ(*name, "Thrall");
+    EXPECT_EQ(cast->spellId, 33786u);
+    EXPECT_FALSE(cast->targetName.has_value());
+}
+
+TEST(LivingWorldCommandGrammarTest, BotCastParsesExplicitTargetName)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 33786 arthas");
+
+    auto const* cast = std::get_if<BotCastCommand>(&cmd);
+    ASSERT_NE(cast, nullptr);
+    EXPECT_EQ(cast->spellId, 33786u);
+    ASSERT_TRUE(cast->targetName.has_value());
+    EXPECT_EQ(*cast->targetName, "Arthas");
+}
+
+TEST(LivingWorldCommandGrammarTest, BotCastNormalizesSelfKeyword)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 33786 self");
+
+    auto const* cast = std::get_if<BotCastCommand>(&cmd);
+    ASSERT_NE(cast, nullptr);
+    ASSERT_TRUE(cast->targetName.has_value());
+    EXPECT_EQ(*cast->targetName, "Self");
+}
+
+TEST(LivingWorldCommandGrammarTest, BotCastNormalizesTargetKeyword)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 33786 target");
+
+    auto const* cast = std::get_if<BotCastCommand>(&cmd);
+    ASSERT_NE(cast, nullptr);
+    ASSERT_TRUE(cast->targetName.has_value());
+    EXPECT_EQ(*cast->targetName, "Target");
+}
+
+TEST(LivingWorldCommandGrammarTest, BotCastNormalizesTargetNameCase)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 33786 SYLVANAS");
+
+    auto const* cast = std::get_if<BotCastCommand>(&cmd);
+    ASSERT_NE(cast, nullptr);
+    ASSERT_TRUE(cast->targetName.has_value());
+    EXPECT_EQ(*cast->targetName, "Sylvanas");
+}
+
+TEST(LivingWorldCommandGrammarTest, BotCastRejectsSpellIdZero)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 0");
+
+    auto const* error = std::get_if<CommandParseError>(&cmd);
+    ASSERT_NE(error, nullptr);
+    EXPECT_EQ(error->kind, CommandParseErrorKind::UnknownVerb);
+}
 } // namespace script
 } // namespace living_world

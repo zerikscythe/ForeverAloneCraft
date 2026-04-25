@@ -158,35 +158,67 @@ ParsedCommand ParseRosterVerb(
         std::string("unknown roster verb: ") + std::string(verb));
 }
 
-ParsedCommand ParseBotProfileCommand(BotRef botRef, std::string_view remaining)
+// Dispatches on the second token after a resolved bot reference:
+//   "profile <1-10>"     → BotProfileSetCommand
+//   "<spellId> [target]" → BotCastCommand
+ParsedCommand ParseBotActionCommand(BotRef botRef, std::string_view remaining)
 {
-    std::string_view verb = ConsumeToken(remaining);
-    if (verb != "profile")
+    std::string_view secondToken = ConsumeToken(remaining);
+
+    if (secondToken.empty())
     {
         return MakeError(
             CommandParseErrorKind::UnknownVerb,
-            std::string("expected 'profile', got: ") + std::string(verb));
+            "expected 'profile' or a spell ID after the bot reference");
     }
 
-    std::string_view slotToken = ConsumeToken(remaining);
-    if (slotToken.empty())
+    // "profile <slot>" path — unchanged behaviour.
+    if (secondToken == "profile")
+    {
+        std::string_view slotToken = ConsumeToken(remaining);
+        if (slotToken.empty())
+        {
+            return MakeError(
+                CommandParseErrorKind::MissingArgument,
+                "profile slot required (1-10)");
+        }
+
+        std::uint64_t slot = 0;
+        if (!ParseUInt64(slotToken, slot) || slot < 1 || slot > 10)
+        {
+            return MakeError(
+                CommandParseErrorKind::InvalidArgument,
+                "profile slot must be 1-10");
+        }
+
+        BotProfileSetCommand cmd;
+        cmd.botRef = std::move(botRef);
+        cmd.profileSlot = static_cast<std::uint8_t>(slot);
+        return cmd;
+    }
+
+    // "<spellId> [target]" path — second token must be a positive integer.
+    std::uint64_t spellId = 0;
+    if (!ParseUInt64(secondToken, spellId) ||
+        spellId == 0 ||
+        spellId > std::numeric_limits<std::uint32_t>::max())
     {
         return MakeError(
-            CommandParseErrorKind::MissingArgument,
-            "profile slot required (1-10)");
+            CommandParseErrorKind::UnknownVerb,
+            std::string("expected 'profile' or a spell ID, got: ") +
+                std::string(secondToken));
     }
 
-    std::uint64_t slot = 0;
-    if (!ParseUInt64(slotToken, slot) || slot < 1 || slot > 10)
-    {
-        return MakeError(
-            CommandParseErrorKind::InvalidArgument,
-            "profile slot must be 1-10");
-    }
+    // Optional target: self | target | <characterName>
+    std::optional<std::string> targetName;
+    std::string_view targetToken = ConsumeToken(remaining);
+    if (!targetToken.empty())
+        targetName = NormalizeCharacterName(targetToken);
 
-    BotProfileSetCommand cmd;
-    cmd.botRef = std::move(botRef);
-    cmd.profileSlot = static_cast<std::uint8_t>(slot);
+    BotCastCommand cmd;
+    cmd.botRef    = std::move(botRef);
+    cmd.spellId   = static_cast<std::uint32_t>(spellId);
+    cmd.targetName = std::move(targetName);
     return cmd;
 }
 } // namespace
@@ -230,13 +262,13 @@ ParsedCommand ParseLivingWorldCommand(std::string_view arguments)
         auto botRefResult = ParseBotRef(firstToken);
         if (CommandParseError* err = std::get_if<CommandParseError>(&botRefResult))
             return *err;
-        return ParseBotProfileCommand(
+        return ParseBotActionCommand(
             std::get<BotRef>(std::move(botRefResult)), remaining);
     }
 
     // `.lwbot <name> profile <slot>` — all-alpha token is a character name.
     if (IsAlphaOnly(firstToken))
-        return ParseBotProfileCommand(
+        return ParseBotActionCommand(
             BotRef { NormalizeCharacterName(firstToken) }, remaining);
 
     return MakeError(

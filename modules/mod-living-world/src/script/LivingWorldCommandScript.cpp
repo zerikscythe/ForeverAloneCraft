@@ -12,6 +12,7 @@
 #include "ObjectAccessor.h"
 #include "Player.h"
 #include "SharedDefines.h"
+#include "SpellMgr.h"
 #include "TemporarySummon.h"
 #include "integration/AzerothWorldFacade.h"
 #include "integration/BotSessionFactory.h"
@@ -192,6 +193,7 @@ void RenderUsage(ChatHandler* handler)
     handler->PSendSysMessage("  .lwbot roster request <rosterEntryId>");
     handler->PSendSysMessage("  .lwbot roster dismiss <rosterEntryId>");
     handler->PSendSysMessage("  .lwbot <#|name> profile <1-10>");
+    handler->PSendSysMessage("  .lwbot <#|name> <spellId> [self|target|playername]");
 }
 
 std::string_view ToSourceText(model::RosterEntrySource source)
@@ -1072,6 +1074,94 @@ std::optional<model::RosterEntry> ResolveBotRosterEntry(
     return std::nullopt;
 }
 
+void HandleBotCast(
+    ChatHandler* handler,
+    BotCastCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld bot cast requires an in-game player.");
+        return;
+    }
+
+    std::optional<model::RosterEntry> entry =
+        ResolveBotRosterEntry(session->GetAccountId(), command.botRef);
+    if (!entry)
+    {
+        handler->PSendSysMessage("LivingWorld bot not found in roster.");
+        return;
+    }
+
+    if (entry->characterGuid == player->GetGUID().GetCounter())
+    {
+        handler->PSendSysMessage(
+            "LivingWorld cannot command the character you are logged in on.");
+        return;
+    }
+
+    Player* bot = service::BotPlayerRegistry::Instance().FindBotForOwner(
+        player->GetGUID());
+    if (!bot)
+    {
+        handler->PSendSysMessage(
+            "LivingWorld {} is not active. Use '.lwbot request <id>' first.",
+            entry->controllableProfile.profile.name);
+        return;
+    }
+
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(command.spellId);
+    if (!spellInfo)
+    {
+        handler->PSendSysMessage(
+            "LivingWorld {} is not a valid spell ID.", command.spellId);
+        return;
+    }
+
+    // Resolve target. nullopt and "Self" both mean the bot itself.
+    // "Target" means whatever the owner currently has selected (works for mobs).
+    // Anything else is treated as a character name.
+    Unit* target = nullptr;
+    if (!command.targetName.has_value() || *command.targetName == "Self")
+    {
+        target = bot;
+    }
+    else if (*command.targetName == "Target")
+    {
+        ObjectGuid const selection = player->GetTarget();
+        if (!selection)
+        {
+            handler->PSendSysMessage("LivingWorld you have no target selected.");
+            return;
+        }
+        target = ObjectAccessor::GetUnit(*player, selection);
+        if (!target)
+        {
+            handler->PSendSysMessage("LivingWorld selected target is not accessible.");
+            return;
+        }
+    }
+    else
+    {
+        target = ObjectAccessor::FindPlayerByName(*command.targetName);
+        if (!target)
+        {
+            handler->PSendSysMessage(
+                "LivingWorld player '{}' not found or not online.",
+                *command.targetName);
+            return;
+        }
+    }
+
+    bot->CastSpell(target, command.spellId, false);
+    handler->PSendSysMessage(
+        "LivingWorld {} cast {} on {}.",
+        bot->GetName(),
+        command.spellId,
+        target->GetName());
+}
+
 void HandleBotProfileSet(
     ChatHandler* handler,
     BotProfileSetCommand const& command)
@@ -1159,6 +1249,13 @@ bool HandleParsedCommand(
         std::get_if<BotProfileSetCommand>(&parsed))
     {
         HandleBotProfileSet(handler, *command);
+        return true;
+    }
+
+    if (BotCastCommand const* command =
+        std::get_if<BotCastCommand>(&parsed))
+    {
+        HandleBotCast(handler, *command);
         return true;
     }
 

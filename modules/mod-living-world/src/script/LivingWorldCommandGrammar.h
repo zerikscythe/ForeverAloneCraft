@@ -12,6 +12,7 @@
 //   .lwbot roster request <rosterEntryId>
 //   .lwbot roster dismiss <rosterEntryId>
 //   .lwbot <position|name> profile <1-10>
+//   .lwbot <position|name> <spellId> [self|target|playername]
 //
 // The parser intentionally produces a structured command object rather
 // than executing anything. Parse errors are returned as a dedicated
@@ -19,6 +20,7 @@
 // without exception handling.
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <variant>
@@ -74,12 +76,27 @@ struct CommandParseError
     std::string detail;
 };
 
+// "<position|name> <spellId> [target]" — instruct an active bot to cast a
+// specific spell. spellId is the numeric WotLK spell ID. targetName drives
+// where the cast is aimed:
+//   nullopt        → attempt self-cast on the bot
+//   "Self"         → explicit self-cast
+//   "Target"       → the owner's currently-selected unit (player or mob)
+//   anything else  → a normalized character name looked up online
+struct BotCastCommand
+{
+    BotRef botRef;
+    std::uint32_t spellId = 0;
+    std::optional<std::string> targetName; // nullopt = self-cast attempt
+};
+
 using ParsedCommand = std::variant<
     CommandParseError,
     RosterListCommand,
     RosterRequestCommand,
     RosterDismissCommand,
-    BotProfileSetCommand>;
+    BotProfileSetCommand,
+    BotCastCommand>;
 
 // Parse a raw command argument string (everything after `.lwbot `). The
 // input is expected to be trimmed of the command prefix but may still
