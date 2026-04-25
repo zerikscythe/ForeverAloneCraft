@@ -186,6 +186,7 @@ void RenderUsage(ChatHandler* handler)
     handler->PSendSysMessage("  .lwbot roster list");
     handler->PSendSysMessage("  .lwbot roster request <rosterEntryId>");
     handler->PSendSysMessage("  .lwbot roster dismiss <rosterEntryId>");
+    handler->PSendSysMessage("  .lwbot <#|name> profile <1-10>");
 }
 
 std::string_view ToSourceText(model::RosterEntrySource source)
@@ -679,12 +680,13 @@ void RenderRosterList(ChatHandler* handler)
     }
 
     handler->PSendSysMessage("LivingWorld roster entries:");
+    std::uint32_t position = 1;
     for (model::RosterEntry const& entry : entries)
     {
         model::BotProfile const& profile = entry.controllableProfile.profile;
         handler->PSendSysMessage(
             "  [{}] {} lvl {} {} ({}){}",
-            entry.rosterEntryId,
+            position++,
             profile.name,
             static_cast<std::uint32_t>(profile.level),
             ToClassName(profile.classId),
@@ -772,6 +774,64 @@ void RenderDismissBot(
         command.rosterEntryId);
 }
 
+std::optional<model::RosterEntry> ResolveBotRosterEntry(
+    std::uint32_t accountId,
+    std::variant<std::uint32_t, std::string> const& botRef)
+{
+    AccountAltRosterRepository repository;
+    std::vector<model::RosterEntry> entries =
+        repository.GetRosterEntriesForAccount(accountId);
+
+    if (std::uint32_t const* position = std::get_if<std::uint32_t>(&botRef))
+    {
+        if (*position == 0 || *position > static_cast<std::uint32_t>(entries.size()))
+            return std::nullopt;
+        return entries[*position - 1];
+    }
+
+    std::string const& name = std::get<std::string>(botRef);
+    for (model::RosterEntry const& entry : entries)
+        if (entry.controllableProfile.profile.name == name)
+            return entry;
+
+    return std::nullopt;
+}
+
+void HandleBotProfileSet(
+    ChatHandler* handler,
+    BotProfileSetCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    if (!session)
+    {
+        handler->SendErrorMessage("LivingWorld bot profile commands require an in-game session.");
+        return;
+    }
+
+    std::optional<model::RosterEntry> entry =
+        ResolveBotRosterEntry(session->GetAccountId(), command.botRef);
+    if (!entry)
+    {
+        handler->PSendSysMessage("LivingWorld bot not found in roster.");
+        return;
+    }
+
+    std::uint64_t const characterGuid = entry->characterGuid;
+    std::uint8_t const slot = command.profileSlot;
+
+    CharacterDatabase.Execute(
+        "INSERT INTO character_bot_profile_slots (characterGuid, activeSlot) "
+        "VALUES ({}, {}) ON DUPLICATE KEY UPDATE activeSlot = {}",
+        characterGuid,
+        static_cast<std::uint32_t>(slot),
+        static_cast<std::uint32_t>(slot));
+
+    handler->PSendSysMessage(
+        "LivingWorld set active profile slot {} for {}.",
+        static_cast<std::uint32_t>(slot),
+        entry->controllableProfile.profile.name);
+}
+
 bool HandleParsedCommand(
     ChatHandler* handler,
     ParsedCommand const& parsed)
@@ -810,6 +870,13 @@ bool HandleParsedCommand(
         std::get_if<RosterDismissCommand>(&parsed))
     {
         RenderDismissBot(handler, *command);
+        return true;
+    }
+
+    if (BotProfileSetCommand const* command =
+        std::get_if<BotProfileSetCommand>(&parsed))
+    {
+        HandleBotProfileSet(handler, *command);
         return true;
     }
 

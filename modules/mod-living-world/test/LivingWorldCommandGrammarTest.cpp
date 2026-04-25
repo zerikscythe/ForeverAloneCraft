@@ -108,5 +108,103 @@ TEST(LivingWorldCommandGrammarTest, UnknownRosterVerbRejected)
     ASSERT_NE(error, nullptr);
     EXPECT_EQ(error->kind, CommandParseErrorKind::UnknownVerb);
 }
+
+TEST(LivingWorldCommandGrammarTest, ProfileSetParsesPositionAndSlot)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("2 profile 3");
+
+    auto const* set = std::get_if<BotProfileSetCommand>(&cmd);
+    ASSERT_NE(set, nullptr);
+    auto const* position = std::get_if<std::uint32_t>(&set->botRef);
+    ASSERT_NE(position, nullptr);
+    EXPECT_EQ(*position, 2u);
+    EXPECT_EQ(set->profileSlot, 3u);
+}
+
+TEST(LivingWorldCommandGrammarTest, ProfileSetParsesNameAndSlot)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("thrall profile 5");
+
+    auto const* set = std::get_if<BotProfileSetCommand>(&cmd);
+    ASSERT_NE(set, nullptr);
+    auto const* name = std::get_if<std::string>(&set->botRef);
+    ASSERT_NE(name, nullptr);
+    EXPECT_EQ(*name, "Thrall");
+    EXPECT_EQ(set->profileSlot, 5u);
+}
+
+TEST(LivingWorldCommandGrammarTest, ProfileSetNormalizesNameCase)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("ARTHAS profile 1");
+
+    auto const* set = std::get_if<BotProfileSetCommand>(&cmd);
+    ASSERT_NE(set, nullptr);
+    auto const* name = std::get_if<std::string>(&set->botRef);
+    ASSERT_NE(name, nullptr);
+    EXPECT_EQ(*name, "Arthas");
+}
+
+TEST(LivingWorldCommandGrammarTest, ProfileSetAcceptsSlotBoundaries)
+{
+    ParsedCommand cmd1 = ParseLivingWorldCommand("1 profile 1");
+    ParsedCommand cmd10 = ParseLivingWorldCommand("1 profile 10");
+
+    EXPECT_NE(std::get_if<BotProfileSetCommand>(&cmd1), nullptr);
+    EXPECT_NE(std::get_if<BotProfileSetCommand>(&cmd10), nullptr);
+}
+
+TEST(LivingWorldCommandGrammarTest, ProfileSetRejectsSlotZero)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 profile 0");
+
+    auto const* error = std::get_if<CommandParseError>(&cmd);
+    ASSERT_NE(error, nullptr);
+    EXPECT_EQ(error->kind, CommandParseErrorKind::InvalidArgument);
+}
+
+TEST(LivingWorldCommandGrammarTest, ProfileSetRejectsSlotElevenAndAbove)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 profile 11");
+
+    auto const* error = std::get_if<CommandParseError>(&cmd);
+    ASSERT_NE(error, nullptr);
+    EXPECT_EQ(error->kind, CommandParseErrorKind::InvalidArgument);
+}
+
+TEST(LivingWorldCommandGrammarTest, ProfileSetRejectsMissingSlot)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 profile");
+
+    auto const* error = std::get_if<CommandParseError>(&cmd);
+    ASSERT_NE(error, nullptr);
+    EXPECT_EQ(error->kind, CommandParseErrorKind::MissingArgument);
+}
+
+TEST(LivingWorldCommandGrammarTest, ProfileSetRejectsPositionZero)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("0 profile 1");
+
+    auto const* error = std::get_if<CommandParseError>(&cmd);
+    ASSERT_NE(error, nullptr);
+    EXPECT_EQ(error->kind, CommandParseErrorKind::InvalidArgument);
+}
+
+TEST(LivingWorldCommandGrammarTest, ProfileSetRejectsWrongVerbAfterPosition)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("2 spell 3");
+
+    auto const* error = std::get_if<CommandParseError>(&cmd);
+    ASSERT_NE(error, nullptr);
+    EXPECT_EQ(error->kind, CommandParseErrorKind::UnknownVerb);
+}
+
+TEST(LivingWorldCommandGrammarTest, ProfileSetRejectsMissingVerbAfterName)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("Thrall");
+
+    auto const* error = std::get_if<CommandParseError>(&cmd);
+    ASSERT_NE(error, nullptr);
+    EXPECT_EQ(error->kind, CommandParseErrorKind::UnknownVerb);
+}
 } // namespace script
 } // namespace living_world

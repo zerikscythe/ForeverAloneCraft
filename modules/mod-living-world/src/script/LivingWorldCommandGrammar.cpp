@@ -2,6 +2,7 @@
 
 #include <cctype>
 #include <charconv>
+#include <limits>
 
 namespace living_world
 {
@@ -72,6 +73,61 @@ bool ParseUInt64(std::string_view token, std::uint64_t& out)
     }
     out = value;
     return true;
+}
+
+bool IsAlphaOnly(std::string_view token)
+{
+    if (token.empty())
+        return false;
+    for (char c : token)
+        if (!std::isalpha(static_cast<unsigned char>(c)))
+            return false;
+    return true;
+}
+
+// First char upper, rest lower — mirrors WoW's enforced character name format.
+std::string NormalizeCharacterName(std::string_view name)
+{
+    std::string out(name);
+    for (char& c : out)
+        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    if (!out.empty())
+        out[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(out[0])));
+    return out;
+}
+
+ParsedCommand ParseBotProfileCommand(
+    std::variant<std::uint32_t, std::string> botRef,
+    std::string_view remaining)
+{
+    std::string_view verb = ConsumeToken(remaining);
+    if (verb != "profile")
+    {
+        return MakeError(
+            CommandParseErrorKind::UnknownVerb,
+            std::string("expected 'profile', got: ") + std::string(verb));
+    }
+
+    std::string_view slotToken = ConsumeToken(remaining);
+    if (slotToken.empty())
+    {
+        return MakeError(
+            CommandParseErrorKind::MissingArgument,
+            "profile slot required (1-10)");
+    }
+
+    std::uint64_t slot = 0;
+    if (!ParseUInt64(slotToken, slot) || slot < 1 || slot > 10)
+    {
+        return MakeError(
+            CommandParseErrorKind::InvalidArgument,
+            "profile slot must be 1-10");
+    }
+
+    BotProfileSetCommand cmd;
+    cmd.botRef = std::move(botRef);
+    cmd.profileSlot = static_cast<std::uint8_t>(slot);
+    return cmd;
 }
 
 ParsedCommand ParseRosterVerb(
@@ -149,6 +205,29 @@ ParsedCommand ParseLivingWorldCommand(std::string_view arguments)
         firstToken == "dismiss")
     {
         return ParseRosterVerb(firstToken, remaining);
+    }
+
+    // `.lwbot <position> profile <slot>` — numeric roster position (1-N).
+    if (std::isdigit(static_cast<unsigned char>(firstToken.front())))
+    {
+        std::uint64_t position = 0;
+        if (!ParseUInt64(firstToken, position) ||
+            position == 0 ||
+            position > std::numeric_limits<std::uint32_t>::max())
+        {
+            return MakeError(
+                CommandParseErrorKind::InvalidArgument,
+                "bot position must be a positive integer");
+        }
+        return ParseBotProfileCommand(
+            static_cast<std::uint32_t>(position), remaining);
+    }
+
+    // `.lwbot <name> profile <slot>` — character name (alpha only, normalized).
+    if (IsAlphaOnly(firstToken))
+    {
+        return ParseBotProfileCommand(
+            NormalizeCharacterName(firstToken), remaining);
     }
 
     return MakeError(

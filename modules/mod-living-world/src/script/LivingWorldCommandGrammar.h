@@ -11,6 +11,7 @@
 //   .lwbot roster list
 //   .lwbot roster request <rosterEntryId>
 //   .lwbot roster dismiss <rosterEntryId>
+//   .lwbot <position|name> profile <1-10>
 //
 // The parser intentionally produces a structured command object rather
 // than executing anything. Parse errors are returned as a dedicated
@@ -44,6 +45,15 @@ struct RosterDismissCommand
     std::uint64_t rosterEntryId = 0;
 };
 
+// "<position|name> profile <slot>" — switch a bot's active moveset profile.
+// botRef holds either a 1-N roster position (uint32) or a normalized character
+// name (string, first char upper rest lower). profileSlot is 1-10.
+struct BotProfileSetCommand
+{
+    std::variant<std::uint32_t, std::string> botRef;
+    std::uint8_t profileSlot = 1;
+};
+
 // Reasons parsing can fail. Kept coarse so the UX can render one message
 // per reason; fine-grained diagnostics go in the trailing `detail` field.
 enum class CommandParseErrorKind : std::uint8_t
@@ -65,7 +75,8 @@ using ParsedCommand = std::variant<
     CommandParseError,
     RosterListCommand,
     RosterRequestCommand,
-    RosterDismissCommand>;
+    RosterDismissCommand,
+    BotProfileSetCommand>;
 
 // Parse a raw command argument string (everything after `.lwbot `). The
 // input is expected to be trimmed of the command prefix but may still
