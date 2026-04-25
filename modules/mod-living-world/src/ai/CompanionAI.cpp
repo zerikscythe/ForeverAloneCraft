@@ -242,6 +242,69 @@ void TickMelee(Player* bot, Unit* target)
         bot->CastSpell(target, spell, false);
 }
 
+// Socketless bot Players have no client-driven movement, so an Attack() call by
+// itself just plants the bot at follow distance swinging at air. The melee /
+// hybrid combat paths must explicitly drive the motion master into chase mode
+// for the current victim. MotionMaster::MoveChase short-circuits when the
+// active generator is already chasing the same target, so this is cheap to
+// re-issue every tick.
+void EnsureChasingVictim(Player* bot, Unit* target)
+{
+    if (!target)
+        return;
+
+    bot->GetMotionMaster()->MoveChase(target);
+}
+
+// Returns true when this unit is something a bot should engage on the owner's
+// behalf: alive, on the same map, hostile to the owner, and currently flagged
+// as a legal attack target.
+bool IsValidAssistTarget(Player const* owner, Unit const* candidate)
+{
+    if (!candidate || !candidate->IsInWorld() || !candidate->IsAlive())
+        return false;
+    if (candidate == owner)
+        return false;
+    if (candidate->GetMap() != owner->GetMap())
+        return false;
+    if (owner->IsFriendlyTo(candidate))
+        return false;
+    if (!candidate->isTargetableForAttack(true, owner))
+        return false;
+    return true;
+}
+
+// Resolve the unit a bot should be fighting right now.
+//   1. Stick to the bot's current victim if it is still valid (don't drop a
+//      mob mid-fight just because the owner re-clicked something else).
+//   2. Otherwise prefer whatever the owner is actively fighting.
+//   3. Otherwise pick up the owner's selection (right-click target). This is
+//      the hunter-pet "Attack" semantic: owner targets a mob, bots engage.
+Unit* ResolveAssistTarget(Player* bot, Player* owner)
+{
+    if (Unit* current = bot->GetVictim())
+    {
+        if (IsValidAssistTarget(owner, current))
+            return current;
+    }
+
+    if (Unit* ownerVictim = owner->GetVictim())
+    {
+        if (IsValidAssistTarget(owner, ownerVictim))
+            return ownerVictim;
+    }
+
+    ObjectGuid const selectionGuid = owner->GetTarget();
+    if (!selectionGuid)
+        return nullptr;
+
+    Unit* selection = ObjectAccessor::GetUnit(*owner, selectionGuid);
+    if (selection && IsValidAssistTarget(owner, selection))
+        return selection;
+
+    return nullptr;
+}
+
 void Tick(Player* bot, Player* owner)
 {
     BotCombatRole const role = GetCombatRole(bot->getClass());
@@ -253,43 +316,42 @@ void Tick(Player* bot, Player* owner)
         return;
     }
 
-    if (owner->IsInCombat())
+    Unit* const assistTarget = ResolveAssistTarget(bot, owner);
+
+    if (assistTarget)
     {
         if (role == BotCombatRole::HybridHealer)
         {
+            // Hybrid casters still triage owner health first. Only commit to
+            // damage when the owner is healthy enough to take a few seconds
+            // of attention shift.
             if (owner->GetHealthPct() < HybridHealThreshold)
             {
                 TickHealer(bot, owner);
                 return;
             }
 
-            if (!bot->GetVictim())
-            {
-                if (Unit* target = owner->GetVictim())
-                    bot->Attack(target, true);
-            }
+            if (bot->GetVictim() != assistTarget)
+                bot->Attack(assistTarget, true);
 
-            if (Unit* target = bot->GetVictim())
-            {
-                std::uint32_t const spell = GetHybridDamageSpell(bot, target);
-                if (spell && !bot->IsNonMeleeSpellCast(false))
-                    bot->CastSpell(target, spell, false);
-            }
+            EnsureChasingVictim(bot, assistTarget);
+            std::uint32_t const spell = GetHybridDamageSpell(bot, assistTarget);
+            if (spell && !bot->IsNonMeleeSpellCast(false))
+                bot->CastSpell(assistTarget, spell, false);
             return;
         }
 
-        if (!bot->GetVictim())
-        {
-            if (Unit* target = owner->GetVictim())
-                bot->Attack(target, true);
-        }
+        if (bot->GetVictim() != assistTarget)
+            bot->Attack(assistTarget, true);
 
-        if (Unit* target = bot->GetVictim())
+        if (role == BotCombatRole::Ranged)
         {
-            if (role == BotCombatRole::Ranged)
-                TickRanged(bot, target);
-            else if (role == BotCombatRole::Melee)
-                TickMelee(bot, target);
+            TickRanged(bot, assistTarget);
+        }
+        else if (role == BotCombatRole::Melee)
+        {
+            EnsureChasingVictim(bot, assistTarget);
+            TickMelee(bot, assistTarget);
         }
 
         return;

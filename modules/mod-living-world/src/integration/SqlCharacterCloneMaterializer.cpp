@@ -264,14 +264,14 @@ bool EnsureSourceNameLeased(
         return false;
     }
 
-    CharacterDatabase.Execute(
+    CharacterDatabase.DirectExecute(
         "UPDATE characters SET name = {} WHERE guid = {}",
         QuoteSql(runtime.reservedSourceCharacterName),
         runtime.sourceCharacterGuid);
 
     if (sWorld->getBoolConfig(CONFIG_DECLINED_NAMES_USED))
     {
-        CharacterDatabase.Execute(
+        CharacterDatabase.DirectExecute(
             "DELETE FROM character_declinedname WHERE guid = {}",
             runtime.sourceCharacterGuid);
     }
@@ -598,6 +598,19 @@ SqlCharacterCloneMaterializer::MaterializeClone(
     {
         created->reason = "materialized persistent clone character";
     }
+
+    // PlayerDumpReader unconditionally stamps AT_LOGIN_RENAME (and may stamp
+    // AT_LOGIN_FIRST) on any imported character whose requested name collided
+    // with an existing global name -- it falls back to a guid-suffixed temp
+    // name and forces a client-side rename. Bot sessions cannot satisfy that
+    // rename prompt, so the next StartBotLogin would be rejected by
+    // Player::LoadFromDB ("tried to login while forced to rename"). Clear
+    // both flags here regardless of whether a collision happened, so freshly
+    // materialized clones always log in cleanly.
+    // 0x21 == AT_LOGIN_RENAME (0x01) | AT_LOGIN_FIRST (0x20)
+    CharacterDatabase.DirectExecute(
+        "UPDATE characters SET at_login = at_login & ~0x21 WHERE guid = {}",
+        created->cloneCharacterGuid);
 
     LOG_INFO(
         "server.worldserver",
