@@ -104,6 +104,20 @@ void BotSayDeny(Player* bot)
     bot->Say(BotDenyPhrases[idx], LANG_UNIVERSAL);
 }
 
+constexpr std::array<std::string_view, 2> BotTargetNotFoundPhrases =
+{
+    "Who!?",
+    "I don't see them!",
+};
+
+void BotSayTargetNotFound(Player* bot)
+{
+    if (!bot)
+        return;
+    std::uint32_t const idx = urand(0, static_cast<std::uint32_t>(BotTargetNotFoundPhrases.size() - 1));
+    bot->Say(BotTargetNotFoundPhrases[idx], LANG_UNIVERSAL);
+}
+
 struct CommitExecutionSummary
 {
     std::uint32_t spawned = 0;
@@ -1215,13 +1229,13 @@ void HandleBotCast(
         ObjectGuid const selection = player->GetTarget();
         if (!selection)
         {
-            BotSayDeny(bot);
+            BotSayTargetNotFound(bot);
             return;
         }
         target = ObjectAccessor::GetUnit(*player, selection);
         if (!target)
         {
-            BotSayDeny(bot);
+            BotSayTargetNotFound(bot);
             return;
         }
     }
@@ -1230,13 +1244,13 @@ void HandleBotCast(
         ObjectGuid const focus = player->GetGuidValue(PLAYER_FOCUS_TARGET);
         if (!focus)
         {
-            BotSayDeny(bot);
+            BotSayTargetNotFound(bot);
             return;
         }
         target = ObjectAccessor::GetUnit(*player, focus);
         if (!target)
         {
-            BotSayDeny(bot);
+            BotSayTargetNotFound(bot);
             return;
         }
     }
@@ -1245,7 +1259,7 @@ void HandleBotCast(
         target = ObjectAccessor::FindPlayerByName(*command.targetName);
         if (!target)
         {
-            BotSayDeny(bot);
+            BotSayTargetNotFound(bot);
             return;
         }
     }
