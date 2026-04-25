@@ -26,6 +26,7 @@ struct AccountAltDismissalSummary
     bool inventorySynced = false;
     bool bankSynced = false;
     bool namesRestored = false;
+    bool runtimeRetired = false;
     bool manualReviewRequired = false;
     bool blocked = false;
     std::string reason;

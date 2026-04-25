@@ -58,12 +58,22 @@ public:
         ++saveCalls;
     }
 
+    void DeleteRuntime(std::uint64_t runtimeId) override
+    {
+        deletedRuntimeIds.push_back(runtimeId);
+        if (_runtime && _runtime->runtimeId == runtimeId)
+        {
+            _runtime.reset();
+        }
+    }
+
     void Seed(model::AccountAltRuntimeRecord runtime)
     {
         _runtime = std::move(runtime);
     }
 
     std::optional<model::AccountAltRuntimeRecord> savedRuntime;
+    std::vector<std::uint64_t> deletedRuntimeIds;
     int saveCalls = 0;
 
 private:

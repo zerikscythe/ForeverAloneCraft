@@ -7,6 +7,7 @@
 #include "service/AccountAltSanityChecker.h"
 #include "service/AccountAltSyncExecutor.h"
 #include "service/CharacterItemSanityChecker.h"
+#include "Log.h"
 
 #include <algorithm>
 
@@ -41,6 +42,11 @@ AccountAltDismissalService::AccountAltDismissalService(
 AccountAltDismissalSummary AccountAltDismissalService::DismissClone(
     std::uint64_t cloneCharacterGuid) const
 {
+    LOG_INFO(
+        "server.worldserver",
+        "[LivingWorldDebug] DismissClone start cloneGuid={}",
+        cloneCharacterGuid);
+
     AccountAltDismissalSummary summary;
 
     std::optional<model::AccountAltRuntimeRecord> runtime =
@@ -48,10 +54,24 @@ AccountAltDismissalSummary AccountAltDismissalService::DismissClone(
     if (!runtime)
     {
         summary.reason = "no runtime found";
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] DismissClone cloneGuid={} result=NoRuntime",
+            cloneCharacterGuid);
         return summary;
     }
 
     summary.runtimeFound = true;
+    LOG_INFO(
+        "server.worldserver",
+        "[LivingWorldDebug] DismissClone runtimeId={} sourceGuid={} cloneGuid={} "
+        "sourceName='{}' cloneName='{}' state={}",
+        runtime->runtimeId,
+        runtime->sourceCharacterGuid,
+        runtime->cloneCharacterGuid,
+        runtime->sourceCharacterName,
+        runtime->cloneCharacterName,
+        static_cast<std::uint32_t>(runtime->state));
 
     std::optional<model::CharacterProgressSnapshot> sourceSnapshot =
         _snapshotRepository.LoadSnapshot(runtime->sourceCharacterGuid);
@@ -63,6 +83,13 @@ AccountAltDismissalSummary AccountAltDismissalService::DismissClone(
         summary.reason = "progress snapshots could not be loaded";
         summary.namesRestored =
             _nameLeaseRepository.RestoreSourceNameLease(*runtime);
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] DismissClone runtimeId={} result=Blocked "
+            "reason='{}' namesRestored={}",
+            runtime->runtimeId,
+            summary.reason,
+            summary.namesRestored);
         return summary;
     }
 
@@ -88,16 +115,35 @@ AccountAltDismissalSummary AccountAltDismissalService::DismissClone(
         {
             summary.progressSynced = true;
         }
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] DismissClone runtimeId={} recoveryPlan=SyncCloneToSource "
+            "reason='{}' progressSynced={}",
+            runtime->runtimeId,
+            recoveryPlan.reason,
+            summary.progressSynced);
     }
     else if (recoveryPlan.kind == model::AccountAltRecoveryPlanKind::ManualReview)
     {
         summary.manualReviewRequired = true;
         summary.reason = recoveryPlan.reason;
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] DismissClone runtimeId={} recoveryPlan=ManualReview "
+            "reason='{}'",
+            runtime->runtimeId,
+            summary.reason);
     }
     else if (recoveryPlan.kind == model::AccountAltRecoveryPlanKind::Blocked)
     {
         summary.blocked = true;
         summary.reason = recoveryPlan.reason;
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] DismissClone runtimeId={} recoveryPlan=Blocked "
+            "reason='{}'",
+            runtime->runtimeId,
+            summary.reason);
     }
 
     std::optional<model::CharacterItemSnapshot> sourceItems =
@@ -131,6 +177,13 @@ AccountAltDismissalSummary AccountAltDismissalService::DismissClone(
             {
                 summary.equipmentSynced = true;
             }
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] DismissClone runtimeId={} itemPlan=SyncEquipmentToSource "
+                "reason='{}' equipmentSynced={}",
+                runtime->runtimeId,
+                itemPlan.reason,
+                summary.equipmentSynced);
         }
         else if (itemPlan.kind ==
                  model::AccountAltItemRecoveryPlanKind::SyncBagDomainsToSource)
@@ -161,6 +214,13 @@ AccountAltDismissalSummary AccountAltDismissalService::DismissClone(
                 {
                     summary.inventorySynced = true;
                 }
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] DismissClone runtimeId={} itemPlan=Inventory "
+                    "reason='{}' inventorySynced={}",
+                    runtime->runtimeId,
+                    itemPlan.reason,
+                    summary.inventorySynced);
             }
 
             if (shouldSyncDomain(model::AccountAltSyncDomain::Bank))
@@ -180,6 +240,13 @@ AccountAltDismissalSummary AccountAltDismissalService::DismissClone(
                 {
                     summary.bankSynced = true;
                 }
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] DismissClone runtimeId={} itemPlan=Bank "
+                    "reason='{}' bankSynced={}",
+                    runtime->runtimeId,
+                    itemPlan.reason,
+                    summary.bankSynced);
             }
         }
         else if (itemPlan.kind ==
@@ -190,6 +257,12 @@ AccountAltDismissalSummary AccountAltDismissalService::DismissClone(
             {
                 summary.reason = itemPlan.reason;
             }
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] DismissClone runtimeId={} itemPlan=ManualReview "
+                "reason='{}'",
+                runtime->runtimeId,
+                itemPlan.reason);
         }
         else if (itemPlan.kind == model::AccountAltItemRecoveryPlanKind::Blocked)
         {
@@ -198,15 +271,47 @@ AccountAltDismissalSummary AccountAltDismissalService::DismissClone(
             {
                 summary.reason = itemPlan.reason;
             }
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] DismissClone runtimeId={} itemPlan=Blocked "
+                "reason='{}'",
+                runtime->runtimeId,
+                itemPlan.reason);
         }
     }
     else if (!summary.blocked && !summary.manualReviewRequired)
     {
         summary.blocked = true;
         summary.reason = "item snapshots could not be loaded";
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] DismissClone runtimeId={} result=Blocked "
+            "reason='{}'",
+            runtime->runtimeId,
+            summary.reason);
     }
 
     summary.namesRestored = _nameLeaseRepository.RestoreSourceNameLease(*runtime);
+    if (!summary.manualReviewRequired && !summary.blocked && summary.namesRestored)
+    {
+        _runtimeRepository.DeleteRuntime(runtime->runtimeId);
+        summary.runtimeRetired = true;
+    }
+    LOG_INFO(
+        "server.worldserver",
+        "[LivingWorldDebug] DismissClone summary runtimeId={} progress={} "
+        "equipment={} inventory={} bank={} namesRestored={} runtimeRetired={} "
+        "manualReview={} blocked={} reason='{}'",
+        runtime->runtimeId,
+        summary.progressSynced,
+        summary.equipmentSynced,
+        summary.inventorySynced,
+        summary.bankSynced,
+        summary.namesRestored,
+        summary.runtimeRetired,
+        summary.manualReviewRequired,
+        summary.blocked,
+        summary.reason);
     return summary;
 }
 } // namespace service

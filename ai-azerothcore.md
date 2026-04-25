@@ -414,6 +414,13 @@ Current state as of the first foundation + first runtime command slice:
   The owner-triggered path now starts in `OnPlayerBeforeLogout` and explicitly
   calls `botSession->LogoutPlayer(true)` so clone recovery, item sync, and name
   release execute on the normal bot logout path.
+- Successful dismissal no longer leaves a persistent `Active` runtime row
+  behind. `AccountAltDismissalService` now retires the runtime after a clean
+  sync/name-restore pass, while `SqlBotAccountPoolRepository` reuses the same
+  reserved BOTHOUSE account for that source alt on the next spawn. Fresh clone
+  materialization on a reserved account deletes stale leftover clone bodies
+  before re-importing from the live source, so offline source-side gear/item
+  changes do not get misread as clone-authoritative recovery work later.
 - Local runtime validation has reached a working end-to-end WotLK install:
   MySQL 8, authserver, worldserver, extracted dbc/maps/vmaps/mmaps, client
   login, character creation, and starting-zone entry. This validates the

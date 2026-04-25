@@ -187,5 +187,12 @@ void SqlAccountAltRuntimeRepository::SaveRuntime(
         runtime.cloneSnapshot.experience,
         runtime.cloneSnapshot.money);
 }
+
+void SqlAccountAltRuntimeRepository::DeleteRuntime(std::uint64_t runtimeId)
+{
+    CharacterDatabase.Execute(
+        "DELETE FROM living_world_account_alt_runtime WHERE runtime_id = {}",
+        runtimeId);
+}
 } // namespace integration
 } // namespace living_world

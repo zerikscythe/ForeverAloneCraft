@@ -22,6 +22,8 @@ public:
 
     void SaveRuntime(
         model::AccountAltRuntimeRecord const& runtime) override;
+
+    void DeleteRuntime(std::uint64_t runtimeId) override;
 };
 } // namespace integration
 } // namespace living_world

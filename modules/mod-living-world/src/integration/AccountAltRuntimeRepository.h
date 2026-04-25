@@ -31,6 +31,8 @@ public:
 
     virtual void SaveRuntime(
         model::AccountAltRuntimeRecord const& runtime) = 0;
+
+    virtual void DeleteRuntime(std::uint64_t runtimeId) = 0;
 };
 } // namespace integration
 } // namespace living_world

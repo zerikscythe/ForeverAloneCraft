@@ -39,6 +39,10 @@ public:
         ++saveCalls;
     }
 
+    void DeleteRuntime(std::uint64_t) override
+    {
+    }
+
     std::optional<model::AccountAltRuntimeRecord> savedRuntime;
     int saveCalls = 0;
 };

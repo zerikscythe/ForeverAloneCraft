@@ -22,6 +22,7 @@
 #include "ScriptMgr.h"
 #include "TradeData.h"
 #include "WorldSession.h"
+#include "Log.h"
 
 #include <optional>
 #include <unordered_set>
@@ -94,6 +95,19 @@ void RunOwnerStartupRecovery(Player* player)
             summary.manualReviewRequired,
             summary.blocked);
     }
+
+    LOG_INFO(
+        "server.worldserver",
+        "[LivingWorldDebug] OwnerLoginRecovery character='{}' guid={} accountId={} "
+        "scanned={} recovered={} pending={} manualReview={} blocked={}",
+        player->GetName(),
+        player->GetGUID().GetCounter(),
+        player->GetSession()->GetAccountId(),
+        summary.scanned,
+        summary.recoveredSyncs,
+        summary.pendingRecovery,
+        summary.manualReviewRequired,
+        summary.blocked);
 }
 
 void AddBotToOwnerGroup(Player* bot, Player* owner)
@@ -246,7 +260,25 @@ void RunBotDismissalRecovery(Player* player)
         recoveryService,
         itemRecoveryOptions);
 
-    dismissalService.DismissClone(player->GetGUID().GetCounter());
+    living_world::service::AccountAltDismissalSummary summary =
+        dismissalService.DismissClone(player->GetGUID().GetCounter());
+    LOG_INFO(
+        "server.worldserver",
+        "[LivingWorldDebug] BotLogoutRecovery character='{}' guid={} "
+        "runtimeFound={} progress={} equipment={} inventory={} bank={} "
+        "namesRestored={} runtimeRetired={} manualReview={} blocked={} reason='{}'",
+        player->GetName(),
+        player->GetGUID().GetCounter(),
+        summary.runtimeFound,
+        summary.progressSynced,
+        summary.equipmentSynced,
+        summary.inventorySynced,
+        summary.bankSynced,
+        summary.namesRestored,
+        summary.runtimeRetired,
+        summary.manualReviewRequired,
+        summary.blocked,
+        summary.reason);
 }
 } // namespace
 

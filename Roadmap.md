@@ -388,6 +388,12 @@ design and foundation code.
   session's real `LogoutPlayer(true)` path rather than `KickPlayer()`. This is
   important for socketless bot sessions because recovery/name-release/item-sync
   work lives on the normal logout path.
+- Clean dismissal now retires the runtime row after successful sync/name
+  restore instead of leaving a stale `Active` record behind. Bot accounts stay
+  reserved to the source alt, and fresh spawn on that reserved account now
+  deletes any stale leftover clone body before rebuilding from the current
+  source state. This prevents old offline clone equipment from being treated as
+  authoritative after the real source alt logs in and changes gear/items.
 
 9.5 Decide whether generic bots and account alts share one runtime pipeline — **Not Started**
 

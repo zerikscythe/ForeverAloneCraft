@@ -65,8 +65,14 @@ public:
         savedRuntimes.push_back(runtime);
     }
 
+    void DeleteRuntime(std::uint64_t runtimeId) override
+    {
+        deletedRuntimeIds.push_back(runtimeId);
+    }
+
     std::vector<model::AccountAltRuntimeRecord> runtimes;
     std::vector<model::AccountAltRuntimeRecord> savedRuntimes;
+    std::vector<std::uint64_t> deletedRuntimeIds;
 };
 
 class FakeSnapshotRepository final

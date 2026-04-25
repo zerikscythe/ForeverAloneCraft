@@ -5,6 +5,7 @@
 #include "Log.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
+#include "Player.h"
 #include "QueryResult.h"
 #include "PlayerDump.h"
 #include "World.h"
@@ -74,6 +75,29 @@ std::optional<CharacterCloneMaterializationResult> LoadExistingClone(
     clone.cloneSnapshot.money = fields[4].Get<std::uint32_t>();
     clone.reason = "reused existing clone character";
     return clone;
+}
+
+bool DeleteOfflineCloneCharacter(
+    std::uint32_t accountId,
+    std::uint64_t cloneCharacterGuid,
+    std::string const& cloneCharacterName)
+{
+    if (cloneCharacterGuid == 0)
+    {
+        return false;
+    }
+
+    ObjectGuid cloneGuid =
+        ObjectGuid::Create<HighGuid::Player>(cloneCharacterGuid);
+    if (ObjectAccessor::FindConnectedPlayer(cloneGuid) ||
+        sWorldSessionMgr->FindOfflineSessionForCharacterGUID(cloneCharacterGuid))
+    {
+        return false;
+    }
+
+    Player::DeleteFromDB(cloneCharacterGuid, accountId, true, true);
+    sCharacterCache->DeleteCharacterCacheEntry(cloneGuid, cloneCharacterName);
+    return true;
 }
 
 bool EnsureSourceNameLeased(
@@ -233,17 +257,47 @@ SqlCharacterCloneMaterializer::MaterializeClone(
     if (std::optional<CharacterCloneMaterializationResult> existing =
         LoadExistingClone(runtime.cloneAccountId, cloneName))
     {
-        LOG_INFO(
-            "server.worldserver",
-            "[LivingWorldDebug] MaterializeClone reused existing clone "
-            "runtimeId={} cloneGuid={} cloneName='{}' level={} xp={} money={}",
-            runtime.runtimeId,
-            existing->cloneCharacterGuid,
-            existing->cloneCharacterName,
-            static_cast<std::uint32_t>(existing->cloneSnapshot.level),
-            existing->cloneSnapshot.experience,
-            existing->cloneSnapshot.money);
-        return *existing;
+        if (runtime.cloneCharacterGuid == 0)
+        {
+                if (!DeleteOfflineCloneCharacter(
+                    runtime.cloneAccountId,
+                    existing->cloneCharacterGuid,
+                    existing->cloneCharacterName))
+            {
+                result.reason =
+                    "stale clone could not be removed before refresh";
+                LOG_ERROR(
+                    "server.worldserver",
+                    "[LivingWorldDebug] MaterializeClone stale visible-name clone "
+                    "delete failed runtimeId={} cloneGuid={} cloneName='{}'",
+                    runtime.runtimeId,
+                    existing->cloneCharacterGuid,
+                    existing->cloneCharacterName);
+                return result;
+            }
+
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] MaterializeClone deleted stale visible-name "
+                "clone runtimeId={} cloneGuid={} cloneName='{}'",
+                runtime.runtimeId,
+                existing->cloneCharacterGuid,
+                existing->cloneCharacterName);
+        }
+        else
+        {
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] MaterializeClone reused existing clone "
+                "runtimeId={} cloneGuid={} cloneName='{}' level={} xp={} money={}",
+                runtime.runtimeId,
+                existing->cloneCharacterGuid,
+                existing->cloneCharacterName,
+                static_cast<std::uint32_t>(existing->cloneSnapshot.level),
+                existing->cloneSnapshot.experience,
+                existing->cloneSnapshot.money);
+            return *existing;
+        }
     }
 
     if (!runtime.reservedSourceCharacterName.empty())
@@ -253,14 +307,44 @@ SqlCharacterCloneMaterializer::MaterializeClone(
                     runtime.cloneAccountId,
                     runtime.reservedSourceCharacterName))
         {
-            LOG_INFO(
-                "server.worldserver",
-                "[LivingWorldDebug] MaterializeClone reused legacy hidden-name "
-                "clone runtimeId={} cloneGuid={} cloneName='{}'",
-                runtime.runtimeId,
-                legacyClone->cloneCharacterGuid,
-                legacyClone->cloneCharacterName);
-            return *legacyClone;
+            if (runtime.cloneCharacterGuid == 0)
+            {
+                if (!DeleteOfflineCloneCharacter(
+                        runtime.cloneAccountId,
+                        legacyClone->cloneCharacterGuid,
+                        legacyClone->cloneCharacterName))
+                {
+                    result.reason =
+                        "stale clone could not be removed before refresh";
+                    LOG_ERROR(
+                        "server.worldserver",
+                        "[LivingWorldDebug] MaterializeClone stale hidden-name clone "
+                        "delete failed runtimeId={} cloneGuid={} cloneName='{}'",
+                        runtime.runtimeId,
+                        legacyClone->cloneCharacterGuid,
+                        legacyClone->cloneCharacterName);
+                    return result;
+                }
+
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] MaterializeClone deleted stale hidden-name "
+                    "clone runtimeId={} cloneGuid={} cloneName='{}'",
+                    runtime.runtimeId,
+                    legacyClone->cloneCharacterGuid,
+                    legacyClone->cloneCharacterName);
+            }
+            else
+            {
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] MaterializeClone reused legacy hidden-name "
+                    "clone runtimeId={} cloneGuid={} cloneName='{}'",
+                    runtime.runtimeId,
+                    legacyClone->cloneCharacterGuid,
+                    legacyClone->cloneCharacterName);
+                return *legacyClone;
+            }
         }
     }
 

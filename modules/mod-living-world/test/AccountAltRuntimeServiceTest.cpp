@@ -61,6 +61,14 @@ public:
         _runtime = runtime;
     }
 
+    void DeleteRuntime(std::uint64_t runtimeId) override
+    {
+        if (_runtime && _runtime->runtimeId == runtimeId)
+        {
+            _runtime.reset();
+        }
+    }
+
     std::optional<model::AccountAltRuntimeRecord> savedRuntime;
 
 private:

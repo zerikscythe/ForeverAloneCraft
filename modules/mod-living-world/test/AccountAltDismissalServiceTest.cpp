@@ -56,12 +56,22 @@ public:
         savedRuntimes.push_back(runtime);
     }
 
+    void DeleteRuntime(std::uint64_t runtimeId) override
+    {
+        deletedRuntimeIds.push_back(runtimeId);
+        if (_runtime && _runtime->runtimeId == runtimeId)
+        {
+            _runtime.reset();
+        }
+    }
+
     void Seed(model::AccountAltRuntimeRecord runtime)
     {
         _runtime = runtime;
     }
 
     std::vector<model::AccountAltRuntimeRecord> savedRuntimes;
+    std::vector<std::uint64_t> deletedRuntimeIds;
 
 private:
     std::optional<model::AccountAltRuntimeRecord> _runtime;
@@ -211,6 +221,7 @@ public:
 model::AccountAltRuntimeRecord BuildRuntime()
 {
     model::AccountAltRuntimeRecord runtime;
+    runtime.runtimeId = 101;
     runtime.sourceAccountId = 7;
     runtime.sourceCharacterGuid = 9001;
     runtime.cloneAccountId = 701;
@@ -276,11 +287,14 @@ TEST(AccountAltDismissalServiceTest, SyncsProgressAndRestoresNamesOnDismiss)
     EXPECT_FALSE(summary.inventorySynced);
     EXPECT_FALSE(summary.bankSynced);
     EXPECT_TRUE(summary.namesRestored);
+    EXPECT_TRUE(summary.runtimeRetired);
     EXPECT_FALSE(summary.manualReviewRequired);
     EXPECT_FALSE(summary.blocked);
     EXPECT_EQ(syncRepository.syncCalls, 1);
     EXPECT_EQ(syncRepository.lastSyncedGuid, 9001u);
     EXPECT_EQ(nameLeaseRepository.restoreCalls, 1);
+    ASSERT_EQ(runtimeRepository.deletedRuntimeIds.size(), 1u);
+    EXPECT_EQ(runtimeRepository.deletedRuntimeIds.front(), 101u);
 }
 
 TEST(AccountAltDismissalServiceTest, FlagsManualReviewButStillRestoresNames)
@@ -320,8 +334,10 @@ TEST(AccountAltDismissalServiceTest, FlagsManualReviewButStillRestoresNames)
     EXPECT_FALSE(summary.bankSynced);
     EXPECT_TRUE(summary.manualReviewRequired);
     EXPECT_TRUE(summary.namesRestored);
+    EXPECT_FALSE(summary.runtimeRetired);
     EXPECT_EQ(syncRepository.syncCalls, 0);
     EXPECT_EQ(nameLeaseRepository.restoreCalls, 1);
+    EXPECT_TRUE(runtimeRepository.deletedRuntimeIds.empty());
 }
 
 TEST(AccountAltDismissalServiceTest, SyncsInventoryWhenPolicyEnablesIt)
@@ -388,8 +404,11 @@ TEST(AccountAltDismissalServiceTest, SyncsInventoryWhenPolicyEnablesIt)
     EXPECT_TRUE(summary.inventorySynced);
     EXPECT_FALSE(summary.bankSynced);
     EXPECT_TRUE(summary.namesRestored);
+    EXPECT_TRUE(summary.runtimeRetired);
     EXPECT_EQ(inventorySyncRepository.syncCalls, 1);
     EXPECT_EQ(bankSyncRepository.syncCalls, 0);
+    ASSERT_EQ(runtimeRepository.deletedRuntimeIds.size(), 1u);
+    EXPECT_EQ(runtimeRepository.deletedRuntimeIds.front(), 101u);
 }
 } // namespace service
 } // namespace living_world
