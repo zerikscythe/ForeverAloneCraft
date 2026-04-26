@@ -728,17 +728,30 @@ void Tick(Player* bot, Player* owner)
 class CompanionAIEvent final : public BasicEvent
 {
 public:
-    CompanionAIEvent(ObjectGuid botGuid, ObjectGuid ownerGuid)
-        : _botGuid(botGuid), _ownerGuid(ownerGuid)
+    CompanionAIEvent(ObjectGuid botGuid, ObjectGuid ownerGuid, std::uint8_t notInWorldRetries = 0)
+        : _botGuid(botGuid), _ownerGuid(ownerGuid), _notInWorldRetries(notInWorldRetries)
     {
     }
 
     bool Execute(uint64, uint32) override
     {
-        Player* bot   = ObjectAccessor::FindPlayer(_botGuid);
-        Player* owner = ObjectAccessor::FindPlayer(_ownerGuid);
-        if (!bot || !owner || !bot->IsInWorld() || !owner->IsInWorld())
+        Player* bot   = ObjectAccessor::FindConnectedPlayer(_botGuid);
+        Player* owner = ObjectAccessor::FindConnectedPlayer(_ownerGuid);
+        if (!bot || !owner)
             return true;
+
+        if (!bot->IsInWorld() || !owner->IsInWorld())
+        {
+            if (_notInWorldRetries >= MaxNotInWorldRetries)
+                return true;
+
+            // Backoff: 500ms, 1s, 2s, 4s, 4s, 4s, ...
+            Milliseconds const delay = 500ms * (1u << std::min(_notInWorldRetries, std::uint8_t{3}));
+            bot->m_Events.AddEventAtOffset(
+                new CompanionAIEvent(_botGuid, _ownerGuid, _notInWorldRetries + 1),
+                delay);
+            return true;
+        }
 
         Tick(bot, owner);
         bot->m_Events.AddEventAtOffset(
@@ -748,8 +761,11 @@ public:
     }
 
 private:
-    ObjectGuid _botGuid;
-    ObjectGuid _ownerGuid;
+    static constexpr std::uint8_t MaxNotInWorldRetries = 20;
+
+    ObjectGuid  _botGuid;
+    ObjectGuid  _ownerGuid;
+    std::uint8_t _notInWorldRetries;
 };
 } // namespace
 

@@ -32,6 +32,52 @@ namespace
 {
 std::unordered_set<std::uint64_t> s_openedControlledTradeWindows;
 
+void CleanupStaleGroupBots(Player* player)
+{
+    if (!player || !player->GetSession())
+    {
+        return;
+    }
+
+    Group* group = player->GetGroup();
+    if (!group)
+    {
+        return;
+    }
+
+    QueryResult result = CharacterDatabase.Query(
+        "SELECT clone_character_guid FROM living_world_account_alt_runtime "
+        "WHERE source_account_id = {} AND clone_character_guid IS NOT NULL "
+        "AND clone_character_guid != 0",
+        player->GetSession()->GetAccountId());
+    if (!result)
+    {
+        return;
+    }
+
+    std::vector<ObjectGuid> toRemove;
+    do
+    {
+        std::uint64_t cloneGuidLow = (*result)[0].Get<std::uint64_t>();
+        ObjectGuid guid = ObjectGuid::Create<HighGuid::Player>(cloneGuidLow);
+        if (group->IsMember(guid) && !ObjectAccessor::FindPlayer(guid))
+        {
+            toRemove.push_back(guid);
+        }
+    } while (result->NextRow());
+
+    for (ObjectGuid const& guid : toRemove)
+    {
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] CleanupStaleGroupBots removing offline clone "
+            "guid={} from owner='{}' group on login.",
+            guid.GetCounter(),
+            player->GetName());
+        group->RemoveMember(guid, GROUP_REMOVEMETHOD_LEAVE);
+    }
+}
+
 void RunOwnerStartupRecovery(Player* player)
 {
     if (!player || !player->GetSession())
@@ -82,7 +128,7 @@ void RunOwnerStartupRecovery(Player* player)
         living_world::script::SendPlayerLog(
             &handler,
             static_cast<std::uint8_t>(
-                living_world::script::PlayerChatLogLevel::Normal),
+                living_world::script::PlayerChatLogLevel::BareMinimum),
             "LivingWorld recovered {} interrupted account-alt sync(s) on login.",
             summary.recoveredSyncs);
     }
@@ -91,7 +137,7 @@ void RunOwnerStartupRecovery(Player* player)
         living_world::script::SendPlayerLog(
             &handler,
             static_cast<std::uint8_t>(
-                living_world::script::PlayerChatLogLevel::Minimal),
+                living_world::script::PlayerChatLogLevel::BareMinimum),
             "LivingWorld found {} account-alt runtime(s) that still need recovery before reuse.",
             summary.pendingRecovery);
     }
@@ -100,7 +146,7 @@ void RunOwnerStartupRecovery(Player* player)
         living_world::script::SendPlayerLog(
             &handler,
             static_cast<std::uint8_t>(
-                living_world::script::PlayerChatLogLevel::Minimal),
+                living_world::script::PlayerChatLogLevel::BareMinimum),
             "LivingWorld found {} runtime(s) needing manual review and {} blocked runtime(s).",
             summary.manualReviewRequired,
             summary.blocked);
@@ -396,6 +442,7 @@ public:
 
         if (!player->GetSession()->IsBotSession())
         {
+            CleanupStaleGroupBots(player);
             RunOwnerStartupRecovery(player);
             return;
         }

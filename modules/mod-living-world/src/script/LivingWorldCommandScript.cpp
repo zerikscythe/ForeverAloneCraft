@@ -250,7 +250,7 @@ std::string_view ToParseErrorText(CommandParseErrorKind kind)
 void RenderUsage(ChatHandler* handler)
 {
     handler->PSendSysMessage("LivingWorld usage:");
-    handler->PSendSysMessage("  .lw loglevel <0-3>");
+    handler->PSendSysMessage("  .lw loglevel <1-4>");
     handler->PSendSysMessage("  .lwbot list");
     handler->PSendSysMessage("  .lwbot request <rosterEntryId>");
     handler->PSendSysMessage("  .lwbot dismiss <rosterEntryId>");
@@ -601,7 +601,7 @@ bool ExecuteSpawnRosterBodyAction(
     {
         SendPlayerLog(
             handler,
-            static_cast<std::uint8_t>(PlayerChatLogLevel::Minimal),
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
             "LivingWorld roster entry {} is already logging in; please wait.",
             action.rosterEntryId);
         return true;
@@ -615,7 +615,7 @@ bool ExecuteSpawnRosterBodyAction(
         {
             SendPlayerLog(
                 handler,
-                static_cast<std::uint8_t>(PlayerChatLogLevel::Minimal),
+                static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
                 "LivingWorld already has another bot login pending for this owner; please wait.",
                 action.rosterEntryId);
             return false;
@@ -668,7 +668,7 @@ bool ExecuteSpawnRosterBodyAction(
     {
         SendPlayerLog(
             handler,
-            static_cast<std::uint8_t>(PlayerChatLogLevel::Minimal),
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
             "LivingWorld blocked account-alt spawn for entry {}: {} ({})",
             action.rosterEntryId,
             ToAccountAltSpawnDecisionText(spawnDecision.kind),
@@ -691,7 +691,7 @@ bool ExecuteSpawnRosterBodyAction(
     {
         SendPlayerLog(
             handler,
-            static_cast<std::uint8_t>(PlayerChatLogLevel::Minimal),
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
             "LivingWorld failed to queue account-alt bot login for entry {}: {}.",
             action.rosterEntryId,
             ToBotSpawnStatusText(spawnResult.status));
@@ -700,7 +700,7 @@ bool ExecuteSpawnRosterBodyAction(
 
     SendPlayerLog(
         handler,
-        static_cast<std::uint8_t>(PlayerChatLogLevel::Normal),
+        static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
         "LivingWorld queued account-alt bot login for entry {} using bot "
         "account {} ({}).",
         action.rosterEntryId,
@@ -747,7 +747,7 @@ bool ExecuteAttachToPartyAction(
 
         SendPlayerLog(
             handler,
-            static_cast<std::uint8_t>(PlayerChatLogLevel::Normal),
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
             "LivingWorld queued roster entry {}; bot login is still pending.",
             action.rosterEntryId);
         return true;
@@ -849,9 +849,17 @@ public:
         std::uint32_t accountId) const override
     {
         std::vector<model::RosterEntry> entries;
+        // COALESCE: when the source alt is parked its characters.name is a
+        // garbage placeholder — use sourceCharacterName from the runtime row
+        // (the original visible name) so that name-based lookups keep working.
         QueryResult result = CharacterDatabase.Query(
-            "SELECT guid, name, race, class, level FROM characters "
-            "WHERE account = {} ORDER BY guid ASC",
+            "SELECT c.guid, COALESCE(r.source_character_name, c.name) AS name, "
+            "c.race, c.class, c.level "
+            "FROM characters c "
+            "LEFT JOIN living_world_account_alt_runtime r "
+            "  ON r.source_character_guid = c.guid AND r.source_account_id = {} "
+            "WHERE c.account = {} ORDER BY c.guid ASC",
+            accountId,
             accountId);
 
         if (!result)
@@ -872,8 +880,13 @@ public:
         std::uint64_t rosterEntryId) const override
     {
         QueryResult result = CharacterDatabase.Query(
-            "SELECT guid, name, race, class, level FROM characters "
-            "WHERE account = {} AND guid = {} LIMIT 1",
+            "SELECT c.guid, COALESCE(r.source_character_name, c.name) AS name, "
+            "c.race, c.class, c.level "
+            "FROM characters c "
+            "LEFT JOIN living_world_account_alt_runtime r "
+            "  ON r.source_character_guid = c.guid AND r.source_account_id = {} "
+            "WHERE c.account = {} AND c.guid = {} LIMIT 1",
+            accountId,
             accountId,
             rosterEntryId);
 
@@ -975,14 +988,14 @@ void RenderRosterList(ChatHandler* handler)
     {
         SendPlayerLog(
             handler,
-            static_cast<std::uint8_t>(PlayerChatLogLevel::Minimal),
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
             "LivingWorld roster: no account characters found.");
         return;
     }
 
     SendPlayerLog(
         handler,
-        static_cast<std::uint8_t>(PlayerChatLogLevel::Minimal),
+        static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
         "LivingWorld roster entries:");
     std::uint32_t position = 1;
     for (model::RosterEntry const& entry : entries)
@@ -990,7 +1003,7 @@ void RenderRosterList(ChatHandler* handler)
         model::BotProfile const& profile = entry.controllableProfile.profile;
         SendPlayerLog(
             handler,
-            static_cast<std::uint8_t>(PlayerChatLogLevel::Minimal),
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
             "  [{}] {} lvl {} {} ({}){}",
             position++,
             profile.name,
@@ -1019,7 +1032,7 @@ void RenderRosterRequest(
     {
         SendPlayerLog(
             handler,
-            static_cast<std::uint8_t>(PlayerChatLogLevel::Minimal),
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
             "LivingWorld bot not found in roster.");
         return;
     }
@@ -1028,7 +1041,7 @@ void RenderRosterRequest(
     {
         SendPlayerLog(
             handler,
-            static_cast<std::uint8_t>(PlayerChatLogLevel::Minimal),
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
             "LivingWorld cannot spawn the character you are currently logged in on.");
         return;
     }
@@ -1060,7 +1073,7 @@ void RenderRosterRequest(
     {
         SendPlayerLog(
             handler,
-            static_cast<std::uint8_t>(PlayerChatLogLevel::Minimal),
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
             "LivingWorld roster request rejected: {}.",
             ToFailureText(result.failureReason));
         return;
@@ -1068,7 +1081,7 @@ void RenderRosterRequest(
 
     SendPlayerLog(
         handler,
-        static_cast<std::uint8_t>(PlayerChatLogLevel::Minimal),
+        static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
         "LivingWorld roster request approved for {}.",
         entry->controllableProfile.profile.name);
     CommitExecutionSummary const execution = ExecuteCommitActions(
@@ -1077,7 +1090,7 @@ void RenderRosterRequest(
         result.commitActions);
     SendPlayerLog(
         handler,
-        static_cast<std::uint8_t>(PlayerChatLogLevel::Normal),
+        static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
         "LivingWorld commit result: spawned {}, attached {}, skipped {}, failed {}.",
         execution.spawned,
         execution.attachedToFollow,
@@ -1103,7 +1116,7 @@ void RenderDismissBot(
     {
         SendPlayerLog(
             handler,
-            static_cast<std::uint8_t>(PlayerChatLogLevel::Minimal),
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
             "LivingWorld bot not found in roster.");
         return;
     }
@@ -1112,7 +1125,7 @@ void RenderDismissBot(
     {
         SendPlayerLog(
             handler,
-            static_cast<std::uint8_t>(PlayerChatLogLevel::Minimal),
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
             "LivingWorld cannot dismiss the character you are currently logged in on.");
         return;
     }
@@ -1145,7 +1158,7 @@ void RenderDismissBot(
         {
             SendPlayerLog(
                 handler,
-                static_cast<std::uint8_t>(PlayerChatLogLevel::Minimal),
+                static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
                 "LivingWorld no active bot found for {}.",
                 entry->controllableProfile.profile.name);
         }
@@ -1187,7 +1200,7 @@ void RenderDismissBot(
         bot->GetSession()->LogoutPlayer(true);
     SendPlayerLog(
         handler,
-        static_cast<std::uint8_t>(PlayerChatLogLevel::Minimal),
+        static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
         "LivingWorld dismissed {}.",
         entry->controllableProfile.profile.name);
 }
@@ -1262,7 +1275,7 @@ void HandleBotCast(
     {
         SendPlayerLog(
             handler,
-            static_cast<std::uint8_t>(PlayerChatLogLevel::Minimal),
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
             "LivingWorld bot not found in roster.");
         return;
     }
@@ -1271,7 +1284,7 @@ void HandleBotCast(
     {
         SendPlayerLog(
             handler,
-            static_cast<std::uint8_t>(PlayerChatLogLevel::Minimal),
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
             "LivingWorld cannot command the character you are logged in on.");
         return;
     }
@@ -1282,7 +1295,7 @@ void HandleBotCast(
     {
         SendPlayerLog(
             handler,
-            static_cast<std::uint8_t>(PlayerChatLogLevel::Minimal),
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
             "LivingWorld {} is not active. Use '.lwbot request <id>' first.",
             entry->controllableProfile.profile.name);
         return;
@@ -1373,7 +1386,7 @@ void HandleBotProfileSet(
     {
         SendPlayerLog(
             handler,
-            static_cast<std::uint8_t>(PlayerChatLogLevel::Minimal),
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
             "LivingWorld bot not found in roster.");
         return;
     }
@@ -1382,7 +1395,7 @@ void HandleBotProfileSet(
     {
         SendPlayerLog(
             handler,
-            static_cast<std::uint8_t>(PlayerChatLogLevel::Minimal),
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
             "LivingWorld cannot switch profiles for the character you are currently logged in on.");
         return;
     }
@@ -1399,7 +1412,7 @@ void HandleBotProfileSet(
 
     SendPlayerLog(
         handler,
-        static_cast<std::uint8_t>(PlayerChatLogLevel::Minimal),
+        static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
         "LivingWorld set active profile slot {} for {}.",
         static_cast<std::uint32_t>(slot),
         entry->controllableProfile.profile.name);
@@ -1473,7 +1486,7 @@ public:
 
     ChatCommandTable GetCommands() const override
     {
-        static ChatCommandTable commandTable =
+        ChatCommandTable commandTable =
         {
             { "lw", HandleLivingWorldRootCommand, SEC_PLAYER, Console::No },
             { "lwbot", HandleLivingWorldCommand, SEC_PLAYER, Console::No }
@@ -1508,7 +1521,7 @@ private:
         if (arguments.empty())
         {
             handler->PSendSysMessage(
-                "LivingWorld command error: missing argument (loglevel requires 0-3)");
+                "LivingWorld command error: missing argument (loglevel requires 1-4)");
             return true;
         }
 
@@ -1519,10 +1532,11 @@ private:
             level);
         if (parseResult.ec != std::errc{} ||
             parseResult.ptr != arguments.data() + arguments.size() ||
+            level < living_world::script::DefaultPlayerChatLogLevel ||
             level > living_world::script::MaxPlayerChatLogLevel)
         {
             handler->PSendSysMessage(
-                "LivingWorld command error: invalid argument (loglevel must be 0-3)");
+                "LivingWorld command error: invalid argument (loglevel must be 1-4)");
             return true;
         }
 

@@ -1,0 +1,15 @@
+[33mc4c3642fa[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m)[m Add player-local LivingWorld chat log level control
+[33m835ff3556[m[33m ([m[1;31mforeveralonecraft/master[m[33m, [m[1;31mforeveralonecraft/claude/expand-bot-combat-AwFp0[m[33m, [m[1;31mforeveralonecraft/HEAD[m[33m)[m feat(Core/LivingWorld): Use distinct target-not-found phrases for bot cast
+[33m7e514c6f8[m feat(Core/LivingWorld): Add bot personality voice for cast confirms and denies
+[33m288d392a9[m feat(Core/LivingWorld): Rewrite bot cast command with natural-language grammar
+[33mec4753a0c[m feat(Core/LivingWorld): Add .lwbot <bot> <spellId> [target] cast command
+[33mbaf089ac1[m feat(Core/LivingWorld): Expand CompanionAI combat and maintenance behavior
+[33ma6df47d4a[m futher copy-clone cleanup - Needs Tested
+[33ma189364a1[m fixed the clone/spawn/logout flow
+[33mb300c481f[m Improve LivingWorld spawn safety and docs
+[33m9c6412c4a[m chore(Build): Add per-machine deploy script and local path config
+[33mab62f53ac[m fix(LivingWorld): retire stale account-alt runtimes
+[33m61042bc13[m fix(Core/LivingWorld): Fix grammar routing for position-zero and alpha tokens
+[33m395563908[m fix(Core/Build): Make boost_throw_exception find optional for system Boost
+[33m51fc70a9d[m fix(LivingWorld): declare roster helper before use
+[33mc9fd8bcb9[m refactor(Core/LivingWorld): Unify bot ref resolution across all commands

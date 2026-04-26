@@ -1,0 +1,5 @@
+mysql_dir=D:\mysql-8.0.46-winx64
+host=127.0.0.1
+port=3306
+user=root
+pass=vajj01
