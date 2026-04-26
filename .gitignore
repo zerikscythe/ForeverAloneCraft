@@ -117,3 +117,4 @@ local.properties
 
 # Per-machine deploy target (see scripts/deploy-local.sh)
 /deploy.local
+/local_scripts
