@@ -1,4 +1,4 @@
-#include "Chat.h"
+ #include "Chat.h"
 #include "Config.h"
 #include "ai/CompanionAI.h"
 #include "script/LivingWorldChatConfig.h"
@@ -293,11 +293,14 @@ Player* FindOwnerControlledTradeBot(Player* owner)
         return nullptr;
     }
 
-    if (living_world::service::BotPlayerRegistry::Instance().FindBotForOwner(
-            owner->GetGUID()) != bot)
+    bool isOwned = false;
+    for (Player* b : living_world::service::BotPlayerRegistry::Instance()
+                         .FindBotsForOwner(owner->GetGUID()))
     {
-        return nullptr;
+        if (b == bot) { isOwned = true; break; }
     }
+    if (!isOwned)
+        return nullptr;
 
     return bot;
 }
@@ -349,21 +352,20 @@ void MaybeAutoAcceptControlledBotTrade(Player* owner)
 
 void DismissOwnerBot(Player* player)
 {
-    Player* bot = living_world::service::BotPlayerRegistry::Instance()
-                      .FindBotForOwner(player->GetGUID());
-    if (!bot || !bot->GetSession())
+    std::vector<Player*> bots = living_world::service::BotPlayerRegistry::Instance()
+                                    .FindBotsForOwner(player->GetGUID());
+    for (Player* bot : bots)
     {
-        return;
-    }
+        if (!bot || !bot->GetSession())
+            continue;
 
-    if (Group* group = bot->GetGroup())
-    {
-        group->RemoveMember(bot->GetGUID(), GROUP_REMOVEMETHOD_LEAVE);
-    }
+        living_world::ai::ClearBotOverride(bot->GetGUID());
 
-    if (!bot->GetSession()->PlayerLogout())
-    {
-        bot->GetSession()->LogoutPlayer(true);
+        if (Group* group = bot->GetGroup())
+            group->RemoveMember(bot->GetGUID(), GROUP_REMOVEMETHOD_LEAVE);
+
+        if (!bot->GetSession()->PlayerLogout())
+            bot->GetSession()->LogoutPlayer(true);
     }
 }
 
@@ -455,7 +457,39 @@ public:
             return;
         }
 
+        // The owner character may have 0 rows in character_spell (e.g. a test
+        // character created outside the normal client flow). Seed the bot with
+        // all class/race default spells so it always has combat abilities.
+        player->LearnDefaultSkills();
+        {
+            // Seed creation-time spells (customSpells/castSpells from PlayerInfo).
+            PlayerInfo const* info = sObjectMgr->GetPlayerInfo(
+                player->getRace(), player->getClass());
+            if (info)
+            {
+                for (uint32 spellId : info->customSpells)
+                    player->learnSpell(spellId, false);
+                for (uint32 spellId : info->castSpells)
+                    player->learnSpell(spellId, false);
+            }
+        }
+        // Copy all spells the owner has learned. The bot is a fidelity clone —
+        // it knows exactly what the owner knows, no more. Use .lwbot train to
+        // teach new spells at a class trainer (charges the owner gold).
         Player* owner = ObjectAccessor::FindPlayer(*ownerGuid);
+        if (owner)
+        {
+            for (auto const& [spellId, playerSpell] : owner->GetSpellMap())
+            {
+                if (playerSpell
+                    && playerSpell->State != PLAYERSPELL_REMOVED
+                    && playerSpell->Active)
+                {
+                    player->learnSpell(spellId, false);
+                }
+            }
+        }
+
         if (owner)
         {
             LOG_INFO(

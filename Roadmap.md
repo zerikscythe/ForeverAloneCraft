@@ -216,15 +216,16 @@ runtime state, while still keeping mutation centralized and thin.
 
 #### Subtasks
 
-6.1 Define an `AzerothWorldFacade` or equivalent thin adapter — **Partial**
+6.1 Define an `AzerothWorldFacade` or equivalent thin adapter — **Complete**
 - Pure-virtual `integration::AzerothWorldFacade` now exists covering initial
   read queries: player context, spawn anchors in zone, character-online
   check.
 - Pure-virtual `integration::RosterRepository` covers persistent-roster
   lookup (list-by-account, find-by-id-scoped-to-account). Scoping every
   query by account is the cross-account safety guarantee.
-- Real AzerothCore-backed implementations are still deferred; test-only
-  fakes for both are in place and drive service tests.
+- Real AzerothCore-backed implementations now exist: `LiveAzerothWorldFacade`
+  and `AccountAltRosterRepository` in `LivingWorldCommandScript.cpp`.
+- Test-only fakes remain in place and continue to drive service-level unit tests.
 
 6.2 Separate read context from write actions — **Complete**
 - `integration::WorldReadContext.h` provides value-only input types
@@ -243,9 +244,12 @@ runtime state, while still keeping mutation centralized and thin.
 
 6.4 Add safety rules for authoritative world mutation — **Partial**
 - Architectural rule is in place: the service layer is the only place that
-  may produce `WorldCommitAction` values, and nothing executes them yet.
-- A single authoritative commit layer still needs to be written before the
-  first mutation lands.
+  may produce `WorldCommitAction` values.
+- `ExecuteCommitActions` in `LivingWorldCommandScript` is the current commit
+  executor: it dispatches `SpawnRosterBodyAction` (real bot session login or
+  temp-summon fallback) and `AttachToPartyAction` (real group membership).
+- `DespawnRosterBodyAction` and `EnqueueEncounterAction` are defined but not
+  yet emitted by any service path.
 
 ---
 
@@ -255,15 +259,15 @@ runtime state, while still keeping mutation centralized and thin.
 
 ### 7) High-Level Services
 
-7.0 Spawn race / roster stability note â€” **Partial**
-- Spawn requests should check pending bot login state before queueing a second
-  request for the same owner or bot.
-- Roster numbering should remain stable by character creation order, not
-  alphabetical name order.
-- Self-target actions should be blocked explicitly instead of hiding the
-  logged-in character from the roster list.
-- A future multi-bot "Summon the boys" style macro should use queued or batch
-  spawn orchestration, not overlapping spawn races.
+7.0 Spawn race / roster stability note — **Partial**
+- Spawn requests check pending bot login state before queueing a second request
+  for the same owner or bot — done: guard in `ExecuteSpawnRosterBodyAction`.
+- Roster numbering is stable by character creation order (`ORDER BY guid ASC`)
+  — done.
+- Self-target actions are blocked explicitly — done: `characterGuid ==
+  player->GetGUID()` check in all request/dismiss/cast paths.
+- Multi-bot “Summon the boys” style macro requires batch spawn orchestration
+  and a 1-to-N `BotPlayerRegistry` — **not yet started**.
 
 **Overall Status: Partial**
 
@@ -278,13 +282,13 @@ runtime state, while still keeping mutation centralized and thin.
 7.2 Introduce `WorldPopulationService` — **Not Started**
 - Player-local ambient population orchestration.
 
-7.3 Introduce `PartyBotService` — **Partial**
+7.3 Introduce `PartyBotService` — **Complete**
 - `service::PartyBotService` is implemented. It resolves the player
   context via the facade, looks up the requested entry through the
   `RosterRepository` scoped to the requesting account, enforces the
   "alt already online" rule, delegates to the party roster planner, and
   translates an approved plan into explicit `WorldCommitAction` records.
-- World-facing commit execution is intentionally not implemented.
+- Commit actions are executed via `ExecuteCommitActions` in the command script.
 - Unit tests in `test/PartyBotServiceTest.cpp` cover: no player context,
   entry not found, cross-account scoping, approved-with-three-actions,
   alt-already-online, and dead-player paths against fake adapters.
@@ -310,39 +314,52 @@ design and foundation code.
 
 #### Subtasks
 
-8.1 Define player-facing roster flow — **Partial**
-- `service::PartyBotService::DispatchRosterRequest` is the first supported
-  end-to-end path: request in, structured result + commit actions out.
-- A first in-game command UX exists through `.lwbot roster ...`; it is
-  intentionally read/intent-only until an authoritative commit executor lands.
+8.1 Define player-facing roster flow — **Complete**
+- `service::PartyBotService::DispatchRosterRequest` is the end-to-end path:
+  request in, structured result + commit actions out, committed to world state.
+- In-game command UX covers the full cycle: spawn, follow, cast, profile, dismiss.
 
 8.2 Implement first command surface for controllable bots — **Partial**
-- Backend grammar parser exists: `script::ParseLivingWorldCommand`
-  recognises `.lwbot roster list`, `.lwbot roster request <id>`, and
-  `.lwbot roster dismiss <id>`, producing a structured `ParsedCommand`
-  result consumable by both a chat command script and a future addon
-  message channel.
-- `script::LivingWorldCommandScript` registers `.lwbot` with AzerothCore,
-  lists account-alt roster entries from the characters DB, scopes lookup to
-  the requesting account, routes requests through `PartyBotService`, and
-  renders approved / rejected planner output plus commit-action intent.
-- `.lw` now exposes a player-local chat verbosity control:
-  `.lw loglevel <0-3>`.
-  Level `0` keeps chat to the minimum LivingWorld gameplay feedback, while
-  higher levels progressively re-enable normal, detailed, and trace-style
-  client chat output.
-- Full `[LivingWorldDebug]` trace remains server-log-first; trace runtime
-  details should not be assumed to appear in the player's chat frame unless
-  the player explicitly raises their LivingWorld chat log level.
-- The command does not execute world mutation yet.
+- Backend grammar parser exists: `script::ParseLivingWorldCommand` produces a
+  structured `ParsedCommand` consumable by both the chat command script and a
+  future addon message channel.
+- `script::LivingWorldCommandScript` registers `.lw` and `.lwbot` with
+  AzerothCore. Both are top-level commands from a single `CommandScript` —
+  no naming conflict.
+- Current live command surface:
+  - `.lw loglevel <1-4>` — player-local chat verbosity. Level 1 (BareMinimum)
+    is the default; higher levels progressively surface detailed, debug, and
+    trace output. Server logs always keep full trace regardless of this setting.
+  - `.lwbot list` — list roster entries with position, name, class, level, source
+  - `.lwbot request <#|name>` — spawn and party an account-alt bot
+  - `.lwbot dismiss <#|name>` — dismiss active bot, runs full logout pipeline
+  - `.lwbot roster list/request/dismiss` — aliases for the above
+  - `.lwbot <#|name|party> profile <1-10>` — switch active combat profile slot
+  - `.lwbot <#|name> cast <Ability Name> [on yourself|me|mytarget|focus|<name>]`
+    — issue a natural-language cast command to a specific bot
+  - `.lwbot <#|name|party> attack` — force bot(s) to attack owner's current target
+  - `.lwbot <#|name|party> disengage` — stop combat and hold position briefly
+  - `.lwbot <#|name|party> retreat [<duration>]` — enter retreat mode (follow +
+    instant heals only) for the specified duration
+  - `.lwbot <#|name|party> follow` — clear combat overrides, resume following owner
+  - `.lwbot <#|name|party> refreshments` — consume food if HP < 60%, drink if
+    mana < 60%
+  - `.lwbot <#|name|party> buff` — force re-apply OOC class maintenance buffs
+    immediately, bypassing the normal OOC guard
+- `party` is a valid bot reference for all commands except `cast` and `request/dismiss`.
+  It fans out to all bots currently registered to the owner.
+- Full `[LivingWorldDebug]` trace remains server-log-first.
 - Switch control/possession target is still not implemented.
 
-8.3 Add party slot/rule validation — **Not Started**
-- Enforce:
-  - party size limits
-  - duplicate roster restrictions
-  - ownership rules
-  - combat-state restrictions where needed
+8.3 Add party slot/rule validation — **Partial**
+- Party size limits — done: `partyMemberCount >= maxPartyMembers` rejection in
+  the planner.
+- Duplicate roster restrictions — done: `isAlreadySummoned` check blocks
+  re-requesting an already-online alt.
+- Ownership rules — done: `OwnershipMismatch` rejection and account-scoped
+  roster queries.
+- Combat-state restrictions — not yet: no explicit block on requesting a bot
+  while in combat.
 
 8.4 Add follow/assist/control mode definitions — **Not Started**
 
@@ -356,8 +373,10 @@ design and foundation code.
 
 #### Subtasks
 
-9.1 Define owned-alt eligibility rules — **Not Started**
-- Only alts from the player's account should be eligible.
+9.1 Define owned-alt eligibility rules — **Complete**
+- Only alts from the player's account are eligible. Enforced via account-scoped
+  roster queries (`source_account_id = {}`), `OwnershipMismatch` planner
+  rejection, and `PartyBotService`'s pre-planner cross-account guard.
 
 9.2 Define runtime representation for account-derived roster entries — **Partial**
 - `model::AccountAltRuntimeRecord` and
@@ -533,11 +552,11 @@ design and foundation code.
 
 ---
 
-## Immediate Next Implementation Slice
+## Completed Slice: Persistent Runtime Records and Recovery Planning
 
-The null-socket bot-session slice has landed. The next milestone is durable
-account-alt recovery so crashes do not strand progress on bot-owned clone
-characters or overwrite good source-character data.
+The null-socket bot-session slice landed. This slice added durable account-alt
+recovery so crashes do not strand progress on bot-owned clone characters or
+overwrite good source-character data.
 
 ### A) Persistent runtime records
 
@@ -621,12 +640,13 @@ the clone-ahead path.
 Inventory, equipment, bank, achievements, quests, reputation, and mail remain
 blocked until they have domain-specific sanity rules and ownership checks.
 
-### E) Startup/player-login recovery pass
+### E) Startup/player-login recovery pass — **Complete**
 
-On player login, list recoverable runtime records for the account. For each
-record, either reuse the persistent clone, queue a safe sync plan, or mark it
-for manual review. This gives the new session a deterministic answer to "what
-bots/accounts were last used?"
+On player login, `LivingWorldPlayerScript::OnPlayerLogin` lists recoverable
+runtime records for the account. `AccountAltStartupRecoveryService` retries
+`SyncingBack` progress-only runtimes, surfaces pending recovery and manual
+review counts, and runs stale-group-bot cleanup (`CleanupStaleGroupBots`)
+before the recovery pass.
 
 ---
 
@@ -717,12 +737,38 @@ New file: `modules/mod-living-world/src/ai/CompanionAI.h/.cpp`
 
 Drives a real `Player*` as a companion. Scheduled as a repeating
 `BasicEvent` on the bot player's own event processor so it runs on the map
-thread (thread-safe). Each tick (~500 ms):
-- If owner is in combat and bot has no target: `bot->Attack(owner->GetVictim())`
-- If owner leaves combat: `bot->AttackStop()` + re-issue `MoveFollow`
-- If not in combat and bot is too far: `MoveFollow(owner, 2.0f, M_PI)`
+thread (thread-safe). Each tick (~500 ms).
 
-Class-specific spell behavior is the next slice after this one lands.
+Role classification (`GetCombatRole`) maps class to one of four combat roles:
+
+| Role | Classes |
+|---|---|
+| Healer | Priest |
+| HybridHealer | Druid, Paladin, Shaman |
+| Ranged | Mage, Warlock, Hunter |
+| Melee | Warrior, Rogue, Death Knight |
+
+Combat behaviour per role:
+- **Healer**: monitors owner health continuously; applies fast/sustained heals
+  regardless of combat state; Power Word: Shield pre-pull for Priests.
+- **HybridHealer**: heals first when owner is below threshold; otherwise closes
+  to melee, autoattacks, and casts class-specific damage spells (Crusader Strike,
+  Flame Shock, Moonfire, Hammer of Wrath, etc.).
+- **Ranged**: three-zone positioning — retreats when target is within 8y,
+  approaches via `MoveChase(target, 25y)` when target is beyond 30y (cast range),
+  casts damage spells in the 8–30y sweet spot. Falls back to melee autoattack
+  when OOM.
+- **Melee**: chases victim with `MoveChase`, casts class-appropriate offensive
+  spells (Execute, Rend, DK disease rotation, etc.).
+
+Assist target resolution: sticks to current victim → owner's victim → owner's
+right-click selection (hunter-pet "Attack" semantic).
+
+Out-of-combat: applies maintenance buffs (class-specific), follows owner at 2y.
+
+The event chain has a `MaxNotInWorldRetries = 20` cap with exponential backoff
+(500 ms → 1 s → 2 s → 4 s) to handle mid-login bot state without runaway
+rescheduling.
 
 ### E) Module — script hooks
 
@@ -809,7 +855,7 @@ group is clean before clone recovery/name-release/item-sync work runs.
 
 ## Completed Slice: Account-Alt Sync Executor
 
-See section D of "Immediate Next Implementation Slice" above for full detail.
+See section D of "Completed Slice: Persistent Runtime Records and Recovery Planning" above for full detail.
 
 ---
 
@@ -892,19 +938,84 @@ Important fixture note for future agents:
 
 ---
 
-## Immediate Next: Runtime Verification and End-to-End Testing Prep
+---
 
-The config surface and tighter sanity rules are now in place. The remaining
-work before any bag-domain sync can be considered for default-on is:
+## Completed Slice: Party Bot Combat AI and Control Expansion
 
-- **Runtime verification pass**: exercise the full spawn → dismiss → startup
-  recovery cycle on a live server and confirm that name reclaim, progress sync,
-  and equipment sync leave source characters in correct state
-- **Bot-session session-key validation**: verify that null-socket bot sessions
-  survive a worldserver restart scenario correctly
-- **Manual test checklist**: document and execute the dismiss/logout
-  lifecycle, source-name reclaim, and clone-to-source sync for at least one
-  account alt before enabling inventory/bank sync in any live config
+This slice added healer mana management, party-wide command fanout, follow/
+refreshments/buff commands, OOC class buffs for Warlock/Priest/Mage/Druid, and
+a full LivingWorld Control Panel addon overhaul.
+
+### A) Healer hybrid mana management — **Complete**
+
+`CompanionAI` now implements hysteresis mana thresholds for pure Healer bots:
+- Stop casting offensive spells when mana falls below 40% (`HealerManaConserveBelow`)
+- Resume when mana recovers above 60% (`HealerManaResumeAbove`)
+- The `_healerConserving` bool is carried through the `CompanionAIEvent` chain
+  so it survives re-scheduling without oscillation at the boundaries.
+- Priest healer path now casts SW:Pain → Mind Blast → Smite offensively when
+  not conserving and a valid assist target exists.
+- Healer branch in `Tick()` now calls `TryApplyOutOfCombatBuff` so healers
+  apply maintenance buffs outside combat (was previously only reached by
+  non-healer roles).
+
+### B) Party-wide command fanout — **Complete**
+
+Grammar parser now accepts `party` as a bot reference. `IsPartyBotRef()` detects
+it and `ResolveSelectedBotsForOwner()` fans the command out to all bots currently
+registered to the owner. All commands except `cast`, `request`, and `dismiss`
+accept `party`.
+
+### C) Follow / Refreshments / Buff commands — **Complete**
+
+Three new `.lwbot` commands:
+- `follow` — clears combat overrides, calls `AttackStop()` + `MoveFollow(owner)`.
+- `refreshments` — inventory scan via `ItemTemplate::Spells[i].SpellCategory`
+  (11=food, 59=drink); uses food if HP < 60%, drink if mana < 60%.
+- `buff` — calls `ForceBotBuffRefresh(bot, owner)` which applies maintenance
+  buffs immediately, bypassing the OOC guard. `ForceBotBuffRefresh` is the
+  public API wrapping the internal `ApplyBotBuff`.
+
+### D) OOC class maintenance buffs expanded — **Complete**
+
+`ApplyBotBuff` now handles:
+- `CLASS_WARLOCK`: Fel Armor → Demon Armor → Demon Skin (self-only, chain
+  fallback).
+- `CLASS_PRIEST`: Power Word: Fortitude buffed on all group members (one per
+  tick). Uses `group->GetMemberSlots()` + `ObjectAccessor::FindConnectedPlayer`.
+- `CLASS_MAGE`: Arcane Intellect buffed on all group members (one per tick).
+- `CLASS_DRUID`: Mark of the Wild buffed on all group members (one per tick).
+
+### E) LivingWorld Control Panel addon — **Complete**
+
+- Slot 0 is a permanent `Party` entry; slot selector wraps through it.
+  Commands that require a single target (Cast, Spawn, Dismiss) guard against
+  Party selection.
+- `GetBotRef()` returns `"party"` for slot 0, character name for all others.
+- Auto-refresh roster on panel show; `CHAT_MSG_SYSTEM` event parses roster
+  list lines and filters out the logged-in player's own character.
+- New buttons: Follow, Eat/Drink (Refreshments), Buff.
+- Log level +/- auto-sends the command immediately; Set button removed.
+
+---
+
+## Immediate Next: Multi-Bot Support and Remaining Verification
+
+Happy-path spawn, follow, cast, and dismiss are verified working on a live
+server. The remaining gaps are:
+
+- **Multi-bot support (1-to-N)**: `BotPlayerRegistry` is hard-limited to one
+  active bot per owner (`_botsByOwner` is a single-value map). Supporting a
+  full 4-player party requires changing registry maps to `vector<ObjectGuid>`
+  per owner and updating spawn guards and `CompanionAI` event scheduling
+  accordingly.
+- **Crash/interrupt recovery verification**: exercise the full spawn →
+  kill-worldserver → restart → owner-login path and confirm name reclaim,
+  progress sync, and equipment sync leave source characters in correct state.
+- **Bot-session restart validation**: verify that null-socket bot sessions
+  survive a worldserver restart scenario without leaving orphaned runtime rows.
+- **Combat-state spawn restriction**: no explicit block on requesting a bot
+  while the owner is in active combat.
 
 Current implementation status:
 - `model::CharacterItemSnapshot` now provides a read-only item-state shape for
@@ -978,12 +1089,6 @@ After this, the next follow-on slice should be:
 
 ---
 
-## Completed Slice: Account-Alt Sync Executor
-
-See section C of "Immediate Next Implementation Slice" above for full detail.
-
----
-
 ### Planner / command / progression work (unchanged priority)
 
 4. **Move planner policies toward config/data as consumers appear**
@@ -998,9 +1103,12 @@ See section C of "Immediate Next Implementation Slice" above for full detail.
   the first party bot runtime slice.
 
 6. **Harden the runtime command surface**
-- Keep `.lwbot roster list` and `.lwbot roster request <id>` usable in-game.
-- Keep `.lwbot roster dismiss <id>` aligned with the bot-session logout path so
-  clone recovery and name/item sync stay authoritative.
+- Keep `.lwbot list/request/dismiss`, `.lwbot <#|name> cast`, and
+  `.lwbot <#|name> profile` stable as the single-bot command surface.
+- Keep dismiss aligned with the bot-session logout path so clone recovery,
+  name/item sync, and group removal stay authoritative.
+- Next expansion: multi-bot support requires extending `.lwbot request` to
+  allow queuing multiple bots and updating all registry lookups to 1-to-N.
 
 ---
 
@@ -1018,16 +1126,20 @@ See section C of "Immediate Next Implementation Slice" above for full detail.
 
 ## Summary Direction
 
-The current project has completed the first foundation pass:
+The project has moved well past the initial foundation pass. Current state:
 
-- module scaffold exists
-- model/planner foundations exist
-- separation of concerns is proven with testable planner stubs
-- Windows configure/build/test workflow is healthy
+- Module scaffold, model/planner foundations, and clean build/test workflow are
+  established.
+- Full account-alt bot lifecycle is working on a live server: spawn, party join,
+  role-based CompanionAI combat, natural-language cast commands, profile
+  switching, dismiss with name reclaim and progress/equipment sync.
+- Account-alt runtime records, sanity checking, sync executors, and startup
+  recovery are all implemented and backed by unit tests.
+- The current system supports one active bot per owner (hard registry limit).
 
-The next milestone is to move from compile-ready architecture into the first
-real runtime-facing service boundary, with command-driven party bot planning as
-the narrowest useful feature slice.
+The next milestone is **multi-bot support**: extend `BotPlayerRegistry` to
+track N bots per owner, update spawn guards, and scale `CompanionAI` scheduling
+to match — unlocking the full 5-player party gameplay goal.
 
 ---
 

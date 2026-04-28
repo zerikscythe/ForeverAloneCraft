@@ -161,6 +161,8 @@ ParsedCommand ParseRosterVerb(
 // Dispatches on the second token after a resolved bot reference:
 //   "profile <1-10>"                          → BotProfileSetCommand
 //   "cast <Ability Name> [on <target>]"       → BotCastCommand
+//   "attack [<target>]"                       → BotAttackCommand
+//   "disengage"                               → BotDisengageCommand
 ParsedCommand ParseBotActionCommand(BotRef botRef, std::string_view remaining)
 {
     std::string_view secondToken = ConsumeToken(remaining);
@@ -169,7 +171,7 @@ ParsedCommand ParseBotActionCommand(BotRef botRef, std::string_view remaining)
     {
         return MakeError(
             CommandParseErrorKind::UnknownVerb,
-            "expected 'profile' or 'cast' after the bot reference");
+            "expected 'profile', 'cast', 'attack', or 'disengage' after the bot reference");
     }
 
     // "profile <slot>" path — unchanged.
@@ -246,9 +248,69 @@ ParsedCommand ParseBotActionCommand(BotRef botRef, std::string_view remaining)
         return cmd;
     }
 
+    // "attack [<target>]" path.
+    if (secondToken == "attack")
+    {
+        BotAttackCommand cmd;
+        cmd.botRef = std::move(botRef);
+        std::string_view targetTok = ConsumeToken(remaining);
+        if (!targetTok.empty())
+            cmd.targetName = NormalizeCharacterName(targetTok);
+        return cmd;
+    }
+
+    // "disengage" path.
+    if (secondToken == "disengage")
+    {
+        BotDisengageCommand cmd;
+        cmd.botRef = std::move(botRef);
+        return cmd;
+    }
+
+    // "train" path.
+    if (secondToken == "train")
+    {
+        BotTrainCommand cmd;
+        cmd.botRef = std::move(botRef);
+        return cmd;
+    }
+
+    // "retreat" path.
+    if (secondToken == "retreat")
+    {
+        BotRetreatCommand cmd;
+        cmd.botRef = std::move(botRef);
+        return cmd;
+    }
+
+    // "follow" path.
+    if (secondToken == "follow")
+    {
+        BotFollowCommand cmd;
+        cmd.botRef = std::move(botRef);
+        return cmd;
+    }
+
+    // "refreshments" path.
+    if (secondToken == "refreshments")
+    {
+        BotRefreshmentsCommand cmd;
+        cmd.botRef = std::move(botRef);
+        return cmd;
+    }
+
+    // "buff" path.
+    if (secondToken == "buff")
+    {
+        BotBuffCommand cmd;
+        cmd.botRef = std::move(botRef);
+        return cmd;
+    }
+
     return MakeError(
         CommandParseErrorKind::UnknownVerb,
-        std::string("expected 'profile' or 'cast', got: ") +
+        std::string("expected 'profile', 'cast', 'attack', 'disengage', 'train', 'retreat', "
+                    "'follow', 'refreshments', or 'buff', got: ") +
             std::string(secondToken));
 }
 } // namespace

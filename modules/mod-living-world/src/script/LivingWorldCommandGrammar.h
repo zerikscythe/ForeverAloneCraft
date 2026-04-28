@@ -97,13 +97,70 @@ struct BotCastCommand
     std::optional<std::string> targetName; // nullopt = self-cast
 };
 
+// "<position|name|party> attack" — lock bot onto owner's current target
+// or the named target if provided.
+struct BotAttackCommand
+{
+    BotRef botRef; // "party" resolves to all bots
+    std::optional<std::string> targetName; // nullopt = owner's current target
+};
+
+// "<position|name|party> disengage" — stop combat and return to follow.
+struct BotDisengageCommand
+{
+    BotRef botRef; // "party" resolves to all bots
+};
+
+// "<position|name|party> train" — while at a class trainer, teaches every
+// available spell up to the bot's level and deducts the gold cost from the
+// owner. Use "party" to train all active bots in one command.
+struct BotTrainCommand
+{
+    BotRef botRef;
+};
+
+// "<position|name|party> retreat" — all bots stop combat, follow the owner,
+// and only cast instant heals for 30 seconds. Issuing the command again
+// during the countdown cancels the retreat early.
+struct BotRetreatCommand
+{
+    BotRef botRef;
+};
+
+// "<position|name|party> follow" — cancel combat and return to follow immediately.
+struct BotFollowCommand
+{
+    BotRef botRef;
+};
+
+// "<position|name|party> refreshments" — each bot consumes food if HP < 60%
+// and/or drink if mana < 60%.
+struct BotRefreshmentsCommand
+{
+    BotRef botRef;
+};
+
+// "<position|name|party> buff" — force each bot to re-apply its out-of-combat
+// maintenance buffs regardless of combat state.
+struct BotBuffCommand
+{
+    BotRef botRef;
+};
+
 using ParsedCommand = std::variant<
     CommandParseError,
     RosterListCommand,
     RosterRequestCommand,
     RosterDismissCommand,
     BotProfileSetCommand,
-    BotCastCommand>;
+    BotCastCommand,
+    BotAttackCommand,
+    BotDisengageCommand,
+    BotTrainCommand,
+    BotRetreatCommand,
+    BotFollowCommand,
+    BotRefreshmentsCommand,
+    BotBuffCommand>;
 
 // Parse a raw command argument string (everything after `.lwbot `). The
 // input is expected to be trimmed of the command prefix but may still

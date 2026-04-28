@@ -1,12 +1,15 @@
 #include "integration/BotSessionFactory.h"
 
 #include "DatabaseEnv.h"
+#include "ObjectAccessor.h"
+#include "Player.h"
 #include "QueryResult.h"
 #include "Log.h"
 #include "WorldSession.h"
 #include "WorldSessionMgr.h"
 #include "service/BotPlayerRegistry.h"
 
+#include <cmath>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -189,6 +192,25 @@ BotSessionSpawnResult BotSessionFactory::SpawnBotPlayerOnAccount(
     service::BotPlayerRegistry::Instance().RegisterPendingOwner(
         characterGuid,
         ownerCharacterGuid);
+
+    // Write the owner's current position into the bot character's DB row before
+    // the session loads character data. TeleportTo does not work for null-socket
+    // bots (it requires a client ack), so pre-seeding the DB is the only
+    // reliable way to start the bot near the owner. DirectExecute blocks until
+    // the row is committed, guaranteeing the session reads the updated position.
+    if (Player* owner = ObjectAccessor::FindPlayer(ownerCharacterGuid))
+    {
+        float const behindAngle = owner->GetOrientation() + 3.14159265358979323846f;
+        CharacterDatabase.DirectExecute(
+            "UPDATE characters SET map={}, position_x={}, position_y={}, "
+            "position_z={}, orientation={} WHERE guid={}",
+            owner->GetMapId(),
+            owner->GetPositionX() + 2.0f * std::cos(behindAngle),
+            owner->GetPositionY() + 2.0f * std::sin(behindAngle),
+            owner->GetPositionZ(),
+            owner->GetOrientation(),
+            characterGuid.GetCounter());
+    }
 
     result.status = BotSessionSpawnStatus::SpawnQueued;
     result.botAccountId = account->id;

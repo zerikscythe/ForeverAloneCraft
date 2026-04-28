@@ -3,6 +3,8 @@
 #include "ObjectAccessor.h"
 #include "Player.h"
 
+#include <algorithm>
+
 namespace living_world
 {
 namespace service
@@ -37,10 +39,18 @@ std::optional<ObjectGuid> BotPlayerRegistry::RegisterBotPlayer(Player* botPlayer
         return std::nullopt;
     }
 
-    ObjectGuid ownerGuid =
-        ObjectGuid::Create<HighGuid::Player>(pending->second);
-    _ownersByBot[botGuid] = pending->second;
-    _botsByOwner[pending->second] = botPlayer->GetGUID();
+    std::uint64_t const ownerGuidLow = pending->second;
+    ObjectGuid ownerGuid = ObjectGuid::Create<HighGuid::Player>(ownerGuidLow);
+    _ownersByBot[botGuid] = ownerGuidLow;
+
+    auto& bots = _botsByOwner[ownerGuidLow];
+    // Avoid duplicate registration.
+    bool found = false;
+    for (ObjectGuid const& g : bots)
+        if (g.GetCounter() == botGuid) { found = true; break; }
+    if (!found)
+        bots.push_back(botPlayer->GetGUID());
+
     _pendingOwnersByBot.erase(pending);
     return ownerGuid;
 }
@@ -54,11 +64,22 @@ void BotPlayerRegistry::UnregisterBotPlayer(Player* botPlayer)
 
     std::lock_guard<std::mutex> guard(_mutex);
     std::uint64_t const botGuid = botPlayer->GetGUID().GetCounter();
-    auto const owner = _ownersByBot.find(botGuid);
-    if (owner != _ownersByBot.end())
+    auto const ownerItr = _ownersByBot.find(botGuid);
+    if (ownerItr != _ownersByBot.end())
     {
-        _botsByOwner.erase(owner->second);
-        _ownersByBot.erase(owner);
+        std::uint64_t const ownerGuidLow = ownerItr->second;
+        auto botsItr = _botsByOwner.find(ownerGuidLow);
+        if (botsItr != _botsByOwner.end())
+        {
+            auto& bots = botsItr->second;
+            bots.erase(
+                std::remove_if(bots.begin(), bots.end(),
+                    [botGuid](ObjectGuid const& g){ return g.GetCounter() == botGuid; }),
+                bots.end());
+            if (bots.empty())
+                _botsByOwner.erase(botsItr);
+        }
+        _ownersByBot.erase(ownerItr);
     }
 
     _pendingOwnersByBot.erase(botGuid);
@@ -68,12 +89,46 @@ Player* BotPlayerRegistry::FindBotForOwner(ObjectGuid ownerCharacterGuid) const
 {
     std::lock_guard<std::mutex> guard(_mutex);
     auto const itr = _botsByOwner.find(ownerCharacterGuid.GetCounter());
-    if (itr == _botsByOwner.end())
+    if (itr == _botsByOwner.end() || itr->second.empty())
     {
         return nullptr;
     }
 
-    return ObjectAccessor::FindPlayer(itr->second);
+    return ObjectAccessor::FindPlayer(itr->second.front());
+}
+
+std::vector<Player*> BotPlayerRegistry::FindBotsForOwner(ObjectGuid ownerCharacterGuid) const
+{
+    std::lock_guard<std::mutex> guard(_mutex);
+    std::vector<Player*> result;
+    auto const itr = _botsByOwner.find(ownerCharacterGuid.GetCounter());
+    if (itr == _botsByOwner.end())
+        return result;
+
+    for (ObjectGuid const& guid : itr->second)
+    {
+        Player* bot = ObjectAccessor::FindPlayer(guid);
+        if (bot)
+            result.push_back(bot);
+    }
+    return result;
+}
+
+Player* BotPlayerRegistry::FindBotForOwnerByGuid(
+    ObjectGuid ownerCharacterGuid,
+    ObjectGuid botCharacterGuid) const
+{
+    std::lock_guard<std::mutex> guard(_mutex);
+    auto const itr = _botsByOwner.find(ownerCharacterGuid.GetCounter());
+    if (itr == _botsByOwner.end())
+        return nullptr;
+
+    for (ObjectGuid const& guid : itr->second)
+    {
+        if (guid.GetCounter() == botCharacterGuid.GetCounter())
+            return ObjectAccessor::FindPlayer(guid);
+    }
+    return nullptr;
 }
 
 std::optional<ObjectGuid> BotPlayerRegistry::FindOwnerForBot(
@@ -116,6 +171,17 @@ bool BotPlayerRegistry::IsPendingBotForOwner(
     }
 
     return itr->second == ownerCharacterGuid.GetCounter();
+}
+
+bool BotPlayerRegistry::HasPendingBotForOwner(ObjectGuid ownerCharacterGuid) const
+{
+    std::lock_guard<std::mutex> guard(_mutex);
+    for (auto const& [botGuid, pendingOwnerGuid] : _pendingOwnersByBot)
+    {
+        if (pendingOwnerGuid == ownerCharacterGuid.GetCounter())
+            return true;
+    }
+    return false;
 }
 } // namespace service
 } // namespace living_world

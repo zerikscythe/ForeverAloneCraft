@@ -1,8 +1,12 @@
 #include "script/LivingWorldCommandGrammar.h"
 #include "script/LivingWorldChatConfig.h"
+#include "ai/CompanionAI.h"
+#include "Trainer.h"
+#include "ObjectMgr.h"
 
 #include "Chat.h"
 #include "CommandScript.h"
+#include "Item.h"
 #include "Config.h"
 #include "Creature.h"
 #include "DatabaseEnv.h"
@@ -259,6 +263,13 @@ void RenderUsage(ChatHandler* handler)
     handler->PSendSysMessage("  .lwbot roster dismiss <rosterEntryId>");
     handler->PSendSysMessage("  .lwbot <#|name> profile <1-10>");
     handler->PSendSysMessage("  .lwbot <#|name> cast <Ability Name> [on yourself|me|mytarget|focus|<name>]");
+    handler->PSendSysMessage("  .lwbot <#|name> attack [<name>]");
+    handler->PSendSysMessage("  .lwbot <#|name> disengage");
+    handler->PSendSysMessage("  .lwbot <#|name> retreat  (30s no-combat flee mode; repeat to cancel)");
+    handler->PSendSysMessage("  .lwbot <#|name> train  (must be near a class trainer)");
+    handler->PSendSysMessage("  .lwbot <#|name|party> follow");
+    handler->PSendSysMessage("  .lwbot <#|name|party> refreshments  (eat/drink if HP or mana < 60%%)");
+    handler->PSendSysMessage("  .lwbot <#|name|party> buff  (force re-apply class buffs)");
 }
 
 std::string_view TrimRootWhitespace(std::string_view input)
@@ -536,9 +547,12 @@ bool ExecuteSpawnRosterBodyAction(
         return true;
     }
 
+    // Check if THIS specific bot (by characterGuid) is already active.
+    ObjectGuid const requestedGuid =
+        ObjectGuid::Create<HighGuid::Player>(action.characterGuid);
     Player* existingBot =
-        service::BotPlayerRegistry::Instance().FindBotForOwner(
-            requester->GetGUID());
+        service::BotPlayerRegistry::Instance().FindBotForOwnerByGuid(
+            requester->GetGUID(), requestedGuid);
     if (existingBot)
     {
         if (!existingBot->GetSession() || !existingBot->GetSession()->IsBotSession())
@@ -605,21 +619,6 @@ bool ExecuteSpawnRosterBodyAction(
             "LivingWorld roster entry {} is already logging in; please wait.",
             action.rosterEntryId);
         return true;
-    }
-
-    if (std::optional<ObjectGuid> pendingBotGuid =
-            service::BotPlayerRegistry::Instance().FindPendingBotForOwner(
-                requester->GetGUID()))
-    {
-        if (pendingBotGuid->GetCounter() != requestedBotGuid.GetCounter())
-        {
-            SendPlayerLog(
-                handler,
-                static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
-                "LivingWorld already has another bot login pending for this owner; please wait.",
-                action.rosterEntryId);
-            return false;
-        }
     }
 
     integration::SqlAccountAltRuntimeRepository runtimeRepository;
@@ -1139,8 +1138,14 @@ void RenderDismissBot(
         RenderAccountAltRuntimeDebug(handler, "dismiss lookup", runtime);
     }
 
-    Player* bot = service::BotPlayerRegistry::Instance().FindBotForOwner(
-        player->GetGUID());
+    std::uint64_t const activeCharacterGuid = ResolveActiveDismissGuid(
+        session->GetAccountId(),
+        *entry,
+        runtime);
+    ObjectGuid const activeGuid =
+        ObjectGuid::Create<HighGuid::Player>(activeCharacterGuid);
+    Player* bot = service::BotPlayerRegistry::Instance().FindBotForOwnerByGuid(
+        player->GetGUID(), activeGuid);
     if (!bot)
     {
         if (runtime && runtime->cloneCharacterGuid != 0)
@@ -1162,24 +1167,6 @@ void RenderDismissBot(
                 "LivingWorld no active bot found for {}.",
                 entry->controllableProfile.profile.name);
         }
-        return;
-    }
-
-    std::uint64_t const activeCharacterGuid = ResolveActiveDismissGuid(
-        session->GetAccountId(),
-        *entry,
-        runtime);
-    if (bot->GetGUID().GetCounter() != activeCharacterGuid)
-    {
-        SendPlayerLog(
-            handler,
-            static_cast<std::uint8_t>(PlayerChatLogLevel::Detailed),
-            "LivingWorld {} is not the active bot. Expected guid {} but active "
-            "bot is '{}' (guid {}).",
-            entry->controllableProfile.profile.name,
-            activeCharacterGuid,
-            bot->GetName(),
-            bot->GetGUID().GetCounter());
         return;
     }
 
@@ -1225,6 +1212,77 @@ std::optional<model::RosterEntry> ResolveBotRosterEntry(
             return entry;
 
     return std::nullopt;
+}
+
+// Returns true when botRef is the "party" broadcast token.
+bool IsPartyBotRef(std::variant<std::uint32_t, std::string> const& botRef)
+{
+    std::string const* name = std::get_if<std::string>(&botRef);
+    return name && *name == "Party";
+}
+
+// Resolve ALL active bot Player*s for the owner (used by party broadcast).
+std::vector<Player*> ResolvePartyBotsForOwner(Player* owner)
+{
+    if (!owner)
+        return {};
+    return service::BotPlayerRegistry::Instance().FindBotsForOwner(owner->GetGUID());
+}
+
+// Resolve the active bot Player* for a given botRef (index or name).
+// Returns null if the bot is not in the roster or not currently online.
+Player* ResolveActiveBotForOwner(
+    Player* owner,
+    std::variant<std::uint32_t, std::string> const& botRef)
+{
+    if (!owner)
+        return nullptr;
+
+    std::optional<model::RosterEntry> entry =
+        ResolveBotRosterEntry(owner->GetSession()->GetAccountId(), botRef);
+    if (!entry)
+        return nullptr;
+
+    // Resolve the active character guid (may be a clone for AccountAlt).
+    std::uint64_t activeGuidLow = entry->characterGuid;
+    if (entry->source == model::RosterEntrySource::AccountAlt)
+    {
+        std::optional<model::AccountAltRuntimeRecord> runtime =
+            LoadAccountAltRuntimeForSource(
+                owner->GetSession()->GetAccountId(),
+                entry->characterGuid);
+        if (runtime && runtime->cloneCharacterGuid != 0)
+            activeGuidLow = runtime->cloneCharacterGuid;
+    }
+
+    ObjectGuid const activeGuid =
+        ObjectGuid::Create<HighGuid::Player>(activeGuidLow);
+    return service::BotPlayerRegistry::Instance().FindBotForOwnerByGuid(
+        owner->GetGUID(), activeGuid);
+}
+
+std::vector<Player*> ResolveSelectedBotsForOwner(
+    Player* owner,
+    std::variant<std::uint32_t, std::string> const& botRef)
+{
+    if (IsPartyBotRef(botRef))
+        return ResolvePartyBotsForOwner(owner);
+
+    if (Player* bot = ResolveActiveBotForOwner(owner, botRef))
+        return { bot };
+
+    return {};
+}
+
+bool IsAnyOwnerBotRetreating(ObjectGuid const& ownerGuid)
+{
+    for (Player* bot : service::BotPlayerRegistry::Instance().FindBotsForOwner(ownerGuid))
+    {
+        if (bot && living_world::ai::IsBotRetreating(bot->GetGUID()))
+            return true;
+    }
+
+    return false;
 }
 
 // Find the highest-rank spell by name that the bot actually knows.
@@ -1289,8 +1347,7 @@ void HandleBotCast(
         return;
     }
 
-    Player* bot = service::BotPlayerRegistry::Instance().FindBotForOwner(
-        player->GetGUID());
+    Player* bot = ResolveActiveBotForOwner(player, command.botRef);
     if (!bot)
     {
         SendPlayerLog(
@@ -1369,6 +1426,442 @@ void HandleBotCast(
     bot->CastSpell(target, spellId, false);
 }
 
+void HandleBotAttack(
+    ChatHandler* handler,
+    BotAttackCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld bot attack requires an in-game player.");
+        return;
+    }
+
+    std::vector<Player*> bots = ResolveSelectedBotsForOwner(player, command.botRef);
+    if (bots.empty())
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld no active bot. Use '.lwbot request <id>' first.");
+        return;
+    }
+
+    // Resolve the target: named target, owner's current target, or owner's victim.
+    Unit* target = nullptr;
+    if (command.targetName.has_value())
+    {
+        target = ObjectAccessor::FindPlayerByName(*command.targetName);
+        if (!target)
+        {
+            BotSayTargetNotFound(bots.front());
+            return;
+        }
+    }
+    else
+    {
+        // Prefer owner's active victim; fall back to current selection.
+        target = player->GetVictim();
+        if (!target)
+        {
+            ObjectGuid const sel = player->GetTarget();
+            if (sel)
+                target = ObjectAccessor::GetUnit(*player, sel);
+        }
+        if (!target)
+        {
+            BotSayTargetNotFound(bots.front());
+            return;
+        }
+    }
+
+    for (Player* bot : bots)
+        living_world::ai::SetBotForcedTarget(bot->GetGUID(), target->GetGUID());
+    BotSayConfirm(bots.front());
+}
+
+// Trains all class trainer spells that are Available (learnable, not yet known)
+// for a single bot. Charges the owner. Returns the number of spells taught.
+std::uint32_t TrainBotFromClassTrainers(Player* owner, Player* bot)
+{
+    std::uint32_t taught = 0;
+    std::uint64_t totalCost = 0;
+
+    // First pass: calculate total cost and collect teachable spells.
+    struct TeachEntry { std::uint32_t spellId; std::uint32_t cost; };
+    std::vector<TeachEntry> toTeach;
+
+    std::vector<Trainer::Trainer const*> const& trainers =
+        sObjectMgr->GetClassTrainers(bot->getClass());
+
+    for (Trainer::Trainer const* trainer : trainers)
+    {
+        if (!trainer)
+            continue;
+        for (Trainer::Spell const& trainerSpell : trainer->GetSpells())
+        {
+            // Skip if bot already knows it or can't learn it yet.
+            if (!trainer->CanTeachSpell(bot, &trainerSpell))
+                continue;
+            // Avoid duplicates across trainers.
+            bool already = false;
+            for (auto const& e : toTeach)
+                if (e.spellId == trainerSpell.SpellId) { already = true; break; }
+            if (already)
+                continue;
+            totalCost += trainerSpell.MoneyCost;
+            toTeach.push_back({ trainerSpell.SpellId, trainerSpell.MoneyCost });
+        }
+    }
+
+    if (toTeach.empty())
+        return 0;
+
+    // Check owner has enough gold (copper).
+    if (owner->GetMoney() < totalCost)
+        return std::numeric_limits<std::uint32_t>::max(); // sentinel: not enough gold
+
+    // Deduct gold from owner.
+    owner->ModifyMoney(-static_cast<int64>(totalCost));
+
+    // Teach spells to bot.
+    for (auto const& entry : toTeach)
+    {
+        bot->learnSpell(entry.spellId, false);
+
+        // Also persist to the SOURCE character's character_spell so the skill
+        // survives the sync-back when the bot is dismissed. The source guid is
+        // stored in living_world_account_alt_runtime.source_character_guid.
+        // We write directly here; the dismissal sync will see it in the DB.
+        CharacterDatabase.Execute(
+            "INSERT IGNORE INTO character_spell (guid, spell, active, disabled) "
+            "SELECT source_character_guid, {}, 1, 0 "
+            "FROM living_world_account_alt_runtime "
+            "WHERE clone_character_guid = {} LIMIT 1",
+            entry.spellId,
+            bot->GetGUID().GetCounter());
+
+        ++taught;
+    }
+
+    return taught;
+}
+
+void HandleBotTrain(
+    ChatHandler* handler,
+    BotTrainCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld bot train requires an in-game player.");
+        return;
+    }
+
+    // Proximity check: owner must be within 10y of a class trainer NPC.
+    constexpr float TrainerProximity = 10.0f;
+    bool nearTrainer = false;
+    {
+        std::list<Creature*> creatures;
+        player->GetCreatureListWithEntryInGrid(creatures, 0, TrainerProximity);
+        // entry=0 returns all nearby creatures; filter for class trainers.
+        for (Creature* c : creatures)
+        {
+            if (!c || !c->IsAlive() || !c->IsTrainer())
+                continue;
+            Trainer::Trainer const* t = sObjectMgr->GetTrainer(c->GetEntry());
+            if (!t || t->GetTrainerType() != Trainer::Type::Class)
+                continue;
+            if (!t->IsTrainerValidForPlayer(player))
+                continue;
+            nearTrainer = true;
+            break;
+        }
+    }
+
+    if (!nearTrainer)
+    {
+        handler->PSendSysMessage("LivingWorld: you must be near a class trainer to train your bots.");
+        return;
+    }
+
+    std::vector<Player*> bots = ResolveSelectedBotsForOwner(player, command.botRef);
+    if (bots.empty())
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld no active bot. Use '.lwbot request <id>' first.");
+        return;
+    }
+
+    if (IsPartyBotRef(command.botRef))
+    {
+        std::uint32_t totalTaught = 0;
+        std::uint32_t trainedBots = 0;
+        bool ranOutOfGold = false;
+
+        for (Player* bot : bots)
+        {
+            std::uint32_t const result = TrainBotFromClassTrainers(player, bot);
+            if (result == std::numeric_limits<std::uint32_t>::max())
+            {
+                ranOutOfGold = true;
+                break;
+            }
+
+            if (result == 0)
+                continue;
+
+            totalTaught += result;
+            ++trainedBots;
+        }
+
+        if (totalTaught == 0)
+        {
+            if (ranOutOfGold)
+                handler->PSendSysMessage("LivingWorld: not enough gold to train the party.");
+            else
+                handler->PSendSysMessage("LivingWorld: no active party bots have anything available to train.");
+            return;
+        }
+
+        BotSayConfirm(bots.front());
+        if (ranOutOfGold)
+        {
+            SendPlayerLog(
+                handler,
+                static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+                "LivingWorld trained {} spell(s) across {} bot(s) before running out of gold.",
+                totalTaught,
+                trainedBots);
+            return;
+        }
+
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld trained {} spell(s) across {} bot(s).",
+            totalTaught,
+            trainedBots);
+        return;
+    }
+
+    Player* bot = bots.front();
+    std::uint32_t const result = TrainBotFromClassTrainers(player, bot);
+    if (result == std::numeric_limits<std::uint32_t>::max())
+    {
+        handler->PSendSysMessage("LivingWorld: not enough gold to train {}.", bot->GetName());
+        return;
+    }
+    if (result == 0)
+    {
+        handler->PSendSysMessage("LivingWorld: {} already knows everything available at this level.", bot->GetName());
+        return;
+    }
+
+    BotSayConfirm(bot);
+    SendPlayerLog(
+        handler,
+        static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+        "LivingWorld trained {} spell(s) for {}.",
+        result,
+        bot->GetName());
+}
+
+void HandleBotDisengage(
+    ChatHandler* handler,
+    BotDisengageCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld bot disengage requires an in-game player.");
+        return;
+    }
+
+    std::vector<Player*> bots = ResolveSelectedBotsForOwner(player, command.botRef);
+    if (bots.empty())
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld no active bot. Use '.lwbot request <id>' first.");
+        return;
+    }
+
+    for (Player* bot : bots)
+        living_world::ai::SetBotDisengaged(bot->GetGUID(), true);
+    BotSayConfirm(bots.front());
+}
+
+// Sends a system message to the owner after a delay via the owner's event queue.
+// If botGuid is set, the message is suppressed when retreat is no longer active.
+class OwnerDelayedMessageEvent final : public BasicEvent
+{
+public:
+    OwnerDelayedMessageEvent(ObjectGuid ownerGuid, std::string message,
+                             ObjectGuid botGuid = ObjectGuid::Empty,
+                             bool suppressIfNotRetreating = false)
+        : _ownerGuid(ownerGuid), _message(std::move(message)),
+          _botGuid(botGuid), _suppressIfNotRetreating(suppressIfNotRetreating) {}
+
+    bool Execute(uint64 /*e_time*/, uint32 /*p_time*/) override
+    {
+        if (_suppressIfNotRetreating)
+        {
+            if (!_botGuid)
+            {
+                if (!IsAnyOwnerBotRetreating(_ownerGuid))
+                    return true;
+            }
+            else if (!living_world::ai::IsBotRetreating(_botGuid))
+            {
+                return true;
+            }
+        }
+
+        Player* owner = ObjectAccessor::FindConnectedPlayer(_ownerGuid);
+        if (owner && owner->GetSession())
+            ChatHandler(owner->GetSession()).SendSysMessage(_message.c_str());
+        return true;
+    }
+private:
+    ObjectGuid  _ownerGuid;
+    std::string _message;
+    ObjectGuid  _botGuid;
+    bool        _suppressIfNotRetreating;
+};
+
+void HandleBotRetreat(
+    ChatHandler* handler,
+    BotRetreatCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld bot retreat requires an in-game player.");
+        return;
+    }
+
+    std::vector<Player*> bots = ResolveSelectedBotsForOwner(player, command.botRef);
+    if (bots.empty())
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld no active bot. Use '.lwbot request <id>' first.");
+        return;
+    }
+
+    constexpr uint32_t RetreatDurationMs = 30000;
+
+    if (IsPartyBotRef(command.botRef))
+    {
+        bool anyRetreating = false;
+        for (Player* bot : bots)
+        {
+            if (living_world::ai::IsBotRetreating(bot->GetGUID()))
+            {
+                anyRetreating = true;
+                break;
+            }
+        }
+
+        if (anyRetreating)
+        {
+            for (Player* bot : bots)
+            {
+                if (living_world::ai::IsBotRetreating(bot->GetGUID()))
+                    living_world::ai::SetBotRetreat(bot->GetGUID(), RetreatDurationMs);
+            }
+
+            SendPlayerLog(
+                handler,
+                static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+                "LivingWorld party retreat cancelled. Party re-engaging.");
+            bots.front()->Say("Retreat cancelled, back in the fight!", LANG_UNIVERSAL);
+            return;
+        }
+
+        for (Player* bot : bots)
+            living_world::ai::SetBotRetreat(bot->GetGUID(), RetreatDurationMs);
+
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld party is disengaged and fleeing for the next 30 seconds. "
+            "Use '.lwbot party retreat' again to cancel.");
+        bots.front()->Say("Falling back! Stay close!", LANG_UNIVERSAL);
+
+        ObjectGuid const ownerGuid = player->GetGUID();
+
+        player->m_Events.AddEventAtOffset(
+            new OwnerDelayedMessageEvent(ownerGuid, "LivingWorld retreat ends in 5 seconds.", ObjectGuid::Empty, true),
+            Milliseconds(25000));
+        player->m_Events.AddEventAtOffset(
+            new OwnerDelayedMessageEvent(ownerGuid, "LivingWorld retreat ends in 3 seconds.", ObjectGuid::Empty, true),
+            Milliseconds(27000));
+        player->m_Events.AddEventAtOffset(
+            new OwnerDelayedMessageEvent(ownerGuid, "LivingWorld retreat ends in 2 seconds.", ObjectGuid::Empty, true),
+            Milliseconds(28000));
+        player->m_Events.AddEventAtOffset(
+            new OwnerDelayedMessageEvent(ownerGuid, "LivingWorld retreat ends in 1 second.", ObjectGuid::Empty, true),
+            Milliseconds(29000));
+        player->m_Events.AddEventAtOffset(
+            new OwnerDelayedMessageEvent(ownerGuid, "LivingWorld retreat over. Party is back in action.", ObjectGuid::Empty, true),
+            Milliseconds(30000));
+        return;
+    }
+
+    Player* bot = bots.front();
+    bool const activated = living_world::ai::SetBotRetreat(bot->GetGUID(), RetreatDurationMs);
+
+    if (!activated)
+    {
+        // Was already retreating — cancelled.
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld retreat cancelled. Party re-engaging.");
+        bot->Say("Retreat cancelled, back in the fight!", LANG_UNIVERSAL);
+        return;
+    }
+
+    SendPlayerLog(
+        handler,
+        static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+        "LivingWorld party is disengaged and fleeing for the next 30 seconds. "
+        "Use '.lwbot retreat' again to cancel.");
+    bot->Say("Falling back! Stay close!", LANG_UNIVERSAL);
+
+    ObjectGuid const ownerGuid = player->GetGUID();
+
+    ObjectGuid const botGuid = bot->GetGUID();
+
+    // 5-second countdown: warn at T+25s, T+27s, T+28s, T+29s, expire at T+30s.
+    // All events check IsBotRetreating so they are silently skipped if cancelled.
+    player->m_Events.AddEventAtOffset(
+        new OwnerDelayedMessageEvent(ownerGuid, "LivingWorld retreat ends in 5 seconds.", botGuid, true),
+        Milliseconds(25000));
+    player->m_Events.AddEventAtOffset(
+        new OwnerDelayedMessageEvent(ownerGuid, "LivingWorld retreat ends in 3 seconds.", botGuid, true),
+        Milliseconds(27000));
+    player->m_Events.AddEventAtOffset(
+        new OwnerDelayedMessageEvent(ownerGuid, "LivingWorld retreat ends in 2 seconds.", botGuid, true),
+        Milliseconds(28000));
+    player->m_Events.AddEventAtOffset(
+        new OwnerDelayedMessageEvent(ownerGuid, "LivingWorld retreat ends in 1 second.", botGuid, true),
+        Milliseconds(29000));
+    player->m_Events.AddEventAtOffset(
+        new OwnerDelayedMessageEvent(ownerGuid, "LivingWorld retreat over. Party is back in action.", botGuid, true),
+        Milliseconds(30000));
+}
+
 void HandleBotProfileSet(
     ChatHandler* handler,
     BotProfileSetCommand const& command)
@@ -1416,6 +1909,157 @@ void HandleBotProfileSet(
         "LivingWorld set active profile slot {} for {}.",
         static_cast<std::uint32_t>(slot),
         entry->controllableProfile.profile.name);
+}
+
+// ---------------------------------------------------------------
+// Inventory helpers for refreshments
+// ---------------------------------------------------------------
+
+constexpr std::uint32_t SpellCategoryFood  = 11;
+constexpr std::uint32_t SpellCategoryDrink = 59;
+
+Item* FindConsumableInInventory(Player* bot, std::uint32_t spellCategory)
+{
+    auto matches = [&](Item* item) -> bool {
+        if (!item) return false;
+        ItemTemplate const* proto = item->GetTemplate();
+        if (!proto || proto->Class != ITEM_CLASS_CONSUMABLE) return false;
+        for (std::uint8_t i = 0; i < MAX_ITEM_PROTO_SPELLS; ++i)
+            if (static_cast<std::uint32_t>(proto->Spells[i].SpellCategory) == spellCategory)
+                return true;
+        return false;
+    };
+
+    for (std::uint8_t slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
+        if (Item* item = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot); matches(item))
+            return item;
+
+    for (std::uint8_t bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
+        if (Bag* pBag = bot->GetBagByPos(bag))
+            for (std::uint32_t slot = 0; slot < pBag->GetBagSize(); ++slot)
+                if (Item* item = pBag->GetItemByPos(slot); matches(item))
+                    return item;
+
+    return nullptr;
+}
+
+void BotUseConsumable(Player* bot, Item* item)
+{
+    if (!item) return;
+    ItemTemplate const* proto = item->GetTemplate();
+    for (std::uint8_t i = 0; i < MAX_ITEM_PROTO_SPELLS; ++i)
+    {
+        if (proto->Spells[i].SpellId > 0 &&
+            proto->Spells[i].SpellTrigger == ITEM_SPELLTRIGGER_ON_USE)
+        {
+            bot->CastSpell(bot, static_cast<std::uint32_t>(proto->Spells[i].SpellId), false);
+            return;
+        }
+    }
+}
+
+// ---------------------------------------------------------------
+// Follow / refreshments / buff handlers
+// ---------------------------------------------------------------
+
+void HandleBotFollow(
+    ChatHandler* handler,
+    BotFollowCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld bot follow requires an in-game player.");
+        return;
+    }
+
+    std::vector<Player*> bots = ResolveSelectedBotsForOwner(player, command.botRef);
+    if (bots.empty())
+    {
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld no active bot. Use '.lwbot request <id>' first.");
+        return;
+    }
+
+    for (Player* bot : bots)
+    {
+        living_world::ai::SetBotDisengaged(bot->GetGUID(), false);
+        bot->AttackStop();
+        bot->GetMotionMaster()->Clear(false);
+        bot->GetMotionMaster()->MoveFollow(player, 2.5f, 3.14159f);
+    }
+    BotSayConfirm(bots.front());
+}
+
+void HandleBotRefreshments(
+    ChatHandler* handler,
+    BotRefreshmentsCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld refreshments requires an in-game player.");
+        return;
+    }
+
+    std::vector<Player*> bots = ResolveSelectedBotsForOwner(player, command.botRef);
+    if (bots.empty())
+    {
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld no active bot. Use '.lwbot request <id>' first.");
+        return;
+    }
+
+    std::uint32_t fed = 0;
+    for (Player* bot : bots)
+    {
+        bool const needFood = bot->GetHealthPct() < 60.0f;
+        bool const needDrink = bot->GetMaxPower(POWER_MANA) > 0 &&
+            100.0f * static_cast<float>(bot->GetPower(POWER_MANA)) /
+                     static_cast<float>(bot->GetMaxPower(POWER_MANA)) < 60.0f;
+
+        if (!needFood && !needDrink)
+            continue;
+
+        if (needFood)
+            BotUseConsumable(bot, FindConsumableInInventory(bot, SpellCategoryFood));
+        if (needDrink)
+            BotUseConsumable(bot, FindConsumableInInventory(bot, SpellCategoryDrink));
+        ++fed;
+    }
+
+    if (fed > 0)
+        BotSayConfirm(bots.front());
+    else
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld no bots needed refreshments.");
+}
+
+void HandleBotBuff(
+    ChatHandler* handler,
+    BotBuffCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld buff requires an in-game player.");
+        return;
+    }
+
+    std::vector<Player*> bots = ResolveSelectedBotsForOwner(player, command.botRef);
+    if (bots.empty())
+    {
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld no active bot. Use '.lwbot request <id>' first.");
+        return;
+    }
+
+    for (Player* bot : bots)
+        living_world::ai::ForceBotBuffRefresh(bot, player);
+    BotSayConfirm(bots.front());
 }
 
 bool HandleParsedCommand(
@@ -1470,6 +2114,55 @@ bool HandleParsedCommand(
         std::get_if<BotCastCommand>(&parsed))
     {
         HandleBotCast(handler, *command);
+        return true;
+    }
+
+    if (BotAttackCommand const* command =
+        std::get_if<BotAttackCommand>(&parsed))
+    {
+        HandleBotAttack(handler, *command);
+        return true;
+    }
+
+    if (BotDisengageCommand const* command =
+        std::get_if<BotDisengageCommand>(&parsed))
+    {
+        HandleBotDisengage(handler, *command);
+        return true;
+    }
+
+    if (BotTrainCommand const* command =
+        std::get_if<BotTrainCommand>(&parsed))
+    {
+        HandleBotTrain(handler, *command);
+        return true;
+    }
+
+    if (BotRetreatCommand const* command =
+        std::get_if<BotRetreatCommand>(&parsed))
+    {
+        HandleBotRetreat(handler, *command);
+        return true;
+    }
+
+    if (BotFollowCommand const* command =
+        std::get_if<BotFollowCommand>(&parsed))
+    {
+        HandleBotFollow(handler, *command);
+        return true;
+    }
+
+    if (BotRefreshmentsCommand const* command =
+        std::get_if<BotRefreshmentsCommand>(&parsed))
+    {
+        HandleBotRefreshments(handler, *command);
+        return true;
+    }
+
+    if (BotBuffCommand const* command =
+        std::get_if<BotBuffCommand>(&parsed))
+    {
+        HandleBotBuff(handler, *command);
         return true;
     }
 

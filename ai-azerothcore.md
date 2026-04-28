@@ -1282,8 +1282,37 @@ bot companions. Populated from `PlayerScript::OnLogin` when
 
 **`ai/CompanionAI`** — a `BasicEvent` subclass scheduled on the bot player's
 own `m_Events` processor so it runs on the map thread (thread-safe). Each
-tick (~500 ms): assist combat by attacking the owner's current target; follow
-when idle. Class-specific spell casting is the next slice after this.
+tick (~500 ms). Role classification maps class to one of four roles:
+
+| Role | Classes |
+|---|---|
+| Healer | Priest |
+| HybridHealer | Druid, Paladin, Shaman |
+| Ranged | Mage, Warlock, Hunter |
+| Melee | Warrior, Rogue, Death Knight |
+
+Combat behaviour:
+- **Healer**: heals continuously; PW:Shield pre-pull (Priest); hysteresis mana
+  management (stop attacking below 40%, resume above 60%); SW:Pain → Mind Blast
+  → Smite offensively when mana allows; calls `TryApplyOutOfCombatBuff` in OOC
+  path.
+- **HybridHealer**: heals when owner below threshold, otherwise melee DPS.
+- **Ranged**: three-zone positioning (retreat < 8y, cast 8–30y, approach > 30y);
+  falls back to melee when OOM.
+- **Melee**: chases victim with `MoveChase`, class-specific offensive spells.
+
+OOC maintenance (`ApplyBotBuff`): Battle Shout (Warrior), Horn of Winter (DK),
+Paladin seal + Blessings, PW:Fortitude party-wide (Priest), Mark of the Wild
+party-wide (Druid), Arcane Intellect party-wide (Mage), Fel Armor/Demon Armor
+self-only (Warlock). Group buffs iterate `group->GetMemberSlots()`, one target
+per tick. `ForceBotBuffRefresh` is the public API used by the `buff` command.
+
+Command override state: forced target, disengage (500 ms auto-expire), retreat
+(timed duration), all cleared by `ClearBotOverride` on dismiss.
+
+Explicit player commands via `.lwbot`: `attack`, `disengage`, `retreat`,
+`follow`, `refreshments`, `buff`, `cast`, `profile`. All except `cast`/
+`request`/`dismiss` accept `party` to fan out to all active bots.
 
 **`script/LivingWorldPlayerScript`** — thin `PlayerScript` hook. On `OnLogin`,
 checks `IsBotSession()`, registers with `BotPlayerRegistry`, and schedules
