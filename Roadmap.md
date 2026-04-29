@@ -1146,6 +1146,76 @@ Current status from live validation:
 
 ---
 
+## Completed Slice: Quest Log Sync to Account-Alt Bots
+
+When the player accepts or abandons a quest, all active account-alt bots owned
+by that player now mirror the change automatically.
+
+### A) Core patch — OnPlayerQuestAccept (4 files)
+
+`PlayerScript` had no player-level quest-accept hook. A minimal patch adds one
+following the same pattern as the existing bot-session patch:
+
+- `src/server/game/Scripting/ScriptDefines/PlayerScript.h` — added
+  `PLAYERHOOK_ON_QUEST_ACCEPT` enum entry and `virtual void
+  OnPlayerQuestAccept(Player*, Quest const*)` virtual method.
+- `src/server/game/Scripting/ScriptDefines/PlayerScript.cpp` — added
+  `ScriptMgr::OnPlayerQuestAccept` dispatcher using `CALL_ENABLED_HOOKS`.
+- `src/server/game/Scripting/ScriptMgr.h` — added `OnPlayerQuestAccept`
+  declaration alongside the existing `OnPlayerQuestAbandon`.
+- `src/server/game/Entities/Player/PlayerQuest.cpp` — added
+  `sScriptMgr->OnPlayerQuestAccept(this, quest)` at the end of
+  `AddQuestAndCheckCompletion`, after all per-giver script hooks have fired.
+
+### B) Module — LivingWorldPlayerScript hooks
+
+`OnPlayerQuestAccept` — fires after the player's own accept is committed.
+Skips bot sessions. Iterates `BotPlayerRegistry::FindBotsForOwner`, checks
+`GetQuestStatus == QUEST_STATUS_NONE`, runs `CanTakeQuest` + `CanAddQuest`
+eligibility, then calls `bot->AddQuestAndCheckCompletion(quest, nullptr)`.
+Passing `nullptr` as questGiver is safe: no per-giver script hooks fire and
+the quest is added cleanly.
+
+`OnPlayerQuestAbandon` — fires after the player's own abandon. Skips bot
+sessions. Iterates the same registry, checks that the bot actually holds the
+quest (`status != QUEST_STATUS_NONE && status != QUEST_STATUS_REWARDED`),
+then calls `bot->AbandonQuest(questId)` + `bot->RemoveActiveQuest(questId)`.
+
+Both paths log at `LOG_INFO` on action and `LOG_DEBUG` on skip with
+`[LivingWorldDebug]` prefix.
+
+### C) Bug fix — active quest sync and SaveToDB timing
+
+Live validation revealed two bugs that prevented the source character from
+seeing accepted quests after a bot session:
+
+**Bug 1 — SaveToDB timing**: `OnPlayerLogout` fires before the normal
+`SaveToDB` call inside AzerothCore's logout path. The bot's in-memory quest
+state (written by `AddQuestAndCheckCompletion`) was never in
+`character_queststatus` at the point the dismissal service read it. Fix: call
+`player->SaveToDB(false, false)` explicitly at the top of the bot
+`OnPlayerLogout` branch, before `RunBotDismissalRecovery`.
+
+**Bug 2 — rewarded-only sync**: `SyncQuestsFromCloneToSource` only copied
+`character_queststatus_rewarded` (completed quests). Active/in-progress quests
+live in `character_queststatus` and were never transferred to the source. Fix:
+added a second `DirectExecute` in `SqlCharacterQuestSyncRepository`:
+```sql
+INSERT IGNORE INTO character_queststatus
+  (guid, quest, status, explored, timer,
+   mobcount1..4, itemcount1..6, playercount)
+SELECT {sourceGuid}, quest, status, ...
+FROM character_queststatus WHERE guid = {cloneGuid} AND status != 0
+```
+`INSERT IGNORE` prevents overwriting a quest the source already holds.
+`status != 0` filters stale zero-rows left by AzerothCore after quest removal.
+
+After both fixes: owner accepts quest → bot gets it in memory → on dismiss,
+bot flushes to DB → sync copies active rows to source → source logs in and
+sees the quest in their quest log.
+
+---
+
 ## Immediate Next: Multi-Bot Support and Remaining Verification
 
 Happy-path spawn, follow, cast, and dismiss are verified working on a live

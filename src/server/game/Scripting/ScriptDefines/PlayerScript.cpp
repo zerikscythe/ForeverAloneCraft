@@ -39,6 +39,11 @@ void ScriptMgr::OnPlayerCompleteQuest(Player* player, Quest const* quest)
     CALL_ENABLED_HOOKS(PlayerScript, PLAYERHOOK_ON_PLAYER_COMPLETE_QUEST, script->OnPlayerCompleteQuest(player, quest));
 }
 
+void ScriptMgr::OnPlayerQuestAccept(Player* player, Quest const* quest)
+{
+    CALL_ENABLED_HOOKS(PlayerScript, PLAYERHOOK_ON_QUEST_ACCEPT, script->OnPlayerQuestAccept(player, quest));
+}
+
 void ScriptMgr::OnPlayerSendInitialPacketsBeforeAddToMap(Player* player, WorldPacket& data)
 {
     CALL_ENABLED_HOOKS(PlayerScript, PLAYERHOOK_ON_SEND_INITIAL_PACKETS_BEFORE_ADD_TO_MAP, script->OnPlayerSendInitialPacketsBeforeAddToMap(player, data));

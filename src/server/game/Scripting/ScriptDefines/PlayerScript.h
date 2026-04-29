@@ -189,6 +189,7 @@ enum PlayerHook
     PLAYERHOOK_ON_PLAYER_LEARN_TALENTS,
     PLAYERHOOK_ON_PLAYER_ENTER_COMBAT,
     PLAYERHOOK_ON_PLAYER_LEAVE_COMBAT,
+    PLAYERHOOK_ON_QUEST_ACCEPT,
     PLAYERHOOK_ON_QUEST_ABANDON,
     PLAYERHOOK_ON_GET_QUEST_RATE,
     PLAYERHOOK_ON_CAN_PLAYER_FLY_IN_ZONE,
@@ -720,6 +721,20 @@ public:
      * @param player Contains information about the Player
      */
     virtual void OnPlayerLeaveCombat(Player* /*player*/) { }
+
+    /**
+     * @brief This hook called after player abandoning quest
+     *
+     * @param player Contains information about the Player
+     * @param questId Contains information about the quest id
+     */
+    /**
+     * @brief This hook is called after a player accepts a quest
+     *
+     * @param player Contains information about the Player
+     * @param quest Contains information about the Quest
+     */
+    virtual void OnPlayerQuestAccept(Player* /*player*/, Quest const* /*quest*/) { }
 
     /**
      * @brief This hook called after player abandoning quest

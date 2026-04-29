@@ -464,6 +464,9 @@ void Player::AddQuestAndCheckCompletion(Quest const* quest, Object* questGiver)
         default:
             break;
     }
+
+    // Notify player-level scripts after all per-giver hooks have fired.
+    sScriptMgr->OnPlayerQuestAccept(this, quest);
 }
 
 bool Player::CanRewardQuest(Quest const* quest, uint32 reward, bool msg)

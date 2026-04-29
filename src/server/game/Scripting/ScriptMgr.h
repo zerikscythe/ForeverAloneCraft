@@ -453,6 +453,7 @@ public: /* PlayerScript */
     void OnPlayerLearnTalents(Player* player, uint32 talentId, uint32 talentRank, uint32 spellid);
     void OnPlayerEnterCombat(Player* player, Unit* enemy);
     void OnPlayerLeaveCombat(Player* player);
+    void OnPlayerQuestAccept(Player* player, Quest const* quest);
     void OnPlayerQuestAbandon(Player* player, uint32 questId);
     bool OnPlayerCanSendErrorAlreadyLooted(Player* player);
     void OnPlayerAfterCreatureLoot(Player* player);

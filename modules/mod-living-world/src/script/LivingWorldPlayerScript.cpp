@@ -26,6 +26,7 @@
 #include "GroupMgr.h"
 #include "ObjectAccessor.h"
 #include "Player.h"
+#include "QuestDef.h"
 #include "ScriptMgr.h"
 #include "TradeData.h"
 #include "WorldSession.h"
@@ -673,10 +674,92 @@ public:
         if (Group* group = player->GetGroup())
             group->RemoveMember(player->GetGUID(), GROUP_REMOVEMETHOD_LEAVE);
 
+        // Flush in-memory state (including quest log) to the DB before the
+        // dismissal service reads character_queststatus for clone→source sync.
+        // OnPlayerLogout fires before the normal SaveToDB in the logout path,
+        // so we must save explicitly here.
+        player->SaveToDB(false, false);
+
         RunBotDismissalRecovery(player);
 
         living_world::service::BotPlayerRegistry::Instance()
             .UnregisterBotPlayer(player);
+    }
+
+    void OnPlayerQuestAccept(Player* player, Quest const* quest) override
+    {
+        // Skip bots — only real owners trigger quest propagation.
+        if (!player || !player->GetSession() || player->GetSession()->IsBotSession())
+            return;
+
+        uint32 questId = quest->GetQuestId();
+
+        for (Player* bot : living_world::service::BotPlayerRegistry::Instance()
+                               .FindBotsForOwner(player->GetGUID()))
+        {
+            if (!bot || !bot->GetSession() || !bot->GetSession()->IsBotSession())
+                continue;
+
+            // Skip if bot already has this quest in any non-none state.
+            if (bot->GetQuestStatus(questId) != QUEST_STATUS_NONE)
+            {
+                LOG_DEBUG(
+                    "server.worldserver",
+                    "[LivingWorldDebug] QuestSync accept: bot='{}' guid={} already has questId={}, skipping.",
+                    bot->GetName(), bot->GetGUID().GetCounter(), questId);
+                continue;
+            }
+
+            if (!bot->CanTakeQuest(quest, false) || !bot->CanAddQuest(quest, false))
+            {
+                LOG_DEBUG(
+                    "server.worldserver",
+                    "[LivingWorldDebug] QuestSync accept: bot='{}' guid={} ineligible for questId={}, skipping.",
+                    bot->GetName(), bot->GetGUID().GetCounter(), questId);
+                continue;
+            }
+
+            // Pass nullptr as giver — no per-giver hooks needed for sync.
+            bot->AddQuestAndCheckCompletion(quest, nullptr);
+
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] QuestSync accept: pushed questId={} from owner='{}' to bot='{}' guid={}.",
+                questId, player->GetName(), bot->GetName(), bot->GetGUID().GetCounter());
+        }
+    }
+
+    void OnPlayerQuestAbandon(Player* player, uint32 questId) override
+    {
+        // Skip bots — abandons are mirrored from owner to bot, not bot to owner.
+        if (!player || !player->GetSession() || player->GetSession()->IsBotSession())
+            return;
+
+        for (Player* bot : living_world::service::BotPlayerRegistry::Instance()
+                               .FindBotsForOwner(player->GetGUID()))
+        {
+            if (!bot || !bot->GetSession() || !bot->GetSession()->IsBotSession())
+                continue;
+
+            QuestStatus status = bot->GetQuestStatus(questId);
+            if (status == QUEST_STATUS_NONE || status == QUEST_STATUS_REWARDED)
+            {
+                LOG_DEBUG(
+                    "server.worldserver",
+                    "[LivingWorldDebug] QuestSync abandon: bot='{}' guid={} does not have questId={}, skipping.",
+                    bot->GetName(), bot->GetGUID().GetCounter(), questId);
+                continue;
+            }
+
+            // RemoveActiveQuest clears quest log slot and status map entry.
+            bot->AbandonQuest(questId);
+            bot->RemoveActiveQuest(questId);
+
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] QuestSync abandon: removed questId={} from bot='{}' guid={} (owner='{}').",
+                questId, bot->GetName(), bot->GetGUID().GetCounter(), player->GetName());
+        }
     }
 
     void OnPlayerUpdate(Player* player, uint32 /*diff*/) override
