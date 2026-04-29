@@ -14,6 +14,7 @@
 #include <array>
 #include <chrono>
 #include <cmath>
+#include <cstdint>
 #include <mutex>
 #include <unordered_map>
 
@@ -29,6 +30,7 @@ namespace ai
 struct BotOverride
 {
     ObjectGuid forcedTarget;                                         // Empty = no forced target
+    bool       attackLocked  = false;                                // .lwbot attack latch until combat resolves/disengage
     bool       disengaged    = false;
     std::chrono::steady_clock::time_point disengageExpiry = {};      // Zero = never expires
     std::chrono::steady_clock::time_point retreatExpiry   = {};      // Zero = not retreating
@@ -49,8 +51,13 @@ static void ModifyOverride(ObjectGuid botGuid, std::function<void(BotOverride&)>
     std::lock_guard<std::mutex> lock(s_overrideMutex);
     fn(s_overrides[botGuid]);
     // Clean up empty entries
+    auto const now = std::chrono::steady_clock::now();
     auto it = s_overrides.find(botGuid);
-    if (it != s_overrides.end() && !it->second.forcedTarget && !it->second.disengaged)
+    if (it != s_overrides.end()
+        && !it->second.forcedTarget
+        && !it->second.attackLocked
+        && !it->second.disengaged
+        && it->second.retreatExpiry <= now)
         s_overrides.erase(it);
 }
 
@@ -59,6 +66,8 @@ void SetBotForcedTarget(ObjectGuid botGuid, ObjectGuid targetGuid)
     ModifyOverride(botGuid, [&](BotOverride& o) {
         o.forcedTarget = targetGuid;
         o.disengaged   = false; // attacking clears disengage
+        if (targetGuid)
+            o.attackLocked = true;
     });
 }
 
@@ -67,6 +76,7 @@ void SetBotDisengaged(ObjectGuid botGuid, bool disengaged)
     ModifyOverride(botGuid, [&](BotOverride& o) {
         o.disengaged      = disengaged;
         o.forcedTarget    = ObjectGuid::Empty; // disengaging clears forced target
+        o.attackLocked    = false;
         // Auto-expire after 500ms so a subsequent r-click re-enables assist.
         o.disengageExpiry = disengaged
             ? std::chrono::steady_clock::now() + std::chrono::milliseconds(500)
@@ -95,7 +105,17 @@ bool SetBotRetreat(ObjectGuid botGuid, uint32_t durationMs)
     // Disengage/forced target cleared while retreating.
     o.disengaged    = false;
     o.forcedTarget  = ObjectGuid::Empty;
+    o.attackLocked  = false;
     return true;
+}
+
+bool IsBotAttackLocked(ObjectGuid botGuid)
+{
+    std::lock_guard<std::mutex> lock(s_overrideMutex);
+    auto it = s_overrides.find(botGuid);
+    if (it == s_overrides.end())
+        return false;
+    return it->second.attackLocked;
 }
 
 bool IsBotRetreating(ObjectGuid botGuid)
@@ -719,6 +739,38 @@ void EnsureRangedApproach(Player* bot, Unit* target)
     bot->GetMotionMaster()->MoveChase(target, RangedOptimalDistance);
 }
 
+void IssueFormationFollow(Player* bot, Player* owner)
+{
+    if (!bot || !owner)
+        return;
+
+    // Deterministic per-bot slotting around the owner to avoid stack/bunching.
+    // Keep a minimum ~1y angular separation while maintaining the nominal
+    // follow ring distance.
+    std::uint64_t const seed = bot->GetGUID().GetCounter();
+    std::uint32_t const slot = static_cast<std::uint32_t>(seed % 7ULL); // 0..6
+    float const angleStep = 2.0f * 3.14159265358979323846f / 7.0f;
+    float const slotAngle = FollowAngle + (static_cast<float>(slot) * angleStep);
+
+    bot->GetMotionMaster()->MoveFollow(owner, FollowDistance, slotAngle);
+}
+
+void BreakFollowForAttack(Player* bot)
+{
+    if (!bot)
+        return;
+
+    if (bot->GetMotionMaster()->GetCurrentMovementGeneratorType() != FOLLOW_MOTION_TYPE)
+        return;
+
+    // If a commanded attack starts while the follow generator is still active,
+    // the owner's movement can continue dragging ranged casters along and break
+    // casts. Clear the stale follow generator once so the combat branch fully
+    // owns movement from here.
+    bot->StopMoving();
+    bot->GetMotionMaster()->Clear(false);
+}
+
 // ---------------------------------------------------------------
 // Per-role combat ticks
 // ---------------------------------------------------------------
@@ -835,17 +887,36 @@ void TickMelee(Player* bot, Unit* target)
 // Returns true when this unit is something a bot should engage on the owner's
 // behalf: alive, on the same map, hostile to the owner, and currently flagged
 // as a legal attack target.
-bool IsValidAssistTarget(Player const* owner, Unit const* candidate)
+bool IsValidAssistTarget(Player const* bot, Player const* owner, Unit const* candidate)
 {
-    if (!candidate || !candidate->IsInWorld() || !candidate->IsAlive())
+    if (!bot || !owner || !candidate || !candidate->IsInWorld() || !candidate->IsAlive())
         return false;
     if (candidate == owner)
         return false;
-    if (candidate->GetMap() != owner->GetMap())
+    if (candidate == bot)
         return false;
-    if (owner->IsFriendlyTo(candidate))
+    if (candidate->GetMap() != bot->GetMap())
         return false;
-    if (!candidate->isTargetableForAttack(true, owner))
+    if (owner->IsFriendlyTo(candidate) || bot->IsFriendlyTo(candidate))
+        return false;
+    if (!candidate->isTargetableForAttack(true, bot))
+        return false;
+    return true;
+}
+
+// Commanded attack targets need slightly looser validation than normal assist.
+// While a player-issued attack command is latched, we still want casters to keep
+// their target and approach even if line-of-sight / targetable checks flicker
+// during pull movement or while the mob has not fully engaged yet.
+bool IsViableCommandTarget(Player const* bot, Player const* owner, Unit const* candidate)
+{
+    if (!bot || !owner || !candidate || !candidate->IsInWorld() || !candidate->IsAlive())
+        return false;
+    if (candidate == owner || candidate == bot)
+        return false;
+    if (candidate->GetMap() != bot->GetMap())
+        return false;
+    if (owner->IsFriendlyTo(candidate) || bot->IsFriendlyTo(candidate))
         return false;
     return true;
 }
@@ -876,17 +947,55 @@ Unit* ResolveAssistTarget(Player* bot, Player* owner)
     if (ovr.forcedTarget)
     {
         Unit* forced = ObjectAccessor::GetUnit(*bot, ovr.forcedTarget);
-        if (forced && IsValidAssistTarget(owner, forced))
+        if (forced && IsViableCommandTarget(bot, owner, forced))
             return forced;
         // Target gone — clear the override and fall through.
         SetBotForcedTarget(bot->GetGUID(), ObjectGuid::Empty);
+    }
+
+    // Attack-lock mode (.lwbot attack): keep suppressing follow and maintain
+    // aggressive assist behavior until combat naturally ends or the player
+    // explicitly disengages/follows.
+    if (ovr.attackLocked)
+    {
+        if (Unit* current = bot->GetVictim())
+        {
+            if (IsViableCommandTarget(bot, owner, current))
+                return current;
+        }
+
+        if (Unit* ownerVictim = owner->GetVictim())
+        {
+            if (IsViableCommandTarget(bot, owner, ownerVictim))
+                return ownerVictim;
+        }
+
+        ObjectGuid const ownerSelection = owner->GetTarget();
+        if (ownerSelection)
+        {
+            if (Unit* selected = ObjectAccessor::GetUnit(*bot, ownerSelection))
+            {
+                if (IsViableCommandTarget(bot, owner, selected))
+                    return selected;
+            }
+        }
+
+        // Only release the command lock once the commanded target context is
+        // truly gone. Do not key this off transient in-combat flags, because
+        // those can flicker during pull/setup and cause casters to snap back
+        // into follow mid-cast.
+        ModifyOverride(bot->GetGUID(), [](BotOverride& o) {
+            o.attackLocked = false;
+        });
+
+        return nullptr;
     }
 
     // Normal assist logic:
     // 1. Keep fighting the current victim while it's alive.
     if (Unit* current = bot->GetVictim())
     {
-        if (IsValidAssistTarget(owner, current))
+        if (IsValidAssistTarget(bot, owner, current))
             return current;
     }
 
@@ -896,7 +1005,7 @@ Unit* ResolveAssistTarget(Player* bot, Player* owner)
     //    aggroed yet or that the owner accidentally clicked.
     if (Unit* ownerVictim = owner->GetVictim())
     {
-        if (IsValidAssistTarget(owner, ownerVictim)
+        if (IsValidAssistTarget(bot, owner, ownerVictim)
             && ownerVictim->GetVictim() == owner)
             return ownerVictim;
     }
@@ -933,25 +1042,52 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
             }
         }
 
-        // Attempt an offensive spell if not already casting and mana is healthy.
-        if (!healerConserving && !bot->IsNonMeleeSpellCast(false))
+        // Keep a valid assist target snapshot so follow logic does not yank
+        // healers back to 2y during active combat.
+        Unit* attackTarget = ResolveAssistTarget(bot, owner);
+        if (attackTarget && bot->GetVictim() != attackTarget)
         {
-            Unit* const attackTarget = ResolveAssistTarget(bot, owner);
-            if (attackTarget)
+            // Match ranged behavior: lock victim/combat state without forcing
+            // chase movement that can interrupt casts.
+            bot->Attack(attackTarget, false);
+        }
+
+        if (attackTarget && IsBotAttackLocked(bot->GetGUID()))
+            BreakFollowForAttack(bot);
+
+        if (attackTarget)
+        {
+            float const distance = bot->GetDistance(attackTarget);
+            if (!bot->IsNonMeleeSpellCast(false) && distance > RangedCastRange)
             {
-                std::uint32_t const spell = GetHealerOffensiveSpell(bot, attackTarget);
-                if (spell)
-                    bot->CastSpell(attackTarget, spell, false);
+                // Priests/healers need explicit approach just like ranged DPS,
+                // otherwise they can stay latched to owner follow spacing when
+                // the pull starts far away.
+                EnsureRangedApproach(bot, attackTarget);
+                return;
             }
+        }
+
+        // Attempt an offensive spell if not already casting and mana is healthy.
+        if (attackTarget && !healerConserving && !bot->IsNonMeleeSpellCast(false))
+        {
+            std::uint32_t const spell = GetHealerOffensiveSpell(bot, attackTarget);
+            if (spell)
+                bot->CastSpell(attackTarget, spell, false);
         }
 
         TryApplyOutOfCombatBuff(bot, owner);
 
-        if (!bot->IsNonMeleeSpellCast(false)
+        if (!attackTarget
+            && !bot->GetVictim()
+            && !bot->IsNonMeleeSpellCast(false)
+            && !bot->IsInCombat()
+            && !owner->IsInCombat()
+            && !IsBotAttackLocked(bot->GetGUID())
             && bot->GetMotionMaster()->GetCurrentMovementGeneratorType() != FOLLOW_MOTION_TYPE)
         {
             bot->GetMotionMaster()->Clear(false);
-            bot->GetMotionMaster()->MoveFollow(owner, FollowDistance, FollowAngle);
+            IssueFormationFollow(bot, owner);
         }
         return;
     }
@@ -960,6 +1096,9 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
 
     if (assistTarget)
     {
+        if (IsBotAttackLocked(bot->GetGUID()))
+            BreakFollowForAttack(bot);
+
         if (role == BotCombatRole::HybridHealer)
         {
             // Hybrid casters still triage owner health first. Only commit to
@@ -1084,9 +1223,20 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
 
     if (bot->GetVictim())
     {
+        if (IsBotAttackLocked(bot->GetGUID()))
+        {
+            // Keep victim/combat state stable while attack-lock is active.
+            // This prevents transient target resolution misses from forcing
+            // AttackStop() and interrupting caster channels/casts.
+            return;
+        }
+
         bot->AttackStop();
-        bot->GetMotionMaster()->Clear(false);
-        bot->GetMotionMaster()->MoveFollow(owner, FollowDistance, FollowAngle);
+        if (!bot->IsInCombat() && !owner->IsInCombat() && !IsBotAttackLocked(bot->GetGUID()))
+        {
+            bot->GetMotionMaster()->Clear(false);
+            IssueFormationFollow(bot, owner);
+        }
         return;
     }
 
@@ -1094,13 +1244,17 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
     // following the owner. Only (re-)issue MoveFollow when not already in follow
     // mode, to avoid killing the active follow generator every 500ms tick which
     // causes the bot to appear frozen or to stutter.
+    if (bot->IsInCombat() || owner->IsInCombat())
+        return;
+
     TryApplyOutOfCombatBuff(bot, owner);
 
     if (!bot->IsNonMeleeSpellCast(false)
+        && !IsBotAttackLocked(bot->GetGUID())
         && bot->GetMotionMaster()->GetCurrentMovementGeneratorType() != FOLLOW_MOTION_TYPE)
     {
         bot->GetMotionMaster()->Clear(false);
-        bot->GetMotionMaster()->MoveFollow(owner, FollowDistance, FollowAngle);
+        IssueFormationFollow(bot, owner);
     }
 }
 

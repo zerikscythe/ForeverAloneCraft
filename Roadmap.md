@@ -642,11 +642,26 @@ blocked until they have domain-specific sanity rules and ownership checks.
 
 ### E) Startup/player-login recovery pass — **Complete**
 
-On player login, `LivingWorldPlayerScript::OnPlayerLogin` lists recoverable
-runtime records for the account. `AccountAltStartupRecoveryService` retries
-`SyncingBack` progress-only runtimes, surfaces pending recovery and manual
-review counts, and runs stale-group-bot cleanup (`CleanupStaleGroupBots`)
-before the recovery pass.
+Crash/forced-close recovery now starts early enough to fix character-select
+state instead of waiting for the source character to fully enter the world.
+
+- `LivingWorldAccountScript::OnAccountLogin` now runs on successful account auth
+  before character enumeration.
+- That hook routes recoverable runtimes through the existing authoritative
+  dismissal/recovery path (`AccountAltDismissalService::DismissClone`) so the
+  source character can receive:
+  - progress sync
+  - approved equipment/inventory/bank sync
+  - source-name lease restoration
+  - runtime retirement after successful cleanup
+- Live validation now confirms a forced client-close path can recover item state
+  on next login without leaving visible reserved-name issues on the character list.
+
+Group-roster cleanup remains split into two phases for safety:
+- `CleanupStaleGroupBots` still detects/logs offline clone members during owner login.
+- A deferred event after player spawn now removes those offline clone members
+  from the group, avoiding the earlier login-time `Group::RemoveMember` crash path
+  while still giving the owner a clean party roster shortly after entry.
 
 ---
 
@@ -986,6 +1001,26 @@ Three new `.lwbot` commands:
 - `CLASS_MAGE`: Arcane Intellect buffed on all group members (one per tick).
 - `CLASS_DRUID`: Mark of the Wild buffed on all group members (one per tick).
 
+### E) Commanded caster combat-lock stabilization — **Partial**
+
+Follow-up live testing found that `.lwbot attack` needed a stricter separation
+from normal assist/follow heuristics, especially for casters.
+
+Stabilization now in place:
+- `attackLocked` is a command-latched combat mode distinct from transient engine
+  `IsInCombat()` flags.
+- Commanded targets now use a looser viability test than normal assist targets,
+  so early pull / LoS / engagement flicker does not immediately collapse the
+  target context.
+- `BreakFollowForAttack` clears stale `FOLLOW_MOTION_TYPE` movement when a
+  commanded attack starts, so near-target owner repositioning no longer drags
+  casters along via the old follow generator.
+
+Current status from live validation:
+- long-range commanded pulls improved substantially
+- near-target reposition behavior is improved and considered workable for now
+- further polish may still be needed if other movement generators show up in logs
+
 ### E) LivingWorld Control Panel addon — **Complete**
 
 - Slot 0 is a permanent `Party` entry; slot selector wraps through it.
@@ -1009,9 +1044,12 @@ server. The remaining gaps are:
   full 4-player party requires changing registry maps to `vector<ObjectGuid>`
   per owner and updating spawn guards and `CompanionAI` event scheduling
   accordingly.
-- **Crash/interrupt recovery verification**: exercise the full spawn →
-  kill-worldserver → restart → owner-login path and confirm name reclaim,
-  progress sync, and equipment sync leave source characters in correct state.
+- **Crash/interrupt recovery verification**: **Partial**
+  - Live test now confirms forced client close + relog can recover inventory
+    state and restore visible character names correctly on the next login.
+  - Still worth broadening this into a fuller regression matrix:
+    spawn → client kill / world crash → relog → verify progress, equipment,
+    inventory, bank, name lease, and party roster cleanup.
 - **Bot-session restart validation**: verify that null-socket bot sessions
   survive a worldserver restart scenario without leaving orphaned runtime rows.
 - **Combat-state spawn restriction**: no explicit block on requesting a bot
@@ -1074,6 +1112,12 @@ Current implementation status:
 - `AccountAltStartupRecoverySummary` now tracks recovered progress,
   equipment, inventory, and bank syncs separately in addition to the aggregate
   `recoveredSyncs` count.
+- Account-login recovery now also has an earlier account-auth hook path via
+  `LivingWorldAccountScript::OnAccountLogin`, which uses
+  `AccountAltDismissalService` to restore source names and sync clone state back
+  before character enumeration.
+- Owner login now schedules deferred stale-party cleanup after world entry so
+  disconnected clone members do not keep blocking fresh bot requests.
 
 Important current safety line:
 - inventory/bank execution now defaults on for the live path so account alts

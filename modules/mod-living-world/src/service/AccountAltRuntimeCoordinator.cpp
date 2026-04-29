@@ -95,6 +95,23 @@ bool DeleteOfflineCloneCharacter(
     sCharacterCache->DeleteCharacterCacheEntry(cloneGuid, cloneCharacterName);
     return true;
 }
+
+bool SourceProgressIsAhead(
+    model::CharacterProgressSnapshot const& source,
+    model::CharacterProgressSnapshot const& clone)
+{
+    if (source.level != clone.level)
+    {
+        return source.level > clone.level;
+    }
+
+    if (source.experience != clone.experience)
+    {
+        return source.experience > clone.experience;
+    }
+
+    return source.money > clone.money;
+}
 } // namespace
 
 AccountAltRuntimeCoordinator::AccountAltRuntimeCoordinator(
@@ -408,7 +425,8 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
     decision.reason = recoveryPlan.reason;
 
     auto applyItemRecovery =
-        [&](model::AccountAltRuntimeRecord const& currentRuntime)
+        [&](model::AccountAltRuntimeRecord const& currentRuntime,
+            bool cloneAuthoritativeForItems)
         -> AccountAltSpawnDecision
     {
         std::optional<model::CharacterItemSnapshot> sourceItems =
@@ -460,6 +478,50 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
                 return itemDecision;
             }
             case model::AccountAltItemRecoveryPlanKind::SyncEquipmentToSource:
+                if (!cloneAuthoritativeForItems)
+                {
+                    if (!DeleteOfflineCloneCharacter(
+                            currentRuntime.cloneAccountId,
+                            currentRuntime.cloneCharacterGuid,
+                            currentRuntime.cloneCharacterName))
+                    {
+                        return BuildBlockedDecision(
+                            "source data is newer but stale clone could not be "
+                            "deleted for refresh");
+                    }
+
+                    model::AccountAltRuntimeRecord refreshedRuntime = currentRuntime;
+                    refreshedRuntime.cloneCharacterGuid = 0;
+                    refreshedRuntime.cloneCharacterName =
+                        refreshedRuntime.sourceCharacterName;
+                    refreshedRuntime.cloneSnapshot = {};
+
+                    integration::CharacterCloneMaterializationResult cloneResult =
+                        _cloneMaterializer.MaterializeClone(refreshedRuntime);
+                    if (!cloneResult.succeeded)
+                    {
+                        return BuildBlockedDecision(cloneResult.reason);
+                    }
+
+                    refreshedRuntime.cloneCharacterGuid = cloneResult.cloneCharacterGuid;
+                    refreshedRuntime.cloneCharacterName = cloneResult.cloneCharacterName;
+                    refreshedRuntime.cloneSnapshot = cloneResult.cloneSnapshot;
+                    refreshedRuntime.state = model::AccountAltRuntimeState::Active;
+                    _runtimeRepository.SaveRuntime(refreshedRuntime);
+
+                    AccountAltSpawnDecision itemDecision;
+                    itemDecision.kind =
+                        AccountAltSpawnDecisionKind::SpawnUsingPersistentClone;
+                    itemDecision.runtime = refreshedRuntime;
+                    itemDecision.botAccountId = refreshedRuntime.cloneAccountId;
+                    itemDecision.spawnCharacterGuid =
+                        refreshedRuntime.cloneCharacterGuid;
+                    itemDecision.reason =
+                        "source data is newer; refreshed persistent clone before "
+                        "spawn";
+                    return itemDecision;
+                }
+
             {
                 AccountAltEquipmentSyncExecutor equipmentExecutor(
                     _runtimeRepository,
@@ -489,6 +551,50 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
                 return itemDecision;
             }
             case model::AccountAltItemRecoveryPlanKind::SyncBagDomainsToSource:
+                if (!cloneAuthoritativeForItems)
+                {
+                    if (!DeleteOfflineCloneCharacter(
+                            currentRuntime.cloneAccountId,
+                            currentRuntime.cloneCharacterGuid,
+                            currentRuntime.cloneCharacterName))
+                    {
+                        return BuildBlockedDecision(
+                            "source data is newer but stale clone could not be "
+                            "deleted for refresh");
+                    }
+
+                    model::AccountAltRuntimeRecord refreshedRuntime = currentRuntime;
+                    refreshedRuntime.cloneCharacterGuid = 0;
+                    refreshedRuntime.cloneCharacterName =
+                        refreshedRuntime.sourceCharacterName;
+                    refreshedRuntime.cloneSnapshot = {};
+
+                    integration::CharacterCloneMaterializationResult cloneResult =
+                        _cloneMaterializer.MaterializeClone(refreshedRuntime);
+                    if (!cloneResult.succeeded)
+                    {
+                        return BuildBlockedDecision(cloneResult.reason);
+                    }
+
+                    refreshedRuntime.cloneCharacterGuid = cloneResult.cloneCharacterGuid;
+                    refreshedRuntime.cloneCharacterName = cloneResult.cloneCharacterName;
+                    refreshedRuntime.cloneSnapshot = cloneResult.cloneSnapshot;
+                    refreshedRuntime.state = model::AccountAltRuntimeState::Active;
+                    _runtimeRepository.SaveRuntime(refreshedRuntime);
+
+                    AccountAltSpawnDecision itemDecision;
+                    itemDecision.kind =
+                        AccountAltSpawnDecisionKind::SpawnUsingPersistentClone;
+                    itemDecision.runtime = refreshedRuntime;
+                    itemDecision.botAccountId = refreshedRuntime.cloneAccountId;
+                    itemDecision.spawnCharacterGuid =
+                        refreshedRuntime.cloneCharacterGuid;
+                    itemDecision.reason =
+                        "source data is newer; refreshed persistent clone before "
+                        "spawn";
+                    return itemDecision;
+                }
+
             {
                 auto const shouldSyncDomain =
                     [&](model::AccountAltSyncDomain domain) -> bool
@@ -566,7 +672,52 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
                 "[LivingWorldDebug] PlanSpawn reusing clone runtimeId={} cloneGuid={}",
                 runtime.runtimeId,
                 runtime.cloneCharacterGuid);
-            return applyItemRecovery(runtime);
+
+            if (SourceProgressIsAhead(*sourceSnapshot, *cloneSnapshot))
+            {
+                if (!DeleteOfflineCloneCharacter(
+                        runtime.cloneAccountId,
+                        runtime.cloneCharacterGuid,
+                        runtime.cloneCharacterName))
+                {
+                    return BuildBlockedDecision(
+                        "source progress is newer but stale clone could not be "
+                        "deleted for refresh");
+                }
+
+                model::AccountAltRuntimeRecord refreshedRuntime = runtime;
+                refreshedRuntime.cloneCharacterGuid = 0;
+                refreshedRuntime.cloneCharacterName =
+                    refreshedRuntime.sourceCharacterName;
+                refreshedRuntime.cloneSnapshot = {};
+
+                integration::CharacterCloneMaterializationResult cloneResult =
+                    _cloneMaterializer.MaterializeClone(refreshedRuntime);
+                if (!cloneResult.succeeded)
+                {
+                    return BuildBlockedDecision(cloneResult.reason);
+                }
+
+                refreshedRuntime.cloneCharacterGuid = cloneResult.cloneCharacterGuid;
+                refreshedRuntime.cloneCharacterName = cloneResult.cloneCharacterName;
+                refreshedRuntime.cloneSnapshot = cloneResult.cloneSnapshot;
+                refreshedRuntime.state = model::AccountAltRuntimeState::Active;
+                _runtimeRepository.SaveRuntime(refreshedRuntime);
+
+                AccountAltSpawnDecision refreshedDecision;
+                refreshedDecision.kind =
+                    AccountAltSpawnDecisionKind::SpawnUsingPersistentClone;
+                refreshedDecision.runtime = refreshedRuntime;
+                refreshedDecision.botAccountId = refreshedRuntime.cloneAccountId;
+                refreshedDecision.spawnCharacterGuid =
+                    refreshedRuntime.cloneCharacterGuid;
+                refreshedDecision.reason =
+                    "source progress is newer; refreshed persistent clone before "
+                    "spawn";
+                return refreshedDecision;
+            }
+
+            return applyItemRecovery(runtime, false);
         case model::AccountAltRecoveryPlanKind::SyncCloneToSource:
         {
             AccountAltSyncExecutor executor(_runtimeRepository, _syncRepository);
@@ -591,7 +742,7 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
                 runtime.runtimeId,
                 runtime.cloneCharacterGuid,
                 recoveryPlan.domainsToSync.size());
-            return applyItemRecovery(runtime);
+            return applyItemRecovery(runtime, true);
         }
         case model::AccountAltRecoveryPlanKind::ManualReview:
             decision.kind = AccountAltSpawnDecisionKind::ManualReviewRequired;

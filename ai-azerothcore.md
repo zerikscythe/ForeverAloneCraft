@@ -71,6 +71,29 @@ The most important issue discovered on `Vajjination` was:
   target server path. If `deploy.local` is absent, deployment must be done
   manually or the file must be created for this machine.
 
+### Windows build invocation on this machine (important)
+
+On this workstation, `cmake` may not be on `PATH` in a plain `cmd.exe` shell.
+Use the Visual Studio bundled CMake directly when running builds from the repo:
+
+- `C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe`
+
+Known-good command for this repo/preset:
+
+```bat
+"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --build --preset vs2022-debug-worldserver --target worldserver
+```
+
+Unit-test target is also expected to compile on this machine during validation:
+
+```bat
+"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --build --preset vs2022-debug-unit-tests --target unit_tests
+```
+
+If `cmake --build ...` fails with "not recognized", do not assume source
+changes broke the build. First retry with the absolute Visual Studio CMake
+path above.
+
 ## Living-World spawn safety notes
 
 These came out of debugging duplicate bot requests and roster confusion:
@@ -496,6 +519,11 @@ Current state as of the first foundation + first runtime command slice:
   `AccountAltRuntimeCoordinator` before `BotSessionFactory`. This means runtime
   records and snapshots are consulted first, reserved bot accounts are reused
   deterministically, and clone-ahead cases are blocked for manual review.
+- `AccountAltRuntimeCoordinator` also now protects the opposite direction:
+  when the live source character is ahead of a stale offline clone, spawn-time
+  reuse does not let old clone progress/items overwrite the source. Instead the
+  old clone body is deleted and rematerialized from the newer source snapshot
+  before spawn continues.
 - `LivingWorldPlayerScript` now contains the first live item-transfer test seam
   for controlled account-alt bots: when a real owner starts a trade with their
   currently registered bot-session clone, the script auto-runs the bot's stock
@@ -1601,6 +1629,44 @@ logout path anymore. It is:
 - strengthening nested-container/manual-review rules
 - runtime-verifying name reclaim, dismissal ordering, and bag-domain safety
 
+### 22.8 Disconnected companion cleanup after client-close / crash
+
+One more group-lifecycle issue showed up in live play: after the real client is
+closed or the server crashes, the owner can come back to a party that still has
+offline clone members attached as disconnected companions. Those stale slots can
+block fresh bot requests until manually uninvited.
+
+Immediate group mutation during owner login had already proven unsafe in debug
+builds (`Group::RemoveMember` / `BroadcastGroupUpdate` UAF path), so the current
+approach is intentionally two-phase:
+
+1. `CleanupStaleGroupBots(player)` still runs on owner login, but it only
+   detects/logs the stale clone slots.
+2. `DeferredOwnerGroupCleanupEvent` is scheduled on the real player's
+   `m_Events` after world entry (currently ~2 seconds later).
+3. The deferred event calls `RemoveOfflineCloneGroupMembers(owner)` which re-checks
+   the group membership and then removes only offline clone members.
+
+This gives the owner a clean roster shortly after spawn without mutating group
+state during the most fragile login phase.
+
+### 22.9 Commanded caster combat-lock note
+
+The `.lwbot attack` path now has extra protection for caster reliability:
+
+- `attackLocked` in `CompanionAI` is a command-latched combat mode, separate
+  from the engine's transient `IsInCombat()` flags.
+- Commanded targets use a looser viability test than normal assist logic, so
+  target context survives early-pull/LoS flicker.
+- When attack-lock is active and a target is acquired, stale
+  `FOLLOW_MOTION_TYPE` movement is explicitly cleared via
+  `BreakFollowForAttack(bot)` so the owner's repositioning does not keep dragging
+  the caster along and breaking casts.
+
+This is not a claim that the combat AI is "finished"; it is the current working
+guardrail that made commanded long-range and near-range caster pulls more stable
+in live testing.
+
 ---
 
 ## 23. Clone-to-source sync executor
@@ -1648,26 +1714,37 @@ LivingWorldCommandScript  (executes on world thread, map thread context)
                   └─ SqlCharacterProgressSyncRepository  (DirectExecute impl)
 ```
 
-### 23.4 What the startup recovery pass does
+### 23.4 What the startup recovery pass does now
 
-When an owner player logs in, `LivingWorldPlayerScript::OnPlayerLogin`
-(non-bot path) now:
-1. Queries `living_world_account_alt_runtime` for the source account.
-2. For each record with `state = SyncingBack`: reloads source/clone snapshots,
-   re-runs sanity checks, and retries `AccountAltSyncExecutor::Execute`.
-3. For each record with `state = SyncingEquipment`, `SyncingInventory`, or
-   `SyncingBank`: reloads item snapshots, rebuilds the guarded item-recovery
-   plan, and retries only that specific executor.
-4. For active materialized clones: builds the recovery plan and surfaces counts
-   for pending recovery, manual review, and blocked runtimes through login
-   messages.
+The earlier owner-login recovery pass was too late for one important UX issue:
+if the client or server died at the wrong time, the original source character
+could still show the reserved lease name on the character-select screen because
+recovery had not run yet.
 
-This pass intentionally stays lightweight:
-- it only performs writes for runtimes already marked `SyncingBack`,
-  `SyncingEquipment`, `SyncingInventory`, or `SyncingBank`
-- it does not auto-run broader clone-ahead recovery for `Active` runtimes
-- it does not auto-run new inventory/equipment/bank recovery for `Active`
-  runtimes that have not already entered a guarded syncing state
+The current recovery timing is therefore:
+
+1. `WorldSocket::HandleAuthSessionCallback` completes successful auth.
+2. AzerothCore fires `AccountScript::OnAccountLogin(accountId)` before character
+   enumeration.
+3. `LivingWorldAccountScript::OnAccountLogin` now calls the module-local helper
+   `RecoverAccountAltRuntimesForAccount(accountId)`.
+4. That helper iterates `living_world_account_alt_runtime` rows for the source
+   account and routes each recoverable clone through
+   `AccountAltDismissalService::DismissClone(cloneGuid)`.
+5. The dismissal service remains the single authoritative recovery path for:
+   - safe clone-to-source progress sync
+   - approved equipment / inventory / bank sync
+   - source-name lease restoration
+   - runtime retirement after successful cleanup
+
+This means crash/forced-close recovery now happens early enough that the
+character list should usually already see corrected source names without any
+custom "waiting..." queue hack.
+
+Important note: the old `AccountAltStartupRecoveryService` still exists as a
+lightweight retry/report seam for interrupted sync-state records, but the
+practical login-screen correctness fix came from moving the real recovery entry
+point to account-login timing and reusing the broader dismissal recovery path.
 
 Important implementation note: `SqlAccountAltRuntimeRepository::
 ListRecoverableForAccount` must include all interrupted sync states, including

@@ -1,5 +1,8 @@
- #include "Chat.h"
+#include "AccountScript.h"
+#include "Chat.h"
 #include "Config.h"
+#include "Duration.h"
+#include "EventProcessor.h"
 #include "ai/CompanionAI.h"
 #include "script/LivingWorldChatConfig.h"
 #include "integration/SqlAccountAltRuntimeRepository.h"
@@ -32,59 +35,22 @@ namespace
 {
 std::unordered_set<std::uint64_t> s_openedControlledTradeWindows;
 
-void CleanupStaleGroupBots(Player* player)
+struct StartupRuntimeRecoverySummary
 {
-    if (!player || !player->GetSession())
-    {
-        return;
-    }
+    std::uint32_t scanned = 0;
+    std::uint32_t progressSynced = 0;
+    std::uint32_t equipmentSynced = 0;
+    std::uint32_t inventorySynced = 0;
+    std::uint32_t bankSynced = 0;
+    std::uint32_t namesRestored = 0;
+    std::uint32_t runtimesRetired = 0;
+    std::uint32_t manualReviewRequired = 0;
+    std::uint32_t blocked = 0;
+};
 
-    Group* group = player->GetGroup();
-    if (!group)
-    {
-        return;
-    }
-
-    QueryResult result = CharacterDatabase.Query(
-        "SELECT clone_character_guid FROM living_world_account_alt_runtime "
-        "WHERE source_account_id = {} AND clone_character_guid IS NOT NULL "
-        "AND clone_character_guid != 0",
-        player->GetSession()->GetAccountId());
-    if (!result)
-    {
-        return;
-    }
-
-    std::vector<ObjectGuid> toRemove;
-    do
-    {
-        std::uint64_t cloneGuidLow = (*result)[0].Get<std::uint64_t>();
-        ObjectGuid guid = ObjectGuid::Create<HighGuid::Player>(cloneGuidLow);
-        if (group->IsMember(guid) && !ObjectAccessor::FindPlayer(guid))
-        {
-            toRemove.push_back(guid);
-        }
-    } while (result->NextRow());
-
-    for (ObjectGuid const& guid : toRemove)
-    {
-        LOG_INFO(
-            "server.worldserver",
-            "[LivingWorldDebug] CleanupStaleGroupBots removing offline clone "
-            "guid={} from owner='{}' group on login.",
-            guid.GetCounter(),
-            player->GetName());
-        group->RemoveMember(guid, GROUP_REMOVEMETHOD_LEAVE);
-    }
-}
-
-void RunOwnerStartupRecovery(Player* player)
+StartupRuntimeRecoverySummary RecoverAccountAltRuntimesForAccount(
+    std::uint32_t accountId)
 {
-    if (!player || !player->GetSession())
-    {
-        return;
-    }
-
     living_world::integration::SqlAccountAltRuntimeRepository runtimeRepository;
     living_world::integration::SqlCharacterItemSnapshotRepository
         itemSnapshotRepository;
@@ -94,6 +60,8 @@ void RunOwnerStartupRecovery(Player* player)
         bankSyncRepository;
     living_world::integration::SqlCharacterEquipmentSyncRepository
         equipmentSyncRepository;
+    living_world::integration::SqlCharacterNameLeaseRepository
+        nameLeaseRepository;
     living_world::integration::SqlCharacterProgressSnapshotRepository
         snapshotRepository;
     living_world::integration::SqlCharacterProgressSyncRepository syncRepository;
@@ -103,43 +71,206 @@ void RunOwnerStartupRecovery(Player* player)
         sConfigMgr->GetOption<bool>("LivingWorld.AccountAlt.EnableInventorySync", true);
     itemRecoveryOptions.enableBankSync =
         sConfigMgr->GetOption<bool>("LivingWorld.AccountAlt.EnableBankSync", true);
-    living_world::service::AccountAltStartupRecoveryService startupRecoveryService(
+    living_world::service::AccountAltDismissalService dismissalService(
         runtimeRepository,
         itemSnapshotRepository,
         inventorySyncRepository,
         bankSyncRepository,
         equipmentSyncRepository,
+        nameLeaseRepository,
         snapshotRepository,
         syncRepository,
         recoveryService,
         itemRecoveryOptions);
 
-    living_world::service::AccountAltStartupRecoverySummary summary =
-        startupRecoveryService.RecoverForAccount(
-            player->GetSession()->GetAccountId());
+    StartupRuntimeRecoverySummary summary;
+    for (living_world::model::AccountAltRuntimeRecord const& runtime :
+         runtimeRepository.ListRecoverableForAccount(accountId))
+    {
+        ++summary.scanned;
+
+        if (runtime.cloneCharacterGuid == 0)
+        {
+            ++summary.blocked;
+            LOG_WARN(
+                "server.worldserver",
+                "[LivingWorldDebug] AccountLoginRecovery runtimeId={} sourceAccountId={} "
+                "blocked: clone identity incomplete.",
+                runtime.runtimeId,
+                accountId);
+            continue;
+        }
+
+        living_world::service::AccountAltDismissalSummary const result =
+            dismissalService.DismissClone(runtime.cloneCharacterGuid);
+        summary.progressSynced += result.progressSynced ? 1u : 0u;
+        summary.equipmentSynced += result.equipmentSynced ? 1u : 0u;
+        summary.inventorySynced += result.inventorySynced ? 1u : 0u;
+        summary.bankSynced += result.bankSynced ? 1u : 0u;
+        summary.namesRestored += result.namesRestored ? 1u : 0u;
+        summary.runtimesRetired += result.runtimeRetired ? 1u : 0u;
+        summary.manualReviewRequired += result.manualReviewRequired ? 1u : 0u;
+        summary.blocked += result.blocked ? 1u : 0u;
+    }
+
+    return summary;
+}
+
+std::vector<ObjectGuid> CollectOfflineCloneGroupMembers(Player* player)
+{
+    if (!player || !player->GetSession())
+    {
+        return {};
+    }
+
+    if (!player->GetGroup())
+    {
+        return {};
+    }
+
+    QueryResult result = CharacterDatabase.Query(
+        "SELECT clone_character_guid FROM living_world_account_alt_runtime "
+        "WHERE source_account_id = {} AND clone_character_guid IS NOT NULL "
+        "AND clone_character_guid != 0",
+        player->GetSession()->GetAccountId());
+    if (!result)
+    {
+        return {};
+    }
+
+    std::vector<ObjectGuid> toRemove;
+    do
+    {
+        std::uint64_t cloneGuidLow = (*result)[0].Get<std::uint64_t>();
+        ObjectGuid guid = ObjectGuid::Create<HighGuid::Player>(cloneGuidLow);
+        Group* currentGroup = player->GetGroup();
+        if (currentGroup && currentGroup->IsMember(guid) && !ObjectAccessor::FindPlayer(guid))
+        {
+            toRemove.push_back(guid);
+        }
+    } while (result->NextRow());
+
+    return toRemove;
+}
+
+void CleanupStaleGroupBots(Player* player)
+{
+    std::vector<ObjectGuid> toRemove = CollectOfflineCloneGroupMembers(player);
+
+    if (toRemove.empty())
+    {
+        return;
+    }
+
+    // NOTE:
+    // Login-time group mutation here has produced rare use-after-free crashes
+    // inside Group::RemoveMember/BroadcastGroupUpdate in debug builds.
+    // Keep detection/logging for visibility, but avoid mutating group state
+    // during this sensitive phase; stale slots are cleaned by normal group
+    // lifecycle/logout flows.
+    LOG_WARN(
+        "server.worldserver",
+        "[LivingWorldDebug] CleanupStaleGroupBots detected {} offline clone(s) "
+        "for owner='{}' on login; skipping immediate removal for safety.",
+        toRemove.size(),
+        player->GetName());
+
+    for (ObjectGuid const& guid : toRemove)
+    {
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] CleanupStaleGroupBots deferred removal cloneGuid={} owner='{}'.",
+            guid.GetCounter(),
+            player->GetName());
+    }
+}
+
+void RemoveOfflineCloneGroupMembers(Player* player)
+{
+    if (!player || !player->GetSession())
+        return;
+
+    Group* group = player->GetGroup();
+    if (!group)
+        return;
+
+    std::vector<ObjectGuid> toRemove = CollectOfflineCloneGroupMembers(player);
+    if (toRemove.empty())
+        return;
+
+    LOG_INFO(
+        "server.worldserver",
+        "[LivingWorldDebug] DeferredGroupCleanup removing {} offline clone(s) for owner='{}'.",
+        toRemove.size(),
+        player->GetName());
+
+    for (ObjectGuid const& guid : toRemove)
+    {
+        if (!group->IsMember(guid) || ObjectAccessor::FindPlayer(guid))
+            continue;
+
+        group->RemoveMember(guid, GROUP_REMOVEMETHOD_LEAVE);
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] DeferredGroupCleanup removed offline cloneGuid={} owner='{}'.",
+            guid.GetCounter(),
+            player->GetName());
+    }
+}
+
+class DeferredOwnerGroupCleanupEvent final : public BasicEvent
+{
+public:
+    explicit DeferredOwnerGroupCleanupEvent(ObjectGuid ownerGuid)
+        : _ownerGuid(ownerGuid)
+    {
+    }
+
+    bool Execute(uint64, uint32) override
+    {
+        Player* owner = ObjectAccessor::FindConnectedPlayer(_ownerGuid);
+        if (owner)
+            RemoveOfflineCloneGroupMembers(owner);
+        return true;
+    }
+
+private:
+    ObjectGuid _ownerGuid;
+};
+
+void RunOwnerStartupRecovery(Player* player)
+{
+    if (!player || !player->GetSession())
+    {
+        return;
+    }
+
+    StartupRuntimeRecoverySummary summary =
+        RecoverAccountAltRuntimesForAccount(player->GetSession()->GetAccountId());
+
     if (summary.scanned == 0)
     {
         return;
     }
 
     ChatHandler handler(player->GetSession());
-    if (summary.recoveredSyncs > 0)
+    if (summary.runtimesRetired > 0)
     {
         living_world::script::SendPlayerLog(
             &handler,
             static_cast<std::uint8_t>(
                 living_world::script::PlayerChatLogLevel::BareMinimum),
-            "LivingWorld recovered {} interrupted account-alt sync(s) on login.",
-            summary.recoveredSyncs);
+            "LivingWorld recovered {} interrupted account-alt runtime(s) on login.",
+            summary.runtimesRetired);
     }
-    if (summary.pendingRecovery > 0)
+    if (summary.namesRestored > 0)
     {
         living_world::script::SendPlayerLog(
             &handler,
             static_cast<std::uint8_t>(
                 living_world::script::PlayerChatLogLevel::BareMinimum),
-            "LivingWorld found {} account-alt runtime(s) that still need recovery before reuse.",
-            summary.pendingRecovery);
+            "LivingWorld restored {} reserved name lease(s) on login.",
+            summary.namesRestored);
     }
     if (summary.manualReviewRequired > 0 || summary.blocked > 0)
     {
@@ -155,13 +286,18 @@ void RunOwnerStartupRecovery(Player* player)
     LOG_INFO(
         "server.worldserver",
         "[LivingWorldDebug] OwnerLoginRecovery character='{}' guid={} accountId={} "
-        "scanned={} recovered={} pending={} manualReview={} blocked={}",
+        "scanned={} progress={} equipment={} inventory={} bank={} namesRestored={} "
+        "retired={} manualReview={} blocked={}",
         player->GetName(),
         player->GetGUID().GetCounter(),
         player->GetSession()->GetAccountId(),
         summary.scanned,
-        summary.recoveredSyncs,
-        summary.pendingRecovery,
+        summary.progressSynced,
+        summary.equipmentSynced,
+        summary.inventorySynced,
+        summary.bankSynced,
+        summary.namesRestored,
+        summary.runtimesRetired,
         summary.manualReviewRequired,
         summary.blocked);
 }
@@ -445,7 +581,9 @@ public:
         if (!player->GetSession()->IsBotSession())
         {
             CleanupStaleGroupBots(player);
-            RunOwnerStartupRecovery(player);
+            player->m_Events.AddEventAtOffset(
+                new DeferredOwnerGroupCleanupEvent(player->GetGUID()),
+                2s);
             return;
         }
 
@@ -457,22 +595,6 @@ public:
             return;
         }
 
-        // The owner character may have 0 rows in character_spell (e.g. a test
-        // character created outside the normal client flow). Seed the bot with
-        // all class/race default spells so it always has combat abilities.
-        player->LearnDefaultSkills();
-        {
-            // Seed creation-time spells (customSpells/castSpells from PlayerInfo).
-            PlayerInfo const* info = sObjectMgr->GetPlayerInfo(
-                player->getRace(), player->getClass());
-            if (info)
-            {
-                for (uint32 spellId : info->customSpells)
-                    player->learnSpell(spellId, false);
-                for (uint32 spellId : info->castSpells)
-                    player->learnSpell(spellId, false);
-            }
-        }
         // Copy all spells the owner has learned. The bot is a fidelity clone —
         // it knows exactly what the owner knows, no more. Use .lwbot train to
         // teach new spells at a class trainer (charges the owner gold).
@@ -482,8 +604,7 @@ public:
             for (auto const& [spellId, playerSpell] : owner->GetSpellMap())
             {
                 if (playerSpell
-                    && playerSpell->State != PLAYERSPELL_REMOVED
-                    && playerSpell->Active)
+                    && playerSpell->State != PLAYERSPELL_REMOVED)
                 {
                     player->learnSpell(spellId, false);
                 }
@@ -542,7 +663,38 @@ public:
     }
 };
 
+class LivingWorldAccountScript final : public AccountScript
+{
+public:
+    LivingWorldAccountScript() : AccountScript("LivingWorldAccountScript") { }
+
+    void OnAccountLogin(uint32 accountId) override
+    {
+        StartupRuntimeRecoverySummary const summary =
+            RecoverAccountAltRuntimesForAccount(accountId);
+        if (summary.scanned == 0)
+            return;
+
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] AccountLoginRecovery accountId={} scanned={} progress={} "
+            "equipment={} inventory={} bank={} namesRestored={} retired={} "
+            "manualReview={} blocked={}",
+            accountId,
+            summary.scanned,
+            summary.progressSynced,
+            summary.equipmentSynced,
+            summary.inventorySynced,
+            summary.bankSynced,
+            summary.namesRestored,
+            summary.runtimesRetired,
+            summary.manualReviewRequired,
+            summary.blocked);
+    }
+};
+
 void AddSC_LivingWorldPlayerScript()
 {
     new LivingWorldPlayerScript();
+    new LivingWorldAccountScript();
 }
