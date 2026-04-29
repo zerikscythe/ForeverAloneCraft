@@ -1756,14 +1756,25 @@ made the equipment retry path unreachable after a crash.
 Currently synced on the main progress path: `Experience` (level + XP) and
 `Money`.
 
-Additional guarded write paths now exist for:
+Additive sync paths (always run, INSERT IGNORE / GREATEST — safe because these
+domains are monotonically increasing during normal play):
+- `Reputation` — `SyncReputationFromCloneToSource` (GREATEST merge)
+- `Quests` — `SyncQuestsFromCloneToSource` (INSERT IGNORE, both active and
+  rewarded tables)
+- `Achievements` — `SyncAchievementsFromCloneToSource` (INSERT IGNORE)
+- `Spells` — `SyncSpellsFromCloneToSource` (INSERT IGNORE, active spells only)
+- `Skills` — `SyncSkillsFromCloneToSource` (GREATEST on value and max)
+
+Additional guarded write paths for items:
 - `Equipment` — via explicit item sanity + executor path
 - `Inventory` — via explicit item sanity + policy-gated executor path
 - `Bank` — via explicit item sanity + policy-gated executor path
 
+Live propagation hooks (in-session, no dismissal required):
+- `OnPlayerLearnSpell` — immediately mirrors new spells to all active bots
+- `OnPlayerLearnTalents` — immediately mirrors talent spells to all active bots
+
 Still not safe without additional rules:
-- `Reputation` — faction relation edge cases
-- `Quests` — quest state machine conflicts
 - `Mail` — item attachment ownership
 
 ---

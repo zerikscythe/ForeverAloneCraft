@@ -16,6 +16,8 @@
 #include "integration/SqlCharacterProgressSyncRepository.h"
 #include "integration/SqlCharacterQuestSyncRepository.h"
 #include "integration/SqlCharacterReputationSyncRepository.h"
+#include "integration/SqlCharacterSkillSyncRepository.h"
+#include "integration/SqlCharacterSpellSyncRepository.h"
 #include "service/AccountAltDismissalService.h"
 #include "service/AccountAltRecoveryService.h"
 #include "service/AccountAltStartupRecoveryService.h"
@@ -46,6 +48,8 @@ struct StartupRuntimeRecoverySummary
     std::uint32_t reputationSynced = 0;
     std::uint32_t questsSynced = 0;
     std::uint32_t achievementsSynced = 0;
+    std::uint32_t spellsSynced = 0;
+    std::uint32_t skillsSynced = 0;
     std::uint32_t equipmentSynced = 0;
     std::uint32_t inventorySynced = 0;
     std::uint32_t bankSynced = 0;
@@ -77,6 +81,8 @@ StartupRuntimeRecoverySummary RecoverAccountAltRuntimesForAccount(
     living_world::integration::SqlCharacterQuestSyncRepository questSyncRepository;
     living_world::integration::SqlCharacterAchievementSyncRepository
         achievementSyncRepository;
+    living_world::integration::SqlCharacterSpellSyncRepository spellSyncRepository;
+    living_world::integration::SqlCharacterSkillSyncRepository skillSyncRepository;
     living_world::service::AccountAltRecoveryService recoveryService;
     living_world::service::AccountAltItemRecoveryOptions itemRecoveryOptions;
     itemRecoveryOptions.enableInventorySync =
@@ -95,6 +101,8 @@ StartupRuntimeRecoverySummary RecoverAccountAltRuntimesForAccount(
         reputationSyncRepository,
         questSyncRepository,
         achievementSyncRepository,
+        spellSyncRepository,
+        skillSyncRepository,
         recoveryService,
         itemRecoveryOptions);
 
@@ -122,6 +130,8 @@ StartupRuntimeRecoverySummary RecoverAccountAltRuntimesForAccount(
         summary.reputationSynced += result.reputationSynced ? 1u : 0u;
         summary.questsSynced += result.questsSynced ? 1u : 0u;
         summary.achievementsSynced += result.achievementsSynced ? 1u : 0u;
+        summary.spellsSynced += result.spellsSynced ? 1u : 0u;
+        summary.skillsSynced += result.skillsSynced ? 1u : 0u;
         summary.equipmentSynced += result.equipmentSynced ? 1u : 0u;
         summary.inventorySynced += result.inventorySynced ? 1u : 0u;
         summary.bankSynced += result.bankSynced ? 1u : 0u;
@@ -305,8 +315,8 @@ void RunOwnerStartupRecovery(Player* player)
         "server.worldserver",
         "[LivingWorldDebug] OwnerLoginRecovery character='{}' guid={} accountId={} "
         "scanned={} progress={} reputation={} quests={} achievements={} "
-        "equipment={} inventory={} bank={} namesRestored={} retired={} "
-        "manualReview={} blocked={}",
+        "spells={} skills={} equipment={} inventory={} bank={} "
+        "namesRestored={} retired={} manualReview={} blocked={}",
         player->GetName(),
         player->GetGUID().GetCounter(),
         player->GetSession()->GetAccountId(),
@@ -315,6 +325,8 @@ void RunOwnerStartupRecovery(Player* player)
         summary.reputationSynced,
         summary.questsSynced,
         summary.achievementsSynced,
+        summary.spellsSynced,
+        summary.skillsSynced,
         summary.equipmentSynced,
         summary.inventorySynced,
         summary.bankSynced,
@@ -553,6 +565,8 @@ void RunBotDismissalRecovery(Player* player)
     living_world::integration::SqlCharacterQuestSyncRepository questSyncRepository;
     living_world::integration::SqlCharacterAchievementSyncRepository
         achievementSyncRepository;
+    living_world::integration::SqlCharacterSpellSyncRepository spellSyncRepository;
+    living_world::integration::SqlCharacterSkillSyncRepository skillSyncRepository;
     living_world::service::AccountAltRecoveryService recoveryService;
     living_world::service::AccountAltItemRecoveryOptions itemRecoveryOptions;
     itemRecoveryOptions.enableInventorySync =
@@ -571,6 +585,8 @@ void RunBotDismissalRecovery(Player* player)
         reputationSyncRepository,
         questSyncRepository,
         achievementSyncRepository,
+        spellSyncRepository,
+        skillSyncRepository,
         recoveryService,
         itemRecoveryOptions);
 
@@ -580,8 +596,8 @@ void RunBotDismissalRecovery(Player* player)
         "server.worldserver",
         "[LivingWorldDebug] BotLogoutRecovery character='{}' guid={} "
         "runtimeFound={} progress={} reputation={} quests={} achievements={} "
-        "equipment={} inventory={} bank={} namesRestored={} runtimeRetired={} "
-        "manualReview={} blocked={} reason='{}'",
+        "spells={} skills={} equipment={} inventory={} bank={} "
+        "namesRestored={} runtimeRetired={} manualReview={} blocked={} reason='{}'",
         player->GetName(),
         player->GetGUID().GetCounter(),
         summary.runtimeFound,
@@ -589,6 +605,8 @@ void RunBotDismissalRecovery(Player* player)
         summary.reputationSynced,
         summary.questsSynced,
         summary.achievementsSynced,
+        summary.spellsSynced,
+        summary.skillsSynced,
         summary.equipmentSynced,
         summary.inventorySynced,
         summary.bankSynced,
@@ -684,6 +702,51 @@ public:
 
         living_world::service::BotPlayerRegistry::Instance()
             .UnregisterBotPlayer(player);
+    }
+
+    void OnPlayerLearnSpell(Player* player, uint32 spellID) override
+    {
+        if (!player || !player->GetSession() || player->GetSession()->IsBotSession())
+            return;
+
+        for (Player* bot : living_world::service::BotPlayerRegistry::Instance()
+                               .FindBotsForOwner(player->GetGUID()))
+        {
+            if (!bot || !bot->GetSession() || !bot->GetSession()->IsBotSession())
+                continue;
+            if (bot->HasSpell(spellID))
+                continue;
+            bot->learnSpell(spellID, false);
+            LOG_DEBUG(
+                "server.worldserver",
+                "[LivingWorldDebug] SpellSync learn: mirrored spellId={} from owner='{}' to bot='{}' guid={}.",
+                spellID, player->GetName(), bot->GetName(), bot->GetGUID().GetCounter());
+        }
+    }
+
+    void OnPlayerLearnTalents(Player* player, uint32 talentId, uint32 talentRank, uint32 spellId) override
+    {
+        if (!player || !player->GetSession() || player->GetSession()->IsBotSession())
+            return;
+
+        for (Player* bot : living_world::service::BotPlayerRegistry::Instance()
+                               .FindBotsForOwner(player->GetGUID()))
+        {
+            if (!bot || !bot->GetSession() || !bot->GetSession()->IsBotSession())
+                continue;
+            // learnSpell handles the talent passive — the talent's spellId is what
+            // actually needs to exist on the bot for modifiers to apply.
+            if (spellId && !bot->HasSpell(spellId))
+            {
+                bot->learnSpell(spellId, false);
+                LOG_DEBUG(
+                    "server.worldserver",
+                    "[LivingWorldDebug] TalentSync: mirrored talentId={} rank={} spellId={} "
+                    "from owner='{}' to bot='{}' guid={}.",
+                    talentId, talentRank, spellId,
+                    player->GetName(), bot->GetName(), bot->GetGUID().GetCounter());
+            }
+        }
     }
 
     void OnPlayerQuestAccept(Player* player, Quest const* quest) override
@@ -794,14 +857,17 @@ public:
         LOG_INFO(
             "server.worldserver",
             "[LivingWorldDebug] AccountLoginRecovery accountId={} scanned={} "
-            "progress={} reputation={} quests={} achievements={} equipment={} "
-            "inventory={} bank={} namesRestored={} retired={} manualReview={} blocked={}",
+            "progress={} reputation={} quests={} achievements={} "
+            "spells={} skills={} equipment={} inventory={} bank={} "
+            "namesRestored={} retired={} manualReview={} blocked={}",
             accountId,
             summary.scanned,
             summary.progressSynced,
             summary.reputationSynced,
             summary.questsSynced,
             summary.achievementsSynced,
+            summary.spellsSynced,
+            summary.skillsSynced,
             summary.equipmentSynced,
             summary.inventorySynced,
             summary.bankSynced,

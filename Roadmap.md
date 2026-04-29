@@ -1216,6 +1216,78 @@ sees the quest in their quest log.
 
 ---
 
+## Completed Slice: Spell and Skill Sync (Clone→Source) + Live Propagation
+
+Bot clones are created from a PlayerDump of the owner, so they start with the
+owner's full spell and skill state. The remaining gap is spells and skills
+gained *after* the clone is active, including spells learned at a trainer and
+talent spells learned via the player's talent panel.
+
+### A) Dismissal sync — additive write paths
+
+Both domains are monotonically increasing during normal play (no training
+rollback, no skill loss in ordinary gameplay). They are therefore safe to sync
+unconditionally in the same additive style as reputation/quests/achievements.
+
+`CharacterSpellSyncRepository` / `SqlCharacterSpellSyncRepository`:
+```sql
+INSERT IGNORE INTO character_spell (guid, spell, active, disabled)
+SELECT {sourceGuid}, spell, active, disabled
+FROM character_spell
+WHERE guid = {cloneGuid} AND active = 1
+```
+Only active spells are propagated. Disabled/suppressed spells are intentionally
+excluded because they represent temporary UI state, not real learning.
+
+`CharacterSkillSyncRepository` / `SqlCharacterSkillSyncRepository`:
+```sql
+INSERT INTO character_skills (guid, skill, value, max)
+SELECT {sourceGuid}, skill, value, max
+FROM character_skills WHERE guid = {cloneGuid}
+ON DUPLICATE KEY UPDATE
+  value = GREATEST(value, VALUES(value)),
+  max   = GREATEST(max,   VALUES(max))
+```
+`GREATEST` on both `value` and `max` ensures neither the current level nor the
+cap ever shrinks. Skills the source already has converge to the higher level;
+skills only the clone earned are inserted fresh.
+
+Both repositories are constructed inside `LivingWorldPlayerScript` at:
+- `RecoverAccountAltRuntimesForAccount` (account-login recovery path)
+- `RunBotDismissalRecovery` (bot-logout dismissal path)
+
+and passed into `AccountAltDismissalService` alongside the existing spell,
+skill, reputation, quest, and achievement repositories.
+
+`AccountAltDismissalSummary` tracks `spellsSynced` and `skillsSynced` booleans.
+Both LOG_INFO summary lines now include `spells={}` and `skills={}` fields.
+
+### B) Live propagation — in-session hooks
+
+Two `PlayerScript` hooks already existed in AzerothCore, requiring no core changes:
+
+`OnPlayerLearnSpell(Player*, uint32 spellId)` — fires after the player learns
+any spell. Skips bot sessions. Iterates
+`BotPlayerRegistry::FindBotsForOwner`, checks `bot->HasSpell(spellId)`, and
+calls `bot->learnSpell(spellId, false)` if the bot is missing it.
+
+`OnPlayerLearnTalents(Player*, uint32 talentId, uint32 talentRank, uint32 spellId)` —
+fires after the player spends a talent point. Same guard pattern. If `spellId`
+is non-zero and the bot does not already have it, calls
+`bot->learnSpell(spellId, false)`.
+
+Both hooks log at `LOG_INFO` on propagation and `LOG_DEBUG` on skip with
+`[LivingWorldDebug]` prefix.
+
+### C) What is intentionally not synced
+
+- **Talents back to source**: bots have no mechanism to change their own talents;
+  the clone starts with the owner's talents and cannot spend talent points.
+- **Glyphs**: copied at `PlayerDump` clone-creation time; no in-session glyph
+  change mechanism exists on the bot side.
+
+---
+
 ## Immediate Next: Multi-Bot Support and Remaining Verification
 
 Happy-path spawn, follow, cast, and dismiss are verified working on a live

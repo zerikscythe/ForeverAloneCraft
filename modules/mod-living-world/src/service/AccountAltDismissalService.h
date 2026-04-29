@@ -11,6 +11,8 @@
 #include "integration/CharacterProgressSyncRepository.h"
 #include "integration/CharacterQuestSyncRepository.h"
 #include "integration/CharacterReputationSyncRepository.h"
+#include "integration/CharacterSkillSyncRepository.h"
+#include "integration/CharacterSpellSyncRepository.h"
 #include "service/AccountAltRecoveryService.h"
 #include "service/AccountAltItemRecoveryService.h"
 
@@ -28,6 +30,8 @@ struct AccountAltDismissalSummary
     bool reputationSynced = false;
     bool questsSynced = false;
     bool achievementsSynced = false;
+    bool spellsSynced = false;
+    bool skillsSynced = false;
     bool equipmentSynced = false;
     bool inventorySynced = false;
     bool bankSynced = false;
@@ -53,6 +57,8 @@ public:
         integration::CharacterReputationSyncRepository& reputationSyncRepository,
         integration::CharacterQuestSyncRepository& questSyncRepository,
         integration::CharacterAchievementSyncRepository& achievementSyncRepository,
+        integration::CharacterSpellSyncRepository& spellSyncRepository,
+        integration::CharacterSkillSyncRepository& skillSyncRepository,
         AccountAltRecoveryService const& recoveryService,
         AccountAltItemRecoveryOptions itemRecoveryOptions = {});
 
@@ -71,6 +77,8 @@ private:
     integration::CharacterReputationSyncRepository& _reputationSyncRepository;
     integration::CharacterQuestSyncRepository& _questSyncRepository;
     integration::CharacterAchievementSyncRepository& _achievementSyncRepository;
+    integration::CharacterSpellSyncRepository& _spellSyncRepository;
+    integration::CharacterSkillSyncRepository& _skillSyncRepository;
     AccountAltRecoveryService const& _recoveryService;
     AccountAltItemRecoveryOptions _itemRecoveryOptions;
 };
