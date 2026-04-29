@@ -1,0 +1,36 @@
+﻿MSBuild version 17.14.40+3e7442088 for .NET Framework
+
+  gtest.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\lib\Debug\gtest.lib
+  gsoap.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\deps\gsoap\Debug\gsoap.lib
+  gmock_main.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\lib\Debug\gmock_main.lib
+  bzip2.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\deps\bzip2\Debug\bzip2.lib
+  gmock.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\lib\Debug\gmock.lib
+  sfmt.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\deps\SFMT\Debug\sfmt.lib
+  fmt.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\deps\fmt\Debug\fmt.lib
+  argon2.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\deps\argon2\Debug\argon2.lib
+  zlib.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\deps\zlib\Debug\zlib.lib
+  gtest_main.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\lib\Debug\gtest_main.lib
+  Detour.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\deps\recastnavigation\Detour\Debug\Detour.lib
+  Recast.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\deps\recastnavigation\Recast\Debug\Recast.lib
+  g3dlib.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\deps\g3dlite\Debug\g3dlib.lib
+  mpq.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\deps\libmpq\Debug\mpq.lib
+  common.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\src\common\Debug\common.lib
+  vmap4_assembler.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\bin\Debug\vmap4_assembler.exe
+  vmap4_extractor.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\bin\Debug\vmap4_extractor.exe
+  mmaps_generator.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\bin\Debug\mmaps_generator.exe
+  map_extractor.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\bin\Debug\map_extractor.exe
+  database.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\src\server\database\Debug\database.lib
+  shared.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\src\server\shared\Debug\shared.lib
+  authserver.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\bin\Debug\authserver.exe
+  CompanionAI.cpp
+  LivingWorldPlayerScript.cpp
+  game.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\src\server\game\Debug\game.lib
+  scripts.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\src\server\scripts\Debug\scripts.lib
+  Please define _WIN32_WINNT or _WIN32_WINDOWS appropriately. For example:
+  - add -D_WIN32_WINNT=0x0601 to the compiler command line; or
+  - add _WIN32_WINNT=0x0601 to your project's Preprocessor Definitions.
+  Assuming _WIN32_WINNT=0x0601 (i.e. Windows 7 target).
+  modules.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\modules\Debug\modules.lib
+  unit_tests.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\bin\Debug\unit_tests.exe
+     Creating library D:/src/azerothcore-wotlk/out/build-vs2022/src/server/apps/Debug/worldserver.lib and object D:/src/azerothcore-wotlk/out/build-vs2022/src/server/apps/Debug/worldserver.exp
+  worldserver.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\bin\Debug\worldserver.exe

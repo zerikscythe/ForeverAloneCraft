@@ -8,8 +8,8 @@ namespace service
 {
 // Conservative sanity check comparing source and clone snapshots.
 // Returns which sync domains are safe to copy from clone back to source.
-// Only domains covered by the snapshot (level, XP, money) can be approved;
-// inventory, equipment, reputation, quests, and mail are never safe here.
+// Reputation, Quests, and Achievements are always safe (additive: clone can
+// only accumulate, never lose these). Level/XP/money have per-session caps.
 class AccountAltSanityChecker
 {
 public:

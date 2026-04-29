@@ -1,0 +1,7 @@
+## Interface: 30300
+## Title: |cff00cc44LivingWorld|r Control Panel
+## Notes: Control panel for the LivingWorld companion bot system.
+## Version: 1.0.0
+
+LivingWorld.lua
+LivingWorld.xml

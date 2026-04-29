@@ -17,6 +17,8 @@
 #include "service/CharacterItemSanityChecker.h"
 
 #include <algorithm>
+
+#include <algorithm>
 #include <utility>
 
 namespace living_world
@@ -101,16 +103,16 @@ bool SourceProgressIsAhead(
     model::CharacterProgressSnapshot const& clone)
 {
     if (source.level != clone.level)
-    {
         return source.level > clone.level;
-    }
-
     if (source.experience != clone.experience)
-    {
         return source.experience > clone.experience;
-    }
-
-    return source.money > clone.money;
+    if (source.money != clone.money)
+        return source.money > clone.money;
+    if (source.completedQuestCount != clone.completedQuestCount)
+        return source.completedQuestCount > clone.completedQuestCount;
+    if (source.achievementCount != clone.achievementCount)
+        return source.achievementCount > clone.achievementCount;
+    return source.totalReputationStanding > clone.totalReputationStanding;
 }
 } // namespace
 
@@ -124,6 +126,9 @@ AccountAltRuntimeCoordinator::AccountAltRuntimeCoordinator(
     integration::CharacterEquipmentSyncRepository& equipmentSyncRepository,
     integration::CharacterProgressSnapshotRepository const& snapshotRepository,
     integration::CharacterProgressSyncRepository& syncRepository,
+    integration::CharacterReputationSyncRepository& reputationSyncRepository,
+    integration::CharacterQuestSyncRepository& questSyncRepository,
+    integration::CharacterAchievementSyncRepository& achievementSyncRepository,
     AccountAltRecoveryService const& recoveryService,
     AccountAltItemRecoveryOptions itemRecoveryOptions)
     : _runtimeRepository(runtimeRepository),
@@ -134,6 +139,9 @@ AccountAltRuntimeCoordinator::AccountAltRuntimeCoordinator(
       _equipmentSyncRepository(equipmentSyncRepository),
       _snapshotRepository(snapshotRepository),
       _syncRepository(syncRepository),
+      _reputationSyncRepository(reputationSyncRepository),
+      _questSyncRepository(questSyncRepository),
+      _achievementSyncRepository(achievementSyncRepository),
       _recoveryService(recoveryService),
       _itemRecoveryOptions(itemRecoveryOptions),
       _runtimeService(runtimeRepository, botAccountPoolRepository)
@@ -720,7 +728,10 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
             return applyItemRecovery(runtime, false);
         case model::AccountAltRecoveryPlanKind::SyncCloneToSource:
         {
-            AccountAltSyncExecutor executor(_runtimeRepository, _syncRepository);
+            AccountAltSyncExecutor executor(
+                _runtimeRepository, _syncRepository,
+                _reputationSyncRepository, _questSyncRepository,
+                _achievementSyncRepository);
             if (!executor.Execute(runtime, *cloneSnapshot, recoveryPlan.domainsToSync))
             {
                 LOG_ERROR(

@@ -10,6 +10,7 @@
 #include "Log.h"
 
 #include <algorithm>
+#include <vector>
 
 namespace living_world
 {
@@ -24,6 +25,9 @@ AccountAltDismissalService::AccountAltDismissalService(
     integration::CharacterNameLeaseRepository& nameLeaseRepository,
     integration::CharacterProgressSnapshotRepository const& snapshotRepository,
     integration::CharacterProgressSyncRepository& syncRepository,
+    integration::CharacterReputationSyncRepository& reputationSyncRepository,
+    integration::CharacterQuestSyncRepository& questSyncRepository,
+    integration::CharacterAchievementSyncRepository& achievementSyncRepository,
     AccountAltRecoveryService const& recoveryService,
     AccountAltItemRecoveryOptions itemRecoveryOptions)
     : _runtimeRepository(runtimeRepository),
@@ -34,6 +38,9 @@ AccountAltDismissalService::AccountAltDismissalService(
       _nameLeaseRepository(nameLeaseRepository),
       _snapshotRepository(snapshotRepository),
       _syncRepository(syncRepository),
+      _reputationSyncRepository(reputationSyncRepository),
+      _questSyncRepository(questSyncRepository),
+      _achievementSyncRepository(achievementSyncRepository),
       _recoveryService(recoveryService),
       _itemRecoveryOptions(itemRecoveryOptions)
 {
@@ -103,9 +110,30 @@ AccountAltDismissalSummary AccountAltDismissalService::DismissClone(
             *cloneSnapshot,
             sanity);
 
+    // Reputation, quests, and achievements are additive: always sync them
+    // regardless of the recovery plan. They can only accumulate during a
+    // session and are safe to merge unconditionally.
+    summary.reputationSynced = _reputationSyncRepository.SyncReputationFromCloneToSource(
+        runtime->sourceCharacterGuid, runtime->cloneCharacterGuid);
+    summary.questsSynced = _questSyncRepository.SyncQuestsFromCloneToSource(
+        runtime->sourceCharacterGuid, runtime->cloneCharacterGuid);
+    summary.achievementsSynced = _achievementSyncRepository.SyncAchievementsFromCloneToSource(
+        runtime->sourceCharacterGuid, runtime->cloneCharacterGuid);
+    LOG_INFO(
+        "server.worldserver",
+        "[LivingWorldDebug] DismissClone runtimeId={} additiveSyncs "
+        "reputation={} quests={} achievements={}",
+        runtime->runtimeId,
+        summary.reputationSynced,
+        summary.questsSynced,
+        summary.achievementsSynced);
+
     if (recoveryPlan.kind == model::AccountAltRecoveryPlanKind::SyncCloneToSource)
     {
-        AccountAltSyncExecutor executor(_runtimeRepository, _syncRepository);
+        AccountAltSyncExecutor executor(
+            _runtimeRepository, _syncRepository,
+            _reputationSyncRepository, _questSyncRepository,
+            _achievementSyncRepository);
         if (!executor.Execute(*runtime, *cloneSnapshot, recoveryPlan.domainsToSync))
         {
             summary.manualReviewRequired = true;
@@ -300,10 +328,14 @@ AccountAltDismissalSummary AccountAltDismissalService::DismissClone(
     LOG_INFO(
         "server.worldserver",
         "[LivingWorldDebug] DismissClone summary runtimeId={} progress={} "
-        "equipment={} inventory={} bank={} namesRestored={} runtimeRetired={} "
-        "manualReview={} blocked={} reason='{}'",
+        "reputation={} quests={} achievements={} equipment={} inventory={} "
+        "bank={} namesRestored={} runtimeRetired={} manualReview={} blocked={} "
+        "reason='{}'",
         runtime->runtimeId,
         summary.progressSynced,
+        summary.reputationSynced,
+        summary.questsSynced,
+        summary.achievementsSynced,
         summary.equipmentSynced,
         summary.inventorySynced,
         summary.bankSynced,

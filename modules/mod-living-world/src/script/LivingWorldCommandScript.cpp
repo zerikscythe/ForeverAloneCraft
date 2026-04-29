@@ -27,6 +27,7 @@
 #include "integration/RosterRepository.h"
 #include "integration/SqlAccountAltRuntimeRepository.h"
 #include "integration/SqlBotAccountPoolRepository.h"
+#include "integration/SqlCharacterAchievementSyncRepository.h"
 #include "integration/SqlCharacterCloneMaterializer.h"
 #include "integration/SqlCharacterBankSyncRepository.h"
 #include "integration/SqlCharacterEquipmentSyncRepository.h"
@@ -34,6 +35,8 @@
 #include "integration/SqlCharacterItemSnapshotRepository.h"
 #include "integration/SqlCharacterProgressSnapshotRepository.h"
 #include "integration/SqlCharacterProgressSyncRepository.h"
+#include "integration/SqlCharacterQuestSyncRepository.h"
+#include "integration/SqlCharacterReputationSyncRepository.h"
 #include "integration/WorldCommitAction.h"
 #include "model/AccountAltRuntime.h"
 #include "model/PlayerRosterRequest.h"
@@ -630,6 +633,9 @@ bool ExecuteSpawnRosterBodyAction(
     integration::SqlCharacterEquipmentSyncRepository equipmentSyncRepository;
     integration::SqlCharacterProgressSnapshotRepository snapshotRepository;
     integration::SqlCharacterProgressSyncRepository syncRepository;
+    integration::SqlCharacterReputationSyncRepository reputationSyncRepository;
+    integration::SqlCharacterQuestSyncRepository questSyncRepository;
+    integration::SqlCharacterAchievementSyncRepository achievementSyncRepository;
     service::AccountAltRecoveryService recoveryService;
     service::AccountAltItemRecoveryOptions itemRecoveryOptions;
     itemRecoveryOptions.enableInventorySync =
@@ -646,6 +652,9 @@ bool ExecuteSpawnRosterBodyAction(
         equipmentSyncRepository,
         snapshotRepository,
         syncRepository,
+        reputationSyncRepository,
+        questSyncRepository,
+        achievementSyncRepository,
         recoveryService,
         itemRecoveryOptions);
 

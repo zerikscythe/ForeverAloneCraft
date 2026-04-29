@@ -89,6 +89,9 @@ AccountAltStartupRecoveryService::AccountAltStartupRecoveryService(
     integration::CharacterEquipmentSyncRepository& equipmentSyncRepository,
     integration::CharacterProgressSnapshotRepository const& snapshotRepository,
     integration::CharacterProgressSyncRepository& syncRepository,
+    integration::CharacterReputationSyncRepository& reputationSyncRepository,
+    integration::CharacterQuestSyncRepository& questSyncRepository,
+    integration::CharacterAchievementSyncRepository& achievementSyncRepository,
     AccountAltRecoveryService const& recoveryService,
     AccountAltItemRecoveryOptions itemRecoveryOptions)
     : _runtimeRepository(runtimeRepository),
@@ -98,6 +101,9 @@ AccountAltStartupRecoveryService::AccountAltStartupRecoveryService(
       _equipmentSyncRepository(equipmentSyncRepository),
       _snapshotRepository(snapshotRepository),
       _syncRepository(syncRepository),
+      _reputationSyncRepository(reputationSyncRepository),
+      _questSyncRepository(questSyncRepository),
+      _achievementSyncRepository(achievementSyncRepository),
       _recoveryService(recoveryService),
       _itemRecoveryOptions(itemRecoveryOptions)
 {
@@ -114,7 +120,10 @@ AccountAltStartupRecoveryService::RecoverForAccount(
 
     AccountAltStartupRecoverySummary summary;
     AccountAltSanityChecker checker;
-    AccountAltSyncExecutor executor(_runtimeRepository, _syncRepository);
+    AccountAltSyncExecutor executor(
+        _runtimeRepository, _syncRepository,
+        _reputationSyncRepository, _questSyncRepository,
+        _achievementSyncRepository);
     CharacterItemSanityChecker itemChecker;
     AccountAltItemRecoveryService itemRecoveryService(_itemRecoveryOptions);
     AccountAltEquipmentSyncExecutor equipmentExecutor(

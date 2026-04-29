@@ -1,4 +1,7 @@
 #include "service/AccountAltStartupRecoveryService.h"
+#include "integration/CharacterAchievementSyncRepository.h"
+#include "integration/CharacterQuestSyncRepository.h"
+#include "integration/CharacterReputationSyncRepository.h"
 #include "gtest/gtest.h"
 
 #include <optional>
@@ -201,6 +204,36 @@ public:
     bool shouldSucceed = true;
 };
 
+class FakeReputationSyncRepository final
+    : public integration::CharacterReputationSyncRepository
+{
+public:
+    bool SyncReputationFromCloneToSource(std::uint64_t, std::uint64_t) override
+    {
+        return true;
+    }
+};
+
+class FakeQuestSyncRepository final
+    : public integration::CharacterQuestSyncRepository
+{
+public:
+    bool SyncQuestsFromCloneToSource(std::uint64_t, std::uint64_t) override
+    {
+        return true;
+    }
+};
+
+class FakeAchievementSyncRepository final
+    : public integration::CharacterAchievementSyncRepository
+{
+public:
+    bool SyncAchievementsFromCloneToSource(std::uint64_t, std::uint64_t) override
+    {
+        return true;
+    }
+};
+
 model::AccountAltRuntimeRecord BuildRuntime(model::AccountAltRuntimeState state)
 {
     model::AccountAltRuntimeRecord runtime;
@@ -238,6 +271,9 @@ TEST(AccountAltStartupRecoveryServiceTest, RetriesInterruptedSyncOnLogin)
     FakeEquipmentSyncRepository equipmentSyncRepository;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
+    FakeReputationSyncRepository reputationSyncRepository;
+    FakeQuestSyncRepository questSyncRepository;
+    FakeAchievementSyncRepository achievementSyncRepository;
     AccountAltRecoveryService recoveryService;
 
     runtimeRepository.runtimes.push_back(
@@ -255,6 +291,9 @@ TEST(AccountAltStartupRecoveryServiceTest, RetriesInterruptedSyncOnLogin)
         equipmentSyncRepository,
         snapshotRepository,
         syncRepository,
+        reputationSyncRepository,
+        questSyncRepository,
+        achievementSyncRepository,
         recoveryService);
 
     AccountAltStartupRecoverySummary summary = service.RecoverForAccount(7);
@@ -285,6 +324,9 @@ TEST(AccountAltStartupRecoveryServiceTest,
     FakeEquipmentSyncRepository equipmentSyncRepository;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
+    FakeReputationSyncRepository reputationSyncRepository;
+    FakeQuestSyncRepository questSyncRepository;
+    FakeAchievementSyncRepository achievementSyncRepository;
     AccountAltRecoveryService recoveryService;
 
     runtimeRepository.runtimes.push_back(
@@ -302,6 +344,9 @@ TEST(AccountAltStartupRecoveryServiceTest,
         equipmentSyncRepository,
         snapshotRepository,
         syncRepository,
+        reputationSyncRepository,
+        questSyncRepository,
+        achievementSyncRepository,
         recoveryService);
 
     AccountAltStartupRecoverySummary summary = service.RecoverForAccount(7);
@@ -322,6 +367,9 @@ TEST(AccountAltStartupRecoveryServiceTest,
     FakeEquipmentSyncRepository equipmentSyncRepository;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
+    FakeReputationSyncRepository reputationSyncRepository;
+    FakeQuestSyncRepository questSyncRepository;
+    FakeAchievementSyncRepository achievementSyncRepository;
     AccountAltRecoveryService recoveryService;
 
     runtimeRepository.runtimes.push_back(
@@ -339,6 +387,9 @@ TEST(AccountAltStartupRecoveryServiceTest,
         equipmentSyncRepository,
         snapshotRepository,
         syncRepository,
+        reputationSyncRepository,
+        questSyncRepository,
+        achievementSyncRepository,
         recoveryService);
 
     AccountAltStartupRecoverySummary summary = service.RecoverForAccount(7);
@@ -363,6 +414,9 @@ TEST(AccountAltStartupRecoveryServiceTest,
     FakeEquipmentSyncRepository equipmentSyncRepository;
     FakeSnapshotRepository snapshotRepository;
     FakeSyncRepository syncRepository;
+    FakeReputationSyncRepository reputationSyncRepository;
+    FakeQuestSyncRepository questSyncRepository;
+    FakeAchievementSyncRepository achievementSyncRepository;
     AccountAltRecoveryService recoveryService;
 
     runtimeRepository.runtimes.push_back(
@@ -406,6 +460,9 @@ TEST(AccountAltStartupRecoveryServiceTest,
         equipmentSyncRepository,
         snapshotRepository,
         syncRepository,
+        reputationSyncRepository,
+        questSyncRepository,
+        achievementSyncRepository,
         recoveryService,
         AccountAltItemRecoveryOptions { true, false });
 

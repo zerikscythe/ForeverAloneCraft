@@ -395,12 +395,20 @@ design and foundation code.
 9.3 Define progression for XP / items / rep ownership — **Partial**
 - The runtime model now carries source/clone progress snapshots and marks the
   clone as authoritative during recovery when clone progress is ahead of the
-  current source snapshot. Item, reputation, quest, and mail sync rules remain
-  unimplemented.
-- Sync-domain types now distinguish XP, money, inventory, equipment,
-  reputation, quests, and mail. Only XP/money-level style progress should be
-  treated as first-pass syncable; inventory-like domains remain explicitly
-  gated behind future sanity rules.
+  current source snapshot.
+- Sync-domain types distinguish XP, money, inventory, equipment, reputation,
+  quests, achievements, and mail.
+- Clone→source sync is now implemented for: level/XP/money, equipment,
+  inventory, bank, reputations, quest completions, and achievements.
+- `CharacterProgressSnapshot` now carries `completedQuestCount`,
+  `achievementCount`, and `totalReputationStanding` for tiebreaking in
+  "clone is ahead" comparisons across both `CloneProgressIsAhead` and
+  `SourceProgressIsAhead`.
+- Auras/buffs are intentionally excluded: `character_aura` rows carry stale
+  `remaintime` and `caster_guid` pointing to the clone GUID, making them
+  incorrect for the source character. They are ephemeral and reapplied
+  naturally through gameplay.
+- Mail domain remains unimplemented.
 
 9.4 Block conflicting login/runtime states — **Partial**
 - Need explicit rules for:
@@ -500,8 +508,12 @@ design and foundation code.
 - `living_world_account_alt_runtime` now has a SQL-backed repository,
   progress snapshot loader, progress sync repository/executor, and owner-login
   startup recovery pass for `SyncingBack` crash retries.
-- Remaining work is broader clone lifecycle persistence and additional sync
-  domains beyond progress-only recovery.
+- Clone→source sync repositories now exist for all non-ephemeral domains:
+  `SqlCharacterReputationSyncRepository` (merge by max standing per faction),
+  `SqlCharacterQuestSyncRepository` (INSERT IGNORE into rewarded quests), and
+  `SqlCharacterAchievementSyncRepository` (INSERT IGNORE for achievements +
+  max-counter merge for criteria progress).
+- Remaining work is mail sync and broader lifecycle persistence hardening.
 
 13.2 Define tunable config values — **Not Started**
 - Examples:
@@ -952,6 +964,106 @@ Important fixture note for future agents:
   instead of bag sync
 
 ---
+
+---
+
+## Completed Slice: Reputation, Quest, and Achievement Sync (Clone→Source)
+
+This slice completed the remaining additive data-transfer paths from the clone
+character back to the source character. Together with the earlier item-sync
+slice, all non-ephemeral progression domains are now implemented.
+
+### A) Model layer extensions — **Complete**
+
+`CharacterProgressSnapshot` now carries three new fields:
+- `completedQuestCount` — count of rewarded quests
+- `achievementCount` — count of completed achievements
+- `totalReputationStanding` — sum of all non-negative faction standings
+
+`AccountAltSyncDomain` enum gained the `Achievements` entry alongside the
+previously-added `Reputation` and `Quests` entries.
+
+Both "is ahead" comparison functions (`CloneProgressIsAhead` in
+`AccountAltRecoveryService` and `SourceProgressIsAhead` in
+`AccountAltRuntimeCoordinator`) now cascade through all six fields in order:
+level → experience → money → completedQuestCount → achievementCount →
+totalReputationStanding.
+
+### B) Snapshot repository extension — **Complete**
+
+`SqlCharacterProgressSnapshotRepository` query extended with three correlated
+subqueries:
+- `COUNT(*)` from `character_queststatus_rewarded`
+- `COUNT(*)` from `character_achievement`
+- `SUM(GREATEST(standing, 0))` from `character_reputation`
+
+### C) Integration repositories — **Complete**
+
+Three new SQL-backed write repositories, each implementing a pure-virtual
+interface:
+
+**`SqlCharacterReputationSyncRepository`**
+```sql
+INSERT INTO character_reputation (guid, faction, standing, flags)
+SELECT {sourceGuid}, faction, standing, flags
+FROM character_reputation WHERE guid = {cloneGuid}
+ON DUPLICATE KEY UPDATE
+  standing = IF(VALUES(standing) > standing, VALUES(standing), standing),
+  flags = VALUES(flags)
+```
+
+**`SqlCharacterQuestSyncRepository`**
+```sql
+INSERT IGNORE INTO character_queststatus_rewarded (guid, quest, active)
+SELECT {sourceGuid}, quest, active
+FROM character_queststatus_rewarded WHERE guid = {cloneGuid}
+```
+
+**`SqlCharacterAchievementSyncRepository`**
+```sql
+-- Completed achievements:
+INSERT IGNORE INTO character_achievement (guid, achievement, date)
+SELECT {sourceGuid}, achievement, date FROM character_achievement WHERE guid = {cloneGuid}
+-- Criteria progress (take max counter):
+INSERT INTO character_achievement_progress (guid, criteria, counter, date)
+SELECT {sourceGuid}, criteria, counter, date FROM character_achievement_progress WHERE guid = {cloneGuid}
+ON DUPLICATE KEY UPDATE
+  counter = IF(VALUES(counter) > counter, VALUES(counter), counter),
+  date = IF(VALUES(counter) > counter, VALUES(date), date)
+```
+
+### D) Sanity checker — **Complete**
+
+`AccountAltSanityChecker` always marks Reputation, Quests, and Achievements as
+safe domains when clone counts ≥ source counts. These domains are additive-only
+so they can never lose source progress.
+
+### E) Service layer wiring — **Complete**
+
+- `AccountAltSyncExecutor` now handles Reputation, Quests, and Achievements
+  domains after writing progress.
+- `AccountAltDismissalService` calls all three repos unconditionally before the
+  recovery plan check, so additive progress is preserved even in `ReuseClone`
+  sessions where no XP/gold was earned.
+- `AccountAltStartupRecoveryService` and `AccountAltRuntimeCoordinator` pass
+  the three new repos through to `AccountAltSyncExecutor` construction.
+
+All three service construction sites in `LivingWorldCommandScript` and
+`LivingWorldPlayerScript` updated to supply the new SQL repo instances.
+
+### F) Intentional exclusion: auras/buffs — **Complete (by design)**
+
+`character_aura` is intentionally not synced. Reasons:
+- `remaintime` is stale the moment the clone logs out.
+- `caster_guid` references the clone's GUID, not the source's.
+- Buffs are ephemeral and naturally reapplied through gameplay.
+Syncing them would inject bad data rather than preserve progress.
+
+### G) Tests updated — **Complete**
+
+`AccountAltDismissalServiceTest`, `AccountAltStartupRecoveryServiceTest`, and
+`AccountAltRuntimeCoordinatorTest` all updated with fake implementations of the
+three new repository interfaces and updated constructor call sites.
 
 ---
 

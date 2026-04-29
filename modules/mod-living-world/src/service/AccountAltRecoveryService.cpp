@@ -11,16 +11,16 @@ bool CloneProgressIsAhead(
     model::CharacterProgressSnapshot const& clone)
 {
     if (clone.level != source.level)
-    {
         return clone.level > source.level;
-    }
-
     if (clone.experience != source.experience)
-    {
         return clone.experience > source.experience;
-    }
-
-    return clone.money > source.money;
+    if (clone.money != source.money)
+        return clone.money > source.money;
+    if (clone.completedQuestCount != source.completedQuestCount)
+        return clone.completedQuestCount > source.completedQuestCount;
+    if (clone.achievementCount != source.achievementCount)
+        return clone.achievementCount > source.achievementCount;
+    return clone.totalReputationStanding > source.totalReputationStanding;
 }
 } // namespace
 

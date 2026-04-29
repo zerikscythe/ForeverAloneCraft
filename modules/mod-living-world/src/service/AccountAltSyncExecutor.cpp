@@ -8,9 +8,15 @@ namespace service
 {
 AccountAltSyncExecutor::AccountAltSyncExecutor(
     integration::AccountAltRuntimeRepository& runtimeRepository,
-    integration::CharacterProgressSyncRepository& syncRepository)
+    integration::CharacterProgressSyncRepository& syncRepository,
+    integration::CharacterReputationSyncRepository& reputationSyncRepository,
+    integration::CharacterQuestSyncRepository& questSyncRepository,
+    integration::CharacterAchievementSyncRepository& achievementSyncRepository)
     : _runtimeRepository(runtimeRepository),
-      _syncRepository(syncRepository)
+      _syncRepository(syncRepository),
+      _reputationSyncRepository(reputationSyncRepository),
+      _questSyncRepository(questSyncRepository),
+      _achievementSyncRepository(achievementSyncRepository)
 {
 }
 
@@ -48,6 +54,24 @@ bool AccountAltSyncExecutor::Execute(
             runtime.sourceCharacterGuid, target))
     {
         return false;
+    }
+
+    if (hasDomain(model::AccountAltSyncDomain::Reputation))
+    {
+        _reputationSyncRepository.SyncReputationFromCloneToSource(
+            runtime.sourceCharacterGuid, runtime.cloneCharacterGuid);
+    }
+
+    if (hasDomain(model::AccountAltSyncDomain::Quests))
+    {
+        _questSyncRepository.SyncQuestsFromCloneToSource(
+            runtime.sourceCharacterGuid, runtime.cloneCharacterGuid);
+    }
+
+    if (hasDomain(model::AccountAltSyncDomain::Achievements))
+    {
+        _achievementSyncRepository.SyncAchievementsFromCloneToSource(
+            runtime.sourceCharacterGuid, runtime.cloneCharacterGuid);
     }
 
     // Sync succeeded — update the persisted source snapshot and clear the

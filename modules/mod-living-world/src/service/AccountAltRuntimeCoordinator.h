@@ -2,6 +2,7 @@
 
 #include "integration/AccountAltRuntimeRepository.h"
 #include "integration/BotAccountPoolRepository.h"
+#include "integration/CharacterAchievementSyncRepository.h"
 #include "integration/CharacterBankSyncRepository.h"
 #include "integration/CharacterCloneMaterializer.h"
 #include "integration/CharacterEquipmentSyncRepository.h"
@@ -9,6 +10,8 @@
 #include "integration/CharacterItemSnapshotRepository.h"
 #include "integration/CharacterProgressSnapshotRepository.h"
 #include "integration/CharacterProgressSyncRepository.h"
+#include "integration/CharacterQuestSyncRepository.h"
+#include "integration/CharacterReputationSyncRepository.h"
 #include "model/AccountAltRuntime.h"
 #include "service/AccountAltItemRecoveryService.h"
 #include "service/AccountAltRecoveryService.h"
@@ -54,6 +57,9 @@ public:
         integration::CharacterEquipmentSyncRepository& equipmentSyncRepository,
         integration::CharacterProgressSnapshotRepository const& snapshotRepository,
         integration::CharacterProgressSyncRepository& syncRepository,
+        integration::CharacterReputationSyncRepository& reputationSyncRepository,
+        integration::CharacterQuestSyncRepository& questSyncRepository,
+        integration::CharacterAchievementSyncRepository& achievementSyncRepository,
         AccountAltRecoveryService const& recoveryService,
         AccountAltItemRecoveryOptions itemRecoveryOptions = {});
 
@@ -72,6 +78,9 @@ private:
     integration::CharacterEquipmentSyncRepository& _equipmentSyncRepository;
     integration::CharacterProgressSnapshotRepository const& _snapshotRepository;
     integration::CharacterProgressSyncRepository& _syncRepository;
+    integration::CharacterReputationSyncRepository& _reputationSyncRepository;
+    integration::CharacterQuestSyncRepository& _questSyncRepository;
+    integration::CharacterAchievementSyncRepository& _achievementSyncRepository;
     AccountAltRecoveryService const& _recoveryService;
     AccountAltItemRecoveryOptions _itemRecoveryOptions;
     AccountAltRuntimeService _runtimeService;

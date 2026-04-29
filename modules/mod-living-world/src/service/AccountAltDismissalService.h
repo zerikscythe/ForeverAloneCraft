@@ -1,6 +1,7 @@
 #pragma once
 
 #include "integration/AccountAltRuntimeRepository.h"
+#include "integration/CharacterAchievementSyncRepository.h"
 #include "integration/CharacterBankSyncRepository.h"
 #include "integration/CharacterEquipmentSyncRepository.h"
 #include "integration/CharacterInventorySyncRepository.h"
@@ -8,6 +9,8 @@
 #include "integration/CharacterNameLeaseRepository.h"
 #include "integration/CharacterProgressSnapshotRepository.h"
 #include "integration/CharacterProgressSyncRepository.h"
+#include "integration/CharacterQuestSyncRepository.h"
+#include "integration/CharacterReputationSyncRepository.h"
 #include "service/AccountAltRecoveryService.h"
 #include "service/AccountAltItemRecoveryService.h"
 
@@ -22,6 +25,9 @@ struct AccountAltDismissalSummary
 {
     bool runtimeFound = false;
     bool progressSynced = false;
+    bool reputationSynced = false;
+    bool questsSynced = false;
+    bool achievementsSynced = false;
     bool equipmentSynced = false;
     bool inventorySynced = false;
     bool bankSynced = false;
@@ -44,6 +50,9 @@ public:
         integration::CharacterNameLeaseRepository& nameLeaseRepository,
         integration::CharacterProgressSnapshotRepository const& snapshotRepository,
         integration::CharacterProgressSyncRepository& syncRepository,
+        integration::CharacterReputationSyncRepository& reputationSyncRepository,
+        integration::CharacterQuestSyncRepository& questSyncRepository,
+        integration::CharacterAchievementSyncRepository& achievementSyncRepository,
         AccountAltRecoveryService const& recoveryService,
         AccountAltItemRecoveryOptions itemRecoveryOptions = {});
 
@@ -59,6 +68,9 @@ private:
     integration::CharacterNameLeaseRepository& _nameLeaseRepository;
     integration::CharacterProgressSnapshotRepository const& _snapshotRepository;
     integration::CharacterProgressSyncRepository& _syncRepository;
+    integration::CharacterReputationSyncRepository& _reputationSyncRepository;
+    integration::CharacterQuestSyncRepository& _questSyncRepository;
+    integration::CharacterAchievementSyncRepository& _achievementSyncRepository;
     AccountAltRecoveryService const& _recoveryService;
     AccountAltItemRecoveryOptions _itemRecoveryOptions;
 };

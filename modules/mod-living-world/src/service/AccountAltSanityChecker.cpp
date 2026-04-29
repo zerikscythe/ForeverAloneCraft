@@ -31,6 +31,16 @@ model::AccountAltSanityCheckResult AccountAltSanityChecker::Check(
             "money gain exceeds the safe per-session threshold");
     }
 
+    // Reputation, quests, and achievements are additive: the clone starts as an
+    // exact copy of the source and can only accumulate these, never lose them.
+    // Always safe to sync regardless of level/money sanity results.
+    if (cloneSnapshot.totalReputationStanding >= sourceSnapshot.totalReputationStanding)
+        result.safeDomains.push_back(model::AccountAltSyncDomain::Reputation);
+    if (cloneSnapshot.completedQuestCount >= sourceSnapshot.completedQuestCount)
+        result.safeDomains.push_back(model::AccountAltSyncDomain::Quests);
+    if (cloneSnapshot.achievementCount >= sourceSnapshot.achievementCount)
+        result.safeDomains.push_back(model::AccountAltSyncDomain::Achievements);
+
     if (result.failures.empty())
     {
         result.passed = true;

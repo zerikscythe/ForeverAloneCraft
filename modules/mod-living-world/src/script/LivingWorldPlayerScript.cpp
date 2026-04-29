@@ -6,6 +6,7 @@
 #include "ai/CompanionAI.h"
 #include "script/LivingWorldChatConfig.h"
 #include "integration/SqlAccountAltRuntimeRepository.h"
+#include "integration/SqlCharacterAchievementSyncRepository.h"
 #include "integration/SqlCharacterBankSyncRepository.h"
 #include "integration/SqlCharacterEquipmentSyncRepository.h"
 #include "integration/SqlCharacterInventorySyncRepository.h"
@@ -13,6 +14,8 @@
 #include "integration/SqlCharacterNameLeaseRepository.h"
 #include "integration/SqlCharacterProgressSnapshotRepository.h"
 #include "integration/SqlCharacterProgressSyncRepository.h"
+#include "integration/SqlCharacterQuestSyncRepository.h"
+#include "integration/SqlCharacterReputationSyncRepository.h"
 #include "service/AccountAltDismissalService.h"
 #include "service/AccountAltRecoveryService.h"
 #include "service/AccountAltStartupRecoveryService.h"
@@ -39,6 +42,9 @@ struct StartupRuntimeRecoverySummary
 {
     std::uint32_t scanned = 0;
     std::uint32_t progressSynced = 0;
+    std::uint32_t reputationSynced = 0;
+    std::uint32_t questsSynced = 0;
+    std::uint32_t achievementsSynced = 0;
     std::uint32_t equipmentSynced = 0;
     std::uint32_t inventorySynced = 0;
     std::uint32_t bankSynced = 0;
@@ -65,6 +71,11 @@ StartupRuntimeRecoverySummary RecoverAccountAltRuntimesForAccount(
     living_world::integration::SqlCharacterProgressSnapshotRepository
         snapshotRepository;
     living_world::integration::SqlCharacterProgressSyncRepository syncRepository;
+    living_world::integration::SqlCharacterReputationSyncRepository
+        reputationSyncRepository;
+    living_world::integration::SqlCharacterQuestSyncRepository questSyncRepository;
+    living_world::integration::SqlCharacterAchievementSyncRepository
+        achievementSyncRepository;
     living_world::service::AccountAltRecoveryService recoveryService;
     living_world::service::AccountAltItemRecoveryOptions itemRecoveryOptions;
     itemRecoveryOptions.enableInventorySync =
@@ -80,6 +91,9 @@ StartupRuntimeRecoverySummary RecoverAccountAltRuntimesForAccount(
         nameLeaseRepository,
         snapshotRepository,
         syncRepository,
+        reputationSyncRepository,
+        questSyncRepository,
+        achievementSyncRepository,
         recoveryService,
         itemRecoveryOptions);
 
@@ -104,6 +118,9 @@ StartupRuntimeRecoverySummary RecoverAccountAltRuntimesForAccount(
         living_world::service::AccountAltDismissalSummary const result =
             dismissalService.DismissClone(runtime.cloneCharacterGuid);
         summary.progressSynced += result.progressSynced ? 1u : 0u;
+        summary.reputationSynced += result.reputationSynced ? 1u : 0u;
+        summary.questsSynced += result.questsSynced ? 1u : 0u;
+        summary.achievementsSynced += result.achievementsSynced ? 1u : 0u;
         summary.equipmentSynced += result.equipmentSynced ? 1u : 0u;
         summary.inventorySynced += result.inventorySynced ? 1u : 0u;
         summary.bankSynced += result.bankSynced ? 1u : 0u;
@@ -286,13 +303,17 @@ void RunOwnerStartupRecovery(Player* player)
     LOG_INFO(
         "server.worldserver",
         "[LivingWorldDebug] OwnerLoginRecovery character='{}' guid={} accountId={} "
-        "scanned={} progress={} equipment={} inventory={} bank={} namesRestored={} "
-        "retired={} manualReview={} blocked={}",
+        "scanned={} progress={} reputation={} quests={} achievements={} "
+        "equipment={} inventory={} bank={} namesRestored={} retired={} "
+        "manualReview={} blocked={}",
         player->GetName(),
         player->GetGUID().GetCounter(),
         player->GetSession()->GetAccountId(),
         summary.scanned,
         summary.progressSynced,
+        summary.reputationSynced,
+        summary.questsSynced,
+        summary.achievementsSynced,
         summary.equipmentSynced,
         summary.inventorySynced,
         summary.bankSynced,
@@ -526,6 +547,11 @@ void RunBotDismissalRecovery(Player* player)
     living_world::integration::SqlCharacterProgressSnapshotRepository
         snapshotRepository;
     living_world::integration::SqlCharacterProgressSyncRepository syncRepository;
+    living_world::integration::SqlCharacterReputationSyncRepository
+        reputationSyncRepository;
+    living_world::integration::SqlCharacterQuestSyncRepository questSyncRepository;
+    living_world::integration::SqlCharacterAchievementSyncRepository
+        achievementSyncRepository;
     living_world::service::AccountAltRecoveryService recoveryService;
     living_world::service::AccountAltItemRecoveryOptions itemRecoveryOptions;
     itemRecoveryOptions.enableInventorySync =
@@ -541,6 +567,9 @@ void RunBotDismissalRecovery(Player* player)
         nameLeaseRepository,
         snapshotRepository,
         syncRepository,
+        reputationSyncRepository,
+        questSyncRepository,
+        achievementSyncRepository,
         recoveryService,
         itemRecoveryOptions);
 
@@ -549,12 +578,16 @@ void RunBotDismissalRecovery(Player* player)
     LOG_INFO(
         "server.worldserver",
         "[LivingWorldDebug] BotLogoutRecovery character='{}' guid={} "
-        "runtimeFound={} progress={} equipment={} inventory={} bank={} "
-        "namesRestored={} runtimeRetired={} manualReview={} blocked={} reason='{}'",
+        "runtimeFound={} progress={} reputation={} quests={} achievements={} "
+        "equipment={} inventory={} bank={} namesRestored={} runtimeRetired={} "
+        "manualReview={} blocked={} reason='{}'",
         player->GetName(),
         player->GetGUID().GetCounter(),
         summary.runtimeFound,
         summary.progressSynced,
+        summary.reputationSynced,
+        summary.questsSynced,
+        summary.achievementsSynced,
         summary.equipmentSynced,
         summary.inventorySynced,
         summary.bankSynced,
@@ -677,12 +710,15 @@ public:
 
         LOG_INFO(
             "server.worldserver",
-            "[LivingWorldDebug] AccountLoginRecovery accountId={} scanned={} progress={} "
-            "equipment={} inventory={} bank={} namesRestored={} retired={} "
-            "manualReview={} blocked={}",
+            "[LivingWorldDebug] AccountLoginRecovery accountId={} scanned={} "
+            "progress={} reputation={} quests={} achievements={} equipment={} "
+            "inventory={} bank={} namesRestored={} retired={} manualReview={} blocked={}",
             accountId,
             summary.scanned,
             summary.progressSynced,
+            summary.reputationSynced,
+            summary.questsSynced,
+            summary.achievementsSynced,
             summary.equipmentSynced,
             summary.inventorySynced,
             summary.bankSynced,

@@ -43,6 +43,7 @@ enum class AccountAltSyncDomain
     Equipment,
     Reputation,
     Quests,
+    Achievements,
     Mail
 };
 
@@ -69,6 +70,9 @@ struct CharacterProgressSnapshot
     std::uint8_t level = 1;
     std::uint32_t experience = 0;
     std::uint32_t money = 0;
+    std::uint32_t completedQuestCount = 0;
+    std::uint32_t achievementCount = 0;
+    std::int64_t totalReputationStanding = 0;
 };
 
 struct BotAccountLease

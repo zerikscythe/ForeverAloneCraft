@@ -12,7 +12,11 @@ SqlCharacterProgressSnapshotRepository::LoadSnapshot(
     std::uint64_t characterGuid) const
 {
     QueryResult result = CharacterDatabase.Query(
-        "SELECT level, xp, money FROM characters WHERE guid = {} LIMIT 1",
+        "SELECT c.level, c.xp, c.money, "
+        "COALESCE((SELECT COUNT(*) FROM character_queststatus_rewarded WHERE guid = c.guid), 0), "
+        "COALESCE((SELECT COUNT(*) FROM character_achievement WHERE guid = c.guid), 0), "
+        "COALESCE((SELECT SUM(GREATEST(standing, 0)) FROM character_reputation WHERE guid = c.guid), 0) "
+        "FROM characters c WHERE c.guid = {} LIMIT 1",
         characterGuid);
     if (!result)
     {
@@ -24,6 +28,9 @@ SqlCharacterProgressSnapshotRepository::LoadSnapshot(
     snapshot.level = fields[0].Get<std::uint8_t>();
     snapshot.experience = fields[1].Get<std::uint32_t>();
     snapshot.money = fields[2].Get<std::uint32_t>();
+    snapshot.completedQuestCount = fields[3].Get<std::uint32_t>();
+    snapshot.achievementCount = fields[4].Get<std::uint32_t>();
+    snapshot.totalReputationStanding = fields[5].Get<std::int64_t>();
     return snapshot;
 }
 } // namespace integration

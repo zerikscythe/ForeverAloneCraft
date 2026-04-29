@@ -1,7 +1,10 @@
 #pragma once
 
 #include "integration/AccountAltRuntimeRepository.h"
+#include "integration/CharacterAchievementSyncRepository.h"
 #include "integration/CharacterProgressSyncRepository.h"
+#include "integration/CharacterQuestSyncRepository.h"
+#include "integration/CharacterReputationSyncRepository.h"
 #include "model/AccountAltRuntime.h"
 
 #include <vector>
@@ -19,7 +22,10 @@ class AccountAltSyncExecutor
 public:
     AccountAltSyncExecutor(
         integration::AccountAltRuntimeRepository& runtimeRepository,
-        integration::CharacterProgressSyncRepository& syncRepository);
+        integration::CharacterProgressSyncRepository& syncRepository,
+        integration::CharacterReputationSyncRepository& reputationSyncRepository,
+        integration::CharacterQuestSyncRepository& questSyncRepository,
+        integration::CharacterAchievementSyncRepository& achievementSyncRepository);
 
     bool Execute(
         model::AccountAltRuntimeRecord const& runtime,
@@ -29,6 +35,9 @@ public:
 private:
     integration::AccountAltRuntimeRepository& _runtimeRepository;
     integration::CharacterProgressSyncRepository& _syncRepository;
+    integration::CharacterReputationSyncRepository& _reputationSyncRepository;
+    integration::CharacterQuestSyncRepository& _questSyncRepository;
+    integration::CharacterAchievementSyncRepository& _achievementSyncRepository;
 };
 } // namespace service
 } // namespace living_world
