@@ -2,6 +2,106 @@
 
     <Script file="LivingWorld.lua" />
 
+    <Button name="LWCPItemSlotTemplate" virtual="true">
+        <Size x="28" y="28" />
+        <Layers>
+            <Layer level="BACKGROUND">
+                <Texture name="$parentBG" file="Interface\Buttons\UI-Slot-Background">
+                    <Anchors>
+                        <Anchor point="TOPLEFT" />
+                        <Anchor point="BOTTOMRIGHT" />
+                    </Anchors>
+                    <TexCoords left="0.1" right="0.9" top="0.1" bottom="0.9" />
+                </Texture>
+            </Layer>
+            <Layer level="ARTWORK">
+                <Texture name="$parentIcon">
+                    <Anchors>
+                        <Anchor point="TOPLEFT" />
+                        <Anchor point="BOTTOMRIGHT" />
+                    </Anchors>
+                </Texture>
+            </Layer>
+            <Layer level="OVERLAY">
+                <FontString name="$parentCount" inherits="NumberFontNormalSmall">
+                    <Anchors>
+                        <Anchor point="BOTTOMRIGHT">
+                            <Offset><AbsDimension x="-2" y="2" /></Offset>
+                        </Anchor>
+                    </Anchors>
+                    <JustifyH>RIGHT</JustifyH>
+                </FontString>
+                <Texture name="$parentHighlight" file="Interface\Buttons\ButtonHilight-Square" alphaMode="ADD" hidden="true">
+                    <Anchors>
+                        <Anchor point="TOPLEFT" />
+                        <Anchor point="BOTTOMRIGHT" />
+                    </Anchors>
+                </Texture>
+            </Layer>
+        </Layers>
+    </Button>
+
+    <Button name="LWCPCompactBagSlotTemplate" virtual="true">
+        <Size x="26" y="26" />
+        <Layers>
+            <Layer level="BACKGROUND">
+                <Texture name="$parentBG" file="Interface\Buttons\UI-Slot-Background">
+                    <Anchors>
+                        <Anchor point="TOPLEFT" />
+                        <Anchor point="BOTTOMRIGHT" />
+                    </Anchors>
+                    <TexCoords left="0.1" right="0.9" top="0.1" bottom="0.9" />
+                </Texture>
+            </Layer>
+            <Layer level="ARTWORK">
+                <Texture name="$parentIcon">
+                    <Anchors>
+                        <Anchor point="TOPLEFT" />
+                        <Anchor point="BOTTOMRIGHT" />
+                    </Anchors>
+                </Texture>
+            </Layer>
+            <Layer level="OVERLAY">
+                <FontString name="$parentCount" inherits="NumberFontNormalSmall">
+                    <Anchors>
+                        <Anchor point="BOTTOMRIGHT">
+                            <Offset><AbsDimension x="-1" y="1" /></Offset>
+                        </Anchor>
+                    </Anchors>
+                    <JustifyH>RIGHT</JustifyH>
+                </FontString>
+                <Texture name="$parentHighlight" file="Interface\Buttons\ButtonHilight-Square" alphaMode="ADD" hidden="true">
+                    <Anchors>
+                        <Anchor point="TOPLEFT" />
+                        <Anchor point="BOTTOMRIGHT" />
+                    </Anchors>
+                </Texture>
+            </Layer>
+        </Layers>
+    </Button>
+
+    <Button name="LWCPBagSelectTemplate" virtual="true">
+        <Size x="28" y="28" />
+        <Layers>
+            <Layer level="ARTWORK">
+                <Texture name="$parentIcon">
+                    <Anchors>
+                        <Anchor point="TOPLEFT" />
+                        <Anchor point="BOTTOMRIGHT" />
+                    </Anchors>
+                </Texture>
+            </Layer>
+            <Layer level="OVERLAY">
+                <Texture name="$parentHighlight" file="Interface\Buttons\ButtonHilight-Square" alphaMode="ADD" hidden="true">
+                    <Anchors>
+                        <Anchor point="TOPLEFT" />
+                        <Anchor point="BOTTOMRIGHT" />
+                    </Anchors>
+                </Texture>
+            </Layer>
+        </Layers>
+    </Button>
+
     <!-- ============================================================ -->
     <!-- Minimap button                                                -->
     <!-- ============================================================ -->
@@ -59,15 +159,19 @@
             <OnLoad>
                 this:RegisterForDrag("LeftButton");
                 this:RegisterEvent("PLAYER_LOGIN");
+                this:RegisterEvent("PARTY_MEMBERS_CHANGED");
                 this:RegisterEvent("CHAT_MSG_SYSTEM");
                 this:RegisterEvent("CHAT_MSG_ADDON");
+                this:RegisterEvent("MODIFIER_STATE_CHANGED");
                 RegisterAddonMessagePrefix("LWBOT");
             </OnLoad>
             <OnDragStart>LWCPFrame:StartMoving();</OnDragStart>
             <OnDragStop>LWCPFrame:StopMovingOrSizing();</OnDragStop>
             <OnEvent>
+                if event == "PLAYER_LOGIN" or event == "PARTY_MEMBERS_CHANGED" then LWCP_UpdateInventoryTabState() end
                 if event == "CHAT_MSG_SYSTEM" then LWCP_HandleSystemMsg(arg1) end
                 if event == "CHAT_MSG_ADDON" then LWCP_HandleAddonMsg(arg1, arg2, arg3, arg4) end
+                if event == "MODIFIER_STATE_CHANGED" then LWCP_HandleModifierStateChanged(arg1) end
             </OnEvent>
             <OnShow>LWCP_RefreshRoster(); LWCP_ShowTab("Bots");</OnShow>
         </Scripts>
@@ -87,8 +191,8 @@
                 <FontString inherits="GameFontHighlightSmallOutline" text="v1.0">
                     <Size x="40" y="14" />
                     <Anchors>
-                        <Anchor point="CENTER" relativePoint="BOTTOMRIGHT">
-                            <Offset><AbsDimension x="-30" y="20" /></Offset>
+                        <Anchor point="BOTTOM" relativePoint="BOTTOM">
+                            <Offset><AbsDimension x="0" y="22" /></Offset>
                         </Anchor>
                     </Anchors>
                 </FontString>
@@ -118,6 +222,27 @@
                 <Scripts><OnClick>LWCP_SlotInc();</OnClick></Scripts>
             </Button>
 
+            <Button name="LWCPRefreshBtn">
+                <Size x="22" y="22" />
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="LWCPSlotInc" relativePoint="RIGHT">
+                        <Offset><AbsDimension x="8" y="0" /></Offset>
+                    </Anchor>
+                </Anchors>
+                <NormalTexture file="Interface\Buttons\UI-RotationRight-Button-Up" />
+                <PushedTexture file="Interface\Buttons\UI-RotationRight-Button-Down" />
+                <HighlightTexture alphaMode="ADD" file="Interface\Buttons\CheckButtonHilight" />
+                <Scripts>
+                    <OnClick>LWCP_RefreshActivePage();</OnClick>
+                    <OnEnter>
+                        GameTooltip:SetOwner(this, "ANCHOR_RIGHT");
+                        GameTooltip:SetText("Refresh current page");
+                        GameTooltip:Show();
+                    </OnEnter>
+                    <OnLeave>GameTooltip:Hide();</OnLeave>
+                </Scripts>
+            </Button>
+
             <!-- ====================================================== -->
             <!-- Tab buttons                                             -->
             <!-- ====================================================== -->
@@ -140,17 +265,17 @@
             <Button name="LWCPTabGear" inherits="UIPanelButtonTemplate" text="Gear">
                 <Size x="52" y="22" />
                 <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="40" y="-72" /></Offset></Anchor>
+                    <Anchor point="TOP"><Offset><AbsDimension x="37" y="-72" /></Offset></Anchor>
                 </Anchors>
                 <Scripts><OnClick>LWCP_ShowTab("Gear");</OnClick></Scripts>
             </Button>
 
-            <Button name="LWCPTabSettings" inherits="UIPanelButtonTemplate" text="Settings">
-                <Size x="66" y="22" />
+            <Button name="LWCPTabBags" inherits="UIPanelButtonTemplate" text="Bags">
+                <Size x="52" y="22" />
                 <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="97" y="-72" /></Offset></Anchor>
+                    <Anchor point="TOP"><Offset><AbsDimension x="94" y="-72" /></Offset></Anchor>
                 </Anchors>
-                <Scripts><OnClick>LWCP_ShowTab("Settings");</OnClick></Scripts>
+                <Scripts><OnClick>LWCP_ShowTab("Bags");</OnClick></Scripts>
             </Button>
 
             <!-- ====================================================== -->
@@ -371,61 +496,68 @@
                 <Scripts>
                     <OnLoad>LWCP_InitGearPage(this);</OnLoad>
                 </Scripts>
-                <Layers>
-                    <Layer level="OVERLAY">
-                        <FontString name="LWCPGearBotName" inherits="GameFontNormal" text="-- No bot selected --">
-                            <Size x="200" y="16" />
-                            <Anchors>
-                                <Anchor point="TOP"><Offset><AbsDimension x="0" y="-4" /></Offset></Anchor>
-                            </Anchors>
-                        </FontString>
-                        <FontString inherits="GameFontHighlightSmall" text="Equipped  (click to retrieve):">
-                            <Size x="200" y="14" />
-                            <Anchors>
-                                <Anchor point="TOP"><Offset><AbsDimension x="0" y="-50" /></Offset></Anchor>
-                            </Anchors>
-                        </FontString>
-                        <FontString inherits="GameFontHighlightSmall" text="Bags  (click to retrieve):">
-                            <Size x="130" y="14" />
-                            <Anchors>
-                                <Anchor point="TOP"><Offset><AbsDimension x="-30" y="-204" /></Offset></Anchor>
-                            </Anchors>
-                        </FontString>
-                        <FontString name="LWCPGearPageLabel" inherits="GameFontHighlightSmall" text="">
-                            <Size x="40" y="14" />
-                            <Anchors>
-                                <Anchor point="TOP"><Offset><AbsDimension x="80" y="-204" /></Offset></Anchor>
-                            </Anchors>
-                        </FontString>
-                        <FontString inherits="GameFontHighlightSmall" text="Equipped Bags:">
-                            <Size x="120" y="14" />
-                            <Anchors>
-                                <Anchor point="TOP"><Offset><AbsDimension x="0" y="-164" /></Offset></Anchor>
-                            </Anchors>
-                        </FontString>
-                    </Layer>
-                </Layers>
                 <Frames>
-                    <Button name="LWCPGearFetchBtn" inherits="UIPanelButtonTemplate" text="Fetch">
-                        <Size x="60" y="22" />
-                        <Anchors>
-                            <Anchor point="TOP"><Offset><AbsDimension x="0" y="-24" /></Offset></Anchor>
-                        </Anchors>
-                        <Scripts><OnClick>LWCP_RequestBotBags();</OnClick></Scripts>
+                    <!-- Left column: Head, Neck, Shoulders, Back, Chest, Shirt, Tabard, Wrist -->
+                    <Button name="LWCPGearSlot1" inherits="LWCPItemSlotTemplate">
+                        <Anchors><Anchor point="TOPLEFT"><Offset><AbsDimension x="20" y="-4" /></Offset></Anchor></Anchors>
                     </Button>
-                    <Button name="LWCPGearPrevBtn" inherits="UIPanelButtonTemplate" text="&lt;">
-                        <Size x="24" y="20" />
-                        <Anchors>
-                            <Anchor point="TOP"><Offset><AbsDimension x="56" y="-202" /></Offset></Anchor>
-                        </Anchors>
-                        <Scripts><OnClick>LWCP_BagPageDec();</OnClick></Scripts>
+                    <Button name="LWCPGearSlot2" inherits="LWCPItemSlotTemplate">
+                        <Anchors><Anchor point="TOP" relativeTo="LWCPGearSlot1" relativePoint="BOTTOM"><Offset><AbsDimension x="0" y="-2" /></Offset></Anchor></Anchors>
                     </Button>
-                    <Button name="LWCPGearNextBtn" inherits="UIPanelButtonTemplate" text="&gt;">
-                        <Size x="24" y="20" />
-                        <Anchors>
-                            <Anchor point="TOP"><Offset><AbsDimension x="82" y="-202" /></Offset></Anchor>
-                        </Anchors>
-                        <Scripts><OnClick>LWCP_BagPageInc();</OnClick></Scripts>
+                    <Button name="LWCPGearSlot3" inherits="LWCPItemSlotTemplate">
+                        <Anchors><Anchor point="TOP" relativeTo="LWCPGearSlot2" relativePoint="BOTTOM"><Offset><AbsDimension x="0" y="-2" /></Offset></Anchor></Anchors>
+                    </Button>
+                    <Button name="LWCPGearSlot4" inherits="LWCPItemSlotTemplate">
+                        <Anchors><Anchor point="TOP" relativeTo="LWCPGearSlot3" relativePoint="BOTTOM"><Offset><AbsDimension x="0" y="-2" /></Offset></Anchor></Anchors>
+                    </Button>
+                    <Button name="LWCPGearSlot5" inherits="LWCPItemSlotTemplate">
+                        <Anchors><Anchor point="TOP" relativeTo="LWCPGearSlot4" relativePoint="BOTTOM"><Offset><AbsDimension x="0" y="-2" /></Offset></Anchor></Anchors>
+                    </Button>
+                    <Button name="LWCPGearSlot6" inherits="LWCPItemSlotTemplate">
+                        <Anchors><Anchor point="TOP" relativeTo="LWCPGearSlot5" relativePoint="BOTTOM"><Offset><AbsDimension x="0" y="-2" /></Offset></Anchor></Anchors>
+                    </Button>
+                    <Button name="LWCPGearSlot7" inherits="LWCPItemSlotTemplate">
+                        <Anchors><Anchor point="TOP" relativeTo="LWCPGearSlot6" relativePoint="BOTTOM"><Offset><AbsDimension x="0" y="-2" /></Offset></Anchor></Anchors>
+                    </Button>
+                    <Button name="LWCPGearSlot8" inherits="LWCPItemSlotTemplate">
+                        <Anchors><Anchor point="TOP" relativeTo="LWCPGearSlot7" relativePoint="BOTTOM"><Offset><AbsDimension x="0" y="-2" /></Offset></Anchor></Anchors>
+                    </Button>
+
+                    <!-- Right column: Hands, Waist, Legs, Feet, Ring1, Ring2, Trinket1, Trinket2 -->
+                    <Button name="LWCPGearSlot9" inherits="LWCPItemSlotTemplate">
+                        <Anchors><Anchor point="TOPRIGHT"><Offset><AbsDimension x="-20" y="-4" /></Offset></Anchor></Anchors>
+                    </Button>
+                    <Button name="LWCPGearSlot10" inherits="LWCPItemSlotTemplate">
+                        <Anchors><Anchor point="TOP" relativeTo="LWCPGearSlot9" relativePoint="BOTTOM"><Offset><AbsDimension x="0" y="-2" /></Offset></Anchor></Anchors>
+                    </Button>
+                    <Button name="LWCPGearSlot11" inherits="LWCPItemSlotTemplate">
+                        <Anchors><Anchor point="TOP" relativeTo="LWCPGearSlot10" relativePoint="BOTTOM"><Offset><AbsDimension x="0" y="-2" /></Offset></Anchor></Anchors>
+                    </Button>
+                    <Button name="LWCPGearSlot12" inherits="LWCPItemSlotTemplate">
+                        <Anchors><Anchor point="TOP" relativeTo="LWCPGearSlot11" relativePoint="BOTTOM"><Offset><AbsDimension x="0" y="-2" /></Offset></Anchor></Anchors>
+                    </Button>
+                    <Button name="LWCPGearSlot13" inherits="LWCPItemSlotTemplate">
+                        <Anchors><Anchor point="TOP" relativeTo="LWCPGearSlot12" relativePoint="BOTTOM"><Offset><AbsDimension x="0" y="-2" /></Offset></Anchor></Anchors>
+                    </Button>
+                    <Button name="LWCPGearSlot14" inherits="LWCPItemSlotTemplate">
+                        <Anchors><Anchor point="TOP" relativeTo="LWCPGearSlot13" relativePoint="BOTTOM"><Offset><AbsDimension x="0" y="-2" /></Offset></Anchor></Anchors>
+                    </Button>
+                    <Button name="LWCPGearSlot15" inherits="LWCPItemSlotTemplate">
+                        <Anchors><Anchor point="TOP" relativeTo="LWCPGearSlot14" relativePoint="BOTTOM"><Offset><AbsDimension x="0" y="-2" /></Offset></Anchor></Anchors>
+                    </Button>
+                    <Button name="LWCPGearSlot16" inherits="LWCPItemSlotTemplate">
+                        <Anchors><Anchor point="TOP" relativeTo="LWCPGearSlot15" relativePoint="BOTTOM"><Offset><AbsDimension x="0" y="-2" /></Offset></Anchor></Anchors>
+                    </Button>
+
+                    <!-- Bottom row: Main Hand, Off Hand, Ranged -->
+                    <Button name="LWCPGearSlot17" inherits="LWCPItemSlotTemplate">
+                        <Anchors><Anchor point="BOTTOM"><Offset><AbsDimension x="-32" y="22" /></Offset></Anchor></Anchors>
+                    </Button>
+                    <Button name="LWCPGearSlot18" inherits="LWCPItemSlotTemplate">
+                        <Anchors><Anchor point="LEFT" relativeTo="LWCPGearSlot17" relativePoint="RIGHT"><Offset><AbsDimension x="4" y="0" /></Offset></Anchor></Anchors>
+                    </Button>
+                    <Button name="LWCPGearSlot19" inherits="LWCPItemSlotTemplate">
+                        <Anchors><Anchor point="LEFT" relativeTo="LWCPGearSlot18" relativePoint="RIGHT"><Offset><AbsDimension x="4" y="0" /></Offset></Anchor></Anchors>
                     </Button>
 
                     <Frame name="LWCPRetrievePrompt" hidden="true">
@@ -482,6 +614,94 @@
             </Frame>
 
             <!-- ====================================================== -->
+            <!-- PAGE: Bags                                              -->
+            <!-- ====================================================== -->
+            <Frame name="LWCPPageBags" hidden="true">
+                <Size x="240" y="300" />
+                <Anchors>
+                    <Anchor point="TOP"><Offset><AbsDimension x="0" y="-100" /></Offset></Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnLoad>LWCP_InitBagsPage(this);</OnLoad>
+                </Scripts>
+                <Layers>
+                    <Layer level="OVERLAY">
+                        <FontString inherits="GameFontHighlightSmall" text="Bags">
+                            <Size x="120" y="14" />
+                            <Anchors>
+                                <Anchor point="TOP"><Offset><AbsDimension x="0" y="-16" /></Offset></Anchor>
+                            </Anchors>
+                        </FontString>
+                        <FontString inherits="GameFontHighlightSmall" text="Left-click pick / Right-click retrieve">
+                            <Size x="200" y="14" />
+                            <Anchors>
+                                <Anchor point="TOP"><Offset><AbsDimension x="0" y="-242" /></Offset></Anchor>
+                            </Anchors>
+                        </FontString>
+                    </Layer>
+                </Layers>
+                <Frames>
+                    <Button name="LWCPBagSelect0" inherits="LWCPBagSelectTemplate">
+                        <Anchors><Anchor point="TOPLEFT"><Offset><AbsDimension x="18" y="-68" /></Offset></Anchor></Anchors>
+                    </Button>
+                    <Button name="LWCPBagSelect1" inherits="LWCPBagSelectTemplate">
+                        <Anchors><Anchor point="LEFT" relativeTo="LWCPBagSelect0" relativePoint="RIGHT"><Offset><AbsDimension x="3" y="0" /></Offset></Anchor></Anchors>
+                    </Button>
+                    <Button name="LWCPBagSelect2" inherits="LWCPBagSelectTemplate">
+                        <Anchors><Anchor point="LEFT" relativeTo="LWCPBagSelect1" relativePoint="RIGHT"><Offset><AbsDimension x="3" y="0" /></Offset></Anchor></Anchors>
+                    </Button>
+                    <Button name="LWCPBagSelect3" inherits="LWCPBagSelectTemplate">
+                        <Anchors><Anchor point="LEFT" relativeTo="LWCPBagSelect2" relativePoint="RIGHT"><Offset><AbsDimension x="3" y="0" /></Offset></Anchor></Anchors>
+                    </Button>
+                    <Button name="LWCPBagSelect4" inherits="LWCPBagSelectTemplate">
+                        <Anchors><Anchor point="LEFT" relativeTo="LWCPBagSelect3" relativePoint="RIGHT"><Offset><AbsDimension x="3" y="0" /></Offset></Anchor></Anchors>
+                    </Button>
+
+                    <Button name="LWCPBagsSlot1" inherits="LWCPCompactBagSlotTemplate">
+                        <Anchors><Anchor point="TOPLEFT"><Offset><AbsDimension x="11" y="-108" /></Offset></Anchor></Anchors>
+                    </Button>
+                    <Button name="LWCPBagsSlot2" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot1" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot3" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot2" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot4" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot3" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot5" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot4" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot6" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot5" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot7" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot6" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot8" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot7" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+
+                    <Button name="LWCPBagsSlot9" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="TOP" relativeTo="LWCPBagsSlot1" relativePoint="BOTTOM"><Offset><AbsDimension x="0" y="-1" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot10" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot9" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot11" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot10" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot12" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot11" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot13" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot12" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot14" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot13" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot15" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot14" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot16" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot15" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+
+                    <Button name="LWCPBagsSlot17" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="TOP" relativeTo="LWCPBagsSlot9" relativePoint="BOTTOM"><Offset><AbsDimension x="0" y="-1" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot18" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot17" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot19" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot18" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot20" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot19" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot21" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot20" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot22" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot21" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot23" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot22" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot24" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot23" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+
+                    <Button name="LWCPBagsSlot25" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="TOP" relativeTo="LWCPBagsSlot17" relativePoint="BOTTOM"><Offset><AbsDimension x="0" y="-1" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot26" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot25" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot27" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot26" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot28" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot27" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot29" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot28" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot30" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot29" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot31" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot30" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+                    <Button name="LWCPBagsSlot32" inherits="LWCPCompactBagSlotTemplate"><Anchors><Anchor point="LEFT" relativeTo="LWCPBagsSlot31" relativePoint="RIGHT"><Offset><AbsDimension x="1" y="0" /></Offset></Anchor></Anchors></Button>
+
+                    <Button name="LWCPBagsEquipSlot" inherits="LWCPItemSlotTemplate">
+                        <Anchors><Anchor point="BOTTOMRIGHT"><Offset><AbsDimension x="-18" y="44" /></Offset></Anchor></Anchors>
+                    </Button>
+                </Frames>
+            </Frame>
+
+            <!-- ====================================================== -->
             <!-- PAGE: Settings                                          -->
             <!-- ====================================================== -->
             <Frame name="LWCPPageSettings" hidden="true">
@@ -528,10 +748,18 @@
             <!-- ====================================================== -->
             <!-- Close button                                            -->
             <!-- ====================================================== -->
-            <Button name="LWCPCloseBtn" inherits="UIPanelButtonTemplate" text="Close">
-                <Size x="120" y="28" />
+            <Button name="LWCPSettingsBtn" inherits="UIPanelButtonTemplate" text="Settings">
+                <Size x="92" y="24" />
                 <Anchors>
-                    <Anchor point="BOTTOM"><Offset><AbsDimension x="0" y="18" /></Offset></Anchor>
+                    <Anchor point="BOTTOMLEFT"><Offset><AbsDimension x="18" y="18" /></Offset></Anchor>
+                </Anchors>
+                <Scripts><OnClick>LWCP_ShowTab("Settings");</OnClick></Scripts>
+            </Button>
+
+            <Button name="LWCPCloseBtn" inherits="UIPanelButtonTemplate" text="Close">
+                <Size x="92" y="24" />
+                <Anchors>
+                    <Anchor point="BOTTOMRIGHT"><Offset><AbsDimension x="-18" y="18" /></Offset></Anchor>
                 </Anchors>
                 <Scripts><OnClick>LWCP_Close();</OnClick></Scripts>
             </Button>

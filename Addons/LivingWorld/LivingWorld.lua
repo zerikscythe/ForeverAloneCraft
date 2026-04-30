@@ -11,6 +11,7 @@ local LW_SlotNum    = 0    -- default to Party
 local LW_SlotMax    = 0    -- grows as roster entries arrive
 local LW_ProfileNum = 1
 local LW_LogLevel   = 1
+local LW_ActiveTab  = "Bots"
 
 -- Returns the bot reference string for the current slot.
 -- Slot 0 → "party", any other slot → character name (or slot number as fallback).
@@ -29,22 +30,42 @@ end
 -- -----------------------------------------------
 -- Tab switching
 -- -----------------------------------------------
-local LW_Tabs = { "Bots", "Combat", "Gear", "Settings" }
+local LW_Tabs = { "Bots", "Combat", "Gear", "Bags", "Settings" }
 
 function LWCP_ShowTab(name)
+    if (name == "Gear" or name == "Bags") and not LWCP_CanOpenInventoryPanels() then
+        name = "Bots"
+    end
+
+    LW_ActiveTab = name
+
     for _, t in ipairs(LW_Tabs) do
         local page = _G["LWCPPage" .. t]
-        local btn  = _G["LWCPTab"  .. t]
+        local btn  = _G["LWCPTab"  .. t] or (t == "Settings" and LWCPSettingsBtn)
         if t == name then
             page:Show()
-            btn:Disable()
+            if btn then btn:Disable() end
         else
             page:Hide()
-            btn:Enable()
+            if btn then btn:Enable() end
         end
     end
     if name == "Gear" then
+        LWCP_RequestBotBags(true)
         LWCP_RenderGearTab()
+    elseif name == "Bags" then
+        LW_SelectedBagIdx = 0
+        LWCP_RenderBagsTab()
+    end
+
+    LWCP_UpdateInventoryTabState()
+end
+
+function LWCP_RefreshActivePage()
+    if LW_ActiveTab == "Gear" or LW_ActiveTab == "Bags" then
+        LWCP_RequestBotBags()
+    else
+        LWCP_RefreshRoster()
     end
 end
 
@@ -54,6 +75,50 @@ end
 function LWCP_UpdateSlotDisplay()
     local entry = LW_Roster[LW_SlotNum]
     LWCPSlotLabel:SetText(entry and entry.name or "---")
+    LWCP_UpdateInventoryTabState()
+end
+
+function LWCP_IsSelectedBotInParty()
+    local entry = LW_Roster[LW_SlotNum]
+    if not entry or not entry.name or LW_SlotNum == 0 then
+        return false
+    end
+
+    local selectedName = string.lower(entry.name)
+    for i = 1, GetNumPartyMembers() do
+        local partyName = UnitName("party" .. i)
+        if partyName and string.lower(partyName) == selectedName then
+            return true
+        end
+    end
+
+    return false
+end
+
+function LWCP_CanOpenInventoryPanels()
+    return not IsPartySelected() and LWCP_IsSelectedBotInParty()
+end
+
+function LWCP_UpdateInventoryTabState()
+    local enabled = LWCP_CanOpenInventoryPanels()
+
+    if not enabled and (LW_ActiveTab == "Gear" or LW_ActiveTab == "Bags") then
+        LWCP_ShowTab("Bots")
+        return
+    end
+
+    local tabs = { "Gear", "Bags" }
+    for _, name in ipairs(tabs) do
+        local btn = _G["LWCPTab" .. name]
+        if btn then
+            btn:SetAlpha(enabled and 1 or 0.45)
+            if enabled and LW_ActiveTab ~= name then
+                btn:Enable()
+            else
+                btn:Disable()
+            end
+        end
+    end
 end
 
 -- Called from OnEvent when a CHAT_MSG_SYSTEM arrives.
@@ -270,10 +335,9 @@ end
 -- -----------------------------------------------
 -- Gear tab — inventory state
 -- -----------------------------------------------
-local LW_GearData    = {}
-local LW_BagData     = {}
-local LW_BagPage     = 1
-local LW_BagPageSize = 14
+local LW_GearData      = {}
+local LW_BagData       = {}
+local LW_SelectedBagIdx = 0
 
 -- Equipment slot display order (left-to-right, top-to-bottom across 3 rows of 7):
 --   Row 1: Head Neck Shoulders Back Chest Shirt Tabard
@@ -283,10 +347,6 @@ local GEAR_SLOT_ORDER = {
     0, 1, 2, 14, 4, 3, 18,
     8, 9, 5, 6, 7, 10, 11,
     12, 13, 15, 16, 17,
-}
-
-local EQUIPPED_BAG_SLOT_ORDER = {
-    19, 20, 21, 22,
 }
 
 local GEAR_SLOT_ICON = {
@@ -329,6 +389,7 @@ local LW_PickedGuidLow = nil
 local LW_PickedBtn     = nil
 local LW_RetrievePromptGuidLow = nil
 local LW_RetrievePromptMax     = nil
+local LW_HoveredBagItemBtn = nil
 
 local function LWCP_ClearPick()
     if LW_PickedBtn and LW_PickedBtn.hl then
@@ -343,6 +404,118 @@ local function LWCP_PickItem(btn)
     LW_PickedGuidLow = btn.guidLow
     LW_PickedBtn     = btn
     btn.hl:Show()
+end
+
+local function LWCP_HideComparisonTooltips()
+    if ShoppingTooltip1 then ShoppingTooltip1:Hide() end
+    if ShoppingTooltip2 then ShoppingTooltip2:Hide() end
+end
+
+local function LWCP_ShowTooltipComparisonLines(itemId)
+    if not IsShiftKeyDown() or not itemId then
+        return
+    end
+
+    local _, _, _, _, _, _, _, _, equipLoc = GetItemInfo(itemId)
+    if not equipLoc or equipLoc == "" then
+        return
+    end
+
+    local slots = nil
+    if equipLoc == "INVTYPE_HEAD" then
+        slots = { 0 }
+    elseif equipLoc == "INVTYPE_NECK" then
+        slots = { 1 }
+    elseif equipLoc == "INVTYPE_SHOULDER" then
+        slots = { 2 }
+    elseif equipLoc == "INVTYPE_BODY" then
+        slots = { 3 }
+    elseif equipLoc == "INVTYPE_CHEST" or equipLoc == "INVTYPE_ROBE" then
+        slots = { 4 }
+    elseif equipLoc == "INVTYPE_WAIST" then
+        slots = { 5 }
+    elseif equipLoc == "INVTYPE_LEGS" then
+        slots = { 6 }
+    elseif equipLoc == "INVTYPE_FEET" then
+        slots = { 7 }
+    elseif equipLoc == "INVTYPE_WRIST" then
+        slots = { 8 }
+    elseif equipLoc == "INVTYPE_HAND" then
+        slots = { 9 }
+    elseif equipLoc == "INVTYPE_FINGER" then
+        slots = { 10, 11 }
+    elseif equipLoc == "INVTYPE_TRINKET" then
+        slots = { 12, 13 }
+    elseif equipLoc == "INVTYPE_CLOAK" then
+        slots = { 14 }
+    elseif equipLoc == "INVTYPE_WEAPONMAINHAND" then
+        slots = { 15 }
+    elseif equipLoc == "INVTYPE_SHIELD" or equipLoc == "INVTYPE_HOLDABLE" or equipLoc == "INVTYPE_WEAPONOFFHAND" then
+        slots = { 16 }
+    elseif equipLoc == "INVTYPE_RANGED" or equipLoc == "INVTYPE_THROWN" or equipLoc == "INVTYPE_RANGEDRIGHT" or equipLoc == "INVTYPE_RELIC" then
+        slots = { 17 }
+    elseif equipLoc == "INVTYPE_TABARD" then
+        slots = { 18 }
+    elseif equipLoc == "INVTYPE_2HWEAPON" or equipLoc == "INVTYPE_WEAPON" then
+        slots = { 15, 16 }
+    end
+
+    if not slots then
+        return
+    end
+
+    local addedHeader = false
+    for _, slot in ipairs(slots) do
+        local worn = LW_GearData[slot]
+        if worn and worn.itemId then
+            if not addedHeader then
+                GameTooltip:AddLine(" ")
+                GameTooltip:AddLine("Bot comparison", 0.0, 1.0, 0.6)
+                addedHeader = true
+            end
+            GameTooltip:AddLine((GEAR_SLOT_NAMES[slot] or "Slot") .. ": |cffffffffitem:" .. worn.itemId .. "|h[" .. (GetItemInfo(worn.itemId) or ("Item " .. worn.itemId)) .. "]|h|r", 0.85, 0.85, 0.85, true)
+        end
+    end
+
+    if addedHeader then
+        GameTooltip:Show()
+    end
+end
+
+local function LWCP_RefreshBagItemTooltip(btn)
+    if not btn or not btn.itemId then
+        return
+    end
+
+    GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
+    GameTooltip:SetHyperlink("item:" .. btn.itemId .. ":0:0:0:0:0:0:0")
+    LWCP_ShowTooltipComparisonLines(btn.itemId)
+    GameTooltip:Show()
+end
+
+function LWCP_HandleModifierStateChanged(key)
+    if key ~= "LSHIFT" and key ~= "RSHIFT" then
+        return
+    end
+
+    if not LW_HoveredBagItemBtn or not LW_HoveredBagItemBtn.itemId then
+        return
+    end
+
+    LWCP_HideComparisonTooltips()
+    LWCP_RefreshBagItemTooltip(LW_HoveredBagItemBtn)
+end
+
+local function LWCP_SelectBagIndex(bagIdx)
+    if bagIdx ~= 0 then
+        local bag = LW_GearData[18 + bagIdx]
+        if not bag or not bag.itemId then
+            return
+        end
+    end
+
+    LW_SelectedBagIdx = bagIdx or 0
+    LWCP_RenderBagsTab()
 end
 
 function LWCP_ShowRetrievePrompt(guidLow, maxCount)
@@ -400,53 +573,20 @@ end
 -- Gear tab — slot button creation (called OnLoad)
 -- -----------------------------------------------
 function LWCP_InitGearPage(frame)
-    local function MakeSlot(name, parent, col, row, yBase)
-        local btn = CreateFrame("Button", name, parent)
-        btn:SetWidth(30)
-        btn:SetHeight(30)
-        btn:SetPoint("TOP", parent, "TOP", -90 + col * 32, yBase - row * 33)
-        btn:EnableMouse(true)
-
-        local bg = btn:CreateTexture(nil, "BACKGROUND")
-        bg:SetAllPoints()
-        bg:SetTexture("Interface\\Buttons\\UI-Slot-Background")
-        bg:SetTexCoord(0.1, 0.9, 0.1, 0.9)
-
-        local icon = btn:CreateTexture(nil, "ARTWORK")
-        icon:SetAllPoints()
-        btn.icon = icon
-
-        local count = btn:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
-        count:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", -2, 2)
-        count:SetJustifyH("RIGHT")
-        count:SetText("")
-        btn.count = count
-
-        -- Yellow highlight shown when this bag slot is "picked"
-        local hl = btn:CreateTexture(nil, "OVERLAY")
-        hl:SetTexture("Interface\\Buttons\\ButtonHilight-Square")
-        hl:SetAllPoints()
-        hl:SetBlendMode("ADD")
-        hl:Hide()
-        btn.hl = hl
-
-        btn.guidLow   = nil
-        btn.itemId    = nil
-        btn.equipSlot = nil
-        btn.stackCount = nil
-        return btn
-    end
-
     -- Gear slots — each maps to a fixed equipment slot for icon + tooltip
     for i = 1, 19 do
-        local col = (i - 1) % 7
-        local row = math.floor((i - 1) / 7)
-        local btn = MakeSlot("LWCPGearSlot" .. i, frame, col, row, -66)
+        local btn = _G["LWCPGearSlot" .. i]
         local eslot = GEAR_SLOT_ORDER[i]
+        btn.icon = _G[btn:GetName() .. "Icon"]
+        btn.count = _G[btn:GetName() .. "Count"]
+        btn.hl = _G[btn:GetName() .. "Highlight"]
         btn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
         btn.equipSlot = eslot
         btn.icon:SetTexture(GEAR_SLOT_ICON[eslot])
         btn.icon:SetAlpha(0.4)
+        btn.guidLow = nil
+        btn.itemId = nil
+        btn.stackCount = nil
 
         btn:SetScript("OnEnter", function(self)
             GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
@@ -478,62 +618,60 @@ function LWCP_InitGearPage(frame)
         end)
     end
 
-    -- Equipped bag slots — treated like gear targets for bag equipping/swapping
-    for i = 1, 4 do
-        local btn = MakeSlot("LWCPBagEquipSlot" .. i, frame, i - 1, 0, -180)
-        local eslot = EQUIPPED_BAG_SLOT_ORDER[i]
-        btn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-        btn.equipSlot = eslot
-        btn.icon:SetTexture(GEAR_SLOT_ICON[eslot])
-        btn.icon:SetAlpha(0.35)
+end
 
+function LWCP_InitBagsPage(frame)
+    for i = 0, 4 do
+        local btn = _G["LWCPBagSelect" .. i]
+        btn.icon = _G[btn:GetName() .. "Icon"]
+        btn.hl = _G[btn:GetName() .. "Highlight"]
+        btn.bagIdx = i
+
+        btn:SetScript("OnClick", function(self)
+            LWCP_SelectBagIndex(self.bagIdx)
+        end)
         btn:SetScript("OnEnter", function(self)
-            GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
-            if btn.itemId then
-                GameTooltip:SetHyperlink("item:" .. btn.itemId .. ":0:0:0:0:0:0:0")
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            local label = (self.bagIdx == 0 and "Backpack") or ("Bag " .. self.bagIdx)
+            if self.itemId then
+                GameTooltip:SetHyperlink("item:" .. self.itemId .. ":0:0:0:0:0:0:0")
+                GameTooltip:AddLine(" ")
+                GameTooltip:AddLine(label, 0.0, 1.0, 0.6)
             else
-                local label = (GEAR_SLOT_NAMES[btn.equipSlot] or "Bag Slot")
-                if LW_PickedGuidLow then
-                    GameTooltip:SetText(label .. "\n|cffff0(Click to equip picked bag)|r")
-                else
-                    GameTooltip:SetText(label .. " — empty")
-                end
+                GameTooltip:SetText(label .. " — empty")
             end
             GameTooltip:Show()
         end)
-        btn:SetScript("OnLeave", function() GameTooltip:Hide() end)
-        btn:SetScript("OnClick", function(self, mouseButton)
-            if mouseButton == "RightButton" then
-                if btn.guidLow then
-                    LWCP_ClearPick()
-                    LWCP_UnequipItem(btn.guidLow)
-                end
-                return
-            end
-            if LW_PickedGuidLow then
-                LWCP_EquipItem(LW_PickedGuidLow)
-                LWCP_ClearPick()
-            end
+        btn:SetScript("OnLeave", function()
+            LWCP_HideComparisonTooltips()
+            GameTooltip:Hide()
         end)
     end
 
-    -- Bag slots — left-click picks for equipping, right-click retrieves
-    for i = 1, 14 do
-        local col = (i - 1) % 7
-        local row = math.floor((i - 1) / 7)
-        local btn = MakeSlot("LWCPBagSlot" .. i, frame, col, row, -228)
+    for i = 1, 32 do
+        local btn = _G["LWCPBagsSlot" .. i]
+        btn.icon = _G[btn:GetName() .. "Icon"]
+        btn.count = _G[btn:GetName() .. "Count"]
+        btn.hl = _G[btn:GetName() .. "Highlight"]
         btn.icon:SetTexture(nil)
         btn.icon:SetAlpha(0)
-
+        btn.guidLow = nil
+        btn.itemId = nil
+        btn.stackCount = nil
         btn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
         btn:SetScript("OnEnter", function(self)
             if btn.itemId then
-                GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
-                GameTooltip:SetHyperlink("item:" .. btn.itemId .. ":0:0:0:0:0:0:0")
-                GameTooltip:Show()
+                LW_HoveredBagItemBtn = btn
+                LWCP_RefreshBagItemTooltip(btn)
             end
         end)
-        btn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        btn:SetScript("OnLeave", function()
+            if LW_HoveredBagItemBtn == btn then
+                LW_HoveredBagItemBtn = nil
+            end
+            LWCP_HideComparisonTooltips()
+            GameTooltip:Hide()
+        end)
         btn:SetScript("OnClick", function(self, mouseButton)
             if not btn.guidLow then return end
             if mouseButton == "RightButton" then
@@ -552,6 +690,32 @@ function LWCP_InitGearPage(frame)
             end
         end)
     end
+
+    local equip = LWCPBagsEquipSlot
+    equip.icon = _G[equip:GetName() .. "Icon"]
+    equip.count = _G[equip:GetName() .. "Count"]
+    equip.hl = _G[equip:GetName() .. "Highlight"]
+    equip:RegisterForClicks("LeftButtonUp")
+    equip.icon:SetTexture("Interface\\PaperDollInfoFrame\\UI-PaperDoll-Slot-MainHand")
+    equip.icon:SetAlpha(0.45)
+    if equip.count then equip.count:SetText("") end
+
+    equip:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        if LW_PickedGuidLow then
+            GameTooltip:SetText("Equip\n|cffffd200Click to equip the selected item on the bot.|r")
+        else
+            GameTooltip:SetText("Equip")
+        end
+        GameTooltip:Show()
+    end)
+    equip:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    equip:SetScript("OnClick", function(self)
+        if LW_PickedGuidLow then
+            LWCP_EquipItem(LW_PickedGuidLow)
+            LWCP_ClearPick()
+        end
+    end)
 end
 
 -- -----------------------------------------------
@@ -588,51 +752,61 @@ function LWCP_RenderGearTab()
             btn.count:SetText("")
         end
     end
+end
 
-    for i = 1, 4 do
-        local btn = _G["LWCPBagEquipSlot" .. i]
+function LWCP_RenderBagsTab()
+    if LWCPBagsBotName then
+        local name = LWCPGearBotName and LWCPGearBotName:GetText()
+        LWCPBagsBotName:SetText(name or "-- No bot selected --")
+    end
+
+    for bagIdx = 0, 4 do
+        local btn = _G["LWCPBagSelect" .. bagIdx]
+        if btn then
+            local item = nil
+            if bagIdx > 0 then
+                item = LW_GearData[18 + bagIdx]
+            end
+
+            if bagIdx == 0 then
+                btn.itemId = nil
+                btn.icon:SetTexture("Interface\\Buttons\\Button-Backpack-Up")
+                btn.icon:SetAlpha(1)
+            elseif item and item.itemId then
+                btn.itemId = item.itemId
+                local _, _, _, _, _, _, _, _, _, icon = GetItemInfo(item.itemId)
+                btn.icon:SetTexture(icon or "Interface\\Buttons\\Button-Backpack-Up")
+                btn.icon:SetAlpha(icon and 1 or 0.6)
+            else
+                btn.itemId = nil
+                btn.icon:SetTexture("Interface\\Buttons\\Button-Backpack-Up")
+                btn.icon:SetAlpha(0.18)
+            end
+
+            if bagIdx == LW_SelectedBagIdx then
+                btn.hl:Show()
+            else
+                btn.hl:Hide()
+            end
+        end
+    end
+
+    local visible = {}
+    for _, item in ipairs(LW_BagData) do
+        if item.bagIdx == LW_SelectedBagIdx then
+            visible[#visible + 1] = item
+        end
+    end
+    table.sort(visible, function(a, b)
+        return (a.slotIdx or 0) < (b.slotIdx or 0)
+    end)
+
+    for i = 1, 32 do
+        local btn = _G["LWCPBagsSlot" .. i]
         if not btn then break end
-        local eslot = EQUIPPED_BAG_SLOT_ORDER[i]
-        local item = LW_GearData[eslot]
+        local item = visible[i]
         if item then
             btn.itemId = item.itemId
-            btn.guidLow = item.guidLow
-            btn.stackCount = nil
-            local _, _, _, _, _, _, _, _, _, icon = GetItemInfo(item.itemId)
-            if icon then
-                btn.icon:SetTexture(icon)
-                btn.icon:SetAlpha(1)
-            else
-                btn.icon:SetTexture(GEAR_SLOT_ICON[eslot])
-                btn.icon:SetAlpha(0.7)
-            end
-        else
-            btn.itemId = nil
-            btn.guidLow = nil
-            btn.stackCount = nil
-            btn.icon:SetTexture(GEAR_SLOT_ICON[eslot])
-            btn.icon:SetAlpha(0.35)
-        end
-        if btn.count then
-            btn.count:SetText("")
-        end
-    end
-
-    -- Bag slots: paginated
-    local totalPages = math.max(1, math.ceil(#LW_BagData / LW_BagPageSize))
-    LW_BagPage = math.min(LW_BagPage, totalPages)
-    local pageStart = (LW_BagPage - 1) * LW_BagPageSize + 1
-
-    if LWCPGearPageLabel then
-        LWCPGearPageLabel:SetText(LW_BagPage .. "/" .. totalPages)
-    end
-
-    for i = 1, 14 do
-        local btn = _G["LWCPBagSlot" .. i]
-        if not btn then break end
-        local item = LW_BagData[pageStart + i - 1]
-        if item then
-            btn.itemId  = item.itemId
             btn.guidLow = item.guidLow
             btn.stackCount = item.count
             local _, _, _, _, _, _, _, _, _, icon = GetItemInfo(item.itemId)
@@ -646,14 +820,12 @@ function LWCP_RenderGearTab()
                 end
             end
         else
-            btn.itemId  = nil
+            btn.itemId = nil
             btn.guidLow = nil
             btn.stackCount = nil
             btn.icon:SetTexture(nil)
             btn.icon:SetAlpha(0)
-            if btn.count then
-                btn.count:SetText("")
-            end
+            if btn.count then btn.count:SetText("") end
         end
     end
 end
@@ -719,18 +891,27 @@ function LWCP_HandleAddonMsg(prefix, payload, channel, sender)
         LWCPGearBotName:SetText("-- " .. botName .. " --")
     end
 
+    if LWCPBagsBotName then
+        LWCPBagsBotName:SetText("-- " .. botName .. " --")
+    end
+
     if LWCPPageGear and LWCPPageGear:IsVisible() then
-        LW_BagPage = 1
         LWCP_RenderGearTab()
+    end
+
+    if LWCPPageBags and LWCPPageBags:IsVisible() then
+        LWCP_RenderBagsTab()
     end
 end
 
 -- -----------------------------------------------
 -- Gear tab — commands
 -- -----------------------------------------------
-function LWCP_RequestBotBags()
+function LWCP_RequestBotBags(silent)
     if IsPartySelected() then
-        DEFAULT_CHAT_FRAME:AddMessage("|cff00cc44LWCP:|r Select a specific bot on the Bots tab first.")
+        if not silent then
+            DEFAULT_CHAT_FRAME:AddMessage("|cff00cc44LWCP:|r Select a specific bot on the Bots tab first.")
+        end
         return
     end
     SendChatMessage(CMD_LWBOT .. GetBotRef() .. " bags")
@@ -767,17 +948,3 @@ function LWCP_UnequipItem(guidLow)
     SendChatMessage(CMD_LWBOT .. GetBotRef() .. " unequip " .. guidLow)
 end
 
-function LWCP_BagPageDec()
-    if LW_BagPage > 1 then
-        LW_BagPage = LW_BagPage - 1
-        LWCP_RenderGearTab()
-    end
-end
-
-function LWCP_BagPageInc()
-    local totalPages = math.max(1, math.ceil(#LW_BagData / LW_BagPageSize))
-    if LW_BagPage < totalPages then
-        LW_BagPage = LW_BagPage + 1
-        LWCP_RenderGearTab()
-    end
-end
