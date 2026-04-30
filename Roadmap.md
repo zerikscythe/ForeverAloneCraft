@@ -1142,6 +1142,13 @@ Current status from live validation:
 - Auto-refresh roster on panel show; `CHAT_MSG_SYSTEM` event parses roster
   list lines and filters out the logged-in player's own character.
 - New buttons: Follow, Eat/Drink (Refreshments), Buff.
+- Gear tab now supports direct bot inventory management through addon-backed
+  chat commands: right-click bag item to retrieve, left-click bag item then
+  left-click gear slot to equip, and right-click equipped gear slot to unequip
+  back into the bot's bags.
+- Ctrl+right-click on a stacked bag item now opens a quantity prompt and sends
+  `.lwbot <bot> retrieve <itemGuid> <count>` so partial stack retrieval is
+  available without dragging the full stack to the player.
 - Log level +/- auto-sends the command immediately; Set button removed.
 
 ---
@@ -1209,6 +1216,16 @@ FROM character_queststatus WHERE guid = {cloneGuid} AND status != 0
 ```
 `INSERT IGNORE` prevents overwriting a quest the source already holds.
 `status != 0` filters stale zero-rows left by AzerothCore after quest removal.
+
+Later hardening:
+- active quest sync can also be blocked by stale zero-status rows already
+  present on the source character because `(guid, quest)` is the primary key.
+- `SqlCharacterQuestSyncRepository` now deletes only those stale zero-status
+  source rows for quests the clone currently has active, then uses
+  `INSERT ... ON DUPLICATE KEY UPDATE` with `GREATEST(...)` progress merges
+  instead of relying on `INSERT IGNORE` alone.
+- repository debug logs now emit pre/post active-quest row counts under the
+  `[LivingWorldDebug] QuestSync repo ...` prefix to make live validation easier.
 
 After both fixes: owner accepts quest → bot gets it in memory → on dismiss,
 bot flushes to DB → sync copies active rows to source → source logs in and

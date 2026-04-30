@@ -1841,6 +1841,25 @@ unexpected if the root bags are a different type than what was recorded.
   verification: exercise the full spawn → dismiss → startup recovery cycle and
   confirm source characters are in correct state after each step.
 
+Addon note:
+- The LivingWorld control panel gear tab now uses addon-backed inventory
+  commands for direct bot item management: right-click bag item retrieves,
+  left-click picked bag item onto a gear slot equips, and right-click equipped
+  gear slot unequips into bot bags via `.lwbot <bot> unequip <itemGuid>`.
+- Ctrl+right-click on a stacked bag item opens a quantity prompt and uses the
+  optional retrieve-count form `.lwbot <bot> retrieve <itemGuid> <count>` for
+  partial stack moves.
+
+Quest sync note:
+- active quest persistence must not rely on `INSERT IGNORE` alone for
+  `character_queststatus`, because stale zero-status source rows can block the
+  real clone quest row on the `(guid, quest)` primary key
+- `SqlCharacterQuestSyncRepository` now deletes only those stale zero-status
+  source rows for quests the clone currently has active, then uses
+  `INSERT ... ON DUPLICATE KEY UPDATE` to merge progress counters
+- `[LivingWorldDebug] QuestSync repo ...` logs source/clone active-quest row
+  counts before and after the merge
+
 Practical note for future edits and tests:
 - if a test or fake snapshot is trying to represent "same bag, different
   contents", keep the root bag itemEntry the same and change an item inside the

@@ -307,10 +307,97 @@ ParsedCommand ParseBotActionCommand(BotRef botRef, std::string_view remaining)
         return cmd;
     }
 
+    // "bags" path — no arguments needed.
+    if (secondToken == "bags")
+    {
+        BotBagsCommand cmd;
+        cmd.botRef = std::move(botRef);
+        return cmd;
+    }
+
+    // "retrieve" path — requires item guid low as numeric argument.
+    if (secondToken == "retrieve")
+    {
+        std::string_view thirdToken = ConsumeToken(remaining);
+        if (thirdToken.empty())
+        {
+            return MakeError(
+                CommandParseErrorKind::MissingArgument,
+                "retrieve requires an item guid");
+        }
+
+        std::uint64_t guidRaw = 0;
+        if (!ParseUInt64(thirdToken, guidRaw) ||
+            guidRaw > std::numeric_limits<std::uint32_t>::max())
+        {
+            return MakeError(
+                CommandParseErrorKind::InvalidArgument,
+                "retrieve requires a numeric item guid");
+        }
+
+        BotRetrieveCommand cmd;
+        cmd.botRef = std::move(botRef);
+        cmd.itemGuidLow = static_cast<std::uint32_t>(guidRaw);
+        std::string_view fourthToken = ConsumeToken(remaining);
+        if (!fourthToken.empty())
+        {
+            std::uint64_t countRaw = 0;
+            if (!ParseUInt64(fourthToken, countRaw) ||
+                countRaw == 0 ||
+                countRaw > std::numeric_limits<std::uint32_t>::max())
+            {
+                return MakeError(
+                    CommandParseErrorKind::InvalidArgument,
+                    "retrieve count must be a positive integer");
+            }
+
+            cmd.itemCount = static_cast<std::uint32_t>(countRaw);
+        }
+        return cmd;
+    }
+
+    // "equip"/"unequip" path — requires item guid low as numeric argument.
+    if (secondToken == "equip" || secondToken == "unequip")
+    {
+        std::string_view thirdToken = ConsumeToken(remaining);
+        if (thirdToken.empty())
+        {
+            return MakeError(
+                CommandParseErrorKind::MissingArgument,
+                secondToken == "equip"
+                    ? "equip requires an item guid"
+                    : "unequip requires an item guid");
+        }
+
+        std::uint64_t guidRaw = 0;
+        if (!ParseUInt64(thirdToken, guidRaw) ||
+            guidRaw > std::numeric_limits<std::uint32_t>::max())
+        {
+            return MakeError(
+                CommandParseErrorKind::InvalidArgument,
+                secondToken == "equip"
+                    ? "equip requires a numeric item guid"
+                    : "unequip requires a numeric item guid");
+        }
+
+        if (secondToken == "equip")
+        {
+            BotEquipCommand cmd;
+            cmd.botRef      = std::move(botRef);
+            cmd.itemGuidLow = static_cast<std::uint32_t>(guidRaw);
+            return cmd;
+        }
+
+        BotUnequipCommand cmd;
+        cmd.botRef      = std::move(botRef);
+        cmd.itemGuidLow = static_cast<std::uint32_t>(guidRaw);
+        return cmd;
+    }
+
     return MakeError(
         CommandParseErrorKind::UnknownVerb,
         std::string("expected 'profile', 'cast', 'attack', 'disengage', 'train', 'retreat', "
-                    "'follow', 'refreshments', or 'buff', got: ") +
+                    "'follow', 'refreshments', 'buff', 'bags', 'retrieve', 'equip', or 'unequip', got: ") +
             std::string(secondToken));
 }
 } // namespace

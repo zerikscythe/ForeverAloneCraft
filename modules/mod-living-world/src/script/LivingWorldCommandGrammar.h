@@ -147,6 +147,38 @@ struct BotBuffCommand
     BotRef botRef;
 };
 
+// "bags" — request bot inventory data sent back to the requesting player's
+// client as an addon message (LWBOT prefix).
+struct BotBagsCommand
+{
+    BotRef botRef;
+};
+
+// "retrieve" — move a specific item (identified by its GUID low) from the
+// bot's inventory or equipped slots into the owner's inventory.
+struct BotRetrieveCommand
+{
+    BotRef botRef;
+    std::uint32_t itemGuidLow;
+    std::optional<std::uint32_t> itemCount;
+};
+
+// "equip" — equip an item (by GUID low) from the bot's bags onto the bot.
+// If the destination slot is occupied, the existing item is moved to bags first.
+struct BotEquipCommand
+{
+    BotRef botRef;
+    std::uint32_t itemGuidLow;
+};
+
+// "unequip" — move an equipped item (by GUID low) from the bot's body into
+// the bot's bags.
+struct BotUnequipCommand
+{
+    BotRef botRef;
+    std::uint32_t itemGuidLow;
+};
+
 using ParsedCommand = std::variant<
     CommandParseError,
     RosterListCommand,
@@ -160,7 +192,11 @@ using ParsedCommand = std::variant<
     BotRetreatCommand,
     BotFollowCommand,
     BotRefreshmentsCommand,
-    BotBuffCommand>;
+    BotBuffCommand,
+    BotBagsCommand,
+    BotRetrieveCommand,
+    BotEquipCommand,
+    BotUnequipCommand>;
 
 // Parse a raw command argument string (everything after `.lwbot `). The
 // input is expected to be trimmed of the command prefix but may still

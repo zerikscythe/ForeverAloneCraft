@@ -10,14 +10,14 @@ bool SqlCharacterSpellSyncRepository::SyncSpellsFromCloneToSource(
     std::uint64_t sourceCharacterGuid,
     std::uint64_t cloneCharacterGuid)
 {
-    // Copy spells the clone learned that the source does not have.
-    // active=1 means the spell is currently learned (not removed/replaced).
-    // INSERT IGNORE preserves the source's existing spell rows untouched.
+    // This AzerothCore branch stores only (guid, spell, specMask) in
+    // character_spell. There is no active/disabled state column here.
+    // Copy learned spells additively and preserve the clone's spec mask.
     CharacterDatabase.DirectExecute(
-        "INSERT IGNORE INTO character_spell (guid, spell, active, disabled) "
-        "SELECT {}, spell, active, disabled "
+        "INSERT IGNORE INTO character_spell (guid, spell, specMask) "
+        "SELECT {}, spell, specMask "
         "FROM character_spell "
-        "WHERE guid = {} AND active = 1",
+        "WHERE guid = {}",
         sourceCharacterGuid,
         cloneCharacterGuid);
 

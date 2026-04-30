@@ -367,5 +367,70 @@ TEST(LivingWorldCommandGrammarTest, BotCastRejectsMissingTargetAfterOn)
     ASSERT_NE(error, nullptr);
     EXPECT_EQ(error->kind, CommandParseErrorKind::MissingArgument);
 }
+
+TEST(LivingWorldCommandGrammarTest, BotEquipParsesPositionAndGuid)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("2 equip 12345");
+
+    auto const* equip = std::get_if<BotEquipCommand>(&cmd);
+    ASSERT_NE(equip, nullptr);
+    auto const* position = std::get_if<std::uint32_t>(&equip->botRef);
+    ASSERT_NE(position, nullptr);
+    EXPECT_EQ(*position, 2u);
+    EXPECT_EQ(equip->itemGuidLow, 12345u);
+}
+
+TEST(LivingWorldCommandGrammarTest, BotRetrieveParsesOptionalCount)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("2 retrieve 12345 7");
+
+    auto const* retrieve = std::get_if<BotRetrieveCommand>(&cmd);
+    ASSERT_NE(retrieve, nullptr);
+    auto const* position = std::get_if<std::uint32_t>(&retrieve->botRef);
+    ASSERT_NE(position, nullptr);
+    EXPECT_EQ(*position, 2u);
+    EXPECT_EQ(retrieve->itemGuidLow, 12345u);
+    ASSERT_TRUE(retrieve->itemCount.has_value());
+    EXPECT_EQ(*retrieve->itemCount, 7u);
+}
+
+TEST(LivingWorldCommandGrammarTest, BotUnequipParsesNameAndGuid)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("thrall unequip 67890");
+
+    auto const* unequip = std::get_if<BotUnequipCommand>(&cmd);
+    ASSERT_NE(unequip, nullptr);
+    auto const* name = std::get_if<std::string>(&unequip->botRef);
+    ASSERT_NE(name, nullptr);
+    EXPECT_EQ(*name, "Thrall");
+    EXPECT_EQ(unequip->itemGuidLow, 67890u);
+}
+
+TEST(LivingWorldCommandGrammarTest, BotUnequipRejectsMissingGuid)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 unequip");
+
+    auto const* error = std::get_if<CommandParseError>(&cmd);
+    ASSERT_NE(error, nullptr);
+    EXPECT_EQ(error->kind, CommandParseErrorKind::MissingArgument);
+}
+
+TEST(LivingWorldCommandGrammarTest, BotRetrieveRejectsZeroCount)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 retrieve 12345 0");
+
+    auto const* error = std::get_if<CommandParseError>(&cmd);
+    ASSERT_NE(error, nullptr);
+    EXPECT_EQ(error->kind, CommandParseErrorKind::InvalidArgument);
+}
+
+TEST(LivingWorldCommandGrammarTest, BotUnequipRejectsNonNumericGuid)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 unequip abc");
+
+    auto const* error = std::get_if<CommandParseError>(&cmd);
+    ASSERT_NE(error, nullptr);
+    EXPECT_EQ(error->kind, CommandParseErrorKind::InvalidArgument);
+}
 } // namespace script
 } // namespace living_world

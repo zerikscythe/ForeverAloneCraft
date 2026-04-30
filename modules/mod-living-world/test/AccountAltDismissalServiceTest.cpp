@@ -2,6 +2,8 @@
 #include "integration/CharacterAchievementSyncRepository.h"
 #include "integration/CharacterQuestSyncRepository.h"
 #include "integration/CharacterReputationSyncRepository.h"
+#include "integration/CharacterSkillSyncRepository.h"
+#include "integration/CharacterSpellSyncRepository.h"
 #include "gtest/gtest.h"
 
 #include <optional>
@@ -251,6 +253,26 @@ public:
     }
 };
 
+class FakeSpellSyncRepository final
+    : public integration::CharacterSpellSyncRepository
+{
+public:
+    bool SyncSpellsFromCloneToSource(std::uint64_t, std::uint64_t) override
+    {
+        return true;
+    }
+};
+
+class FakeSkillSyncRepository final
+    : public integration::CharacterSkillSyncRepository
+{
+public:
+    bool SyncSkillsFromCloneToSource(std::uint64_t, std::uint64_t) override
+    {
+        return true;
+    }
+};
+
 model::AccountAltRuntimeRecord BuildRuntime()
 {
     model::AccountAltRuntimeRecord runtime;
@@ -296,6 +318,8 @@ TEST(AccountAltDismissalServiceTest, SyncsProgressAndRestoresNamesOnDismiss)
     FakeReputationSyncRepository reputationSyncRepository;
     FakeQuestSyncRepository questSyncRepository;
     FakeAchievementSyncRepository achievementSyncRepository;
+    FakeSpellSyncRepository spellSyncRepository;
+    FakeSkillSyncRepository skillSyncRepository;
     AccountAltRecoveryService recoveryService;
 
     runtimeRepository.Seed(BuildRuntime());
@@ -316,6 +340,8 @@ TEST(AccountAltDismissalServiceTest, SyncsProgressAndRestoresNamesOnDismiss)
         reputationSyncRepository,
         questSyncRepository,
         achievementSyncRepository,
+        spellSyncRepository,
+        skillSyncRepository,
         recoveryService);
 
     AccountAltDismissalSummary summary = service.DismissClone(8001);
@@ -349,6 +375,8 @@ TEST(AccountAltDismissalServiceTest, FlagsManualReviewButStillRestoresNames)
     FakeReputationSyncRepository reputationSyncRepository;
     FakeQuestSyncRepository questSyncRepository;
     FakeAchievementSyncRepository achievementSyncRepository;
+    FakeSpellSyncRepository spellSyncRepository;
+    FakeSkillSyncRepository skillSyncRepository;
     AccountAltRecoveryService recoveryService;
 
     runtimeRepository.Seed(BuildRuntime());
@@ -369,6 +397,8 @@ TEST(AccountAltDismissalServiceTest, FlagsManualReviewButStillRestoresNames)
         reputationSyncRepository,
         questSyncRepository,
         achievementSyncRepository,
+        spellSyncRepository,
+        skillSyncRepository,
         recoveryService);
 
     AccountAltDismissalSummary summary = service.DismissClone(8001);
@@ -398,6 +428,8 @@ TEST(AccountAltDismissalServiceTest, SyncsInventoryWhenPolicyEnablesIt)
     FakeReputationSyncRepository reputationSyncRepository;
     FakeQuestSyncRepository questSyncRepository;
     FakeAchievementSyncRepository achievementSyncRepository;
+    FakeSpellSyncRepository spellSyncRepository;
+    FakeSkillSyncRepository skillSyncRepository;
     AccountAltRecoveryService recoveryService;
 
     runtimeRepository.Seed(BuildRuntime());
@@ -444,6 +476,8 @@ TEST(AccountAltDismissalServiceTest, SyncsInventoryWhenPolicyEnablesIt)
         reputationSyncRepository,
         questSyncRepository,
         achievementSyncRepository,
+        spellSyncRepository,
+        skillSyncRepository,
         recoveryService,
         AccountAltItemRecoveryOptions { true, false });
 

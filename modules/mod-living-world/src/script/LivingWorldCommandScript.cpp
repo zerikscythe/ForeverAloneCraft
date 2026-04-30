@@ -6,6 +6,7 @@
 
 #include "Chat.h"
 #include "CommandScript.h"
+#include "Entities/Item/Container/Bag.h"
 #include "Item.h"
 #include "Config.h"
 #include "Creature.h"
@@ -273,6 +274,9 @@ void RenderUsage(ChatHandler* handler)
     handler->PSendSysMessage("  .lwbot <#|name|party> follow");
     handler->PSendSysMessage("  .lwbot <#|name|party> refreshments  (eat/drink if HP or mana < 60%%)");
     handler->PSendSysMessage("  .lwbot <#|name|party> buff  (force re-apply class buffs)");
+    handler->PSendSysMessage("  .lwbot <#|name> retrieve <itemGuid> [count]");
+    handler->PSendSysMessage("  .lwbot <#|name> equip <itemGuid>");
+    handler->PSendSysMessage("  .lwbot <#|name> unequip <itemGuid>");
 }
 
 std::string_view TrimRootWhitespace(std::string_view input)
@@ -1544,8 +1548,8 @@ std::uint32_t TrainBotFromClassTrainers(Player* owner, Player* bot)
         // stored in living_world_account_alt_runtime.source_character_guid.
         // We write directly here; the dismissal sync will see it in the DB.
         CharacterDatabase.Execute(
-            "INSERT IGNORE INTO character_spell (guid, spell, active, disabled) "
-            "SELECT source_character_guid, {}, 1, 0 "
+            "INSERT IGNORE INTO character_spell (guid, spell, specMask) "
+            "SELECT source_character_guid, {}, 1 "
             "FROM living_world_account_alt_runtime "
             "WHERE clone_character_guid = {} LIMIT 1",
             entry.spellId,
@@ -2071,6 +2075,385 @@ void HandleBotBuff(
     BotSayConfirm(bots.front());
 }
 
+// Send an addon message to a player's client using the LWBOT prefix.
+// The client fires CHAT_MSG_ADDON with prefix="LWBOT" and the payload as
+// the message argument. No 255-byte limit applies — this is server→client.
+void SendLWBotAddonMessage(Player* player, std::string const& payload)
+{
+    std::string msg = "LWBOT\t" + payload;
+    WorldPacket data;
+    ChatHandler::BuildChatPacket(
+        data, CHAT_MSG_WHISPER, LANG_ADDON, player, player, msg);
+    player->GetSession()->SendPacket(&data);
+}
+
+// Serialize a single item's link fields into the shared colon-delimited format.
+// Fields: itemId:enchId:g1:g2:g3:guidLow  (gems sent as socket enchantment IDs
+// so the client can reconstruct a usable hyperlink; count appended for bags).
+std::string SerializeItemFields(Item const* item, bool includeCount)
+{
+    std::string s;
+    s += std::to_string(item->GetEntry());
+    s += ':';
+    s += std::to_string(item->GetEnchantmentId(PERM_ENCHANTMENT_SLOT));
+    s += ':';
+    s += std::to_string(item->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT));
+    s += ':';
+    s += std::to_string(item->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT_2));
+    s += ':';
+    s += std::to_string(item->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT_3));
+    if (includeCount)
+    {
+        s += ':';
+        s += std::to_string(item->GetCount());
+    }
+    s += ':';
+    s += std::to_string(item->GetGUID().GetCounter());
+    return s;
+}
+
+// Build the full INV payload for the LWBOT addon message.
+// Format: INV;<botName>;<G:slot:fields...>;<B:bagIdx:slotIdx:fields...>
+std::string BuildBotInventoryPayload(Player* bot)
+{
+    std::string payload = "INV;";
+    payload += bot->GetName();
+
+    // Equipped gear (slots 0–18)
+    for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
+    {
+        Item const* item = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+        if (!item)
+            continue;
+        payload += ";G:";
+        payload += std::to_string(slot);
+        payload += ':';
+        payload += SerializeItemFields(item, false);
+    }
+
+    // Backpack (bag index 0 in the protocol, slot offset normalised to 0-based)
+    for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
+    {
+        Item const* item = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+        if (!item)
+            continue;
+        payload += ";B:0:";
+        payload += std::to_string(slot - INVENTORY_SLOT_ITEM_START);
+        payload += ':';
+        payload += SerializeItemFields(item, true);
+    }
+
+    // Equipped bags (indices 1–4 in the protocol)
+    for (uint8 bagSlot = INVENTORY_SLOT_BAG_START; bagSlot < INVENTORY_SLOT_BAG_END; ++bagSlot)
+    {
+        Bag const* bag = bot->GetBagByPos(bagSlot);
+        if (!bag)
+            continue;
+        uint8 const bagIdx = bagSlot - INVENTORY_SLOT_BAG_START + 1;
+        for (uint32 s = 0; s < bag->GetBagSize(); ++s)
+        {
+            Item const* item = bag->GetItemByPos(static_cast<uint8>(s));
+            if (!item)
+                continue;
+            payload += ";B:";
+            payload += std::to_string(bagIdx);
+            payload += ':';
+            payload += std::to_string(s);
+            payload += ':';
+            payload += SerializeItemFields(item, true);
+        }
+    }
+
+    return payload;
+}
+
+// Find an item anywhere in the bot's inventory (gear + bags) by GUID low.
+// Returns the item and records its bag/slot for RemoveItem.
+Item* FindBotItemByGuidLow(
+    Player* bot,
+    std::uint32_t guidLow,
+    uint8& outBag,
+    uint8& outSlot)
+{
+    // Equipped gear
+    for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
+    {
+        Item* item = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+        if (item && item->GetGUID().GetCounter() == guidLow)
+        {
+            outBag  = INVENTORY_SLOT_BAG_0;
+            outSlot = slot;
+            return item;
+        }
+    }
+
+    // Backpack
+    for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
+    {
+        Item* item = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+        if (item && item->GetGUID().GetCounter() == guidLow)
+        {
+            outBag  = INVENTORY_SLOT_BAG_0;
+            outSlot = slot;
+            return item;
+        }
+    }
+
+    // Equipped bags
+    for (uint8 bagSlot = INVENTORY_SLOT_BAG_START; bagSlot < INVENTORY_SLOT_BAG_END; ++bagSlot)
+    {
+        Bag* bag = bot->GetBagByPos(bagSlot);
+        if (!bag)
+            continue;
+        for (uint32 s = 0; s < bag->GetBagSize(); ++s)
+        {
+            Item* item = bag->GetItemByPos(static_cast<uint8>(s));
+            if (item && item->GetGUID().GetCounter() == guidLow)
+            {
+                outBag  = bagSlot;
+                outSlot = static_cast<uint8>(s);
+                return item;
+            }
+        }
+    }
+
+    return nullptr;
+}
+
+void HandleBotBags(
+    ChatHandler* handler,
+    BotBagsCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld bags requires an in-game player.");
+        return;
+    }
+
+    std::vector<Player*> bots = ResolveSelectedBotsForOwner(player, command.botRef);
+    if (bots.empty())
+    {
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld no active bot. Use '.lwbot request <id>' first.");
+        return;
+    }
+
+    Player* bot = bots.front();
+    SendLWBotAddonMessage(player, BuildBotInventoryPayload(bot));
+}
+
+void HandleBotRetrieve(
+    ChatHandler* handler,
+    BotRetrieveCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld retrieve requires an in-game player.");
+        return;
+    }
+
+    std::vector<Player*> bots = ResolveSelectedBotsForOwner(player, command.botRef);
+    if (bots.empty())
+    {
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld no active bot. Use '.lwbot request <id>' first.");
+        return;
+    }
+
+    Player* bot = bots.front();
+    uint8 foundBag = 0, foundSlot = 0;
+    Item* item = FindBotItemByGuidLow(bot, command.itemGuidLow, foundBag, foundSlot);
+    if (!item)
+    {
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld retrieve: item not found on bot.");
+        return;
+    }
+
+    std::uint32_t const sourceCount = item->GetCount();
+    std::uint32_t const retrieveCount = command.itemCount.value_or(sourceCount);
+    if (retrieveCount == 0 || retrieveCount > sourceCount)
+    {
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld retrieve: invalid stack count.");
+        return;
+    }
+
+    ItemPosCountVec dest;
+    InventoryResult const canStore =
+        player->CanStoreItem(
+            NULL_BAG,
+            NULL_SLOT,
+            dest,
+            item->GetEntry(),
+            retrieveCount,
+            item,
+            false);
+    if (canStore != EQUIP_ERR_OK)
+    {
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld retrieve: your inventory is full.");
+        return;
+    }
+
+    if (retrieveCount == sourceCount)
+    {
+        bot->RemoveItem(foundBag, foundSlot, true);
+        player->StoreItem(dest, item, true);
+    }
+    else
+    {
+        Item* splitItem = item->CloneItem(retrieveCount, player);
+        if (!splitItem)
+        {
+            SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+                "LivingWorld retrieve: failed to split item stack.");
+            return;
+        }
+
+        item->SetCount(sourceCount - retrieveCount);
+        item->SetState(ITEM_CHANGED, bot);
+        if (bot->IsInWorld())
+        {
+            item->SendUpdateToPlayer(bot);
+        }
+
+        player->StoreItem(dest, splitItem, true);
+    }
+
+    // Push refreshed inventory back so the addon panel updates automatically.
+    SendLWBotAddonMessage(player, BuildBotInventoryPayload(bot));
+}
+
+void HandleBotEquip(
+    ChatHandler* handler,
+    BotEquipCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld equip requires an in-game player.");
+        return;
+    }
+
+    std::vector<Player*> bots = ResolveSelectedBotsForOwner(player, command.botRef);
+    if (bots.empty())
+    {
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld no active bot. Use '.lwbot request <id>' first.");
+        return;
+    }
+
+    Player* bot = bots.front();
+    uint8 foundBag = 0, foundSlot = 0;
+    Item* item = FindBotItemByGuidLow(bot, command.itemGuidLow, foundBag, foundSlot);
+    if (!item)
+    {
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld equip: item not found on bot.");
+        return;
+    }
+
+    // Determine the destination equip slot. swap=true lets CanEquipItem choose
+    // any valid slot, including occupied ones (we handle displacement below).
+    uint16 dest = 0;
+    InventoryResult canEquip = bot->CanEquipItem(NULL_SLOT, dest, item, true, false);
+    if (canEquip != EQUIP_ERR_OK)
+    {
+        BotSayDeny(bot);
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld equip: bot cannot equip that item (class/level restriction?).");
+        return;
+    }
+
+    // dest is a packed (bag<<8|slot) position; extract the equipment slot byte.
+    uint8 const equipSlot = static_cast<uint8>(dest & 0xFF);
+
+    // If the destination slot is already occupied, move the existing item to bags.
+    Item* displaced = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, equipSlot);
+    if (displaced)
+    {
+        ItemPosCountVec bagDest;
+        InventoryResult canStore =
+            bot->CanStoreItem(NULL_BAG, NULL_SLOT, bagDest, displaced, false);
+        if (canStore != EQUIP_ERR_OK)
+        {
+            BotSayDeny(bot);
+            SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+                "LivingWorld equip: no bag space to unequip the current item.");
+            return;
+        }
+        bot->RemoveItem(INVENTORY_SLOT_BAG_0, equipSlot, true);
+        bot->StoreItem(bagDest, displaced, true);
+    }
+
+    bot->RemoveItem(foundBag, foundSlot, true);
+    bot->EquipItem(dest, item, true);
+    BotSayConfirm(bot);
+
+    SendLWBotAddonMessage(player, BuildBotInventoryPayload(bot));
+}
+
+void HandleBotUnequip(
+    ChatHandler* handler,
+    BotUnequipCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld unequip requires an in-game player.");
+        return;
+    }
+
+    std::vector<Player*> bots = ResolveSelectedBotsForOwner(player, command.botRef);
+    if (bots.empty())
+    {
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld no active bot. Use '.lwbot request <id>' first.");
+        return;
+    }
+
+    Player* bot = bots.front();
+    uint8 foundBag = 0, foundSlot = 0;
+    Item* item = FindBotItemByGuidLow(bot, command.itemGuidLow, foundBag, foundSlot);
+    if (!item)
+    {
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld unequip: item not found on bot.");
+        return;
+    }
+
+    if (foundBag != INVENTORY_SLOT_BAG_0 || foundSlot >= INVENTORY_SLOT_ITEM_START)
+    {
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld unequip: item is not currently equipped.");
+        return;
+    }
+
+    ItemPosCountVec dest;
+    InventoryResult const canStore =
+        bot->CanStoreItem(NULL_BAG, NULL_SLOT, dest, item, false);
+    if (canStore != EQUIP_ERR_OK)
+    {
+        BotSayDeny(bot);
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld unequip: no bag space on bot.");
+        return;
+    }
+
+    bot->RemoveItem(foundBag, foundSlot, true);
+    bot->StoreItem(dest, item, true);
+    BotSayConfirm(bot);
+
+    SendLWBotAddonMessage(player, BuildBotInventoryPayload(bot));
+}
+
 bool HandleParsedCommand(
     ChatHandler* handler,
     ParsedCommand const& parsed)
@@ -2172,6 +2555,34 @@ bool HandleParsedCommand(
         std::get_if<BotBuffCommand>(&parsed))
     {
         HandleBotBuff(handler, *command);
+        return true;
+    }
+
+    if (BotBagsCommand const* command =
+        std::get_if<BotBagsCommand>(&parsed))
+    {
+        HandleBotBags(handler, *command);
+        return true;
+    }
+
+    if (BotRetrieveCommand const* command =
+        std::get_if<BotRetrieveCommand>(&parsed))
+    {
+        HandleBotRetrieve(handler, *command);
+        return true;
+    }
+
+    if (BotEquipCommand const* command =
+        std::get_if<BotEquipCommand>(&parsed))
+    {
+        HandleBotEquip(handler, *command);
+        return true;
+    }
+
+    if (BotUnequipCommand const* command =
+        std::get_if<BotUnequipCommand>(&parsed))
+    {
+        HandleBotUnequip(handler, *command);
         return true;
     }
 
