@@ -19,17 +19,25 @@ bool SqlCharacterAchievementSyncRepository::SyncAchievementsFromCloneToSource(
         sourceCharacterGuid,
         cloneCharacterGuid);
 
-    // Criteria progress: merge by taking the higher counter value, and update
-    // the date only when the counter is actually advanced.
+    // Criteria progress: insert missing rows first, then merge upward. This
+    // avoids self-table INSERT ... ON DUPLICATE KEY ambiguity on MySQL.
     CharacterDatabase.DirectExecute(
-        "INSERT INTO character_achievement_progress (guid, criteria, counter, date) "
+        "INSERT IGNORE INTO character_achievement_progress (guid, criteria, counter, date) "
         "SELECT {}, criteria, counter, date "
-        "FROM character_achievement_progress WHERE guid = {} "
-        "ON DUPLICATE KEY UPDATE "
-        "counter = IF(VALUES(counter) > counter, VALUES(counter), counter), "
-        "date = IF(VALUES(counter) > counter, VALUES(date), date)",
+        "FROM character_achievement_progress WHERE guid = {}",
         sourceCharacterGuid,
         cloneCharacterGuid);
+
+    CharacterDatabase.DirectExecute(
+        "UPDATE character_achievement_progress AS source "
+        "INNER JOIN character_achievement_progress AS clone "
+        "  ON clone.criteria = source.criteria "
+        " AND clone.guid = {} "
+        "SET source.counter = IF(clone.counter > source.counter, clone.counter, source.counter), "
+        "    source.date = IF(clone.counter > source.counter, clone.date, source.date) "
+        "WHERE source.guid = {}",
+        cloneCharacterGuid,
+        sourceCharacterGuid);
 
     return true;
 }

@@ -28,6 +28,7 @@
 #include "GroupMgr.h"
 #include "ObjectAccessor.h"
 #include "Player.h"
+#include "QueryResult.h"
 #include "QuestDef.h"
 #include "ScriptMgr.h"
 #include "TradeData.h"
@@ -36,10 +37,35 @@
 
 #include <optional>
 #include <unordered_set>
+#include <vector>
 
 namespace
 {
 std::unordered_set<std::uint64_t> s_openedControlledTradeWindows;
+
+std::uint32_t CountQuestRows(std::uint64_t characterGuid, std::uint32_t questId)
+{
+    QueryResult result = CharacterDatabase.Query(
+        "SELECT COUNT(*) FROM character_queststatus WHERE guid = {} AND quest = {}",
+        characterGuid,
+        questId);
+    if (!result)
+        return 0;
+
+    return result->Fetch()[0].Get<std::uint32_t>();
+}
+
+std::uint32_t CountActiveQuestRowsForQuest(std::uint64_t characterGuid, std::uint32_t questId)
+{
+    QueryResult result = CharacterDatabase.Query(
+        "SELECT COUNT(*) FROM character_queststatus WHERE guid = {} AND quest = {} AND status != 0",
+        characterGuid,
+        questId);
+    if (!result)
+        return 0;
+
+    return result->Fetch()[0].Get<std::uint32_t>();
+}
 
 struct StartupRuntimeRecoverySummary
 {
@@ -524,6 +550,13 @@ void DismissOwnerBot(Player* player)
 {
     std::vector<Player*> bots = living_world::service::BotPlayerRegistry::Instance()
                                     .FindBotsForOwner(player->GetGUID());
+    LOG_INFO(
+        "server.worldserver",
+        "[LivingWorldDebug] DismissOwnerBot owner='{}' guid={} botCount={}",
+        player ? player->GetName() : "<null>",
+        player ? player->GetGUID().GetCounter() : 0,
+        bots.size());
+
     for (Player* bot : bots)
     {
         if (!bot || !bot->GetSession())
@@ -534,7 +567,15 @@ void DismissOwnerBot(Player* player)
         if (Group* group = bot->GetGroup())
             group->RemoveMember(bot->GetGUID(), GROUP_REMOVEMETHOD_LEAVE);
 
-        if (!bot->GetSession()->PlayerLogout())
+        bool const alreadyLoggingOut = bot->GetSession()->PlayerLogout();
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] DismissOwnerBot bot='{}' guid={} alreadyLoggingOut={}",
+            bot->GetName(),
+            bot->GetGUID().GetCounter(),
+            alreadyLoggingOut);
+
+        if (!alreadyLoggingOut)
             bot->GetSession()->LogoutPlayer(true);
     }
 }
@@ -689,6 +730,12 @@ public:
         if (!player->GetSession()->IsBotSession())
             return;
 
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] BotOnLogout character='{}' guid={}",
+            player->GetName(),
+            player->GetGUID().GetCounter());
+
         if (Group* group = player->GetGroup())
             group->RemoveMember(player->GetGUID(), GROUP_REMOVEMETHOD_LEAVE);
 
@@ -702,6 +749,74 @@ public:
 
         living_world::service::BotPlayerRegistry::Instance()
             .UnregisterBotPlayer(player);
+    }
+
+    void SyncActiveQuestStateToSource(Player* bot, uint32 questId, bool removeQuest) const
+    {
+        if (!bot || !bot->GetSession() || !bot->GetSession()->IsBotSession())
+        {
+            return;
+        }
+
+        living_world::integration::SqlAccountAltRuntimeRepository runtimeRepository;
+        std::optional<living_world::model::AccountAltRuntimeRecord> runtime =
+            runtimeRepository.FindByCloneCharacter(bot->GetGUID().GetCounter());
+        if (!runtime)
+        {
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] QuestSync live: no runtime for bot='{}' guid={} questId={}.",
+                bot->GetName(),
+                bot->GetGUID().GetCounter(),
+                questId);
+            return;
+        }
+
+        std::uint32_t const cloneRowsBeforeSave =
+            CountQuestRows(runtime->cloneCharacterGuid, questId);
+        std::uint32_t const sourceRowsBeforeSync =
+            CountQuestRows(runtime->sourceCharacterGuid, questId);
+
+        // Persist the clone's in-memory quest log first, then merge the quest
+        // tables back into the parked/original source character immediately so
+        // accept/abandon state survives even if later logout recovery misses.
+        bot->SaveToDB(false, false);
+
+        std::uint32_t const cloneRowsAfterSave =
+            CountQuestRows(runtime->cloneCharacterGuid, questId);
+
+        if (removeQuest)
+        {
+            CharacterDatabase.DirectExecute(
+                "DELETE FROM character_queststatus WHERE guid = {} AND quest = {}",
+                runtime->sourceCharacterGuid,
+                questId);
+        }
+
+        living_world::integration::SqlCharacterQuestSyncRepository questSyncRepository;
+        bool const synced = questSyncRepository.SyncQuestsFromCloneToSource(
+            runtime->sourceCharacterGuid,
+            runtime->cloneCharacterGuid);
+        std::uint32_t const sourceRowsAfterSync =
+            CountQuestRows(runtime->sourceCharacterGuid, questId);
+        std::uint32_t const sourceActiveRowsAfterSync =
+            CountActiveQuestRowsForQuest(runtime->sourceCharacterGuid, questId);
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] QuestSync live: bot='{}' cloneGuid={} sourceGuid={} "
+            "questId={} removeQuest={} cloneRowsBeforeSave={} cloneRowsAfterSave={} "
+            "sourceRowsBeforeSync={} sourceRowsAfterSync={} sourceActiveRowsAfterSync={} synced={}",
+            bot->GetName(),
+            runtime->cloneCharacterGuid,
+            runtime->sourceCharacterGuid,
+            questId,
+            removeQuest,
+            cloneRowsBeforeSave,
+            cloneRowsAfterSave,
+            sourceRowsBeforeSync,
+            sourceRowsAfterSync,
+            sourceActiveRowsAfterSync,
+            synced);
     }
 
     void OnPlayerLearnSpell(Player* player, uint32 spellID) override
@@ -756,9 +871,17 @@ public:
             return;
 
         uint32 questId = quest->GetQuestId();
+        std::vector<Player*> bots = living_world::service::BotPlayerRegistry::Instance()
+                                        .FindBotsForOwner(player->GetGUID());
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] QuestSync accept entry owner='{}' guid={} questId={} botCount={}",
+            player->GetName(),
+            player->GetGUID().GetCounter(),
+            questId,
+            bots.size());
 
-        for (Player* bot : living_world::service::BotPlayerRegistry::Instance()
-                               .FindBotsForOwner(player->GetGUID()))
+        for (Player* bot : bots)
         {
             if (!bot || !bot->GetSession() || !bot->GetSession()->IsBotSession())
                 continue;
@@ -784,6 +907,7 @@ public:
 
             // Pass nullptr as giver — no per-giver hooks needed for sync.
             bot->AddQuestAndCheckCompletion(quest, nullptr);
+            SyncActiveQuestStateToSource(bot, questId, false);
 
             LOG_INFO(
                 "server.worldserver",
@@ -817,6 +941,7 @@ public:
             // RemoveActiveQuest clears quest log slot and status map entry.
             bot->AbandonQuest(questId);
             bot->RemoveActiveQuest(questId);
+            SyncActiveQuestStateToSource(bot, questId, true);
 
             LOG_INFO(
                 "server.worldserver",
@@ -837,6 +962,11 @@ public:
             return;
         }
 
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] OwnerBeforeLogout owner='{}' guid={}",
+            player->GetName(),
+            player->GetGUID().GetCounter());
         s_openedControlledTradeWindows.erase(player->GetGUID().GetCounter());
         DismissOwnerBot(player);
     }

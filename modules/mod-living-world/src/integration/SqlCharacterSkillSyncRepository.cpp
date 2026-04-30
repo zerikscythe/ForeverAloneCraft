@@ -10,19 +10,26 @@ bool SqlCharacterSkillSyncRepository::SyncSkillsFromCloneToSource(
     std::uint64_t sourceCharacterGuid,
     std::uint64_t cloneCharacterGuid)
 {
-    // For skills the clone has that the source does not — insert them.
-    // For skills both share — update source to whichever value is higher.
-    // `value` is the current skill level; `max` is the current max cap.
-    // We take GREATEST for both so neither shrinks.
+    // Insert missing skills first, then merge higher current/max values onto
+    // the source row. Splitting the write avoids self-table INSERT ... ON
+    // DUPLICATE KEY ambiguity on MySQL.
     CharacterDatabase.DirectExecute(
-        "INSERT INTO character_skills (guid, skill, value, max) "
+        "INSERT IGNORE INTO character_skills (guid, skill, value, max) "
         "SELECT {}, skill, value, max "
-        "FROM character_skills WHERE guid = {} "
-        "ON DUPLICATE KEY UPDATE "
-        "  value = GREATEST(value, VALUES(value)), "
-        "  max   = GREATEST(max,   VALUES(max))",
+        "FROM character_skills WHERE guid = {}",
         sourceCharacterGuid,
         cloneCharacterGuid);
+
+    CharacterDatabase.DirectExecute(
+        "UPDATE character_skills AS source "
+        "INNER JOIN character_skills AS clone "
+        "  ON clone.skill = source.skill "
+        " AND clone.guid = {} "
+        "SET source.value = GREATEST(source.value, clone.value), "
+        "    source.max = GREATEST(source.max, clone.max) "
+        "WHERE source.guid = {}",
+        cloneCharacterGuid,
+        sourceCharacterGuid);
 
     return true;
 }

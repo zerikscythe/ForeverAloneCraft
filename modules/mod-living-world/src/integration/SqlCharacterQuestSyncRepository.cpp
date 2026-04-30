@@ -79,11 +79,12 @@ bool SqlCharacterQuestSyncRepository::SyncQuestsFromCloneToSource(
         cloneCharacterGuid,
         sourceCharacterGuid);
 
-    // Sync active (in-progress) quests. Use ON DUPLICATE KEY UPDATE so an
-    // existing source row can still absorb clone progress instead of silently
-    // being skipped. Progress counters only ever move upward.
+    // Sync active (in-progress) quests in two steps. MySQL gets unhappy when
+    // we self-select from and self-update character_queststatus inside one
+    // INSERT ... ON DUPLICATE KEY UPDATE statement, so we first insert any
+    // missing source rows, then merge progress onto existing ones.
     CharacterDatabase.DirectExecute(
-        "INSERT INTO character_queststatus "
+        "INSERT IGNORE INTO character_queststatus "
         "(guid, quest, status, explored, timer, "
         " mobcount1, mobcount2, mobcount3, mobcount4, "
         " itemcount1, itemcount2, itemcount3, itemcount4, itemcount5, itemcount6, "
@@ -92,24 +93,33 @@ bool SqlCharacterQuestSyncRepository::SyncQuestsFromCloneToSource(
         " mobcount1, mobcount2, mobcount3, mobcount4, "
         " itemcount1, itemcount2, itemcount3, itemcount4, itemcount5, itemcount6, "
         " playercount "
-        "FROM character_queststatus WHERE guid = {} AND status != 0 "
-        "ON DUPLICATE KEY UPDATE "
-        " timer = CASE WHEN status = 0 THEN VALUES(timer) ELSE timer END, "
-        " explored = GREATEST(explored, VALUES(explored)), "
-        " mobcount1 = GREATEST(mobcount1, VALUES(mobcount1)), "
-        " mobcount2 = GREATEST(mobcount2, VALUES(mobcount2)), "
-        " mobcount3 = GREATEST(mobcount3, VALUES(mobcount3)), "
-        " mobcount4 = GREATEST(mobcount4, VALUES(mobcount4)), "
-        " itemcount1 = GREATEST(itemcount1, VALUES(itemcount1)), "
-        " itemcount2 = GREATEST(itemcount2, VALUES(itemcount2)), "
-        " itemcount3 = GREATEST(itemcount3, VALUES(itemcount3)), "
-        " itemcount4 = GREATEST(itemcount4, VALUES(itemcount4)), "
-        " itemcount5 = GREATEST(itemcount5, VALUES(itemcount5)), "
-        " itemcount6 = GREATEST(itemcount6, VALUES(itemcount6)), "
-        " playercount = GREATEST(playercount, VALUES(playercount)), "
-        " status = GREATEST(status, VALUES(status))",
+        "FROM character_queststatus WHERE guid = {} AND status != 0",
         sourceCharacterGuid,
         cloneCharacterGuid);
+
+    CharacterDatabase.DirectExecute(
+        "UPDATE character_queststatus AS source "
+        "INNER JOIN character_queststatus AS clone "
+        "  ON clone.quest = source.quest "
+        " AND clone.guid = {} "
+        " AND clone.status != 0 "
+        "SET source.timer = CASE WHEN source.status = 0 THEN clone.timer ELSE source.timer END, "
+        "    source.explored = GREATEST(source.explored, clone.explored), "
+        "    source.mobcount1 = GREATEST(source.mobcount1, clone.mobcount1), "
+        "    source.mobcount2 = GREATEST(source.mobcount2, clone.mobcount2), "
+        "    source.mobcount3 = GREATEST(source.mobcount3, clone.mobcount3), "
+        "    source.mobcount4 = GREATEST(source.mobcount4, clone.mobcount4), "
+        "    source.itemcount1 = GREATEST(source.itemcount1, clone.itemcount1), "
+        "    source.itemcount2 = GREATEST(source.itemcount2, clone.itemcount2), "
+        "    source.itemcount3 = GREATEST(source.itemcount3, clone.itemcount3), "
+        "    source.itemcount4 = GREATEST(source.itemcount4, clone.itemcount4), "
+        "    source.itemcount5 = GREATEST(source.itemcount5, clone.itemcount5), "
+        "    source.itemcount6 = GREATEST(source.itemcount6, clone.itemcount6), "
+        "    source.playercount = GREATEST(source.playercount, clone.playercount), "
+        "    source.status = GREATEST(source.status, clone.status) "
+        "WHERE source.guid = {}",
+        cloneCharacterGuid,
+        sourceCharacterGuid);
 
     std::uint32_t const sourceActiveAfter = CountActiveQuestRows(sourceCharacterGuid);
     std::uint32_t const sourceRewardedAfter = CountRewardedQuestRows(sourceCharacterGuid);

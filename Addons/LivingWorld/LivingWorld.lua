@@ -285,6 +285,10 @@ local GEAR_SLOT_ORDER = {
     12, 13, 15, 16, 17,
 }
 
+local EQUIPPED_BAG_SLOT_ORDER = {
+    19, 20, 21, 22,
+}
+
 local GEAR_SLOT_ICON = {
     [0]  = "Interface\\PaperDollInfoFrame\\UI-PaperDoll-Slot-Head",
     [1]  = "Interface\\PaperDollInfoFrame\\UI-PaperDoll-Slot-Neck",
@@ -305,6 +309,10 @@ local GEAR_SLOT_ICON = {
     [16] = "Interface\\PaperDollInfoFrame\\UI-PaperDoll-Slot-SecondaryHand",
     [17] = "Interface\\PaperDollInfoFrame\\UI-PaperDoll-Slot-Ranged",
     [18] = "Interface\\PaperDollInfoFrame\\UI-PaperDoll-Slot-Tabard",
+    [19] = "Interface\\Buttons\\Button-Backpack-Up",
+    [20] = "Interface\\Buttons\\Button-Backpack-Up",
+    [21] = "Interface\\Buttons\\Button-Backpack-Up",
+    [22] = "Interface\\Buttons\\Button-Backpack-Up",
 }
 
 local GEAR_SLOT_NAMES = {
@@ -312,7 +320,7 @@ local GEAR_SLOT_NAMES = {
     [5]="Waist", [6]="Legs", [7]="Feet", [8]="Wrists", [9]="Hands",
     [10]="Ring 1", [11]="Ring 2", [12]="Trinket 1", [13]="Trinket 2",
     [14]="Back", [15]="Main Hand", [16]="Off Hand", [17]="Ranged/Wand",
-    [18]="Tabard",
+    [18]="Tabard", [19]="Bag 1", [20]="Bag 2", [21]="Bag 3", [22]="Bag 4",
 }
 
 -- Pick-and-place state: left-click a bag item to pick it, then left-click a
@@ -470,13 +478,52 @@ function LWCP_InitGearPage(frame)
         end)
     end
 
+    -- Equipped bag slots — treated like gear targets for bag equipping/swapping
+    for i = 1, 4 do
+        local btn = MakeSlot("LWCPBagEquipSlot" .. i, frame, i - 1, 0, -180)
+        local eslot = EQUIPPED_BAG_SLOT_ORDER[i]
+        btn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+        btn.equipSlot = eslot
+        btn.icon:SetTexture(GEAR_SLOT_ICON[eslot])
+        btn.icon:SetAlpha(0.35)
+
+        btn:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
+            if btn.itemId then
+                GameTooltip:SetHyperlink("item:" .. btn.itemId .. ":0:0:0:0:0:0:0")
+            else
+                local label = (GEAR_SLOT_NAMES[btn.equipSlot] or "Bag Slot")
+                if LW_PickedGuidLow then
+                    GameTooltip:SetText(label .. "\n|cffff0(Click to equip picked bag)|r")
+                else
+                    GameTooltip:SetText(label .. " — empty")
+                end
+            end
+            GameTooltip:Show()
+        end)
+        btn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        btn:SetScript("OnClick", function(self, mouseButton)
+            if mouseButton == "RightButton" then
+                if btn.guidLow then
+                    LWCP_ClearPick()
+                    LWCP_UnequipItem(btn.guidLow)
+                end
+                return
+            end
+            if LW_PickedGuidLow then
+                LWCP_EquipItem(LW_PickedGuidLow)
+                LWCP_ClearPick()
+            end
+        end)
+    end
+
     -- Bag slots — left-click picks for equipping, right-click retrieves
     for i = 1, 14 do
         local col = (i - 1) % 7
         local row = math.floor((i - 1) / 7)
-        local btn = MakeSlot("LWCPBagSlot" .. i, frame, col, row, -186)
-        btn.icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
-        btn.icon:SetAlpha(0.25)
+        local btn = MakeSlot("LWCPBagSlot" .. i, frame, col, row, -228)
+        btn.icon:SetTexture(nil)
+        btn.icon:SetAlpha(0)
 
         btn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
         btn:SetScript("OnEnter", function(self)
@@ -542,6 +589,35 @@ function LWCP_RenderGearTab()
         end
     end
 
+    for i = 1, 4 do
+        local btn = _G["LWCPBagEquipSlot" .. i]
+        if not btn then break end
+        local eslot = EQUIPPED_BAG_SLOT_ORDER[i]
+        local item = LW_GearData[eslot]
+        if item then
+            btn.itemId = item.itemId
+            btn.guidLow = item.guidLow
+            btn.stackCount = nil
+            local _, _, _, _, _, _, _, _, _, icon = GetItemInfo(item.itemId)
+            if icon then
+                btn.icon:SetTexture(icon)
+                btn.icon:SetAlpha(1)
+            else
+                btn.icon:SetTexture(GEAR_SLOT_ICON[eslot])
+                btn.icon:SetAlpha(0.7)
+            end
+        else
+            btn.itemId = nil
+            btn.guidLow = nil
+            btn.stackCount = nil
+            btn.icon:SetTexture(GEAR_SLOT_ICON[eslot])
+            btn.icon:SetAlpha(0.35)
+        end
+        if btn.count then
+            btn.count:SetText("")
+        end
+    end
+
     -- Bag slots: paginated
     local totalPages = math.max(1, math.ceil(#LW_BagData / LW_BagPageSize))
     LW_BagPage = math.min(LW_BagPage, totalPages)
@@ -573,8 +649,8 @@ function LWCP_RenderGearTab()
             btn.itemId  = nil
             btn.guidLow = nil
             btn.stackCount = nil
-            btn.icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
-            btn.icon:SetAlpha(0.25)
+            btn.icon:SetTexture(nil)
+            btn.icon:SetAlpha(0)
             if btn.count then
                 btn.count:SetText("")
             end

@@ -10,19 +10,27 @@ bool SqlCharacterReputationSyncRepository::SyncReputationFromCloneToSource(
     std::uint64_t sourceCharacterGuid,
     std::uint64_t cloneCharacterGuid)
 {
-    // For each faction the clone has standing in, insert or update the source
-    // row: existing standing is replaced only if the clone's value is higher.
-    // This is safe because reputation can only legitimately grow during a
-    // bot session.
+    // Insert missing faction rows first, then merge higher standings onto the
+    // source row. Splitting this into two queries avoids MySQL ambiguity when
+    // selecting from and updating the same table in one statement.
     CharacterDatabase.DirectExecute(
-        "INSERT INTO character_reputation (guid, faction, standing, flags) "
+        "INSERT IGNORE INTO character_reputation (guid, faction, standing, flags) "
         "SELECT {}, faction, standing, flags "
-        "FROM character_reputation WHERE guid = {} "
-        "ON DUPLICATE KEY UPDATE "
-        "standing = IF(VALUES(standing) > standing, VALUES(standing), standing), "
-        "flags = VALUES(flags)",
+        "FROM character_reputation WHERE guid = {}",
         sourceCharacterGuid,
         cloneCharacterGuid);
+
+    CharacterDatabase.DirectExecute(
+        "UPDATE character_reputation AS source "
+        "INNER JOIN character_reputation AS clone "
+        "  ON clone.faction = source.faction "
+        " AND clone.guid = {} "
+        "SET source.standing = IF(clone.standing > source.standing, clone.standing, source.standing), "
+        "    source.flags = clone.flags "
+        "WHERE source.guid = {}",
+        cloneCharacterGuid,
+        sourceCharacterGuid);
+
     return true;
 }
 } // namespace integration

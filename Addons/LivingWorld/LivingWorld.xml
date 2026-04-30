@@ -388,13 +388,19 @@
                         <FontString inherits="GameFontHighlightSmall" text="Bags  (click to retrieve):">
                             <Size x="130" y="14" />
                             <Anchors>
-                                <Anchor point="TOP"><Offset><AbsDimension x="-30" y="-162" /></Offset></Anchor>
+                                <Anchor point="TOP"><Offset><AbsDimension x="-30" y="-204" /></Offset></Anchor>
                             </Anchors>
                         </FontString>
                         <FontString name="LWCPGearPageLabel" inherits="GameFontHighlightSmall" text="">
                             <Size x="40" y="14" />
                             <Anchors>
-                                <Anchor point="TOP"><Offset><AbsDimension x="80" y="-162" /></Offset></Anchor>
+                                <Anchor point="TOP"><Offset><AbsDimension x="80" y="-204" /></Offset></Anchor>
+                            </Anchors>
+                        </FontString>
+                        <FontString inherits="GameFontHighlightSmall" text="Equipped Bags:">
+                            <Size x="120" y="14" />
+                            <Anchors>
+                                <Anchor point="TOP"><Offset><AbsDimension x="0" y="-164" /></Offset></Anchor>
                             </Anchors>
                         </FontString>
                     </Layer>
@@ -410,14 +416,14 @@
                     <Button name="LWCPGearPrevBtn" inherits="UIPanelButtonTemplate" text="&lt;">
                         <Size x="24" y="20" />
                         <Anchors>
-                            <Anchor point="TOP"><Offset><AbsDimension x="56" y="-160" /></Offset></Anchor>
+                            <Anchor point="TOP"><Offset><AbsDimension x="56" y="-202" /></Offset></Anchor>
                         </Anchors>
                         <Scripts><OnClick>LWCP_BagPageDec();</OnClick></Scripts>
                     </Button>
                     <Button name="LWCPGearNextBtn" inherits="UIPanelButtonTemplate" text="&gt;">
                         <Size x="24" y="20" />
                         <Anchors>
-                            <Anchor point="TOP"><Offset><AbsDimension x="82" y="-160" /></Offset></Anchor>
+                            <Anchor point="TOP"><Offset><AbsDimension x="82" y="-202" /></Offset></Anchor>
                         </Anchors>
                         <Scripts><OnClick>LWCP_BagPageInc();</OnClick></Scripts>
                     </Button>
