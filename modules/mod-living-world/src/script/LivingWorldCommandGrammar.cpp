@@ -356,6 +356,49 @@ ParsedCommand ParseBotActionCommand(BotRef botRef, std::string_view remaining)
         return cmd;
     }
 
+    // "bagmove" path — requires item guid and target bag index (0-4).
+    if (secondToken == "bagmove")
+    {
+        std::string_view thirdToken = ConsumeToken(remaining);
+        if (thirdToken.empty())
+        {
+            return MakeError(
+                CommandParseErrorKind::MissingArgument,
+                "bagmove requires an item guid");
+        }
+
+        std::uint64_t guidRaw = 0;
+        if (!ParseUInt64(thirdToken, guidRaw) ||
+            guidRaw > std::numeric_limits<std::uint32_t>::max())
+        {
+            return MakeError(
+                CommandParseErrorKind::InvalidArgument,
+                "bagmove requires a numeric item guid");
+        }
+
+        std::string_view fourthToken = ConsumeToken(remaining);
+        if (fourthToken.empty())
+        {
+            return MakeError(
+                CommandParseErrorKind::MissingArgument,
+                "bagmove requires a target bag index (0-4)");
+        }
+
+        std::uint64_t bagIndexRaw = 0;
+        if (!ParseUInt64(fourthToken, bagIndexRaw) || bagIndexRaw > 4)
+        {
+            return MakeError(
+                CommandParseErrorKind::InvalidArgument,
+                "bagmove target bag index must be 0-4");
+        }
+
+        BotBagMoveCommand cmd;
+        cmd.botRef = std::move(botRef);
+        cmd.itemGuidLow = static_cast<std::uint32_t>(guidRaw);
+        cmd.bagIndex = static_cast<std::uint8_t>(bagIndexRaw);
+        return cmd;
+    }
+
     // "equip"/"unequip" path — requires item guid low as numeric argument.
     if (secondToken == "equip" || secondToken == "unequip")
     {
@@ -397,7 +440,7 @@ ParsedCommand ParseBotActionCommand(BotRef botRef, std::string_view remaining)
     return MakeError(
         CommandParseErrorKind::UnknownVerb,
         std::string("expected 'profile', 'cast', 'attack', 'disengage', 'train', 'retreat', "
-                    "'follow', 'refreshments', 'buff', 'bags', 'retrieve', 'equip', or 'unequip', got: ") +
+                    "'follow', 'refreshments', 'buff', 'bags', 'retrieve', 'bagmove', 'equip', or 'unequip', got: ") +
             std::string(secondToken));
 }
 } // namespace

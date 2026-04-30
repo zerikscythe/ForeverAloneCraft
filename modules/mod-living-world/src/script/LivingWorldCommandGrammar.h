@@ -163,6 +163,15 @@ struct BotRetrieveCommand
     std::optional<std::uint32_t> itemCount;
 };
 
+// "bagmove" — move an item (by GUID low) into a target bag container on the
+// bot. bagIndex 0 means backpack, 1-4 are equipped bag slots.
+struct BotBagMoveCommand
+{
+    BotRef botRef;
+    std::uint32_t itemGuidLow;
+    std::uint8_t bagIndex;
+};
+
 // "equip" — equip an item (by GUID low) from the bot's bags onto the bot.
 // If the destination slot is occupied, the existing item is moved to bags first.
 struct BotEquipCommand
@@ -195,6 +204,7 @@ using ParsedCommand = std::variant<
     BotBuffCommand,
     BotBagsCommand,
     BotRetrieveCommand,
+    BotBagMoveCommand,
     BotEquipCommand,
     BotUnequipCommand>;
 

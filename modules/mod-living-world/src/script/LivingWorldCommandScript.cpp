@@ -2329,6 +2329,83 @@ void HandleBotRetrieve(
     SendLWBotAddonMessage(player, BuildBotInventoryPayload(bot));
 }
 
+uint8 ResolveBotBagMoveDestination(std::uint8_t bagIndex)
+{
+    if (bagIndex == 0)
+        return NULL_BAG;
+    if (bagIndex >= 1 && bagIndex <= 4)
+        return static_cast<uint8>(INVENTORY_SLOT_BAG_START + (bagIndex - 1));
+    return NULL_SLOT;
+}
+
+void HandleBotBagMove(
+    ChatHandler* handler,
+    BotBagMoveCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld bagmove requires an in-game player.");
+        return;
+    }
+
+    std::vector<Player*> bots = ResolveSelectedBotsForOwner(player, command.botRef);
+    if (bots.empty())
+    {
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld no active bot. Use '.lwbot request <id>' first.");
+        return;
+    }
+
+    Player* bot = bots.front();
+    uint8 foundBag = 0, foundSlot = 0;
+    Item* item = FindBotItemByGuidLow(bot, command.itemGuidLow, foundBag, foundSlot);
+    if (!item)
+    {
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld bagmove: item not found on bot.");
+        return;
+    }
+
+    uint8 const destinationBag = ResolveBotBagMoveDestination(command.bagIndex);
+    if (destinationBag == NULL_SLOT)
+    {
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld bagmove: invalid target bag index.");
+        return;
+    }
+
+    if (command.bagIndex > 0 && !bot->GetBagByPos(destinationBag))
+    {
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld bagmove: that bag slot is empty.");
+        return;
+    }
+
+    ItemPosCountVec dest;
+    InventoryResult const canStore = bot->CanStoreItem(destinationBag, NULL_SLOT, dest, item, false);
+    if (canStore != EQUIP_ERR_OK)
+    {
+        BotSayDeny(bot);
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld bagmove: no room in that bag.");
+        return;
+    }
+
+    uint16 const src = (static_cast<uint16>(foundBag) << 8) | static_cast<uint16>(foundSlot);
+    if (dest.size() == 1 && dest[0].pos == src)
+    {
+        SendLWBotAddonMessage(player, BuildBotInventoryPayload(bot));
+        return;
+    }
+
+    bot->RemoveItem(foundBag, foundSlot, true);
+    bot->StoreItem(dest, item, true);
+    BotSayConfirm(bot);
+    SendLWBotAddonMessage(player, BuildBotInventoryPayload(bot));
+}
+
 void HandleBotEquip(
     ChatHandler* handler,
     BotEquipCommand const& command)
@@ -2569,6 +2646,13 @@ bool HandleParsedCommand(
         std::get_if<BotRetrieveCommand>(&parsed))
     {
         HandleBotRetrieve(handler, *command);
+        return true;
+    }
+
+    if (BotBagMoveCommand const* command =
+        std::get_if<BotBagMoveCommand>(&parsed))
+    {
+        HandleBotBagMove(handler, *command);
         return true;
     }
 
