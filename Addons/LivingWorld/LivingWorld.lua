@@ -27,6 +27,25 @@ local function IsPartySelected()
 end
 
 -- -----------------------------------------------
+-- Tab switching
+-- -----------------------------------------------
+local LW_Tabs = { "Bots", "Combat", "Gear", "Settings" }
+
+function LWCP_ShowTab(name)
+    for _, t in ipairs(LW_Tabs) do
+        local page = _G["LWCPPage" .. t]
+        local btn  = _G["LWCPTab"  .. t]
+        if t == name then
+            page:Show()
+            btn:Disable()
+        else
+            page:Hide()
+            btn:Enable()
+        end
+    end
+end
+
+-- -----------------------------------------------
 -- Roster display helpers
 -- -----------------------------------------------
 function LWCP_UpdateSlotDisplay()
@@ -109,7 +128,7 @@ function LWCP_SetProfile()
 end
 
 -- -----------------------------------------------
--- Combat overrides  (always party-wide)
+-- Combat overrides
 -- -----------------------------------------------
 function LWCP_Attack()
     SendChatMessage(CMD_LWBOT .. GetBotRef() .. " attack")

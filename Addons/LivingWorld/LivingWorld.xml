@@ -44,7 +44,7 @@
     <!-- Main panel                                                    -->
     <!-- ============================================================ -->
     <Frame name="LWCPFrame" parent="UIParent" toplevel="true" enableMouse="true" movable="true" hidden="true">
-        <Size x="240" y="502" />
+        <Size x="240" y="420" />
         <Anchors>
             <Anchor point="TOP"><Offset><AbsDimension x="0" y="-60" /></Offset></Anchor>
         </Anchors>
@@ -66,7 +66,7 @@
             <OnEvent>
                 if event == "CHAT_MSG_SYSTEM" then LWCP_HandleSystemMsg(arg1) end
             </OnEvent>
-            <OnShow>LWCP_RefreshRoster();</OnShow>
+            <OnShow>LWCP_RefreshRoster(); LWCP_ShowTab("Bots");</OnShow>
         </Scripts>
 
         <Layers>
@@ -80,67 +80,6 @@
                         </Anchor>
                     </Anchors>
                 </FontString>
-
-                <!-- Section: Roster -->
-                <FontString inherits="GameFontNormal" text="-- Roster --">
-                    <Size x="220" y="16" />
-                    <Anchors>
-                        <Anchor point="CENTER" relativePoint="TOP">
-                            <Offset><AbsDimension x="0" y="-50" /></Offset>
-                        </Anchor>
-                    </Anchors>
-                </FontString>
-
-                <!-- Section: Profile -->
-                <FontString inherits="GameFontNormal" text="-- Combat Profile --">
-                    <Size x="220" y="16" />
-                    <Anchors>
-                        <Anchor point="CENTER" relativePoint="TOP">
-                            <Offset><AbsDimension x="0" y="-160" /></Offset>
-                        </Anchor>
-                    </Anchors>
-                </FontString>
-
-                <!-- Section: Combat -->
-                <FontString inherits="GameFontNormal" text="-- Combat --">
-                    <Size x="220" y="16" />
-                    <Anchors>
-                        <Anchor point="CENTER" relativePoint="TOP">
-                            <Offset><AbsDimension x="0" y="-240" /></Offset>
-                        </Anchor>
-                    </Anchors>
-                </FontString>
-
-                <!-- Section: Cast -->
-                <FontString inherits="GameFontNormal" text="-- Cast Command --">
-                    <Size x="220" y="16" />
-                    <Anchors>
-                        <Anchor point="CENTER" relativePoint="TOP">
-                            <Offset><AbsDimension x="0" y="-310" /></Offset>
-                        </Anchor>
-                    </Anchors>
-                </FontString>
-
-                <!-- Spell label -->
-                <FontString inherits="GameFontHighlightSmall" text="Spell:">
-                    <Size x="35" y="14" />
-                    <Anchors>
-                        <Anchor point="CENTER" relativePoint="TOP">
-                            <Offset><AbsDimension x="-85" y="-332" /></Offset>
-                        </Anchor>
-                    </Anchors>
-                </FontString>
-
-                <!-- Section: Log Level -->
-                <FontString inherits="GameFontNormal" text="-- Log Level (1-4) --">
-                    <Size x="220" y="16" />
-                    <Anchors>
-                        <Anchor point="CENTER" relativePoint="TOP">
-                            <Offset><AbsDimension x="0" y="-410" /></Offset>
-                        </Anchor>
-                    </Anchors>
-                </FontString>
-
                 <!-- Version -->
                 <FontString inherits="GameFontHighlightSmallOutline" text="v1.0">
                     <Size x="40" y="14" />
@@ -156,216 +95,341 @@
         <Frames>
 
             <!-- ====================================================== -->
-            <!-- ROSTER: slot selector                                   -->
+            <!-- Tab buttons                                             -->
             <!-- ====================================================== -->
-            <Button name="LWCPSlotDec" inherits="UIPanelButtonTemplate" text="-">
-                <Size x="28" y="26" />
+            <Button name="LWCPTabBots" inherits="UIPanelButtonTemplate" text="Bots">
+                <Size x="52" y="22" />
                 <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="-56" y="-68" /></Offset></Anchor>
+                    <Anchor point="TOP"><Offset><AbsDimension x="-81" y="-44" /></Offset></Anchor>
                 </Anchors>
-                <Scripts><OnClick>LWCP_SlotDec();</OnClick></Scripts>
+                <Scripts><OnClick>LWCP_ShowTab("Bots");</OnClick></Scripts>
             </Button>
 
-            <!-- Slot label (named so Lua can update its text) -->
-            <Button name="LWCPSlotLabel" inherits="UIPanelButtonTemplate" text="Slot 1">
-                <Size x="80" y="26" />
+            <Button name="LWCPTabCombat" inherits="UIPanelButtonTemplate" text="Combat">
+                <Size x="62" y="22" />
                 <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="0" y="-68" /></Offset></Anchor>
+                    <Anchor point="TOP"><Offset><AbsDimension x="-22" y="-44" /></Offset></Anchor>
                 </Anchors>
+                <Scripts><OnClick>LWCP_ShowTab("Combat");</OnClick></Scripts>
             </Button>
 
-            <Button name="LWCPSlotInc" inherits="UIPanelButtonTemplate" text="+">
-                <Size x="28" y="26" />
+            <Button name="LWCPTabGear" inherits="UIPanelButtonTemplate" text="Gear">
+                <Size x="52" y="22" />
                 <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="56" y="-68" /></Offset></Anchor>
+                    <Anchor point="TOP"><Offset><AbsDimension x="40" y="-44" /></Offset></Anchor>
                 </Anchors>
-                <Scripts><OnClick>LWCP_SlotInc();</OnClick></Scripts>
+                <Scripts><OnClick>LWCP_ShowTab("Gear");</OnClick></Scripts>
             </Button>
 
-            <!-- ROSTER: action buttons -->
-            <Button name="LWCPSpawnBtn" inherits="UIPanelButtonTemplate" text="Spawn">
-                <Size x="68" y="26" />
+            <Button name="LWCPTabSettings" inherits="UIPanelButtonTemplate" text="Settings">
+                <Size x="66" y="22" />
                 <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="-68" y="-100" /></Offset></Anchor>
+                    <Anchor point="TOP"><Offset><AbsDimension x="97" y="-44" /></Offset></Anchor>
                 </Anchors>
-                <Scripts><OnClick>LWCP_Spawn();</OnClick></Scripts>
-            </Button>
-
-            <Button name="LWCPDismissBtn" inherits="UIPanelButtonTemplate" text="Dismiss">
-                <Size x="68" y="26" />
-                <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="0" y="-100" /></Offset></Anchor>
-                </Anchors>
-                <Scripts><OnClick>LWCP_Dismiss();</OnClick></Scripts>
-            </Button>
-
-            <Button name="LWCPListBtn" inherits="UIPanelButtonTemplate" text="Refresh">
-                <Size x="56" y="26" />
-                <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="68" y="-100" /></Offset></Anchor>
-                </Anchors>
-                <Scripts><OnClick>LWCP_RefreshRoster();</OnClick></Scripts>
+                <Scripts><OnClick>LWCP_ShowTab("Settings");</OnClick></Scripts>
             </Button>
 
             <!-- ====================================================== -->
-            <!-- PROFILE: selector                                       -->
+            <!-- PAGE: Bots                                              -->
             <!-- ====================================================== -->
-            <Button name="LWCPProfileDec" inherits="UIPanelButtonTemplate" text="-">
-                <Size x="28" y="26" />
+            <Frame name="LWCPPageBots" hidden="false">
+                <Size x="216" y="300" />
                 <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="-56" y="-178" /></Offset></Anchor>
+                    <Anchor point="TOP"><Offset><AbsDimension x="0" y="-72" /></Offset></Anchor>
                 </Anchors>
-                <Scripts><OnClick>LWCP_ProfileDec();</OnClick></Scripts>
-            </Button>
-
-            <Button name="LWCPProfileLabel" inherits="UIPanelButtonTemplate" text="Profile 1">
-                <Size x="88" y="26" />
-                <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="0" y="-178" /></Offset></Anchor>
-                </Anchors>
-            </Button>
-
-            <Button name="LWCPProfileInc" inherits="UIPanelButtonTemplate" text="+">
-                <Size x="28" y="26" />
-                <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="60" y="-178" /></Offset></Anchor>
-                </Anchors>
-                <Scripts><OnClick>LWCP_ProfileInc();</OnClick></Scripts>
-            </Button>
-
-            <Button name="LWCPSetProfileBtn" inherits="UIPanelButtonTemplate" text="Set Profile">
-                <Size x="120" y="26" />
-                <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="0" y="-210" /></Offset></Anchor>
-                </Anchors>
-                <Scripts><OnClick>LWCP_SetProfile();</OnClick></Scripts>
-            </Button>
-
-            <!-- ====================================================== -->
-            <!-- COMBAT: attack / disengage / retreat                   -->
-            <!-- ====================================================== -->
-            <Button name="LWCPAttackBtn" inherits="UIPanelButtonTemplate" text="Attack">
-                <Size x="68" y="26" />
-                <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="-68" y="-258" /></Offset></Anchor>
-                </Anchors>
-                <Scripts><OnClick>LWCP_Attack();</OnClick></Scripts>
-            </Button>
-
-            <Button name="LWCPDisengageBtn" inherits="UIPanelButtonTemplate" text="Disengage">
-                <Size x="78" y="26" />
-                <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="10" y="-258" /></Offset></Anchor>
-                </Anchors>
-                <Scripts><OnClick>LWCP_Disengage();</OnClick></Scripts>
-            </Button>
-
-            <Button name="LWCPRetreatBtn" inherits="UIPanelButtonTemplate" text="Retreat">
-                <Size x="68" y="26" />
-                <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="88" y="-258" /></Offset></Anchor>
-                </Anchors>
-                <Scripts><OnClick>LWCP_Retreat();</OnClick></Scripts>
-            </Button>
-
-            <Button name="LWCPFollowBtn" inherits="UIPanelButtonTemplate" text="Follow">
-                <Size x="64" y="26" />
-                <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="-74" y="-290" /></Offset></Anchor>
-                </Anchors>
-                <Scripts><OnClick>LWCP_Follow();</OnClick></Scripts>
-            </Button>
-
-            <Button name="LWCPRefreshmentsBtn" inherits="UIPanelButtonTemplate" text="Eat/Drink">
-                <Size x="72" y="26" />
-                <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="4" y="-290" /></Offset></Anchor>
-                </Anchors>
-                <Scripts><OnClick>LWCP_Refreshments();</OnClick></Scripts>
-            </Button>
-
-            <Button name="LWCPBuffBtn" inherits="UIPanelButtonTemplate" text="Buff">
-                <Size x="56" y="26" />
-                <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="82" y="-290" /></Offset></Anchor>
-                </Anchors>
-                <Scripts><OnClick>LWCP_Buff();</OnClick></Scripts>
-            </Button>
+                <Layers>
+                    <Layer level="OVERLAY">
+                        <FontString inherits="GameFontNormal" text="-- Roster --">
+                            <Size x="216" y="16" />
+                            <Anchors>
+                                <Anchor point="CENTER" relativePoint="TOP">
+                                    <Offset><AbsDimension x="0" y="-12" /></Offset>
+                                </Anchor>
+                            </Anchors>
+                        </FontString>
+                    </Layer>
+                </Layers>
+                <Frames>
+                    <!-- Slot selector -->
+                    <Button name="LWCPSlotDec" inherits="UIPanelButtonTemplate" text="-">
+                        <Size x="28" y="26" />
+                        <Anchors>
+                            <Anchor point="TOP"><Offset><AbsDimension x="-56" y="-30" /></Offset></Anchor>
+                        </Anchors>
+                        <Scripts><OnClick>LWCP_SlotDec();</OnClick></Scripts>
+                    </Button>
+                    <Button name="LWCPSlotLabel" inherits="UIPanelButtonTemplate" text="Party">
+                        <Size x="80" y="26" />
+                        <Anchors>
+                            <Anchor point="TOP"><Offset><AbsDimension x="0" y="-30" /></Offset></Anchor>
+                        </Anchors>
+                    </Button>
+                    <Button name="LWCPSlotInc" inherits="UIPanelButtonTemplate" text="+">
+                        <Size x="28" y="26" />
+                        <Anchors>
+                            <Anchor point="TOP"><Offset><AbsDimension x="56" y="-30" /></Offset></Anchor>
+                        </Anchors>
+                        <Scripts><OnClick>LWCP_SlotInc();</OnClick></Scripts>
+                    </Button>
+                    <!-- Roster action buttons -->
+                    <Button name="LWCPSpawnBtn" inherits="UIPanelButtonTemplate" text="Spawn">
+                        <Size x="68" y="26" />
+                        <Anchors>
+                            <Anchor point="TOP"><Offset><AbsDimension x="-68" y="-62" /></Offset></Anchor>
+                        </Anchors>
+                        <Scripts><OnClick>LWCP_Spawn();</OnClick></Scripts>
+                    </Button>
+                    <Button name="LWCPDismissBtn" inherits="UIPanelButtonTemplate" text="Dismiss">
+                        <Size x="68" y="26" />
+                        <Anchors>
+                            <Anchor point="TOP"><Offset><AbsDimension x="0" y="-62" /></Offset></Anchor>
+                        </Anchors>
+                        <Scripts><OnClick>LWCP_Dismiss();</OnClick></Scripts>
+                    </Button>
+                    <Button name="LWCPListBtn" inherits="UIPanelButtonTemplate" text="Refresh">
+                        <Size x="56" y="26" />
+                        <Anchors>
+                            <Anchor point="TOP"><Offset><AbsDimension x="66" y="-62" /></Offset></Anchor>
+                        </Anchors>
+                        <Scripts><OnClick>LWCP_RefreshRoster();</OnClick></Scripts>
+                    </Button>
+                </Frames>
+            </Frame>
 
             <!-- ====================================================== -->
-            <!-- CAST: spell name input + target buttons                 -->
+            <!-- PAGE: Combat                                            -->
             <!-- ====================================================== -->
-            <EditBox name="LWCPSpellBox" inherits="InputBoxTemplate" autoFocus="false">
-                <Size x="155" y="20" />
+            <Frame name="LWCPPageCombat" hidden="true">
+                <Size x="216" y="300" />
                 <Anchors>
-                    <Anchor point="CENTER" relativePoint="TOP">
-                        <Offset><AbsDimension x="20" y="-332" /></Offset>
-                    </Anchor>
+                    <Anchor point="TOP"><Offset><AbsDimension x="0" y="-72" /></Offset></Anchor>
                 </Anchors>
-                <Scripts>
-                    <OnEscapePressed>LWCPSpellBox:ClearFocus();</OnEscapePressed>
-                    <OnEnterPressed>LWCP_CastOnTarget(); LWCPSpellBox:ClearFocus();</OnEnterPressed>
-                </Scripts>
-            </EditBox>
-
-            <!-- Cast target buttons -->
-            <Button name="LWCPCastTarget" inherits="UIPanelButtonTemplate" text="Target">
-                <Size x="54" y="24" />
-                <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="-81" y="-358" /></Offset></Anchor>
-                </Anchors>
-                <Scripts><OnClick>LWCP_CastOnTarget();</OnClick></Scripts>
-            </Button>
-
-            <Button name="LWCPCastMe" inherits="UIPanelButtonTemplate" text="Me">
-                <Size x="44" y="24" />
-                <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="-27" y="-358" /></Offset></Anchor>
-                </Anchors>
-                <Scripts><OnClick>LWCP_CastOnMe();</OnClick></Scripts>
-            </Button>
-
-            <Button name="LWCPCastFocus" inherits="UIPanelButtonTemplate" text="Focus">
-                <Size x="54" y="24" />
-                <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="24" y="-358" /></Offset></Anchor>
-                </Anchors>
-                <Scripts><OnClick>LWCP_CastOnFocus();</OnClick></Scripts>
-            </Button>
-
-            <Button name="LWCPCastSelf" inherits="UIPanelButtonTemplate" text="Self">
-                <Size x="44" y="24" />
-                <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="78" y="-358" /></Offset></Anchor>
-                </Anchors>
-                <Scripts><OnClick>LWCP_CastOnSelf();</OnClick></Scripts>
-            </Button>
+                <Layers>
+                    <Layer level="OVERLAY">
+                        <FontString inherits="GameFontNormal" text="-- Combat Profile --">
+                            <Size x="216" y="16" />
+                            <Anchors>
+                                <Anchor point="CENTER" relativePoint="TOP">
+                                    <Offset><AbsDimension x="0" y="-10" /></Offset>
+                                </Anchor>
+                            </Anchors>
+                        </FontString>
+                        <FontString inherits="GameFontNormal" text="-- Combat --">
+                            <Size x="216" y="16" />
+                            <Anchors>
+                                <Anchor point="CENTER" relativePoint="TOP">
+                                    <Offset><AbsDimension x="0" y="-94" /></Offset>
+                                </Anchor>
+                            </Anchors>
+                        </FontString>
+                        <FontString inherits="GameFontNormal" text="-- Cast Command --">
+                            <Size x="216" y="16" />
+                            <Anchors>
+                                <Anchor point="CENTER" relativePoint="TOP">
+                                    <Offset><AbsDimension x="0" y="-180" /></Offset>
+                                </Anchor>
+                            </Anchors>
+                        </FontString>
+                        <FontString inherits="GameFontHighlightSmall" text="Spell:">
+                            <Size x="35" y="14" />
+                            <Anchors>
+                                <Anchor point="CENTER" relativePoint="TOP">
+                                    <Offset><AbsDimension x="-85" y="-202" /></Offset>
+                                </Anchor>
+                            </Anchors>
+                        </FontString>
+                    </Layer>
+                </Layers>
+                <Frames>
+                    <!-- Profile selector -->
+                    <Button name="LWCPProfileDec" inherits="UIPanelButtonTemplate" text="-">
+                        <Size x="28" y="26" />
+                        <Anchors>
+                            <Anchor point="TOP"><Offset><AbsDimension x="-56" y="-28" /></Offset></Anchor>
+                        </Anchors>
+                        <Scripts><OnClick>LWCP_ProfileDec();</OnClick></Scripts>
+                    </Button>
+                    <Button name="LWCPProfileLabel" inherits="UIPanelButtonTemplate" text="Profile 1">
+                        <Size x="88" y="26" />
+                        <Anchors>
+                            <Anchor point="TOP"><Offset><AbsDimension x="0" y="-28" /></Offset></Anchor>
+                        </Anchors>
+                    </Button>
+                    <Button name="LWCPProfileInc" inherits="UIPanelButtonTemplate" text="+">
+                        <Size x="28" y="26" />
+                        <Anchors>
+                            <Anchor point="TOP"><Offset><AbsDimension x="60" y="-28" /></Offset></Anchor>
+                        </Anchors>
+                        <Scripts><OnClick>LWCP_ProfileInc();</OnClick></Scripts>
+                    </Button>
+                    <Button name="LWCPSetProfileBtn" inherits="UIPanelButtonTemplate" text="Set Profile">
+                        <Size x="120" y="26" />
+                        <Anchors>
+                            <Anchor point="TOP"><Offset><AbsDimension x="0" y="-60" /></Offset></Anchor>
+                        </Anchors>
+                        <Scripts><OnClick>LWCP_SetProfile();</OnClick></Scripts>
+                    </Button>
+                    <!-- Combat buttons -->
+                    <Button name="LWCPAttackBtn" inherits="UIPanelButtonTemplate" text="Attack">
+                        <Size x="64" y="26" />
+                        <Anchors>
+                            <Anchor point="TOP"><Offset><AbsDimension x="-74" y="-112" /></Offset></Anchor>
+                        </Anchors>
+                        <Scripts><OnClick>LWCP_Attack();</OnClick></Scripts>
+                    </Button>
+                    <Button name="LWCPDisengageBtn" inherits="UIPanelButtonTemplate" text="Disengage">
+                        <Size x="76" y="26" />
+                        <Anchors>
+                            <Anchor point="TOP"><Offset><AbsDimension x="4" y="-112" /></Offset></Anchor>
+                        </Anchors>
+                        <Scripts><OnClick>LWCP_Disengage();</OnClick></Scripts>
+                    </Button>
+                    <Button name="LWCPRetreatBtn" inherits="UIPanelButtonTemplate" text="Retreat">
+                        <Size x="64" y="26" />
+                        <Anchors>
+                            <Anchor point="TOP"><Offset><AbsDimension x="82" y="-112" /></Offset></Anchor>
+                        </Anchors>
+                        <Scripts><OnClick>LWCP_Retreat();</OnClick></Scripts>
+                    </Button>
+                    <Button name="LWCPFollowBtn" inherits="UIPanelButtonTemplate" text="Follow">
+                        <Size x="64" y="26" />
+                        <Anchors>
+                            <Anchor point="TOP"><Offset><AbsDimension x="-74" y="-144" /></Offset></Anchor>
+                        </Anchors>
+                        <Scripts><OnClick>LWCP_Follow();</OnClick></Scripts>
+                    </Button>
+                    <Button name="LWCPRefreshmentsBtn" inherits="UIPanelButtonTemplate" text="Eat/Drink">
+                        <Size x="74" y="26" />
+                        <Anchors>
+                            <Anchor point="TOP"><Offset><AbsDimension x="4" y="-144" /></Offset></Anchor>
+                        </Anchors>
+                        <Scripts><OnClick>LWCP_Refreshments();</OnClick></Scripts>
+                    </Button>
+                    <Button name="LWCPBuffBtn" inherits="UIPanelButtonTemplate" text="Buff">
+                        <Size x="52" y="26" />
+                        <Anchors>
+                            <Anchor point="TOP"><Offset><AbsDimension x="82" y="-144" /></Offset></Anchor>
+                        </Anchors>
+                        <Scripts><OnClick>LWCP_Buff();</OnClick></Scripts>
+                    </Button>
+                    <!-- Cast: spell input -->
+                    <EditBox name="LWCPSpellBox" inherits="InputBoxTemplate" autoFocus="false">
+                        <Size x="148" y="20" />
+                        <Anchors>
+                            <Anchor point="CENTER" relativePoint="TOP">
+                                <Offset><AbsDimension x="26" y="-202" /></Offset>
+                            </Anchor>
+                        </Anchors>
+                        <Scripts>
+                            <OnEscapePressed>LWCPSpellBox:ClearFocus();</OnEscapePressed>
+                            <OnEnterPressed>LWCP_CastOnTarget(); LWCPSpellBox:ClearFocus();</OnEnterPressed>
+                        </Scripts>
+                    </EditBox>
+                    <!-- Cast target buttons -->
+                    <Button name="LWCPCastTarget" inherits="UIPanelButtonTemplate" text="Target">
+                        <Size x="54" y="24" />
+                        <Anchors>
+                            <Anchor point="TOP"><Offset><AbsDimension x="-81" y="-224" /></Offset></Anchor>
+                        </Anchors>
+                        <Scripts><OnClick>LWCP_CastOnTarget();</OnClick></Scripts>
+                    </Button>
+                    <Button name="LWCPCastMe" inherits="UIPanelButtonTemplate" text="Me">
+                        <Size x="44" y="24" />
+                        <Anchors>
+                            <Anchor point="TOP"><Offset><AbsDimension x="-22" y="-224" /></Offset></Anchor>
+                        </Anchors>
+                        <Scripts><OnClick>LWCP_CastOnMe();</OnClick></Scripts>
+                    </Button>
+                    <Button name="LWCPCastFocus" inherits="UIPanelButtonTemplate" text="Focus">
+                        <Size x="54" y="24" />
+                        <Anchors>
+                            <Anchor point="TOP"><Offset><AbsDimension x="30" y="-224" /></Offset></Anchor>
+                        </Anchors>
+                        <Scripts><OnClick>LWCP_CastOnFocus();</OnClick></Scripts>
+                    </Button>
+                    <Button name="LWCPCastSelf" inherits="UIPanelButtonTemplate" text="Self">
+                        <Size x="44" y="24" />
+                        <Anchors>
+                            <Anchor point="TOP"><Offset><AbsDimension x="83" y="-224" /></Offset></Anchor>
+                        </Anchors>
+                        <Scripts><OnClick>LWCP_CastOnSelf();</OnClick></Scripts>
+                    </Button>
+                </Frames>
+            </Frame>
 
             <!-- ====================================================== -->
-            <!-- LOG LEVEL: selector + set                               -->
+            <!-- PAGE: Gear (placeholder for inspect / trade UI)         -->
             <!-- ====================================================== -->
-            <Button name="LWCPLogDec" inherits="UIPanelButtonTemplate" text="-">
-                <Size x="28" y="26" />
+            <Frame name="LWCPPageGear" hidden="true">
+                <Size x="216" y="300" />
                 <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="-56" y="-428" /></Offset></Anchor>
+                    <Anchor point="TOP"><Offset><AbsDimension x="0" y="-72" /></Offset></Anchor>
                 </Anchors>
-                <Scripts><OnClick>LWCP_LogDec();</OnClick></Scripts>
-            </Button>
+                <Layers>
+                    <Layer level="OVERLAY">
+                        <FontString inherits="GameFontNormal" text="-- Bot Gear & Bags --">
+                            <Size x="216" y="16" />
+                            <Anchors>
+                                <Anchor point="CENTER" relativePoint="TOP">
+                                    <Offset><AbsDimension x="0" y="-12" /></Offset>
+                                </Anchor>
+                            </Anchors>
+                        </FontString>
+                        <FontString inherits="GameFontHighlightSmall" text="Coming soon: inspect bot gear,&#10;view bags, and transfer items.&#10;&#10;Select a bot on the Bots tab&#10;to get started.">
+                            <Size x="190" y="120" />
+                            <Anchors>
+                                <Anchor point="CENTER" relativePoint="TOP">
+                                    <Offset><AbsDimension x="0" y="-100" /></Offset>
+                                </Anchor>
+                            </Anchors>
+                        </FontString>
+                    </Layer>
+                </Layers>
+            </Frame>
 
-            <Button name="LWCPLogLabel" inherits="UIPanelButtonTemplate" text="Level: 1">
-                <Size x="80" y="26" />
+            <!-- ====================================================== -->
+            <!-- PAGE: Settings                                          -->
+            <!-- ====================================================== -->
+            <Frame name="LWCPPageSettings" hidden="true">
+                <Size x="216" y="300" />
                 <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="0" y="-428" /></Offset></Anchor>
+                    <Anchor point="TOP"><Offset><AbsDimension x="0" y="-72" /></Offset></Anchor>
                 </Anchors>
-            </Button>
-
-            <Button name="LWCPLogInc" inherits="UIPanelButtonTemplate" text="+">
-                <Size x="28" y="26" />
-                <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="56" y="-428" /></Offset></Anchor>
-                </Anchors>
-                <Scripts><OnClick>LWCP_LogInc();</OnClick></Scripts>
-            </Button>
+                <Layers>
+                    <Layer level="OVERLAY">
+                        <FontString inherits="GameFontNormal" text="-- Log Level (1-4) --">
+                            <Size x="216" y="16" />
+                            <Anchors>
+                                <Anchor point="CENTER" relativePoint="TOP">
+                                    <Offset><AbsDimension x="0" y="-20" /></Offset>
+                                </Anchor>
+                            </Anchors>
+                        </FontString>
+                    </Layer>
+                </Layers>
+                <Frames>
+                    <Button name="LWCPLogDec" inherits="UIPanelButtonTemplate" text="-">
+                        <Size x="28" y="26" />
+                        <Anchors>
+                            <Anchor point="TOP"><Offset><AbsDimension x="-56" y="-44" /></Offset></Anchor>
+                        </Anchors>
+                        <Scripts><OnClick>LWCP_LogDec();</OnClick></Scripts>
+                    </Button>
+                    <Button name="LWCPLogLabel" inherits="UIPanelButtonTemplate" text="Level: 1">
+                        <Size x="80" y="26" />
+                        <Anchors>
+                            <Anchor point="TOP"><Offset><AbsDimension x="0" y="-44" /></Offset></Anchor>
+                        </Anchors>
+                    </Button>
+                    <Button name="LWCPLogInc" inherits="UIPanelButtonTemplate" text="+">
+                        <Size x="28" y="26" />
+                        <Anchors>
+                            <Anchor point="TOP"><Offset><AbsDimension x="56" y="-44" /></Offset></Anchor>
+                        </Anchors>
+                        <Scripts><OnClick>LWCP_LogInc();</OnClick></Scripts>
+                    </Button>
+                </Frames>
+            </Frame>
 
             <!-- ====================================================== -->
             <!-- Close button                                            -->
