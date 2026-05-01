@@ -18,6 +18,8 @@ This checklist is for early safety validation of:
 - clone name lease / reclaim
 - dismiss and logout recovery
 - progress sync
+- active quest accept / active quest progress sync
+- reward-choice quest turn-ins
 - equipment sync
 - inventory sync
 - bank sync
@@ -71,6 +73,8 @@ Before each scenario, record:
 ### Tables to snapshot
 
 - [ ] `characters`
+- [ ] `character_queststatus`
+- [ ] `character_queststatus_rewarded`
 - [ ] `character_inventory`
 - [ ] `item_instance`
 - [ ] `living_world_account_alt_runtime`
@@ -135,6 +139,29 @@ restart testing, and log inspection. They do not require full manual gameplay.
 - [ ] Confirm source `characters` row is updated correctly
 - [ ] Confirm runtime leaves `SyncingBack` cleanly
 - [ ] Confirm repeating the same dismiss does not double-apply progress
+
+## 1.5.a Quest accept and objective progress sync
+
+- [ ] Accept a normal shared quest on the owner with active eligible bots
+- [ ] Confirm eligible bots receive the active quest
+- [ ] Confirm ineligible bots do not receive the quest
+- [ ] Advance at least one objective counter on a bot clone
+- [ ] Dismiss or log out cleanly
+- [ ] Confirm the source character keeps the active quest
+- [ ] Confirm source objective counters match the clone progress
+- [ ] Confirm rewarded/completed quest state does not regress to incomplete
+
+## 1.5.b Reward-choice quest handling
+
+- [ ] Complete a reward-choice quest on an active bot while reward mode is
+      `smart`
+- [ ] Confirm obvious upgrades auto-pick correctly
+- [ ] Confirm ambiguous choices remain pending for manual selection
+- [ ] Confirm party-style reward announcement is emitted for bot choices
+- [ ] Switch reward mode to `manual`
+- [ ] Confirm reward-choice quests stay pending until the player selects one
+- [ ] Confirm manual selection grants the correct item and normal quest rewards
+- [ ] Confirm rewarded state syncs back to the source character
 
 ### Blocked or manual-review deltas
 
@@ -237,6 +264,10 @@ or server logs.
 - [ ] `.lwbot roster list` renders expected entries
 - [ ] `.lwbot roster request <id>` shows correct approval or rejection
 - [ ] `.lwbot roster dismiss <id>` shows correct result
+- [ ] `.lwbot quests` populates the addon quests tab correctly
+- [ ] `.lwbot questmode smart|manual` updates mode correctly
+- [ ] `.lwbot <bot> reward <questId> <choiceNumber>` applies manual choice
+      cleanly
 - [ ] duplicate-request messaging is readable
 - [ ] pending-login rejection is readable
 - [ ] manual-review or blocked messaging is readable
@@ -291,6 +322,14 @@ This must be validated with a real client because it uses native trade flow.
 - [ ] owner relog after interrupted recovery shows correct message
 - [ ] startup recovery summary is understandable in chat
 - [ ] no stale active clone appears in party or world after relog
+
+## 2.7 Quest addon UX
+
+- [ ] `Quests` tab shows pending reward choices for party or selected bot view
+- [ ] Smart/Manual mode buttons reflect current saved state
+- [ ] Clicking a choice button works for the intended bot only
+- [ ] Empty-state messaging is clear when no pending rewards exist
+- [ ] Party-channel reward text is readable in normal play
 
 ---
 
@@ -368,6 +407,8 @@ Run validation in this order.
 - [ ] spawn lifecycle
 - [ ] dismiss lifecycle
 - [ ] progress sync
+- [ ] quest accept and objective progress sync
+- [ ] reward-choice quest handling
 - [ ] equipment sync
 - [ ] safe inventory sync
 - [ ] safe bank sync

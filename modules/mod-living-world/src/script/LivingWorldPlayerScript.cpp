@@ -21,6 +21,7 @@
 #include "service/AccountAltDismissalService.h"
 #include "service/AccountAltRecoveryService.h"
 #include "service/AccountAltStartupRecoveryService.h"
+#include "service/BotQuestRewardService.h"
 #include "service/BotPlayerRegistry.h"
 
 #include "DatabaseEnv.h"
@@ -65,6 +66,63 @@ std::uint32_t CountActiveQuestRowsForQuest(std::uint64_t characterGuid, std::uin
         return 0;
 
     return result->Fetch()[0].Get<std::uint32_t>();
+}
+
+void SendLWBotAddonMessage(Player* player, std::string const& payload)
+{
+    if (!player || !player->GetSession())
+    {
+        return;
+    }
+
+    std::string msg = "LWBOT\t" + payload;
+    WorldPacket data;
+    ChatHandler::BuildChatPacket(
+        data, CHAT_MSG_WHISPER, LANG_ADDON, player, player, msg);
+    player->GetSession()->SendPacket(&data);
+}
+
+void SendQuestRewardsAddonState(Player* player)
+{
+    if (!player || !player->GetSession())
+    {
+        return;
+    }
+
+    living_world::service::BotQuestRewardService questRewardService;
+    SendLWBotAddonMessage(player, "QCLR");
+    SendLWBotAddonMessage(
+        player,
+        std::string("QMODE;") +
+            (questRewardService.GetRewardMode(player->GetGUID().GetCounter()) ==
+                    living_world::service::BotQuestRewardMode::Manual
+                ? "MANUAL"
+                : "SMART"));
+
+    for (living_world::service::PendingQuestReward const& pending :
+         questRewardService.BuildPendingRewards(player))
+    {
+        std::string payload = "QST;";
+        payload += pending.botName;
+        payload += ';';
+        payload += std::to_string(pending.questId);
+        payload += ';';
+        payload += pending.questTitle;
+
+        for (living_world::service::QuestRewardChoice const& choice : pending.choices)
+        {
+            payload += ';';
+            payload += std::to_string(choice.choiceNumber);
+            payload += ':';
+            payload += std::to_string(choice.itemId);
+            payload += ':';
+            payload += std::to_string(choice.count);
+        }
+
+        SendLWBotAddonMessage(player, payload);
+    }
+
+    SendLWBotAddonMessage(player, "QEND");
 }
 
 struct StartupRuntimeRecoverySummary
@@ -914,6 +972,46 @@ public:
                 "[LivingWorldDebug] QuestSync accept: pushed questId={} from owner='{}' to bot='{}' guid={}.",
                 questId, player->GetName(), bot->GetName(), bot->GetGUID().GetCounter());
         }
+    }
+
+    void OnPlayerCompleteQuest(Player* player, Quest const* quest) override
+    {
+        if (!player || !quest || !player->GetSession())
+        {
+            return;
+        }
+
+        if (!player->GetSession()->IsBotSession())
+        {
+            living_world::service::BotQuestRewardService questRewardService;
+            questRewardService.ApplyOwnerQuestRewardToBots(player, quest);
+            SendQuestRewardsAddonState(player);
+
+            std::uint32_t const pendingCount =
+                static_cast<std::uint32_t>(
+                    questRewardService.BuildPendingRewards(player).size());
+            if (pendingCount > 0)
+            {
+                ChatHandler handler(player->GetSession());
+                living_world::script::SendPlayerLog(
+                    &handler,
+                    static_cast<std::uint8_t>(living_world::script::PlayerChatLogLevel::BareMinimum),
+                    "LivingWorld {} bot quest reward choice(s) waiting in the Quests tab.",
+                    pendingCount);
+            }
+
+            return;
+        }
+
+        uint32 const questId = quest->GetQuestId();
+        SyncActiveQuestStateToSource(player, questId, false);
+
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] QuestSync complete: bot='{}' guid={} questId={}.",
+            player->GetName(),
+            player->GetGUID().GetCounter(),
+            questId);
     }
 
     void OnPlayerQuestAbandon(Player* player, uint32 questId) override

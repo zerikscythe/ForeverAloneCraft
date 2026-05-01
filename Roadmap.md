@@ -19,6 +19,27 @@ The old roadmap included a number of emulator-specific tasks, file names,
 runtime assumptions, and command surfaces from a different server stack. Those
 details have been intentionally removed here rather than copied forward.
 
+## Recent Progress Snapshot
+
+The latest completed gameplay slice is quest-state continuity for account-alt
+bots plus the first bot quest UX layer.
+
+Completed recently:
+
+- active quest accept now mirrors owner -> eligible active bots
+- clone -> source quest sync now preserves active quest rows and objective
+  counters correctly
+- bot quest completion now syncs back during play via
+  `LivingWorldPlayerScript::OnPlayerCompleteQuest`
+- reward-choice quests now support a smart/manual bot reward flow
+- the LivingWorld addon now has a `Quests` tab for pending bot reward choices
+
+Current next-planned slice:
+
+- extend the `Quests` tab into a broader bot quest-actions panel that can show
+  bot-specific `Pick Up` / `Turn In` actions for a targeted quest giver,
+  including class-specific follow-up quests
+
 ## Sensitive Data Review
 
 The old roadmap did not contain obvious secrets such as passwords, API keys, or
@@ -348,6 +369,11 @@ design and foundation code.
     immediately, bypassing the normal OOC guard
 - `party` is a valid bot reference for all commands except `cast` and `request/dismiss`.
   It fans out to all bots currently registered to the owner.
+- Quest UX command surface now also exists:
+  - `.lwbot quests` — push current pending bot reward-choice state to the addon
+  - `.lwbot questmode <smart|manual>` — toggle bot reward behavior per owner
+  - `.lwbot <#|name> reward <questId> <choiceNumber>` — apply a manual
+    reward-choice selection for a specific active bot
 - Full `[LivingWorldDebug]` trace remains server-log-first.
 - Switch control/possession target is still not implemented.
 
@@ -400,6 +426,11 @@ design and foundation code.
   quests, achievements, and mail.
 - Clone→source sync is now implemented for: level/XP/money, equipment,
   inventory, bank, reputations, quest completions, and achievements.
+- Quest sync now also preserves active/in-progress quest rows and objective
+  counters correctly during bot dismiss/logout recovery.
+- Quest completion with choice rewards now has a bot-facing reward pipeline:
+  smart auto-pick by class/item fit when the answer is clear, otherwise leave
+  the reward pending for manual selection in the addon.
 - `CharacterProgressSnapshot` now carries `completedQuestCount`,
   `achievementCount`, and `totalReputationStanding` for tiebreaking in
   "clone is ahead" comparisons across both `CloneProgressIsAhead` and
@@ -1424,6 +1455,20 @@ After this, the next follow-on slice should be:
   name/item sync, and group removal stay authoritative.
 - Next expansion: multi-bot support requires extending `.lwbot request` to
   allow queuing multiple bots and updating all registry lookups to 1-to-N.
+
+7. **Expand quest UX beyond reward-choice handling**
+- Reuse the existing addon `Quests` tab as the home for broader bot quest
+  actions rather than creating a second quest addon.
+- Primary next step: target-questgiver driven actions panel.
+- Goal: when the owner targets a quest giver, show bot-specific `Pick Up` and
+  `Turn In` actions for quests that active bots are eligible for even if the
+  owner is not, including class-specific trainer quests and chain
+  continuations.
+- Do not make proximity-based auto-accept the default behavior. Prefer
+  explicit player-triggered actions from the panel to avoid noisy or unsafe
+  automation.
+- Reward-choice turn-ins from that panel should continue to route through the
+  smart/manual reward system rather than a separate implementation.
 
 ---
 

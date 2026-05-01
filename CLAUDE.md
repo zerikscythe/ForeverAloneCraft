@@ -8,6 +8,17 @@ AzerothCore is an open-source MMORPG server emulator for World of Warcraft patch
 
 ## Build Commands
 
+## Read This First For LivingWorld Work
+
+Before changing the custom bot/account-alt system, read:
+
+- `Roadmap.md`
+- `ai-azerothcore.md`
+- `EarlyBotValidation.md`
+
+Those files carry the current project-specific state more accurately than this
+generic repository note.
+
 ### Local runtime deployment
 
 - Keep the repo as the build/development workspace.
@@ -23,6 +34,24 @@ AzerothCore is an open-source MMORPG server emulator for World of Warcraft patch
   - `Shutdown-Servers.ps1` stops auth/world manually.
 - MySQL is installed as Windows service `MySQL80Acore` and listens on
   `127.0.0.1:3306` for this local setup.
+
+### Current repo machine notes
+
+- Active development repo path in the current workspace:
+  `E:\WoWzers\azerothcore-wotlk`
+- A recent known-good local build flow on this machine was:
+
+```powershell
+cmake -S . -B out/build-vs2022 -G "Visual Studio 17 2022" -A x64
+cmake --build out/build-vs2022 --target worldserver --config RelWithDebInfo
+cmake --build out/build-vs2022 --target unit_tests --config RelWithDebInfo
+```
+
+- Re-run CMake configure/generate after adding new module `.cpp` files so the
+  generated Visual Studio solution picks them up.
+- The authoritative live gameplay DB may live on a separate server PC rather
+  than the local MySQL instance. Confirm which DB you are inspecting before
+  trusting runtime-state conclusions.
 
 ### Deploying after a build
 
@@ -158,3 +187,18 @@ Type(Scope/Subscope): Short description (max 50 chars)
 - AI tool usage must be disclosed in PRs
 - In-game testing expected
 - Changes to generic code require regression testing of related systems
+
+## LivingWorld Current Focus
+
+Recent completed work:
+
+- clone -> source quest sync for active quest rows and progress counters
+- immediate bot completion sync back to source
+- smart/manual bot reward-choice handling for quest turn-ins
+- addon `Quests` tab for pending reward selections
+
+Current planned next slice:
+
+- when the owner targets a quest giver, surface bot-specific `Pick Up` /
+  `Turn In` actions in the addon for quests the bots can take or complete,
+  including class-specific trainer quests

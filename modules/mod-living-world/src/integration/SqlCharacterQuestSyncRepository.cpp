@@ -63,6 +63,20 @@ bool SqlCharacterQuestSyncRepository::SyncQuestsFromCloneToSource(
         sourceCharacterGuid,
         cloneCharacterGuid);
 
+    // Rewarded quests must not leave an old active quest row behind on the
+    // parked/original source. AzerothCore loads active quest rows before it
+    // checks rewarded state, so stale source rows can resurrect a quest that
+    // the clone already turned in.
+    CharacterDatabase.DirectExecute(
+        "DELETE source "
+        "FROM character_queststatus AS source "
+        "INNER JOIN character_queststatus_rewarded AS clone_rewarded "
+        "  ON clone_rewarded.quest = source.quest "
+        " AND clone_rewarded.guid = {} "
+        "WHERE source.guid = {}",
+        cloneCharacterGuid,
+        sourceCharacterGuid);
+
     // AzerothCore can leave behind zero-status rows for quests that are no
     // longer active. Those stale rows block INSERT IGNORE on the real clone
     // progress because (guid, quest) is the primary key. Clear only the stale
@@ -82,7 +96,10 @@ bool SqlCharacterQuestSyncRepository::SyncQuestsFromCloneToSource(
     // Sync active (in-progress) quests in two steps. MySQL gets unhappy when
     // we self-select from and self-update character_queststatus inside one
     // INSERT ... ON DUPLICATE KEY UPDATE statement, so we first insert any
-    // missing source rows, then merge progress onto existing ones.
+    // missing source rows, then mirror the clone row onto existing ones. The
+    // clone is the authoritative live state for the runtime session, so we
+    // copy its timer, counters, and quest status exactly instead of taking a
+    // numeric max. QuestStatus values are not ordered by progress in AC.
     CharacterDatabase.DirectExecute(
         "INSERT IGNORE INTO character_queststatus "
         "(guid, quest, status, explored, timer, "
@@ -103,20 +120,20 @@ bool SqlCharacterQuestSyncRepository::SyncQuestsFromCloneToSource(
         "  ON clone.quest = source.quest "
         " AND clone.guid = {} "
         " AND clone.status != 0 "
-        "SET source.timer = CASE WHEN source.status = 0 THEN clone.timer ELSE source.timer END, "
-        "    source.explored = GREATEST(source.explored, clone.explored), "
-        "    source.mobcount1 = GREATEST(source.mobcount1, clone.mobcount1), "
-        "    source.mobcount2 = GREATEST(source.mobcount2, clone.mobcount2), "
-        "    source.mobcount3 = GREATEST(source.mobcount3, clone.mobcount3), "
-        "    source.mobcount4 = GREATEST(source.mobcount4, clone.mobcount4), "
-        "    source.itemcount1 = GREATEST(source.itemcount1, clone.itemcount1), "
-        "    source.itemcount2 = GREATEST(source.itemcount2, clone.itemcount2), "
-        "    source.itemcount3 = GREATEST(source.itemcount3, clone.itemcount3), "
-        "    source.itemcount4 = GREATEST(source.itemcount4, clone.itemcount4), "
-        "    source.itemcount5 = GREATEST(source.itemcount5, clone.itemcount5), "
-        "    source.itemcount6 = GREATEST(source.itemcount6, clone.itemcount6), "
-        "    source.playercount = GREATEST(source.playercount, clone.playercount), "
-        "    source.status = GREATEST(source.status, clone.status) "
+        "SET source.status = clone.status, "
+        "    source.explored = clone.explored, "
+        "    source.timer = clone.timer, "
+        "    source.mobcount1 = clone.mobcount1, "
+        "    source.mobcount2 = clone.mobcount2, "
+        "    source.mobcount3 = clone.mobcount3, "
+        "    source.mobcount4 = clone.mobcount4, "
+        "    source.itemcount1 = clone.itemcount1, "
+        "    source.itemcount2 = clone.itemcount2, "
+        "    source.itemcount3 = clone.itemcount3, "
+        "    source.itemcount4 = clone.itemcount4, "
+        "    source.itemcount5 = clone.itemcount5, "
+        "    source.itemcount6 = clone.itemcount6, "
+        "    source.playercount = clone.playercount "
         "WHERE source.guid = {}",
         cloneCharacterGuid,
         sourceCharacterGuid);
