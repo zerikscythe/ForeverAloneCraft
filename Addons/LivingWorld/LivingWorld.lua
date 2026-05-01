@@ -1,5 +1,6 @@
 -- LivingWorld Control Panel
 
+local LWCP_BUILD = "trainer-ui-t7"
 local CMD_LW    = ".lw "
 local CMD_LWBOT = ".lwbot "
 
@@ -12,6 +13,18 @@ local LW_SlotMax    = 0    -- grows as roster entries arrive
 local LW_ProfileNum = 1
 local LW_LogLevel   = 1
 local LW_ActiveTab  = "Bots"
+local LW_QuestMode  = "SMART"
+local LW_QuestRewards = {}
+local LW_QuestActions = {}
+local LW_QuestActionsReady = false
+local LW_TrainActions = {}
+local LW_TrainBotGold = {}
+local LW_TrainOwnerGold = 0
+local LW_TrainActionsReady = false
+local LW_TrainPendingActions = {}
+local LW_TrainPendingBotGold = {}
+local LW_TrainPendingOwnerGold = 0
+local LW_PendingTrainerAlert = false
 
 -- Returns the bot reference string for the current slot.
 -- Slot 0 → "party", any other slot → character name (or slot number as fallback).
@@ -30,7 +43,7 @@ end
 -- -----------------------------------------------
 -- Tab switching
 -- -----------------------------------------------
-local LW_Tabs = { "Bots", "Combat", "Gear", "Bags", "Settings" }
+local LW_Tabs = { "Bots", "Combat", "NPC", "Gear", "Bags", "Settings" }
 
 function LWCP_ShowTab(name)
     if (name == "Gear" or name == "Bags") and not LWCP_CanOpenInventoryPanels() then
@@ -50,12 +63,27 @@ function LWCP_ShowTab(name)
             if btn then btn:Enable() end
         end
     end
+
+    if name ~= "NPC" and LWCP_HideTrainRows then
+        LWCP_HideTrainRows()
+    end
+
     if name == "Gear" then
         LWCP_RequestBotBags(true)
         LWCP_RenderGearTab()
+    elseif name == "NPC" then
+        if not LW_TrainActionsReady then
+            LWCP_RequestTrainActions()
+        end
+        LWCP_RequestQuestRewards(true)
+        LWCP_RequestQuestActions()
+        LWCP_RenderQuestsTab()
     elseif name == "Bags" then
         LW_SelectedBagIdx = 0
         LWCP_RenderBagsTab()
+    elseif name == "Settings" then
+        LWCP_RequestQuestRewards(true)
+        LWCP_UpdateQuestModeButtons()
     end
 
     LWCP_UpdateInventoryTabState()
@@ -64,6 +92,14 @@ end
 function LWCP_RefreshActivePage()
     if LW_ActiveTab == "Gear" or LW_ActiveTab == "Bags" then
         LWCP_RequestBotBags()
+    elseif LW_ActiveTab == "NPC" or LW_ActiveTab == "Settings" then
+        LWCP_RequestQuestRewards(true)
+        if LW_ActiveTab == "NPC" then
+            if not LW_TrainActionsReady or #LW_TrainActions == 0 then
+                LWCP_RequestTrainActions()
+            end
+            LWCP_RequestQuestActions()
+        end
     else
         LWCP_RefreshRoster()
     end
@@ -76,6 +112,9 @@ function LWCP_UpdateSlotDisplay()
     local entry = LW_Roster[LW_SlotNum]
     LWCPSlotLabel:SetText(entry and entry.name or "---")
     LWCP_UpdateInventoryTabState()
+    if LWCPPageNPC and LWCPPageNPC:IsVisible() then
+        LWCP_RenderQuestsTab()
+    end
 end
 
 function LWCP_IsSelectedBotInParty()
@@ -142,6 +181,73 @@ function LWCP_RefreshRoster()
     SendChatMessage(CMD_LWBOT .. "list")
 end
 
+function LWCP_RequestQuestRewards(silent)
+    SendChatMessage(CMD_LWBOT .. "quests")
+end
+
+function LWCP_SetQuestMode(mode)
+    if not mode then return end
+    SendChatMessage(CMD_LWBOT .. "questmode " .. string.lower(mode))
+end
+
+function LWCP_ChooseQuestReward(botName, questId, choiceNumber)
+    if not botName or not questId or not choiceNumber then return end
+    SendChatMessage(CMD_LWBOT .. botName .. " reward " .. questId .. " " .. choiceNumber)
+end
+
+function LWCP_RequestQuestActions()
+    SendChatMessage(CMD_LWBOT .. "questactions")
+end
+
+function LWCP_RequestTrainActions()
+    SendChatMessage(CMD_LWBOT .. "trainactions")
+end
+
+function LWCP_BotPickupQuest(botName, questId)
+    if not botName or not questId then return end
+    SendChatMessage(CMD_LWBOT .. botName .. " pickup " .. questId)
+end
+
+function LWCP_BotTurninQuest(botName, questId)
+    if not botName or not questId then return end
+    SendChatMessage(CMD_LWBOT .. botName .. " turnin " .. questId)
+end
+
+function LWCP_BotTrainSpell(botName, trainerSpellId)
+    if not botName or not trainerSpellId then return end
+    SendChatMessage(CMD_LWBOT .. botName .. " trainspell " .. trainerSpellId)
+end
+
+function LWCP_BotTrainAll(botName)
+    if not botName then return end
+    SendChatMessage(CMD_LWBOT .. botName .. " trainall")
+end
+
+function LWCP_HandleTargetChanged()
+    LW_PendingTrainerAlert = true
+    LWCP_RequestTrainActions()
+
+    if LW_ActiveTab == "NPC" and LWCPPageNPC and LWCPPageNPC:IsVisible() then
+        LWCP_RequestQuestActions()
+    end
+end
+
+function LWCP_HandleTrainerShow()
+    LW_PendingTrainerAlert = true
+    LWCP_RequestTrainActions()
+    if LW_ActiveTab == "NPC" and LWCPPageNPC and LWCPPageNPC:IsVisible() then
+        LWCP_RenderQuestsTab()
+    end
+end
+
+function LWCP_HandleTrainerClosed()
+    LW_PendingTrainerAlert = false
+end
+
+function LWCP_HandlePlayerLogin()
+    DEFAULT_CHAT_FRAME:AddMessage("|cff00cc44LWCP:|r addon build " .. LWCP_BUILD .. " loaded.")
+end
+
 -- -----------------------------------------------
 -- Slot selector
 -- -----------------------------------------------
@@ -174,6 +280,24 @@ end
 function LWCP_Dismiss()
     if IsPartySelected() then return end
     SendChatMessage(CMD_LWBOT .. "dismiss " .. LW_SlotNum)
+end
+
+function LWCP_Train()
+    if IsPartySelected() then
+        DEFAULT_CHAT_FRAME:AddMessage("|cff00cc44LWCP:|r Select a specific bot to train.")
+        return
+    end
+
+    SendChatMessage(CMD_LWBOT .. GetBotRef() .. " train")
+end
+
+function LWCP_TrainSelectedAtTarget()
+    if IsPartySelected() then
+        DEFAULT_CHAT_FRAME:AddMessage("|cff00cc44LWCP:|r Select a specific bot to train at the targeted trainer.")
+        return
+    end
+
+    LWCP_BotTrainAll(GetBotRef())
 end
 
 -- -----------------------------------------------
@@ -286,11 +410,33 @@ function LWCP_Close()
 end
 
 SLASH_LWCP1 = "/lwcp"
-SlashCmdList["LWCP"] = function()
+SlashCmdList["LWCP"] = function(msg)
+    msg = string.lower(msg or "")
+    msg = string.gsub(msg, "^%s+", "")
+    msg = string.gsub(msg, "%s+$", "")
+    if msg == "train" or msg == "trainer" or msg == "skills" then
+        DEFAULT_CHAT_FRAME:AddMessage("|cff00cc44LWCP:|r trainer command received (" .. LWCP_BUILD .. ").")
+        if LWCP_ToggleTrainerWindow then
+            LWCP_ToggleTrainerWindow()
+        elseif LWCP_ShowTrainerWindow then
+            LWCP_ShowTrainerWindow()
+        else
+            DEFAULT_CHAT_FRAME:AddMessage("|cff00cc44LWCP:|r Trainer window is not ready yet.")
+        end
+        return
+    end
+
     if LWCPFrame:IsVisible() then
         LWCPFrame:Hide()
     else
         LWCPFrame:Show()
+    end
+end
+
+SLASH_LWTRAIN1 = "/lwtrain"
+SlashCmdList["LWTRAIN"] = function()
+    if LWCP_ToggleTrainerWindow then
+        LWCP_ToggleTrainerWindow()
     end
 end
 
@@ -330,6 +476,811 @@ function LWCPButton_OnEnter()
     GameTooltip:SetOwner(this, "ANCHOR_LEFT")
     GameTooltip:SetText("LivingWorld Control Panel\nLeft-click to open/close\nRight-drag to move")
     GameTooltip:Show()
+end
+
+-- -----------------------------------------------
+-- Quests tab
+-- -----------------------------------------------
+local LW_QuestRows = {}
+local LW_QuestActionRows = {}
+local LW_TrainRows = {}
+local LW_TRAIN_ROW_COUNT = 10
+local LW_LastVisibleTrainCount = 0
+local LWCP_FormatMoney
+local LW_TrainerDebugFrame = nil
+local LW_TrainerDebugRows = {}
+local LW_TRAIN_DEBUG_ROW_COUNT = 10
+
+local function LWCP_CreateTrainRow(rowIdx, frame)
+    local parent = LWCPFrame or frame
+    local row = CreateFrame("Frame", "LWCPNPCTrainDynRow" .. rowIdx, parent)
+    row:SetWidth(216)
+    row:SetHeight(20)
+    row:SetFrameStrata("DIALOG")
+    row:SetFrameLevel(parent:GetFrameLevel() + 40)
+    row:SetAlpha(1)
+    row:EnableMouse(false)
+
+    row.bg = row:CreateTexture(nil, "BACKGROUND")
+    row.bg:SetAllPoints(row)
+    row.bg:SetTexture(0, 0.25, 0.05, 0.55)
+
+    row.label = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    row.label:SetPoint("LEFT", row, "LEFT", 4, 0)
+    row.label:SetWidth(112)
+    row.label:SetJustifyH("LEFT")
+
+    row.costText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    row.costText:SetPoint("RIGHT", row, "RIGHT", -54, 0)
+    row.costText:SetWidth(44)
+    row.costText:SetJustifyH("RIGHT")
+
+    row.actionBtn = CreateFrame("Button", "LWCPNPCTrainDynBtn" .. rowIdx, row, "UIPanelButtonTemplate")
+    row.actionBtn:SetWidth(50)
+    row.actionBtn:SetHeight(18)
+    row.actionBtn:SetPoint("RIGHT", row, "RIGHT", -2, 0)
+    row.actionBtn:SetText("Learn")
+    row.actionBtn:SetFrameStrata("DIALOG")
+    row.actionBtn:SetFrameLevel(row:GetFrameLevel() + 1)
+    row.actionBtn:SetScript("OnClick", function(self)
+        if not self.botName or not self.trainerSpellId then return end
+        LWCP_BotTrainSpell(self.botName, self.trainerSpellId)
+    end)
+    row.actionBtn:SetScript("OnEnter", function(self)
+        if not self.spellLabel then return end
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText(self.spellLabel .. "\n|cffaaaaaaCost: " .. LWCP_FormatMoney(self.cost or 0) .. "|r")
+        GameTooltip:Show()
+    end)
+    row.actionBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+    row:Hide()
+    return row
+end
+
+local function LWCP_SetTrainRowPoint(row, offsetY)
+    row:ClearAllPoints()
+    if LWCPFrame then
+        row:SetPoint("TOP", LWCPFrame, "TOP", 0, offsetY)
+    elseif LWCPPageNPC then
+        row:SetPoint("TOP", LWCPPageNPC, "TOP", 0, offsetY + 100)
+    end
+end
+
+function LWCP_HideTrainRows()
+    for _, row in ipairs(LW_TrainRows) do
+        row:Hide()
+    end
+end
+
+local function LWCP_UpdateNPCDebugText()
+    if not LWCPNPCDebugText then
+        return
+    end
+
+    LWCPNPCDebugText:SetText(
+        LWCP_BUILD .. " | TA rows: " .. #LW_TrainActions ..
+        " | vis: " .. LW_LastVisibleTrainCount ..
+        " | pending: " .. #LW_TrainPendingActions ..
+        " | ui: " .. #LW_TrainRows ..
+        " | ready: " .. (LW_TrainActionsReady and "yes" or "no"))
+end
+
+LWCP_FormatMoney = function(amount)
+    amount = tonumber(amount) or 0
+    local gold = math.floor(amount / 10000)
+    local silver = math.floor(math.mod(amount, 10000) / 100)
+    local copper = math.mod(amount, 100)
+
+    local parts = {}
+    if gold > 0 then parts[#parts + 1] = gold .. "g" end
+    if silver > 0 then parts[#parts + 1] = silver .. "s" end
+    if copper > 0 or #parts == 0 then parts[#parts + 1] = copper .. "c" end
+    return table.concat(parts, " ")
+end
+
+local function LWCP_BuildTrainerFallbackText(trainActions)
+    local lines = {}
+    for idx, data in ipairs(trainActions) do
+        if idx > 6 then
+            lines[#lines + 1] = "... " .. (#trainActions - 6) .. " more"
+            break
+        end
+
+        local label = data.spellLabel or "Spell"
+        if data.botName then
+            label = data.botName .. " - " .. label
+        end
+        lines[#lines + 1] = label .. "  " .. LWCP_FormatMoney(data.cost)
+    end
+
+    return table.concat(lines, "\n")
+end
+
+local function LWCP_EnsureTrainerDebugWindow()
+    if LW_TrainerDebugFrame then
+        return LW_TrainerDebugFrame
+    end
+
+    local frame = CreateFrame("Frame", "LWCPTrainDebugFrame", UIParent)
+    frame:SetWidth(380)
+    frame:SetHeight(318)
+    frame:SetPoint("CENTER", UIParent, "CENTER", 260, 0)
+    frame:SetFrameStrata("FULLSCREEN_DIALOG")
+    frame:SetFrameLevel(200)
+    frame:SetMovable(true)
+    frame:EnableMouse(true)
+    frame:RegisterForDrag("LeftButton")
+    frame:SetScript("OnDragStart", function(self) self:StartMoving() end)
+    frame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
+    frame:SetBackdrop({
+        bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+        edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+        tile = true,
+        tileSize = 16,
+        edgeSize = 24,
+        insets = { left = 6, right = 6, top = 6, bottom = 6 }
+    })
+    frame:SetBackdropColor(0, 0, 0, 0.92)
+
+    frame.title = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
+    frame.title:SetPoint("TOP", frame, "TOP", 0, -18)
+    frame.title:SetText("LivingWorld Trainer Data")
+
+    frame.status = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    frame.status:SetPoint("TOP", frame.title, "BOTTOM", 0, -8)
+    frame.status:SetWidth(340)
+    frame.status:SetJustifyH("CENTER")
+
+    frame.empty = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    frame.empty:SetPoint("TOP", frame.status, "BOTTOM", 0, -34)
+    frame.empty:SetWidth(320)
+    frame.empty:SetJustifyH("CENTER")
+    frame.empty:SetText("No trainer actions received yet.\nOpen a trainer, then click Refresh.")
+
+    frame.closeBtn = CreateFrame("Button", "LWCPTrainDebugClose", frame, "UIPanelButtonTemplate")
+    frame.closeBtn:SetWidth(70)
+    frame.closeBtn:SetHeight(22)
+    frame.closeBtn:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -22, 18)
+    frame.closeBtn:SetText("Close")
+    frame.closeBtn:SetScript("OnClick", function() frame:Hide() end)
+
+    frame.refreshBtn = CreateFrame("Button", "LWCPTrainDebugRefresh", frame, "UIPanelButtonTemplate")
+    frame.refreshBtn:SetWidth(70)
+    frame.refreshBtn:SetHeight(22)
+    frame.refreshBtn:SetPoint("RIGHT", frame.closeBtn, "LEFT", -10, 0)
+    frame.refreshBtn:SetText("Refresh")
+    frame.refreshBtn:SetScript("OnClick", function()
+        LWCP_RequestTrainActions()
+        LWCP_RenderTrainerDebugWindow()
+    end)
+
+    for rowIdx = 1, LW_TRAIN_DEBUG_ROW_COUNT do
+        local row = CreateFrame("Frame", "LWCPTrainDebugRow" .. rowIdx, frame)
+        row:SetWidth(334)
+        row:SetHeight(22)
+        row:SetPoint("TOP", frame, "TOP", 0, -66 - ((rowIdx - 1) * 22))
+
+        row.bg = row:CreateTexture(nil, "BACKGROUND")
+        row.bg:SetAllPoints(row)
+        row.bg:SetTexture(0, 0.18, 0.05, 0.45)
+
+        row.label = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        row.label:SetPoint("LEFT", row, "LEFT", 4, 0)
+        row.label:SetWidth(210)
+        row.label:SetJustifyH("LEFT")
+
+        row.costText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        row.costText:SetPoint("LEFT", row.label, "RIGHT", 4, 0)
+        row.costText:SetWidth(52)
+        row.costText:SetJustifyH("RIGHT")
+
+        row.actionBtn = CreateFrame("Button", "LWCPTrainDebugLearn" .. rowIdx, row, "UIPanelButtonTemplate")
+        row.actionBtn:SetWidth(58)
+        row.actionBtn:SetHeight(18)
+        row.actionBtn:SetPoint("RIGHT", row, "RIGHT", -2, 0)
+        row.actionBtn:SetText("Learn")
+        row.actionBtn:SetScript("OnClick", function(self)
+            if not self.botName or not self.trainerSpellId then return end
+            LWCP_BotTrainSpell(self.botName, self.trainerSpellId)
+        end)
+        row.actionBtn:SetScript("OnEnter", function(self)
+            if not self.spellLabel then return end
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:SetText(self.spellLabel .. "\n|cffaaaaaa" .. (self.botName or "Unknown") .. "\nCost: " .. LWCP_FormatMoney(self.cost or 0) .. "|r")
+            GameTooltip:Show()
+        end)
+        row.actionBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+        row:Hide()
+        LW_TrainerDebugRows[rowIdx] = row
+    end
+
+    frame:Hide()
+    LW_TrainerDebugFrame = frame
+    return frame
+end
+
+function LWCP_RenderTrainerDebugWindow()
+    local frame = LWCP_EnsureTrainerDebugWindow()
+    local targetName = UnitName("target") or "no target"
+    frame.status:SetText(LWCP_BUILD .. " | target: " .. targetName .. " | actions: " .. #LW_TrainActions .. " | pending: " .. #LW_TrainPendingActions)
+
+    if #LW_TrainActions == 0 then
+        frame.empty:Show()
+    else
+        frame.empty:Hide()
+    end
+
+    for rowIdx, row in ipairs(LW_TrainerDebugRows) do
+        local data = LW_TrainActions[rowIdx]
+        if data then
+            local combinedGold = (LW_TrainBotGold[data.botName] or 0) + (LW_TrainOwnerGold or 0)
+            local canAfford = combinedGold >= (data.cost or 0)
+            row.label:SetText((data.botName or "Unknown") .. " - " .. (data.spellLabel or "Spell"))
+            row.costText:SetText(LWCP_FormatMoney(data.cost))
+            row.actionBtn.botName = data.botName
+            row.actionBtn.trainerSpellId = data.trainerSpellId
+            row.actionBtn.spellLabel = data.spellLabel
+            row.actionBtn.cost = data.cost
+            row.actionBtn:SetAlpha(canAfford and 1 or 0.55)
+            if canAfford then
+                row.actionBtn:Enable()
+            else
+                row.actionBtn:Disable()
+            end
+            row:Show()
+        else
+            row.label:SetText("")
+            row.costText:SetText("")
+            row.actionBtn.botName = nil
+            row.actionBtn.trainerSpellId = nil
+            row.actionBtn.spellLabel = nil
+            row.actionBtn.cost = nil
+            row:Hide()
+        end
+    end
+end
+
+function LWCP_ShowTrainerWindow()
+    local frame = LWCP_EnsureTrainerDebugWindow()
+    LWCP_RenderTrainerDebugWindow()
+    frame:Show()
+end
+
+function LWCP_ToggleTrainerWindow()
+    local frame = LWCP_EnsureTrainerDebugWindow()
+    if frame:IsVisible() then
+        frame:Hide()
+    else
+        LWCP_ShowTrainerWindow()
+    end
+end
+
+local function LWCP_GetVisibleTrainActions()
+    if LW_SlotNum == 0 then
+        return LW_TrainActions
+    end
+
+    local visible = {}
+    local entry = LW_Roster[LW_SlotNum]
+    local selectedName = entry and entry.name
+    if not selectedName then
+        return visible
+    end
+
+    local selectedNameLower = string.lower(selectedName)
+    for _, action in ipairs(LW_TrainActions) do
+        if action.botName and string.lower(action.botName) == selectedNameLower then
+            visible[#visible + 1] = action
+        end
+    end
+
+    if #visible == 0 and #LW_TrainActions > 0 then
+        return LW_TrainActions
+    end
+
+    return visible
+end
+
+local function LWCP_GetVisibleQuestRewards()
+    if LW_SlotNum == 0 then
+        return LW_QuestRewards
+    end
+
+    local visible = {}
+    local entry = LW_Roster[LW_SlotNum]
+    local selectedName = entry and entry.name
+    if not selectedName then
+        return visible
+    end
+
+    local selectedNameLower = string.lower(selectedName)
+    for _, reward in ipairs(LW_QuestRewards) do
+        if reward.botName and string.lower(reward.botName) == selectedNameLower then
+            visible[#visible + 1] = reward
+        end
+    end
+    return visible
+end
+
+local function LWCP_GetVisibleQuestActions()
+    if LW_SlotNum == 0 then
+        return LW_QuestActions
+    end
+
+    local visible = {}
+    local entry = LW_Roster[LW_SlotNum]
+    local selectedName = entry and entry.name
+    if not selectedName then
+        return visible
+    end
+
+    local selectedNameLower = string.lower(selectedName)
+    for _, action in ipairs(LW_QuestActions) do
+        if action.botName and string.lower(action.botName) == selectedNameLower then
+            visible[#visible + 1] = action
+        end
+    end
+    return visible
+end
+
+function LWCP_UpdateQuestModeButtons()
+    if LWCPQuestModeLabel then
+        LWCPQuestModeLabel:SetText("Mode: " .. string.upper(LW_QuestMode or "SMART"))
+    end
+
+    if LWCPQuestModeSmart then
+        if LW_QuestMode == "SMART" then
+            LWCPQuestModeSmart:Disable()
+        else
+            LWCPQuestModeSmart:Enable()
+        end
+    end
+
+    if LWCPQuestModeManual then
+        if LW_QuestMode == "MANUAL" then
+            LWCPQuestModeManual:Disable()
+        else
+            LWCPQuestModeManual:Enable()
+        end
+    end
+end
+
+function LWCP_InitQuestsPage(frame)
+    if #LW_TrainRows == 0 then
+        for rowIdx = 1, LW_TRAIN_ROW_COUNT do
+            local row = _G["LWCPNPCTrainRow" .. rowIdx]
+            if not row then
+                row = LWCP_CreateTrainRow(rowIdx, frame)
+            else
+                row.label = _G[row:GetName() .. "Label"]
+                row.costText = _G[row:GetName() .. "Cost"]
+                row.actionBtn = _G[row:GetName() .. "Button"]
+                row:SetFrameStrata("DIALOG")
+                row:SetFrameLevel((LWCPFrame or frame):GetFrameLevel() + 40)
+                if row.actionBtn then
+                    row.actionBtn:SetFrameStrata("DIALOG")
+                    row.actionBtn:SetFrameLevel(row:GetFrameLevel() + 1)
+                    row.actionBtn:SetText("Learn")
+                    row.actionBtn:SetScript("OnClick", function(self)
+                        if not self.botName or not self.trainerSpellId then return end
+                        LWCP_BotTrainSpell(self.botName, self.trainerSpellId)
+                    end)
+                    row.actionBtn:SetScript("OnEnter", function(self)
+                        if not self.spellLabel then return end
+                        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                        GameTooltip:SetText(self.spellLabel .. "\n|cffaaaaaaCost: " .. LWCP_FormatMoney(self.cost or 0) .. "|r")
+                        GameTooltip:Show()
+                    end)
+                    row.actionBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+                end
+                row:Hide()
+            end
+
+            LW_TrainRows[rowIdx] = row
+        end
+    end
+
+    -- Quest action rows (pick up / turn in from targeted NPC)
+    if #LW_QuestActionRows == 0 then
+        for rowIdx = 1, 8 do
+            local row = CreateFrame("Frame", "LWCPQuestActionRow" .. rowIdx, frame)
+            row:SetWidth(216)
+            row:SetHeight(20)
+
+            row.label = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+            row.label:SetPoint("LEFT", row, "LEFT", 4, 0)
+            row.label:SetWidth(138)
+            row.label:SetJustifyH("LEFT")
+
+            local btnName = "LWCPQuestActionBtn" .. rowIdx
+            row.actionBtn = CreateFrame("Button", btnName, row, "UIPanelButtonTemplate")
+            row.actionBtn:SetWidth(68)
+            row.actionBtn:SetHeight(18)
+            row.actionBtn:SetPoint("RIGHT", row, "RIGHT", -2, 0)
+            row.actionBtn:SetScript("OnClick", function(self)
+                if not self.botName or not self.questId then return end
+                if self.actionType == "PICKUP" then
+                    LWCP_BotPickupQuest(self.botName, self.questId)
+                elseif self.actionType == "TURNIN" then
+                    LWCP_BotTurninQuest(self.botName, self.questId)
+                end
+            end)
+            row.actionBtn:SetScript("OnEnter", function(self)
+                if not self.questTitle then return end
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                local tip = self.questTitle
+                if self.hasChoices then
+                    tip = tip .. "\n|cffaaaaaa(has reward choices)|r"
+                end
+                GameTooltip:SetText(tip)
+                GameTooltip:Show()
+            end)
+            row.actionBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+            row:Hide()
+            LW_QuestActionRows[rowIdx] = row
+        end
+    end
+
+    -- Quest reward rows (pending choices)
+    if #LW_QuestRows == 0 then
+        for rowIdx = 1, 5 do
+            local row = CreateFrame("Frame", "LWCPQuestRow" .. rowIdx, frame)
+            row:SetWidth(216)
+            row:SetHeight(48)
+            if rowIdx == 1 then
+                row:SetPoint("TOP", frame, "TOP", 0, -56)
+            else
+                row:SetPoint("TOP", LW_QuestRows[rowIdx - 1], "BOTTOM", 0, -6)
+            end
+
+            row.botText = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+            row.botText:SetPoint("TOPLEFT", row, "TOPLEFT", 4, -2)
+            row.botText:SetWidth(208)
+            row.botText:SetJustifyH("LEFT")
+
+            row.questText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            row.questText:SetPoint("TOPLEFT", row.botText, "BOTTOMLEFT", 0, -2)
+            row.questText:SetWidth(208)
+            row.questText:SetJustifyH("LEFT")
+
+            row.emptyText = row:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+            row.emptyText:SetPoint("LEFT", row, "LEFT", 6, -6)
+            row.emptyText:SetText("")
+
+            row.choiceButtons = {}
+            for choiceIdx = 1, 6 do
+                local btnName = "LWCPQuestChoice" .. rowIdx .. "_" .. choiceIdx
+                local btn = CreateFrame("Button", btnName, row, "LWCPItemSlotTemplate")
+                btn:SetWidth(26)
+                btn:SetHeight(26)
+                if choiceIdx == 1 then
+                    btn:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", 4, 2)
+                else
+                    btn:SetPoint("LEFT", row.choiceButtons[choiceIdx - 1], "RIGHT", 4, 0)
+                end
+
+                btn.choiceNumber = nil
+                btn.itemId = nil
+                btn.count = _G[btnName .. "Count"]
+                btn.icon = _G[btnName .. "Icon"]
+                btn.hl = _G[btnName .. "Highlight"]
+
+                btn:SetScript("OnEnter", function(self)
+                    if not self.itemId then return end
+                    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                    GameTooltip:SetHyperlink("item:" .. self.itemId .. ":0:0:0:0:0:0:0")
+                    if self.count and self.countValue and self.countValue > 1 then
+                        GameTooltip:AddLine("Count: " .. self.countValue, 0.7, 0.7, 0.7)
+                        GameTooltip:Show()
+                    end
+                end)
+                btn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+                btn:SetScript("OnClick", function(self)
+                    if not self.botName or not self.questId or not self.choiceNumber then return end
+                    LWCP_ChooseQuestReward(self.botName, self.questId, self.choiceNumber)
+                end)
+
+                row.choiceButtons[choiceIdx] = btn
+                btn:Hide()
+            end
+
+            row:Hide()
+            LW_QuestRows[rowIdx] = row
+        end
+    end
+end
+
+function LWCP_RenderQuestsTab()
+    if (#LW_TrainRows == 0 or #LW_QuestActionRows == 0 or #LW_QuestRows == 0) and LWCPPageNPC then
+        LWCP_InitQuestsPage(LWCPPageNPC)
+    end
+
+    local trainActions = LWCP_GetVisibleTrainActions()
+    local actions = LWCP_GetVisibleQuestActions()
+    local rewards = LWCP_GetVisibleQuestRewards()
+    LW_LastVisibleTrainCount = #trainActions
+    LWCP_UpdateNPCDebugText()
+    LWCP_UpdateQuestModeButtons()
+
+    local currentTop = 10
+    local hasTrainActions = #trainActions > 0
+
+    if hasTrainActions and LWCPQuestsEmptyText then
+        LWCPQuestsEmptyText:Hide()
+    end
+
+    if LWCPTrainActionsHeader then
+        if hasTrainActions then
+            LWCPTrainActionsHeader:ClearAllPoints()
+            LWCPTrainActionsHeader:SetPoint("TOP", LWCPPageNPC, "TOP", 0, -currentTop)
+            if #trainActions > #LW_TrainRows then
+                LWCPTrainActionsHeader:SetText("-- Trainer Actions (" .. #LW_TrainRows .. "/" .. #trainActions .. ") --")
+            else
+                LWCPTrainActionsHeader:SetText("-- Trainer Actions --")
+            end
+            LWCPTrainActionsHeader:Show()
+            currentTop = currentTop + 20
+        else
+            LWCPTrainActionsHeader:Hide()
+        end
+    end
+
+    for rowIdx, row in ipairs(LW_TrainRows) do
+            LWCP_SetTrainRowPoint(row, -currentTop)
+        local data = trainActions[rowIdx]
+        if data then
+            local combinedGold = (LW_TrainBotGold[data.botName] or 0) + (LW_TrainOwnerGold or 0)
+            local canAfford = combinedGold >= (data.cost or 0)
+            local labelText = data.spellLabel or "Spell"
+            local entry = LW_Roster[LW_SlotNum]
+            local selectedName = entry and entry.name
+            if IsPartySelected() or not selectedName or (data.botName and string.lower(data.botName) ~= string.lower(selectedName)) then
+                labelText = (data.botName or "Unknown") .. " - " .. labelText
+            end
+            row.label:SetText(labelText)
+            if row.costText then row.costText:SetText(LWCP_FormatMoney(data.cost)) end
+            row.actionBtn:SetText("Learn")
+            row.actionBtn.botName = data.botName
+            row.actionBtn.trainerSpellId = data.trainerSpellId
+            row.actionBtn.spellLabel = data.spellLabel
+            row.actionBtn.cost = data.cost
+            row.actionBtn:SetAlpha(canAfford and 1 or 0.55)
+            if canAfford then
+                row.actionBtn:Enable()
+            else
+                row.actionBtn:Disable()
+            end
+            row:Show()
+            currentTop = currentTop + 22
+        else
+            row.label:SetText("")
+            if row.costText then row.costText:SetText("") end
+            row.actionBtn.botName = nil
+            row.actionBtn.trainerSpellId = nil
+            row.actionBtn.spellLabel = nil
+            row.actionBtn.cost = nil
+            row.actionBtn:SetText("")
+            row.actionBtn:SetAlpha(1)
+            row.actionBtn:Enable()
+            row:Hide()
+        end
+    end
+
+    if hasTrainActions then
+        if LWCPQuestsEmptyText then
+            LWCPQuestsEmptyText:ClearAllPoints()
+            LWCPQuestsEmptyText:SetPoint("TOP", LWCPPageNPC, "TOP", 0, -42)
+            LWCPQuestsEmptyText:SetHeight(150)
+            LWCPQuestsEmptyText:SetText(LWCP_BuildTrainerFallbackText(trainActions))
+            LWCPQuestsEmptyText:Show()
+        end
+
+        if LWCPQuestActionsHeader then
+            LWCPQuestActionsHeader:Hide()
+        end
+
+        if LWCPQuestRewardsHeader then
+            LWCPQuestRewardsHeader:Hide()
+        end
+
+        for _, row in ipairs(LW_QuestActionRows) do
+            row.label:SetText("")
+            row.actionBtn.botName = nil
+            row.actionBtn.questId = nil
+            row.actionBtn.questTitle = nil
+            row.actionBtn.actionType = nil
+            row.actionBtn.hasChoices = nil
+            row.actionBtn:SetText("")
+            row:Hide()
+        end
+
+        for _, row in ipairs(LW_QuestRows) do
+            row.botText:SetText("")
+            row.questText:SetText("")
+            row.emptyText:SetText("")
+            for _, btn in ipairs(row.choiceButtons) do
+                btn.botName = nil
+                btn.questId = nil
+                btn.choiceNumber = nil
+                btn.itemId = nil
+                btn.countValue = nil
+                btn.icon:SetTexture(nil)
+                btn.icon:SetAlpha(0)
+                if btn.count then btn.count:SetText("") end
+                btn:Hide()
+            end
+            row:Hide()
+        end
+
+        if LWCPNPCTrainAll then
+            local canTrainAll = not IsPartySelected() and #trainActions > 0
+            LWCPNPCTrainAll:SetAlpha(canTrainAll and 1 or 0.55)
+            if canTrainAll then
+                LWCPNPCTrainAll:Enable()
+            else
+                LWCPNPCTrainAll:Disable()
+            end
+        end
+
+        return
+    end
+
+    if LWCPNPCTrainAll then
+        local canTrainAll = not IsPartySelected() and #trainActions > 0
+        LWCPNPCTrainAll:SetAlpha(canTrainAll and 1 or 0.55)
+        if canTrainAll then
+            LWCPNPCTrainAll:Enable()
+        else
+            LWCPNPCTrainAll:Disable()
+        end
+    end
+
+    -- Render quest action rows
+    local hasActions = #actions > 0
+
+    if LWCPQuestActionsHeader then
+        if hasActions then
+            LWCPQuestActionsHeader:ClearAllPoints()
+            LWCPQuestActionsHeader:SetPoint("TOP", LWCPPageNPC, "TOP", 0, -currentTop)
+            LWCPQuestActionsHeader:Show()
+            currentTop = currentTop + 20
+        else
+            LWCPQuestActionsHeader:Hide()
+        end
+    end
+
+    for rowIdx, row in ipairs(LW_QuestActionRows) do
+        row:ClearAllPoints()
+        row:SetPoint("TOP", LWCPPageNPC, "TOP", 0, -currentTop)
+        local data = actions[rowIdx]
+        if data then
+            local labelText = data.botName .. " - " .. data.questTitle
+            row.label:SetText(labelText)
+
+            local btn = row.actionBtn
+            btn.botName = data.botName
+            btn.questId = data.questId
+            btn.questTitle = data.questTitle
+            btn.actionType = data.actionType
+            btn.hasChoices = data.hasChoices
+
+            if data.actionType == "TURNIN" then
+                btn:SetText("Turn In")
+            else
+                btn:SetText("Pick Up")
+            end
+
+            row:Show()
+            currentTop = currentTop + 22
+        else
+            row.label:SetText("")
+            row.actionBtn.botName = nil
+            row.actionBtn.questId = nil
+            row.actionBtn.questTitle = nil
+            row.actionBtn.actionType = nil
+            row.actionBtn.hasChoices = nil
+            row.actionBtn:SetText("")
+            row:Hide()
+        end
+    end
+
+    -- Position reward rows below quest action rows
+    local actionsBottom = currentTop
+
+    if LWCPQuestRewardsHeader then
+        LWCPQuestRewardsHeader:ClearAllPoints()
+        LWCPQuestRewardsHeader:SetPoint("TOP", LWCPPageNPC, "TOP", 0, -actionsBottom)
+        if #rewards > 0 then
+            LWCPQuestRewardsHeader:Show()
+        else
+            LWCPQuestRewardsHeader:Hide()
+        end
+    end
+
+    local rewardsStartY = actionsBottom + 16
+
+    -- Empty text shown only when both sections are empty
+    if LWCPQuestsEmptyText then
+        if #trainActions == 0 and #actions == 0 and #rewards == 0 then
+            LWCPQuestsEmptyText:SetText(
+                (LW_TrainActionsReady or LW_QuestActionsReady)
+                    and "No NPC actions available.\nTarget a quest giver or trainer to see options."
+                    or "No pending NPC actions.")
+            LWCPQuestsEmptyText:Show()
+        else
+            LWCPQuestsEmptyText:Hide()
+        end
+    end
+
+    -- Render reward choice rows
+    for rowIdx, row in ipairs(LW_QuestRows) do
+        row:ClearAllPoints()
+        if rowIdx == 1 then
+            row:SetPoint("TOP", LWCPPageNPC, "TOP", 0, -rewardsStartY)
+        else
+            row:SetPoint("TOP", LW_QuestRows[rowIdx - 1], "BOTTOM", 0, -6)
+        end
+
+        local data = rewards[rowIdx]
+        if data then
+            row:Show()
+            row.botText:SetText(data.botName)
+            row.questText:SetText("[" .. data.questId .. "] " .. data.questTitle)
+            row.emptyText:SetText("")
+
+            for choiceIdx, btn in ipairs(row.choiceButtons) do
+                local choice = data.choices[choiceIdx]
+                if choice then
+                    btn.botName = data.botName
+                    btn.questId = data.questId
+                    btn.choiceNumber = choice.choiceNumber
+                    btn.itemId = choice.itemId
+                    btn.countValue = choice.count
+
+                    local _, _, _, _, _, _, _, _, _, icon = GetItemInfo(choice.itemId)
+                    btn.icon:SetTexture(icon or "Interface\\Icons\\INV_Misc_QuestionMark")
+                    btn.icon:SetAlpha(icon and 1 or 0.6)
+                    if btn.count then
+                        if choice.count and choice.count > 1 then
+                            btn.count:SetText(choice.count)
+                        else
+                            btn.count:SetText("")
+                        end
+                    end
+                    btn:Show()
+                else
+                    btn.botName = nil
+                    btn.questId = nil
+                    btn.choiceNumber = nil
+                    btn.itemId = nil
+                    btn.countValue = nil
+                    btn.icon:SetTexture(nil)
+                    btn.icon:SetAlpha(0)
+                    if btn.count then btn.count:SetText("") end
+                    btn:Hide()
+                end
+            end
+        else
+            row:Hide()
+            row.botText:SetText("")
+            row.questText:SetText("")
+            row.emptyText:SetText("")
+            for _, btn in ipairs(row.choiceButtons) do
+                btn.botName = nil
+                btn.questId = nil
+                btn.choiceNumber = nil
+                btn.itemId = nil
+                btn.countValue = nil
+                btn.icon:SetTexture(nil)
+                btn.icon:SetAlpha(0)
+                if btn.count then btn.count:SetText("") end
+                btn:Hide()
+            end
+        end
+    end
 end
 
 -- -----------------------------------------------
@@ -845,6 +1796,143 @@ function LWCP_HandleAddonMsg(prefix, payload, channel, sender)
         parts[#parts + 1] = part
     end
 
+    if parts[1] == "QCLR" then
+        LW_QuestRewards = {}
+        if LWCPPageNPC and LWCPPageNPC:IsVisible() then
+            LWCP_RenderQuestsTab()
+        end
+        return
+    end
+
+    if parts[1] == "QMODE" then
+        LW_QuestMode = string.upper(parts[2] or "SMART")
+        LWCP_UpdateQuestModeButtons()
+        if LWCPPageNPC and LWCPPageNPC:IsVisible() then
+            LWCP_RenderQuestsTab()
+        end
+        return
+    end
+
+    if parts[1] == "QST" then
+        local reward = {
+            botName = parts[2] or "Unknown",
+            questId = tonumber(parts[3]) or 0,
+            questTitle = parts[4] or "Quest",
+            choices = {}
+        }
+
+        for i = 5, #parts do
+            local choiceNum, itemId, count = string.match(parts[i], "^(%d+):(%d+):(%d+)$")
+            if choiceNum and itemId and count then
+                reward.choices[#reward.choices + 1] = {
+                    choiceNumber = tonumber(choiceNum),
+                    itemId = tonumber(itemId),
+                    count = tonumber(count),
+                }
+            end
+        end
+
+        LW_QuestRewards[#LW_QuestRewards + 1] = reward
+        if LWCPPageNPC and LWCPPageNPC:IsVisible() then
+            LWCP_RenderQuestsTab()
+        end
+        return
+    end
+
+    if parts[1] == "QEND" then
+        if LWCPPageNPC and LWCPPageNPC:IsVisible() then
+            LWCP_RenderQuestsTab()
+        end
+        return
+    end
+
+    if parts[1] == "QACLR" then
+        LW_QuestActions = {}
+        LW_QuestActionsReady = false
+        return
+    end
+
+    if parts[1] == "TACLR" then
+        LW_TrainPendingActions = {}
+        LW_TrainPendingBotGold = {}
+        LW_TrainPendingOwnerGold = 0
+        LW_TrainActionsReady = false
+        LWCP_UpdateNPCDebugText()
+        return
+    end
+
+    if parts[1] == "TABOT" then
+        local botName = parts[2] or "Unknown"
+        LW_TrainPendingBotGold[botName] = tonumber(parts[3]) or 0
+        LWCP_UpdateNPCDebugText()
+        return
+    end
+
+    if parts[1] == "TA" then
+        LW_TrainPendingActions[#LW_TrainPendingActions + 1] = {
+            botName = parts[2] or "Unknown",
+            trainerSpellId = tonumber(parts[3]) or 0,
+            spellLabel = parts[4] or "Spell",
+            cost = tonumber(parts[5]) or 0,
+        }
+        LWCP_UpdateNPCDebugText()
+        return
+    end
+
+    if parts[1] == "TAEND" then
+        LW_TrainPendingOwnerGold = tonumber(parts[2]) or 0
+        if #LW_TrainPendingActions > 0 or #LW_TrainActions == 0 then
+            LW_TrainActions = LW_TrainPendingActions
+            LW_TrainBotGold = LW_TrainPendingBotGold
+            LW_TrainOwnerGold = LW_TrainPendingOwnerGold
+        end
+        LW_TrainActionsReady = true
+        if LW_PendingTrainerAlert then
+            if #LW_TrainPendingActions > 0 then
+                local bots = {}
+                local seen = {}
+                for _, action in ipairs(LW_TrainPendingActions) do
+                    if action.botName and not seen[action.botName] then
+                        seen[action.botName] = true
+                        bots[#bots + 1] = action.botName
+                    end
+                end
+                DEFAULT_CHAT_FRAME:AddMessage("|cff00cc44LWCP:|r Trainer spells available for " .. table.concat(bots, ", ") .. ". Open the NPC tab or use Train All.")
+            end
+            LW_PendingTrainerAlert = false
+        end
+        LWCP_UpdateNPCDebugText()
+        if LWCPPageNPC and LWCPPageNPC:IsVisible() then
+            LWCP_RenderQuestsTab()
+        end
+        if LW_TrainerDebugFrame and LW_TrainerDebugFrame:IsVisible() then
+            LWCP_RenderTrainerDebugWindow()
+        elseif #LW_TrainActions > 0 then
+            LWCP_ShowTrainerWindow()
+        end
+        return
+    end
+
+    if parts[1] == "QA" then
+        local action = {
+            botName = parts[2] or "Unknown",
+            questId = tonumber(parts[3]) or 0,
+            questTitle = parts[4] or "Quest",
+            actionType = parts[5] or "PICKUP",
+            hasChoices = (parts[6] == "CHOICES"),
+        }
+        LW_QuestActions[#LW_QuestActions + 1] = action
+        return
+    end
+
+    if parts[1] == "QAEND" then
+        LW_QuestActionsReady = true
+        if LWCPPageNPC and LWCPPageNPC:IsVisible() then
+            LWCP_RenderQuestsTab()
+        end
+        return
+    end
+
     if parts[1] ~= "INV" then return end
 
     local botName = parts[2] or "Unknown"
@@ -947,4 +2035,3 @@ function LWCP_UnequipItem(guidLow)
     end
     SendChatMessage(CMD_LWBOT .. GetBotRef() .. " unequip " .. guidLow)
 end
-

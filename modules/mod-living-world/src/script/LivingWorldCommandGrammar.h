@@ -179,6 +179,71 @@ struct BotUnequipCommand
     std::uint32_t itemGuidLow;
 };
 
+// "questactions" — query the owner's current target (quest giver NPC) for
+// bot-specific quest pick-up and turn-in opportunities.
+struct QuestActionsCommand
+{
+};
+
+// "<position|name> pickup <questId>" — have a bot accept a specific quest
+// from the owner's targeted quest giver.
+struct BotQuestPickupCommand
+{
+    BotRef botRef;
+    std::uint32_t questId = 0;
+};
+
+// "<position|name> turnin <questId>" — have a bot turn in a completed quest
+// to the owner's targeted quest giver.
+struct BotQuestTurninCommand
+{
+    BotRef botRef;
+    std::uint32_t questId = 0;
+};
+
+// "trainactions" — query the owner's current target (trainer NPC) for
+// bot-specific spell training opportunities.
+struct TrainActionsCommand
+{
+};
+
+// "<position|name> trainspell <trainerSpellId>" — have a bot learn a single
+// spell from the owner's targeted trainer NPC.
+struct BotTrainSpellCommand
+{
+    BotRef botRef;
+    std::uint32_t trainerSpellId = 0;
+};
+
+// "<position|name> trainall" — have a bot learn all available spells from the
+// owner's targeted trainer NPC.
+struct BotTrainAllCommand
+{
+    BotRef botRef;
+};
+
+// "quests" - request the current pending bot quest reward choices plus the
+// owner's current smart/manual reward mode.
+struct QuestRewardsCommand
+{
+};
+
+// "questmode <smart|manual>" - change the default reward mode used when the
+// owner turns in a quest for active bots.
+struct QuestRewardModeSetCommand
+{
+    bool smartMode = true;
+};
+
+// "<position|name> reward <questId> <choiceNumber>" - manually reward a
+// completed bot quest using the selected 1-based reward choice number.
+struct BotRewardChoiceCommand
+{
+    BotRef botRef;
+    std::uint32_t questId = 0;
+    std::uint8_t choiceNumber = 0;
+};
+
 using ParsedCommand = std::variant<
     CommandParseError,
     RosterListCommand,
@@ -196,7 +261,16 @@ using ParsedCommand = std::variant<
     BotBagsCommand,
     BotRetrieveCommand,
     BotEquipCommand,
-    BotUnequipCommand>;
+    BotUnequipCommand,
+    QuestActionsCommand,
+    BotQuestPickupCommand,
+    BotQuestTurninCommand,
+    TrainActionsCommand,
+    BotTrainSpellCommand,
+    BotTrainAllCommand,
+    QuestRewardsCommand,
+    QuestRewardModeSetCommand,
+    BotRewardChoiceCommand>;
 
 // Parse a raw command argument string (everything after `.lwbot `). The
 // input is expected to be trimmed of the command prefix but may still

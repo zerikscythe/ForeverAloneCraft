@@ -266,6 +266,44 @@ TEST(LivingWorldCommandGrammarTest, BotCastParsesNameAndSingleWordSpell)
     EXPECT_FALSE(cast->targetName.has_value());
 }
 
+TEST(LivingWorldCommandGrammarTest, QuestRewardsParses)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("quests");
+
+    EXPECT_NE(std::get_if<QuestRewardsCommand>(&cmd), nullptr);
+}
+
+TEST(LivingWorldCommandGrammarTest, QuestRewardModeParsesSmart)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("questmode smart");
+
+    auto const* mode = std::get_if<QuestRewardModeSetCommand>(&cmd);
+    ASSERT_NE(mode, nullptr);
+    EXPECT_TRUE(mode->smartMode);
+}
+
+TEST(LivingWorldCommandGrammarTest, QuestRewardModeParsesManual)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("questmode manual");
+
+    auto const* mode = std::get_if<QuestRewardModeSetCommand>(&cmd);
+    ASSERT_NE(mode, nullptr);
+    EXPECT_FALSE(mode->smartMode);
+}
+
+TEST(LivingWorldCommandGrammarTest, BotRewardChoiceParses)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("thrall reward 8325 2");
+
+    auto const* reward = std::get_if<BotRewardChoiceCommand>(&cmd);
+    ASSERT_NE(reward, nullptr);
+    auto const* name = std::get_if<std::string>(&reward->botRef);
+    ASSERT_NE(name, nullptr);
+    EXPECT_EQ(*name, "Thrall");
+    EXPECT_EQ(reward->questId, 8325u);
+    EXPECT_EQ(reward->choiceNumber, 2u);
+}
+
 TEST(LivingWorldCommandGrammarTest, BotCastParsesMultiWordSpellName)
 {
     ParsedCommand cmd = ParseLivingWorldCommand("1 cast Death Strike");
@@ -427,6 +465,105 @@ TEST(LivingWorldCommandGrammarTest, BotRetrieveRejectsZeroCount)
 TEST(LivingWorldCommandGrammarTest, BotUnequipRejectsNonNumericGuid)
 {
     ParsedCommand cmd = ParseLivingWorldCommand("1 unequip abc");
+
+    auto const* error = std::get_if<CommandParseError>(&cmd);
+    ASSERT_NE(error, nullptr);
+    EXPECT_EQ(error->kind, CommandParseErrorKind::InvalidArgument);
+}
+TEST(LivingWorldCommandGrammarTest, QuestActionsParses)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("questactions");
+
+    EXPECT_NE(std::get_if<QuestActionsCommand>(&cmd), nullptr);
+}
+
+TEST(LivingWorldCommandGrammarTest, TrainActionsParses)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("trainactions");
+
+    EXPECT_NE(std::get_if<TrainActionsCommand>(&cmd), nullptr);
+}
+
+TEST(LivingWorldCommandGrammarTest, BotTrainSpellParsesNameAndSpellId)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("Theron trainspell 1234");
+
+    auto const* trainSpell = std::get_if<BotTrainSpellCommand>(&cmd);
+    ASSERT_NE(trainSpell, nullptr);
+    auto const* name = std::get_if<std::string>(&trainSpell->botRef);
+    ASSERT_NE(name, nullptr);
+    EXPECT_EQ(*name, "Theron");
+    EXPECT_EQ(trainSpell->trainerSpellId, 1234u);
+}
+
+TEST(LivingWorldCommandGrammarTest, BotTrainAllParsesPosition)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("2 trainall");
+
+    auto const* trainAll = std::get_if<BotTrainAllCommand>(&cmd);
+    ASSERT_NE(trainAll, nullptr);
+    auto const* pos = std::get_if<std::uint32_t>(&trainAll->botRef);
+    ASSERT_NE(pos, nullptr);
+    EXPECT_EQ(*pos, 2u);
+}
+
+TEST(LivingWorldCommandGrammarTest, BotPickupParsesPositionAndQuestId)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 pickup 783");
+
+    auto const* pickup = std::get_if<BotQuestPickupCommand>(&cmd);
+    ASSERT_NE(pickup, nullptr);
+    auto const* pos = std::get_if<std::uint32_t>(&pickup->botRef);
+    ASSERT_NE(pos, nullptr);
+    EXPECT_EQ(*pos, 1u);
+    EXPECT_EQ(pickup->questId, 783u);
+}
+
+TEST(LivingWorldCommandGrammarTest, BotPickupParsesNameAndQuestId)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("Theron pickup 456");
+
+    auto const* pickup = std::get_if<BotQuestPickupCommand>(&cmd);
+    ASSERT_NE(pickup, nullptr);
+    auto const* name = std::get_if<std::string>(&pickup->botRef);
+    ASSERT_NE(name, nullptr);
+    EXPECT_EQ(*name, "Theron");
+    EXPECT_EQ(pickup->questId, 456u);
+}
+
+TEST(LivingWorldCommandGrammarTest, BotPickupRejectsMissingQuestId)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 pickup");
+
+    auto const* error = std::get_if<CommandParseError>(&cmd);
+    ASSERT_NE(error, nullptr);
+    EXPECT_EQ(error->kind, CommandParseErrorKind::MissingArgument);
+}
+
+TEST(LivingWorldCommandGrammarTest, BotTurninParsesPositionAndQuestId)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("2 turnin 100");
+
+    auto const* turnin = std::get_if<BotQuestTurninCommand>(&cmd);
+    ASSERT_NE(turnin, nullptr);
+    auto const* pos = std::get_if<std::uint32_t>(&turnin->botRef);
+    ASSERT_NE(pos, nullptr);
+    EXPECT_EQ(*pos, 2u);
+    EXPECT_EQ(turnin->questId, 100u);
+}
+
+TEST(LivingWorldCommandGrammarTest, BotTurninRejectsMissingQuestId)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 turnin");
+
+    auto const* error = std::get_if<CommandParseError>(&cmd);
+    ASSERT_NE(error, nullptr);
+    EXPECT_EQ(error->kind, CommandParseErrorKind::MissingArgument);
+}
+
+TEST(LivingWorldCommandGrammarTest, BotTurninRejectsNonNumericQuestId)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 turnin abc");
 
     auto const* error = std::get_if<CommandParseError>(&cmd);
     ASSERT_NE(error, nullptr);

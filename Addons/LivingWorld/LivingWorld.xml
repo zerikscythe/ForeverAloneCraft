@@ -1,7 +1,5 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-    <Script file="LivingWorld.lua" />
-
     <Button name="LWCPItemSlotTemplate" virtual="true">
         <Size x="28" y="28" />
         <Layers>
@@ -40,6 +38,36 @@
             </Layer>
         </Layers>
     </Button>
+
+    <Frame name="LWCPNPCActionsRowTemplate" virtual="true">
+        <Size x="216" y="20" />
+        <Layers>
+            <Layer level="OVERLAY">
+                <FontString name="$parentLabel" inherits="GameFontHighlightSmall">
+                    <Size x="112" y="18" />
+                    <Anchors>
+                        <Anchor point="LEFT"><Offset><AbsDimension x="4" y="0" /></Offset></Anchor>
+                    </Anchors>
+                    <JustifyH>LEFT</JustifyH>
+                </FontString>
+                <FontString name="$parentCost" inherits="GameFontNormalSmall">
+                    <Size x="44" y="18" />
+                    <Anchors>
+                        <Anchor point="RIGHT"><Offset><AbsDimension x="-54" y="0" /></Offset></Anchor>
+                    </Anchors>
+                    <JustifyH>RIGHT</JustifyH>
+                </FontString>
+            </Layer>
+        </Layers>
+        <Frames>
+            <Button name="$parentButton" inherits="UIPanelButtonTemplate" text="Learn">
+                <Size x="50" y="18" />
+                <Anchors>
+                    <Anchor point="RIGHT"><Offset><AbsDimension x="-2" y="0" /></Offset></Anchor>
+                </Anchors>
+            </Button>
+        </Frames>
+    </Frame>
 
     <Button name="LWCPCompactBagSlotTemplate" virtual="true">
         <Size x="26" y="26" />
@@ -163,15 +191,22 @@
                 this:RegisterEvent("CHAT_MSG_SYSTEM");
                 this:RegisterEvent("CHAT_MSG_ADDON");
                 this:RegisterEvent("MODIFIER_STATE_CHANGED");
+                this:RegisterEvent("PLAYER_TARGET_CHANGED");
+                this:RegisterEvent("TRAINER_SHOW");
+                this:RegisterEvent("TRAINER_CLOSED");
                 RegisterAddonMessagePrefix("LWBOT");
             </OnLoad>
             <OnDragStart>LWCPFrame:StartMoving();</OnDragStart>
             <OnDragStop>LWCPFrame:StopMovingOrSizing();</OnDragStop>
             <OnEvent>
+                if event == "PLAYER_LOGIN" then LWCP_HandlePlayerLogin() end
                 if event == "PLAYER_LOGIN" or event == "PARTY_MEMBERS_CHANGED" then LWCP_UpdateInventoryTabState() end
                 if event == "CHAT_MSG_SYSTEM" then LWCP_HandleSystemMsg(arg1) end
                 if event == "CHAT_MSG_ADDON" then LWCP_HandleAddonMsg(arg1, arg2, arg3, arg4) end
                 if event == "MODIFIER_STATE_CHANGED" then LWCP_HandleModifierStateChanged(arg1) end
+                if event == "PLAYER_TARGET_CHANGED" then LWCP_HandleTargetChanged() end
+                if event == "TRAINER_SHOW" then LWCP_HandleTrainerShow() end
+                if event == "TRAINER_CLOSED" then LWCP_HandleTrainerClosed() end
             </OnEvent>
             <OnShow>LWCP_RefreshRoster(); LWCP_ShowTab("Bots");</OnShow>
         </Scripts>
@@ -188,7 +223,7 @@
                     </Anchors>
                 </FontString>
                 <!-- Version -->
-                <FontString inherits="GameFontHighlightSmallOutline" text="v1.0">
+                <FontString inherits="GameFontHighlightSmallOutline" text="t7">
                     <Size x="40" y="14" />
                     <Anchors>
                         <Anchor point="BOTTOM" relativePoint="BOTTOM">
@@ -247,33 +282,41 @@
             <!-- Tab buttons                                             -->
             <!-- ====================================================== -->
             <Button name="LWCPTabBots" inherits="UIPanelButtonTemplate" text="Bots">
-                <Size x="52" y="22" />
+                <Size x="44" y="22" />
                 <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="-81" y="-72" /></Offset></Anchor>
+                    <Anchor point="TOP"><Offset><AbsDimension x="-88" y="-72" /></Offset></Anchor>
                 </Anchors>
                 <Scripts><OnClick>LWCP_ShowTab("Bots");</OnClick></Scripts>
             </Button>
 
             <Button name="LWCPTabCombat" inherits="UIPanelButtonTemplate" text="Combat">
-                <Size x="62" y="22" />
+                <Size x="52" y="22" />
                 <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="-22" y="-72" /></Offset></Anchor>
+                    <Anchor point="TOP"><Offset><AbsDimension x="-38" y="-72" /></Offset></Anchor>
                 </Anchors>
                 <Scripts><OnClick>LWCP_ShowTab("Combat");</OnClick></Scripts>
             </Button>
 
-            <Button name="LWCPTabGear" inherits="UIPanelButtonTemplate" text="Gear">
-                <Size x="52" y="22" />
+            <Button name="LWCPTabNPC" inherits="UIPanelButtonTemplate" text="NPC">
+                <Size x="44" y="22" />
                 <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="37" y="-72" /></Offset></Anchor>
+                    <Anchor point="TOP"><Offset><AbsDimension x="14" y="-72" /></Offset></Anchor>
+                </Anchors>
+                <Scripts><OnClick>LWCP_ShowTab("NPC");</OnClick></Scripts>
+            </Button>
+
+            <Button name="LWCPTabGear" inherits="UIPanelButtonTemplate" text="Gear">
+                <Size x="44" y="22" />
+                <Anchors>
+                    <Anchor point="TOP"><Offset><AbsDimension x="68" y="-72" /></Offset></Anchor>
                 </Anchors>
                 <Scripts><OnClick>LWCP_ShowTab("Gear");</OnClick></Scripts>
             </Button>
 
             <Button name="LWCPTabBags" inherits="UIPanelButtonTemplate" text="Bags">
-                <Size x="52" y="22" />
+                <Size x="44" y="22" />
                 <Anchors>
-                    <Anchor point="TOP"><Offset><AbsDimension x="94" y="-72" /></Offset></Anchor>
+                    <Anchor point="TOP"><Offset><AbsDimension x="114" y="-72" /></Offset></Anchor>
                 </Anchors>
                 <Scripts><OnClick>LWCP_ShowTab("Bags");</OnClick></Scripts>
             </Button>
@@ -481,6 +524,110 @@
                             <Anchor point="TOP"><Offset><AbsDimension x="83" y="-224" /></Offset></Anchor>
                         </Anchors>
                         <Scripts><OnClick>LWCP_CastOnSelf();</OnClick></Scripts>
+                    </Button>
+                </Frames>
+            </Frame>
+
+            <!-- ====================================================== -->
+            <!-- PAGE: NPC                                               -->
+            <!-- ====================================================== -->
+            <Frame name="LWCPPageNPC" hidden="true">
+                <Size x="240" y="300" />
+                <Anchors>
+                    <Anchor point="TOP"><Offset><AbsDimension x="0" y="-100" /></Offset></Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnLoad>LWCP_InitQuestsPage(this);</OnLoad>
+                </Scripts>
+                <Layers>
+                    <Layer level="OVERLAY">
+                        <FontString name="LWCPTrainActionsHeader" inherits="GameFontNormal" text="-- Trainer Actions --" hidden="true">
+                            <Size x="216" y="16" />
+                            <Anchors>
+                                <Anchor point="CENTER" relativePoint="TOP">
+                                    <Offset><AbsDimension x="0" y="-10" /></Offset>
+                                </Anchor>
+                            </Anchors>
+                        </FontString>
+                        <FontString name="LWCPQuestActionsHeader" inherits="GameFontNormal" text="-- Quest Actions --" hidden="true">
+                            <Size x="216" y="16" />
+                            <Anchors>
+                                <Anchor point="CENTER" relativePoint="TOP">
+                                    <Offset><AbsDimension x="0" y="-10" /></Offset>
+                                </Anchor>
+                            </Anchors>
+                        </FontString>
+                        <FontString name="LWCPQuestRewardsHeader" inherits="GameFontNormal" text="-- Reward Choices --" hidden="true">
+                            <Size x="216" y="16" />
+                            <Anchors>
+                                <Anchor point="TOP"><Offset><AbsDimension x="0" y="-56" /></Offset></Anchor>
+                            </Anchors>
+                        </FontString>
+                        <FontString name="LWCPQuestsEmptyText" inherits="GameFontDisableSmall" text="No pending reward choices.">
+                            <Size x="216" y="32" />
+                            <Anchors>
+                                <Anchor point="TOP"><Offset><AbsDimension x="0" y="-40" /></Offset></Anchor>
+                            </Anchors>
+                        </FontString>
+                        <FontString name="LWCPNPCDebugText" inherits="GameFontDisableSmall" text="TA rows: 0 | pending: 0 | ready: no">
+                            <Size x="216" y="14" />
+                            <Anchors>
+                                <Anchor point="BOTTOM"><Offset><AbsDimension x="0" y="46" /></Offset></Anchor>
+                            </Anchors>
+                        </FontString>
+                    </Layer>
+                </Layers>
+                <Frames>
+                    <Frame name="LWCPNPCTrainRow1" inherits="LWCPNPCActionsRowTemplate">
+                        <Anchors><Anchor point="TOP"><Offset><AbsDimension x="0" y="-34" /></Offset></Anchor></Anchors>
+                    </Frame>
+                    <Frame name="LWCPNPCTrainRow2" inherits="LWCPNPCActionsRowTemplate">
+                        <Anchors><Anchor point="TOP"><Offset><AbsDimension x="0" y="-56" /></Offset></Anchor></Anchors>
+                    </Frame>
+                    <Frame name="LWCPNPCTrainRow3" inherits="LWCPNPCActionsRowTemplate">
+                        <Anchors><Anchor point="TOP"><Offset><AbsDimension x="0" y="-78" /></Offset></Anchor></Anchors>
+                    </Frame>
+                    <Frame name="LWCPNPCTrainRow4" inherits="LWCPNPCActionsRowTemplate">
+                        <Anchors><Anchor point="TOP"><Offset><AbsDimension x="0" y="-100" /></Offset></Anchor></Anchors>
+                    </Frame>
+                    <Frame name="LWCPNPCTrainRow5" inherits="LWCPNPCActionsRowTemplate">
+                        <Anchors><Anchor point="TOP"><Offset><AbsDimension x="0" y="-122" /></Offset></Anchor></Anchors>
+                    </Frame>
+                    <Frame name="LWCPNPCTrainRow6" inherits="LWCPNPCActionsRowTemplate">
+                        <Anchors><Anchor point="TOP"><Offset><AbsDimension x="0" y="-144" /></Offset></Anchor></Anchors>
+                    </Frame>
+                    <Frame name="LWCPNPCTrainRow7" inherits="LWCPNPCActionsRowTemplate">
+                        <Anchors><Anchor point="TOP"><Offset><AbsDimension x="0" y="-166" /></Offset></Anchor></Anchors>
+                    </Frame>
+                    <Frame name="LWCPNPCTrainRow8" inherits="LWCPNPCActionsRowTemplate">
+                        <Anchors><Anchor point="TOP"><Offset><AbsDimension x="0" y="-188" /></Offset></Anchor></Anchors>
+                    </Frame>
+                    <Frame name="LWCPNPCTrainRow9" inherits="LWCPNPCActionsRowTemplate">
+                        <Anchors><Anchor point="TOP"><Offset><AbsDimension x="0" y="-210" /></Offset></Anchor></Anchors>
+                    </Frame>
+                    <Frame name="LWCPNPCTrainRow10" inherits="LWCPNPCActionsRowTemplate">
+                        <Anchors><Anchor point="TOP"><Offset><AbsDimension x="0" y="-232" /></Offset></Anchor></Anchors>
+                    </Frame>
+                    <Button name="LWCPNPCTrainAll" inherits="UIPanelButtonTemplate" text="Train All">
+                        <Size x="72" y="24" />
+                        <Anchors>
+                            <Anchor point="BOTTOMLEFT"><Offset><AbsDimension x="44" y="18" /></Offset></Anchor>
+                        </Anchors>
+                        <Scripts><OnClick>LWCP_TrainSelectedAtTarget();</OnClick></Scripts>
+                    </Button>
+                    <Button name="LWCPNPCTrainerDebug" inherits="UIPanelButtonTemplate" text="Trainer">
+                        <Size x="70" y="22" />
+                        <Anchors>
+                            <Anchor point="BOTTOM"><Offset><AbsDimension x="0" y="48" /></Offset></Anchor>
+                        </Anchors>
+                        <Scripts><OnClick>LWCP_ShowTrainerWindow();</OnClick></Scripts>
+                    </Button>
+                    <Button name="LWCPQuestsRefresh" inherits="UIPanelButtonTemplate" text="Refresh">
+                        <Size x="70" y="24" />
+                        <Anchors>
+                            <Anchor point="BOTTOMRIGHT"><Offset><AbsDimension x="-44" y="18" /></Offset></Anchor>
+                        </Anchors>
+                        <Scripts><OnClick>LWCP_RequestTrainActions(); LWCP_RequestQuestRewards(); LWCP_RequestQuestActions(); if LWCP_RenderTrainerDebugWindow then LWCP_RenderTrainerDebugWindow(); end</OnClick></Scripts>
                     </Button>
                 </Frames>
             </Frame>
@@ -719,6 +866,22 @@
                                 </Anchor>
                             </Anchors>
                         </FontString>
+                        <FontString inherits="GameFontNormal" text="-- Quest Reward Mode --">
+                            <Size x="216" y="16" />
+                            <Anchors>
+                                <Anchor point="CENTER" relativePoint="TOP">
+                                    <Offset><AbsDimension x="0" y="-112" /></Offset>
+                                </Anchor>
+                            </Anchors>
+                        </FontString>
+                        <FontString name="LWCPQuestModeLabel" inherits="GameFontHighlightSmall" text="Mode: SMART">
+                            <Size x="216" y="16" />
+                            <Anchors>
+                                <Anchor point="CENTER" relativePoint="TOP">
+                                    <Offset><AbsDimension x="0" y="-134" /></Offset>
+                                </Anchor>
+                            </Anchors>
+                        </FontString>
                     </Layer>
                 </Layers>
                 <Frames>
@@ -741,6 +904,20 @@
                             <Anchor point="TOP"><Offset><AbsDimension x="56" y="-44" /></Offset></Anchor>
                         </Anchors>
                         <Scripts><OnClick>LWCP_LogInc();</OnClick></Scripts>
+                    </Button>
+                    <Button name="LWCPQuestModeSmart" inherits="UIPanelButtonTemplate" text="Smart">
+                        <Size x="70" y="24" />
+                        <Anchors>
+                            <Anchor point="TOP"><Offset><AbsDimension x="-42" y="-160" /></Offset></Anchor>
+                        </Anchors>
+                        <Scripts><OnClick>LWCP_SetQuestMode("SMART");</OnClick></Scripts>
+                    </Button>
+                    <Button name="LWCPQuestModeManual" inherits="UIPanelButtonTemplate" text="Manual">
+                        <Size x="70" y="24" />
+                        <Anchors>
+                            <Anchor point="TOP"><Offset><AbsDimension x="42" y="-160" /></Offset></Anchor>
+                        </Anchors>
+                        <Scripts><OnClick>LWCP_SetQuestMode("MANUAL");</OnClick></Scripts>
                     </Button>
                 </Frames>
             </Frame>

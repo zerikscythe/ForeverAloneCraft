@@ -34,6 +34,14 @@ Do not assume an older commit or older local script from another machine will
 configure or deploy correctly on this machine without re-checking paths and
 runtime DLL choices.
 
+## Important validation nuance
+
+- The local MySQL instance on the workstation is not always the authoritative
+  live gameplay database.
+- When validating live character state, confirm whether the active data is on a
+  separate server machine before drawing conclusions from local DB rows.
+- Do not store passwords or private connection details in repo docs.
+
 The most important issue discovered on `Vajjination` was:
 
 - `RelWithDebInfo` could incorrectly link against debug Boost import libraries
@@ -121,6 +129,39 @@ These came out of debugging duplicate bot requests and roster confusion:
 - If a bot appears "already online" unexpectedly, verify whether the command
   path is pointing at the current active bot, the requested roster slot, or a
   pending login rather than assuming the spawn itself is broken.
+
+## Current LivingWorld quest status
+
+Recent completed work:
+
+- owner quest accept now mirrors to eligible active account-alt bots
+- clone -> source quest sync now preserves active quests and progress counters
+  correctly on dismiss/logout
+- bot quest completion now syncs back immediately through
+  `LivingWorldPlayerScript::OnPlayerCompleteQuest`
+- reward-choice quests now have a smart/manual bot reward system
+- the addon now includes a `Quests` tab for pending bot reward choices
+
+Smart/manual reward details:
+
+- default mode is `smart`
+- smart mode auto-picks a clear best reward by class/item fit
+- ambiguous or poor-fit rewards remain pending for manual choice
+- manual mode forces all choice rewards to wait for player selection
+- reward selections can be driven from:
+  - `.lwbot quests`
+  - `.lwbot questmode <smart|manual>`
+  - `.lwbot <bot> reward <questId> <choiceNumber>`
+
+Current next quest slice:
+
+- extend the `Quests` tab from reward-choice handling into a quest-actions
+  panel
+- use the owner's current target quest giver as the lookup anchor
+- show bot-specific `Pick Up` / `Turn In` actions for quests the active bots
+  can take or complete, including class-specific follow-up quests
+- keep auto-pickup off by default; prefer explicit player confirmation from the
+  panel
 
 ## Practical rule
 
