@@ -13,11 +13,14 @@
 //   .lwbot roster dismiss <rosterEntryId>
 //   .lwbot <position|name> profile <1-10>
 //   .lwbot <position|name> cast <Ability Name> [on <target>]
+//   .lwbot <position|name> mode assist|passive|hold|guard
 //
 // The parser intentionally produces a structured command object rather
 // than executing anything. Parse errors are returned as a dedicated
 // variant alternative so callers can render a precise error message
 // without exception handling.
+
+#include "model/BotCombatMode.h"
 
 #include <cstdint>
 #include <optional>
@@ -253,6 +256,17 @@ struct BotRewardChoiceCommand
     std::uint8_t choiceNumber = 0;
 };
 
+// "<position|name> mode assist|passive|hold|guard"
+//
+// Changes the bot's combat stance immediately. Stored in BotPlayerRegistry
+// and consulted at the top of every CompanionAI tick.
+struct BotModeSetCommand
+{
+    BotRef botRef;
+    model::BotCombatMode mode = model::BotCombatMode::Assist;
+};
+
+
 using ParsedCommand = std::variant<
     CommandParseError,
     RosterListCommand,
@@ -280,7 +294,9 @@ using ParsedCommand = std::variant<
     BotTrainAllCommand,
     QuestRewardsCommand,
     QuestRewardModeSetCommand,
-    BotRewardChoiceCommand>;
+    BotRewardChoiceCommand,
+    BotModeSetCommand>;
+
 
 // Parse a raw command argument string (everything after `.lwbot `). The
 // input is expected to be trimmed of the command prefix but may still

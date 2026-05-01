@@ -10,6 +10,8 @@
 #include "SharedDefines.h"
 #include "SpellMgr.h"
 #include "Unit.h"
+#include "model/BotCombatMode.h"
+#include "service/BotPlayerRegistry.h"
 
 #include <array>
 #include <chrono>
@@ -1013,12 +1015,55 @@ Unit* ResolveAssistTarget(Player* bot, Player* owner)
     return nullptr;
 }
 
+// Picks up an attacker that is currently hitting the owner, preferring the
+// bot's current victim if it qualifies. Used by Guard mode.
+Unit* ResolveGuardTarget(Player* bot, Player* owner)
+{
+    if (Unit* current = bot->GetVictim())
+    {
+        if (IsValidAssistTarget(owner, current))
+            return current;
+    }
+
+    for (Unit* attacker : owner->getAttackers())
+    {
+        if (IsValidAssistTarget(owner, attacker))
+            return attacker;
+    }
+
+    return nullptr;
+}
+
 // ---------------------------------------------------------------
 // Main tick
 // ---------------------------------------------------------------
 
 void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConserving)
 {
+    model::BotCombatMode const mode =
+        service::BotPlayerRegistry::Instance().GetBotMode(owner->GetGUID());
+
+    // Hold: stop all combat and stand still.
+    if (mode == model::BotCombatMode::Hold)
+    {
+        if (bot->GetVictim())
+            bot->AttackStop();
+        bot->GetMotionMaster()->Clear(false);
+        return;
+    }
+
+    // Passive: follow and buff, never engage.
+    if (mode == model::BotCombatMode::Passive)
+    {
+        if (bot->GetVictim())
+            bot->AttackStop();
+        TryApplyOutOfCombatBuff(bot, owner);
+        if (!bot->IsNonMeleeSpellCast(false)
+            && !bot->IsWithinDistInMap(owner, RepositionDistance))
+            bot->GetMotionMaster()->MoveFollow(owner, FollowDistance, FollowAngle);
+        return;
+    }
+
     BotCombatRole const role = GetCombatRole(bot->getClass());
 
     // Pure healers: heal first, then optionally attack based on mana.
@@ -1092,7 +1137,9 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
         return;
     }
 
-    Unit* const assistTarget = ResolveAssistTarget(bot, owner);
+    Unit* const assistTarget = (mode == model::BotCombatMode::Guard)
+        ? ResolveGuardTarget(bot, owner)
+        : ResolveAssistTarget(bot, owner);
 
     if (assistTarget)
     {

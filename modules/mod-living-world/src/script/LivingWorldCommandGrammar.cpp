@@ -521,11 +521,43 @@ ParsedCommand ParseBotActionCommand(BotRef botRef, std::string_view remaining)
         return cmd;
     }
 
+    // "mode assist|passive|hold|guard" path.
+    if (secondToken == "mode")
+    {
+        std::string_view modeTok = ConsumeToken(remaining);
+        if (modeTok.empty())
+        {
+            return MakeError(
+                CommandParseErrorKind::MissingArgument,
+                "mode required: assist, passive, hold, or guard");
+        }
+
+        model::BotCombatMode mode;
+        if (modeTok == "assist")
+            mode = model::BotCombatMode::Assist;
+        else if (modeTok == "passive")
+            mode = model::BotCombatMode::Passive;
+        else if (modeTok == "hold")
+            mode = model::BotCombatMode::Hold;
+        else if (modeTok == "guard")
+            mode = model::BotCombatMode::Guard;
+        else
+            return MakeError(
+                CommandParseErrorKind::InvalidArgument,
+                std::string("unknown mode '") + std::string(modeTok) +
+                    "'; expected assist, passive, hold, or guard");
+
+        BotModeSetCommand cmd;
+        cmd.botRef = std::move(botRef);
+        cmd.mode   = mode;
+        return cmd;
+    }
+
     return MakeError(
         CommandParseErrorKind::UnknownVerb,
         std::string("expected 'profile', 'cast', 'attack', 'disengage', 'train', 'retreat', "
                     "'follow', 'refreshments', 'buff', 'bags', 'retrieve', 'equip', 'unequip', "
-                    "'pickup', 'turnin', 'trainspell', 'trainall', or 'reward', got: ") +
+                    "'pickup', 'turnin', 'trainspell', 'trainall', 'reward', or 'mode', got: ") +
             std::string(secondToken));
 }
 } // namespace

@@ -569,5 +569,70 @@ TEST(LivingWorldCommandGrammarTest, BotTurninRejectsNonNumericQuestId)
     ASSERT_NE(error, nullptr);
     EXPECT_EQ(error->kind, CommandParseErrorKind::InvalidArgument);
 }
+
+// BotModeSetCommand tests
+
+TEST(LivingWorldCommandGrammarTest, ModeAssistParsesByPosition)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 mode assist");
+
+    auto const* mode = std::get_if<BotModeSetCommand>(&cmd);
+    ASSERT_NE(mode, nullptr);
+    auto const* position = std::get_if<std::uint32_t>(&mode->botRef);
+    ASSERT_NE(position, nullptr);
+    EXPECT_EQ(*position, 1u);
+    EXPECT_EQ(mode->mode, model::BotCombatMode::Assist);
+}
+
+TEST(LivingWorldCommandGrammarTest, ModePassiveParsesByName)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("Thrall mode passive");
+
+    auto const* mode = std::get_if<BotModeSetCommand>(&cmd);
+    ASSERT_NE(mode, nullptr);
+    auto const* name = std::get_if<std::string>(&mode->botRef);
+    ASSERT_NE(name, nullptr);
+    EXPECT_EQ(*name, "Thrall");
+    EXPECT_EQ(mode->mode, model::BotCombatMode::Passive);
+}
+
+TEST(LivingWorldCommandGrammarTest, ModeHoldParsesByPosition)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("3 mode hold");
+
+    auto const* mode = std::get_if<BotModeSetCommand>(&cmd);
+    ASSERT_NE(mode, nullptr);
+    EXPECT_EQ(mode->mode, model::BotCombatMode::Hold);
+}
+
+TEST(LivingWorldCommandGrammarTest, ModeGuardParsesByName)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("arthas mode guard");
+
+    auto const* mode = std::get_if<BotModeSetCommand>(&cmd);
+    ASSERT_NE(mode, nullptr);
+    auto const* name = std::get_if<std::string>(&mode->botRef);
+    ASSERT_NE(name, nullptr);
+    EXPECT_EQ(*name, "Arthas");
+    EXPECT_EQ(mode->mode, model::BotCombatMode::Guard);
+}
+
+TEST(LivingWorldCommandGrammarTest, ModeRejectsMissingToken)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 mode");
+
+    auto const* error = std::get_if<CommandParseError>(&cmd);
+    ASSERT_NE(error, nullptr);
+    EXPECT_EQ(error->kind, CommandParseErrorKind::MissingArgument);
+}
+
+TEST(LivingWorldCommandGrammarTest, ModeRejectsUnknownToken)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 mode berserk");
+
+    auto const* error = std::get_if<CommandParseError>(&cmd);
+    ASSERT_NE(error, nullptr);
+    EXPECT_EQ(error->kind, CommandParseErrorKind::InvalidArgument);
+}
 } // namespace script
 } // namespace living_world

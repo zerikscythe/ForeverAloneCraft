@@ -132,6 +132,11 @@ void BotSayTargetNotFound(Player* bot)
     bot->Say(BotTargetNotFoundPhrases[idx], LANG_UNIVERSAL);
 }
 
+void BotSayModeAssist(Player* bot)  { if (bot) bot->Say("I got your back.", LANG_UNIVERSAL); }
+void BotSayModePassive(Player* bot) { if (bot) bot->Say("Staying out of it.", LANG_UNIVERSAL); }
+void BotSayModeHold(Player* bot)    { if (bot) bot->Say("Not moving.", LANG_UNIVERSAL); }
+void BotSayModeGuard(Player* bot)   { if (bot) bot->Say("Nobody touches you.", LANG_UNIVERSAL); }
+
 struct CommitExecutionSummary
 {
     std::uint32_t spawned = 0;
@@ -283,6 +288,7 @@ void RenderUsage(ChatHandler* handler)
     handler->PSendSysMessage("  .lwbot quests");
     handler->PSendSysMessage("  .lwbot questmode <smart|manual>");
     handler->PSendSysMessage("  .lwbot <#|name> reward <questId> <choiceNumber>");
+    handler->PSendSysMessage("  .lwbot <#|name> mode assist|passive|hold|guard");
 }
 
 std::string_view TrimRootWhitespace(std::string_view input)
@@ -1332,6 +1338,38 @@ std::uint32_t ResolveSpellByName(Player const* bot, std::string const& name)
     }
 
     return bestSpellId;
+}
+
+void HandleBotModeSet(
+    ChatHandler* handler,
+    BotModeSetCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld bot mode commands require an in-game player.");
+        return;
+    }
+
+    Player* bot = service::BotPlayerRegistry::Instance().FindBotForOwner(
+        player->GetGUID());
+    if (!bot)
+    {
+        handler->PSendSysMessage(
+            "LivingWorld no active bot. Use '.lwbot request <id>' first.");
+        return;
+    }
+
+    service::BotPlayerRegistry::Instance().SetBotMode(player->GetGUID(), command.mode);
+
+    switch (command.mode)
+    {
+        case model::BotCombatMode::Assist:  BotSayModeAssist(bot);  break;
+        case model::BotCombatMode::Passive: BotSayModePassive(bot); break;
+        case model::BotCombatMode::Hold:    BotSayModeHold(bot);    break;
+        case model::BotCombatMode::Guard:   BotSayModeGuard(bot);   break;
+    }
 }
 
 void HandleBotCast(
@@ -3604,6 +3642,13 @@ bool HandleParsedCommand(
         std::get_if<BotRewardChoiceCommand>(&parsed))
     {
         HandleBotRewardChoice(handler, *command);
+        return true;
+    }
+
+    if (BotModeSetCommand const* command =
+        std::get_if<BotModeSetCommand>(&parsed))
+    {
+        HandleBotModeSet(handler, *command);
         return true;
     }
 
