@@ -1523,6 +1523,74 @@ end
 -- -----------------------------------------------
 -- Gear tab — slot button creation (called OnLoad)
 -- -----------------------------------------------
+
+-- BEGIN LWCP_BAGS_TAB_LAYOUT
+local LW_BagsTabLayout = {
+    LWCPBagContainerBtn0 = { x = -88, y = -54, w = 30, h = 30 },
+    LWCPBagContainerBtn1 = { x = -52, y = -54, w = 30, h = 30 },
+    LWCPBagContainerBtn2 = { x = -16, y = -54, w = 30, h = 30 },
+    LWCPBagContainerBtn3 = { x = 20, y = -54, w = 30, h = 30 },
+    LWCPBagContainerBtn4 = { x = 56, y = -54, w = 30, h = 30 },
+    LWCPBagGearBtn = { x = 102, y = -50, w = 46, h = 22 },
+    LWCPBagItemSlot1 = { x = -105, y = -112, w = 28, h = 28 },
+    LWCPBagItemSlot2 = { x = -75, y = -112, w = 28, h = 28 },
+    LWCPBagItemSlot3 = { x = -45, y = -112, w = 28, h = 28 },
+    LWCPBagItemSlot4 = { x = -15, y = -112, w = 28, h = 28 },
+    LWCPBagItemSlot5 = { x = 15, y = -112, w = 28, h = 28 },
+    LWCPBagItemSlot6 = { x = 45, y = -112, w = 28, h = 28 },
+    LWCPBagItemSlot7 = { x = 75, y = -112, w = 28, h = 28 },
+    LWCPBagItemSlot8 = { x = 105, y = -112, w = 28, h = 28 },
+    LWCPBagItemSlot9 = { x = -105, y = -142, w = 28, h = 28 },
+    LWCPBagItemSlot10 = { x = -75, y = -142, w = 28, h = 28 },
+    LWCPBagItemSlot11 = { x = -45, y = -142, w = 28, h = 28 },
+    LWCPBagItemSlot12 = { x = -15, y = -142, w = 28, h = 28 },
+    LWCPBagItemSlot13 = { x = 15, y = -142, w = 28, h = 28 },
+    LWCPBagItemSlot14 = { x = 45, y = -142, w = 28, h = 28 },
+    LWCPBagItemSlot15 = { x = 75, y = -142, w = 28, h = 28 },
+    LWCPBagItemSlot16 = { x = 105, y = -142, w = 28, h = 28 },
+    LWCPBagItemSlot17 = { x = -105, y = -172, w = 28, h = 28 },
+    LWCPBagItemSlot18 = { x = -75, y = -172, w = 28, h = 28 },
+    LWCPBagItemSlot19 = { x = -45, y = -172, w = 28, h = 28 },
+    LWCPBagItemSlot20 = { x = -15, y = -172, w = 28, h = 28 },
+    LWCPBagItemSlot21 = { x = 15, y = -172, w = 28, h = 28 },
+    LWCPBagItemSlot22 = { x = 45, y = -172, w = 28, h = 28 },
+    LWCPBagItemSlot23 = { x = 75, y = -172, w = 28, h = 28 },
+    LWCPBagItemSlot24 = { x = 105, y = -172, w = 28, h = 28 },
+    LWCPBagItemSlot25 = { x = -105, y = -202, w = 28, h = 28 },
+    LWCPBagItemSlot26 = { x = -75, y = -202, w = 28, h = 28 },
+    LWCPBagItemSlot27 = { x = -45, y = -202, w = 28, h = 28 },
+    LWCPBagItemSlot28 = { x = -15, y = -202, w = 28, h = 28 },
+    LWCPBagItemSlot29 = { x = 15, y = -202, w = 28, h = 28 },
+    LWCPBagItemSlot30 = { x = 45, y = -202, w = 28, h = 28 },
+    LWCPBagItemSlot31 = { x = 75, y = -202, w = 28, h = 28 },
+    LWCPBagItemSlot32 = { x = 105, y = -202, w = 28, h = 28 },
+}
+-- END LWCP_BAGS_TAB_LAYOUT
+
+-- BEGIN LWCP_GEAR_SLOT_LAYOUT
+local LW_GearSlotLayout = {
+    LWCPGearSlot1 = { x = -90, y = -66, w = 30, h = 30 },
+    LWCPGearSlot2 = { x = -58, y = -66, w = 30, h = 30 },
+    LWCPGearSlot3 = { x = -26, y = -66, w = 30, h = 30 },
+    LWCPGearSlot4 = { x = 6, y = -66, w = 30, h = 30 },
+    LWCPGearSlot5 = { x = 38, y = -66, w = 30, h = 30 },
+    LWCPGearSlot6 = { x = 70, y = -66, w = 30, h = 30 },
+    LWCPGearSlot7 = { x = 102, y = -66, w = 30, h = 30 },
+    LWCPGearSlot8 = { x = -90, y = -99, w = 30, h = 30 },
+    LWCPGearSlot9 = { x = -58, y = -99, w = 30, h = 30 },
+    LWCPGearSlot10 = { x = -26, y = -99, w = 30, h = 30 },
+    LWCPGearSlot11 = { x = 6, y = -99, w = 30, h = 30 },
+    LWCPGearSlot12 = { x = 38, y = -99, w = 30, h = 30 },
+    LWCPGearSlot13 = { x = 70, y = -99, w = 30, h = 30 },
+    LWCPGearSlot14 = { x = 102, y = -99, w = 30, h = 30 },
+    LWCPGearSlot15 = { x = -90, y = -132, w = 30, h = 30 },
+    LWCPGearSlot16 = { x = -58, y = -132, w = 30, h = 30 },
+    LWCPGearSlot17 = { x = -26, y = -132, w = 30, h = 30 },
+    LWCPGearSlot18 = { x = 6, y = -132, w = 30, h = 30 },
+    LWCPGearSlot19 = { x = 38, y = -132, w = 30, h = 30 },
+}
+-- END LWCP_GEAR_SLOT_LAYOUT
+
 function LWCP_InitGearPage(frame)
     -- Gear slots — each maps to a fixed equipment slot for icon + tooltip
     for i = 1, 19 do
