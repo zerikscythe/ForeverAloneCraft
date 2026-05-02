@@ -805,6 +805,12 @@ public:
 
         RunBotDismissalRecovery(player);
 
+        // Release the pool account so it can be reused for the next spawn.
+        LoginDatabase.Execute(
+            "UPDATE living_world_bot_account_pool "
+            "SET is_available = 1, reserved_for = NULL WHERE account_id = {}",
+            player->GetSession()->GetAccountId());
+
         living_world::service::BotPlayerRegistry::Instance()
             .UnregisterBotPlayer(player);
     }
