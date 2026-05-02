@@ -10,13 +10,20 @@
 #include "SharedDefines.h"
 #include "SpellMgr.h"
 #include "Unit.h"
+#include "integration/SqlAccountAltRuntimeRepository.h"
+#include "integration/SqlBotCombatDefaultProfileRepository.h"
+#include "integration/SqlBotCombatProfileRepository.h"
+#include "integration/SqlBotCombatProfileSelectionRepository.h"
 #include "model/BotCombatMode.h"
+#include "model/BotCombatProfile.h"
 #include "service/BotPlayerRegistry.h"
+#include "service/SimpleBotCombatSpecRoleResolver.h"
 
 #include <array>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
+#include <optional>
 #include <mutex>
 #include <unordered_map>
 
@@ -134,6 +141,7 @@ namespace
 // --- Follow / reposition constants ---
 constexpr float FollowDistance        = 2.0f;
 constexpr float FollowAngle           = 3.14159265358979323846f;
+constexpr float CombatFollowOverrideDistance = 20.0f;
 constexpr float RepositionDistance    = 8.0f;
 constexpr float RangedMinDistance     = 8.0f;    // Back away when closer than this
 constexpr float RangedOptimalDistance = 25.0f;   // Target spacing for ranged bots
@@ -191,6 +199,177 @@ BotCombatRole GetCombatRole(std::uint8_t classId)
     }
 }
 
+struct BotCombatResolvedProfile
+{
+    model::BotCombatProfileSettings settings;
+    std::vector<model::BotCombatEntryDefinition> interruptEntries;
+    std::vector<model::BotCombatEntryDefinition> rotationEntries;
+};
+
+struct BotCombatDoctrine
+{
+    BotCombatRole role = BotCombatRole::Melee;
+    BotCombatResolvedProfile profile;
+    model::BotCombatProfileSettings settings;
+};
+
+struct CachedBotCombatDoctrine
+{
+    BotCombatDoctrine doctrine;
+    std::chrono::steady_clock::time_point expiresAt;
+};
+
+std::mutex s_doctrineMutex;
+std::unordered_map<std::uint64_t, CachedBotCombatDoctrine> s_doctrineByBotGuid;
+constexpr auto DoctrineCacheTtl = std::chrono::seconds(5);
+
+std::uint32_t FindBestKnownSpellInChain(Player* bot, std::uint32_t baseSpellId);
+
+BotCombatRole ResolveDoctrineRole(
+    std::uint8_t classId,
+    std::string const& specKey,
+    std::string const& roleKey)
+{
+    if (roleKey == "HEAL")
+    {
+        switch (classId)
+        {
+            case CLASS_PRIEST:
+                return BotCombatRole::Healer;
+            case CLASS_DRUID:
+            case CLASS_PALADIN:
+            case CLASS_SHAMAN:
+                return BotCombatRole::HybridHealer;
+            default:
+                return BotCombatRole::Healer;
+        }
+    }
+
+    if (roleKey == "TANK")
+        return BotCombatRole::Melee;
+
+    if (roleKey == "DPS")
+    {
+        switch (classId)
+        {
+            case CLASS_HUNTER:
+            case CLASS_MAGE:
+            case CLASS_WARLOCK:
+                return BotCombatRole::Ranged;
+            case CLASS_PRIEST:
+                return specKey == "Shadow"
+                    ? BotCombatRole::Ranged
+                    : BotCombatRole::Healer;
+            case CLASS_DRUID:
+                return specKey == "Balance"
+                    ? BotCombatRole::Ranged
+                    : BotCombatRole::Melee;
+            case CLASS_SHAMAN:
+                return specKey == "Elemental"
+                    ? BotCombatRole::Ranged
+                    : BotCombatRole::Melee;
+            case CLASS_PALADIN:
+                return specKey == "Holy"
+                    ? BotCombatRole::HybridHealer
+                    : BotCombatRole::Melee;
+            default:
+                return BotCombatRole::Melee;
+        }
+    }
+
+    return GetCombatRole(classId);
+}
+
+BotCombatDoctrine LoadCombatDoctrine(Player* bot, Player* owner)
+{
+    static integration::SqlAccountAltRuntimeRepository runtimeRepository;
+    static integration::SqlBotCombatProfileRepository profileRepository;
+    static integration::SqlBotCombatProfileSelectionRepository selectionRepository;
+    static service::SimpleBotCombatSpecRoleResolver resolver;
+
+    BotCombatDoctrine doctrine;
+
+    std::uint64_t sourceCharacterGuid = bot->GetGUID().GetCounter();
+    std::uint32_t ownerAccountId = owner->GetSession()
+        ? owner->GetSession()->GetAccountId()
+        : 0;
+
+    if (auto runtime = runtimeRepository.FindByCloneCharacter(bot->GetGUID().GetCounter()))
+    {
+        sourceCharacterGuid = runtime->sourceCharacterGuid;
+        ownerAccountId = runtime->sourceAccountId;
+    }
+
+    std::uint8_t activeSlot = 0;
+    if (auto selection = selectionRepository.FindRuntimeSelection(sourceCharacterGuid))
+        activeSlot = selection->activeProfileSlot;
+
+    auto profile = profileRepository.FindProfileForCharacterSlot(
+        ownerAccountId,
+        sourceCharacterGuid,
+        activeSlot);
+
+    service::BotCombatSpecRoleResolutionRequest request;
+    request.sourceCharacterGuid = sourceCharacterGuid;
+    request.classId = bot->getClass();
+    if (profile)
+    {
+        request.specOverrideKey = profile->specOverrideKey;
+        request.roleOverrideKey = profile->roleOverrideKey;
+    }
+
+    service::BotCombatSpecRoleResolutionResult resolved = resolver.Resolve(request);
+    if (profile)
+    {
+        if (!profile->guessedSpecKey.empty())
+            resolved.guessedSpecKey = profile->guessedSpecKey;
+        if (!profile->guessedRoleKey.empty())
+            resolved.guessedRoleKey = profile->guessedRoleKey;
+        if (!profile->specOverrideKey || profile->specOverrideKey->empty())
+            resolved.effectiveSpecKey = resolved.guessedSpecKey;
+        if (!profile->roleOverrideKey || profile->roleOverrideKey->empty())
+            resolved.effectiveRoleKey = resolved.guessedRoleKey;
+    }
+
+    doctrine.role = ResolveDoctrineRole(
+        bot->getClass(),
+        resolved.effectiveSpecKey,
+        resolved.effectiveRoleKey);
+    return doctrine;
+}
+
+BotCombatDoctrine GetCombatDoctrine(Player* bot, Player* owner)
+{
+    std::uint64_t const botGuid = bot->GetGUID().GetCounter();
+    auto const now = std::chrono::steady_clock::now();
+
+    {
+        std::lock_guard<std::mutex> lock(s_doctrineMutex);
+        auto it = s_doctrineByBotGuid.find(botGuid);
+        if (it != s_doctrineByBotGuid.end() && it->second.expiresAt > now)
+            return it->second.doctrine;
+    }
+
+    BotCombatDoctrine doctrine = LoadCombatDoctrine(bot, owner);
+
+    {
+        std::lock_guard<std::mutex> lock(s_doctrineMutex);
+        s_doctrineByBotGuid[botGuid] = { doctrine, now + DoctrineCacheTtl };
+    }
+
+    return doctrine;
+}
+
+bool IsOffenseSuppressed(
+    model::BotCombatConservationMode mode,
+    bool conserving)
+{
+    if (mode == model::BotCombatConservationMode::JitCasting)
+        return true;
+
+    return mode == model::BotCombatConservationMode::Conservative && conserving;
+}
+
 // ---------------------------------------------------------------
 // Spell utilities
 // ---------------------------------------------------------------
@@ -231,6 +410,356 @@ bool BotHasManaToFight(Player const* bot)
     if (bot->GetMaxPower(POWER_MANA) == 0)
         return true;
     return bot->GetPower(POWER_MANA) > 0;
+}
+
+std::uint32_t ResolveKnownSpellForAction(
+    Player* bot,
+    model::BotCombatActionDefinition const& action)
+{
+    if (!bot || action.actionType != model::BotCombatActionType::Spell ||
+        action.spellBaseId == 0)
+        return 0;
+
+    switch (action.rankMode)
+    {
+        case model::BotCombatRankMode::BestKnown:
+        {
+            std::uint32_t const spellId =
+                FindBestKnownSpellInChain(bot, action.spellBaseId);
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] ProfileSpellResolve bot='{}' guid={} actionId={} rankMode=BestKnown baseSpellId={} resolvedSpellId={}",
+                bot->GetName(),
+                bot->GetGUID().GetCounter(),
+                action.actionId,
+                action.spellBaseId,
+                spellId);
+            return spellId;
+        }
+        case model::BotCombatRankMode::ExactSpellId:
+        {
+            std::uint32_t const spellId =
+                bot->HasSpell(action.spellBaseId) ? action.spellBaseId : 0;
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] ProfileSpellResolve bot='{}' guid={} actionId={} rankMode=ExactSpellId baseSpellId={} resolvedSpellId={}",
+                bot->GetName(),
+                bot->GetGUID().GetCounter(),
+                action.actionId,
+                action.spellBaseId,
+                spellId);
+            return spellId;
+        }
+        case model::BotCombatRankMode::SpecificRank:
+        {
+            if (action.rankValue == 0)
+            {
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] ProfileSpellResolve bot='{}' guid={} actionId={} rankMode=SpecificRank baseSpellId={} requestedRank={} resolvedSpellId=0 reason=zero_rank",
+                    bot->GetName(),
+                    bot->GetGUID().GetCounter(),
+                    action.actionId,
+                    action.spellBaseId,
+                    static_cast<std::uint32_t>(action.rankValue));
+                return 0;
+            }
+
+            std::uint32_t candidate =
+                sSpellMgr->GetFirstSpellInChain(action.spellBaseId);
+            if (!candidate)
+                candidate = action.spellBaseId;
+
+            std::uint8_t rank = 1;
+            while (candidate)
+            {
+                if (rank == action.rankValue)
+                {
+                    std::uint32_t const spellId =
+                        bot->HasSpell(candidate) ? candidate : 0;
+                    LOG_INFO(
+                        "server.worldserver",
+                        "[LivingWorldDebug] ProfileSpellResolve bot='{}' guid={} actionId={} rankMode=SpecificRank baseSpellId={} requestedRank={} resolvedSpellId={}",
+                        bot->GetName(),
+                        bot->GetGUID().GetCounter(),
+                        action.actionId,
+                        action.spellBaseId,
+                        static_cast<std::uint32_t>(action.rankValue),
+                        spellId);
+                    return spellId;
+                }
+                candidate = sSpellMgr->GetNextSpellInChain(candidate);
+                ++rank;
+            }
+
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] ProfileSpellResolve bot='{}' guid={} actionId={} rankMode=SpecificRank baseSpellId={} requestedRank={} resolvedSpellId=0 reason=rank_not_found",
+                bot->GetName(),
+                bot->GetGUID().GetCounter(),
+                action.actionId,
+                action.spellBaseId,
+                static_cast<std::uint32_t>(action.rankValue));
+            return 0;
+        }
+    }
+
+    return 0;
+}
+
+bool IsActionUsableByBot(
+    Player* bot,
+    model::BotCombatActionDefinition const& action)
+{
+    switch (action.actionType)
+    {
+        case model::BotCombatActionType::Spell:
+            return ResolveKnownSpellForAction(bot, action) != 0;
+        case model::BotCombatActionType::Item:
+            return action.itemId != 0;
+    }
+
+    return false;
+}
+
+std::optional<model::BotCombatEntryDefinition> FilterEntryForKnownActions(
+    Player* bot,
+    model::BotCombatEntryDefinition entry)
+{
+    if (!entry.enabled)
+    {
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] ProfileEntryFiltered bot='{}' guid={} entryId={} label='{}' reason=disabled",
+            bot ? bot->GetName() : "",
+            bot ? bot->GetGUID().GetCounter() : 0,
+            entry.entryId,
+            entry.label);
+        return std::nullopt;
+    }
+
+    bool const primaryUsable = IsActionUsableByBot(bot, entry.primaryAction);
+    bool const secondaryUsable =
+        entry.secondaryAction && IsActionUsableByBot(bot, *entry.secondaryAction);
+
+    if (!primaryUsable && !secondaryUsable)
+    {
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] ProfileEntryFiltered bot='{}' guid={} entryId={} label='{}' reason=no_usable_actions primaryActionId={} secondaryActionId={}",
+            bot->GetName(),
+            bot->GetGUID().GetCounter(),
+            entry.entryId,
+            entry.label,
+            entry.primaryAction.actionId,
+            entry.secondaryAction ? entry.secondaryAction->actionId : 0);
+        return std::nullopt;
+    }
+
+    if (!primaryUsable && secondaryUsable)
+    {
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] ProfileEntryFiltered bot='{}' guid={} entryId={} label='{}' action=promote_secondary primaryActionId={} secondaryActionId={}",
+            bot->GetName(),
+            bot->GetGUID().GetCounter(),
+            entry.entryId,
+            entry.label,
+            entry.primaryAction.actionId,
+            entry.secondaryAction ? entry.secondaryAction->actionId : 0);
+        entry.primaryAction = *entry.secondaryAction;
+        entry.primaryAction.slot = 0;
+        entry.secondaryAction.reset();
+    }
+    else if (entry.secondaryAction && !secondaryUsable)
+    {
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] ProfileEntryFiltered bot='{}' guid={} entryId={} label='{}' action=drop_secondary secondaryActionId={}",
+            bot->GetName(),
+            bot->GetGUID().GetCounter(),
+            entry.entryId,
+            entry.label,
+            entry.secondaryAction->actionId);
+        entry.secondaryAction.reset();
+    }
+
+    LOG_INFO(
+        "server.worldserver",
+        "[LivingWorldDebug] ProfileEntryAccepted bot='{}' guid={} entryId={} label='{}' primaryActionId={} secondaryActionId={} isInterrupt={} priority={}",
+        bot->GetName(),
+        bot->GetGUID().GetCounter(),
+        entry.entryId,
+        entry.label,
+        entry.primaryAction.actionId,
+        entry.secondaryAction ? entry.secondaryAction->actionId : 0,
+        entry.isInterrupt,
+        static_cast<std::uint32_t>(entry.priority));
+
+    return entry;
+}
+
+template <typename EntryContainer>
+std::vector<model::BotCombatEntryDefinition> FilterEntriesForKnownActions(
+    Player* bot,
+    EntryContainer const& entries)
+{
+    std::vector<model::BotCombatEntryDefinition> filtered;
+    filtered.reserve(entries.size());
+
+    for (auto const& entry : entries)
+    {
+        if (auto resolved = FilterEntryForKnownActions(bot, entry))
+            filtered.push_back(std::move(*resolved));
+    }
+
+    return filtered;
+}
+
+BotCombatResolvedProfile LoadResolvedCombatProfile(Player* bot, Player* owner)
+{
+    static integration::SqlAccountAltRuntimeRepository runtimeRepository;
+    static integration::SqlBotCombatProfileRepository profileRepository;
+    static integration::SqlBotCombatProfileSelectionRepository selectionRepository;
+    static integration::SqlBotCombatDefaultProfileRepository defaultProfileRepository;
+    static service::SimpleBotCombatSpecRoleResolver resolver;
+
+    BotCombatResolvedProfile resolvedProfile;
+
+    std::uint64_t sourceCharacterGuid = bot->GetGUID().GetCounter();
+    std::uint32_t ownerAccountId = owner->GetSession()
+        ? owner->GetSession()->GetAccountId()
+        : 0;
+
+    if (auto runtime = runtimeRepository.FindByCloneCharacter(bot->GetGUID().GetCounter()))
+    {
+        sourceCharacterGuid = runtime->sourceCharacterGuid;
+        ownerAccountId = runtime->sourceAccountId;
+    }
+
+    std::uint8_t activeSlot = 0;
+    if (auto selection = selectionRepository.FindRuntimeSelection(sourceCharacterGuid))
+        activeSlot = selection->activeProfileSlot;
+
+    auto profile = profileRepository.FindProfileForCharacterSlot(
+        ownerAccountId,
+        sourceCharacterGuid,
+        activeSlot);
+
+    service::BotCombatSpecRoleResolutionRequest request;
+    request.sourceCharacterGuid = sourceCharacterGuid;
+    request.classId = bot->getClass();
+    if (profile)
+    {
+        request.specOverrideKey = profile->specOverrideKey;
+        request.roleOverrideKey = profile->roleOverrideKey;
+    }
+
+    service::BotCombatSpecRoleResolutionResult specRole = resolver.Resolve(request);
+    if (profile)
+    {
+        if (!profile->guessedSpecKey.empty())
+            specRole.guessedSpecKey = profile->guessedSpecKey;
+        if (!profile->guessedRoleKey.empty())
+            specRole.guessedRoleKey = profile->guessedRoleKey;
+        if (!profile->specOverrideKey || profile->specOverrideKey->empty())
+            specRole.effectiveSpecKey = specRole.guessedSpecKey;
+        if (!profile->roleOverrideKey || profile->roleOverrideKey->empty())
+            specRole.effectiveRoleKey = specRole.guessedRoleKey;
+    }
+
+    if (profile)
+    {
+        resolvedProfile.settings = profile->settings;
+        resolvedProfile.interruptEntries =
+            FilterEntriesForKnownActions(bot, profile->interruptEntries);
+        resolvedProfile.rotationEntries =
+            FilterEntriesForKnownActions(bot, profile->rotationEntries);
+
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] ProfileLoad bot='{}' guid={} sourceGuid={} kind=custom slot={} spec='{}' role='{}' hasOverrides={} interruptEntries={} rotationEntries={}",
+            bot->GetName(),
+            bot->GetGUID().GetCounter(),
+            sourceCharacterGuid,
+            static_cast<std::uint32_t>(activeSlot),
+            specRole.effectiveSpecKey,
+            specRole.effectiveRoleKey,
+            profile->HasEntryOverrides(),
+            resolvedProfile.interruptEntries.size(),
+            resolvedProfile.rotationEntries.size());
+
+        if (!profile->HasEntryOverrides())
+        {
+            if (auto defaultProfile = defaultProfileRepository.FindDefaultProfile(
+                specRole.effectiveSpecKey,
+                specRole.effectiveRoleKey))
+            {
+                resolvedProfile.interruptEntries =
+                    FilterEntriesForKnownActions(bot, defaultProfile->interruptEntries);
+                resolvedProfile.rotationEntries =
+                    FilterEntriesForKnownActions(bot, defaultProfile->rotationEntries);
+
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] ProfileLoad bot='{}' guid={} sourceGuid={} kind=default_fallback defaultProfileId={} spec='{}' role='{}' interruptEntries={} rotationEntries={}",
+                    bot->GetName(),
+                    bot->GetGUID().GetCounter(),
+                    sourceCharacterGuid,
+                    defaultProfile->defaultProfileId,
+                    specRole.effectiveSpecKey,
+                    specRole.effectiveRoleKey,
+                    resolvedProfile.interruptEntries.size(),
+                    resolvedProfile.rotationEntries.size());
+            }
+            else
+            {
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] ProfileLoad bot='{}' guid={} sourceGuid={} kind=default_fallback spec='{}' role='{}' result=missing_default",
+                    bot->GetName(),
+                    bot->GetGUID().GetCounter(),
+                    sourceCharacterGuid,
+                    specRole.effectiveSpecKey,
+                    specRole.effectiveRoleKey);
+            }
+        }
+    }
+    else if (auto defaultProfile = defaultProfileRepository.FindDefaultProfile(
+        specRole.effectiveSpecKey,
+        specRole.effectiveRoleKey))
+    {
+        resolvedProfile.settings = defaultProfile->settings;
+        resolvedProfile.interruptEntries =
+            FilterEntriesForKnownActions(bot, defaultProfile->interruptEntries);
+        resolvedProfile.rotationEntries =
+            FilterEntriesForKnownActions(bot, defaultProfile->rotationEntries);
+
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] ProfileLoad bot='{}' guid={} sourceGuid={} kind=default defaultProfileId={} spec='{}' role='{}' interruptEntries={} rotationEntries={}",
+            bot->GetName(),
+            bot->GetGUID().GetCounter(),
+            sourceCharacterGuid,
+            defaultProfile->defaultProfileId,
+            specRole.effectiveSpecKey,
+            specRole.effectiveRoleKey,
+            resolvedProfile.interruptEntries.size(),
+            resolvedProfile.rotationEntries.size());
+    }
+    else
+    {
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] ProfileLoad bot='{}' guid={} sourceGuid={} kind=none spec='{}' role='{}' result=missing_default",
+            bot->GetName(),
+            bot->GetGUID().GetCounter(),
+            sourceCharacterGuid,
+            specRole.effectiveSpecKey,
+            specRole.effectiveRoleKey);
+    }
+
+    return resolvedProfile;
 }
 
 // ---------------------------------------------------------------
@@ -741,6 +1270,23 @@ void EnsureRangedApproach(Player* bot, Unit* target)
     bot->GetMotionMaster()->MoveChase(target, RangedOptimalDistance);
 }
 
+void EnsureSupportRange(Player* bot, Player* owner, std::uint32_t spellId)
+{
+    if (!bot || !owner || !spellId)
+        return;
+
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    if (!spellInfo)
+        return;
+
+    float const maxRange = bot->GetSpellMaxRangeForTarget(owner, spellInfo);
+    if (maxRange <= 0.0f)
+        return;
+
+    if (!bot->IsWithinCombatRange(owner, maxRange))
+        bot->GetMotionMaster()->MoveChase(owner, std::max(1.0f, maxRange - 2.0f));
+}
+
 void IssueFormationFollow(Player* bot, Player* owner)
 {
     if (!bot || !owner)
@@ -755,6 +1301,19 @@ void IssueFormationFollow(Player* bot, Player* owner)
     float const slotAngle = FollowAngle + (static_cast<float>(slot) * angleStep);
 
     bot->GetMotionMaster()->MoveFollow(owner, FollowDistance, slotAngle);
+}
+
+bool ShouldCombatFollowOverride(Player* bot, Player* owner, BotCombatRole role)
+{
+    if (!bot || !owner)
+        return false;
+
+    if (role != BotCombatRole::Healer
+        && role != BotCombatRole::HybridHealer
+        && role != BotCombatRole::Ranged)
+        return false;
+
+    return bot->GetDistance(owner) > CombatFollowOverrideDistance;
 }
 
 void BreakFollowForAttack(Player* bot)
@@ -782,6 +1341,18 @@ void TickHealer(Player* bot, Player* owner)
     if (bot->IsNonMeleeSpellCast(false))
         return;
 
+    std::uint32_t const directSpell    = GetDirectHealSpell(bot);
+    std::uint32_t const sustainedSpell = GetSustainedHealSpell(bot);
+
+    if (owner->GetHealthPct() < HealOwnerModerate)
+    {
+        std::uint32_t const supportSpell = owner->GetHealthPct() < HealOwnerCritical
+            ? directSpell
+            : sustainedSpell;
+        if (supportSpell)
+            EnsureSupportRange(bot, owner, supportSpell);
+    }
+
     // Power Word: Shield (Priest only): proactive absorb while the owner is in
     // combat. Applied as soon as the fight starts so damage is partially absorbed
     // before reactive heals are needed. Weakened Soul prevents re-shielding for
@@ -791,39 +1362,89 @@ void TickHealer(Player* bot, Player* owner)
         std::uint32_t const pws = FindBestKnownSpellInChain(bot, 17);
         if (pws && !owner->HasAura(pws) && !owner->HasAura(AuraWeakenedSoul))
         {
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] HealerAI cast attempt: bot='{}' guid={} action=shield_owner spell={} targetGuid={} ownerHp={:.1f} botHp={:.1f}",
+                bot->GetName(),
+                bot->GetGUID().GetCounter(),
+                pws,
+                owner->GetGUID().GetCounter(),
+                owner->GetHealthPct(),
+                bot->GetHealthPct());
             bot->CastSpell(owner, pws, false);
             return;
         }
     }
 
-    std::uint32_t const directSpell    = GetDirectHealSpell(bot);
-    std::uint32_t const sustainedSpell = GetSustainedHealSpell(bot);
-
     if (owner->GetHealthPct() < HealOwnerCritical)
     {
         if (directSpell)
+        {
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] HealerAI cast attempt: bot='{}' guid={} action=direct_heal_owner spell={} targetGuid={} ownerHp={:.1f} botHp={:.1f}",
+                bot->GetName(),
+                bot->GetGUID().GetCounter(),
+                directSpell,
+                owner->GetGUID().GetCounter(),
+                owner->GetHealthPct(),
+                bot->GetHealthPct());
             bot->CastSpell(owner, directSpell, false);
+        }
         return;
     }
 
     if (owner->GetHealthPct() < HealOwnerModerate)
     {
         if (sustainedSpell && !owner->HasAura(sustainedSpell))
+        {
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] HealerAI cast attempt: bot='{}' guid={} action=sustain_owner spell={} targetGuid={} ownerHp={:.1f} botHp={:.1f}",
+                bot->GetName(),
+                bot->GetGUID().GetCounter(),
+                sustainedSpell,
+                owner->GetGUID().GetCounter(),
+                owner->GetHealthPct(),
+                bot->GetHealthPct());
             bot->CastSpell(owner, sustainedSpell, false);
+        }
         return;
     }
 
     if (bot->GetHealthPct() < HealSelfCritical)
     {
         if (directSpell)
+        {
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] HealerAI cast attempt: bot='{}' guid={} action=direct_heal_self spell={} targetGuid={} ownerHp={:.1f} botHp={:.1f}",
+                bot->GetName(),
+                bot->GetGUID().GetCounter(),
+                directSpell,
+                bot->GetGUID().GetCounter(),
+                owner->GetHealthPct(),
+                bot->GetHealthPct());
             bot->CastSpell(bot, directSpell, false);
+        }
         return;
     }
 
     if (bot->GetHealthPct() < HealSelfModerate)
     {
         if (sustainedSpell && !bot->HasAura(sustainedSpell))
+        {
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] HealerAI cast attempt: bot='{}' guid={} action=sustain_self spell={} targetGuid={} ownerHp={:.1f} botHp={:.1f}",
+                bot->GetName(),
+                bot->GetGUID().GetCounter(),
+                sustainedSpell,
+                bot->GetGUID().GetCounter(),
+                owner->GetHealthPct(),
+                bot->GetHealthPct());
             bot->CastSpell(bot, sustainedSpell, false);
+        }
     }
 }
 
@@ -879,7 +1500,19 @@ void TickMelee(Player* bot, Unit* target)
 
     std::uint32_t const spell = GetMeleeOffensiveSpell(bot, target);
     if (spell)
+    {
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] MeleeAI cast attempt: bot='{}' guid={} class={} spell={} targetGuid={} distance={:.2f} victimGuid={}",
+            bot->GetName(),
+            bot->GetGUID().GetCounter(),
+            static_cast<std::uint32_t>(bot->getClass()),
+            spell,
+            target ? target->GetGUID().GetCounter() : 0,
+            target ? bot->GetDistance(target) : 0.0f,
+            bot->GetVictim() ? bot->GetVictim()->GetGUID().GetCounter() : 0);
         bot->CastSpell(target, spell, false);
+    }
 }
 
 // ---------------------------------------------------------------
@@ -933,14 +1566,28 @@ Unit* ResolveAssistTarget(Player* bot, Player* owner)
 
     // Retreat mode: bot follows and heals only — no combat at all.
     if (ovr.retreatExpiry > now)
+    {
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=retreat result=none",
+            bot->GetName(),
+            bot->GetGUID().GetCounter());
         return nullptr;
+    }
 
     // If the player ordered disengage, hold — but auto-expire after 500ms so
     // a subsequent r-click (owner attacks → mob agros back → bot assists) works.
     if (ovr.disengaged)
     {
         if (now < ovr.disengageExpiry)
+        {
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=disengaged result=none",
+                bot->GetName(),
+                bot->GetGUID().GetCounter());
             return nullptr;
+        }
         // Expired — clear the flag and fall through to normal assist.
         ClearBotOverride(bot->GetGUID());
     }
@@ -950,7 +1597,15 @@ Unit* ResolveAssistTarget(Player* bot, Player* owner)
     {
         Unit* forced = ObjectAccessor::GetUnit(*bot, ovr.forcedTarget);
         if (forced && IsViableCommandTarget(bot, owner, forced))
+        {
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=forced targetGuid={}",
+                bot->GetName(),
+                bot->GetGUID().GetCounter(),
+                forced->GetGUID().GetCounter());
             return forced;
+        }
         // Target gone — clear the override and fall through.
         SetBotForcedTarget(bot->GetGUID(), ObjectGuid::Empty);
     }
@@ -963,13 +1618,29 @@ Unit* ResolveAssistTarget(Player* bot, Player* owner)
         if (Unit* current = bot->GetVictim())
         {
             if (IsViableCommandTarget(bot, owner, current))
+            {
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=attack_locked source=current_victim targetGuid={}",
+                    bot->GetName(),
+                    bot->GetGUID().GetCounter(),
+                    current->GetGUID().GetCounter());
                 return current;
+            }
         }
 
         if (Unit* ownerVictim = owner->GetVictim())
         {
             if (IsViableCommandTarget(bot, owner, ownerVictim))
+            {
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=attack_locked source=owner_victim targetGuid={}",
+                    bot->GetName(),
+                    bot->GetGUID().GetCounter(),
+                    ownerVictim->GetGUID().GetCounter());
                 return ownerVictim;
+            }
         }
 
         ObjectGuid const ownerSelection = owner->GetTarget();
@@ -978,7 +1649,15 @@ Unit* ResolveAssistTarget(Player* bot, Player* owner)
             if (Unit* selected = ObjectAccessor::GetUnit(*bot, ownerSelection))
             {
                 if (IsViableCommandTarget(bot, owner, selected))
+                {
+                    LOG_INFO(
+                        "server.worldserver",
+                        "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=attack_locked source=owner_selection targetGuid={}",
+                        bot->GetName(),
+                        bot->GetGUID().GetCounter(),
+                        selected->GetGUID().GetCounter());
                     return selected;
+                }
             }
         }
 
@@ -998,7 +1677,15 @@ Unit* ResolveAssistTarget(Player* bot, Player* owner)
     if (Unit* current = bot->GetVictim())
     {
         if (IsValidAssistTarget(bot, owner, current))
+        {
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=assist source=current_victim targetGuid={}",
+                bot->GetName(),
+                bot->GetGUID().GetCounter(),
+                current->GetGUID().GetCounter());
             return current;
+        }
     }
 
     // 2. Pick up owner's active victim only when that mob is fighting back —
@@ -1009,9 +1696,22 @@ Unit* ResolveAssistTarget(Player* bot, Player* owner)
     {
         if (IsValidAssistTarget(bot, owner, ownerVictim)
             && ownerVictim->GetVictim() == owner)
+        {
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=assist source=owner_victim targetGuid={}",
+                bot->GetName(),
+                bot->GetGUID().GetCounter(),
+                ownerVictim->GetGUID().GetCounter());
             return ownerVictim;
+        }
     }
 
+    LOG_INFO(
+        "server.worldserver",
+        "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=assist result=none",
+        bot->GetName(),
+        bot->GetGUID().GetCounter());
     return nullptr;
 }
 
@@ -1021,13 +1721,13 @@ Unit* ResolveGuardTarget(Player* bot, Player* owner)
 {
     if (Unit* current = bot->GetVictim())
     {
-        if (IsValidAssistTarget(owner, current))
+        if (IsValidAssistTarget(bot, owner, current))
             return current;
     }
 
     for (Unit* attacker : owner->getAttackers())
     {
-        if (IsValidAssistTarget(owner, attacker))
+        if (IsValidAssistTarget(bot, owner, attacker))
             return attacker;
     }
 
@@ -1064,24 +1764,28 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
         return;
     }
 
-    BotCombatRole const role = GetCombatRole(bot->getClass());
+    BotCombatDoctrine const doctrine = GetCombatDoctrine(bot, owner);
+    BotCombatRole const role = doctrine.role;
 
     // Pure healers: heal first, then optionally attack based on mana.
     if (role == BotCombatRole::Healer)
     {
         TickHealer(bot, owner);
 
-        // Hysteresis: stop attacking below 40% mana, resume above 60%.
-        if (bot->GetMaxPower(POWER_MANA) > 0)
+        if (doctrine.settings.conservationMode != model::BotCombatConservationMode::Conservative)
+        {
+            healerConserving = false;
+        }
+        else if (bot->GetMaxPower(POWER_MANA) > 0)
         {
             float const manaPct = 100.0f * static_cast<float>(bot->GetPower(POWER_MANA))
                                          / static_cast<float>(bot->GetMaxPower(POWER_MANA));
             if (healerConserving)
             {
-                if (manaPct >= HealerManaResumeAbove)
+                if (manaPct >= doctrine.settings.manaHighWater)
                     healerConserving = false;
             }
-            else if (manaPct < HealerManaConserveBelow)
+            else if (manaPct < doctrine.settings.manaLowWater)
             {
                 healerConserving = true;
             }
@@ -1097,7 +1801,7 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
             bot->Attack(attackTarget, false);
         }
 
-        if (attackTarget && IsBotAttackLocked(bot->GetGUID()))
+        if (attackTarget)
             BreakFollowForAttack(bot);
 
         if (attackTarget)
@@ -1114,7 +1818,9 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
         }
 
         // Attempt an offensive spell if not already casting and mana is healthy.
-        if (attackTarget && !healerConserving && !bot->IsNonMeleeSpellCast(false))
+        if (attackTarget
+            && !IsOffenseSuppressed(doctrine.settings.conservationMode, healerConserving)
+            && !bot->IsNonMeleeSpellCast(false))
         {
             std::uint32_t const spell = GetHealerOffensiveSpell(bot, attackTarget);
             if (spell)
@@ -1122,6 +1828,16 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
         }
 
         TryApplyOutOfCombatBuff(bot, owner);
+
+        if (ShouldCombatFollowOverride(bot, owner, role))
+        {
+            if (!bot->IsNonMeleeSpellCast(false))
+            {
+                bot->GetMotionMaster()->Clear(false);
+                IssueFormationFollow(bot, owner);
+            }
+            return;
+        }
 
         if (!attackTarget
             && !bot->GetVictim()
@@ -1141,9 +1857,18 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
         ? ResolveGuardTarget(bot, owner)
         : ResolveAssistTarget(bot, owner);
 
-    if (assistTarget)
-    {
-        if (IsBotAttackLocked(bot->GetGUID()))
+        if (assistTarget)
+        {
+            if (ShouldCombatFollowOverride(bot, owner, role))
+            {
+                if (!bot->IsNonMeleeSpellCast(false))
+                {
+                    bot->GetMotionMaster()->Clear(false);
+                    IssueFormationFollow(bot, owner);
+                }
+                return;
+            }
+
             BreakFollowForAttack(bot);
 
         if (role == BotCombatRole::HybridHealer)
@@ -1153,6 +1878,11 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
             // of attention shift.
             if (owner->GetHealthPct() < HybridHealThreshold)
             {
+                std::uint32_t const emergencySpell = owner->GetHealthPct() < HealOwnerCritical
+                    ? GetDirectHealSpell(bot)
+                    : GetSustainedHealSpell(bot);
+                if (emergencySpell)
+                    EnsureSupportRange(bot, owner, emergencySpell);
                 TickHealer(bot, owner);
                 return;
             }
@@ -1176,7 +1906,20 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
             EnsureChasingVictim(bot, assistTarget);
             std::uint32_t const spell = GetHybridDamageSpell(bot, assistTarget);
             if (spell && !bot->IsNonMeleeSpellCast(false))
+            {
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] HybridAI cast attempt: bot='{}' guid={} class={} spell={} targetGuid={} distance={:.2f} ownerHp={:.1f} botHp={:.1f}",
+                    bot->GetName(),
+                    bot->GetGUID().GetCounter(),
+                    static_cast<std::uint32_t>(bot->getClass()),
+                    spell,
+                    assistTarget->GetGUID().GetCounter(),
+                    bot->GetDistance(assistTarget),
+                    owner->GetHealthPct(),
+                    bot->GetHealthPct());
                 bot->CastSpell(assistTarget, spell, false);
+            }
             return;
         }
 
@@ -1292,7 +2035,16 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
     // mode, to avoid killing the active follow generator every 500ms tick which
     // causes the bot to appear frozen or to stutter.
     if (bot->IsInCombat() || owner->IsInCombat())
+    {
+        if (ShouldCombatFollowOverride(bot, owner, role)
+            && !bot->IsNonMeleeSpellCast(false)
+            && bot->GetMotionMaster()->GetCurrentMovementGeneratorType() != FOLLOW_MOTION_TYPE)
+        {
+            bot->GetMotionMaster()->Clear(false);
+            IssueFormationFollow(bot, owner);
+        }
         return;
+    }
 
     TryApplyOutOfCombatBuff(bot, owner);
 

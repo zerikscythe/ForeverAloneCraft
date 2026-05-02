@@ -579,32 +579,15 @@
                 </ns0:Layers>
                 <ns0:Frames>
                     <ns0:Button name="LWCPProfileDec" inherits="UIPanelButtonTemplate" text="-">
-                        <ns0:Size x="28" y="26" text="Bags">
-                            <ns0:Size x="120" y="14" />
-                            <ns0:Anchors>
-                                <ns0:Anchor point="TOP">
-                                    <ns0:Offset>
-                                        <ns0:AbsDimension x="0" y="-16" />
-                                    </ns0:Offset>
-                                </ns0:Anchor>
-                            </ns0:Anchors>
-                        </ns0:Size>
-                        <ns0:Anchors text="Left-click pick / Right-click retrieve">
+                        <ns0:Size x="28" y="26" />
+                        <ns0:Anchors>
                             <ns0:Anchor point="TOP">
                                 <ns0:Offset>
                                     <ns0:AbsDimension x="-56" y="-28" />
                                 </ns0:Offset>
                             </ns0:Anchor>
-                            <ns0:Size x="200" y="14" />
-                            <ns0:Anchors>
-                                <ns0:Anchor point="TOP">
-                                    <ns0:Offset>
-                                        <ns0:AbsDimension x="0" y="-242" />
-                                    </ns0:Offset>
-                                </ns0:Anchor>
-                            </ns0:Anchors>
                         </ns0:Anchors>
-                    <ns0:Scripts>
+                        <ns0:Scripts>
                             <ns0:OnClick>LWCP_ProfileDec();</ns0:OnClick>
                         </ns0:Scripts>
                     </ns0:Button>
@@ -1316,31 +1299,6 @@
                                 </ns0:Anchor>
                             </ns0:Anchors>
                         </ns0:FontString>
-                        <ns0:Size x="28" y="26" text="Bags">
-                            <ns0:Size x="120" y="14" />
-                            <ns0:Anchors>
-                                <ns0:Anchor point="TOP">
-                                    <ns0:Offset>
-                                        <ns0:AbsDimension x="0" y="-16" />
-                                    </ns0:Offset>
-                                </ns0:Anchor>
-                            </ns0:Anchors>
-                        </ns0:Size>
-                        <ns0:Anchors text="Left-click pick / Right-click retrieve">
-                            <ns0:Anchor point="TOP">
-                                <ns0:Offset>
-                                    <ns0:AbsDimension x="-56" y="-28" />
-                                </ns0:Offset>
-                            </ns0:Anchor>
-                            <ns0:Size x="200" y="14" />
-                            <ns0:Anchors>
-                                <ns0:Anchor point="TOP">
-                                    <ns0:Offset>
-                                        <ns0:AbsDimension x="0" y="-242" />
-                                    </ns0:Offset>
-                                </ns0:Anchor>
-                            </ns0:Anchors>
-                        </ns0:Anchors>
                     </ns0:Layer>
                 </ns0:Layers>
                 <ns0:Frames>

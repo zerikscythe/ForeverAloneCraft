@@ -280,6 +280,7 @@ void RenderUsage(ChatHandler* handler)
     handler->PSendSysMessage("  .lwbot <#|name> retreat  (30s no-combat flee mode; repeat to cancel)");
     handler->PSendSysMessage("  .lwbot <#|name> train  (must be near a class trainer)");
     handler->PSendSysMessage("  .lwbot <#|name|party> follow");
+    handler->PSendSysMessage("  .lwbot <#|name|party> yoink  (teleport stuck bots to you)");
     handler->PSendSysMessage("  .lwbot <#|name|party> refreshments  (eat/drink if HP or mana < 60%%)");
     handler->PSendSysMessage("  .lwbot <#|name|party> buff  (force re-apply class buffs)");
     handler->PSendSysMessage("  .lwbot <#|name> retrieve <itemGuid> [count]");
@@ -1535,6 +1536,58 @@ void HandleBotAttack(
 
     for (Player* bot : bots)
         living_world::ai::SetBotForcedTarget(bot->GetGUID(), target->GetGUID());
+    BotSayConfirm(bots.front());
+}
+
+void HandleBotYoink(
+    ChatHandler* handler,
+    BotYoinkCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld bot yoink requires an in-game player.");
+        return;
+    }
+
+    std::vector<Player*> bots = ResolveSelectedBotsForOwner(player, command.botRef);
+    if (bots.empty())
+    {
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld no active bot. Use '.lwbot request <id>' first.");
+        return;
+    }
+
+    std::uint32_t yoinkedCount = 0;
+    for (Player* bot : bots)
+    {
+        if (!bot || bot == player)
+            continue;
+
+        if (bot->GetMapId() != player->GetMapId())
+            continue;
+
+        living_world::ai::SetBotDisengaged(bot->GetGUID(), false);
+        bot->AttackStop();
+        bot->InterruptNonMeleeSpells(false);
+        bot->GetMotionMaster()->Clear(false);
+        bot->NearTeleportTo(
+            player->GetPositionX(),
+            player->GetPositionY(),
+            player->GetPositionZ(),
+            player->GetOrientation(),
+            true);
+        bot->GetMotionMaster()->MoveFollow(player, 2.5f, 3.14159f);
+        ++yoinkedCount;
+    }
+
+    if (yoinkedCount == 0)
+    {
+        handler->SendErrorMessage("LivingWorld yoink failed: no active bots on your map.");
+        return;
+    }
+
     BotSayConfirm(bots.front());
 }
 
@@ -3530,6 +3583,13 @@ bool HandleParsedCommand(
         std::get_if<BotFollowCommand>(&parsed))
     {
         HandleBotFollow(handler, *command);
+        return true;
+    }
+
+    if (BotYoinkCommand const* command =
+        std::get_if<BotYoinkCommand>(&parsed))
+    {
+        HandleBotYoink(handler, *command);
         return true;
     }
 

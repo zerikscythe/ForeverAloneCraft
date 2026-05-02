@@ -136,6 +136,14 @@ struct BotFollowCommand
     BotRef botRef;
 };
 
+// "<position|name|party> yoink" — teleport a bot or the whole active bot
+// party to the owner's current position. Intended as a recovery command for
+// stuck/fallen bots.
+struct BotYoinkCommand
+{
+    BotRef botRef;
+};
+
 // "<position|name|party> refreshments" — each bot consumes food if HP < 60%
 // and/or drink if mana < 60%.
 struct BotRefreshmentsCommand
@@ -279,6 +287,7 @@ using ParsedCommand = std::variant<
     BotTrainCommand,
     BotRetreatCommand,
     BotFollowCommand,
+    BotYoinkCommand,
     BotRefreshmentsCommand,
     BotBuffCommand,
     BotBagsCommand,

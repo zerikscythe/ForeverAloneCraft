@@ -40,6 +40,18 @@ Current next-planned slice:
   bot-specific `Pick Up` / `Turn In` actions for a targeted quest giver,
   including class-specific follow-up quests
 
+Current agreed design workstream:
+
+- define and implement server-authoritative user-overrideable bot combat
+  profiles backed by relational DB tables rather than JSON blobs
+- ship a baked-in default combat doctrine for one starter spec/role per class,
+  with blank profiles falling back to that default behavior automatically
+- expose profile editing through an addon-facing API/message layer handled by
+  worldserver services/repositories, not by direct addon-to-database access
+- support row-based editing of actions/conditions/targets, including
+  `enemy_primary` and `enemy_trash` target resolution, primary/secondary
+  fallback timing, conservation modes, and optional down-ranking
+
 ## Sensitive Data Review
 
 The old roadmap did not contain obvious secrets such as passwords, API keys, or
@@ -1571,15 +1583,27 @@ scattered checks
 
 ### D) Bot Control, Combat Profiles, and Addon UX
 
-**Overall Status: Not Started**
+**Overall Status: Partial**
+
+Primary design/handoff doc for this track:
+- `modules/mod-living-world/docs/BotCombatProfiles.md`
 
 #### Candidate tasks
 
-D.1 Define addon-friendly command grammar and stable bot IDs
+D.1 Define addon-friendly command grammar and stable bot IDs — **Partial**
+- [x] Keep bot/profile control server-authoritative through a worldserver API
+      layer rather than direct addon-to-database access.
+- [x] Treat addon actions as zoomed-out requests: addon -> API/messages ->
+      profile service -> repository -> DB.
+- [ ] Finalize the concrete request/response surface for profile CRUD,
+      row edits, priority changes, reset, and active-slot changes.
 
-D.2 Keep roster, behavior, and combat-profile control surfaces separate
+D.2 Keep roster, behavior, and combat-profile control surfaces separate — **Partial**
+- [x] Separate high-level concerns conceptually: roster selection, party
+      controls, and combat profile editing are distinct UI/API surfaces.
+- [ ] Reflect that split in the addon panel layout and command/message naming.
 
-D.3 Define `CombatProfile` data model
+D.3 Define `CombatProfile` data model — **Partial**
 - class
 - role/type
 - optional subtype/style
@@ -1590,27 +1614,68 @@ D.3 Define `CombatProfile` data model
 - racial rules
 - trinket rules
 
-D.4 Define structured rule/action/condition schema
+- [x] Decide that a blank player profile means "use baked-in default behavior"
+      for the effective spec/role.
+- [x] Decide that profile state should be stored in relational DB tables, not a
+      JSON blob.
+- [x] Decide each source character gets 10 profile slots.
+- [x] Decide each profile may carry a spec/role override while still retaining
+      a server-side best-guess fallback.
+- [ ] Finalize the exact schema for:
+  - profile settings table
+  - rotation entry table
+  - action table (primary/secondary)
+  - condition table
+  - baked-in default profile tables
+  - runtime active-profile slot linkage
 
-D.5 Define level-band strategy
+D.4 Define structured rule/action/condition schema — **Partial**
+- [x] Agree on row-based authoring model: add row -> action/item/spell,
+      optional target, condition subject/stat/operator/value.
+- [x] Agree on primary/secondary action slots per row.
+- [x] Agree on interrupt/global override rules that can break an active cast.
+- [x] Agree on primary fallback timing rule:
+  - wait if primary becomes usable within the next 500ms tick
+  - otherwise attempt secondary
+  - otherwise skip row
+- [x] Add target concepts `enemy_primary` and `enemy_trash` to the design.
+- [ ] Finalize the first-pass condition/operator vocabulary and DB-backed enum
+      mapping.
+- [ ] Finalize target-resolution rules for all supported target types.
+
+D.5 Define level-band strategy — **Not Started**
 - Support 5 to 10 level chunks.
 - Prefer 10-level bands first.
 
-D.6 Define loadout-aware combat doctrine
+D.6 Define loadout-aware combat doctrine — **Not Started**
 
-D.7 Define player override model
+D.7 Define player override model — **Partial**
 - default profile
 - bot-specific override
 - optional session override
 - reset path
 
-D.8 Define addon MVP surfaces
+- [x] Decide that user override is optional and should sit on top of server
+      defaults.
+- [x] Decide that "best guess" spec/role is the fallback when no override is
+      present.
+- [ ] Decide whether v1 uses full custom-profile replacement or partial merge
+      against baked-in defaults.
+- [ ] Define reset-to-default behavior precisely at the row/settings level.
+
+D.8 Define addon MVP surfaces — **Partial**
 - roster UI
 - party control UI
 - bot detail UI
 - combat editor UI
 
-D.9 Use external guide resources for combat doctrine only
+- [x] Agree that the combat editor should support row authoring with simple
+      controls such as spell/item, target, and `IF` conditions.
+- [ ] Design the first-pass combat profile editor layout, including spec/role
+      dropdowns and profile slot selection.
+- [ ] Define how the addon queries and refreshes server-stored profile data.
+
+D.9 Use external guide resources for combat doctrine only — **Not Started**
 - role identity
 - rotation philosophy
 - cooldown concepts
@@ -1618,10 +1683,34 @@ D.9 Use external guide resources for combat doctrine only
 - racial/trinket usage concepts
 - loadout assumptions
 
-D.10 Keep local runtime data authoritative for executable values
+D.10 Keep local runtime data authoritative for executable values — **Partial**
+- [x] Agree that executable truth stays on the server.
+- [x] Agree that the addon should send intent/edits, while the server resolves
+      spells, targets, cooldown timing, role guesses, and default behavior.
+- [ ] Define which runtime-derived values can be exposed back to the addon for
+      preview/debug without making the addon authoritative.
 
-D.11 Define doctrine-to-profile authoring workflow
+D.11 Define doctrine-to-profile authoring workflow — **Partial**
 - read guide concepts
 - convert to structured internal profile data
 - validate against local runtime truth
 - execute only valid actions
+
+- [x] Decide v1 starter coverage is one baked-in default spec/role per class.
+- [ ] Choose the exact 10 initial spec/role defaults to seed.
+- [ ] Author and validate those defaults against live class spell/rank data.
+
+#### Current active checklist
+
+- [ ] Add DB schema for bot combat profiles, entries, actions, and conditions.
+- [ ] Add baked-in default data/service path for one starter spec/role per
+      class.
+- [ ] Implement spec/role best-guess resolver with optional profile override.
+- [ ] Add runtime resolver for blank-profile -> default-profile behavior.
+- [ ] Add primary/secondary row execution with 500ms wait-or-fallback logic.
+- [ ] Implement target resolvers for `enemy_primary` and `enemy_trash`.
+- [ ] Add conservation modes: Full Force, Conservative, JIT Casting.
+- [ ] Add optional down-rank support with floor rules.
+- [ ] Expose profile CRUD/edit/reset/apply operations through the server API /
+      message layer for addon consumption.
+- [ ] Build the first addon-side combat profile editor against that API.

@@ -987,6 +987,17 @@ The code should not assume the current feature list is the end state.
 
 # 16A. Bot Control and Combat Profiles
 
+Primary handoff document for this track:
+- `modules/mod-living-world/docs/BotCombatProfiles.md`
+
+That file should be treated as the current design source for:
+- relational table concepts
+- blank-profile fallback rules
+- best-guess spec/role resolution
+- primary/secondary fallback timing
+- target concepts such as `enemy_primary` and `enemy_trash`
+- addon/API responsibilities vs server responsibilities
+
 The current intended player-facing control model is:
 - command-driven first
 - addon-assisted as the primary long-term UX

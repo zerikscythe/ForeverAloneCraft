@@ -292,6 +292,14 @@ ParsedCommand ParseBotActionCommand(BotRef botRef, std::string_view remaining)
         return cmd;
     }
 
+    // "yoink" path.
+    if (secondToken == "yoink")
+    {
+        BotYoinkCommand cmd;
+        cmd.botRef = std::move(botRef);
+        return cmd;
+    }
+
     // "refreshments" path.
     if (secondToken == "refreshments")
     {
