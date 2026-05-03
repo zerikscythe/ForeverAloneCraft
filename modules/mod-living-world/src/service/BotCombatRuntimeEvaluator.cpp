@@ -327,6 +327,12 @@ bool BotCombatRuntimeEvaluator::EvaluateCondition(
         }
     }
 
+    if (condition.statKey == "combo_points")
+        return CompareNumeric(
+            condition.comparison,
+            static_cast<float>(subject->GetComboPoints()),
+            condition.numericValue);
+
     return false;
 }
 

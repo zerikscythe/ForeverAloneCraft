@@ -67,7 +67,12 @@ TEST(AccountAltSanityCheckerTest, FailsWhenLevelDeltaExceedsCap)
 
     EXPECT_FALSE(result.passed);
     EXPECT_FALSE(result.failures.empty());
-    EXPECT_TRUE(result.safeDomains.empty());
+    EXPECT_FALSE(HasDomain(result, model::AccountAltSyncDomain::Experience));
+    EXPECT_FALSE(HasDomain(result, model::AccountAltSyncDomain::Money));
+    // Additive domains remain safe even when level/money sanity fails.
+    EXPECT_TRUE(HasDomain(result, model::AccountAltSyncDomain::Reputation));
+    EXPECT_TRUE(HasDomain(result, model::AccountAltSyncDomain::Quests));
+    EXPECT_TRUE(HasDomain(result, model::AccountAltSyncDomain::Achievements));
 }
 
 TEST(AccountAltSanityCheckerTest, PassesOnSmallMoneyGain)
@@ -88,7 +93,12 @@ TEST(AccountAltSanityCheckerTest, FailsWhenMoneyGainExceedsCap)
 
     EXPECT_FALSE(result.passed);
     EXPECT_FALSE(result.failures.empty());
-    EXPECT_TRUE(result.safeDomains.empty());
+    EXPECT_FALSE(HasDomain(result, model::AccountAltSyncDomain::Experience));
+    EXPECT_FALSE(HasDomain(result, model::AccountAltSyncDomain::Money));
+    // Additive domains remain safe even when level/money sanity fails.
+    EXPECT_TRUE(HasDomain(result, model::AccountAltSyncDomain::Reputation));
+    EXPECT_TRUE(HasDomain(result, model::AccountAltSyncDomain::Quests));
+    EXPECT_TRUE(HasDomain(result, model::AccountAltSyncDomain::Achievements));
 }
 
 TEST(AccountAltSanityCheckerTest, FailsBothChecksIndependently)
@@ -99,7 +109,12 @@ TEST(AccountAltSanityCheckerTest, FailsBothChecksIndependently)
 
     EXPECT_FALSE(result.passed);
     EXPECT_EQ(result.failures.size(), 2u);
-    EXPECT_TRUE(result.safeDomains.empty());
+    EXPECT_FALSE(HasDomain(result, model::AccountAltSyncDomain::Experience));
+    EXPECT_FALSE(HasDomain(result, model::AccountAltSyncDomain::Money));
+    // Additive domains remain safe even when both level and money sanity fail.
+    EXPECT_TRUE(HasDomain(result, model::AccountAltSyncDomain::Reputation));
+    EXPECT_TRUE(HasDomain(result, model::AccountAltSyncDomain::Quests));
+    EXPECT_TRUE(HasDomain(result, model::AccountAltSyncDomain::Achievements));
 }
 } // namespace service
 } // namespace living_world

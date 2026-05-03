@@ -164,10 +164,6 @@ constexpr float HybridHealThreshold  = 70.0f;
 constexpr float HealerManaConserveBelow = 40.0f;  // Stop attacking below this
 constexpr float HealerManaResumeAbove   = 60.0f;  // Resume attacking above this
 
-// --- DK disease aura IDs ---
-constexpr std::uint32_t AuraFrostFever  = 55095;
-constexpr std::uint32_t AuraBloodPlague = 55078;
-
 // --- Priest Weakened Soul debuff: prevents re-shielding for 15 seconds ---
 constexpr std::uint32_t AuraWeakenedSoul = 6788;
 
@@ -653,96 +649,6 @@ std::uint32_t GetHealerOffensiveSpell(Player* bot, Unit* target)
     }
 }
 
-// ---------------------------------------------------------------
-// Offensive spells — melee roles
-// ---------------------------------------------------------------
-
-// Returns the best melee-range offensive ability for the bot's class and state.
-std::uint32_t GetMeleeOffensiveSpell(Player* bot, Unit* target)
-{
-    switch (bot->getClass())
-    {
-        case CLASS_WARRIOR:
-        {
-            // Execute: highest-priority finisher at low target health
-            std::uint32_t const execute = FindBestKnownSpellInChain(bot, 5308);
-            if (execute && target->GetHealthPct() < 20.0f)
-                return execute;
-
-            // Mortal Strike (Arms)
-            std::uint32_t spell = FindBestKnownSpellInChain(bot, 12294);
-            if (spell)
-                return spell;
-
-            // Bloodthirst (Fury)
-            spell = FindBestKnownSpellInChain(bot, 23881);
-            if (spell)
-                return spell;
-
-            // Rend: apply the bleed DoT when not present on target
-            {
-                std::uint32_t const rend = FindBestKnownSpellInChain(bot, 772);
-                if (rend && !target->HasAura(rend))
-                    return rend;
-            }
-
-            // Heroic Strike: basic melee filler
-            return FindBestKnownSpellInChain(bot, 78);
-        }
-
-        case CLASS_ROGUE:
-        {
-            std::uint32_t const snd   = FindBestKnownSpellInChain(bot, 5171); // Slice and Dice
-            std::uint32_t const evisc = FindBestKnownSpellInChain(bot, 2098); // Eviscerate
-            std::uint32_t const ss    = FindBestKnownSpellInChain(bot, 1752); // Sinister Strike
-
-            std::uint8_t const cp = bot->GetComboPoints();
-
-            // At 2+ combo points, apply Slice and Dice when the haste buff is missing
-            if (cp >= 2 && snd && !bot->HasAura(snd))
-                return snd;
-
-            // At 4+ combo points spend with Eviscerate
-            if (cp >= 4 && evisc)
-                return evisc;
-
-            return ss;
-        }
-
-        case CLASS_DEATH_KNIGHT:
-        {
-            bool const hasFrostFever  = target->HasAura(AuraFrostFever);
-            bool const hasBloodPlague = target->HasAura(AuraBloodPlague);
-
-            // Apply diseases before committing to strike abilities
-            if (!hasBloodPlague && bot->HasSpell(45462))
-                return 45462; // Plague Strike — applies Blood Plague
-            if (!hasFrostFever && bot->HasSpell(45477))
-                return 45477; // Icy Touch — applies Frost Fever
-
-            // Diseases up: Death Strike when off cooldown (damage + self-heal)
-            if (bot->HasSpell(49998) && !bot->HasSpellCooldown(49998))
-                return 49998;
-
-            // Death Strike is on cooldown — fill with rune strikes
-            {
-                std::uint32_t const heartStrike = FindBestKnownSpellInChain(bot, 55050);
-                if (heartStrike && !bot->HasSpellCooldown(heartStrike))
-                    return heartStrike; // Heart Strike
-            }
-            if (bot->HasSpell(45902) && !bot->HasSpellCooldown(45902))
-                return 45902; // Blood Strike
-
-            // Fallback: let the engine handle the cooldown; autoattack continues
-            if (bot->HasSpell(49998))
-                return 49998;
-            return 0;
-        }
-
-        default:
-            return 0;
-    }
-}
 
 // ---------------------------------------------------------------
 // Offensive spells — Paladin seal helpers
@@ -834,85 +740,6 @@ std::uint32_t GetHybridDamageSpell(Player* bot, Unit* target)
     }
 }
 
-// ---------------------------------------------------------------
-// Offensive spells — ranged roles
-// ---------------------------------------------------------------
-
-// Returns the best ranged damage spell, preferring DoTs when not yet applied.
-std::uint32_t GetDamageSpell(Player* bot, Unit* target)
-{
-    switch (bot->getClass())
-    {
-        case CLASS_MAGE:
-        {
-            // Walk the Frostbolt chain; if chain lookup fails (e.g. rank data
-            // missing), fall back to direct spell ID checks for common ranks.
-            std::uint32_t fb = FindBestKnownSpellInChain(bot, 116);
-            if (fb)
-                return fb;
-            // Direct fallback: Frostbolt ranks 1-14 in reverse order
-            static constexpr std::uint32_t FrostboltRanks[] = {
-                42842, 42841, 38697, 27072, 25304, 10161, 10160, 10159,
-                8406,  8405,  8404,  837,   228,   116
-            };
-            for (std::uint32_t id : FrostboltRanks)
-                if (bot->HasSpell(id))
-                    return id;
-            // No Frostbolt — try Fireball as alternate
-            fb = FindBestKnownSpellInChain(bot, 133);
-            if (fb)
-                return fb;
-            // Frostfire Bolt (dual-school, learned via talent)
-            if (bot->HasSpell(44614))
-                return 44614;
-            return 0;
-        }
-
-        case CLASS_WARLOCK:
-        {
-            // Curse of Agony: highest-DPS curse, apply first
-            std::uint32_t const coa = FindBestKnownSpellInChain(bot, 980);
-            if (coa && !target->HasAura(coa))
-                return coa;
-
-            // Immolate: fire DoT, apply when missing
-            std::uint32_t const immolate = FindBestKnownSpellInChain(bot, 348);
-            if (immolate && !target->HasAura(immolate))
-                return immolate;
-
-            // Corruption: instant shadow DoT
-            std::uint32_t const corruption = FindBestKnownSpellInChain(bot, 172);
-            if (corruption && !target->HasAura(corruption))
-                return corruption;
-
-            // Shadow Bolt: primary filler when all DoTs are rolling
-            return FindBestKnownSpellInChain(bot, 686);
-        }
-
-        case CLASS_HUNTER:
-        {
-            // Serpent Sting: nature DoT, apply when missing
-            std::uint32_t const serpent = FindBestKnownSpellInChain(bot, 1978);
-            if (serpent && !target->HasAura(serpent))
-                return serpent;
-
-            // Multi-Shot: strong filler when off cooldown
-            std::uint32_t const multiShot = FindBestKnownSpellInChain(bot, 2643);
-            if (multiShot && !bot->HasSpellCooldown(multiShot))
-                return multiShot;
-
-            // Steady Shot: primary ranged filler
-            if (bot->HasSpell(34120))
-                return 34120;
-
-            // Arcane Shot: fallback if Steady Shot is not yet learned
-            return FindBestKnownSpellInChain(bot, 3044);
-        }
-
-        default:
-            return 0;
-    }
-}
 
 // ---------------------------------------------------------------
 // Out-of-combat maintenance
@@ -1286,77 +1113,39 @@ void TickHealer(Player* bot, Player* owner)
     }
 }
 
+void UpdateConservationState(
+    model::BotCombatProfileSettings const& settings,
+    Player const* bot,
+    bool& conserving)
+{
+    if (settings.conservationMode != model::BotCombatConservationMode::Conservative)
+    {
+        conserving = false;
+        return;
+    }
+    if (bot->GetMaxPower(POWER_MANA) == 0)
+        return;
+    float const manaPct = 100.0f * static_cast<float>(bot->GetPower(POWER_MANA))
+                                 / static_cast<float>(bot->GetMaxPower(POWER_MANA));
+    if (conserving)
+    {
+        if (manaPct >= settings.manaHighWater)
+            conserving = false;
+    }
+    else if (manaPct < settings.manaLowWater)
+    {
+        conserving = true;
+    }
+}
+
 void TickRanged(Player* bot, Player* owner, Unit* target)
 {
-    if (TryExecuteProfileRotation(bot, owner, target))
-        return;
-
-    if (bot->IsNonMeleeSpellCast(false))
-    {
-        LOG_INFO(
-            "server.worldserver",
-            "[LivingWorldDebug] RangedAI cast blocked: bot='{}' guid={} targetGuid={} reason=already_casting",
-            bot->GetName(),
-            bot->GetGUID().GetCounter(),
-            target ? target->GetGUID().GetCounter() : 0);
-        return;
-    }
-
-    std::uint32_t const spell = GetDamageSpell(bot, target);
-    if (!spell)
-    {
-        LOG_INFO(
-            "server.worldserver",
-            "[LivingWorldDebug] RangedAI cast blocked: bot='{}' guid={} class={} targetGuid={} distance={:.2f} mana={}/{} reason=no_spell_selected",
-            bot->GetName(),
-            bot->GetGUID().GetCounter(),
-            static_cast<std::uint32_t>(bot->getClass()),
-            target ? target->GetGUID().GetCounter() : 0,
-            target ? bot->GetDistance(target) : 0.0f,
-            static_cast<std::uint32_t>(bot->GetPower(POWER_MANA)),
-            static_cast<std::uint32_t>(bot->GetMaxPower(POWER_MANA)));
-        return;
-    }
-
-    LOG_INFO(
-        "server.worldserver",
-        "[LivingWorldDebug] RangedAI cast attempt: bot='{}' guid={} class={} spell={} targetGuid={} distance={:.2f} mana={}/{} victimGuid={}",
-        bot->GetName(),
-        bot->GetGUID().GetCounter(),
-        static_cast<std::uint32_t>(bot->getClass()),
-        spell,
-        target ? target->GetGUID().GetCounter() : 0,
-        target ? bot->GetDistance(target) : 0.0f,
-        static_cast<std::uint32_t>(bot->GetPower(POWER_MANA)),
-        static_cast<std::uint32_t>(bot->GetMaxPower(POWER_MANA)),
-        bot->GetVictim() ? bot->GetVictim()->GetGUID().GetCounter() : 0);
-
-    bot->CastSpell(target, spell, false);
+    TryExecuteProfileRotation(bot, owner, target);
 }
 
 void TickMelee(Player* bot, Player* owner, Unit* target)
 {
-    if (TryExecuteProfileRotation(bot, owner, target))
-        return;
-
-    if (bot->IsNonMeleeSpellCast(false))
-        return;
-
-    std::uint32_t const spell = GetMeleeOffensiveSpell(bot, target);
-    if (spell)
-    {
-        LOG_INFO(
-            "server.worldserver",
-            "[LivingWorldDebug] MeleeAI cast attempt: bot='{}' guid={} class={} spell={} targetGuid={} distance={:.2f} victimGuid={}",
-            bot->GetName(),
-            bot->GetGUID().GetCounter(),
-            static_cast<std::uint32_t>(bot->getClass()),
-            spell,
-            target ? target->GetGUID().GetCounter() : 0,
-            target ? bot->GetDistance(target) : 0.0f,
-            bot->GetVictim() ? bot->GetVictim()->GetGUID().GetCounter() : 0);
-        bot->CastSpell(target, spell, false);
-    }
+    TryExecuteProfileRotation(bot, owner, target);
 }
 
 // ---------------------------------------------------------------
@@ -1582,7 +1371,7 @@ Unit* ResolveGuardTarget(Player* bot, Player* owner)
 // Main tick
 // ---------------------------------------------------------------
 
-void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConserving)
+void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& conserving)
 {
     model::BotCombatMode const mode =
         service::BotPlayerRegistry::Instance().GetBotMode(owner->GetGUID());
@@ -1611,66 +1400,47 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
     BotCombatDoctrine const doctrine = GetCombatDoctrine(bot, owner);
     BotCombatRole const role = doctrine.role;
 
-    // Pure healers: heal first, then optionally attack based on mana.
+    // Pure healers: profile rotation handles healing + offense in priority order;
+    // hardcoded TickHealer fires only as a fallback when no profile is active.
     if (role == BotCombatRole::Healer)
     {
-        TickHealer(bot, owner);
+        UpdateConservationState(doctrine.settings, bot, conserving);
 
-        if (doctrine.settings.conservationMode != model::BotCombatConservationMode::Conservative)
-        {
-            healerConserving = false;
-        }
-        else if (bot->GetMaxPower(POWER_MANA) > 0)
-        {
-            float const manaPct = 100.0f * static_cast<float>(bot->GetPower(POWER_MANA))
-                                         / static_cast<float>(bot->GetMaxPower(POWER_MANA));
-            if (healerConserving)
-            {
-                if (manaPct >= doctrine.settings.manaHighWater)
-                    healerConserving = false;
-            }
-            else if (manaPct < doctrine.settings.manaLowWater)
-            {
-                healerConserving = true;
-            }
-        }
-
-        // Keep a valid assist target snapshot so follow logic does not yank
-        // healers back to 2y during active combat.
         Unit* attackTarget = ResolveAssistTarget(bot, owner);
         if (attackTarget && bot->GetVictim() != attackTarget)
-        {
-            // Match ranged behavior: lock victim/combat state without forcing
-            // chase movement that can interrupt casts.
             bot->Attack(attackTarget, false);
-        }
 
         if (attackTarget)
             BreakFollowForAttack(bot);
+
+        // Profile rotation handles both healing (lowest_hp_party entries) and
+        // offense (enemy_primary entries) in a single priority-ordered pass.
+        // When mana-conserving, pass nullptr as the primary target so offense
+        // entries are naturally skipped while healing entries still resolve via
+        // lowest_hp_party independently of the combat target.
+        bool const offenseSuppressed =
+            IsOffenseSuppressed(doctrine.settings.conservationMode, conserving);
+        if (!TryExecuteProfileRotation(
+                bot, owner, offenseSuppressed ? nullptr : attackTarget))
+        {
+            // Fallback: hardcoded healing when no profile is configured.
+            TickHealer(bot, owner);
+            if (attackTarget && !offenseSuppressed && !bot->IsNonMeleeSpellCast(false))
+            {
+                std::uint32_t const spell = GetHealerOffensiveSpell(bot, attackTarget);
+                if (spell)
+                    bot->CastSpell(attackTarget, spell, false);
+            }
+        }
 
         if (attackTarget)
         {
             float const distance = bot->GetDistance(attackTarget);
             if (!bot->IsNonMeleeSpellCast(false) && distance > RangedCastRange)
             {
-                // Priests/healers need explicit approach just like ranged DPS,
-                // otherwise they can stay latched to owner follow spacing when
-                // the pull starts far away.
                 EnsureRangedApproach(bot, attackTarget);
                 return;
             }
-        }
-
-        // Attempt an offensive spell if not already casting and mana is healthy.
-        if (attackTarget
-            && !IsOffenseSuppressed(doctrine.settings.conservationMode, healerConserving))
-        {
-            if (TryExecuteProfileRotation(bot, owner, attackTarget))
-                return;
-
-            std::uint32_t const spell = GetHealerOffensiveSpell(bot, attackTarget);
-            if (spell && !bot->IsNonMeleeSpellCast(false))
-                bot->CastSpell(attackTarget, spell, false);
         }
 
         TryApplyOutOfCombatBuff(bot, owner);
@@ -1698,6 +1468,11 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
         }
         return;
     }
+
+    // DPS roles track mana conservation every tick so out-of-combat mana regen
+    // properly clears the conserving state before the next pull.
+    if (role == BotCombatRole::Ranged || role == BotCombatRole::Melee)
+        UpdateConservationState(doctrine.settings, bot, conserving);
 
     Unit* const assistTarget = (mode == model::BotCombatMode::Guard)
         ? ResolveGuardTarget(bot, owner)
@@ -1833,6 +1608,18 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
                 // Target is beyond spell range: close to optimal distance.
                 EnsureRangedApproach(bot, assistTarget);
             }
+            else if (IsOffenseSuppressed(doctrine.settings.conservationMode, conserving))
+            {
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] RangedAI decision: bot='{}' guid={} targetGuid={} distance={:.2f} mana={}/{} action=conserving",
+                    bot->GetName(),
+                    bot->GetGUID().GetCounter(),
+                    assistTarget->GetGUID().GetCounter(),
+                    distance,
+                    static_cast<std::uint32_t>(bot->GetPower(POWER_MANA)),
+                    static_cast<std::uint32_t>(bot->GetMaxPower(POWER_MANA)));
+            }
             else
             {
                 LOG_INFO(
@@ -1854,7 +1641,8 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
                 bot->Attack(assistTarget, true);
 
             EnsureChasingVictim(bot, assistTarget);
-            TickMelee(bot, owner, assistTarget);
+            if (!IsOffenseSuppressed(doctrine.settings.conservationMode, conserving))
+                TickMelee(bot, owner, assistTarget);
         }
 
         return;
@@ -1916,10 +1704,10 @@ public:
     CompanionAIEvent(ObjectGuid botGuid, ObjectGuid ownerGuid,
                      std::uint8_t notInWorldRetries = 0,
                      float retreatHpPct = RangedRetreatTrigger,
-                     bool healerConserving = false)
+                     bool conserving = false)
         : _botGuid(botGuid), _ownerGuid(ownerGuid)
         , _notInWorldRetries(notInWorldRetries), _retreatHpPct(retreatHpPct)
-        , _healerConserving(healerConserving)
+        , _conserving(conserving)
     {
     }
 
@@ -1938,7 +1726,7 @@ public:
             // Backoff: 500ms, 1s, 2s, 4s, 4s, 4s, ...
             Milliseconds const delay = 500ms * (1u << std::min(_notInWorldRetries, std::uint8_t{3}));
             bot->m_Events.AddEventAtOffset(
-                new CompanionAIEvent(_botGuid, _ownerGuid, _notInWorldRetries + 1, _retreatHpPct, _healerConserving),
+                new CompanionAIEvent(_botGuid, _ownerGuid, _notInWorldRetries + 1, _retreatHpPct, _conserving),
                 delay);
             return true;
         }
@@ -1947,9 +1735,9 @@ public:
         if (_retreatHpPct < RangedRetreatTrigger && bot && bot->GetHealthPct() >= RangedRetreatTrigger)
             _retreatHpPct = RangedRetreatTrigger;
 
-        Tick(bot, owner, _retreatHpPct, _healerConserving);
+        Tick(bot, owner, _retreatHpPct, _conserving);
         bot->m_Events.AddEventAtOffset(
-            new CompanionAIEvent(_botGuid, _ownerGuid, 0, _retreatHpPct, _healerConserving),
+            new CompanionAIEvent(_botGuid, _ownerGuid, 0, _retreatHpPct, _conserving),
             500ms);
         return true;
     }
@@ -1961,7 +1749,7 @@ private:
     ObjectGuid   _ownerGuid;
     std::uint8_t _notInWorldRetries;
     float        _retreatHpPct;
-    bool         _healerConserving;
+    bool         _conserving;
 };
 } // namespace
 

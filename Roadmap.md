@@ -53,6 +53,16 @@ Additional recent engineering progress on the active combat migration:
     sanity implies zero safe domains
   - a real `AccountAltRuntimeCoordinator` test seam bug, where clone-present
     paths escaped the fake test seams and touched live/global clone-login state
+- all stale unit-test failures are now resolved (15/15 passing)
+- DB-driven rotation doctrine seeded for all 10 default DPS specs across
+  `living_world_bot_combat_default_entry/action/condition`
+- `BotCombatRuntimeEvaluator` gained `combo_points` condition support
+  (stat_key='combo_points', subject_key='self') enabling correct Rogue rotation
+  gating on Eviscerate and Slice and Dice
+- hardcoded per-class spell selection removed from `TickRanged` and `TickMelee`;
+  both now delegate entirely to the profile evaluator path, with auto-attack
+  as the only implicit fallback — healer and hybrid-healer paths remain
+  hardcoded until healer profiles are seeded
 
 Current next-planned slice:
 
@@ -227,12 +237,12 @@ This should be delivered in phases so the runtime stays stable:
 
 Immediate combat-runtime status after the latest review/fix pass:
 
-- the live bot runtime now resolves doctrine from the DB-backed profile/default
-  system and attempts row-driven execution before legacy class logic
-- the current hardcoded class/spec behavior in `CompanionAI` still exists as a
-  fallback layer, so the migration is mid-cutover rather than complete
-- the next highest-value combat step remains shrinking legacy fallback by
-  improving doctrine/default coverage and evaluator/runtime confidence
+- the live bot runtime resolves doctrine from the DB-backed profile/default
+  system; for all 10 DPS specs the profile evaluator is now the sole spell
+  selection path (no per-class C++ fallback for TickRanged/TickMelee)
+- healer and hybrid-healer ticks remain hardcoded; the next step is seeding
+  healer default profiles and migrating those paths to the evaluator
+- the `combo_points` condition is wired and tested through the Rogue rotation
 
 #### Non-goals
 
@@ -1230,6 +1240,61 @@ Current repair status:
 
 ---
 
+## Completed Slice: DB-Driven DPS Combat Doctrine
+
+All 10 default DPS class doctrines are now live in the world DB and are the
+sole spell-selection path for ranged and melee bots.
+
+### A) Rotation seed data — **Complete**
+
+`rev_living_world_004_default_profile_entries.sql` seeded 48 rotation entries,
+63 actions, and 6 conditions across all 10 default DPS profiles.
+
+Every class except healers now drives combat through
+`living_world_bot_combat_default_entry / action / condition`.
+
+Key design choices:
+
+- `rank_mode=BestKnown` for all standard ranked spells — the evaluator walks
+  the chain and picks the highest rank the bot knows.
+- `rank_mode=ExactSpellId` for single-rank talents (Crusader Strike, Divine
+  Storm, Steady Shot, Lava Burst, Death Strike, etc.) so bots only attempt
+  them if actually learned.
+- DoT refreshes are accepted without aura-gate conditions on first pass; in
+  WotLK all damage DoTs refresh cleanly on re-cast.
+- DK disease entries (Icy Touch, Plague Strike) carry `aura/NotHas` conditions
+  using the debuff aura IDs (Frost Fever 55095, Blood Plague 55078) because
+  those debuffs are single-ID and `HasAura()` is reliable.
+- Rogue Eviscerate and Slice and Dice use the new `combo_points` condition.
+  Eviscerate fires at 4+ CP; Slice and Dice at 2+ CP; Sinister Strike fills
+  otherwise.
+
+### B) combo_points condition — **Complete**
+
+`BotCombatRuntimeEvaluator::EvaluateCondition` gained a `combo_points` stat
+branch. Uses `subject->GetComboPoints()` (defined on `Unit`).
+
+Condition format: `subject_key='self', stat_key='combo_points',
+comparison=GreaterThanOrEqual(5), numeric_value=4.0` (for "4+ combo points").
+
+### C) TickRanged / TickMelee doctrine removal — **Complete**
+
+`GetDamageSpell` (Mage, Warlock, Hunter hardcoded chains) and
+`GetMeleeOffensiveSpell` (Warrior, Rogue, Death Knight hardcoded chains)
+removed from `CompanionAI.cpp`.
+
+`TickRanged` and `TickMelee` now delegate entirely to
+`TryExecuteProfileRotation`. If no profile action fires (all entries on
+cooldown or no profile loaded), the tick is a no-op and auto-attack continues
+naturally through AzerothCore's combat engine.
+
+Healer and hybrid-healer helper functions (`GetDirectHealSpell`,
+`GetSustainedHealSpell`, `GetHybridDamageSpell`, `GetHealerOffensiveSpell`,
+`GetPreferredSeal`, `HasSealActive`) are retained unchanged — their paths are
+still data-hardcoded pending healer profile seeding.
+
+---
+
 ## Completed Slice: Reputation, Quest, and Achievement Sync (Clone→Source)
 
 This slice completed the remaining additive data-transfer paths from the clone
@@ -1942,21 +2007,26 @@ D.11 Define doctrine-to-profile authoring workflow — **Partial**
 
 #### Current active checklist
 
-- [ ] Add DB schema for bot combat profiles, entries, actions, and conditions.
-- [ ] Add baked-in default data/service path for one starter spec/role per
+- [x] Add DB schema for bot combat profiles, entries, actions, and conditions.
+- [x] Add baked-in default data/service path for one starter spec/role per
       class.
-- [ ] Implement spec/role best-guess resolver with optional profile override.
-- [ ] Add runtime resolver for blank-profile -> default-profile behavior.
+- [x] Implement spec/role best-guess resolver with optional profile override.
+- [x] Add runtime resolver for blank-profile -> default-profile behavior.
+- [x] Add one explicit doctrine-resolution service that owns precedence and
+      keeps fallback behavior centralized.
+- [x] Add primary/secondary row execution with 500ms wait-or-fallback logic.
+- [x] Implement target resolvers for `enemy_primary` and `enemy_trash`.
+- [x] Remove per-class hardcoded spell selection from `TickRanged` and
+      `TickMelee`; DPS rotation is now fully DB-driven.
+- [ ] Seed healer/hybrid-healer default profiles (Priest Holy, Paladin Holy,
+      Shaman Restoration, Druid Restoration) and migrate `TickHealer` /
+      hybrid-healer offensive path to the profile evaluator.
 - [ ] Extend the runtime resolver so account defaults and future context
       defaults (`pug` / `raid` / `battleground`) use the same doctrine lookup
       system.
-- [ ] Move as much default combat doctrine as practical from hardcoded C++ into
-      world/default DB rows, leaving only a minimal emergency fallback in code.
-- [ ] Add one explicit doctrine-resolution service that owns precedence and
-      keeps fallback behavior centralized.
-- [ ] Add primary/secondary row execution with 500ms wait-or-fallback logic.
-- [ ] Implement target resolvers for `enemy_primary` and `enemy_trash`.
-- [ ] Add conservation modes: Full Force, Conservative, JIT Casting.
+- [ ] Add conservation mode enforcement through the evaluator path for DPS bots
+      (model and CompanionAI healer hysteresis exist; DPS mana thresholds are
+      not yet enforced at the evaluator level).
 - [ ] Add optional down-rank support with floor rules.
 - [ ] Expose profile CRUD/edit/reset/apply operations through the server API /
       message layer for addon consumption.
