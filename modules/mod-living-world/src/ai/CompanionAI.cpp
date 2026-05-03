@@ -398,7 +398,19 @@ bool TryExecuteProfileRotation(Player* bot, Player* owner, Unit* primaryTarget)
         GetPreparedCombatProfile(bot, owner);
     if (preparedProfile.interruptEntries.empty()
         && preparedProfile.rotationEntries.empty())
+    {
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] ProfileFallback bot='{}' guid={} reason=no_prepared_entries sourceGuid={} slot={} spec='{}' role='{}' sourceKind={}",
+            bot->GetName(),
+            bot->GetGUID().GetCounter(),
+            preparedProfile.resolution.sourceCharacterGuid,
+            static_cast<std::uint32_t>(preparedProfile.resolution.activeProfileSlot),
+            preparedProfile.resolution.effectiveSpecKey,
+            preparedProfile.resolution.effectiveRoleKey,
+            static_cast<std::uint32_t>(preparedProfile.resolution.source));
         return false;
+    }
 
     service::BotCombatRuntimeContext context;
     context.bot = bot;
@@ -467,9 +479,26 @@ bool TryExecuteProfileRotation(Player* bot, Player* owner, Unit* primaryTarget)
         return true;
     }
 
-    return handleEvaluationResult(
-        GetRuntimeEvaluator().EvaluateRotation(preparedProfile, context),
-        "rotation");
+    if (handleEvaluationResult(
+            GetRuntimeEvaluator().EvaluateRotation(preparedProfile, context),
+            "rotation"))
+    {
+        return true;
+    }
+
+    LOG_INFO(
+        "server.worldserver",
+        "[LivingWorldDebug] ProfileFallback bot='{}' guid={} reason=no_runtime_action sourceGuid={} slot={} spec='{}' role='{}' interruptEntries={} rotationEntries={} targetGuid={}",
+        bot->GetName(),
+        bot->GetGUID().GetCounter(),
+        preparedProfile.resolution.sourceCharacterGuid,
+        static_cast<std::uint32_t>(preparedProfile.resolution.activeProfileSlot),
+        preparedProfile.resolution.effectiveSpecKey,
+        preparedProfile.resolution.effectiveRoleKey,
+        preparedProfile.interruptEntries.size(),
+        preparedProfile.rotationEntries.size(),
+        primaryTarget ? primaryTarget->GetGUID().GetCounter() : 0);
+    return false;
 }
 
 bool IsOffenseSuppressed(
@@ -1951,6 +1980,24 @@ void ForceBotBuffRefresh(Player* bot, Player* owner)
     if (!bot || !owner)
         return;
     ApplyBotBuff(bot, owner);
+}
+
+void InvalidateBotCombatCaches(ObjectGuid botGuid)
+{
+    if (!botGuid.IsPlayer())
+        return;
+
+    std::uint64_t const botGuidLow = botGuid.GetCounter();
+
+    {
+        std::lock_guard<std::mutex> lock(s_doctrineMutex);
+        s_doctrineByBotGuid.erase(botGuidLow);
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(s_preparedProfileMutex);
+        s_preparedProfileByBotGuid.erase(botGuidLow);
+    }
 }
 } // namespace ai
 } // namespace living_world

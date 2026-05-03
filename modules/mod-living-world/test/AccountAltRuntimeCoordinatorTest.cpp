@@ -1,4 +1,5 @@
 #include "service/AccountAltRuntimeCoordinator.h"
+#include "integration/CharacterCloneStateGateway.h"
 #include "integration/CharacterAchievementSyncRepository.h"
 #include "integration/CharacterQuestSyncRepository.h"
 #include "integration/CharacterReputationSyncRepository.h"
@@ -114,6 +115,36 @@ public:
     std::optional<model::AccountAltRuntimeRecord> requestedRuntime;
     integration::CharacterCloneMaterializationResult result;
     int materializeCalls = 0;
+};
+
+class FakeCloneStateGateway final
+    : public integration::CharacterCloneStateGateway
+{
+public:
+    std::optional<integration::CharacterCloneLoginState> LoadCloneLoginState(
+        std::uint64_t cloneCharacterGuid) const override
+    {
+        if (!loginState || requestedCloneGuid != cloneCharacterGuid)
+            return std::nullopt;
+        return loginState;
+    }
+
+    bool DeleteOfflineCloneCharacter(
+        std::uint32_t,
+        std::uint64_t cloneCharacterGuid,
+        std::string const&) const override
+    {
+        ++deleteCalls;
+        lastDeletedCloneGuid = cloneCharacterGuid;
+        return deleteShouldSucceed;
+    }
+
+    std::uint64_t requestedCloneGuid = 8001;
+    mutable int deleteCalls = 0;
+    mutable std::uint64_t lastDeletedCloneGuid = 0;
+    bool deleteShouldSucceed = true;
+    std::optional<integration::CharacterCloneLoginState> loginState =
+        integration::CharacterCloneLoginState { "Tester", 0, true };
 };
 
 class FakeItemSnapshotRepository final
@@ -290,6 +321,7 @@ TEST(AccountAltRuntimeCoordinatorTest, NewRuntimeUsesReservedAccount)
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
+    FakeCloneStateGateway cloneStateGateway;
     FakeItemSnapshotRepository itemSnapshotRepository;
     FakeInventorySyncRepository inventorySyncRepository;
     FakeBankSyncRepository bankSyncRepository;
@@ -313,6 +345,7 @@ TEST(AccountAltRuntimeCoordinatorTest, NewRuntimeUsesReservedAccount)
         runtimeRepository,
         botAccountPoolRepository,
         cloneMaterializer,
+        cloneStateGateway,
         itemSnapshotRepository,
         inventorySyncRepository,
         bankSyncRepository,
@@ -346,6 +379,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
+    FakeCloneStateGateway cloneStateGateway;
     FakeItemSnapshotRepository itemSnapshotRepository;
     FakeInventorySyncRepository inventorySyncRepository;
     FakeBankSyncRepository bankSyncRepository;
@@ -374,6 +408,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
         runtimeRepository,
         botAccountPoolRepository,
         cloneMaterializer,
+        cloneStateGateway,
         itemSnapshotRepository,
         inventorySyncRepository,
         bankSyncRepository,
@@ -405,6 +440,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
+    FakeCloneStateGateway cloneStateGateway;
     FakeItemSnapshotRepository itemSnapshotRepository;
     FakeInventorySyncRepository inventorySyncRepository;
     FakeBankSyncRepository bankSyncRepository;
@@ -430,6 +466,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
         runtimeRepository,
         botAccountPoolRepository,
         cloneMaterializer,
+        cloneStateGateway,
         itemSnapshotRepository,
         inventorySyncRepository,
         bankSyncRepository,
@@ -457,6 +494,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
+    FakeCloneStateGateway cloneStateGateway;
     FakeItemSnapshotRepository itemSnapshotRepository;
     FakeInventorySyncRepository inventorySyncRepository;
     FakeBankSyncRepository bankSyncRepository;
@@ -484,6 +522,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
         runtimeRepository,
         botAccountPoolRepository,
         cloneMaterializer,
+        cloneStateGateway,
         itemSnapshotRepository,
         inventorySyncRepository,
         bankSyncRepository,
@@ -519,6 +558,7 @@ TEST(AccountAltRuntimeCoordinatorTest, BlocksWhenCloneMaterializationFails)
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
+    FakeCloneStateGateway cloneStateGateway;
     FakeItemSnapshotRepository itemSnapshotRepository;
     FakeInventorySyncRepository inventorySyncRepository;
     FakeBankSyncRepository bankSyncRepository;
@@ -538,6 +578,7 @@ TEST(AccountAltRuntimeCoordinatorTest, BlocksWhenCloneMaterializationFails)
         runtimeRepository,
         botAccountPoolRepository,
         cloneMaterializer,
+        cloneStateGateway,
         itemSnapshotRepository,
         inventorySyncRepository,
         bankSyncRepository,
@@ -564,6 +605,7 @@ TEST(AccountAltRuntimeCoordinatorTest, ReuseCloneRunsEquipmentRecoveryWhenApprov
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
+    FakeCloneStateGateway cloneStateGateway;
     FakeItemSnapshotRepository itemSnapshotRepository;
     FakeInventorySyncRepository inventorySyncRepository;
     FakeBankSyncRepository bankSyncRepository;
@@ -607,6 +649,7 @@ TEST(AccountAltRuntimeCoordinatorTest, ReuseCloneRunsEquipmentRecoveryWhenApprov
         runtimeRepository,
         botAccountPoolRepository,
         cloneMaterializer,
+        cloneStateGateway,
         itemSnapshotRepository,
         inventorySyncRepository,
         bankSyncRepository,
@@ -635,6 +678,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
+    FakeCloneStateGateway cloneStateGateway;
     FakeItemSnapshotRepository itemSnapshotRepository;
     FakeInventorySyncRepository inventorySyncRepository;
     FakeBankSyncRepository bankSyncRepository;
@@ -692,6 +736,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
         runtimeRepository,
         botAccountPoolRepository,
         cloneMaterializer,
+        cloneStateGateway,
         itemSnapshotRepository,
         inventorySyncRepository,
         bankSyncRepository,
@@ -719,6 +764,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
+    FakeCloneStateGateway cloneStateGateway;
     FakeItemSnapshotRepository itemSnapshotRepository;
     FakeInventorySyncRepository inventorySyncRepository;
     FakeBankSyncRepository bankSyncRepository;
@@ -776,6 +822,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
         runtimeRepository,
         botAccountPoolRepository,
         cloneMaterializer,
+        cloneStateGateway,
         itemSnapshotRepository,
         inventorySyncRepository,
         bankSyncRepository,

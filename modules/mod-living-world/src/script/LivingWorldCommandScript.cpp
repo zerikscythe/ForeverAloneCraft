@@ -28,9 +28,11 @@
 #include "integration/RosterRepository.h"
 #include "integration/SqlAccountAltRuntimeRepository.h"
 #include "integration/SqlBotAccountPoolRepository.h"
+#include "integration/AzerothCharacterCloneStateGateway.h"
 #include "integration/SqlCharacterAchievementSyncRepository.h"
 #include "integration/SqlCharacterCloneMaterializer.h"
 #include "integration/SqlCharacterBankSyncRepository.h"
+#include "integration/SqlBotCombatProfileSelectionRepository.h"
 #include "integration/SqlCharacterEquipmentSyncRepository.h"
 #include "integration/SqlCharacterInventorySyncRepository.h"
 #include "integration/SqlCharacterItemSnapshotRepository.h"
@@ -644,6 +646,7 @@ bool ExecuteSpawnRosterBodyAction(
     integration::SqlAccountAltRuntimeRepository runtimeRepository;
     integration::SqlBotAccountPoolRepository botAccountPoolRepository;
     integration::SqlCharacterCloneMaterializer cloneMaterializer;
+    integration::AzerothCharacterCloneStateGateway cloneStateGateway;
     integration::SqlCharacterItemSnapshotRepository itemSnapshotRepository;
     integration::SqlCharacterInventorySyncRepository inventorySyncRepository;
     integration::SqlCharacterBankSyncRepository bankSyncRepository;
@@ -663,6 +666,7 @@ bool ExecuteSpawnRosterBodyAction(
         runtimeRepository,
         botAccountPoolRepository,
         cloneMaterializer,
+        cloneStateGateway,
         itemSnapshotRepository,
         inventorySyncRepository,
         bankSyncRepository,
@@ -2133,12 +2137,15 @@ void HandleBotProfileSet(
     std::uint64_t const characterGuid = entry->characterGuid;
     std::uint8_t const slot = command.profileSlot;
 
-    CharacterDatabase.Execute(
-        "INSERT INTO character_bot_profile_slots (characterGuid, activeSlot) "
-        "VALUES ({}, {}) ON DUPLICATE KEY UPDATE activeSlot = {}",
-        characterGuid,
-        static_cast<std::uint32_t>(slot),
-        static_cast<std::uint32_t>(slot));
+    integration::SqlBotCombatProfileSelectionRepository selectionRepository;
+    selectionRepository.SaveRuntimeSelection(
+        model::BotCombatRuntimeSelection {
+            characterGuid,
+            slot,
+        });
+
+    if (Player* activeBot = ResolveActiveBotForOwner(session->GetPlayer(), command.botRef))
+        living_world::ai::InvalidateBotCombatCaches(activeBot->GetGUID());
 
     SendPlayerLog(
         handler,

@@ -2,6 +2,7 @@
 
 #include "integration/AccountAltRuntimeRepository.h"
 #include "integration/BotAccountPoolRepository.h"
+#include "integration/CharacterCloneStateGateway.h"
 #include "integration/CharacterAchievementSyncRepository.h"
 #include "integration/CharacterBankSyncRepository.h"
 #include "integration/CharacterCloneMaterializer.h"
@@ -51,6 +52,7 @@ public:
         integration::AccountAltRuntimeRepository& runtimeRepository,
         integration::BotAccountPoolRepository& botAccountPoolRepository,
         integration::CharacterCloneMaterializer& cloneMaterializer,
+        integration::CharacterCloneStateGateway const& cloneStateGateway,
         integration::CharacterItemSnapshotRepository const& itemSnapshotRepository,
         integration::CharacterInventorySyncRepository& inventorySyncRepository,
         integration::CharacterBankSyncRepository& bankSyncRepository,
@@ -72,6 +74,7 @@ public:
 private:
     integration::AccountAltRuntimeRepository& _runtimeRepository;
     integration::CharacterCloneMaterializer& _cloneMaterializer;
+    integration::CharacterCloneStateGateway const& _cloneStateGateway;
     integration::CharacterItemSnapshotRepository const& _itemSnapshotRepository;
     integration::CharacterInventorySyncRepository& _inventorySyncRepository;
     integration::CharacterBankSyncRepository& _bankSyncRepository;

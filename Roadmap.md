@@ -34,6 +34,26 @@ Completed recently:
 - reward-choice quests now support a smart/manual bot reward flow
 - the LivingWorld addon now has a `Quests` tab for pending bot reward choices
 
+Additional recent engineering progress on the active combat migration:
+
+- `.lwbot <#|name> profile <1-10>` now writes to the new
+  `living_world_bot_combat_runtime_selection` table instead of the legacy
+  `character_bot_profile_slots` path
+- active bot profile-slot switches now invalidate live CompanionAI doctrine /
+  prepared-profile caches immediately, so slot changes apply on the next AI tick
+  instead of waiting for cache TTL expiry
+- `CompanionAI` now logs explicit doctrine-runtime fallback reasons:
+  - `reason=no_prepared_entries`
+  - `reason=no_runtime_action`
+- first focused combat-profile tests were added for
+  `SimpleBotCombatSpecRoleResolver`, and the doctrine-related filtered suite now
+  passes locally
+- investigation of the broader unit-test run found two categories of failures:
+  - stale `AccountAltSanityCheckerTest` expectations that still assume failed
+    sanity implies zero safe domains
+  - a real `AccountAltRuntimeCoordinator` test seam bug, where clone-present
+    paths escaped the fake test seams and touched live/global clone-login state
+
 Current next-planned slice:
 
 - extend the `Quests` tab into a broader bot quest-actions panel that can show
@@ -204,6 +224,15 @@ This should be delivered in phases so the runtime stays stable:
 4. add context-level default selection for `party`, `pug`, `raid`, `battleground`
 5. expose those context/default controls through the server API and addon UX
 6. add validation/versioning for doctrine rows so bad data fails safely
+
+Immediate combat-runtime status after the latest review/fix pass:
+
+- the live bot runtime now resolves doctrine from the DB-backed profile/default
+  system and attempts row-driven execution before legacy class logic
+- the current hardcoded class/spec behavior in `CompanionAI` still exists as a
+  fallback layer, so the migration is mid-cutover rather than complete
+- the next highest-value combat step remains shrinking legacy fallback by
+  improving doctrine/default coverage and evaluator/runtime confidence
 
 #### Non-goals
 
@@ -1170,6 +1199,32 @@ Important fixture note for future agents:
 - changing the itemEntry of the bag in slots 19-22 or 67-73 is now treated as
   a real bag-container change and should correctly route to manual review
   instead of bag sync
+
+### E) Unit-test seam hardening and current findings - **Partial**
+
+Follow-up validation after the bag-domain work surfaced two important facts:
+
+- `AccountAltSanityChecker` has intentionally evolved past its original test
+  assumptions. Reputation, quests, and achievements are now treated as
+  additive-only safe domains even when level/money sanity fails, so the older
+  tests expecting `safeDomains.empty()` are stale.
+- `AccountAltRuntimeCoordinator` had a real testability/runtime seam problem:
+  clone-present paths called direct clone-login / offline-delete helpers instead
+  of staying behind injected repositories. This caused the clone-present unit
+  tests to escape fake seams and crash with SEH `0xc0000094`.
+
+Current repair status:
+
+- a new clone-state integration seam is now being introduced so coordinator
+  clone-login-state lookup and offline-delete checks can be injected/faked in
+  tests while still using AzerothCore-backed behavior at runtime
+- after this seam refactor, the previously crashing coordinator suite runs far
+  enough to expose ordinary assertion failures instead of crashing immediately
+- remaining follow-up work is:
+  - finish reconciling the reusable-clone item-authority semantics with the
+    current equipment/inventory recovery tests
+  - then update the stale sanity-checker tests to the newer additive-domain
+    rules only after the coordinator path is stable again
 
 ---
 

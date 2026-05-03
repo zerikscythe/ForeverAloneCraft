@@ -34,5 +34,10 @@ bool IsBotRetreating(ObjectGuid botGuid);
 // Force the bot to re-apply its class maintenance buffs immediately,
 // bypassing the normal out-of-combat guard.
 void ForceBotBuffRefresh(Player* bot, Player* owner);
+
+// Clear cached doctrine/prepared-profile state for a live bot so profile edits
+// or slot changes take effect on the next AI tick instead of waiting for cache
+// TTL expiry.
+void InvalidateBotCombatCaches(ObjectGuid botGuid);
 } // namespace ai
 } // namespace living_world
