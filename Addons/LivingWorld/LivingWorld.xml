@@ -116,16 +116,6 @@
                 </ns0:Texture>
             </ns0:Layer>
             <ns0:Layer level="OVERLAY">
-                <ns0:FontString name="$parentCount" inherits="NumberFontNormalSmall">
-                    <ns0:Anchors>
-                        <ns0:Anchor point="BOTTOMRIGHT">
-                            <ns0:Offset>
-                                <ns0:AbsDimension x="-1" y="1" />
-                            </ns0:Offset>
-                        </ns0:Anchor>
-                    </ns0:Anchors>
-                    <ns0:JustifyH>RIGHT</ns0:JustifyH>
-                </ns0:FontString>
                 <ns0:Texture name="$parentHighlight" file="Interface\Buttons\ButtonHilight-Square" alphaMode="ADD" hidden="true">
                     <ns0:Anchors>
                         <ns0:Anchor point="TOPLEFT" />
@@ -469,17 +459,17 @@
                             <ns0:OnClick>LWCP_Dismiss();</ns0:OnClick>
                         </ns0:Scripts>
                     </ns0:Button>
-                    <ns0:Button name="LWCPListBtn" inherits="UIPanelButtonTemplate" text="Refresh">
-                        <ns0:Size x="56" y="26" />
+                    <ns0:Button name="LWCPYoinkBtn" inherits="UIPanelButtonTemplate" text="Yoink">
+                        <ns0:Size x="68" y="24" />
                         <ns0:Anchors>
                             <ns0:Anchor point="TOP">
                                 <ns0:Offset>
-                                    <ns0:AbsDimension x="66" y="-36" />
+                                    <ns0:AbsDimension x="0" y="-68" />
                                 </ns0:Offset>
                             </ns0:Anchor>
                         </ns0:Anchors>
                         <ns0:Scripts>
-                            <ns0:OnClick>LWCP_RefreshRoster();</ns0:OnClick>
+                            <ns0:OnClick>LWCP_Yoink();</ns0:OnClick>
                         </ns0:Scripts>
                     </ns0:Button>
                 </ns0:Frames>
@@ -966,19 +956,6 @@
                             <ns0:OnClick>LWCP_ShowTrainerWindow();</ns0:OnClick>
                         </ns0:Scripts>
                     </ns0:Button>
-                    <ns0:Button name="LWCPQuestsRefresh" inherits="UIPanelButtonTemplate" text="Refresh">
-                        <ns0:Size x="70" y="24" />
-                        <ns0:Anchors>
-                            <ns0:Anchor point="BOTTOMRIGHT">
-                                <ns0:Offset>
-                                    <ns0:AbsDimension x="-44" y="18" />
-                                </ns0:Offset>
-                            </ns0:Anchor>
-                        </ns0:Anchors>
-                        <ns0:Scripts>
-                            <ns0:OnClick>LWCP_RequestTrainActions(); LWCP_RequestQuestRewards(); LWCP_RequestQuestActions(); if LWCP_RenderTrainerDebugWindow then LWCP_RenderTrainerDebugWindow(); end</ns0:OnClick>
-                        </ns0:Scripts>
-                    </ns0:Button>
                 </ns0:Frames>
             </ns0:Frame>
             <ns0:Frame name="LWCPPageGear" hidden="true">
@@ -993,6 +970,30 @@
                 <ns0:Scripts>
                     <ns0:OnLoad>LWCP_InitGearPage(this);</ns0:OnLoad>
                 </ns0:Scripts>
+                <ns0:Layers>
+                    <ns0:Layer level="OVERLAY">
+                        <ns0:FontString inherits="GameFontHighlightSmall" text="Gear">
+                            <ns0:Size x="120" y="14" />
+                            <ns0:Anchors>
+                                <ns0:Anchor point="TOP">
+                                    <ns0:Offset>
+                                        <ns0:AbsDimension x="0" y="-16" />
+                                    </ns0:Offset>
+                                </ns0:Anchor>
+                            </ns0:Anchors>
+                        </ns0:FontString>
+                        <ns0:FontString name="LWCPGearBotName" inherits="GameFontHighlightSmall" text="-- No bot selected --">
+                            <ns0:Size x="216" y="14" />
+                            <ns0:Anchors>
+                                <ns0:Anchor point="TOP">
+                                    <ns0:Offset>
+                                        <ns0:AbsDimension x="0" y="-34" />
+                                    </ns0:Offset>
+                                </ns0:Anchor>
+                            </ns0:Anchors>
+                        </ns0:FontString>
+                    </ns0:Layer>
+                </ns0:Layers>
                 <ns0:Frames>
                     <ns0:Button name="LWCPGearSlot1" inherits="LWCPItemSlotTemplate" text="">
                         <ns0:Anchors>
@@ -1285,6 +1286,16 @@
                                 <ns0:Anchor point="TOP">
                                     <ns0:Offset>
                                         <ns0:AbsDimension x="0" y="-16" />
+                                    </ns0:Offset>
+                                </ns0:Anchor>
+                            </ns0:Anchors>
+                        </ns0:FontString>
+                        <ns0:FontString name="LWCPBagsBotName" inherits="GameFontHighlightSmall" text="-- No bot selected --">
+                            <ns0:Size x="216" y="14" />
+                            <ns0:Anchors>
+                                <ns0:Anchor point="TOP">
+                                    <ns0:Offset>
+                                        <ns0:AbsDimension x="0" y="-34" />
                                     </ns0:Offset>
                                 </ns0:Anchor>
                             </ns0:Anchors>

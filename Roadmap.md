@@ -40,6 +40,47 @@ Current next-planned slice:
   bot-specific `Pick Up` / `Turn In` actions for a targeted quest giver,
   including class-specific follow-up quests
 
+## Active Workstream
+
+**Current active priority:**
+
+- finish the bot combat runtime path and complete the migration toward a
+  data-driven combat-doctrine system
+
+This is the active work because it is the highest-leverage path for getting
+the bots fully usable while also reducing future maintenance cost.
+
+What this means in practice:
+
+1. make the combat cycle reliable end-to-end
+   - profile resolution
+   - target resolution
+   - action evaluation
+   - fallback behavior
+   - safe execution
+
+2. move doctrine/tuning out of hardcoded C++ and into the relational profile
+   system
+   - world defaults
+   - account defaults
+   - character overrides
+   - later context defaults for `pug`, `raid`, and `battleground`
+
+3. keep only minimal hardcoded fallback behavior in C++
+   - bots must remain functional when data is missing or incomplete
+
+4. treat addon/editor work as a follow-on surface for the same server-owned
+   doctrine system, not as a separate authority
+
+Reason for priority:
+
+- this work most directly improves real bot quality
+- this work reduces the need for server recompiles during combat tuning
+- this work gives one shared doctrine path for player bots and future system
+  bots
+- this work prevents further growth of one-off class/context hardcoded combat
+  branches
+
 Current agreed design workstream:
 
 - define and implement server-authoritative user-overrideable bot combat
@@ -51,6 +92,130 @@ Current agreed design workstream:
 - support row-based editing of actions/conditions/targets, including
   `enemy_primary` and `enemy_trash` target resolution, primary/secondary
   fallback timing, conservation modes, and optional down-ranking
+- extend that same doctrine system so server defaults, account defaults,
+  character overrides, and future context defaults (PUG / Raid /
+  Battleground) all flow through the same external data model rather than
+  requiring new hardcoded C++ behavior for tuning changes
+
+### Combat Doctrine Direction: Data-Driven by Default
+
+The combat system should continue moving toward a strict split between
+runtime engine code and externally authored doctrine data.
+
+#### Why this matters
+
+The project should not require a worldserver rebuild whenever bot combat logic
+needs tuning. Recompiling the server for every threshold, target preference,
+priority reorder, or context-specific doctrine adjustment creates avoidable
+friction and slows iteration.
+
+Using the same external doctrine system for all bot contexts gives the project:
+
+- faster iteration without new binaries
+- safer balancing through SQL/data updates
+- one consistent authoring model for defaults and overrides
+- less pressure to grow large hardcoded per-class/per-context C++ branches
+- a cleaner path for future PUG / Raid / Battleground bots
+
+#### Architectural rule
+
+Going forward, the intended split is:
+
+- **C++ owns the combat engine**
+  - action legality checks
+  - target resolution
+  - condition evaluation
+  - cooldown/range/resource validation
+  - safety fallback behavior
+  - execution scheduling
+
+- **DB/data owns combat doctrine**
+  - rotations
+  - interrupts
+  - thresholds
+  - conservation rules
+  - AoE preferences
+  - spec/role defaults
+  - context-specific default profiles
+  - account/character overrides
+
+In short:
+
+- **server code = interpreter/runtime**
+- **database = doctrine/configuration**
+
+Hardcoded C++ should remain only as the minimal emergency fallback for missing,
+invalid, or incomplete doctrine rows.
+
+#### Target resolution order
+
+The long-term profile lookup chain should become:
+
+1. character-specific override
+2. account default/override
+3. context default (`solo`, `party`, `pug`, `raid`, `battleground`)
+4. shipped world default for spec/role
+5. minimal hardcoded emergency fallback in C++
+
+This preserves operator flexibility without allowing missing data to break bot
+combat entirely.
+
+#### Why one shared system is important
+
+The same profile system should be reused for:
+
+- baked-in/default class doctrine
+- owner/account preference doctrine
+- individual character override doctrine
+- future matchmaking/context doctrine for PUG / Raid / Battleground bots
+
+This avoids creating parallel systems such as:
+
+- hardcoded defaults in C++
+- DB rows for account bots
+- a separate battleground-only behavior table
+- special-case raid AI code paths
+
+Those parallel systems would drift over time and make future maintenance much
+harder.
+
+#### Implementation direction
+
+The current relational combat-profile work should be expanded rather than
+replaced.
+
+Near-term design expectation:
+
+- keep using repositories/services as the only readers/writers of combat
+  doctrine data
+- add context-aware profile selection on top of the existing profile/default
+  repositories
+- move more fallback doctrine out of hardcoded C++ and into default-profile
+  DB rows
+- keep the addon/API layer as an editor/controller, never as an authority
+
+#### Rollout strategy
+
+This should be delivered in phases so the runtime stays stable:
+
+1. finish character profile + default profile DB path
+2. reduce hardcoded doctrine to best-effort emergency fallback only
+3. add account-level default selection
+4. add context-level default selection for `party`, `pug`, `raid`, `battleground`
+5. expose those context/default controls through the server API and addon UX
+6. add validation/versioning for doctrine rows so bad data fails safely
+
+#### Non-goals
+
+This direction does **not** mean:
+
+- addon code talks directly to the DB
+- arbitrary user scripting runs inside the client addon
+- combat legality moves out of server code
+- every engine behavior becomes hot-swappable data
+
+The server remains authoritative. Only doctrine and tuning should become
+externally authored.
 
 ## Sensitive Data Review
 
@@ -1690,6 +1855,26 @@ D.10 Keep local runtime data authoritative for executable values — **Partial**
 - [ ] Define which runtime-derived values can be exposed back to the addon for
       preview/debug without making the addon authoritative.
 
+D.10A Expand external doctrine ownership beyond player profiles — **Not Started**
+- Use the same relational combat-profile system for:
+  - world/server defaults
+  - account defaults
+  - character overrides
+  - future `pug` / `raid` / `battleground` context defaults
+- Keep C++ focused on evaluation/execution and emergency fallback only.
+- Do this specifically to reduce recompiles and avoid shipping new server
+  binaries for doctrine tuning changes.
+
+D.10B Define profile-resolution precedence explicitly — **Not Started**
+- Final intended precedence:
+  1. character override
+  2. account override/default
+  3. context default
+  4. world default
+  5. hardcoded emergency fallback
+- This precedence should be implemented in one resolver/service path rather
+  than scattered callsite checks.
+
 D.11 Define doctrine-to-profile authoring workflow — **Partial**
 - read guide concepts
 - convert to structured internal profile data
@@ -1707,6 +1892,13 @@ D.11 Define doctrine-to-profile authoring workflow — **Partial**
       class.
 - [ ] Implement spec/role best-guess resolver with optional profile override.
 - [ ] Add runtime resolver for blank-profile -> default-profile behavior.
+- [ ] Extend the runtime resolver so account defaults and future context
+      defaults (`pug` / `raid` / `battleground`) use the same doctrine lookup
+      system.
+- [ ] Move as much default combat doctrine as practical from hardcoded C++ into
+      world/default DB rows, leaving only a minimal emergency fallback in code.
+- [ ] Add one explicit doctrine-resolution service that owns precedence and
+      keeps fallback behavior centralized.
 - [ ] Add primary/secondary row execution with 500ms wait-or-fallback logic.
 - [ ] Implement target resolvers for `enemy_primary` and `enemy_trash`.
 - [ ] Add conservation modes: Full Force, Conservative, JIT Casting.

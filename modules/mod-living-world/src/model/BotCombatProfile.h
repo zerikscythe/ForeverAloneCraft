@@ -67,6 +67,7 @@ struct BotCombatProfileSettings
 {
     BotCombatConservationMode conservationMode =
         BotCombatConservationMode::Conservative;
+    std::uint32_t rotationWaitMs = 500;
     std::uint8_t manaLowWater = 55;
     std::uint8_t manaHighWater = 75;
     bool enableDownRank = true;

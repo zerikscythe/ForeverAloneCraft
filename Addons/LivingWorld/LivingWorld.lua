@@ -95,9 +95,7 @@ function LWCP_RefreshActivePage()
     elseif LW_ActiveTab == "NPC" or LW_ActiveTab == "Settings" then
         LWCP_RequestQuestRewards(true)
         if LW_ActiveTab == "NPC" then
-            if not LW_TrainActionsReady or #LW_TrainActions == 0 then
-                LWCP_RequestTrainActions()
-            end
+            LWCP_RequestTrainActions()
             LWCP_RequestQuestActions()
         end
     else
@@ -280,6 +278,10 @@ end
 function LWCP_Dismiss()
     if IsPartySelected() then return end
     SendChatMessage(CMD_LWBOT .. "dismiss " .. LW_SlotNum)
+end
+
+function LWCP_Yoink()
+    SendChatMessage(CMD_LWBOT .. GetBotRef() .. " yoink")
 end
 
 function LWCP_Train()

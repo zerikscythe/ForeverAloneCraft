@@ -163,6 +163,60 @@ Current next quest slice:
 - keep auto-pickup off by default; prefer explicit player confirmation from the
   panel
 
+## Current active engineering focus
+
+The current active work is:
+
+- finishing the bot combat runtime path
+- and completing the shift to a data-driven combat-doctrine system
+
+Future agents should treat this as the main near-term priority for bot quality.
+
+### Why this is the active focus
+
+This work has the best payoff because it improves both:
+
+- real gameplay behavior right now
+- long-term maintainability of the bot system
+
+It is the shortest path toward bots that are:
+
+- more reliable in combat
+- easier to tune
+- less dependent on server recompiles for behavior changes
+- ready to share one doctrine system across account bots and future
+  `pug` / `raid` / `battleground` bots
+
+### What to prioritize first
+
+1. combat runtime reliability
+   - profile resolution
+   - target resolution
+   - action legality
+   - fallback behavior
+   - execution stability
+
+2. doctrine migration into the DB-backed profile system
+   - world defaults
+   - account defaults
+   - character overrides
+   - context defaults later
+
+3. minimize hardcoded doctrine in C++
+   - keep only emergency fallback behavior in code
+
+4. addon/editor work after the server-owned runtime + doctrine path is solid
+
+### Practical rule for future agents
+
+If choosing between:
+
+- adding more one-off hardcoded combat behavior
+- or improving the shared combat runtime + doctrine system
+
+prefer the shared combat runtime + doctrine system unless a small hardcoded fix
+is needed as a temporary safety patch.
+
 ## Practical rule
 
 Before doing commit-by-commit rollback for a startup crash on this machine,
@@ -1064,8 +1118,40 @@ This should behave like a prioritized rule engine, not a static rotation list.
 
 ## 16A.4 Combat-profile data direction
 
-Profiles should eventually be serialized in separate files, likely JSON, with
-one profile per class/type/level band.
+Profiles should be authored and stored as server-owned structured data through
+the relational combat-profile system, not as client-authored freeform scripts
+and not as hardcoded class logic baked into C++.
+
+The same doctrine system should be reused for:
+- shipped world defaults
+- account-level defaults or overrides
+- character-specific overrides
+- future context defaults such as `party`, `pug`, `raid`, and `battleground`
+
+This is an important architectural rule, not a convenience feature. The goal is
+to avoid recompiling and redistributing the server every time combat doctrine
+needs tuning.
+
+Preferred split:
+- **C++ owns the engine**
+  - condition evaluation
+  - target resolution
+  - cooldown/range/resource legality
+  - scheduling and execution
+  - safety fallback behavior
+- **DB data owns doctrine**
+  - priorities
+  - thresholds
+  - interrupt sets
+  - AoE preferences
+  - conservation modes
+  - spec/role defaults
+  - context defaults
+  - account/character overrides
+
+In short:
+- **server code = interpreter/runtime**
+- **database = doctrine/configuration**
 
 Expected dimensions:
 - class
@@ -1079,6 +1165,18 @@ Expected dimensions:
 - utility rules
 - racial rules
 - trinket rules
+
+The relational shape should remain the primary authoring target:
+- profile/settings row
+- entry rows
+- action rows
+- condition rows
+- default profile rows
+- runtime selection rows
+
+Minimal hardcoded doctrine in C++ is still acceptable as an emergency fallback
+for missing or invalid DB data, but it should not be the primary place where
+normal combat tuning lives.
 
 ## 16A.5 Level-band strategy
 
@@ -1140,6 +1238,58 @@ data. The local emulator/runtime remains authoritative for executable values.
 2. Convert doctrine into internal structured combat-profile data
 3. Validate against local AzerothCore/runtime truth
 4. Execute only what is legal and available
+
+## 16A.10 Doctrine resolution hierarchy
+
+Future agents should preserve one centralized lookup chain for combat doctrine.
+Do not scatter precedence rules across command handlers, AI tick code, or addon
+message handlers.
+
+Preferred precedence:
+1. character-specific override
+2. account default/override
+3. context default (`solo`, `party`, `pug`, `raid`, `battleground`)
+4. shipped world default for spec/role
+5. minimal hardcoded emergency fallback
+
+This lookup must live in one resolver/service path so future systems do not
+fork into incompatible behavior sources.
+
+## 16A.11 Why context defaults should use the same system
+
+Future PUG / Raid / Battleground bots should not get their own separate AI
+configuration mechanism if it can be avoided.
+
+Reasons:
+- keeping one doctrine system reduces duplicate authoring work
+- tuning can happen through SQL/data patches rather than server binaries
+- account bots and system bots can share the same runtime evaluator
+- support/debug burden stays lower when one resolver explains all behavior
+
+Bad direction to avoid:
+- hardcoded C++ defaults for normal bots
+- relational rows for account bots
+- a second special-case data system for battleground bots
+- one-off raid-only AI branches that bypass the profile runtime
+
+Preferred direction:
+- one runtime evaluator
+- multiple doctrine sources feeding it through an explicit precedence chain
+
+## 16A.12 Rollout guidance
+
+When evolving this system, future agents should favor the following order:
+
+1. keep the engine safe and authoritative in C++
+2. move doctrine/tuning data into repositories + relational tables
+3. centralize precedence in one resolver
+4. expand coverage from character profiles to account/context defaults
+5. expose editing/selection through server API + addon UX
+6. leave only a minimal hardcoded fallback in code
+
+Do not jump straight from hardcoded logic to a fully dynamic system without a
+safe fallback. The runtime must still function if DB rows are missing,
+malformed, or partially authored.
 
 ---
 

@@ -16,6 +16,9 @@
 #include "integration/SqlBotCombatProfileSelectionRepository.h"
 #include "model/BotCombatMode.h"
 #include "model/BotCombatProfile.h"
+#include "service/BotCombatDoctrineResolver.h"
+#include "service/BotCombatProfilePreparationService.h"
+#include "service/BotCombatRuntimeEvaluator.h"
 #include "service/BotPlayerRegistry.h"
 #include "service/SimpleBotCombatSpecRoleResolver.h"
 
@@ -219,11 +222,48 @@ struct CachedBotCombatDoctrine
     std::chrono::steady_clock::time_point expiresAt;
 };
 
+struct CachedPreparedBotCombatProfile
+{
+    service::BotCombatPreparedProfile profile;
+    std::chrono::steady_clock::time_point expiresAt;
+};
+
 std::mutex s_doctrineMutex;
 std::unordered_map<std::uint64_t, CachedBotCombatDoctrine> s_doctrineByBotGuid;
+std::mutex s_preparedProfileMutex;
+std::unordered_map<std::uint64_t, CachedPreparedBotCombatProfile> s_preparedProfileByBotGuid;
 constexpr auto DoctrineCacheTtl = std::chrono::seconds(5);
 
 std::uint32_t FindBestKnownSpellInChain(Player* bot, std::uint32_t baseSpellId);
+
+service::BotCombatDoctrineResolver& GetDoctrineResolver()
+{
+    static integration::SqlAccountAltRuntimeRepository runtimeRepository;
+    static integration::SqlBotCombatProfileRepository profileRepository;
+    static integration::SqlBotCombatProfileSelectionRepository selectionRepository;
+    static integration::SqlBotCombatDefaultProfileRepository defaultProfileRepository;
+    static service::SimpleBotCombatSpecRoleResolver resolver;
+    static service::BotCombatDoctrineResolver doctrineResolver(
+        runtimeRepository,
+        profileRepository,
+        selectionRepository,
+        defaultProfileRepository,
+        resolver);
+    return doctrineResolver;
+}
+
+service::BotCombatProfilePreparationService& GetProfilePreparationService()
+{
+    static service::BotCombatProfilePreparationService preparationService(
+        GetDoctrineResolver());
+    return preparationService;
+}
+
+service::BotCombatRuntimeEvaluator& GetRuntimeEvaluator()
+{
+    static service::BotCombatRuntimeEvaluator runtimeEvaluator;
+    return runtimeEvaluator;
+}
 
 BotCombatRole ResolveDoctrineRole(
     std::uint8_t classId,
@@ -282,59 +322,21 @@ BotCombatRole ResolveDoctrineRole(
 
 BotCombatDoctrine LoadCombatDoctrine(Player* bot, Player* owner)
 {
-    static integration::SqlAccountAltRuntimeRepository runtimeRepository;
-    static integration::SqlBotCombatProfileRepository profileRepository;
-    static integration::SqlBotCombatProfileSelectionRepository selectionRepository;
-    static service::SimpleBotCombatSpecRoleResolver resolver;
-
     BotCombatDoctrine doctrine;
-
-    std::uint64_t sourceCharacterGuid = bot->GetGUID().GetCounter();
     std::uint32_t ownerAccountId = owner->GetSession()
         ? owner->GetSession()->GetAccountId()
         : 0;
-
-    if (auto runtime = runtimeRepository.FindByCloneCharacter(bot->GetGUID().GetCounter()))
-    {
-        sourceCharacterGuid = runtime->sourceCharacterGuid;
-        ownerAccountId = runtime->sourceAccountId;
-    }
-
-    std::uint8_t activeSlot = 0;
-    if (auto selection = selectionRepository.FindRuntimeSelection(sourceCharacterGuid))
-        activeSlot = selection->activeProfileSlot;
-
-    auto profile = profileRepository.FindProfileForCharacterSlot(
-        ownerAccountId,
-        sourceCharacterGuid,
-        activeSlot);
-
-    service::BotCombatSpecRoleResolutionRequest request;
-    request.sourceCharacterGuid = sourceCharacterGuid;
-    request.classId = bot->getClass();
-    if (profile)
-    {
-        request.specOverrideKey = profile->specOverrideKey;
-        request.roleOverrideKey = profile->roleOverrideKey;
-    }
-
-    service::BotCombatSpecRoleResolutionResult resolved = resolver.Resolve(request);
-    if (profile)
-    {
-        if (!profile->guessedSpecKey.empty())
-            resolved.guessedSpecKey = profile->guessedSpecKey;
-        if (!profile->guessedRoleKey.empty())
-            resolved.guessedRoleKey = profile->guessedRoleKey;
-        if (!profile->specOverrideKey || profile->specOverrideKey->empty())
-            resolved.effectiveSpecKey = resolved.guessedSpecKey;
-        if (!profile->roleOverrideKey || profile->roleOverrideKey->empty())
-            resolved.effectiveRoleKey = resolved.guessedRoleKey;
-    }
+    service::BotCombatDoctrineResolution resolution =
+        GetDoctrineResolver().ResolveForBot(
+            bot->GetGUID().GetCounter(),
+            bot->getClass(),
+            ownerAccountId);
+    doctrine.settings = resolution.profile.settings;
 
     doctrine.role = ResolveDoctrineRole(
         bot->getClass(),
-        resolved.effectiveSpecKey,
-        resolved.effectiveRoleKey);
+        resolution.effectiveSpecKey,
+        resolution.effectiveRoleKey);
     return doctrine;
 }
 
@@ -358,6 +360,116 @@ BotCombatDoctrine GetCombatDoctrine(Player* bot, Player* owner)
     }
 
     return doctrine;
+}
+
+service::BotCombatPreparedProfile GetPreparedCombatProfile(Player* bot, Player* owner)
+{
+    std::uint64_t const botGuid = bot->GetGUID().GetCounter();
+    auto const now = std::chrono::steady_clock::now();
+
+    {
+        std::lock_guard<std::mutex> lock(s_preparedProfileMutex);
+        auto it = s_preparedProfileByBotGuid.find(botGuid);
+        if (it != s_preparedProfileByBotGuid.end() && it->second.expiresAt > now)
+            return it->second.profile;
+    }
+
+    std::uint32_t ownerAccountId = owner->GetSession()
+        ? owner->GetSession()->GetAccountId()
+        : 0;
+    service::BotCombatPreparedProfile preparedProfile =
+        GetProfilePreparationService().PrepareForBot(bot, ownerAccountId);
+
+    {
+        std::lock_guard<std::mutex> lock(s_preparedProfileMutex);
+        s_preparedProfileByBotGuid[botGuid] =
+            { preparedProfile, now + DoctrineCacheTtl };
+    }
+
+    return preparedProfile;
+}
+
+bool TryExecuteProfileRotation(Player* bot, Player* owner, Unit* primaryTarget)
+{
+    if (!bot || !owner)
+        return false;
+
+    service::BotCombatPreparedProfile preparedProfile =
+        GetPreparedCombatProfile(bot, owner);
+    if (preparedProfile.interruptEntries.empty()
+        && preparedProfile.rotationEntries.empty())
+        return false;
+
+    service::BotCombatRuntimeContext context;
+    context.bot = bot;
+    context.owner = owner;
+    context.primaryTarget = primaryTarget;
+    context.rotationWaitMs = preparedProfile.resolution.profile.settings.rotationWaitMs;
+
+    auto const handleEvaluationResult =
+        [&](service::BotCombatEvaluationResult const& result, char const* phase) -> bool
+        {
+            if (result.disposition == service::BotCombatEvaluationDisposition::None)
+                return false;
+
+            if (result.disposition == service::BotCombatEvaluationDisposition::Wait)
+            {
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] ProfileActionWait bot='{}' guid={} phase={} waitMs={}",
+                    bot->GetName(),
+                    bot->GetGUID().GetCounter(),
+                    phase,
+                    result.waitMs);
+                return true;
+            }
+
+            if (!result.action)
+                return false;
+
+            service::BotCombatEvaluatedAction const& evaluatedAction = *result.action;
+
+            if (evaluatedAction.breaksCurrentCast && bot->IsNonMeleeSpellCast(false))
+            {
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] ProfileActionBreakCast bot='{}' guid={} phase={} entryId={} actionId={} spellId={}",
+                    bot->GetName(),
+                    bot->GetGUID().GetCounter(),
+                    phase,
+                    evaluatedAction.entryId,
+                    evaluatedAction.actionId,
+                    evaluatedAction.spellId);
+                bot->InterruptNonMeleeSpells(false);
+            }
+
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] ProfileActionCast bot='{}' guid={} phase={} entryId={} actionId={} spellId={} targetKey='{}' targetGuid={} breaksCurrentCast={}",
+                bot->GetName(),
+                bot->GetGUID().GetCounter(),
+                phase,
+                evaluatedAction.entryId,
+                evaluatedAction.actionId,
+                evaluatedAction.spellId,
+                evaluatedAction.targetKey,
+                evaluatedAction.target ? evaluatedAction.target->GetGUID().GetCounter() : 0,
+                evaluatedAction.breaksCurrentCast);
+
+            bot->CastSpell(evaluatedAction.target, evaluatedAction.spellId, false);
+            return true;
+        };
+
+    if (handleEvaluationResult(
+            GetRuntimeEvaluator().EvaluateInterrupts(preparedProfile, context),
+            "interrupt"))
+    {
+        return true;
+    }
+
+    return handleEvaluationResult(
+        GetRuntimeEvaluator().EvaluateRotation(preparedProfile, context),
+        "rotation");
 }
 
 bool IsOffenseSuppressed(
@@ -412,352 +524,49 @@ bool BotHasManaToFight(Player const* bot)
     return bot->GetPower(POWER_MANA) > 0;
 }
 
-std::uint32_t ResolveKnownSpellForAction(
-    Player* bot,
-    model::BotCombatActionDefinition const& action)
+BotCombatResolvedProfile LoadResolvedCombatProfile(Player* bot, Player* owner)
 {
-    if (!bot || action.actionType != model::BotCombatActionType::Spell ||
-        action.spellBaseId == 0)
-        return 0;
+    BotCombatResolvedProfile resolvedProfile;
+    service::BotCombatPreparedProfile preparedProfile =
+        GetPreparedCombatProfile(bot, owner);
 
-    switch (action.rankMode)
+    resolvedProfile.settings = preparedProfile.resolution.profile.settings;
+    resolvedProfile.interruptEntries = std::move(preparedProfile.interruptEntries);
+    resolvedProfile.rotationEntries = std::move(preparedProfile.rotationEntries);
+
+    char const* sourceKind = "none";
+    switch (preparedProfile.resolution.source)
     {
-        case model::BotCombatRankMode::BestKnown:
-        {
-            std::uint32_t const spellId =
-                FindBestKnownSpellInChain(bot, action.spellBaseId);
-            LOG_INFO(
-                "server.worldserver",
-                "[LivingWorldDebug] ProfileSpellResolve bot='{}' guid={} actionId={} rankMode=BestKnown baseSpellId={} resolvedSpellId={}",
-                bot->GetName(),
-                bot->GetGUID().GetCounter(),
-                action.actionId,
-                action.spellBaseId,
-                spellId);
-            return spellId;
-        }
-        case model::BotCombatRankMode::ExactSpellId:
-        {
-            std::uint32_t const spellId =
-                bot->HasSpell(action.spellBaseId) ? action.spellBaseId : 0;
-            LOG_INFO(
-                "server.worldserver",
-                "[LivingWorldDebug] ProfileSpellResolve bot='{}' guid={} actionId={} rankMode=ExactSpellId baseSpellId={} resolvedSpellId={}",
-                bot->GetName(),
-                bot->GetGUID().GetCounter(),
-                action.actionId,
-                action.spellBaseId,
-                spellId);
-            return spellId;
-        }
-        case model::BotCombatRankMode::SpecificRank:
-        {
-            if (action.rankValue == 0)
-            {
-                LOG_INFO(
-                    "server.worldserver",
-                    "[LivingWorldDebug] ProfileSpellResolve bot='{}' guid={} actionId={} rankMode=SpecificRank baseSpellId={} requestedRank={} resolvedSpellId=0 reason=zero_rank",
-                    bot->GetName(),
-                    bot->GetGUID().GetCounter(),
-                    action.actionId,
-                    action.spellBaseId,
-                    static_cast<std::uint32_t>(action.rankValue));
-                return 0;
-            }
-
-            std::uint32_t candidate =
-                sSpellMgr->GetFirstSpellInChain(action.spellBaseId);
-            if (!candidate)
-                candidate = action.spellBaseId;
-
-            std::uint8_t rank = 1;
-            while (candidate)
-            {
-                if (rank == action.rankValue)
-                {
-                    std::uint32_t const spellId =
-                        bot->HasSpell(candidate) ? candidate : 0;
-                    LOG_INFO(
-                        "server.worldserver",
-                        "[LivingWorldDebug] ProfileSpellResolve bot='{}' guid={} actionId={} rankMode=SpecificRank baseSpellId={} requestedRank={} resolvedSpellId={}",
-                        bot->GetName(),
-                        bot->GetGUID().GetCounter(),
-                        action.actionId,
-                        action.spellBaseId,
-                        static_cast<std::uint32_t>(action.rankValue),
-                        spellId);
-                    return spellId;
-                }
-                candidate = sSpellMgr->GetNextSpellInChain(candidate);
-                ++rank;
-            }
-
-            LOG_INFO(
-                "server.worldserver",
-                "[LivingWorldDebug] ProfileSpellResolve bot='{}' guid={} actionId={} rankMode=SpecificRank baseSpellId={} requestedRank={} resolvedSpellId=0 reason=rank_not_found",
-                bot->GetName(),
-                bot->GetGUID().GetCounter(),
-                action.actionId,
-                action.spellBaseId,
-                static_cast<std::uint32_t>(action.rankValue));
-            return 0;
-        }
-    }
-
-    return 0;
-}
-
-bool IsActionUsableByBot(
-    Player* bot,
-    model::BotCombatActionDefinition const& action)
-{
-    switch (action.actionType)
-    {
-        case model::BotCombatActionType::Spell:
-            return ResolveKnownSpellForAction(bot, action) != 0;
-        case model::BotCombatActionType::Item:
-            return action.itemId != 0;
-    }
-
-    return false;
-}
-
-std::optional<model::BotCombatEntryDefinition> FilterEntryForKnownActions(
-    Player* bot,
-    model::BotCombatEntryDefinition entry)
-{
-    if (!entry.enabled)
-    {
-        LOG_INFO(
-            "server.worldserver",
-            "[LivingWorldDebug] ProfileEntryFiltered bot='{}' guid={} entryId={} label='{}' reason=disabled",
-            bot ? bot->GetName() : "",
-            bot ? bot->GetGUID().GetCounter() : 0,
-            entry.entryId,
-            entry.label);
-        return std::nullopt;
-    }
-
-    bool const primaryUsable = IsActionUsableByBot(bot, entry.primaryAction);
-    bool const secondaryUsable =
-        entry.secondaryAction && IsActionUsableByBot(bot, *entry.secondaryAction);
-
-    if (!primaryUsable && !secondaryUsable)
-    {
-        LOG_INFO(
-            "server.worldserver",
-            "[LivingWorldDebug] ProfileEntryFiltered bot='{}' guid={} entryId={} label='{}' reason=no_usable_actions primaryActionId={} secondaryActionId={}",
-            bot->GetName(),
-            bot->GetGUID().GetCounter(),
-            entry.entryId,
-            entry.label,
-            entry.primaryAction.actionId,
-            entry.secondaryAction ? entry.secondaryAction->actionId : 0);
-        return std::nullopt;
-    }
-
-    if (!primaryUsable && secondaryUsable)
-    {
-        LOG_INFO(
-            "server.worldserver",
-            "[LivingWorldDebug] ProfileEntryFiltered bot='{}' guid={} entryId={} label='{}' action=promote_secondary primaryActionId={} secondaryActionId={}",
-            bot->GetName(),
-            bot->GetGUID().GetCounter(),
-            entry.entryId,
-            entry.label,
-            entry.primaryAction.actionId,
-            entry.secondaryAction ? entry.secondaryAction->actionId : 0);
-        entry.primaryAction = *entry.secondaryAction;
-        entry.primaryAction.slot = 0;
-        entry.secondaryAction.reset();
-    }
-    else if (entry.secondaryAction && !secondaryUsable)
-    {
-        LOG_INFO(
-            "server.worldserver",
-            "[LivingWorldDebug] ProfileEntryFiltered bot='{}' guid={} entryId={} label='{}' action=drop_secondary secondaryActionId={}",
-            bot->GetName(),
-            bot->GetGUID().GetCounter(),
-            entry.entryId,
-            entry.label,
-            entry.secondaryAction->actionId);
-        entry.secondaryAction.reset();
+        case service::BotCombatDoctrineSource::DefaultProfile:
+            sourceKind = "default";
+            break;
+        case service::BotCombatDoctrineSource::CustomProfile:
+            sourceKind = "custom";
+            break;
+        case service::BotCombatDoctrineSource::CustomProfileWithDefaultFallback:
+            sourceKind = "custom_with_default_fallback";
+            break;
+        case service::BotCombatDoctrineSource::None:
+        default:
+            sourceKind = "none";
+            break;
     }
 
     LOG_INFO(
         "server.worldserver",
-        "[LivingWorldDebug] ProfileEntryAccepted bot='{}' guid={} entryId={} label='{}' primaryActionId={} secondaryActionId={} isInterrupt={} priority={}",
+        "[LivingWorldDebug] ProfileLoad bot='{}' guid={} sourceGuid={} ownerAccountId={} slot={} sourceKind={} customProfileId={} defaultProfileId={} spec='{}' role='{}' interruptEntries={} rotationEntries={}",
         bot->GetName(),
         bot->GetGUID().GetCounter(),
-        entry.entryId,
-        entry.label,
-        entry.primaryAction.actionId,
-        entry.secondaryAction ? entry.secondaryAction->actionId : 0,
-        entry.isInterrupt,
-        static_cast<std::uint32_t>(entry.priority));
-
-    return entry;
-}
-
-template <typename EntryContainer>
-std::vector<model::BotCombatEntryDefinition> FilterEntriesForKnownActions(
-    Player* bot,
-    EntryContainer const& entries)
-{
-    std::vector<model::BotCombatEntryDefinition> filtered;
-    filtered.reserve(entries.size());
-
-    for (auto const& entry : entries)
-    {
-        if (auto resolved = FilterEntryForKnownActions(bot, entry))
-            filtered.push_back(std::move(*resolved));
-    }
-
-    return filtered;
-}
-
-BotCombatResolvedProfile LoadResolvedCombatProfile(Player* bot, Player* owner)
-{
-    static integration::SqlAccountAltRuntimeRepository runtimeRepository;
-    static integration::SqlBotCombatProfileRepository profileRepository;
-    static integration::SqlBotCombatProfileSelectionRepository selectionRepository;
-    static integration::SqlBotCombatDefaultProfileRepository defaultProfileRepository;
-    static service::SimpleBotCombatSpecRoleResolver resolver;
-
-    BotCombatResolvedProfile resolvedProfile;
-
-    std::uint64_t sourceCharacterGuid = bot->GetGUID().GetCounter();
-    std::uint32_t ownerAccountId = owner->GetSession()
-        ? owner->GetSession()->GetAccountId()
-        : 0;
-
-    if (auto runtime = runtimeRepository.FindByCloneCharacter(bot->GetGUID().GetCounter()))
-    {
-        sourceCharacterGuid = runtime->sourceCharacterGuid;
-        ownerAccountId = runtime->sourceAccountId;
-    }
-
-    std::uint8_t activeSlot = 0;
-    if (auto selection = selectionRepository.FindRuntimeSelection(sourceCharacterGuid))
-        activeSlot = selection->activeProfileSlot;
-
-    auto profile = profileRepository.FindProfileForCharacterSlot(
-        ownerAccountId,
-        sourceCharacterGuid,
-        activeSlot);
-
-    service::BotCombatSpecRoleResolutionRequest request;
-    request.sourceCharacterGuid = sourceCharacterGuid;
-    request.classId = bot->getClass();
-    if (profile)
-    {
-        request.specOverrideKey = profile->specOverrideKey;
-        request.roleOverrideKey = profile->roleOverrideKey;
-    }
-
-    service::BotCombatSpecRoleResolutionResult specRole = resolver.Resolve(request);
-    if (profile)
-    {
-        if (!profile->guessedSpecKey.empty())
-            specRole.guessedSpecKey = profile->guessedSpecKey;
-        if (!profile->guessedRoleKey.empty())
-            specRole.guessedRoleKey = profile->guessedRoleKey;
-        if (!profile->specOverrideKey || profile->specOverrideKey->empty())
-            specRole.effectiveSpecKey = specRole.guessedSpecKey;
-        if (!profile->roleOverrideKey || profile->roleOverrideKey->empty())
-            specRole.effectiveRoleKey = specRole.guessedRoleKey;
-    }
-
-    if (profile)
-    {
-        resolvedProfile.settings = profile->settings;
-        resolvedProfile.interruptEntries =
-            FilterEntriesForKnownActions(bot, profile->interruptEntries);
-        resolvedProfile.rotationEntries =
-            FilterEntriesForKnownActions(bot, profile->rotationEntries);
-
-        LOG_INFO(
-            "server.worldserver",
-            "[LivingWorldDebug] ProfileLoad bot='{}' guid={} sourceGuid={} kind=custom slot={} spec='{}' role='{}' hasOverrides={} interruptEntries={} rotationEntries={}",
-            bot->GetName(),
-            bot->GetGUID().GetCounter(),
-            sourceCharacterGuid,
-            static_cast<std::uint32_t>(activeSlot),
-            specRole.effectiveSpecKey,
-            specRole.effectiveRoleKey,
-            profile->HasEntryOverrides(),
-            resolvedProfile.interruptEntries.size(),
-            resolvedProfile.rotationEntries.size());
-
-        if (!profile->HasEntryOverrides())
-        {
-            if (auto defaultProfile = defaultProfileRepository.FindDefaultProfile(
-                specRole.effectiveSpecKey,
-                specRole.effectiveRoleKey))
-            {
-                resolvedProfile.interruptEntries =
-                    FilterEntriesForKnownActions(bot, defaultProfile->interruptEntries);
-                resolvedProfile.rotationEntries =
-                    FilterEntriesForKnownActions(bot, defaultProfile->rotationEntries);
-
-                LOG_INFO(
-                    "server.worldserver",
-                    "[LivingWorldDebug] ProfileLoad bot='{}' guid={} sourceGuid={} kind=default_fallback defaultProfileId={} spec='{}' role='{}' interruptEntries={} rotationEntries={}",
-                    bot->GetName(),
-                    bot->GetGUID().GetCounter(),
-                    sourceCharacterGuid,
-                    defaultProfile->defaultProfileId,
-                    specRole.effectiveSpecKey,
-                    specRole.effectiveRoleKey,
-                    resolvedProfile.interruptEntries.size(),
-                    resolvedProfile.rotationEntries.size());
-            }
-            else
-            {
-                LOG_INFO(
-                    "server.worldserver",
-                    "[LivingWorldDebug] ProfileLoad bot='{}' guid={} sourceGuid={} kind=default_fallback spec='{}' role='{}' result=missing_default",
-                    bot->GetName(),
-                    bot->GetGUID().GetCounter(),
-                    sourceCharacterGuid,
-                    specRole.effectiveSpecKey,
-                    specRole.effectiveRoleKey);
-            }
-        }
-    }
-    else if (auto defaultProfile = defaultProfileRepository.FindDefaultProfile(
-        specRole.effectiveSpecKey,
-        specRole.effectiveRoleKey))
-    {
-        resolvedProfile.settings = defaultProfile->settings;
-        resolvedProfile.interruptEntries =
-            FilterEntriesForKnownActions(bot, defaultProfile->interruptEntries);
-        resolvedProfile.rotationEntries =
-            FilterEntriesForKnownActions(bot, defaultProfile->rotationEntries);
-
-        LOG_INFO(
-            "server.worldserver",
-            "[LivingWorldDebug] ProfileLoad bot='{}' guid={} sourceGuid={} kind=default defaultProfileId={} spec='{}' role='{}' interruptEntries={} rotationEntries={}",
-            bot->GetName(),
-            bot->GetGUID().GetCounter(),
-            sourceCharacterGuid,
-            defaultProfile->defaultProfileId,
-            specRole.effectiveSpecKey,
-            specRole.effectiveRoleKey,
-            resolvedProfile.interruptEntries.size(),
-            resolvedProfile.rotationEntries.size());
-    }
-    else
-    {
-        LOG_INFO(
-            "server.worldserver",
-            "[LivingWorldDebug] ProfileLoad bot='{}' guid={} sourceGuid={} kind=none spec='{}' role='{}' result=missing_default",
-            bot->GetName(),
-            bot->GetGUID().GetCounter(),
-            sourceCharacterGuid,
-            specRole.effectiveSpecKey,
-            specRole.effectiveRoleKey);
-    }
+        preparedProfile.resolution.sourceCharacterGuid,
+        preparedProfile.resolution.ownerAccountId,
+        static_cast<std::uint32_t>(preparedProfile.resolution.activeProfileSlot),
+        sourceKind,
+        preparedProfile.resolution.customProfileId.value_or(0),
+        preparedProfile.resolution.defaultProfileId.value_or(0),
+        preparedProfile.resolution.effectiveSpecKey,
+        preparedProfile.resolution.effectiveRoleKey,
+        resolvedProfile.interruptEntries.size(),
+        resolvedProfile.rotationEntries.size());
 
     return resolvedProfile;
 }
@@ -1448,8 +1257,11 @@ void TickHealer(Player* bot, Player* owner)
     }
 }
 
-void TickRanged(Player* bot, Unit* target)
+void TickRanged(Player* bot, Player* owner, Unit* target)
 {
+    if (TryExecuteProfileRotation(bot, owner, target))
+        return;
+
     if (bot->IsNonMeleeSpellCast(false))
     {
         LOG_INFO(
@@ -1493,8 +1305,11 @@ void TickRanged(Player* bot, Unit* target)
     bot->CastSpell(target, spell, false);
 }
 
-void TickMelee(Player* bot, Unit* target)
+void TickMelee(Player* bot, Player* owner, Unit* target)
 {
+    if (TryExecuteProfileRotation(bot, owner, target))
+        return;
+
     if (bot->IsNonMeleeSpellCast(false))
         return;
 
@@ -1819,11 +1634,13 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
 
         // Attempt an offensive spell if not already casting and mana is healthy.
         if (attackTarget
-            && !IsOffenseSuppressed(doctrine.settings.conservationMode, healerConserving)
-            && !bot->IsNonMeleeSpellCast(false))
+            && !IsOffenseSuppressed(doctrine.settings.conservationMode, healerConserving))
         {
+            if (TryExecuteProfileRotation(bot, owner, attackTarget))
+                return;
+
             std::uint32_t const spell = GetHealerOffensiveSpell(bot, attackTarget);
-            if (spell)
+            if (spell && !bot->IsNonMeleeSpellCast(false))
                 bot->CastSpell(attackTarget, spell, false);
         }
 
@@ -1904,6 +1721,9 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
             }
 
             EnsureChasingVictim(bot, assistTarget);
+            if (TryExecuteProfileRotation(bot, owner, assistTarget))
+                return;
+
             std::uint32_t const spell = GetHybridDamageSpell(bot, assistTarget);
             if (spell && !bot->IsNonMeleeSpellCast(false))
             {
@@ -1996,7 +1816,7 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
                     static_cast<std::uint32_t>(bot->GetPower(POWER_MANA)),
                     static_cast<std::uint32_t>(bot->GetMaxPower(POWER_MANA)));
 
-                TickRanged(bot, assistTarget);
+                TickRanged(bot, owner, assistTarget);
             }
         }
         else // Melee
@@ -2005,7 +1825,7 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
                 bot->Attack(assistTarget, true);
 
             EnsureChasingVictim(bot, assistTarget);
-            TickMelee(bot, assistTarget);
+            TickMelee(bot, owner, assistTarget);
         }
 
         return;
