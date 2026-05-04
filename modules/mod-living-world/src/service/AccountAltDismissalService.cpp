@@ -144,7 +144,8 @@ AccountAltDismissalSummary AccountAltDismissalService::DismissClone(
         AccountAltSyncExecutor executor(
             _runtimeRepository, _syncRepository,
             _reputationSyncRepository, _questSyncRepository,
-            _achievementSyncRepository);
+            _achievementSyncRepository, _skillSyncRepository,
+            _spellSyncRepository);
         if (!executor.Execute(*runtime, *cloneSnapshot, recoveryPlan.domainsToSync))
         {
             summary.manualReviewRequired = true;

@@ -77,6 +77,8 @@ AccountAltRuntimeCoordinator::AccountAltRuntimeCoordinator(
     integration::CharacterReputationSyncRepository& reputationSyncRepository,
     integration::CharacterQuestSyncRepository& questSyncRepository,
     integration::CharacterAchievementSyncRepository& achievementSyncRepository,
+    integration::CharacterSkillSyncRepository& skillSyncRepository,
+    integration::CharacterSpellSyncRepository& spellSyncRepository,
     AccountAltRecoveryService const& recoveryService,
     AccountAltItemRecoveryOptions itemRecoveryOptions)
     : _runtimeRepository(runtimeRepository),
@@ -91,6 +93,8 @@ AccountAltRuntimeCoordinator::AccountAltRuntimeCoordinator(
       _reputationSyncRepository(reputationSyncRepository),
       _questSyncRepository(questSyncRepository),
       _achievementSyncRepository(achievementSyncRepository),
+      _skillSyncRepository(skillSyncRepository),
+      _spellSyncRepository(spellSyncRepository),
       _recoveryService(recoveryService),
       _itemRecoveryOptions(itemRecoveryOptions),
       _runtimeService(runtimeRepository, botAccountPoolRepository)
@@ -680,7 +684,8 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
             AccountAltSyncExecutor executor(
                 _runtimeRepository, _syncRepository,
                 _reputationSyncRepository, _questSyncRepository,
-                _achievementSyncRepository);
+                _achievementSyncRepository, _skillSyncRepository,
+                _spellSyncRepository);
             if (!executor.Execute(runtime, *cloneSnapshot, recoveryPlan.domainsToSync))
             {
                 LOG_ERROR(

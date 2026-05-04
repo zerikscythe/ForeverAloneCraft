@@ -44,7 +44,10 @@ enum class AccountAltSyncDomain
     Reputation,
     Quests,
     Achievements,
-    Mail
+    Mail,
+    Honor,
+    Skills,
+    Spells
 };
 
 enum class AccountAltRecoveryPlanKind
@@ -73,6 +76,8 @@ struct CharacterProgressSnapshot
     std::uint32_t completedQuestCount = 0;
     std::uint32_t achievementCount = 0;
     std::int64_t totalReputationStanding = 0;
+    std::uint32_t totalHonorPoints = 0;
+    std::uint32_t totalKills = 0;
 };
 
 struct BotAccountLease

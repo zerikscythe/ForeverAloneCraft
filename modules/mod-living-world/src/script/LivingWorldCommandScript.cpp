@@ -40,6 +40,8 @@
 #include "integration/SqlCharacterProgressSyncRepository.h"
 #include "integration/SqlCharacterQuestSyncRepository.h"
 #include "integration/SqlCharacterReputationSyncRepository.h"
+#include "integration/SqlCharacterSkillSyncRepository.h"
+#include "integration/SqlCharacterSpellSyncRepository.h"
 #include "integration/WorldCommitAction.h"
 #include "model/AccountAltRuntime.h"
 #include "model/PlayerRosterRequest.h"
@@ -656,6 +658,8 @@ bool ExecuteSpawnRosterBodyAction(
     integration::SqlCharacterReputationSyncRepository reputationSyncRepository;
     integration::SqlCharacterQuestSyncRepository questSyncRepository;
     integration::SqlCharacterAchievementSyncRepository achievementSyncRepository;
+    integration::SqlCharacterSkillSyncRepository skillSyncRepository;
+    integration::SqlCharacterSpellSyncRepository spellSyncRepository;
     service::AccountAltRecoveryService recoveryService;
     service::AccountAltItemRecoveryOptions itemRecoveryOptions;
     itemRecoveryOptions.enableInventorySync =
@@ -676,6 +680,8 @@ bool ExecuteSpawnRosterBodyAction(
         reputationSyncRepository,
         questSyncRepository,
         achievementSyncRepository,
+        skillSyncRepository,
+        spellSyncRepository,
         recoveryService,
         itemRecoveryOptions);
 

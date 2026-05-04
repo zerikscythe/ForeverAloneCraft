@@ -16,8 +16,15 @@ bool CloneProgressIsAhead(
     {
         return clone.level > source.level;
     }
-
-    return clone.experience > source.experience;
+    if (clone.experience != source.experience)
+    {
+        return clone.experience > source.experience;
+    }
+    if (clone.totalHonorPoints != source.totalHonorPoints)
+    {
+        return clone.totalHonorPoints > source.totalHonorPoints;
+    }
+    return clone.totalKills > source.totalKills;
 }
 
 std::string BuildReservedSourceName(std::uint64_t sourceCharacterGuid)
