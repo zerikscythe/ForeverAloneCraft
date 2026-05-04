@@ -274,6 +274,13 @@ struct BotModeSetCommand
     model::BotCombatMode mode = model::BotCombatMode::Assist;
 };
 
+// "<position|name> info" — request the bot's current config state pushed back
+// as a LWBT:BINFO system message so the Bot-Tune addon can render it.
+struct BotInfoCommand
+{
+    BotRef botRef;
+};
+
 
 using ParsedCommand = std::variant<
     CommandParseError,
@@ -304,7 +311,8 @@ using ParsedCommand = std::variant<
     QuestRewardsCommand,
     QuestRewardModeSetCommand,
     BotRewardChoiceCommand,
-    BotModeSetCommand>;
+    BotModeSetCommand,
+    BotInfoCommand>;
 
 
 // Parse a raw command argument string (everything after `.lwbot `). The

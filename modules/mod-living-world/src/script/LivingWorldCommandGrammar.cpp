@@ -561,11 +561,18 @@ ParsedCommand ParseBotActionCommand(BotRef botRef, std::string_view remaining)
         return cmd;
     }
 
+    if (secondToken == "info")
+    {
+        BotInfoCommand cmd;
+        cmd.botRef = std::move(botRef);
+        return cmd;
+    }
+
     return MakeError(
         CommandParseErrorKind::UnknownVerb,
         std::string("expected 'profile', 'cast', 'attack', 'disengage', 'train', 'retreat', "
                     "'follow', 'refreshments', 'buff', 'bags', 'retrieve', 'equip', 'unequip', "
-                    "'pickup', 'turnin', 'trainspell', 'trainall', 'reward', or 'mode', got: ") +
+                    "'pickup', 'turnin', 'trainspell', 'trainall', 'reward', 'mode', or 'info', got: ") +
             std::string(secondToken));
 }
 } // namespace

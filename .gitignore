@@ -35,6 +35,9 @@
 # default build directory if not specified by CMAKE configuration
 /out/*
 
+# LivingWorld bot editor — local DB credentials, never commit
+tools/lw-editor/config.ini
+
 #
 #Generic
 #
@@ -120,3 +123,11 @@ local.properties
 /local_scripts
 /.github/copilot-instructions.md
 /_issues/Crashes
+lw_gramcpp_tail.txt
+lw_tail.txt
+lw_script_tail.txt
+lw_resolve.txt
+lw_profset.txt
+lw_modeset.txt
+extract_resolve.ps1
+extract_handlers.ps1

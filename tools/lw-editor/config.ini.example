@@ -1,0 +1,8 @@
+[db]
+host = 192.168.0.93
+port = 3306
+user = acore
+password = acore
+db_auth = acore_auth
+db_world = acore_world
+db_characters = acore_characters

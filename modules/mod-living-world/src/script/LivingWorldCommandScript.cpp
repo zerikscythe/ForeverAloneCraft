@@ -1345,6 +1345,42 @@ std::uint32_t ResolveSpellByName(Player const* bot, std::string const& name)
     return bestSpellId;
 }
 
+std::string_view BotCombatModeToString(model::BotCombatMode mode)
+{
+    switch (mode)
+    {
+        case model::BotCombatMode::Passive: return "passive";
+        case model::BotCombatMode::Hold:    return "hold";
+        case model::BotCombatMode::Guard:   return "guard";
+        default:                            return "assist";
+    }
+}
+
+void SendBotInfoMessage(
+    ChatHandler* handler,
+    model::RosterEntry const& entry,
+    std::uint32_t rosterPosition)
+{
+    WorldSession* session = handler->GetSession();
+    Player* owner = session ? session->GetPlayer() : nullptr;
+    if (!owner)
+        return;
+
+    integration::SqlBotCombatProfileSelectionRepository selectionRepo;
+    auto selection = selectionRepo.FindRuntimeSelection(entry.characterGuid);
+    std::uint8_t const slot = selection ? selection->activeProfileSlot : 0;
+
+    model::BotCombatMode const mode =
+        service::BotPlayerRegistry::Instance().GetBotMode(owner->GetGUID());
+
+    handler->PSendSysMessage(
+        "LWBT:BINFO:%s:%u:%u:%s",
+        entry.controllableProfile.profile.name.c_str(),
+        rosterPosition,
+        static_cast<std::uint32_t>(slot),
+        BotCombatModeToString(mode).data());
+}
+
 void HandleBotModeSet(
     ChatHandler* handler,
     BotModeSetCommand const& command)
@@ -1374,6 +1410,21 @@ void HandleBotModeSet(
         case model::BotCombatMode::Passive: BotSayModePassive(bot); break;
         case model::BotCombatMode::Hold:    BotSayModeHold(bot);    break;
         case model::BotCombatMode::Guard:   BotSayModeGuard(bot);   break;
+    }
+
+    // Push updated state to Bot-Tune addon for the first active bot.
+    {
+        std::vector<model::RosterEntry> entries =
+            BuildVisibleRosterEntries(session->GetAccountId());
+        ObjectGuid const botGuid = bot->GetGUID();
+        for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(entries.size()); ++i)
+        {
+            if (entries[i].characterGuid == botGuid.GetCounter())
+            {
+                SendBotInfoMessage(handler, entries[i], i + 1);
+                break;
+            }
+        }
     }
 }
 
@@ -2103,6 +2154,57 @@ void HandleBotRetreat(
         Milliseconds(30000));
 }
 
+void HandleBotInfo(
+    ChatHandler* handler,
+    BotInfoCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    if (!session)
+    {
+        handler->SendErrorMessage("LivingWorld bot info requires an in-game session.");
+        return;
+    }
+
+    std::vector<model::RosterEntry> entries =
+        BuildVisibleRosterEntries(session->GetAccountId());
+
+    std::optional<model::RosterEntry> entry;
+    std::uint32_t rosterPosition = 0;
+
+    if (std::uint32_t const* pos = std::get_if<std::uint32_t>(&command.botRef))
+    {
+        if (*pos > 0 && *pos <= static_cast<std::uint32_t>(entries.size()))
+        {
+            entry = entries[*pos - 1];
+            rosterPosition = *pos;
+        }
+    }
+    else
+    {
+        std::string const& name = std::get<std::string>(command.botRef);
+        for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(entries.size()); ++i)
+        {
+            if (entries[i].controllableProfile.profile.name == name)
+            {
+                entry = entries[i];
+                rosterPosition = i + 1;
+                break;
+            }
+        }
+    }
+
+    if (!entry)
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld bot not found in roster.");
+        return;
+    }
+
+    SendBotInfoMessage(handler, *entry, rosterPosition);
+}
+
 void HandleBotProfileSet(
     ChatHandler* handler,
     BotProfileSetCommand const& command)
@@ -2153,6 +2255,23 @@ void HandleBotProfileSet(
         "LivingWorld set active profile slot {} for {}.",
         static_cast<std::uint32_t>(slot),
         entry->controllableProfile.profile.name);
+
+    // Push updated state to Bot-Tune addon.
+    {
+        std::vector<model::RosterEntry> entries =
+            BuildVisibleRosterEntries(session->GetAccountId());
+        std::uint32_t pos = 0;
+        for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(entries.size()); ++i)
+        {
+            if (entries[i].characterGuid == entry->characterGuid)
+            {
+                pos = i + 1;
+                break;
+            }
+        }
+        if (pos > 0)
+            SendBotInfoMessage(handler, *entry, pos);
+    }
 }
 
 // ---------------------------------------------------------------
@@ -3541,6 +3660,13 @@ bool HandleParsedCommand(
         std::get_if<RosterDismissCommand>(&parsed))
     {
         RenderDismissBot(handler, *command);
+        return true;
+    }
+
+    if (BotInfoCommand const* command =
+        std::get_if<BotInfoCommand>(&parsed))
+    {
+        HandleBotInfo(handler, *command);
         return true;
     }
 
