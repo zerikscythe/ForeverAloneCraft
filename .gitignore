@@ -37,6 +37,10 @@
 
 # LivingWorld bot editor — local DB credentials, never commit
 tools/lw-editor/config.ini
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
 
 #
 #Generic
