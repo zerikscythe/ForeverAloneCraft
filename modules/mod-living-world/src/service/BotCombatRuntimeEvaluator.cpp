@@ -4,6 +4,7 @@
 #include "ObjectAccessor.h"
 #include "Player.h"
 #include "Spell.h"
+#include "SpellAuras.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
 #include "Unit.h"
@@ -333,6 +334,49 @@ bool BotCombatRuntimeEvaluator::EvaluateCondition(
             static_cast<float>(subject->GetComboPoints()),
             condition.numericValue);
 
+    if (condition.statKey == "threat_pct")
+    {
+        if (!context.primaryTarget)
+            return false;
+        ThreatManager& mgr = context.primaryTarget->GetThreatMgr();
+        float const subjectThreat = mgr.GetThreat(subject);
+        float topThreat = 0.0f;
+        for (ThreatReference const* ref : mgr.GetSortedThreatList())
+        {
+            if (ref->IsOnline())
+            {
+                topThreat = ref->GetThreat();
+                break;
+            }
+        }
+        float const pct = (topThreat > 0.0f) ? (subjectThreat / topThreat * 100.0f) : 0.0f;
+        return CompareNumeric(condition.comparison, pct, condition.numericValue);
+    }
+
+    if (condition.statKey == "is_aggro_holder")
+    {
+        if (!context.primaryTarget)
+            return false;
+        bool const holds = (context.primaryTarget->GetThreatMgr().GetCurrentVictim() == subject);
+        return CompareNumeric(condition.comparison, holds ? 1.0f : 0.0f, condition.numericValue);
+    }
+
+    if (condition.statKey == "aura_stacks")
+    {
+        if (condition.stringValue.empty())
+            return false;
+        uint32_t spellId = 0;
+        try { spellId = static_cast<uint32_t>(std::stoul(condition.stringValue)); }
+        catch (...) { return false; }
+        uint32_t stacks = 0;
+        if (Aura const* aura = subject->GetAura(spellId))
+            stacks = aura->GetStackAmount();
+        return CompareNumeric(
+            condition.comparison,
+            static_cast<float>(stacks),
+            condition.numericValue);
+    }
+
     return false;
 }
 
@@ -478,6 +522,9 @@ Unit* BotCombatRuntimeEvaluator::ResolveActionTarget(
 
     if (targetKey == "enemy_trash")
         return FindTrashTarget(context);
+
+    if (targetKey == "enemy_primary_victim")
+        return context.primaryTarget ? context.primaryTarget->GetVictim() : nullptr;
 
     return nullptr;
 }

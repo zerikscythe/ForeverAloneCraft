@@ -1,5 +1,6 @@
 #include "ai/CompanionAI.h"
 
+#include "Chat.h"
 #include "Duration.h"
 #include "EventProcessor.h"
 #include "Log.h"
@@ -10,6 +11,7 @@
 #include "SharedDefines.h"
 #include "SpellMgr.h"
 #include "Unit.h"
+#include "WorldPacket.h"
 #include "integration/SqlAccountAltRuntimeRepository.h"
 #include "integration/SqlBotCombatDefaultProfileRepository.h"
 #include "integration/SqlBotCombatProfileRepository.h"
@@ -385,10 +387,41 @@ service::BotCombatPreparedProfile GetPreparedCombatProfile(Player* bot, Player* 
     return preparedProfile;
 }
 
+void PushThreatAddonMessage(Player* bot, Player* owner, Unit* primaryTarget)
+{
+    if (!bot || !owner || !owner->GetSession() || !primaryTarget)
+        return;
+
+    ThreatManager& mgr = primaryTarget->GetThreatMgr();
+    float const myThreat = mgr.GetThreat(bot);
+    float topThreat = 0.0f;
+    for (ThreatReference const* ref : mgr.GetSortedThreatList())
+    {
+        if (ref->IsOnline())
+        {
+            topThreat = ref->GetThreat();
+            break;
+        }
+    }
+    int const threatPct = (topThreat > 0.0f)
+        ? static_cast<int>(myThreat / topThreat * 100.0f) : 0;
+    bool const holdsAggro = (mgr.GetCurrentVictim() == bot);
+
+    std::string const msg = "LWBOT\tLWBT:THREAT:" + bot->GetName()
+        + ":" + std::to_string(threatPct)
+        + ":" + (holdsAggro ? "1" : "0");
+    WorldPacket data;
+    ChatHandler::BuildChatPacket(
+        data, CHAT_MSG_WHISPER, LANG_ADDON, owner, owner, msg);
+    owner->GetSession()->SendPacket(&data);
+}
+
 bool TryExecuteProfileRotation(Player* bot, Player* owner, Unit* primaryTarget)
 {
     if (!bot || !owner)
         return false;
+
+    PushThreatAddonMessage(bot, owner, primaryTarget);
 
     service::BotCombatPreparedProfile preparedProfile =
         GetPreparedCombatProfile(bot, owner);
