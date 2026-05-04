@@ -15,6 +15,12 @@ Connection settings are saved to config.ini in the same folder.
 ─────────────────────────────────────────────────────────────────────────────
 """
 
+import warnings
+# Suppress cryptography deprecation warnings from paramiko (TripleDES)
+warnings.filterwarnings('ignore', category=DeprecationWarning, module='paramiko')
+warnings.filterwarnings('ignore', message='.*TripleDES.*')
+warnings.filterwarnings('ignore', message='.*Blowfish.*')
+
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
 import mysql.connector
@@ -24,6 +30,13 @@ import hashlib
 import os
 import pathlib
 import struct
+
+try:
+    from sshtunnel import SSHTunnelForwarder
+    SSH_TUNNEL_AVAILABLE = True
+except ImportError:
+    SSHTunnelForwarder = None
+    SSH_TUNNEL_AVAILABLE = False
 
 # ═══════════════════════════════════════════════════════════════════════════
 #  CONSTANTS / ENUM MAPS
@@ -59,13 +72,14 @@ COND_LOGIC_OPTS   = list(COND_LOGIC.values())
 COND_OPS_OPTS     = list(COND_OPS.values())
 AOE_OPTS          = list(AOE_MODES.values())
 
-TARGET_KEYS   = ["enemy", "enemy_primary", "enemy_trash",
-                 "self", "owner", "ally_lowest_hp", "focus"]
+TARGET_KEYS   = ["enemy", "enemy_primary", "enemy_trash", "enemy_primary_victim",
+                 "self", "owner", "ally_lowest_hp", "lowest_hp_party", "focus"]
 SUBJECT_KEYS  = ["owner", "bot", "target", "owner.target"]
 STAT_KEYS     = ["hp_pct", "mana_pct", "rage", "energy", "runic_power",
-                 "combo_points", "aura", "distance",
+                 "combo_points", "aura", "aura_stacks", "distance",
+                 "threat_pct", "is_aggro_holder",
                  "in_melee", "is_casting", "is_moving", "target_hp_pct"]
-BOOL_STAT_KEYS = {"in_melee", "is_casting", "is_moving"}
+BOOL_STAT_KEYS = {"in_melee", "is_casting", "is_moving", "is_aggro_holder"}
 
 WOW_CLASSES = {
     1: "Warrior", 2: "Paladin", 3: "Hunter", 4: "Rogue",
@@ -178,15 +192,89 @@ class DBCtx:
         self._class_skillline_ids = None
         self._dbc_root = (pathlib.Path(__file__).resolve().parents[2] /
                           "var" / "extractors" / "dbc")
+        self._ssh_tunnel = None
+        self._dbc_warning_shown = False
+        self._spell_data_warning_shown = False
+        # JSON cache paths
+        self._json_cache_dir = pathlib.Path(__file__).resolve().parent
+        self._spell_names_json = self._json_cache_dir / "spell_names.json"
+        self._class_spells_json = self._json_cache_dir / "class_spells.json"
+        self._json_spell_cache = None
+        self._json_class_spells_cache = None
 
-    def connect(self, host: str, port: int, user: str, password: str):
-        base = dict(host=host, port=port, user=user, password=password,
+    def connect(self, host: str, port: int, user: str, password: str,
+                 ssh_enabled: bool = False, ssh_host: str = "", ssh_port: int = 22,
+                 ssh_user: str = "", ssh_password: str = "", ssh_key_file: str = "",
+                 db_host: str = "127.0.0.1", db_port: int = 3306):
+        """Connect to MySQL, optionally through an SSH tunnel.
+
+        Args:
+            host: Direct MySQL host (or localhost if using SSH tunnel)
+            port: Direct MySQL port (or local tunnel port if using SSH tunnel)
+            user: MySQL username
+            password: MySQL password
+            ssh_enabled: Whether to use SSH tunnel
+            ssh_host: SSH jump host address
+            ssh_port: SSH port (usually 22)
+            ssh_user: SSH username
+            ssh_password: SSH password (if not using key)
+            ssh_key_file: Path to SSH private key file
+            db_host: Database server address as seen from SSH host
+            db_port: Database port on the remote server
+        """
+        # Close any existing tunnel
+        self._close_ssh_tunnel()
+
+        actual_host = host
+        actual_port = port
+
+        # Set up SSH tunnel if enabled
+        if ssh_enabled and SSH_TUNNEL_AVAILABLE:
+            if not ssh_host or not ssh_user:
+                raise ValueError("SSH host and user are required when SSH is enabled")
+
+            ssh_auth = {}
+            if ssh_key_file and os.path.exists(ssh_key_file):
+                ssh_auth["ssh_private_key"] = ssh_key_file
+                if ssh_password:  # Key passphrase
+                    ssh_auth["ssh_private_key_password"] = ssh_password
+            elif ssh_password:
+                ssh_auth["ssh_password"] = ssh_password
+            else:
+                raise ValueError("SSH requires either password or key file")
+
+            self._ssh_tunnel = SSHTunnelForwarder(
+                (ssh_host, ssh_port),
+                ssh_username=ssh_user,
+                remote_bind_address=(db_host, db_port),
+                **ssh_auth
+            )
+            self._ssh_tunnel.start()
+
+            # Connect to localhost through the tunnel
+            actual_host = "127.0.0.1"
+            actual_port = self._ssh_tunnel.local_bind_port
+        elif ssh_enabled and not SSH_TUNNEL_AVAILABLE:
+            raise ImportError(
+                "SSH tunnel requested but sshtunnel package not installed.\n"
+                "Install it with: pip install sshtunnel")
+
+        base = dict(host=actual_host, port=actual_port, user=user, password=password,
                     autocommit=True, charset="utf8mb4")
         self.auth  = mysql.connector.connect(**base, database="acore_auth")
         self.world = mysql.connector.connect(**base, database="acore_world")
         self.chars = mysql.connector.connect(**base, database="acore_characters")
         self._world_tables = None
         self._spell_rank_cache = None
+
+    def _close_ssh_tunnel(self):
+        """Close SSH tunnel if active."""
+        if self._ssh_tunnel:
+            try:
+                self._ssh_tunnel.stop()
+            except Exception:
+                pass
+            self._ssh_tunnel = None
 
     def disconnect(self):
         for c in (self.auth, self.world, self.chars):
@@ -197,6 +285,7 @@ class DBCtx:
                 pass
         self.auth = self.world = self.chars = None
         self._world_tables = None
+        self._close_ssh_tunnel()
 
     def ok(self) -> bool:
         return bool(self.auth and self.auth.is_connected())
@@ -233,18 +322,26 @@ class DBCtx:
     def _read_dbc_rows(self, file_name: str, expected_fields: int | None = None):
         path = self._dbc_root / file_name
         if not path.exists():
+            if not self._dbc_warning_shown:
+                import sys
+                print(f"[lw-editor] DBC files not found in {self._dbc_root}", file=sys.stderr)
+                print(f"[lw-editor] Spell names will be limited. You can enter spell IDs manually.", file=sys.stderr)
+                print(f"[lw-editor] To extract DBC files, run the WoW client data extractors.", file=sys.stderr)
+                self._dbc_warning_shown = True
             return None
-        with path.open("rb") as f:
-            magic, record_count, field_count, record_size, string_size = struct.unpack(
-                "<4s4I", f.read(20))
-            if magic != b"WDBC":
-                raise ValueError(f"{file_name} is not a DBC file")
-            if expected_fields and field_count != expected_fields:
-                raise ValueError(
-                    f"{file_name} field count {field_count} != expected {expected_fields}")
-            records = f.read(record_count * record_size)
-            string_block = f.read(string_size)
-        return record_count, field_count, record_size, records, string_block
+        try:
+            with path.open("rb") as f:
+                magic, record_count, field_count, record_size, string_size = struct.unpack(
+                    "<4s4I", f.read(20))
+                if magic != b"WDBC":
+                    return None
+                if expected_fields and field_count != expected_fields:
+                    return None
+                records = f.read(record_count * record_size)
+                string_block = f.read(string_size)
+            return record_count, field_count, record_size, records, string_block
+        except Exception:
+            return None
 
     def _dbc_string(self, string_block: bytes, offset: int) -> str:
         if not offset:
@@ -253,6 +350,47 @@ class DBCtx:
         if end == -1:
             end = len(string_block)
         return string_block[offset:end].decode("utf-8", errors="ignore")
+
+    def _load_json_spell_cache(self):
+        """Load spell names from JSON cache file if available."""
+        if self._json_spell_cache is not None:
+            return self._json_spell_cache
+
+        if not self._spell_names_json.exists():
+            self._json_spell_cache = {}
+            return self._json_spell_cache
+
+        try:
+            import json
+            with self._spell_names_json.open("r", encoding="utf-8") as f:
+                data = json.load(f)
+                # Convert string keys to int keys
+                self._json_spell_cache = {int(k): v for k, v in data.items()}
+            import sys
+            print(f"[lw-editor] Loaded {len(self._json_spell_cache):,} spells from {self._spell_names_json.name}", file=sys.stderr)
+            return self._json_spell_cache
+        except Exception as exc:
+            import sys
+            print(f"[lw-editor] Failed to load JSON cache: {exc}", file=sys.stderr)
+            self._json_spell_cache = {}
+            return self._json_spell_cache
+
+    def _load_json_class_spells(self, class_id: int):
+        """Load class spell list from JSON cache file if available."""
+        if self._json_class_spells_cache is None:
+            if not self._class_spells_json.exists():
+                self._json_class_spells_cache = {}
+            else:
+                try:
+                    import json
+                    with self._class_spells_json.open("r", encoding="utf-8") as f:
+                        self._json_class_spells_cache = json.load(f)
+                except Exception:
+                    self._json_class_spells_cache = {}
+
+        # Map class_id to class name
+        class_name = WOW_CLASSES.get(class_id, f"Class{class_id}")
+        return self._json_class_spells_cache.get(class_name, [])
 
     def _load_spell_name_cache(self):
         if self._spell_name_cache is not None:
@@ -337,31 +475,40 @@ class DBCtx:
     # ── Spell name lookup ────────────────────────────────────────────────────
 
     def spell_name(self, spell_id: int) -> str:
-        """Try to resolve a human-readable spell name from acore_world."""
+        """Try to resolve a human-readable spell name."""
         if not spell_id:
             return ""
         try:
             sid = int(spell_id)
         except (TypeError, ValueError):
             return ""
+
+        # First check JSON cache
+        json_cache = self._load_json_spell_cache()
+        if sid in json_cache:
+            return json_cache[sid]
+
+        # Then check DBC cache
         spell_names = self._load_spell_name_cache()
         if sid in spell_names:
             return spell_names[sid]
+
+        # Try database lookup - spell_dbc is standard AzerothCore table
+        if not self.ok():
+            return ""
+
         try:
-            if self._has_world_table("spell_template"):
-                rows = self.q(self.world,
-                    "SELECT SpellName1 FROM spell_template WHERE entry=%s LIMIT 1",
-                    (sid,))
-                if rows:
-                    return rows[0].get("SpellName1") or ""
             if self._has_world_table("spell_dbc"):
                 rows = self.q(self.world,
                     "SELECT Name_Lang_enUS FROM spell_dbc WHERE ID=%s LIMIT 1",
                     (sid,))
                 if rows:
-                    return rows[0].get("Name_Lang_enUS") or ""
+                    name = rows[0].get("Name_Lang_enUS", "") or ""
+                    if name:
+                        return name
         except Exception:
             pass
+
         return ""
 
     def load_class_spells(self, class_id: int) -> list:
@@ -369,12 +516,27 @@ class DBCtx:
         if not class_id:
             return []
 
+        # Try JSON cache first (fastest and most convenient)
+        json_spells = self._load_json_class_spells(class_id)
+        if json_spells:
+            result = [
+                {"id": spell["id"], "display": f"{spell['name']}  [{spell['id']}]"}
+                for spell in json_spells
+            ]
+            if not self._spell_data_warning_shown and result:
+                import sys
+                class_name = WOW_CLASSES.get(class_id, f"Class{class_id}")
+                print(f"[lw-editor] Loaded {len(result):,} {class_name} spells from JSON cache", file=sys.stderr)
+                self._spell_data_warning_shown = True
+            return result
+
         class_rows = self._load_class_spell_rows()
         class_skilllines = self._load_class_skillline_ids()
         spell_names = self._load_spell_name_cache()
         rank_map = self._load_spell_rank_cache()
         mask = 1 << (int(class_id) - 1)
 
+        # Try DBC-based loading (most reliable and properly filtered)
         if class_rows and spell_names:
             choices = {}
             for row in class_rows:
@@ -397,28 +559,64 @@ class DBCtx:
                         for name, sid in sorted(choices.items(),
                                                 key=lambda x: x[0].lower())]
 
-        family = CLASS_SPELL_FAMILY.get(class_id)
-        if not family or not self.ok():
-            return []
-        try:
-            # Subquery picks the lowest entry (≈ rank 1) per spell name in the family.
-            rows = self.q(self.world,
-                "SELECT entry, SpellName1 FROM spell_template "
-                "WHERE SpellFamilyName=%s AND SpellName1 IS NOT NULL AND SpellName1 != '' "
-                "AND entry IN ("
-                "  SELECT MIN(entry) FROM spell_template "
-                "  WHERE SpellFamilyName=%s AND SpellName1 IS NOT NULL AND SpellName1 != '' "
-                "  GROUP BY SpellName1"
-                ") ORDER BY SpellName1 LIMIT 3000",
-                (family, family))
-            return [{"id": r["entry"],
-                     "display": f"{r['SpellName1']}  [{r['entry']}]"}
-                    for r in rows]
-        except Exception as exc:
+        # Fallback: Use spell_dbc with DBC-based class filtering
+        if self.ok() and self._has_world_table("spell_dbc") and class_rows:
+            try:
+                # Get list of spell IDs that are valid for this class from DBC
+                valid_spell_ids = set()
+                for row in class_rows:
+                    if class_skilllines and row["skillline"] not in class_skilllines:
+                        continue
+                    if not (row["classmask"] & mask):
+                        continue
+                    if row["excludeclass"] & mask:
+                        continue
+                    spell_id = int(row["spell"])
+                    base_id = int(rank_map.get(spell_id, spell_id))
+                    valid_spell_ids.add(base_id)
+
+                if valid_spell_ids:
+                    # Query spell_dbc but only for spell IDs we know are valid for this class
+                    # Build IN clause with spell IDs (limit to prevent too large query)
+                    id_list = list(valid_spell_ids)[:3000]
+                    placeholders = ','.join(['%s'] * len(id_list))
+
+                    rows = self.q(self.world,
+                        f"SELECT ID, Name_Lang_enUS FROM spell_dbc "
+                        f"WHERE ID IN ({placeholders}) "
+                        f"AND Name_Lang_enUS IS NOT NULL AND Name_Lang_enUS != '' "
+                        f"ORDER BY Name_Lang_enUS",
+                        tuple(id_list))
+
+                    if rows:
+                        filtered = [
+                            {"id": r["ID"], "display": f"{r['Name_Lang_enUS']}  [{r['ID']}]"}
+                            for r in rows
+                            if not self._is_noise_spell_name(r["Name_Lang_enUS"])
+                        ]
+
+                        if filtered:
+                            if not self._spell_data_warning_shown:
+                                import sys
+                                print(f"[lw-editor] Loaded {len(filtered)} spells for class {class_id} from spell_dbc", file=sys.stderr)
+                                self._spell_data_warning_shown = True
+                            return filtered
+            except Exception as exc:
+                # If spell_dbc query fails, fall through
+                import sys
+                print(f"[lw-editor] spell_dbc query failed: {exc}", file=sys.stderr)
+
+        # Show helpful message once if no spell data sources are available
+        if not self._spell_data_warning_shown:
             import sys
-            print(f"[lw-editor] load_class_spells failed (class {class_id}): {exc}",
-                  file=sys.stderr)
-            return []
+            print(f"[lw-editor] No spell data available for class {class_id}", file=sys.stderr)
+            print(f"[lw-editor] Quick setup: Run 'python extract_dbc_data.py' to create JSON cache", file=sys.stderr)
+            print(f"[lw-editor] Or extract DBC files to var/extractors/dbc/", file=sys.stderr)
+            print(f"[lw-editor] You can still enter spell IDs manually (find IDs on wowhead.com)", file=sys.stderr)
+            self._spell_data_warning_shown = True
+
+        # Return empty list - user can still type spell IDs manually
+        return []
 
     def search_items(self, name: str) -> list:
         """Search item_template by name (case-insensitive LIKE). Returns up to 20 hits."""
@@ -1236,6 +1434,10 @@ class RotationEditor(ttk.Frame):
         if stat_key == "aura":
             raw_value = string_value if string_value not in (None, "") else numeric_value
             value_text = self._condition_spell_display(raw_value)
+        elif stat_key == "aura_stacks":
+            raw_value = string_value if string_value not in (None, "") else numeric_value
+            spell_display = self._condition_spell_display(raw_value)
+            value_text = f"{spell_display} stacks={numeric_value}"
         elif stat_key in BOOL_STAT_KEYS:
             try:
                 value_text = "True" if int(float(numeric_value or 0)) else "False"
@@ -1250,6 +1452,7 @@ class RotationEditor(ttk.Frame):
 
     def _sync_condition_value_editor(self):
         aura_mode = self.v_stat.get() == "aura"
+        aura_stacks_mode = self.v_stat.get() == "aura_stacks"
         bool_mode = self.v_stat.get() in BOOL_STAT_KEYS
         if aura_mode:
             self._cond_value_label.pack_forget()
@@ -1260,6 +1463,15 @@ class RotationEditor(ttk.Frame):
             self._cond_bool_combo.pack_forget()
             self._cond_aura_label.pack(side=tk.LEFT)
             self._cond_spell_combo.pack(side=tk.LEFT, padx=2)
+        elif aura_stacks_mode:
+            self._cond_bool_label.pack_forget()
+            self._cond_bool_combo.pack_forget()
+            self._cond_aura_label.pack(side=tk.LEFT)
+            self._cond_spell_combo.pack(side=tk.LEFT, padx=2)
+            self._cond_value_label.pack(side=tk.LEFT)
+            self._cond_nval_entry.pack(side=tk.LEFT, padx=2)
+            self._cond_string_label.pack_forget()
+            self._cond_sval_entry.pack_forget()
         elif bool_mode:
             self._cond_aura_label.pack_forget()
             self._cond_spell_combo.pack_forget()
@@ -1283,6 +1495,9 @@ class RotationEditor(ttk.Frame):
         if self.v_stat.get() == "aura":
             raw_value = self.v_sval.get().strip() or self.v_nval.get().strip()
             self.v_cond_spell.set(self._condition_spell_display(raw_value))
+        elif self.v_stat.get() == "aura_stacks":
+            raw_value = self.v_sval.get().strip()
+            self.v_cond_spell.set(self._condition_spell_display(raw_value))
         elif self.v_stat.get() in BOOL_STAT_KEYS:
             try:
                 self.v_cond_bool.set("True" if int(float(self.v_nval.get() or 0)) else "False")
@@ -1297,20 +1512,29 @@ class RotationEditor(ttk.Frame):
     def _on_cond_spell_pick(self, _=None):
         sid = self._parse_id_from_display(self.v_cond_spell.get())
         if sid is not None:
-            self.v_nval.set(str(sid))
-            self.v_sval.set("")
+            if self.v_stat.get() == "aura_stacks":
+                self.v_sval.set(str(sid))
+            else:
+                self.v_nval.set(str(sid))
+                self.v_sval.set("")
             self.v_cond_spell.set(self._spell_display_for_id(sid))
 
     def _on_cond_spell_typed(self, _=None):
         raw = self.v_cond_spell.get().strip()
         if not raw:
-            self.v_nval.set("0")
-            self.v_sval.set("")
+            if self.v_stat.get() == "aura_stacks":
+                self.v_sval.set("")
+            else:
+                self.v_nval.set("0")
+                self.v_sval.set("")
             return
         sid = self._parse_id_from_display(raw)
         if sid is not None:
-            self.v_nval.set(str(sid))
-            self.v_sval.set("")
+            if self.v_stat.get() == "aura_stacks":
+                self.v_sval.set(str(sid))
+            else:
+                self.v_nval.set(str(sid))
+                self.v_sval.set("")
             self.v_cond_spell.set(self._spell_display_for_id(sid))
 
     # ── Type toggle ─────────────────────────────────────────────────────────
@@ -2280,16 +2504,43 @@ class App(tk.Tk):
         if os.path.exists(CONFIG_FILE):
             cfg.read(CONFIG_FILE)
         d = cfg["database"] if cfg.has_section("database") else {}
-        self.v_host.set(d.get("host", "192.168.0.93"))
+        self.v_host.set(d.get("host", "127.0.0.1"))
         self.v_port.set(d.get("port", "3306"))
         self.v_user.set(d.get("user", "acore"))
         self.v_pass.set(d.get("password", "acore"))
+
+        # SSH tunnel config
+        s = cfg["ssh"] if cfg.has_section("ssh") else {}
+        self.v_ssh_enabled.set(s.get("enabled", "0") == "1")
+        self.v_ssh_host.set(s.get("host", ""))
+        self.v_ssh_port.set(s.get("port", "22"))
+        self.v_ssh_user.set(s.get("user", ""))
+        self.v_ssh_pass.set(s.get("password", ""))
+        self.v_ssh_key.set(s.get("key_file", ""))
+        self.v_db_host.set(s.get("db_host", "127.0.0.1"))
+        self.v_db_port.set(s.get("db_port", "3306"))
+        # Load MySQL credentials from SSH section
+        self.v_db_user.set(s.get("db_user", d.get("user", "acore")))
+        self.v_db_pass.set(s.get("db_password", d.get("password", "acore")))
+        self._toggle_ssh_fields()
 
     def _save_config(self):
         cfg = configparser.ConfigParser()
         cfg["database"] = {
             "host": self.v_host.get(), "port": self.v_port.get(),
             "user": self.v_user.get(), "password": self.v_pass.get(),
+        }
+        cfg["ssh"] = {
+            "enabled": "1" if self.v_ssh_enabled.get() else "0",
+            "host": self.v_ssh_host.get(),
+            "port": self.v_ssh_port.get(),
+            "user": self.v_ssh_user.get(),
+            "password": self.v_ssh_pass.get(),
+            "key_file": self.v_ssh_key.get(),
+            "db_host": self.v_db_host.get(),
+            "db_port": self.v_db_port.get(),
+            "db_user": self.v_db_user.get(),
+            "db_password": self.v_db_pass.get(),
         }
         with open(CONFIG_FILE, "w") as f:
             cfg.write(f)
@@ -2298,24 +2549,158 @@ class App(tk.Tk):
         bar = ttk.Frame(self, padding=(6, 4))
         bar.pack(side=tk.TOP, fill=tk.X)
 
+        # ── Direct Connection Section ──────────────────────────────────────
+        direct_frame = ttk.LabelFrame(bar, text="Direct Connection", padding=(4, 2))
+        direct_frame.pack(fill=tk.X, pady=(0, 4))
+
+        direct_row = ttk.Frame(direct_frame)
+        direct_row.pack(fill=tk.X)
+
         self.v_host   = tk.StringVar()
         self.v_port   = tk.StringVar()
         self.v_user   = tk.StringVar()
         self.v_pass   = tk.StringVar()
         self.v_status = tk.StringVar(value="Not connected")
 
+        self._direct_widgets = []
         for label, var, w, show in [
-            ("Host:", self.v_host, 16, ""),
+            ("MySQL Host:", self.v_host, 16, ""),
             ("Port:", self.v_port, 6,  ""),
             ("User:", self.v_user, 10, ""),
             ("Pass:", self.v_pass, 10, "*"),
         ]:
-            ttk.Label(bar, text=label).pack(side=tk.LEFT, padx=(4, 1))
-            ttk.Entry(bar, textvariable=var, width=w, show=show).pack(side=tk.LEFT, padx=(0, 6))
+            lbl = ttk.Label(direct_row, text=label)
+            lbl.pack(side=tk.LEFT, padx=(4, 1))
+            ent = ttk.Entry(direct_row, textvariable=var, width=w, show=show)
+            ent.pack(side=tk.LEFT, padx=(0, 6))
+            self._direct_widgets.extend([lbl, ent])
 
-        ttk.Button(bar, text="Connect", command=self._connect).pack(side=tk.LEFT, padx=4)
-        self._status_lbl = ttk.Label(bar, textvariable=self.v_status, foreground="red")
+        ttk.Button(direct_row, text="Connect", command=self._connect).pack(side=tk.LEFT, padx=4)
+        self._status_lbl = ttk.Label(direct_row, textvariable=self.v_status, foreground="red")
         self._status_lbl.pack(side=tk.LEFT, padx=8)
+
+        # ── SSH Tunnel Section ──────────────────────────────────────────────
+        ssh_frame = ttk.LabelFrame(bar, text="SSH Tunnel (for remote/private networks)", padding=(4, 2))
+        ssh_frame.pack(fill=tk.X)
+
+        # Checkbox row
+        check_row = ttk.Frame(ssh_frame)
+        check_row.pack(fill=tk.X, pady=(0, 2))
+
+        self.v_ssh_enabled = tk.BooleanVar(value=False)
+        ssh_check = ttk.Checkbutton(check_row, text="Enable SSH Tunnel", variable=self.v_ssh_enabled,
+                                     command=self._toggle_ssh_fields)
+        ssh_check.pack(side=tk.LEFT, padx=(4, 8))
+
+        if not SSH_TUNNEL_AVAILABLE:
+            ssh_check.configure(state="disabled")
+            ttk.Label(check_row, text="⚠ Package not installed: pip install sshtunnel",
+                     foreground="orange").pack(side=tk.LEFT)
+        else:
+            ttk.Label(check_row, text="→ When enabled, connects through a jump host to reach the database",
+                     foreground="gray").pack(side=tk.LEFT)
+
+        # SSH credentials row
+        ssh_row1 = ttk.Frame(ssh_frame)
+        ssh_row1.pack(fill=tk.X, pady=1)
+
+        self.v_ssh_host = tk.StringVar()
+        self.v_ssh_port = tk.StringVar()
+        self.v_ssh_user = tk.StringVar()
+        self.v_ssh_pass = tk.StringVar()
+        self.v_ssh_key  = tk.StringVar()
+
+        self._ssh_widgets = []
+        ttk.Label(ssh_row1, text="SSH:", foreground="blue").pack(side=tk.LEFT, padx=(4, 4))
+        for label, var, w, show in [
+            ("Host:", self.v_ssh_host, 18, ""),
+            ("Port:", self.v_ssh_port, 5, ""),
+            ("User:", self.v_ssh_user, 10, ""),
+            ("Pass:", self.v_ssh_pass, 10, "*"),
+        ]:
+            lbl = ttk.Label(ssh_row1, text=label)
+            lbl.pack(side=tk.LEFT, padx=(4, 1))
+            ent = ttk.Entry(ssh_row1, textvariable=var, width=w, show=show)
+            ent.pack(side=tk.LEFT, padx=(0, 4))
+            self._ssh_widgets.extend([lbl, ent])
+
+        # Key file row
+        ssh_row2 = ttk.Frame(ssh_frame)
+        ssh_row2.pack(fill=tk.X, pady=1)
+
+        ttk.Label(ssh_row2, text="SSH:", foreground="blue").pack(side=tk.LEFT, padx=(4, 4))
+        lbl_key = ttk.Label(ssh_row2, text="Key File:")
+        lbl_key.pack(side=tk.LEFT, padx=(4, 1))
+        ent_key = ttk.Entry(ssh_row2, textvariable=self.v_ssh_key, width=40)
+        ent_key.pack(side=tk.LEFT, padx=(0, 2))
+        btn_browse = ttk.Button(ssh_row2, text="Browse...", command=self._browse_ssh_key)
+        btn_browse.pack(side=tk.LEFT, padx=2)
+        self._ssh_widgets.extend([lbl_key, ent_key, btn_browse])
+
+        lbl_hint = ttk.Label(ssh_row2, text="(leave blank to use password)", foreground="gray")
+        lbl_hint.pack(side=tk.LEFT, padx=(4, 0))
+        self._ssh_widgets.append(lbl_hint)
+
+        # Database credentials row (MySQL on remote server)
+        ssh_row3 = ttk.Frame(ssh_frame)
+        ssh_row3.pack(fill=tk.X, pady=1)
+
+        self.v_db_host  = tk.StringVar()
+        self.v_db_port  = tk.StringVar()
+        self.v_db_user  = tk.StringVar()
+        self.v_db_pass  = tk.StringVar()
+
+        ttk.Label(ssh_row3, text="MySQL:", foreground="green").pack(side=tk.LEFT, padx=(4, 4))
+        for label, var, w, show in [
+            ("Host:", self.v_db_host, 18, ""),
+            ("Port:", self.v_db_port, 5, ""),
+            ("User:", self.v_db_user, 10, ""),
+            ("Pass:", self.v_db_pass, 10, "*"),
+        ]:
+            lbl = ttk.Label(ssh_row3, text=label)
+            lbl.pack(side=tk.LEFT, padx=(4, 1))
+            ent = ttk.Entry(ssh_row3, textvariable=var, width=w, show=show)
+            ent.pack(side=tk.LEFT, padx=(0, 4))
+            self._ssh_widgets.extend([lbl, ent])
+
+        lbl_mysql_hint = ttk.Label(ssh_row3, text="(MySQL server as seen from SSH host)", foreground="gray")
+        lbl_mysql_hint.pack(side=tk.LEFT, padx=(4, 0))
+        self._ssh_widgets.append(lbl_mysql_hint)
+
+    def _toggle_ssh_fields(self):
+        """Enable/disable SSH fields and direct connection based on mode."""
+        ssh_enabled = self.v_ssh_enabled.get()
+
+        # Enable/disable SSH fields
+        ssh_state = "normal" if ssh_enabled else "disabled"
+        for w in self._ssh_widgets:
+            w.configure(state=ssh_state)
+
+        # Show/hide direct connection fields
+        direct_state = "disabled" if ssh_enabled else "normal"
+        for w in self._direct_widgets:
+            w.configure(state=direct_state)
+
+        # Auto-populate direct connection from SSH MySQL fields when enabling SSH
+        if ssh_enabled:
+            # When using SSH tunnel, direct connection always goes to localhost
+            self.v_host.set("127.0.0.1")
+            self.v_port.set("3306")
+            # Copy MySQL credentials from SSH section to direct section
+            if self.v_db_user.get():
+                self.v_user.set(self.v_db_user.get())
+            if self.v_db_pass.get():
+                self.v_pass.set(self.v_db_pass.get())
+
+    def _browse_ssh_key(self):
+        """Browse for SSH private key file."""
+        from tkinter import filedialog
+        filename = filedialog.askopenfilename(
+            title="Select SSH Private Key",
+            filetypes=[("All files", "*"), ("PEM files", "*.pem"), ("Key files", "id_rsa")]
+        )
+        if filename:
+            self.v_ssh_key.set(filename)
 
     def _build_notebook(self):
         self.nb = ttk.Notebook(self)
@@ -2330,15 +2715,33 @@ class App(tk.Tk):
     def _connect(self):
         try:
             db.disconnect()
-            db.connect(self.v_host.get(), int(self.v_port.get()),
-                       self.v_user.get(), self.v_pass.get())
+
+            # When SSH is enabled, use MySQL credentials from SSH section
+            mysql_user = self.v_db_user.get() if self.v_ssh_enabled.get() else self.v_user.get()
+            mysql_pass = self.v_db_pass.get() if self.v_ssh_enabled.get() else self.v_pass.get()
+
+            db.connect(
+                host=self.v_host.get(),
+                port=int(self.v_port.get()),
+                user=mysql_user,
+                password=mysql_pass,
+                ssh_enabled=self.v_ssh_enabled.get(),
+                ssh_host=self.v_ssh_host.get(),
+                ssh_port=int(self.v_ssh_port.get()) if self.v_ssh_port.get() else 22,
+                ssh_user=self.v_ssh_user.get(),
+                ssh_password=self.v_ssh_pass.get(),
+                ssh_key_file=self.v_ssh_key.get(),
+                db_host=self.v_db_host.get() if self.v_db_host.get() else "127.0.0.1",
+                db_port=int(self.v_db_port.get()) if self.v_db_port.get() else 3306
+            )
             self._save_config()
-            self.v_status.set("● Connected")
+            tunnel_info = " (via SSH tunnel)" if self.v_ssh_enabled.get() else ""
+            self.v_status.set(f"● Connected{tunnel_info}")
             self._status_lbl.configure(foreground="#1a7f1a")
             self.tab_defaults.refresh()
             self.tab_profiles.refresh()
             self.tab_accounts.refresh()
-        except (MySQLError, ValueError) as e:
+        except (MySQLError, ValueError, ImportError) as e:
             self.v_status.set(f"✗ {e}")
             self._status_lbl.configure(foreground="red")
 
