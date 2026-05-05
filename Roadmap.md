@@ -898,6 +898,21 @@ server operator might want to tune without rebuilding belongs in DB.
 
 10.1 Phase 1 engine (Layer 1 aura + Layer 2 HP trend + escape movement) — **Complete**
 
+10.1a Terrain-aware escape destination via `MovePositionToFirstCollision` — **Complete**
+
+- Raw `x + dist*cos(angle)` projection could produce a point inside a wall or
+  over a ledge, causing bots to walk into geometry or fall.
+- `MovePositionToFirstCollision(dest, stepDist, angle)` shoots a ray in the
+  escape direction, stops at the first vmap collision, and resolves correct
+  ground height — escape target is always a reachable surface point.
+- `MovePoint(generatePath=true)` then navmeshes to that point, routing around
+  any remaining obstacles.
+- **Dependency**: VMaps and MMaps must be extracted from the client and loaded
+  by the server (`mmap.enablePathFinding = 1` in `worldserver.conf`, `vmaps/`
+  and `mmaps/` folders populated). If MMaps are absent the call still returns a
+  reasonable position but wall-clipping may occur. Extraction tools are already
+  in the repo under `tools/` — one-time run against the 3.3.5a client data.
+
 10.2 Migrate aura registry to `living_world_hazard_auras` DB table — **Not Started**
 
 10.3 Migrate tuning constants to `living_world_hazard_config` DB table — **Not Started**
