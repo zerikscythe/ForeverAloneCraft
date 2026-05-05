@@ -1,4 +1,5 @@
 #include "ai/CompanionAI.h"
+#include "ai/BotHazardSensor.h"
 
 #include "Chat.h"
 #include "Duration.h"
@@ -102,6 +103,7 @@ void ClearBotOverride(ObjectGuid botGuid)
 {
     std::lock_guard<std::mutex> lock(s_overrideMutex);
     s_overrides.erase(botGuid);
+    BotHazardSensor::ClearHazardState(botGuid);
 }
 
 bool SetBotRetreat(ObjectGuid botGuid, uint32_t durationMs)
@@ -1429,6 +1431,12 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& conserving)
             bot->GetMotionMaster()->MoveFollow(owner, FollowDistance, FollowAngle);
         return;
     }
+
+    // Hazard escape: fires before doctrine resolution so ground effects
+    // are handled regardless of combat role, and skips the DB-cached
+    // doctrine lookup entirely while the bot is actively fleeing.
+    if (BotHazardSensor::ProcessHazardTick(bot, owner))
+        return;
 
     BotCombatDoctrine const doctrine = GetCombatDoctrine(bot, owner);
     BotCombatRole const role = doctrine.role;
