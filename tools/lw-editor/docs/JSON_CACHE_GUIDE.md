@@ -1,6 +1,184 @@
-# JSON Spell Cache System
+# DBC Extraction & JSON Cache Guide
 
-A lightweight alternative to DBC files for spell data in the LivingWorld Bot Editor.
+The editor never reads DBC files at runtime. Instead, `extract_dbc_data.py` converts them to
+small JSON files once. The editor loads those files on startup in milliseconds.
+
+---
+
+## Quick Start
+
+### Step 1 — Copy DBC files
+
+Copy the following files from your WoW 3.3.5a client (`Data/enUS/DBFilesClient/`)
+into `var/extractors/dbc/`:
+
+```
+Spell.dbc
+SkillLineAbility.dbc
+SkillLine.dbc
+Faction.dbc
+Talent.dbc
+TalentTab.dbc
+SpellItemEnchantment.dbc
+GemProperties.dbc
+```
+
+> **Alternative:** Download them from [wow.tools](https://wow.tools/dbc/) → select build `3.3.5`.
+
+### Step 2 — Run the extractor
+
+```bash
+cd tools/lw-editor
+python extract_dbc_data.py
+```
+
+### Step 3 — Validate
+
+```bash
+python startup_validate.py
+```
+
+All 7 data-file checks should pass before launching the editor.
+
+---
+
+## Output Files
+
+All files are written to `var/extractors/data/` (configured via `DATA_DIR` in `lw_editor/__init__.py`).
+
+| File | Size (approx) | Entries | Used for |
+|---|---|---|---|
+| `spell_names.json` | ~2 MB | 48,885 | Spell ID → name everywhere |
+| `class_spells.json` | ~1 MB | ~2,500 | Per-class spell pickers |
+| `spell_lookup.csv` | ~2 MB | 48,885 | Human reference |
+| `faction_names.json` | ~30 KB | 87 | Reputation tab grouping |
+| `talent_data.json` | ~200 KB | 829 talents | Talent tree display |
+| `enchantment_data.json` | ~800 KB | 2,655 | Enchant picker |
+| `gem_properties.json` | ~50 KB | 626 | Gem socket picker |
+| `skill_line_abilities.json` | ~500 KB | 3,556 recipes | Professions browser |
+
+**Total: ~6 MB** — compare to ~200 MB of raw DBC files.
+
+---
+
+## faction_names.json format
+
+Unlike other files, this is a dict of dicts rather than a simple id→string map:
+
+```json
+{
+  "1": {
+    "name": "Stormwind",
+    "parent_id": 1118,
+    "parent_name": "Alliance",
+    "expansion": "Classic"
+  },
+  ...
+}
+```
+
+`expansion` is one of: `"Classic"`, `"The Burning Crusade"`, `"Wrath of the Lich King"`, `"Other"`.
+
+The extractor automatically:
+- Walks the full parent chain to determine the expansion root
+- Filters out internal/profession-spec pseudo-factions (`Blacksmithing - Armorsmithing`, etc.)
+- Filters out `UNUSED`, `REUSE`, `DND`, `DNR` entries
+
+---
+
+## skill_line_abilities.json format
+
+```json
+{
+  "185": [
+    {
+      "spell_id": 2550,
+      "spell_name": "Cooking",
+      "min_skill": 0,
+      "superseded_by": 0
+    },
+    ...
+  ]
+}
+```
+
+The key is the `skill_line_id` (e.g. `185` = Cooking, `202` = Engineering).
+Entries superseded by a higher-rank version of the same spell are excluded automatically.
+
+Skill lines extracted:
+
+| Skill Line ID | Profession |
+|---|---|
+| 129 | First Aid |
+| 185 | Cooking |
+| 356 | Fishing |
+| 171 | Alchemy |
+| 164 | Blacksmithing |
+| 333 | Enchanting |
+| 202 | Engineering |
+| 773 | Inscription |
+| 755 | Jewelcrafting |
+| 165 | Leatherworking |
+| 197 | Tailoring |
+| 203 | Gnomish Engineering (spec) |
+| 204 | Goblin Engineering (spec) |
+| 751–753 | LW specs (Tribal / Elemental / Dragonscale) |
+| 220, 221 | BS specs (Armorsmith / Weaponsmith) |
+| 904–906 | Tailoring specs (Mooncloth / Spellfire / Shadoweave) |
+
+---
+
+## Updating the Cache
+
+Re-run extraction any time you:
+- Update DBC files
+- Add custom spells or factions to your server
+- Change the extraction logic in `extract_dbc_data.py`
+
+```bash
+python extract_dbc_data.py   # overwrites existing JSON files
+python startup_validate.py   # verify the new files pass all checks
+```
+
+---
+
+## Git Considerations
+
+The JSON files are **not** source code — they're build artefacts derived from DBC files.
+
+**Option A — gitignore them (recommended)**
+
+Add to `.gitignore`:
+```
+var/extractors/data/*.json
+var/extractors/data/*.csv
+```
+
+Each developer runs `extract_dbc_data.py` once after clone.
+
+**Option B — commit them**
+
+If your team doesn't have DBC files readily available, committing the JSON files makes
+setup one step shorter for everyone:
+
+```bash
+git add var/extractors/data/*.json
+git commit -m "chore: add pre-extracted DBC data cache"
+```
+
+---
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| `❌ DBC directory not found` | Copy DBC files to `var/extractors/dbc/` |
+| `⚠ Faction.dbc not found — skipping` | Only faction grouping is affected; editor still works |
+| Profession tab shows "No recipe data" | Run `extract_dbc_data.py`; check `skill_line_abilities.json` exists |
+| Reputation tab shows unknown factions | Faction IDs not in `faction_names.json`; they appear in **Other** tab |
+| `startup_validate.py` reports missing data files | Run `extract_dbc_data.py` first |
+| Talent trees empty | Requires `Talent.dbc` and `TalentTab.dbc`; run extractor again |
+
 
 ## Overview
 

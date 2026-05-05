@@ -24,8 +24,6 @@ public:
     std::optional<ObjectGuid> RegisterBotPlayer(Player* botPlayer);
     void UnregisterBotPlayer(Player* botPlayer);
 
-    // Returns the first registered bot for this owner (legacy single-bot helper).
-    Player* FindBotForOwner(ObjectGuid ownerCharacterGuid) const;
     // Returns all active bots registered for this owner.
     std::vector<Player*> FindBotsForOwner(ObjectGuid ownerCharacterGuid) const;
     // Returns the specific bot by character guid, if owned by ownerCharacterGuid.

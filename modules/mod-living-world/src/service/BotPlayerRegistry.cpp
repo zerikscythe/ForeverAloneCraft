@@ -88,18 +88,6 @@ void BotPlayerRegistry::UnregisterBotPlayer(Player* botPlayer)
     _pendingOwnersByBot.erase(botGuid);
 }
 
-Player* BotPlayerRegistry::FindBotForOwner(ObjectGuid ownerCharacterGuid) const
-{
-    std::lock_guard<std::mutex> guard(_mutex);
-    auto const itr = _botsByOwner.find(ownerCharacterGuid.GetCounter());
-    if (itr == _botsByOwner.end() || itr->second.empty())
-    {
-        return nullptr;
-    }
-
-    return ObjectAccessor::FindPlayer(itr->second.front());
-}
-
 std::vector<Player*> BotPlayerRegistry::FindBotsForOwner(ObjectGuid ownerCharacterGuid) const
 {
     std::lock_guard<std::mutex> guard(_mutex);

@@ -3,6 +3,7 @@
 #include <cctype>
 #include <charconv>
 #include <limits>
+#include <vector>
 
 namespace living_world
 {
@@ -568,11 +569,72 @@ ParsedCommand ParseBotActionCommand(BotRef botRef, std::string_view remaining)
         return cmd;
     }
 
+    if (secondToken == "addtalent")
+    {
+        // Consume all remaining tokens. The last token is the point count;
+        // everything before it is the talent name (multi-word supported).
+        std::string_view next = ConsumeToken(remaining);
+        if (next.empty())
+        {
+            return MakeError(
+                CommandParseErrorKind::MissingArgument,
+                "addtalent requires a talent name and point count");
+        }
+
+        // Collect tokens; the final one must be a number.
+        std::vector<std::string_view> parts;
+        while (!next.empty())
+        {
+            parts.push_back(next);
+            next = ConsumeToken(remaining);
+        }
+
+        if (parts.size() < 2)
+        {
+            return MakeError(
+                CommandParseErrorKind::MissingArgument,
+                "addtalent requires both a talent name and a point count");
+        }
+
+        // Last part is the point count.
+        std::uint64_t pointsRaw = 0;
+        if (!ParseUInt64(parts.back(), pointsRaw) || pointsRaw == 0 ||
+            pointsRaw > 5)
+        {
+            return MakeError(
+                CommandParseErrorKind::InvalidArgument,
+                "addtalent point count must be 1-5");
+        }
+
+        // All other parts form the talent name.
+        std::string talentName;
+        for (std::size_t i = 0; i + 1 < parts.size(); ++i)
+        {
+            if (i > 0)
+                talentName += ' ';
+            talentName += std::string(parts[i]);
+        }
+
+        BotAddTalentCommand cmd;
+        cmd.botRef     = std::move(botRef);
+        cmd.talentName = std::move(talentName);
+        cmd.points     = static_cast<std::uint8_t>(pointsRaw);
+        return cmd;
+    }
+
+    if (secondToken == "resettalents")
+    {
+        BotResetTalentsCommand cmd;
+        cmd.botRef = std::move(botRef);
+        return cmd;
+    }
+
     return MakeError(
         CommandParseErrorKind::UnknownVerb,
         std::string("expected 'profile', 'cast', 'attack', 'disengage', 'train', 'retreat', "
                     "'follow', 'refreshments', 'buff', 'bags', 'retrieve', 'equip', 'unequip', "
-                    "'pickup', 'turnin', 'trainspell', 'trainall', 'reward', 'mode', or 'info', got: ") +
+                    "'pickup', 'turnin', 'trainspell', 'trainall', 'reward', 'mode', 'info', "
+                    "'addtalent', or 'resettalents', got: ") +
             std::string(secondToken));
 }
 } // namespace

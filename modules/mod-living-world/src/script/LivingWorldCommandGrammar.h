@@ -264,6 +264,25 @@ struct BotRewardChoiceCommand
     std::uint8_t choiceNumber = 0;
 };
 
+// "<position|name> addtalent <Talent Name> <points>" — add one or more
+// talent points to a named talent on a bot. talentName is the spell name
+// of the talent's first rank (multi-word names are supported). points is
+// how many ranks to add (1-5). All prerequisite and available-point checks
+// are enforced server-side in the handler.
+struct BotAddTalentCommand
+{
+    BotRef botRef;
+    std::string talentName;
+    std::uint8_t points = 1;
+};
+
+// "<position|name> resettalents" — refund all talent points on the bot's
+// active spec, restoring free talent points to their level-appropriate cap.
+struct BotResetTalentsCommand
+{
+    BotRef botRef;
+};
+
 // "<position|name> mode assist|passive|hold|guard"
 //
 // Changes the bot's combat stance immediately. Stored in BotPlayerRegistry
@@ -312,7 +331,9 @@ using ParsedCommand = std::variant<
     QuestRewardModeSetCommand,
     BotRewardChoiceCommand,
     BotModeSetCommand,
-    BotInfoCommand>;
+    BotInfoCommand,
+    BotAddTalentCommand,
+    BotResetTalentsCommand>;
 
 
 // Parse a raw command argument string (everything after `.lwbot `). The

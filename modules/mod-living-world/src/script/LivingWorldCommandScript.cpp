@@ -21,6 +21,8 @@
 #include "Common.h"
 #include "Random.h"
 #include "SpellMgr.h"
+#include "DataStores/DBCStores.h"
+#include "DataStores/DBCStructure.h"
 #include "Util.h"
 #include "TemporarySummon.h"
 #include "integration/AzerothWorldFacade.h"
@@ -761,22 +763,24 @@ bool ExecuteAttachToPartyAction(
     Creature* body = FindActiveRosterBody(requester, action.rosterEntryId);
     if (!body)
     {
-        if (Player* bot =
-            service::BotPlayerRegistry::Instance().FindBotForOwner(
-                requester->GetGUID()))
+        std::vector<Player*> bots =
+            service::BotPlayerRegistry::Instance().FindBotsForOwner(
+                requester->GetGUID());
+        if (!bots.empty())
         {
-            bot->GetMotionMaster()->MoveFollow(
-                requester,
-                AltCompanionFollowDistance,
-                AltCompanionFollowAngle);
-            SendPlayerLog(
-                handler,
-                static_cast<std::uint8_t>(PlayerChatLogLevel::Detailed),
-                "LivingWorld attached roster entry {} as bot-player '{}' "
-                "(guid {}).",
-                action.rosterEntryId,
-                bot->GetName(),
-                bot->GetGUID().GetCounter());
+            for (Player* bot : bots)
+            {
+                bot->GetMotionMaster()->MoveFollow(
+                    requester,
+                    AltCompanionFollowDistance,
+                    AltCompanionFollowAngle);
+                SendPlayerLog(
+                    handler,
+                    static_cast<std::uint8_t>(PlayerChatLogLevel::Detailed),
+                    "LivingWorld attached bot-player '{}' (guid {}).",
+                    bot->GetName(),
+                    bot->GetGUID().GetCounter());
+            }
             return true;
         }
 
@@ -1399,39 +1403,192 @@ void HandleBotModeSet(
         return;
     }
 
-    Player* bot = service::BotPlayerRegistry::Instance().FindBotForOwner(
-        player->GetGUID());
-    if (!bot)
+    std::vector<Player*> bots =
+        service::BotPlayerRegistry::Instance().FindBotsForOwner(
+            player->GetGUID());
+    if (bots.empty())
     {
         handler->PSendSysMessage(
-            "LivingWorld no active bot. Use '.lwbot request <id>' first.");
+            "LivingWorld no active bots. Use '.lwbot request <id>' first.");
         return;
     }
 
     service::BotPlayerRegistry::Instance().SetBotMode(player->GetGUID(), command.mode);
 
-    switch (command.mode)
+    for (Player* bot : bots)
     {
-        case model::BotCombatMode::Assist:  BotSayModeAssist(bot);  break;
-        case model::BotCombatMode::Passive: BotSayModePassive(bot); break;
-        case model::BotCombatMode::Hold:    BotSayModeHold(bot);    break;
-        case model::BotCombatMode::Guard:   BotSayModeGuard(bot);   break;
+        switch (command.mode)
+        {
+            case model::BotCombatMode::Assist:  BotSayModeAssist(bot);  break;
+            case model::BotCombatMode::Passive: BotSayModePassive(bot); break;
+            case model::BotCombatMode::Hold:    BotSayModeHold(bot);    break;
+            case model::BotCombatMode::Guard:   BotSayModeGuard(bot);   break;
+        }
     }
 
-    // Push updated state to Bot-Tune addon for the first active bot.
+    // Push updated state to Bot-Tune addon for all active bots.
     {
         std::vector<model::RosterEntry> entries =
             BuildVisibleRosterEntries(session->GetAccountId());
-        ObjectGuid const botGuid = bot->GetGUID();
-        for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(entries.size()); ++i)
+        for (Player* bot : bots)
         {
-            if (entries[i].characterGuid == botGuid.GetCounter())
+            ObjectGuid const botGuid = bot->GetGUID();
+            for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(entries.size()); ++i)
             {
-                SendBotInfoMessage(handler, entries[i], i + 1);
-                break;
+                if (entries[i].characterGuid == botGuid.GetCounter())
+                {
+                    SendBotInfoMessage(handler, entries[i], i + 1);
+                    break;
+                }
             }
         }
     }
+}
+
+void HandleBotAddTalent(
+    ChatHandler* handler,
+    BotAddTalentCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* owner = session ? session->GetPlayer() : nullptr;
+    if (!session || !owner)
+    {
+        handler->SendErrorMessage("LivingWorld addtalent requires an in-game player.");
+        return;
+    }
+
+    Player* bot = ResolveActiveBotForOwner(owner, command.botRef);
+    if (!bot)
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "addtalent: bot not found or not currently active.");
+        return;
+    }
+
+    // Normalise the talent name
+    std::string searchName = command.talentName;
+    for (char& c : searchName)
+        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+
+    // Scan sTalentStore to find a matching talent by the name of its first
+    // rank spell. We match case-insensitively against the spell name.
+    TalentEntry const* foundTalent = nullptr;
+    for (std::uint32_t i = 0; i < sTalentStore.GetNumRows(); ++i)
+    {
+        TalentEntry const* talent = sTalentStore.LookupEntry(i);
+        if (!talent || talent->RankID[0] == 0)
+            continue;
+
+        // Only consider talents that belong to the bot's class.
+        TalentTabEntry const* tab = sTalentTabStore.LookupEntry(talent->TalentTab);
+        if (!tab || !(tab->ClassMask & (1 << (bot->getClass() - 1))))
+            continue;
+
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(talent->RankID[0]);
+        if (!spellInfo)
+            continue;
+
+        std::string spellName = spellInfo->SpellName[0];
+        for (char& c : spellName)
+            c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+
+        if (spellName == searchName)
+        {
+            foundTalent = talent;
+            break;
+        }
+    }
+
+    if (!foundTalent)
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "addtalent: no talent named '{}' found for {}.",
+            command.talentName,
+            bot->GetName());
+        return;
+    }
+
+    // Determine max rank (number of non-zero RankID entries).
+    std::uint8_t maxRank = 0;
+    for (std::uint32_t spellId : foundTalent->RankID)
+        if (spellId) ++maxRank;
+
+    // Determine current rank (highest rank the bot already knows).
+    std::uint8_t currentRank = 0;
+    for (std::uint8_t r = 0; r < maxRank; ++r)
+        if (bot->HasSpell(foundTalent->RankID[r]))
+            currentRank = r + 1;
+
+    std::uint8_t canAdd = static_cast<std::uint8_t>(maxRank - currentRank);
+    std::uint8_t toAdd  = std::min(command.points, canAdd);
+
+    if (toAdd == 0)
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "addtalent: '{}' is already at max rank ({}/{}) on {}.",
+            command.talentName, currentRank, maxRank, bot->GetName());
+        return;
+    }
+
+    if (bot->GetFreeTalentPoints() < toAdd)
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "addtalent: {} only has {} free talent point(s); {} needed.",
+            bot->GetName(), bot->GetFreeTalentPoints(), toAdd);
+        return;
+    }
+
+    // Use the core LearnTalent path which handles prerequisite checks,
+    // spell learning, character_talent persistence, and point deduction.
+    for (std::uint8_t r = 0; r < toAdd; ++r)
+        bot->LearnTalent(foundTalent->TalentID, currentRank + r);
+
+    SendPlayerLog(
+        handler,
+        static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+        "addtalent: added {} point(s) to '{}' on {} (now {}/{}).",
+        toAdd, command.talentName, bot->GetName(),
+        currentRank + toAdd, maxRank);
+}
+
+void HandleBotResetTalents(
+    ChatHandler* handler,
+    BotResetTalentsCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* owner = session ? session->GetPlayer() : nullptr;
+    if (!session || !owner)
+    {
+        handler->SendErrorMessage("LivingWorld resettalents requires an in-game player.");
+        return;
+    }
+
+    Player* bot = ResolveActiveBotForOwner(owner, command.botRef);
+    if (!bot)
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "resettalents: bot not found or not currently active.");
+        return;
+    }
+
+    bot->resetTalents(true);
+
+    SendPlayerLog(
+        handler,
+        static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+        "resettalents: {} talent points refunded on {}.",
+        bot->GetFreeTalentPoints(),
+        bot->GetName());
 }
 
 void HandleBotCast(
@@ -3848,6 +4005,20 @@ bool HandleParsedCommand(
         std::get_if<BotModeSetCommand>(&parsed))
     {
         HandleBotModeSet(handler, *command);
+        return true;
+    }
+
+    if (BotAddTalentCommand const* command =
+        std::get_if<BotAddTalentCommand>(&parsed))
+    {
+        HandleBotAddTalent(handler, *command);
+        return true;
+    }
+
+    if (BotResetTalentsCommand const* command =
+        std::get_if<BotResetTalentsCommand>(&parsed))
+    {
+        HandleBotResetTalents(handler, *command);
         return true;
     }
 
