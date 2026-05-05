@@ -29,7 +29,9 @@ import configparser
 import hashlib
 import os
 import pathlib
+import secrets
 import struct
+from datetime import datetime
 
 try:
     from sshtunnel import SSHTunnelForwarder
@@ -103,6 +105,121 @@ CLASS_SPEC_OPTS = {
 }
 ROLE_OPTS = ["DPS", "HEAL", "TANK", "OFF_TANK"]
 
+WOW_RACES = {
+    1: "Human", 2: "Orc", 3: "Dwarf", 4: "Night Elf", 5: "Undead",
+    6: "Tauren", 7: "Gnome", 8: "Troll", 10: "Blood Elf", 11: "Draenei",
+}
+
+EQUIPMENT_SLOT_NAMES = {
+    0: "Head",
+    1: "Neck",
+    2: "Shoulder",
+    3: "Shirt",
+    4: "Chest",
+    5: "Waist",
+    6: "Legs",
+    7: "Feet",
+    8: "Wrist",
+    9: "Hands",
+    10: "Finger 1",
+    11: "Finger 2",
+    12: "Trinket 1",
+    13: "Trinket 2",
+    14: "Back",
+    15: "Main Hand",
+    16: "Off Hand",
+    17: "Ranged",
+    18: "Tabard",
+}
+
+ITEM_ENCHANTMENT_SLOT_COUNT = 12
+ITEM_ENCHANTMENT_OFFSET_COUNT = 3
+PERM_ENCHANTMENT_SLOT = 0
+SOCK_ENCHANTMENT_SLOT = 2
+SOCK_ENCHANTMENT_SLOT_2 = 3
+SOCK_ENCHANTMENT_SLOT_3 = 4
+
+EQUIPMENT_SLOT_TO_INVENTORY_TYPES = {
+    0: [1],            # Head
+    1: [2],            # Neck
+    2: [3],            # Shoulder
+    3: [4],            # Shirt
+    4: [5, 20],        # Chest / Robe
+    5: [6],            # Waist
+    6: [7],            # Legs
+    7: [8],            # Feet
+    8: [9],            # Wrist
+    9: [10],           # Hands
+    10: [11],          # Finger
+    11: [11],          # Finger
+    12: [12],          # Trinket
+    13: [12],          # Trinket
+    14: [16],          # Back
+    15: [13, 17, 21],  # Main hand / weapon / two hand
+    16: [14, 22, 23],  # Off hand / shield / holdable
+    17: [15, 25, 26, 28],  # Ranged / thrown / ranged right / relic
+    18: [19],          # Tabard
+}
+
+SOCKET_COLOR_NAMES = {
+    0: "None",
+    1: "Meta",
+    2: "Red",
+    4: "Yellow",
+    8: "Blue",
+    16: "Prismatic",
+}
+
+ARMOR_PROFICIENCY_SLOT_IDS = {0, 2, 4, 5, 6, 7, 8, 9}
+CLASS_ARMOR_SUBCLASSES = {
+    1: {1, 2, 3, 4},   # Warrior
+    2: {1, 2, 3, 4},   # Paladin
+    3: {1, 2, 3},      # Hunter
+    4: {1, 2},         # Rogue
+    5: {1},            # Priest
+    6: {1, 2, 3, 4},   # Death Knight
+    7: {1, 2, 3},      # Shaman
+    8: {1},            # Mage
+    9: {1},            # Warlock
+    11: {1, 2},        # Druid
+}
+
+ITEM_QUALITY_OPTIONS = [
+    ("Any", None),
+    ("Poor / Gray", 0),
+    ("Common / White", 1),
+    ("Uncommon / Green", 2),
+    ("Rare / Blue", 3),
+    ("Epic / Purple", 4),
+    ("Legendary / Orange", 5),
+    ("Artifact / Light Yellow", 6),
+    ("Heirloom / Gold", 7),
+]
+ITEM_QUALITY_LABEL_TO_ID = {label: quality_id for label, quality_id in ITEM_QUALITY_OPTIONS}
+ITEM_QUALITY_LABELS = [label for label, _quality_id in ITEM_QUALITY_OPTIONS]
+
+SLOT_ENCHANT_CATEGORY = {
+    0: "armor",
+    2: "armor",
+    4: "armor",
+    5: "armor",
+    6: "armor",
+    7: "armor",
+    8: "armor",
+    9: "armor",
+    14: "cloak",
+    15: "weapon",
+    16: "offhand",
+    17: "ranged",
+}
+ENCHANT_CATEGORY_KEYWORDS = {
+    "armor": ["arcanum", "inscription", "thread", "reinforced", "stamina", "stats", "spirit", "resilience", "assault", "greater"],
+    "cloak": ["cloak", "shadow armor", "speed", "wisdom", "mighty armor", "subtlety", "spell piercing"],
+    "weapon": ["berserking", "mongoose", "executioner", "accuracy", "black magic", "spellpower", "icebreaker", "lifeward", "titanium weapon chain", "weapon chain", "slayer", "potency", "agility", "intellect", "spellsurge"],
+    "offhand": ["shield", "defense", "intellect", "resilience", "greater stamina", "major stamina", "titanium plating"],
+    "ranged": ["scope", "heartseeker", "sun scope", "diamond-cut", "sniper", "accuracy"],
+}
+
 # spell_template.SpellFamilyName value for each WoW class_id
 CLASS_SPELL_FAMILY = {
     1: 2,   # Warrior
@@ -174,6 +291,24 @@ def _normalize_role(role_key: str) -> str:
         return upper
     return ROLE_ALIASES.get(text.lower(), upper)
 
+
+SRP6_G = 7
+SRP6_N = int("894B645E89E1535BBDAD5B8B290650530801B18EBFBF5E8FAB3C82872A3E9BB7", 16)
+
+
+def _upper_only_latin(text: str) -> str:
+    return (text or "").upper()
+
+
+def _srp6_registration_data(username: str, password: str) -> tuple[bytes, bytes]:
+    username_up = _upper_only_latin(username)
+    password_up = _upper_only_latin(password)
+    salt = secrets.token_bytes(32)
+    inner = hashlib.sha1(f"{username_up}:{password_up}".encode("utf-8")).digest()
+    x = int.from_bytes(hashlib.sha1(salt + inner).digest(), "big")
+    verifier = pow(SRP6_G, x, SRP6_N).to_bytes(32, "big")
+    return salt, verifier
+
 # ═══════════════════════════════════════════════════════════════════════════
 #  DATABASE LAYER
 # ═══════════════════════════════════════════════════════════════════════════
@@ -201,6 +336,8 @@ class DBCtx:
         self._class_spells_json = self._json_cache_dir / "class_spells.json"
         self._json_spell_cache = None
         self._json_class_spells_cache = None
+        self._dbc_enchant_cache = None
+        self._dbc_gemproperties_cache = None
 
     def connect(self, host: str, port: int, user: str, password: str,
                  ssh_enabled: bool = False, ssh_host: str = "", ssh_port: int = 22,
@@ -346,10 +483,165 @@ class DBCtx:
     def _dbc_string(self, string_block: bytes, offset: int) -> str:
         if not offset:
             return ""
-        end = string_block.find(b"\x00", offset)
+        end = string_block.find(b"\0", offset)
         if end == -1:
             end = len(string_block)
         return string_block[offset:end].decode("utf-8", errors="ignore")
+
+    def _load_dbc_enchant_cache(self):
+        if self._dbc_enchant_cache is not None:
+            return self._dbc_enchant_cache
+
+        cache = []
+        parsed = self._read_dbc_rows("SpellItemEnchantment.dbc", expected_fields=38)
+        if parsed:
+            record_count, field_count, record_size, records, strings = parsed
+            for i in range(record_count):
+                row = struct.unpack_from(f"<{field_count}I", records, i * record_size)
+                enchant_id = int(row[0] or 0)
+                name = self._dbc_string(strings, row[14]).strip()
+                min_level = int(row[37] or 0)
+                if enchant_id and name:
+                    cache.append({
+                        "ID": enchant_id,
+                        "Name_Lang_enUS": name,
+                        "MinLevel": min_level,
+                    })
+
+        self._dbc_enchant_cache = cache
+        return self._dbc_enchant_cache
+
+    def _load_dbc_gemproperties_cache(self):
+        if self._dbc_gemproperties_cache is not None:
+            return self._dbc_gemproperties_cache
+
+        cache = {}
+        parsed = self._read_dbc_rows("GemProperties.dbc", expected_fields=5)
+        if parsed:
+            record_count, field_count, record_size, records, _strings = parsed
+            for i in range(record_count):
+                row = struct.unpack_from(f"<{field_count}I", records, i * record_size)
+                gemprop_id = int(row[0] or 0)
+                enchant_id = int(row[1] or 0)
+                socket_mask = int(row[4] or 0)
+                if gemprop_id:
+                    cache[gemprop_id] = {
+                        "ID": gemprop_id,
+                        "Enchant_Id": enchant_id,
+                        "Type": socket_mask,
+                    }
+
+        self._dbc_gemproperties_cache = cache
+        return self._dbc_gemproperties_cache
+
+    def _search_item_enchantments_dbc(self, text: str, limit: int = 50) -> list:
+        raw = (text or "").strip()
+        rows = self._load_dbc_enchant_cache()
+        if not rows:
+            return []
+
+        if raw and raw.isdigit():
+            wanted = int(raw)
+            return [row for row in rows if int(row.get("ID", 0)) == wanted][:limit]
+
+        if raw:
+            lowered = raw.lower()
+            rows = [row for row in rows if lowered in (row.get("Name_Lang_enUS") or "").lower()]
+
+        return sorted(rows, key=lambda row: (row.get("Name_Lang_enUS") or "").lower())[:limit]
+
+    def _search_gem_items_dbc(self, text: str, socket_color: int = 0, limit: int = 50) -> list:
+        if not self.ok():
+            return []
+
+        gemprops = self._load_dbc_gemproperties_cache()
+        if not gemprops:
+            return []
+
+        raw = (text or "").strip()
+        sql = (
+            "SELECT entry, name, GemProperties "
+            "FROM item_template "
+            "WHERE GemProperties > 0 "
+        )
+        params = []
+        if raw:
+            if raw.isdigit():
+                sql += "AND entry=%s "
+                params.append(int(raw))
+            else:
+                sql += "AND name LIKE %s "
+                params.append(f"%{raw}%")
+        sql += "ORDER BY name LIMIT %s"
+        params.append(max(int(limit) * 5, 250))
+
+        base_rows = self.q(self.world, sql, tuple(params))
+        results = []
+        for row in base_rows:
+            gemprop_id = int(row.get("GemProperties", 0) or 0)
+            gemprop = gemprops.get(gemprop_id)
+            if not gemprop:
+                continue
+            gem_color = int(gemprop.get("Type", 0) or 0)
+            if socket_color and (gem_color & int(socket_color)) == 0:
+                continue
+            results.append({
+                "entry": row.get("entry"),
+                "name": row.get("name"),
+                "gem_color": gem_color,
+                "Enchant_Id": int(gemprop.get("Enchant_Id", 0) or 0),
+            })
+            if len(results) >= int(limit):
+                break
+        return results
+
+    def _lookup_gem_item_by_enchant_dbc(self, enchant_id: int):
+        if not enchant_id or not self.ok():
+            return None
+
+        gemprops = self._load_dbc_gemproperties_cache()
+        if not gemprops:
+            return None
+
+        gemprop_ids = [gid for gid, row in gemprops.items()
+                       if int(row.get("Enchant_Id", 0) or 0) == int(enchant_id)]
+        if not gemprop_ids:
+            return None
+
+        placeholders = ",".join(["%s"] * len(gemprop_ids))
+        rows = self.q(self.world,
+            f"SELECT entry, name, GemProperties FROM item_template "
+            f"WHERE GemProperties IN ({placeholders}) "
+            "ORDER BY entry LIMIT 1",
+            tuple(gemprop_ids))
+        if not rows:
+            return None
+
+        row = rows[0]
+        gemprop = gemprops.get(int(row.get("GemProperties", 0) or 0), {})
+        return {
+            "entry": row.get("entry"),
+            "name": row.get("name"),
+            "gem_color": int(gemprop.get("Type", 0) or 0),
+        }
+
+    def _get_gem_enchant_id_dbc(self, gem_item_entry: int) -> int:
+        if not gem_item_entry or not self.ok():
+            return 0
+
+        gemprops = self._load_dbc_gemproperties_cache()
+        if not gemprops:
+            return 0
+
+        rows = self.q(self.world,
+            "SELECT GemProperties FROM item_template WHERE entry=%s LIMIT 1",
+            (int(gem_item_entry),))
+        if not rows:
+            return 0
+
+        gemprop_id = int(rows[0].get("GemProperties", 0) or 0)
+        gemprop = gemprops.get(gemprop_id)
+        return int(gemprop.get("Enchant_Id", 0) or 0) if gemprop else 0
 
     def _load_json_spell_cache(self):
         """Load spell names from JSON cache file if available."""
@@ -647,6 +939,231 @@ class DBCtx:
             pass
         return ""
 
+    def get_item_max_durability(self, item_id: int) -> int:
+        if not item_id or not self.ok():
+            return 0
+        try:
+            rows = self.q(self.world,
+                "SELECT MaxDurability FROM item_template WHERE entry=%s LIMIT 1",
+                (item_id,))
+            if rows:
+                return int(rows[0].get("MaxDurability") or 0)
+        except Exception:
+            pass
+        return 0
+
+    def search_equippable_items_for_slot(self, slot_id: int, text: str,
+                                         class_id: int | None = None,
+                                         quality: int | None = None,
+                                         limit: int = 50) -> list:
+        if not self.ok():
+            return []
+        raw = (text or "").strip()
+
+        inv_types = EQUIPMENT_SLOT_TO_INVENTORY_TYPES.get(slot_id, [])
+        params = []
+        sql = (
+            "SELECT entry, name, Quality, InventoryType, MaxDurability, "
+            "`class` AS item_class, subclass AS item_subclass, AllowableClass AS allowable_class "
+            "FROM item_template WHERE InventoryType > 0 "
+        )
+
+        if inv_types:
+            placeholders = ",".join(["%s"] * len(inv_types))
+            sql += f"AND InventoryType IN ({placeholders}) "
+            params.extend(inv_types)
+
+        if class_id:
+            class_mask = 1 << (int(class_id) - 1)
+            sql += "AND (AllowableClass = -1 OR (AllowableClass & %s) <> 0) "
+            params.append(class_mask)
+
+        if quality is not None:
+            sql += "AND Quality=%s "
+            params.append(int(quality))
+
+        if raw:
+            if raw.isdigit():
+                sql += "AND entry=%s "
+                params.append(int(raw))
+            else:
+                sql += "AND name LIKE %s "
+                params.append(f"%{raw}%")
+
+        sql += "ORDER BY name LIMIT %s"
+        params.append(int(limit))
+
+        rows = self.q(self.world, sql, tuple(params))
+        if not class_id:
+            return [r for r in rows if not _is_noise_item_name(r.get("name", ""))]
+
+        allowed_armor = CLASS_ARMOR_SUBCLASSES.get(int(class_id), {1, 2, 3, 4})
+        filtered = []
+        for row in rows:
+            if _is_noise_item_name(row.get("name", "")):
+                continue
+            if slot_id in ARMOR_PROFICIENCY_SLOT_IDS and int(row.get("item_class", 0) or 0) == 4:
+                subclass = int(row.get("item_subclass", 0) or 0)
+                if subclass in {1, 2, 3, 4} and subclass not in allowed_armor:
+                    continue
+            filtered.append(row)
+        return filtered
+
+    def load_valid_equippable_items_for_slot(self, class_id: int | None, slot_id: int,
+                                             quality: int | None = None, limit: int = 250) -> list:
+        return self.search_equippable_items_for_slot(slot_id, "", class_id=class_id, quality=quality, limit=limit)
+
+    def search_item_enchantments(self, text: str, slot_id: int | None = None, limit: int = 50) -> list:
+        if not self.ok():
+            return []
+        raw = (text or "").strip()
+
+        rows = []
+        try:
+            if raw and raw.isdigit():
+                rows = self.q(self.world,
+                    "SELECT ID, Name_Lang_enUS, MinLevel "
+                    "FROM spellitemenchantment_dbc "
+                    "WHERE ID=%s LIMIT %s",
+                    (int(raw), int(limit)))
+            else:
+                params = []
+                sql = (
+                    "SELECT ID, Name_Lang_enUS, MinLevel "
+                    "FROM spellitemenchantment_dbc "
+                    "WHERE Name_Lang_enUS IS NOT NULL AND Name_Lang_enUS != '' "
+                )
+                if raw:
+                    sql += "AND Name_Lang_enUS LIKE %s "
+                    params.append(f"%{raw}%")
+                sql += "ORDER BY Name_Lang_enUS LIMIT %s"
+                params.append(int(limit))
+                rows = self.q(self.world, sql, tuple(params))
+        except Exception:
+            rows = []
+
+        if not rows:
+            rows = self._search_item_enchantments_dbc(raw, limit=limit)
+
+        if slot_id is None:
+            return rows
+        return filter_enchant_rows_for_slot(slot_id, rows)
+
+    def enchant_name(self, enchant_id: int) -> str:
+        if not enchant_id:
+            return ""
+        if self.ok():
+            try:
+                rows = self.q(self.world,
+                    "SELECT Name_Lang_enUS "
+                    "FROM spellitemenchantment_dbc "
+                    "WHERE ID=%s LIMIT 1",
+                    (enchant_id,))
+                if rows:
+                    return rows[0].get("Name_Lang_enUS") or ""
+            except Exception:
+                pass
+
+        rows = self._search_item_enchantments_dbc(str(int(enchant_id)), limit=1)
+        return rows[0].get("Name_Lang_enUS") or "" if rows else ""
+
+    def search_gem_items(self, text: str, socket_color: int = 0) -> list:
+        if not self.ok():
+            return []
+        raw = (text or "").strip()
+
+        rows = []
+        try:
+            sql = (
+                "SELECT it.entry, it.name, gp.Type AS gem_color, gp.Enchant_Id "
+                "FROM item_template it "
+                "JOIN gemproperties_dbc gp ON gp.ID = it.GemProperties "
+                "WHERE it.GemProperties > 0 "
+            )
+            params = []
+
+            if socket_color:
+                sql += "AND (gp.Type & %s) <> 0 "
+                params.append(int(socket_color))
+
+            if raw:
+                if raw.isdigit():
+                    sql += "AND it.entry=%s "
+                    params.append(int(raw))
+                else:
+                    sql += "AND it.name LIKE %s "
+                    params.append(f"%{raw}%")
+
+            sql += "ORDER BY it.name LIMIT 50"
+            rows = self.q(self.world, sql, tuple(params))
+        except Exception:
+            rows = []
+
+        if not rows:
+            rows = self._search_gem_items_dbc(raw, socket_color=socket_color, limit=50)
+        return rows
+
+    def lookup_gem_item_by_enchant(self, enchant_id: int):
+        if not enchant_id or not self.ok():
+            return None
+        rows = []
+        try:
+            rows = self.q(self.world,
+                "SELECT it.entry, it.name, gp.Type AS gem_color "
+                "FROM item_template it "
+                "JOIN gemproperties_dbc gp ON gp.ID = it.GemProperties "
+                "WHERE gp.Enchant_Id=%s "
+                "LIMIT 1",
+                (enchant_id,))
+        except Exception:
+            rows = []
+        return rows[0] if rows else self._lookup_gem_item_by_enchant_dbc(enchant_id)
+
+    def get_gem_enchant_id(self, gem_item_entry: int) -> int:
+        if not gem_item_entry or not self.ok():
+            return 0
+        rows = []
+        try:
+            rows = self.q(self.world,
+                "SELECT gp.Enchant_Id "
+                "FROM item_template it "
+                "JOIN gemproperties_dbc gp ON gp.ID = it.GemProperties "
+                "WHERE it.entry=%s "
+                "LIMIT 1",
+                (gem_item_entry,))
+        except Exception:
+            rows = []
+        if rows:
+            return int(rows[0].get("Enchant_Id") or 0)
+        return self._get_gem_enchant_id_dbc(gem_item_entry)
+
+    def update_item_instance_equipment(self, item_guid: int, item_entry: int, enchantments: str, durability: int):
+        self.run(self.chars,
+            "UPDATE item_instance "
+            "SET itemEntry=%s, enchantments=%s, durability=%s, randomPropertyId=0 "
+            "WHERE guid=%s",
+            (item_entry, enchantments, durability, item_guid))
+
+    def next_item_instance_guid(self) -> int:
+        rows = self.q(self.chars, "SELECT COALESCE(MAX(guid), 0) + 1 AS next_guid FROM item_instance")
+        return int(rows[0].get("next_guid", 1) or 1) if rows else 1
+
+    def create_equipped_item_for_character(self, character_guid: int, slot_id: int, item_entry: int) -> int:
+        item_guid = self.next_item_instance_guid()
+        enchantments = build_item_enchantments([0] * (ITEM_ENCHANTMENT_SLOT_COUNT * ITEM_ENCHANTMENT_OFFSET_COUNT))
+        durability = self.get_item_max_durability(item_entry)
+
+        self.run(self.chars,
+            "INSERT INTO item_instance "
+            "(guid, itemEntry, owner_guid, creatorGuid, giftCreatorGuid, count, duration, charges, "
+            "flags, enchantments, randomPropertyId, durability, playedTime, text) "
+            "VALUES (%s,%s,%s,0,0,1,0,'',0,%s,0,%s,0,'')",
+            (item_guid, item_entry, character_guid, enchantments, durability))
+        self.run(self.chars,
+            "REPLACE INTO character_inventory (guid, bag, slot, item) VALUES (%s,0,%s,%s)",
+            (character_guid, slot_id, item_guid))
+        return item_guid
+
     # ── Default profiles (acore_world) ──────────────────────────────────────
 
     def load_default_profiles(self):
@@ -787,6 +1304,21 @@ class DBCtx:
             "SELECT guid, account, name, level, class "
             "FROM characters ORDER BY account, name")
 
+    def load_source_characters_for_account(self, account_id: int):
+        return self.q(self.chars,
+            "SELECT guid, account, name, level, class "
+            "FROM characters WHERE account=%s ORDER BY name, guid",
+            (account_id,))
+
+    def load_player_accounts(self):
+        return self.q(self.auth,
+            "SELECT a.id AS account_id, a.username, COUNT(c.guid) AS char_count "
+            "FROM account a "
+            "LEFT JOIN acore_characters.characters c ON c.account = a.id "
+            "GROUP BY a.id, a.username "
+            "HAVING COUNT(c.guid) > 0 "
+            "ORDER BY a.username")
+
     def load_bot_profiles(self, source_char_guid: int):
         return self.q(self.chars,
             "SELECT * FROM living_world_bot_combat_profile "
@@ -800,22 +1332,26 @@ class DBCtx:
                 "slot=%s, profile_name=%s, guessed_spec_key=%s, guessed_role_key=%s, "
                 "spec_override_key=%s, role_override_key=%s, conservation_mode=%s, "
                 "mana_low_water=%s, mana_high_water=%s, enable_down_rank=%s, "
-                "down_rank_floor=%s WHERE profile_id=%s",
+                "down_rank_floor=%s, default_aoe_mode=%s, default_aoe_min_targets=%s, "
+                "default_aoe_scan_radius=%s WHERE profile_id=%s",
                 (p["slot"], p["profile_name"], p["guessed_spec_key"], p["guessed_role_key"],
                  p.get("spec_override_key"), p.get("role_override_key"),
                  p["conservation_mode"], p["mana_low_water"], p["mana_high_water"],
-                 p["enable_down_rank"], p["down_rank_floor"], p["profile_id"]))
+                 p["enable_down_rank"], p["down_rank_floor"], p["default_aoe_mode"],
+                 p["default_aoe_min_targets"], p["default_aoe_scan_radius"], p["profile_id"]))
             return p["profile_id"]
         return self.run(self.chars,
             "INSERT INTO living_world_bot_combat_profile "
             "(source_character_guid, owner_account_id, slot, profile_name, "
             "guessed_spec_key, guessed_role_key, conservation_mode, mana_low_water, "
-            "mana_high_water, enable_down_rank, down_rank_floor) VALUES "
-            "(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            "mana_high_water, enable_down_rank, down_rank_floor, default_aoe_mode, "
+            "default_aoe_min_targets, default_aoe_scan_radius) VALUES "
+            "(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
             (p["source_character_guid"], p["owner_account_id"], p["slot"],
              p["profile_name"], p["guessed_spec_key"], p["guessed_role_key"],
              p["conservation_mode"], p["mana_low_water"], p["mana_high_water"],
-             p["enable_down_rank"], p["down_rank_floor"]))
+             p["enable_down_rank"], p["down_rank_floor"], p["default_aoe_mode"],
+             p["default_aoe_min_targets"], p["default_aoe_scan_radius"]))
 
     def delete_bot_profile(self, pid: int):
         for e in self.q(self.chars,
@@ -865,16 +1401,20 @@ class DBCtx:
             self.run(self.chars,
                 "UPDATE living_world_bot_combat_profile_action SET "
                 "action_type=%s, spell_base_id=%s, item_id=%s, rank_mode=%s, "
-                "rank_value=%s, target_key=%s WHERE action_id=%s",
+                "rank_value=%s, target_key=%s, aoe_mode=%s, aoe_min_targets=%s, "
+                "aoe_radius=%s WHERE action_id=%s",
                 (a["action_type"], a["spell_base_id"], a["item_id"], a["rank_mode"],
-                 a["rank_value"], a["target_key"], a["action_id"]))
+                 a["rank_value"], a["target_key"], a.get("aoe_mode"),
+                 a.get("aoe_min_targets"), a.get("aoe_radius"), a["action_id"]))
         else:
             self.run(self.chars,
                 "INSERT INTO living_world_bot_combat_profile_action "
                 "(entry_id, slot, action_type, spell_base_id, item_id, rank_mode, "
-                "rank_value, target_key) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+                "rank_value, target_key, aoe_mode, aoe_min_targets, aoe_radius) "
+                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
                 (entry_id, a["slot"], a["action_type"], a["spell_base_id"],
-                 a["item_id"], a["rank_mode"], a["rank_value"], a["target_key"]))
+                 a["item_id"], a["rank_mode"], a["rank_value"], a["target_key"],
+                 a.get("aoe_mode"), a.get("aoe_min_targets"), a.get("aoe_radius")))
 
     def load_bot_conditions(self, eid: int):
         return self.q(self.chars,
@@ -913,24 +1453,159 @@ class DBCtx:
             "LEFT JOIN account a ON a.id = p.account_id "
             "ORDER BY p.account_id")
 
-    def create_bot_account(self, username: str, password: str) -> int:
-        """Create a new acore_auth.account and add it to the bot pool."""
-        u = username.upper()
-        sha = hashlib.sha1(f"{u}:{password.upper()}".encode()).hexdigest().upper()
+    def load_all_accounts(self):
+        return self.q(self.auth,
+            "SELECT a.id AS account_id, a.username, a.email, a.reg_mail, a.locked, "
+            "a.online, a.expansion, COUNT(c.guid) AS char_count, "
+            "p.account_id IS NOT NULL AS in_pool, p.is_enabled, p.account_name, "
+            "p.assigned_source_account_id, p.assigned_source_character_guid "
+            "FROM account a "
+            "LEFT JOIN acore_characters.characters c ON c.account = a.id "
+            "LEFT JOIN living_world_bot_account_pool p ON p.account_id = a.id "
+            "GROUP BY a.id, a.username, a.email, a.reg_mail, a.locked, a.online, a.expansion, "
+            "p.account_id, p.is_enabled, p.account_name, p.assigned_source_account_id, p.assigned_source_character_guid "
+            "ORDER BY a.id")
+
+    def load_character_summary(self, guid: int):
+        rows = self.q(self.chars,
+            "SELECT c.guid, c.account, c.name, c.race, c.class, c.gender, c.level, c.xp, "
+            "c.money, c.bankSlots, c.online, c.zone, c.map, c.health, c.power1, c.power2, "
+            "c.power3, c.power4, c.power5, c.power6, c.power7, c.arenaPoints, "
+            "c.totalHonorPoints, c.totalKills, c.creation_date, "
+            "s.maxhealth, s.maxpower1, s.maxpower2, s.maxpower3, s.maxpower4, s.maxpower5, "
+            "s.maxpower6, s.maxpower7, s.strength, s.agility, s.stamina, s.intellect, "
+            "s.spirit, s.armor, s.attackPower, s.rangedAttackPower, s.spellPower, "
+            "s.resilience, gm.guildid, g.name AS guild_name, g.BankMoney AS guild_bank_money "
+            "FROM characters c "
+            "LEFT JOIN character_stats s ON s.guid = c.guid "
+            "LEFT JOIN guild_member gm ON gm.guid = c.guid "
+            "LEFT JOIN guild g ON g.guildid = gm.guildid "
+            "WHERE c.guid=%s LIMIT 1",
+            (guid,))
+        return rows[0] if rows else None
+
+    def load_character_reputations(self, guid: int):
+        return self.q(self.chars,
+            "SELECT cr.faction, cr.standing, cr.flags, "
+            "fd.Name_Lang_enUS AS faction_name "
+            "FROM character_reputation cr "
+            "LEFT JOIN acore_world.faction_dbc fd ON fd.ID = cr.faction "
+            "WHERE cr.guid=%s "
+            "ORDER BY cr.standing DESC, cr.faction ASC",
+            (guid,))
+
+    def load_character_inventory_rows(self, guid: int):
+        return self.q(self.chars,
+            "SELECT ci.bag, ci.slot, ci.item AS item_guid, "
+            "ii.itemEntry, ii.count, ii.enchantments, ii.durability, "
+            "it.name AS item_name, it.InventoryType, it.MaxDurability, "
+            "it.socketColor_1, it.socketColor_2, it.socketColor_3 "
+            "FROM character_inventory ci "
+            "LEFT JOIN item_instance ii ON ii.guid = ci.item "
+            "LEFT JOIN acore_world.item_template it ON it.entry = ii.itemEntry "
+            "WHERE ci.guid=%s "
+            "ORDER BY ci.bag ASC, ci.slot ASC, ci.item ASC",
+            (guid,))
+
+    def load_character_achievements(self, guid: int):
+        if self.ok() and self._has_world_table("achievement_dbc"):
+            return self.q(self.chars,
+                "SELECT ca.achievement, ca.date, ad.Title_Lang_enUS AS achievement_name "
+                "FROM character_achievement ca "
+                "LEFT JOIN acore_world.achievement_dbc ad ON ad.ID = ca.achievement "
+                "WHERE ca.guid=%s "
+                "ORDER BY ca.date DESC, ca.achievement ASC",
+                (guid,))
+        return self.q(self.chars,
+            "SELECT achievement, date, NULL AS achievement_name "
+            "FROM character_achievement "
+            "WHERE guid=%s "
+            "ORDER BY date DESC, achievement ASC",
+            (guid,))
+
+    def update_character_core_stats(self, guid: int, level: int, xp: int, money: int, bank_slots: int):
+        self.run(self.chars,
+            "UPDATE characters SET level=%s, xp=%s, money=%s, bankSlots=%s "
+            "WHERE guid=%s",
+            (level, xp, money, bank_slots, guid))
+
+    def create_account(self, username: str, password: str, email: str = "", add_to_pool: bool = False) -> int:
+        username = _upper_only_latin(username)
+        email = _upper_only_latin(email)
+        salt, verifier = _srp6_registration_data(username, password)
         acct_id = self.run(self.auth,
-            "INSERT INTO account (username, sha_pass_hash, expansion) VALUES (%s,%s,2)",
-            (u, sha))
+            "INSERT INTO account (username, salt, verifier, expansion, reg_mail, email, joindate) "
+            "VALUES (%s,%s,%s,%s,%s,%s,NOW())",
+            (username, salt, verifier, 2, email, email))
         self.run(self.auth,
-            "INSERT INTO living_world_bot_account_pool "
-            "(account_id, account_name, is_enabled) VALUES (%s,%s,1)",
-            (acct_id, u))
+            "INSERT INTO realmcharacters (realmid, acctid, numchars) "
+            "SELECT id, %s, 0 FROM realmlist",
+            (acct_id,))
+        if add_to_pool:
+            self.run(self.auth,
+                "INSERT INTO living_world_bot_account_pool "
+                "(account_id, account_name, is_enabled) VALUES (%s,%s,1)",
+                (acct_id, username))
         return acct_id
 
+    def set_pool_account_enabled(self, account_id: int, enabled: bool):
+        rows = self.q(self.auth,
+            "SELECT account_id FROM living_world_bot_account_pool WHERE account_id=%s",
+            (account_id,))
+        if rows:
+            self.run(self.auth,
+                "UPDATE living_world_bot_account_pool SET is_enabled=%s WHERE account_id=%s",
+                (1 if enabled else 0, account_id))
+            return
+        if enabled:
+            name_rows = self.q(self.auth,
+                "SELECT username FROM account WHERE id=%s LIMIT 1",
+                (account_id,))
+            account_name = name_rows[0]["username"] if name_rows else str(account_id)
+            self.run(self.auth,
+                "INSERT INTO living_world_bot_account_pool "
+                "(account_id, account_name, is_enabled) VALUES (%s,%s,1)",
+                (account_id, account_name))
+
     def set_account_enabled(self, account_id: int, enabled: bool):
+        self.set_pool_account_enabled(account_id, enabled)
+
+    def rename_account(self, account_id: int, new_username: str, new_password: str):
+        new_username = _upper_only_latin(new_username)
+        salt, verifier = _srp6_registration_data(new_username, new_password)
         self.run(self.auth,
-            "UPDATE living_world_bot_account_pool SET is_enabled=%s "
-            "WHERE account_id=%s",
-            (1 if enabled else 0, account_id))
+            "UPDATE account SET username=%s, salt=%s, verifier=%s WHERE id=%s",
+            (new_username, salt, verifier, account_id))
+        self.run(self.auth,
+            "UPDATE living_world_bot_account_pool SET account_name=%s WHERE account_id=%s",
+            (new_username, account_id))
+
+    def change_account_password(self, account_id: int, new_password: str):
+        rows = self.q(self.auth,
+            "SELECT username FROM account WHERE id=%s LIMIT 1",
+            (account_id,))
+        if not rows:
+            raise ValueError(f"Account {account_id} not found")
+        username = rows[0]["username"]
+        salt, verifier = _srp6_registration_data(username, new_password)
+        self.run(self.auth,
+            "UPDATE account SET salt=%s, verifier=%s WHERE id=%s",
+            (salt, verifier, account_id))
+
+    def delete_account(self, account_id: int):
+        char_rows = self.q(self.chars,
+            "SELECT COUNT(*) AS n FROM characters WHERE account=%s",
+            (account_id,))
+        char_count = int(char_rows[0]["n"] or 0) if char_rows else 0
+        if char_count > 0:
+            raise ValueError(f"Account {account_id} still has {char_count} character(s); delete or move them first")
+
+        self.run(self.auth, "DELETE FROM realmcharacters WHERE acctid=%s", (account_id,))
+        self.run(self.auth, "DELETE FROM account_access WHERE id=%s", (account_id,))
+        self.run(self.auth, "DELETE FROM account_banned WHERE id=%s", (account_id,))
+        self.run(self.auth, "DELETE FROM account_muted WHERE guid=%s", (account_id,))
+        self.run(self.auth, "DELETE FROM living_world_bot_account_pool WHERE account_id=%s", (account_id,))
+        self.run(self.auth, "DELETE FROM account WHERE id=%s", (account_id,))
 
 
 db = DBCtx()
@@ -945,7 +1620,11 @@ def lbl(parent, text, row, col, **kw):
                                       padx=4, pady=2, **kw)
 
 def entry_w(parent, var, row, col, width=10, **kw):
-    e = ttk.Entry(parent, textvariable=var, width=width)
+    widget_kwargs = {}
+    for key in ("state",):
+        if key in kw:
+            widget_kwargs[key] = kw.pop(key)
+    e = ttk.Entry(parent, textvariable=var, width=width, **widget_kwargs)
     e.grid(row=row, column=col, sticky="w", padx=4, pady=2, **kw)
     return e
 
@@ -959,6 +1638,148 @@ def check_w(parent, var, text, row, col, **kw):
     cb = ttk.Checkbutton(parent, text=text, variable=var)
     cb.grid(row=row, column=col, sticky="w", padx=4, pady=2, **kw)
     return cb
+
+def money_text(copper) -> str:
+    try:
+        total = int(copper or 0)
+    except (TypeError, ValueError):
+        total = 0
+    gold = total // 10000
+    silver = (total % 10000) // 100
+    copper_only = total % 100
+    return f"{gold}g {silver}s {copper_only}c"
+
+def unix_text(value) -> str:
+    try:
+        ts = int(value or 0)
+    except (TypeError, ValueError):
+        return ""
+    if ts <= 0:
+        return ""
+    try:
+        return datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
+    except Exception:
+        return str(ts)
+
+def _is_noise_item_name(name: str) -> bool:
+    lowered = (name or "").strip().lower()
+    return (
+        not lowered or
+        lowered.startswith("zzold") or
+        lowered.startswith("deprecated") or
+        lowered.startswith("test") or
+        lowered.startswith("old")
+    )
+
+def item_quality_filter_id(label: str):
+    return ITEM_QUALITY_LABEL_TO_ID.get((label or "").strip(), None)
+
+def slot_enchant_category(slot_id: int) -> str | None:
+    return SLOT_ENCHANT_CATEGORY.get(int(slot_id))
+
+def filter_enchant_rows_for_slot(slot_id: int, rows: list) -> list:
+    category = slot_enchant_category(slot_id)
+    cleaned = []
+    for row in rows:
+        name = (row.get("Name_Lang_enUS") or "").strip()
+        lowered = name.lower()
+        if not lowered:
+            continue
+        if any(word in lowered for word in ("test", "deprecated", "qa ", "zzold")):
+            continue
+        cleaned.append(row)
+
+    if not category:
+        return cleaned
+
+    keywords = ENCHANT_CATEGORY_KEYWORDS.get(category, [])
+    filtered = []
+    for row in cleaned:
+        lowered = (row.get("Name_Lang_enUS") or "").strip().lower()
+        if any(keyword in lowered for keyword in keywords):
+            filtered.append(row)
+
+    return filtered or cleaned
+
+def parse_display_id(text: str):
+    s = (text or "").strip()
+    if not s:
+        return None
+    if s.endswith("]") and "[" in s:
+        try:
+            return int(s.rsplit("[", 1)[-1].rstrip("]").strip())
+        except ValueError:
+            pass
+    if s.startswith("#"):
+        try:
+            return int(s[1:].strip())
+        except ValueError:
+            pass
+    if s.isdigit():
+        return int(s)
+    return None
+
+def item_display_text(item_id, name: str = "") -> str:
+    if not item_id:
+        return ""
+    try:
+        iid = int(item_id)
+    except (TypeError, ValueError):
+        return str(item_id)
+    return f"{name or f'Item {iid}'} [{iid}]"
+
+def enchant_display_text(enchant_id, name: str = "") -> str:
+    if not enchant_id:
+        return ""
+    try:
+        eid = int(enchant_id)
+    except (TypeError, ValueError):
+        return str(enchant_id)
+    return f"{name or f'Enchant {eid}'} [{eid}]"
+
+def socket_color_text(mask) -> str:
+    try:
+        value = int(mask or 0)
+    except (TypeError, ValueError):
+        value = 0
+    if value in SOCKET_COLOR_NAMES:
+        return SOCKET_COLOR_NAMES[value]
+    parts = [name for bit, name in SOCKET_COLOR_NAMES.items() if bit and (value & bit)]
+    return "/".join(parts) if parts else str(value)
+
+def parse_item_enchantments(text: str) -> list[int]:
+    values = []
+    for part in (text or "").split():
+        try:
+            values.append(int(part))
+        except ValueError:
+            values.append(0)
+    target_len = ITEM_ENCHANTMENT_SLOT_COUNT * ITEM_ENCHANTMENT_OFFSET_COUNT
+    if len(values) < target_len:
+        values.extend([0] * (target_len - len(values)))
+    return values[:target_len]
+
+def build_item_enchantments(values: list[int]) -> str:
+    target_len = ITEM_ENCHANTMENT_SLOT_COUNT * ITEM_ENCHANTMENT_OFFSET_COUNT
+    padded = [int(v or 0) for v in list(values[:target_len])]
+    if len(padded) < target_len:
+        padded.extend([0] * (target_len - len(padded)))
+    return " ".join(str(v) for v in padded)
+
+def enchant_value_index(slot: int, offset: int = 0) -> int:
+    return slot * ITEM_ENCHANTMENT_OFFSET_COUNT + offset
+
+def get_item_enchant_id(values: list[int], slot: int) -> int:
+    idx = enchant_value_index(slot, 0)
+    return int(values[idx] or 0) if idx < len(values) else 0
+
+def set_item_enchant_id(values: list[int], slot: int, enchant_id: int):
+    base = enchant_value_index(slot, 0)
+    if base + 2 >= len(values):
+        return
+    values[base] = int(enchant_id or 0)
+    values[base + 1] = 0
+    values[base + 2] = 0
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1323,6 +2144,9 @@ class RotationEditor(ttk.Frame):
         v["rank_mode"]    = tk.StringVar(value=RANK_MODES[0])
         v["rank_val"]     = tk.StringVar(value="0")
         v["target"]       = tk.StringVar(value="enemy")
+        v["aoe_mode"]     = tk.StringVar(value="")
+        v["aoe_min"]      = tk.StringVar(value="")
+        v["aoe_radius"]   = tk.StringVar(value="")
 
         # ── Type picker (Spell / Item) ──────────────────────────────────────
         type_cb = ttk.Combobox(f, textvariable=v["type"], values=ACTION_OPTS,
@@ -1364,6 +2188,14 @@ class RotationEditor(ttk.Frame):
         ttk.Label(f, text="Target:").pack(side=tk.LEFT, padx=(4, 0))
         ttk.Combobox(f, textvariable=v["target"], values=TARGET_KEYS,
                      state="readonly", width=14).pack(side=tk.LEFT, padx=2)
+
+        ttk.Label(f, text="AoE:").pack(side=tk.LEFT, padx=(4, 0))
+        ttk.Combobox(f, textvariable=v["aoe_mode"], values=[""] + AOE_OPTS,
+                     state="readonly", width=10).pack(side=tk.LEFT, padx=2)
+        ttk.Label(f, text="Min:").pack(side=tk.LEFT)
+        ttk.Entry(f, textvariable=v["aoe_min"], width=3).pack(side=tk.LEFT, padx=2)
+        ttk.Label(f, text="R:").pack(side=tk.LEFT)
+        ttk.Entry(f, textvariable=v["aoe_radius"], width=4).pack(side=tk.LEFT, padx=2)
         return v
 
     # ── Spell / Item combo helpers ───────────────────────────────────────────
@@ -1752,6 +2584,9 @@ class RotationEditor(ttk.Frame):
             w["rank_mode"].set(RANK_MODES.get(a.get("rank_mode", 0), "Best Known"))
             w["rank_val"].set(str(a.get("rank_value", 0) or 0))
             w["target"].set(a.get("target_key", "enemy") or "enemy")
+            w["aoe_mode"].set(AOE_MODES.get(a.get("aoe_mode"), "") if a.get("aoe_mode") is not None else "")
+            w["aoe_min"].set("" if a.get("aoe_min_targets") in (None, "") else str(a.get("aoe_min_targets")))
+            w["aoe_radius"].set("" if a.get("aoe_radius") in (None, "") else str(a.get("aoe_radius")))
 
             if action_type == 0:  # Spell
                 sid = a.get("spell_base_id") or 0
@@ -1898,13 +2733,19 @@ class RotationEditor(ttk.Frame):
         existing = {a["slot"]: a for a in self._cbs["load_actions"](eid)}
         for slot, w in self._action_widgets.items():
             a = existing.get(slot, {})
+            aoe_mode_text = w["aoe_mode"].get().strip()
+            aoe_min_text = w["aoe_min"].get().strip()
+            aoe_radius_text = w["aoe_radius"].get().strip()
             a.update(slot=slot,
                      action_type=ACTION_INV.get(w["type"].get(), 0),
                      spell_base_id=int(w["spell_id"].get() or 0),
                      item_id=int(w["item_id"].get() or 0),
                      rank_mode=RANK_INV.get(w["rank_mode"].get(), 0),
                      rank_value=int(w["rank_val"].get() or 0),
-                     target_key=w["target"].get() or "enemy")
+                     target_key=w["target"].get() or "enemy",
+                     aoe_mode=AOE_INV.get(aoe_mode_text) if aoe_mode_text else None,
+                     aoe_min_targets=int(aoe_min_text) if aoe_min_text else None,
+                     aoe_radius=float(aoe_radius_text) if aoe_radius_text else None)
             self._cbs["upsert_action"](a, eid)
 
         self._refresh_entry_list()
@@ -2122,8 +2963,11 @@ class BotProfilesTab(ttk.Frame):
 
     def __init__(self, parent, **kw):
         super().__init__(parent, **kw)
+        self._accounts = []
         self._chars    = []
         self._profiles = []
+        self._account_by_label = {}
+        self._selected_account_id = None
         self._sel_char = None
         self._sel_prof = None
         self._build()
@@ -2135,6 +2979,12 @@ class BotProfilesTab(ttk.Frame):
         # ── Left: character + profile slot list ─────────────────────────────
         left = ttk.Frame(pane, width=240)
         pane.add(left, weight=0)
+
+        ttk.Label(left, text="Account").pack(anchor="w", padx=4, pady=(4, 0))
+        self.v_account = tk.StringVar()
+        self._acct_cb = ttk.Combobox(left, textvariable=self.v_account, state="readonly", width=34)
+        self._acct_cb.pack(fill=tk.X, padx=4)
+        self._acct_cb.bind("<<ComboboxSelected>>", self._on_account_select)
 
         ttk.Label(left, text="Characters").pack(anchor="w", padx=4, pady=(4, 0))
         char_cols = ("name", "lvl", "class")
@@ -2189,22 +3039,73 @@ class BotProfilesTab(ttk.Frame):
         self._hdr._on_class_change_cb = self._rot.set_class
         self._rot.pack(fill=tk.BOTH, expand=True, padx=4, pady=4)
 
+    def _account_label(self, row: dict) -> str:
+        return f"{row.get('username', '')} [{row.get('account_id')}] ({row.get('char_count', 0)} chars)"
+
+    def _select_account_id(self, account_id: int | None):
+        if not self._accounts:
+            self.v_account.set("")
+            self._selected_account_id = None
+            return
+
+        if account_id is None:
+            account_id = self._accounts[0].get("account_id")
+
+        for row in self._accounts:
+            if row.get("account_id") == account_id:
+                label = self._account_label(row)
+                self.v_account.set(label)
+                self._selected_account_id = account_id
+                self._load_characters_for_selected_account()
+                return
+
+        first = self._accounts[0]
+        self.v_account.set(self._account_label(first))
+        self._selected_account_id = first.get("account_id")
+        self._load_characters_for_selected_account()
+
+    def _load_characters_for_selected_account(self):
+        self._char_tv.delete(*self._char_tv.get_children())
+        self._sel_char = None
+        self._sel_prof = None
+        self._profiles = []
+        self._prof_lb.delete(0, tk.END)
+        self._hdr.clear()
+        self._rot.clear()
+
+        if not self._selected_account_id:
+            return
+
+        self._chars = db.load_source_characters_for_account(self._selected_account_id)
+        for c in self._chars:
+            cls = WOW_CLASSES.get(c.get("class", 0), str(c.get("class", "")))
+            self._char_tv.insert("", "end", iid=str(c["guid"]),
+                                 values=(c["name"], c["level"], cls))
+
+    def _on_account_select(self, _=None):
+        label = self.v_account.get()
+        account_id = self._account_by_label.get(label)
+        self._selected_account_id = account_id
+        app = self.winfo_toplevel()
+        if hasattr(app, "set_preferred_game_account") and account_id:
+            app.set_preferred_game_account(account_id)
+        self._load_characters_for_selected_account()
+
     def refresh(self):
         if not db.ok():
             return
         try:
-            self._chars = db.load_source_characters()
-            self._char_tv.delete(*self._char_tv.get_children())
-            for c in self._chars:
-                cls = WOW_CLASSES.get(c.get("class", 0), str(c.get("class", "")))
-                self._char_tv.insert("", "end", iid=str(c["guid"]),
-                                     values=(c["name"], c["level"], cls))
-            self._sel_char = None
-            self._sel_prof = None
-            self._profiles = []
-            self._prof_lb.delete(0, tk.END)
-            self._hdr.clear()
-            self._rot.clear()
+            self._accounts = db.load_player_accounts()
+            labels = [self._account_label(row) for row in self._accounts]
+            self._account_by_label = {self._account_label(row): row.get("account_id") for row in self._accounts}
+            self._acct_cb.configure(values=labels)
+
+            preferred_id = None
+            app = self.winfo_toplevel()
+            if hasattr(app, "get_preferred_game_account"):
+                preferred_id = app.get_preferred_game_account()
+
+            self._select_account_id(preferred_id)
         except MySQLError as e:
             messagebox.showerror("DB error", str(e))
 
@@ -2312,6 +3213,9 @@ class BotProfilesTab(ttk.Frame):
                     rank_mode=src_action.get("rank_mode", 0),
                     rank_value=src_action.get("rank_value", 0),
                     target_key=src_action.get("target_key", "enemy"),
+                    aoe_mode=src_action.get("aoe_mode"),
+                    aoe_min_targets=src_action.get("aoe_min_targets"),
+                    aoe_radius=src_action.get("aoe_radius"),
                 )
                 db.upsert_bot_action(new_action, new_entry_id)
 
@@ -2351,7 +3255,9 @@ class BotProfilesTab(ttk.Frame):
                      guessed_spec_key="", guessed_role_key="DPS",
                      spec_override_key=None, role_override_key=None,
                      conservation_mode=1, mana_low_water=55, mana_high_water=75,
-                     enable_down_rank=1, down_rank_floor=2)
+                     enable_down_rank=1, down_rank_floor=2,
+                     default_aoe_mode=0, default_aoe_min_targets=2,
+                     default_aoe_scan_radius=10.0)
             new_profile_id = db.upsert_bot_profile(p)
             if picker.selection is not None:
                 self._copy_default_profile_to_bot(picker.selection, new_profile_id)
@@ -2383,6 +3289,614 @@ class BotProfilesTab(ttk.Frame):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+#  TAB: CHARACTER EDITOR
+# ═══════════════════════════════════════════════════════════════════════════
+
+class CharacterEditorTab(ttk.Frame):
+
+    def __init__(self, parent, **kw):
+        super().__init__(parent, **kw)
+        self._accounts = []
+        self._chars = []
+        self._selected_account_id = None
+        self._account_by_label = {}
+        self._sel_char = None
+        self._gear_rows = {}
+        self._gear_slot_current_rows = {}
+        self._selected_gear_row = None
+        self._gear_slot_controls = {}
+        self._build()
+
+    def _build(self):
+        pane = ttk.PanedWindow(self, orient=tk.HORIZONTAL)
+        pane.pack(fill=tk.BOTH, expand=True)
+
+        left = ttk.Frame(pane, width=260)
+        pane.add(left, weight=0)
+
+        ttk.Label(left, text="Account").pack(anchor="w", padx=4, pady=(4, 0))
+        self.v_account = tk.StringVar()
+        self._acct_cb = ttk.Combobox(left, textvariable=self.v_account, state="readonly", width=36)
+        self._acct_cb.pack(fill=tk.X, padx=4)
+        self._acct_cb.bind("<<ComboboxSelected>>", self._on_account_select)
+
+        ttk.Label(left, text="Characters").pack(anchor="w", padx=4, pady=(6, 0))
+        cols = ("name", "lvl", "class")
+        char_wrap = ttk.Frame(left)
+        char_wrap.pack(fill=tk.BOTH, expand=True, padx=4, pady=(0, 4))
+
+        self._char_tv = ttk.Treeview(char_wrap, columns=cols, show="headings", height=18, selectmode="browse")
+        self._char_tv.heading("name", text="Name")
+        self._char_tv.heading("lvl", text="Lvl")
+        self._char_tv.heading("class", text="Class")
+        self._char_tv.column("name", width=115)
+        self._char_tv.column("lvl", width=40, anchor="center")
+        self._char_tv.column("class", width=85)
+        char_scroll = ttk.Scrollbar(char_wrap, orient="vertical", command=self._char_tv.yview)
+        self._char_tv.configure(yscrollcommand=char_scroll.set)
+        self._char_tv.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        char_scroll.pack(side=tk.LEFT, fill=tk.Y)
+        self._char_tv.bind("<<TreeviewSelect>>", self._on_char_select)
+
+        right = ttk.Frame(pane)
+        pane.add(right, weight=1)
+
+        top_btns = ttk.Frame(right)
+        top_btns.pack(fill=tk.X, padx=4, pady=4)
+        ttk.Button(top_btns, text="🔄 Refresh Character", command=self._reload_selected_character).pack(side=tk.LEFT, padx=2)
+        ttk.Button(top_btns, text="💾 Save Basic Stats", command=self._save_basic_stats).pack(side=tk.LEFT, padx=2)
+
+        summary = ttk.LabelFrame(right, text="Character Summary", padding=6)
+        summary.pack(fill=tk.X, padx=4, pady=(0, 4))
+
+        self.v_char_name = tk.StringVar()
+        self.v_char_guid = tk.StringVar()
+        self.v_char_account = tk.StringVar()
+        self.v_char_class = tk.StringVar()
+        self.v_char_race = tk.StringVar()
+        self.v_char_guild = tk.StringVar()
+        self.v_char_online = tk.StringVar()
+        self.v_char_created = tk.StringVar()
+        self.v_level = tk.StringVar()
+        self.v_xp = tk.StringVar()
+        self.v_money = tk.StringVar()
+        self.v_money_text = tk.StringVar()
+        self.v_bank_slots = tk.StringVar()
+        self.v_guild_bank_money = tk.StringVar()
+        self.v_location = tk.StringVar()
+        self.v_stat_summary = tk.StringVar()
+
+        lbl(summary, "Name:", 0, 0)
+        entry_w(summary, self.v_char_name, 0, 1, width=18, state="readonly")
+        lbl(summary, "GUID:", 0, 2)
+        entry_w(summary, self.v_char_guid, 0, 3, width=8, state="readonly")
+        lbl(summary, "Account:", 0, 4)
+        entry_w(summary, self.v_char_account, 0, 5, width=8, state="readonly")
+
+        lbl(summary, "Class:", 1, 0)
+        entry_w(summary, self.v_char_class, 1, 1, width=18, state="readonly")
+        lbl(summary, "Race:", 1, 2)
+        entry_w(summary, self.v_char_race, 1, 3, width=14, state="readonly")
+        lbl(summary, "Online:", 1, 4)
+        entry_w(summary, self.v_char_online, 1, 5, width=10, state="readonly")
+
+        lbl(summary, "Level:", 2, 0)
+        entry_w(summary, self.v_level, 2, 1, width=8)
+        lbl(summary, "XP:", 2, 2)
+        entry_w(summary, self.v_xp, 2, 3, width=12)
+        lbl(summary, "Bank Slots:", 2, 4)
+        entry_w(summary, self.v_bank_slots, 2, 5, width=8)
+
+        lbl(summary, "Gold (copper):", 3, 0)
+        entry_w(summary, self.v_money, 3, 1, width=12)
+        lbl(summary, "Gold:", 3, 2)
+        entry_w(summary, self.v_money_text, 3, 3, width=16, state="readonly")
+        lbl(summary, "Guild Bank Gold:", 3, 4)
+        entry_w(summary, self.v_guild_bank_money, 3, 5, width=16, state="readonly")
+
+        lbl(summary, "Guild:", 4, 0)
+        entry_w(summary, self.v_char_guild, 4, 1, width=18, state="readonly")
+        lbl(summary, "Location:", 4, 2)
+        entry_w(summary, self.v_location, 4, 3, width=18, state="readonly")
+        lbl(summary, "Created:", 4, 4)
+        entry_w(summary, self.v_char_created, 4, 5, width=18, state="readonly")
+
+        ttk.Label(summary, text="Stored Stats:").grid(row=5, column=0, sticky="nw", padx=4, pady=2)
+        ttk.Label(summary, textvariable=self.v_stat_summary, justify="left", wraplength=700).grid(
+            row=5, column=1, columnspan=5, sticky="w", padx=4, pady=2)
+
+        detail_nb = ttk.Notebook(right)
+        detail_nb.pack(fill=tk.BOTH, expand=True, padx=4, pady=4)
+
+        rep_tab = ttk.Frame(detail_nb)
+        gear_tab = ttk.Frame(detail_nb)
+        inv_tab = ttk.Frame(detail_nb)
+        ach_tab = ttk.Frame(detail_nb)
+        detail_nb.add(rep_tab, text="  Reputation  ")
+        detail_nb.add(gear_tab, text="  Equipped Gear  ")
+        detail_nb.add(inv_tab, text="  Inventory  ")
+        detail_nb.add(ach_tab, text="  Achievements  ")
+
+        rep_wrap = ttk.Frame(rep_tab)
+        rep_wrap.pack(fill=tk.BOTH, expand=True)
+        self._rep_tv = ttk.Treeview(rep_wrap, columns=("faction_id", "faction_name", "standing", "flags"), show="headings")
+        self._rep_tv.heading("faction_id", text="Faction ID")
+        self._rep_tv.heading("faction_name", text="Faction")
+        self._rep_tv.heading("standing", text="Standing")
+        self._rep_tv.heading("flags", text="Flags")
+        self._rep_tv.column("faction_id", width=90, anchor="center")
+        self._rep_tv.column("faction_name", width=260)
+        self._rep_tv.column("standing", width=110, anchor="center")
+        self._rep_tv.column("flags", width=90, anchor="center")
+        rep_scroll = ttk.Scrollbar(rep_wrap, orient="vertical", command=self._rep_tv.yview)
+        self._rep_tv.configure(yscrollcommand=rep_scroll.set)
+        self._rep_tv.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        rep_scroll.pack(side=tk.LEFT, fill=tk.Y)
+
+        quick_gear = ttk.LabelFrame(gear_tab, text="Equipped Gear Editor", padding=6)
+        quick_gear.pack(fill=tk.BOTH, expand=True, padx=4, pady=4)
+
+        gear_canvas = tk.Canvas(quick_gear, highlightthickness=0)
+        gear_scroll = ttk.Scrollbar(quick_gear, orient="vertical", command=gear_canvas.yview)
+        self._gear_rows_frame = ttk.Frame(gear_canvas)
+
+        self._gear_rows_frame.bind(
+            "<Configure>",
+            lambda _e: gear_canvas.configure(scrollregion=gear_canvas.bbox("all"))
+        )
+
+        gear_canvas.create_window((0, 0), window=self._gear_rows_frame, anchor="nw")
+        gear_canvas.configure(yscrollcommand=gear_scroll.set)
+
+        gear_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        gear_scroll.pack(side=tk.LEFT, fill=tk.Y)
+
+        ttk.Label(self._gear_rows_frame, text="Quality Filter").grid(row=0, column=1, sticky="w", padx=4, pady=(0, 4))
+        ttk.Label(self._gear_rows_frame, text="Item").grid(row=0, column=2, sticky="w", padx=4, pady=(0, 4))
+        ttk.Label(self._gear_rows_frame, text="Enchant").grid(row=0, column=3, sticky="w", padx=4, pady=(0, 4))
+        ttk.Label(self._gear_rows_frame, text="Gems").grid(row=0, column=4, sticky="w", padx=4, pady=(0, 4))
+
+        row_idx = 1
+        for slot_id, slot_name in EQUIPMENT_SLOT_NAMES.items():
+            var = tk.StringVar()
+            quality_var = tk.StringVar(value=ITEM_QUALITY_LABELS[0])
+            enchant_var = tk.StringVar()
+            ttk.Label(self._gear_rows_frame, text=f"{slot_name}:").grid(row=row_idx, column=0, sticky="w", padx=4, pady=2)
+
+            quality_combo = ttk.Combobox(
+                self._gear_rows_frame,
+                textvariable=quality_var,
+                values=ITEM_QUALITY_LABELS,
+                width=18,
+                state="readonly",
+            )
+            quality_combo.grid(row=row_idx, column=1, sticky="w", padx=4, pady=2)
+
+            combo = ttk.Combobox(self._gear_rows_frame, textvariable=var, width=34, state="readonly")
+            combo.grid(row=row_idx, column=2, sticky="we", padx=4, pady=2)
+            combo.bind("<<ComboboxSelected>>", lambda _e, sid=slot_id: self._refresh_gear_slot_row(sid))
+
+            enchant_combo = ttk.Combobox(self._gear_rows_frame, textvariable=enchant_var, width=28, state="readonly")
+            enchant_combo.grid(row=row_idx, column=3, sticky="we", padx=4, pady=2)
+
+            gem_frame = ttk.Frame(self._gear_rows_frame)
+            gem_frame.grid(row=row_idx, column=4, sticky="we", padx=4, pady=2)
+            gem_controls = []
+            for gem_index in range(3):
+                gem_var = tk.StringVar()
+                gem_combo = ttk.Combobox(gem_frame, textvariable=gem_var, width=22, state="readonly")
+                gem_combo.grid(row=0, column=gem_index, sticky="we", padx=(0 if gem_index == 0 else 4, 0))
+                gem_controls.append({"var": gem_var, "combo": gem_combo})
+
+            quality_combo.bind("<<ComboboxSelected>>", lambda _e, sid=slot_id: self._refresh_gear_slot_row(sid))
+            self._gear_slot_controls[slot_id] = {
+                "var": var,
+                "combo": combo,
+                "quality_var": quality_var,
+                "quality_combo": quality_combo,
+                "enchant_var": enchant_var,
+                "enchant_combo": enchant_combo,
+                "gem_frame": gem_frame,
+                "gems": gem_controls,
+            }
+            row_idx += 1
+
+        ttk.Button(self._gear_rows_frame, text="Apply Slot Rows", command=self._apply_gear_slot_rows).grid(
+            row=row_idx, column=2, sticky="w", padx=4, pady=(8, 2))
+        self._gear_rows_frame.columnconfigure(2, weight=1)
+        self._gear_rows_frame.columnconfigure(3, weight=1)
+        self._gear_rows_frame.columnconfigure(4, weight=1)
+
+        inv_wrap = ttk.Frame(inv_tab)
+        inv_wrap.pack(fill=tk.BOTH, expand=True)
+        self._inv_tv = ttk.Treeview(inv_wrap, columns=("bag", "slot", "entry", "name", "count", "item_guid"), show="headings")
+        self._inv_tv.heading("bag", text="Bag")
+        self._inv_tv.heading("slot", text="Slot")
+        self._inv_tv.heading("entry", text="Entry")
+        self._inv_tv.heading("name", text="Item")
+        self._inv_tv.heading("count", text="Count")
+        self._inv_tv.heading("item_guid", text="Item GUID")
+        self._inv_tv.column("bag", width=60, anchor="center")
+        self._inv_tv.column("slot", width=60, anchor="center")
+        self._inv_tv.column("entry", width=70, anchor="center")
+        self._inv_tv.column("name", width=300)
+        self._inv_tv.column("count", width=60, anchor="center")
+        self._inv_tv.column("item_guid", width=90, anchor="center")
+        inv_scroll = ttk.Scrollbar(inv_wrap, orient="vertical", command=self._inv_tv.yview)
+        self._inv_tv.configure(yscrollcommand=inv_scroll.set)
+        self._inv_tv.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        inv_scroll.pack(side=tk.LEFT, fill=tk.Y)
+
+        ach_wrap = ttk.Frame(ach_tab)
+        ach_wrap.pack(fill=tk.BOTH, expand=True)
+        self._ach_tv = ttk.Treeview(ach_wrap, columns=("achievement", "name", "date"), show="headings")
+        self._ach_tv.heading("achievement", text="Achievement")
+        self._ach_tv.heading("name", text="Name")
+        self._ach_tv.heading("date", text="Earned")
+        self._ach_tv.column("achievement", width=100, anchor="center")
+        self._ach_tv.column("name", width=360)
+        self._ach_tv.column("date", width=160)
+        ach_scroll = ttk.Scrollbar(ach_wrap, orient="vertical", command=self._ach_tv.yview)
+        self._ach_tv.configure(yscrollcommand=ach_scroll.set)
+        self._ach_tv.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        ach_scroll.pack(side=tk.LEFT, fill=tk.Y)
+
+        self._clear_detail()
+
+    def _account_label(self, row: dict) -> str:
+        return f"{row.get('username', '')} [{row.get('account_id')}] ({row.get('char_count', 0)} chars)"
+
+    def _clear_detail(self):
+        self._sel_char = None
+        self._gear_rows = {}
+        self._gear_slot_current_rows = {}
+        for var in (
+            self.v_char_name, self.v_char_guid, self.v_char_account, self.v_char_class,
+            self.v_char_race, self.v_char_guild, self.v_char_online, self.v_char_created,
+            self.v_level, self.v_xp, self.v_money, self.v_money_text, self.v_bank_slots,
+            self.v_guild_bank_money, self.v_location, self.v_stat_summary
+        ):
+            var.set("")
+        self._rep_tv.delete(*self._rep_tv.get_children())
+        self._inv_tv.delete(*self._inv_tv.get_children())
+        self._ach_tv.delete(*self._ach_tv.get_children())
+        for controls in self._gear_slot_controls.values():
+            controls["var"].set("")
+            controls["combo"].configure(values=[""])
+            controls["quality_var"].set(ITEM_QUALITY_LABELS[0])
+            controls["enchant_var"].set("")
+            controls["enchant_combo"].configure(values=[""])
+            for gem in controls["gems"]:
+                gem["var"].set("")
+                gem["combo"].configure(values=[""])
+                gem["combo"].grid_remove()
+
+    def _select_account_id(self, account_id: int | None):
+        if not self._accounts:
+            self.v_account.set("")
+            self._selected_account_id = None
+            self._char_tv.delete(*self._char_tv.get_children())
+            self._clear_detail()
+            return
+
+        if account_id is None:
+            account_id = self._accounts[0].get("account_id")
+
+        for row in self._accounts:
+            if row.get("account_id") == account_id:
+                self.v_account.set(self._account_label(row))
+                self._selected_account_id = account_id
+                self._load_characters_for_selected_account()
+                return
+
+        first = self._accounts[0]
+        self.v_account.set(self._account_label(first))
+        self._selected_account_id = first.get("account_id")
+        self._load_characters_for_selected_account()
+
+    def _load_characters_for_selected_account(self):
+        self._char_tv.delete(*self._char_tv.get_children())
+        self._clear_detail()
+
+        if not self._selected_account_id:
+            return
+
+        self._chars = db.load_source_characters_for_account(self._selected_account_id)
+        for c in self._chars:
+            cls = WOW_CLASSES.get(c.get("class", 0), str(c.get("class", "")))
+            self._char_tv.insert("", "end", iid=str(c["guid"]), values=(c["name"], c["level"], cls))
+
+    def _on_account_select(self, _=None):
+        label = self.v_account.get()
+        account_id = self._account_by_label.get(label)
+        self._selected_account_id = account_id
+        app = self.winfo_toplevel()
+        if hasattr(app, "set_preferred_game_account") and account_id:
+            app.set_preferred_game_account(account_id)
+        self._load_characters_for_selected_account()
+
+    def refresh(self):
+        if not db.ok():
+            return
+        try:
+            self._accounts = db.load_player_accounts()
+            labels = [self._account_label(row) for row in self._accounts]
+            self._account_by_label = {self._account_label(row): row.get("account_id") for row in self._accounts}
+            self._acct_cb.configure(values=labels)
+
+            preferred_id = None
+            app = self.winfo_toplevel()
+            if hasattr(app, "get_preferred_game_account"):
+                preferred_id = app.get_preferred_game_account()
+
+            self._select_account_id(preferred_id)
+        except MySQLError as e:
+            messagebox.showerror("DB error", str(e))
+
+    def _reload_selected_character(self):
+        if self._sel_char:
+            self._load_character_data(self._sel_char["guid"])
+
+    def _on_char_select(self, _=None):
+        sel = self._char_tv.selection()
+        if not sel:
+            return
+        guid = int(sel[0])
+        self._sel_char = next((c for c in self._chars if c["guid"] == guid), None)
+        if not self._sel_char:
+            return
+        self._load_character_data(guid)
+
+    def _load_character_data(self, guid: int):
+        summary = db.load_character_summary(guid)
+        if not summary:
+            self._clear_detail()
+            return
+
+        self.v_char_name.set(summary.get("name", ""))
+        self.v_char_guid.set(str(summary.get("guid", "")))
+        self.v_char_account.set(str(summary.get("account", "")))
+        self.v_char_class.set(WOW_CLASSES.get(summary.get("class", 0), str(summary.get("class", ""))))
+        self.v_char_race.set(WOW_RACES.get(summary.get("race", 0), str(summary.get("race", ""))))
+        self.v_char_guild.set(summary.get("guild_name") or "")
+        self.v_char_online.set("Yes" if summary.get("online") else "No")
+        self.v_char_created.set(str(summary.get("creation_date", "") or ""))
+        self.v_level.set(str(summary.get("level", 0)))
+        self.v_xp.set(str(summary.get("xp", 0)))
+        self.v_money.set(str(summary.get("money", 0)))
+        self.v_money_text.set(money_text(summary.get("money", 0)))
+        self.v_bank_slots.set(str(summary.get("bankSlots", 0)))
+        guild_bank_money = summary.get("guild_bank_money")
+        self.v_guild_bank_money.set(money_text(guild_bank_money) if guild_bank_money is not None else "")
+        self.v_location.set(f"Map {summary.get('map', 0)} / Zone {summary.get('zone', 0)}")
+
+        stat_parts = [
+            f"Health {summary.get('health', 0)}/{summary.get('maxhealth', 0)}",
+            f"Power1 {summary.get('power1', 0)}/{summary.get('maxpower1', 0)}",
+            f"Strength {summary.get('strength', 0)}",
+            f"Agility {summary.get('agility', 0)}",
+            f"Stamina {summary.get('stamina', 0)}",
+            f"Intellect {summary.get('intellect', 0)}",
+            f"Spirit {summary.get('spirit', 0)}",
+            f"Armor {summary.get('armor', 0)}",
+            f"AP {summary.get('attackPower', 0)}",
+            f"RAP {summary.get('rangedAttackPower', 0)}",
+            f"SP {summary.get('spellPower', 0)}",
+            f"Resilience {summary.get('resilience', 0)}",
+            f"Arena {summary.get('arenaPoints', 0)}",
+            f"Honor {summary.get('totalHonorPoints', 0)}",
+            f"Kills {summary.get('totalKills', 0)}",
+        ]
+        self.v_stat_summary.set("  |  ".join(stat_parts))
+
+        self._rep_tv.delete(*self._rep_tv.get_children())
+        for row in db.load_character_reputations(guid):
+            self._rep_tv.insert("", "end", values=(
+                row.get("faction", 0),
+                row.get("faction_name") or f"Faction {row.get('faction', 0)}",
+                row.get("standing", 0),
+                row.get("flags", 0),
+            ))
+
+        self._gear_rows = {}
+        self._inv_tv.delete(*self._inv_tv.get_children())
+        for row in db.load_character_inventory_rows(guid):
+            item_name = row.get("item_name") or f"Item {row.get('itemEntry', 0)}"
+            values = (
+                row.get("itemEntry", 0),
+                item_name,
+                row.get("count", 1),
+                row.get("item_guid", 0),
+            )
+            if row.get("bag", 0) == 0 and row.get("slot", -1) in EQUIPMENT_SLOT_NAMES:
+                item_guid = int(row.get("item_guid", 0) or 0)
+                self._gear_rows[item_guid] = dict(row)
+            else:
+                self._inv_tv.insert("", "end", values=(
+                    row.get("bag", 0),
+                    row.get("slot", 0),
+                    *values,
+                ))
+
+        self._ach_tv.delete(*self._ach_tv.get_children())
+        for row in db.load_character_achievements(guid):
+            self._ach_tv.insert("", "end", values=(
+                row.get("achievement", 0),
+                row.get("achievement_name") or "",
+                unix_text(row.get("date", 0)),
+            ))
+
+        self._refresh_gear_slot_rows()
+
+    def _refresh_gear_slot_row(self, slot_id: int):
+        controls = self._gear_slot_controls.get(slot_id)
+        if not controls:
+            return
+
+        class_id = self._sel_char.get("class") if self._sel_char else None
+        current_row = next((r for r in self._gear_rows.values() if int(r.get("slot", -1)) == slot_id), None)
+        self._gear_slot_current_rows[slot_id] = current_row
+
+        selected_display = (controls["var"].get() or "").strip()
+        current_display = ""
+        selected_item_id = parse_display_id(selected_display)
+        if current_row:
+            current_display = item_display_text(current_row.get("itemEntry", 0), current_row.get("item_name") or "")
+
+        quality_id = item_quality_filter_id(controls["quality_var"].get())
+        options = db.load_valid_equippable_items_for_slot(class_id, slot_id, quality=quality_id, limit=250)
+        displays = [""] + [item_display_text(r.get("entry"), r.get("name") or "") for r in options]
+
+        preferred_display = selected_display or current_display
+        if preferred_display and preferred_display not in displays:
+            displays.append(preferred_display)
+
+        controls["combo"].configure(values=displays)
+        controls["var"].set(preferred_display)
+
+        item_id = selected_item_id or parse_display_id(current_display)
+        current_item_id = int(current_row.get("itemEntry", 0) or 0) if current_row else 0
+        enchant_values = parse_item_enchantments(current_row.get("enchantments", "") if current_row else "")
+        current_enchant_id = get_item_enchant_id(enchant_values, PERM_ENCHANTMENT_SLOT)
+        enchant_rows = db.search_item_enchantments("", slot_id=slot_id, limit=250)
+        enchant_displays = [""] + [enchant_display_text(r.get("ID"), r.get("Name_Lang_enUS") or "") for r in enchant_rows]
+        current_enchant_display = enchant_display_text(current_enchant_id, db.enchant_name(current_enchant_id) or "")
+        if current_enchant_display and current_enchant_display not in enchant_displays:
+            enchant_displays.append(current_enchant_display)
+        controls["enchant_combo"].configure(values=enchant_displays)
+        controls["enchant_var"].set(current_enchant_display)
+
+        socket_colors = []
+        use_current_item_sockets = current_row and current_item_id and current_item_id == int(item_id or 0)
+        if use_current_item_sockets:
+            socket_colors = [
+                int(current_row.get("socketColor_1", 0) or 0),
+                int(current_row.get("socketColor_2", 0) or 0),
+                int(current_row.get("socketColor_3", 0) or 0),
+            ]
+
+        if item_id and not use_current_item_sockets:
+            item_rows = db.q(db.world,
+                "SELECT socketColor_1, socketColor_2, socketColor_3 FROM item_template WHERE entry=%s LIMIT 1",
+                (int(item_id),))
+            if item_rows:
+                socket_colors = [
+                    int(item_rows[0].get("socketColor_1", 0) or 0),
+                    int(item_rows[0].get("socketColor_2", 0) or 0),
+                    int(item_rows[0].get("socketColor_3", 0) or 0),
+                ]
+
+        socket_slots = [SOCK_ENCHANTMENT_SLOT, SOCK_ENCHANTMENT_SLOT_2, SOCK_ENCHANTMENT_SLOT_3]
+        for gem_index, gem_controls in enumerate(controls["gems"]):
+            socket_color = socket_colors[gem_index] if gem_index < len(socket_colors) else 0
+            gem_slot = socket_slots[gem_index]
+            current_gem_enchant = get_item_enchant_id(enchant_values, gem_slot)
+            current_gem_item = db.lookup_gem_item_by_enchant(current_gem_enchant) if current_gem_enchant else None
+            current_gem_display = item_display_text(
+                current_gem_item.get("entry") if current_gem_item else 0,
+                current_gem_item.get("name") if current_gem_item else "",
+            )
+
+            if socket_color:
+                gem_rows = db.search_gem_items("", socket_color=socket_color)
+                if not gem_rows:
+                    gem_rows = db.search_gem_items("", socket_color=0)
+                gem_displays = [""] + [item_display_text(r.get("entry"), r.get("name") or "") for r in gem_rows]
+                if current_gem_display and current_gem_display not in gem_displays:
+                    gem_displays.append(current_gem_display)
+                gem_controls["combo"].configure(values=gem_displays)
+                gem_controls["var"].set(current_gem_display)
+                gem_controls["combo"].grid()
+            else:
+                gem_controls["var"].set("")
+                gem_controls["combo"].configure(values=[""])
+                gem_controls["combo"].grid_remove()
+
+    def _refresh_gear_slot_rows(self):
+        self._gear_slot_current_rows = {}
+        for slot_id in self._gear_slot_controls:
+            self._refresh_gear_slot_row(slot_id)
+
+    def _apply_gear_slot_rows(self):
+        if not self._sel_char:
+            return
+        try:
+            char_guid = int(self._sel_char["guid"])
+            changed = 0
+
+            for slot_id, controls in self._gear_slot_controls.items():
+                selected_item_id = parse_display_id(controls["var"].get())
+                current_row = self._gear_slot_current_rows.get(slot_id)
+
+                if not selected_item_id:
+                    continue
+
+                enchantments = parse_item_enchantments(
+                    current_row.get("enchantments", "") if current_row
+                    else build_item_enchantments([0] * (ITEM_ENCHANTMENT_SLOT_COUNT * ITEM_ENCHANTMENT_OFFSET_COUNT))
+                )
+                selected_enchant_id = parse_display_id(controls["enchant_var"].get()) or 0
+                set_item_enchant_id(enchantments, PERM_ENCHANTMENT_SLOT, selected_enchant_id)
+
+                for gem_index, gem_controls in enumerate(controls["gems"]):
+                    gem_item_id = parse_display_id(gem_controls["var"].get()) or 0
+                    gem_enchant_id = db.get_gem_enchant_id(gem_item_id) if gem_item_id else 0
+                    gem_slot = [SOCK_ENCHANTMENT_SLOT, SOCK_ENCHANTMENT_SLOT_2, SOCK_ENCHANTMENT_SLOT_3][gem_index]
+                    set_item_enchant_id(enchantments, gem_slot, gem_enchant_id)
+
+                enchantments_text = build_item_enchantments(enchantments)
+
+                if current_row:
+                    current_item_id = int(current_row.get("itemEntry", 0) or 0)
+                    current_enchantments = current_row.get("enchantments", "") or build_item_enchantments([0] * (ITEM_ENCHANTMENT_SLOT_COUNT * ITEM_ENCHANTMENT_OFFSET_COUNT))
+                    if current_item_id == selected_item_id and current_enchantments == enchantments_text:
+                        continue
+
+                    db.update_item_instance_equipment(
+                        int(current_row.get("item_guid", 0) or 0),
+                        selected_item_id,
+                        enchantments_text,
+                        db.get_item_max_durability(selected_item_id),
+                    )
+                    changed += 1
+                else:
+                    item_guid = db.create_equipped_item_for_character(char_guid, slot_id, selected_item_id)
+                    db.update_item_instance_equipment(
+                        int(item_guid),
+                        selected_item_id,
+                        enchantments_text,
+                        db.get_item_max_durability(selected_item_id),
+                    )
+                    changed += 1
+
+            if changed:
+                self._load_character_data(char_guid)
+                messagebox.showinfo("Saved", f"Updated {changed} gear slot(s).")
+            else:
+                messagebox.showinfo("No changes", "No gear slot changes were applied.")
+        except (MySQLError, ValueError) as e:
+            messagebox.showerror("Gear update error", str(e))
+
+
+    def _save_basic_stats(self):
+        if not self._sel_char:
+            return
+        try:
+            guid = int(self._sel_char["guid"])
+            level = int(self.v_level.get() or 0)
+            xp = int(self.v_xp.get() or 0)
+            money = int(self.v_money.get() or 0)
+            bank_slots = int(self.v_bank_slots.get() or 0)
+            db.update_character_core_stats(guid, level, xp, money, bank_slots)
+            self.v_money_text.set(money_text(money))
+            cls = WOW_CLASSES.get(self._sel_char.get("class", 0), str(self._sel_char.get("class", "")))
+            self._char_tv.item(str(guid), values=(self._sel_char.get("name", ""), level, cls))
+            self._load_character_data(guid)
+            messagebox.showinfo("Saved", f"Updated basic stats for {self._sel_char.get('name', '')}.")
+        except (MySQLError, ValueError) as e:
+            messagebox.showerror("Save error", str(e))
+
+# ═══════════════════════════════════════════════════════════════════════════
 #  TAB: BOT ACCOUNTS
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -2398,22 +3912,27 @@ class AccountsTab(ttk.Frame):
         top.pack(fill=tk.X, padx=8, pady=6)
         ttk.Button(top, text="🔄 Refresh",       command=self.refresh).pack(side=tk.LEFT, padx=4)
         ttk.Button(top, text="+ Create account", command=self._create).pack(side=tk.LEFT, padx=4)
-        ttk.Button(top, text="✓ Enable",         command=self._enable).pack(side=tk.LEFT, padx=4)
-        ttk.Button(top, text="✗ Disable",        command=self._disable).pack(side=tk.LEFT, padx=4)
+        ttk.Button(top, text="Rename",           command=self._rename).pack(side=tk.LEFT, padx=4)
+        ttk.Button(top, text="Set password",     command=self._password).pack(side=tk.LEFT, padx=4)
+        ttk.Button(top, text="Delete",           command=self._delete).pack(side=tk.LEFT, padx=4)
+        ttk.Button(top, text="✓ Pool On",        command=self._enable).pack(side=tk.LEFT, padx=4)
+        ttk.Button(top, text="✗ Pool Off",       command=self._disable).pack(side=tk.LEFT, padx=4)
 
-        cols = ("id", "username", "enabled", "src_acct", "src_char")
+        cols = ("id", "username", "chars", "pool", "enabled", "online")
         self._tv = ttk.Treeview(self, columns=cols, show="headings",
                                 selectmode="browse")
         self._tv.heading("id",       text="Account ID")
         self._tv.heading("username", text="Username")
-        self._tv.heading("enabled",  text="Enabled")
-        self._tv.heading("src_acct", text="Src Account")
-        self._tv.heading("src_char", text="Src Char GUID")
+        self._tv.heading("chars",    text="Chars")
+        self._tv.heading("pool",     text="Bot Pool")
+        self._tv.heading("enabled",  text="Pool Enabled")
+        self._tv.heading("online",   text="Online")
         self._tv.column("id",       width=80,  anchor="center")
-        self._tv.column("username", width=150)
+        self._tv.column("username", width=170)
+        self._tv.column("chars",    width=50,  anchor="center")
+        self._tv.column("pool",     width=65,  anchor="center")
         self._tv.column("enabled",  width=60,  anchor="center")
-        self._tv.column("src_acct", width=100, anchor="center")
-        self._tv.column("src_char", width=120, anchor="center")
+        self._tv.column("online",   width=50,  anchor="center")
         self._tv.pack(fill=tk.BOTH, expand=True, padx=8, pady=4)
 
         # Info bar
@@ -2424,25 +3943,28 @@ class AccountsTab(ttk.Frame):
         if not db.ok():
             return
         try:
-            self._rows = db.load_pool_accounts()
+            self._rows = db.load_all_accounts()
             self._tv.delete(*self._tv.get_children())
             for r in self._rows:
                 en = "✓" if r.get("is_enabled") else "✗"
+                in_pool = "✓" if r.get("in_pool") else "✗"
+                online = "✓" if r.get("online") else "✗"
                 self._tv.insert("", "end",
                                 iid=str(r["account_id"]),
-                                tags=("enabled",) if r.get("is_enabled") else ("disabled",),
+                                tags=("enabled",) if r.get("in_pool") and r.get("is_enabled") else ("disabled",),
                                 values=(r["account_id"],
-                                        r.get("account_name") or r.get("username", ""),
+                                        r.get("username", ""),
+                                        r.get("char_count", 0),
+                                        in_pool,
                                         en,
-                                        r.get("assigned_source_account_id") or "—",
-                                        r.get("assigned_source_character_guid") or "—"))
+                                        online))
             self._tv.tag_configure("enabled",  foreground="#1a7f1a")
             self._tv.tag_configure("disabled", foreground="#999")
             total   = len(self._rows)
-            enabled = sum(1 for r in self._rows if r.get("is_enabled"))
-            assigned = sum(1 for r in self._rows if r.get("assigned_source_account_id"))
+            enabled = sum(1 for r in self._rows if r.get("in_pool") and r.get("is_enabled"))
+            in_pool = sum(1 for r in self._rows if r.get("in_pool"))
             self._info.configure(
-                text=f"{total} pool accounts  |  {enabled} enabled  |  {assigned} assigned")
+                text=f"{total} total accounts  |  {in_pool} in bot pool  |  {enabled} pool-enabled")
         except MySQLError as e:
             messagebox.showerror("DB error", str(e))
 
@@ -2467,21 +3989,67 @@ class AccountsTab(ttk.Frame):
     def _create(self):
         if not db.ok():
             return
-        username = simpledialog.askstring("New bot account", "Username (e.g. BOTHOUSE011):")
+        username = simpledialog.askstring("New account", "Username:")
         if not username:
             return
-        password = simpledialog.askstring("New bot account",
+        password = simpledialog.askstring("New account",
                                           f"Password for {username.upper()}:", show="*")
         if not password:
             return
+        email = simpledialog.askstring("New account", "Email (optional):") or ""
+        add_to_pool = messagebox.askyesno("Bot pool", "Add this account to the bot account pool?")
         try:
-            aid = db.create_bot_account(username, password)
+            aid = db.create_account(username, password, email=email, add_to_pool=add_to_pool)
             messagebox.showinfo("Created",
-                f"Bot account '{username.upper()}' created with ID {aid}.\n"
-                "Remember to create a character on this account before using it.")
+                f"Account '{username.upper()}' created with ID {aid}.")
             self.refresh()
-        except MySQLError as e:
+        except (MySQLError, ValueError) as e:
             messagebox.showerror("DB error", str(e))
+
+    def _rename(self):
+        aid = self._selected_id()
+        if aid is None:
+            return
+        row = next((r for r in self._rows if int(r["account_id"]) == aid), None)
+        if not row:
+            return
+        username = simpledialog.askstring("Rename account", "New username:", initialvalue=row.get("username", ""))
+        if not username:
+            return
+        password = simpledialog.askstring("Rename account",
+                                          f"New password for {username.upper()}:", show="*")
+        if not password:
+            return
+        try:
+            db.rename_account(aid, username, password)
+            self.refresh()
+        except (MySQLError, ValueError) as e:
+            messagebox.showerror("Rename error", str(e))
+
+    def _password(self):
+        aid = self._selected_id()
+        if aid is None:
+            return
+        password = simpledialog.askstring("Set password", f"New password for account {aid}:", show="*")
+        if not password:
+            return
+        try:
+            db.change_account_password(aid, password)
+            messagebox.showinfo("Updated", f"Password updated for account {aid}.")
+        except (MySQLError, ValueError) as e:
+            messagebox.showerror("Password error", str(e))
+
+    def _delete(self):
+        aid = self._selected_id()
+        if aid is None:
+            return
+        if not messagebox.askyesno("Confirm delete", f"Delete account {aid}? This only works if it has no characters."):
+            return
+        try:
+            db.delete_account(aid)
+            self.refresh()
+        except (MySQLError, ValueError) as e:
+            messagebox.showerror("Delete error", str(e))
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -2495,9 +4063,13 @@ class App(tk.Tk):
         self.title(f"LivingWorld Bot Editor  v{VERSION}")
         self.geometry("1280x800")
         self.minsize(1000, 640)
+        self._preferred_game_account_id = None
+        self._auto_connect_enabled = False
         self._build_connection_bar()
         self._build_notebook()
         self._load_saved_config()
+        if self._auto_connect_enabled:
+            self.after(150, self._connect)
 
     def _load_saved_config(self):
         cfg = configparser.ConfigParser()
@@ -2522,6 +4094,11 @@ class App(tk.Tk):
         # Load MySQL credentials from SSH section
         self.v_db_user.set(s.get("db_user", d.get("user", "acore")))
         self.v_db_pass.set(s.get("db_password", d.get("password", "acore")))
+        pref = cfg["preferences"] if cfg.has_section("preferences") else {}
+        pref_id = pref.get("preferred_game_account_id", "").strip()
+        self._preferred_game_account_id = int(pref_id) if pref_id.isdigit() else None
+        self._auto_connect_enabled = pref.get("auto_connect_on_startup", "0") == "1"
+        self.v_ssh_collapsed.set(pref.get("ssh_collapsed", "0") == "1")
         self._toggle_ssh_fields()
 
     def _save_config(self):
@@ -2542,8 +4119,20 @@ class App(tk.Tk):
             "db_user": self.v_db_user.get(),
             "db_password": self.v_db_pass.get(),
         }
+        cfg["preferences"] = {
+            "preferred_game_account_id": str(self._preferred_game_account_id or ""),
+            "auto_connect_on_startup": "1" if self._auto_connect_enabled else "0",
+            "ssh_collapsed": "1" if self.v_ssh_collapsed.get() else "0",
+        }
         with open(CONFIG_FILE, "w") as f:
             cfg.write(f)
+
+    def get_preferred_game_account(self) -> int | None:
+        return self._preferred_game_account_id
+
+    def set_preferred_game_account(self, account_id: int | None):
+        self._preferred_game_account_id = account_id
+        self._save_config()
 
     def _build_connection_bar(self):
         bar = ttk.Frame(self, padding=(6, 4))
@@ -2582,15 +4171,25 @@ class App(tk.Tk):
         # ── SSH Tunnel Section ──────────────────────────────────────────────
         ssh_frame = ttk.LabelFrame(bar, text="SSH Tunnel (for remote/private networks)", padding=(4, 2))
         ssh_frame.pack(fill=tk.X)
+        self._ssh_frame = ssh_frame
+        self.v_ssh_collapsed = tk.BooleanVar(value=False)
 
         # Checkbox row
         check_row = ttk.Frame(ssh_frame)
         check_row.pack(fill=tk.X, pady=(0, 2))
+        self._ssh_check_row = check_row
 
         self.v_ssh_enabled = tk.BooleanVar(value=False)
         ssh_check = ttk.Checkbutton(check_row, text="Enable SSH Tunnel", variable=self.v_ssh_enabled,
                                      command=self._toggle_ssh_fields)
         ssh_check.pack(side=tk.LEFT, padx=(4, 8))
+
+        self._ssh_collapse_btn = ttk.Button(
+            check_row,
+            text="[V]",
+            width=4,
+            command=self._toggle_ssh_collapsed)
+        self._ssh_collapse_btn.pack(side=tk.RIGHT, padx=(4, 4))
 
         if not SSH_TUNNEL_AVAILABLE:
             ssh_check.configure(state="disabled")
@@ -2603,6 +4202,7 @@ class App(tk.Tk):
         # SSH credentials row
         ssh_row1 = ttk.Frame(ssh_frame)
         ssh_row1.pack(fill=tk.X, pady=1)
+        self._ssh_row1 = ssh_row1
 
         self.v_ssh_host = tk.StringVar()
         self.v_ssh_port = tk.StringVar()
@@ -2627,6 +4227,7 @@ class App(tk.Tk):
         # Key file row
         ssh_row2 = ttk.Frame(ssh_frame)
         ssh_row2.pack(fill=tk.X, pady=1)
+        self._ssh_row2 = ssh_row2
 
         ttk.Label(ssh_row2, text="SSH:", foreground="blue").pack(side=tk.LEFT, padx=(4, 4))
         lbl_key = ttk.Label(ssh_row2, text="Key File:")
@@ -2644,6 +4245,7 @@ class App(tk.Tk):
         # Database credentials row (MySQL on remote server)
         ssh_row3 = ttk.Frame(ssh_frame)
         ssh_row3.pack(fill=tk.X, pady=1)
+        self._ssh_row3 = ssh_row3
 
         self.v_db_host  = tk.StringVar()
         self.v_db_port  = tk.StringVar()
@@ -2666,6 +4268,27 @@ class App(tk.Tk):
         lbl_mysql_hint = ttk.Label(ssh_row3, text="(MySQL server as seen from SSH host)", foreground="gray")
         lbl_mysql_hint.pack(side=tk.LEFT, padx=(4, 0))
         self._ssh_widgets.append(lbl_mysql_hint)
+
+    def _toggle_ssh_collapsed(self):
+        self.v_ssh_collapsed.set(not self.v_ssh_collapsed.get())
+        self._apply_ssh_collapsed_state()
+        self._save_config()
+
+    def _apply_ssh_collapsed_state(self):
+        collapsed = self.v_ssh_collapsed.get()
+        self._ssh_collapse_btn.configure(text="[>]" if collapsed else "[V]")
+
+        if collapsed:
+            self._ssh_row1.pack_forget()
+            self._ssh_row2.pack_forget()
+            self._ssh_row3.pack_forget()
+        else:
+            if not self._ssh_row1.winfo_manager():
+                self._ssh_row1.pack(fill=tk.X, pady=1)
+            if not self._ssh_row2.winfo_manager():
+                self._ssh_row2.pack(fill=tk.X, pady=1)
+            if not self._ssh_row3.winfo_manager():
+                self._ssh_row3.pack(fill=tk.X, pady=1)
 
     def _toggle_ssh_fields(self):
         """Enable/disable SSH fields and direct connection based on mode."""
@@ -2692,6 +4315,8 @@ class App(tk.Tk):
             if self.v_db_pass.get():
                 self.v_pass.set(self.v_db_pass.get())
 
+        self._apply_ssh_collapsed_state()
+
     def _browse_ssh_key(self):
         """Browse for SSH private key file."""
         from tkinter import filedialog
@@ -2707,9 +4332,11 @@ class App(tk.Tk):
         self.nb.pack(fill=tk.BOTH, expand=True, padx=6, pady=6)
         self.tab_defaults = DefaultProfilesTab(self.nb)
         self.tab_profiles = BotProfilesTab(self.nb)
+        self.tab_character_editor = CharacterEditorTab(self.nb)
         self.tab_accounts = AccountsTab(self.nb)
         self.nb.add(self.tab_defaults, text="  Class Defaults  ")
         self.nb.add(self.tab_profiles, text="  Bot Profiles  ")
+        self.nb.add(self.tab_character_editor, text="  Character Editor  ")
         self.nb.add(self.tab_accounts, text="  Accounts  ")
 
     def _connect(self):
@@ -2734,12 +4361,14 @@ class App(tk.Tk):
                 db_host=self.v_db_host.get() if self.v_db_host.get() else "127.0.0.1",
                 db_port=int(self.v_db_port.get()) if self.v_db_port.get() else 3306
             )
+            self._auto_connect_enabled = True
             self._save_config()
             tunnel_info = " (via SSH tunnel)" if self.v_ssh_enabled.get() else ""
             self.v_status.set(f"● Connected{tunnel_info}")
             self._status_lbl.configure(foreground="#1a7f1a")
             self.tab_defaults.refresh()
             self.tab_profiles.refresh()
+            self.tab_character_editor.refresh()
             self.tab_accounts.refresh()
         except (MySQLError, ValueError, ImportError) as e:
             self.v_status.set(f"✗ {e}")
