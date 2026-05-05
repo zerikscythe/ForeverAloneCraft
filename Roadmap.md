@@ -34,6 +34,30 @@ Completed recently:
 - reward-choice quests now support a smart/manual bot reward flow
 - the LivingWorld addon now has a `Quests` tab for pending bot reward choices
 
+Bot hazard / floor sensor system (Phase 1) landed:
+
+- `BotHazardSensor` added to `src/ai/` — two detection layers per tick:
+  - Layer 1: known bad aura registry (`GetKnownHazardAuras`, hardcoded set for
+    now; designed to become DB-driven)
+  - Layer 2: repeated HP loss at a fixed position — catches unnamed fire patches
+    with no detectable aura
+- When danger is detected the bot steps 5 yards toward the nearest clean party
+  member and stops immediately once the hazard clears (does not run all the way
+  to the companion)
+- Anti-jitter: 2-second commitment window keeps the same anchor between ticks
+- Class exemptions: Warriors and Death Knights skip escape (tank proxy);
+  HybridHealers suppressed when owner HP is critically low
+- Integration point: `ProcessHazardTick` fires in `Tick()` after Hold/Passive
+  early-returns and before `GetCombatDoctrine()` — bots escaping fire skip the
+  DB doctrine lookup entirely while moving
+- Cleanup: `ClearHazardState` wired to `ClearBotOverride` for clean bot dismissal
+
+Design decision recorded: the aura registry, tuning constants, class exception
+rules, and encounter-specific override profiles are all intended to migrate to
+DB tables rather than stay hardcoded — same architecture as the combat doctrine
+system. See the "Bot Hazard Sensor: DB Migration Roadmap" section under Phase 6
+for the full breakdown and priority order.
+
 Additional recent engineering progress on the active combat migration:
 
 - `.lwbot <#|name> profile <1-10>` now writes to the new
@@ -69,6 +93,11 @@ Current next-planned slice:
 - extend the `Quests` tab into a broader bot quest-actions panel that can show
   bot-specific `Pick Up` / `Turn In` actions for a targeted quest giver,
   including class-specific follow-up quests
+
+Queued after quest panel work:
+
+- migrate hazard aura registry and tuning constants to DB tables
+  (see "Bot Hazard Sensor: DB Migration Roadmap" under Phase 6)
 
 ## Active Workstream
 
@@ -168,6 +197,8 @@ Going forward, the intended split is:
   - spec/role defaults
   - context-specific default profiles
   - account/character overrides
+  - hazard aura registry and tuning (see section 10 — the hazard sensor
+    follows the same split and its hardcoded values are temporary)
 
 In short:
 
@@ -688,6 +719,194 @@ design and foundation code.
   authoritative after the real source alt logs in and changes gear/items.
 
 9.5 Decide whether generic bots and account alts share one runtime pipeline — **Not Started**
+
+### 10) Bot Hazard Sensor System
+
+**Overall Status: Partial**
+
+Phase 1 (hardcoded engine) is complete. The remaining work is migrating the
+tunable parts to DB tables so they can be edited from an external tool without
+rebuilding the server, following the same architecture as the combat doctrine
+system.
+
+#### What is currently hardcoded (and why it should not stay that way)
+
+The Phase 1 implementation in `src/ai/BotHazardSensor.cpp` contains four
+categories of hardcoded values. Each one is a friction point every time a new
+dungeon, raid, or battleground is added, or when encounter behavior needs tuning:
+
+1. **The known hazard aura set** (`GetKnownHazardAuras`) — a `static
+   unordered_set<uint32_t>`. Adding a new boss ground effect requires a code
+   change + server rebuild.
+
+2. **Tuning constants** (`HazardDamageThreshold`, `HazardEscapeStepYards`,
+   `HazardCommitWindowMs`, etc.) — `constexpr` floats and durations. Any
+   balance tweak requires a rebuild.
+
+3. **Class/role exception rules** (`IsTankClass`, the HybridHealer HP gate) —
+   hardcoded class IDs and HP thresholds. Adding a new tank class or changing
+   the healer stay-threshold requires a rebuild.
+
+4. **Encounter-specific behavior** — currently absent. Some mechanics require
+   the opposite of "move away": move toward the boss, stack on a raid marker,
+   spread to avoid splash, or move along an arc. These cannot be expressed at
+   all without code changes under the current structure.
+
+#### DB Migration Roadmap
+
+Migrate in priority order. Each step is independent; they can ship separately.
+
+##### Step 1 — Aura registry in DB (highest value, lowest effort)
+
+**Status: Not Started**
+
+Add a single table to `acore_world`:
+
+```sql
+CREATE TABLE living_world_hazard_auras (
+    spell_id    INT UNSIGNED    NOT NULL,
+    severity    FLOAT           NOT NULL DEFAULT 1.0,
+    notes       VARCHAR(255)    NULL,
+    PRIMARY KEY (spell_id)
+);
+```
+
+- Add `SqlBotHazardAuraRepository` following the `SqlBotCombatProfileRepository`
+  pattern (load on first use, 5-second TTL cache, read-only from C++ side).
+- Replace the hardcoded `GetKnownHazardAuras()` set with a DB-backed query.
+- Seed the table from the current hardcoded list as the initial migration.
+- From this point on, new ground effects are added by inserting a row — no
+  rebuild needed.
+
+This single step covers the most common day-to-day tuning need.
+
+##### Step 2 — Tuning constants in DB (low effort, moderate value)
+
+**Status: Not Started**
+
+Add a key/value config table to `acore_world`:
+
+```sql
+CREATE TABLE living_world_hazard_config (
+    config_key   VARCHAR(64)     NOT NULL,
+    value_float  FLOAT           NOT NULL DEFAULT 0.0,
+    notes        VARCHAR(255)    NULL,
+    PRIMARY KEY (config_key)
+);
+-- Seed rows:
+-- 'damage_threshold_pct'    2.0
+-- 'escape_step_yards'       5.0
+-- 'commit_window_ms'        2000.0
+-- 'safe_anchor_radius'      40.0
+-- 'max_movement_yards'      2.0
+-- 'consecutive_ticks'       2.0
+```
+
+Replace the `constexpr` constants with a DB-backed config reader using the same
+TTL-cache pattern. Default values act as the fallback when rows are missing.
+
+##### Step 3 — Class/role exception rules in DB (moderate effort, moderate value)
+
+**Status: Not Started**
+
+```sql
+CREATE TABLE living_world_hazard_class_rules (
+    class_id            TINYINT UNSIGNED    NOT NULL,
+    skip_escape         TINYINT(1)          NOT NULL DEFAULT 0,
+    owner_hp_gate_pct   FLOAT               NOT NULL DEFAULT 0.0,
+    PRIMARY KEY (class_id)
+);
+-- Seed rows:
+-- CLASS_WARRIOR (1):         skip_escape=1, owner_hp_gate_pct=0
+-- CLASS_DEATH_KNIGHT (6):    skip_escape=1, owner_hp_gate_pct=0
+-- CLASS_DRUID (11):          skip_escape=0, owner_hp_gate_pct=50
+-- CLASS_PALADIN (2):         skip_escape=0, owner_hp_gate_pct=50
+-- CLASS_SHAMAN (7):          skip_escape=0, owner_hp_gate_pct=50
+```
+
+Replace `IsTankClass()` and the HybridHealer HP check with DB-backed lookups.
+Making this data-driven means adding a new tank spec or changing healer behavior
+is a row edit, not a code change.
+
+##### Step 4 — Encounter-specific behavior profiles (larger scope, highest ceiling)
+
+**Status: Not Started**
+
+This is the raid-support layer. Some encounters invert normal escape logic
+(move toward the thing) or require role-specific movement (healer arc, spread,
+stack). A behavior profile table handles all of these:
+
+```sql
+CREATE TABLE living_world_hazard_encounter_rules (
+    id              INT UNSIGNED    NOT NULL AUTO_INCREMENT,
+    encounter_id    INT UNSIGNED    NOT NULL DEFAULT 0,   -- 0 = any encounter
+    spell_id        INT UNSIGNED    NOT NULL DEFAULT 0,   -- 0 = layer-2 pattern
+    behavior        ENUM(
+                        'escape_away',      -- default: move away from hazard
+                        'escape_toward',    -- reversed: move toward boss/marker
+                        'spread',           -- move away from party members
+                        'stack',            -- move toward party members
+                        'none'              -- do nothing (suppress escape)
+                    )               NOT NULL DEFAULT 'escape_away',
+    anchor_type     ENUM(
+                        'clean_party',      -- default: nearest clean party member
+                        'tank',             -- move toward the current tank
+                        'owner',            -- move toward the player owner
+                        'none'              -- no anchor, use direction only
+                    )               NOT NULL DEFAULT 'clean_party',
+    step_yards      FLOAT           NOT NULL DEFAULT 5.0,
+    commit_ms       INT UNSIGNED    NOT NULL DEFAULT 2000,
+    tank_ignore     TINYINT(1)      NOT NULL DEFAULT 0,
+    notes           VARCHAR(255)    NULL,
+    PRIMARY KEY (id),
+    KEY idx_encounter_spell (encounter_id, spell_id)
+);
+```
+
+The runtime evaluator checks: does the current map/encounter have a matching
+row for this spell or layer-2 pattern? If yes, apply that behavior. Falls back
+to global defaults otherwise.
+
+This table is also where the "healer arc movement" variant belongs once it is
+designed — it could be expressed as a specialized `anchor_type` or a separate
+`movement_pattern` column.
+
+#### Architectural rule for this system
+
+The hazard sensor follows the same C++/DB split as the combat doctrine system:
+
+- **C++ owns the detection engine** — aura checking, HP delta tracking,
+  position tracking, movement commands, timing/jitter logic, safety checks.
+- **DB owns the doctrine** — which spells are dangerous, how dangerous they
+  are, how to respond to them, which classes are exempt, and what each
+  encounter requires.
+
+Hardcoded values in `BotHazardSensor.cpp` should be treated as emergency
+fallbacks only, not as the authoritative source of behavior. Any value that a
+server operator might want to tune without rebuilding belongs in DB.
+
+#### Current file locations
+
+- `modules/mod-living-world/src/ai/BotHazardSensor.h` — public API + structs
+- `modules/mod-living-world/src/ai/BotHazardSensor.cpp` — Phase 1 engine
+- Integration point: `Tick()` in `src/ai/CompanionAI.cpp`, after Hold/Passive
+  checks, before `GetCombatDoctrine()`
+- Cleanup: `ClearBotOverride()` in `CompanionAI.cpp` calls
+  `BotHazardSensor::ClearHazardState(botGuid)` on bot dismiss
+
+#### Subtasks
+
+10.1 Phase 1 engine (Layer 1 aura + Layer 2 HP trend + escape movement) — **Complete**
+
+10.2 Migrate aura registry to `living_world_hazard_auras` DB table — **Not Started**
+
+10.3 Migrate tuning constants to `living_world_hazard_config` DB table — **Not Started**
+
+10.4 Migrate class/role exception rules to `living_world_hazard_class_rules` — **Not Started**
+
+10.5 Add encounter-specific behavior profile table and evaluator — **Not Started**
+
+10.6 Expose hazard aura/config editing via external tool / addon API — **Not Started**
 
 ---
 
