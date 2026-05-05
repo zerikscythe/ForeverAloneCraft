@@ -178,15 +178,15 @@ Player* FindNearestCleanPartyMember(Player* bot, Player* owner)
     return best;
 }
 
-// Project a HazardEscapeStepYards step from the bot toward `anchor`
-// and issue a point-movement command.
+// Project a HazardEscapeStepYards step from the bot toward `anchor`,
+// stopping at the first vmap collision so the destination is never inside
+// a wall or over a ledge edge. Correct ground height is also resolved.
 void IssueEscapeStep(Player* bot, Player* anchor)
 {
     float const angle = bot->GetAngle(anchor);
-    float const x     = bot->GetPositionX() + HazardEscapeStepYards * std::cos(angle);
-    float const y     = bot->GetPositionY() + HazardEscapeStepYards * std::sin(angle);
-    float const z     = bot->GetPositionZ();
-    bot->GetMotionMaster()->MovePoint(0, x, y, z);
+    Position dest = bot->GetPosition();
+    bot->MovePositionToFirstCollision(dest, HazardEscapeStepYards, angle);
+    bot->GetMotionMaster()->MovePoint(0, dest.GetPositionX(), dest.GetPositionY(), dest.GetPositionZ());
 }
 
 // Move away from the hazard center (used when no clean anchor exists).
