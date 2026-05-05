@@ -923,6 +923,28 @@ server operator might want to tune without rebuilding belongs in DB.
 
 10.6 Expose hazard aura/config editing via external tool / addon API — **Not Started**
 
+#### Maybe / Future
+
+- **Escape-angle spread to prevent anchor stacking**: When multiple bots escape
+  toward the same clean anchor they land on the same point. Fix by adding a
+  slot-based angular offset at escape time (`angle += slot * spread_per_slot`,
+  where slot comes from the existing `GetGUID().GetCounter() % 7` pattern in
+  `IssueFormationFollow`). No post-escape timer needed; role-based positioning
+  disperses bots naturally within 1–2 ticks anyway. Deferred — only matters
+  for spread-sensitive mechanics.
+
+- **Owner-in-fire fallback fix**: Current no-anchor fallback does
+  `MoveFollow(owner)` without checking if the owner is also in the hazard.
+  Fix: check `HasKnownHazardAura(owner)` first; if owner is also in danger,
+  use a random escape direction instead.
+
+- **Stun/root guard**: If the bot is stunned or rooted when escape fires,
+  `MovePoint` silently fails but the hazard system keeps returning `true` and
+  suppressing the combat rotation. Fix: check
+  `bot->HasUnitState(UNIT_STATE_ROOT | UNIT_STATE_STUNNED)` before issuing
+  movement; skip the `MovePoint` but still return `true` so the rotation stays
+  suppressed until CC expires.
+
 ---
 
 ## Phase 7: Ambient World and Rival Guild Population
