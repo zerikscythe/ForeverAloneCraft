@@ -3,6 +3,9 @@
 #include "IWorld.h"
 #include "Log.h"
 #include "ScriptMgr.h"
+#include "integration/SqlBotGlobalConfigRepository.h"
+#include "integration/SqlBotHazardConfigRepository.h"
+#include "integration/SqlBotOocConfigRepository.h"
 #include "service/BotQuestRewardService.h"
 
 namespace living_world
@@ -52,6 +55,9 @@ void ApplyEconomyScale(float scale, bool isReload)
             void OnStartup() override
             {
                 living_world::service::BotQuestRewardService().EnsureSchema();
+                living_world::integration::SqlBotHazardConfigRepository().EnsureSchema();
+                living_world::integration::SqlBotGlobalConfigRepository().EnsureSchema();
+                living_world::integration::SqlBotOocConfigRepository().EnsureSchema();
             }
         };
 

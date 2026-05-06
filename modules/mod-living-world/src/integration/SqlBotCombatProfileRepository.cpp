@@ -179,6 +179,21 @@ model::BotCombatProfileRecord BuildProfile(Field const* fields)
     if (!fields[8].IsNull())
         profile.roleOverrideKey = fields[8].Get<std::string>();
     profile.settings = BuildSettings(fields, 9);
+    // OOC behavior — fields 16..24 (added by migration 2025_12)
+    // Graceful defaults if columns are absent (NULL fallback via COALESCE in SELECT).
+    auto& ooc = profile.oocBehavior;
+    ooc.buffScope         = static_cast<model::BotBuffScope>(fields[16].Get<std::uint8_t>());
+    ooc.buffReapplySecs   = fields[17].Get<std::uint16_t>();
+    ooc.buffOnSpawn       = fields[18].Get<bool>();
+    if (!fields[19].IsNull())
+        ooc.followDistOverride = fields[19].Get<float>();
+    if (!fields[20].IsNull())
+        ooc.autoLootOverride = fields[20].Get<std::uint8_t>() != 0;
+    ooc.lootQualityMin    = fields[21].Get<std::uint8_t>();
+    ooc.gatherNodes       = static_cast<model::BotGatherNodes>(fields[22].Get<std::uint8_t>());
+    ooc.gatherSkin        = static_cast<model::BotGatherSkin>(fields[23].Get<std::uint8_t>());
+    ooc.skinLootQualityMax= fields[24].Get<std::uint8_t>();
+    ooc.lootCategoryFlags = fields[25].Get<std::uint32_t>();
     return profile;
 }
 
@@ -384,7 +399,11 @@ SqlBotCombatProfileRepository::ListProfilesForCharacter(
         "SELECT profile_id, source_character_guid, owner_account_id, slot, profile_name, "
         "guessed_spec_key, guessed_role_key, spec_override_key, role_override_key, "
         "conservation_mode, mana_low_water, mana_high_water, enable_down_rank, "
-        "down_rank_floor, default_aoe_mode, default_aoe_min_targets, default_aoe_scan_radius "
+        "down_rank_floor, default_aoe_mode, default_aoe_min_targets, default_aoe_scan_radius, "
+        "COALESCE(buff_scope,2), COALESCE(buff_reapply_secs,30), COALESCE(buff_on_spawn,1), "
+        "follow_dist_override, auto_loot_override, COALESCE(loot_quality_min,0), "
+        "COALESCE(gather_nodes,0), COALESCE(gather_skin,0), COALESCE(skin_loot_quality_max,0), "
+        "COALESCE(loot_category_flags,0) "
         "FROM living_world_bot_combat_profile "
         "WHERE owner_account_id = {} AND source_character_guid = {} "
         "ORDER BY slot ASC",
@@ -413,7 +432,11 @@ SqlBotCombatProfileRepository::FindProfileForCharacterSlot(
         "SELECT profile_id, source_character_guid, owner_account_id, slot, profile_name, "
         "guessed_spec_key, guessed_role_key, spec_override_key, role_override_key, "
         "conservation_mode, mana_low_water, mana_high_water, enable_down_rank, "
-        "down_rank_floor, default_aoe_mode, default_aoe_min_targets, default_aoe_scan_radius "
+        "down_rank_floor, default_aoe_mode, default_aoe_min_targets, default_aoe_scan_radius, "
+        "COALESCE(buff_scope,2), COALESCE(buff_reapply_secs,30), COALESCE(buff_on_spawn,1), "
+        "follow_dist_override, auto_loot_override, COALESCE(loot_quality_min,0), "
+        "COALESCE(gather_nodes,0), COALESCE(gather_skin,0), COALESCE(skin_loot_quality_max,0), "
+        "COALESCE(loot_category_flags,0) "
         "FROM living_world_bot_combat_profile "
         "WHERE owner_account_id = {} AND source_character_guid = {} AND slot = {} "
         "LIMIT 1",
@@ -436,8 +459,11 @@ void SqlBotCombatProfileRepository::SaveProfile(
         "source_character_guid, owner_account_id, slot, profile_name, guessed_spec_key, "
         "guessed_role_key, spec_override_key, role_override_key, conservation_mode, "
         "mana_low_water, mana_high_water, enable_down_rank, down_rank_floor, default_aoe_mode, "
-        "default_aoe_min_targets, default_aoe_scan_radius) "
-        "VALUES ({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}) "
+        "default_aoe_min_targets, default_aoe_scan_radius, "
+        "buff_scope, buff_reapply_secs, buff_on_spawn, follow_dist_override, "
+        "auto_loot_override, loot_quality_min, gather_nodes, gather_skin, skin_loot_quality_max, "
+        "loot_category_flags) "
+        "VALUES ({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}) "
         "ON DUPLICATE KEY UPDATE "
         "profile_name = VALUES(profile_name), "
         "guessed_spec_key = VALUES(guessed_spec_key), "
@@ -451,7 +477,17 @@ void SqlBotCombatProfileRepository::SaveProfile(
         "down_rank_floor = VALUES(down_rank_floor), "
         "default_aoe_mode = VALUES(default_aoe_mode), "
         "default_aoe_min_targets = VALUES(default_aoe_min_targets), "
-        "default_aoe_scan_radius = VALUES(default_aoe_scan_radius)",
+        "default_aoe_scan_radius = VALUES(default_aoe_scan_radius), "
+        "buff_scope = VALUES(buff_scope), "
+        "buff_reapply_secs = VALUES(buff_reapply_secs), "
+        "buff_on_spawn = VALUES(buff_on_spawn), "
+        "follow_dist_override = VALUES(follow_dist_override), "
+        "auto_loot_override = VALUES(auto_loot_override), "
+        "loot_quality_min = VALUES(loot_quality_min), "
+        "gather_nodes = VALUES(gather_nodes), "
+        "gather_skin = VALUES(gather_skin), "
+        "skin_loot_quality_max = VALUES(skin_loot_quality_max), "
+        "loot_category_flags = VALUES(loot_category_flags)",
         profile.sourceCharacterGuid,
         profile.ownerAccountId,
         static_cast<std::uint32_t>(profile.slot),
@@ -467,7 +503,19 @@ void SqlBotCombatProfileRepository::SaveProfile(
         static_cast<std::uint32_t>(profile.settings.downRankFloor),
         static_cast<std::uint32_t>(profile.settings.defaultAoEMode),
         static_cast<std::uint32_t>(profile.settings.defaultAoEMinTargets),
-        profile.settings.defaultAoEScanRadius);
+        profile.settings.defaultAoEScanRadius,
+        static_cast<std::uint32_t>(profile.oocBehavior.buffScope),
+        static_cast<std::uint32_t>(profile.oocBehavior.buffReapplySecs),
+        profile.oocBehavior.buffOnSpawn ? 1 : 0,
+        profile.oocBehavior.followDistOverride.has_value()
+            ? std::to_string(*profile.oocBehavior.followDistOverride) : "NULL",
+        profile.oocBehavior.autoLootOverride.has_value()
+            ? std::to_string(*profile.oocBehavior.autoLootOverride ? 1 : 0) : "NULL",
+        static_cast<std::uint32_t>(profile.oocBehavior.lootQualityMin),
+        static_cast<std::uint32_t>(profile.oocBehavior.gatherNodes),
+        static_cast<std::uint32_t>(profile.oocBehavior.gatherSkin),
+        static_cast<std::uint32_t>(profile.oocBehavior.skinLootQualityMax),
+        profile.oocBehavior.lootCategoryFlags);
 
     std::uint64_t profileId = ResolveProfileId(profile);
     if (profileId == 0)

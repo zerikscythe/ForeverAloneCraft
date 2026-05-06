@@ -7,6 +7,8 @@
 #include "Player.h"
 #include "SharedDefines.h"
 #include "Unit.h"
+#include "integration/SqlBotHazardConfigRepository.h"
+#include "service/BotHazardConfigService.h"
 
 #include <chrono>
 #include <cmath>
@@ -25,53 +27,13 @@ namespace
 {
 
 // ---------------------------------------------------------------
-// Tuning constants
+// Singleton service — loads config from DB with TTL caching.
 // ---------------------------------------------------------------
-
-// HP% drop per 500ms tick to count as "taking damage"
-constexpr float HazardDamageThreshold       = 2.0f;
-// Consecutive damage ticks needed before declaring danger (Layer 2)
-constexpr int   HazardConsecutiveTicks       = 2;
-// If bot moved more than this between ticks, ignore HP loss
-// (prevents false positives from fall damage while moving)
-constexpr float HazardMaxMovementYards       = 2.0f;
-// How far to search for a clean party anchor
-constexpr float HazardSafeAnchorSearchRadius = 40.0f;
-// How far to step toward the anchor each tick
-constexpr float HazardEscapeStepYards        = 5.0f;
-// Once an anchor is chosen, keep it for this long to prevent jitter
-constexpr auto  HazardCommitWindowMs         = std::chrono::milliseconds(2000);
-
-// ---------------------------------------------------------------
-// Layer 1 — known hazard aura IDs
-// These are ground effect / persistent AoE debuffs. Expand as
-// new raid content is encountered.
-// ---------------------------------------------------------------
-std::unordered_set<uint32_t> const& GetKnownHazardAuras()
+service::BotHazardConfigService& GetHazardConfigService()
 {
-    static std::unordered_set<uint32_t> const s_hazardAuras =
-    {
-        // --- Naxxramas ---
-        28524,  // Slime Pool (Grobbulus)
-        26575,  // Void Zone (Instructor Razuvious / generic)
-        // --- Serpentshrine Cavern ---
-        37591,  // Toxic Spores
-        // --- Black Temple ---
-        40923,  // Fel Eruption
-        // --- Sunwell ---
-        46228,  // Dark Decay (Eredar Twins)
-        // --- Ulduar ---
-        63018,  // Searing Flames (Ignis)
-        64290,  // Saronite Vapors (General Vezax)
-        // --- Trial of the Crusader ---
-        67480,  // Firebomb (Jaraxxus)
-        // --- Icecrown Citadel ---
-        70952,  // Defile (Lich King)
-        72754,  // Frozen Orb ground effect
-        // --- Ruby Sanctum ---
-        74527,  // Combustion ground fire
-    };
-    return s_hazardAuras;
+    static integration::SqlBotHazardConfigRepository repo;
+    static service::BotHazardConfigService            service(repo);
+    return service;
 }
 
 // ---------------------------------------------------------------
@@ -94,30 +56,59 @@ static std::unordered_map<uint64_t, BotHazardTracking> s_tracking;
 // Internal helpers
 // ---------------------------------------------------------------
 
-// Warriors and Death Knights are tanking-capable; skip hazard escape
-// for them. The BotCombatDoctrine role does not distinguish TANK from
-// Melee DPS (both map to Melee), so we use the class as a proxy.
-bool IsTankClass(Player const* bot)
+// Maps a bot's class to its hazard role key.
+// Warriors and DKs → TANK (aggro check applied separately).
+// Pure Priest    → HEALER.
+// Paladin/Shaman/Druid → HYBRID_HEALER (may be healing or DPS spec;
+//   the owner-HP gate suppresses escape only when they are in a healing role).
+// Ranged casters/hunters → RANGED_DPS.
+// Everything else → MELEE_DPS.
+std::string GetHazardRoleKey(Player const* bot)
 {
-    uint8_t const c = bot->getClass();
-    return c == CLASS_WARRIOR || c == CLASS_DEATH_KNIGHT;
+    switch (bot->getClass())
+    {
+        case CLASS_WARRIOR:      return "TANK";
+        case CLASS_DEATH_KNIGHT: return "TANK";
+        case CLASS_PRIEST:       return "HEALER";
+        case CLASS_PALADIN:
+        case CLASS_SHAMAN:
+        case CLASS_DRUID:        return "HYBRID_HEALER";
+        case CLASS_HUNTER:
+        case CLASS_MAGE:
+        case CLASS_WARLOCK:      return "RANGED_DPS";
+        default:                 return "MELEE_DPS";
+    }
 }
 
-// Returns true if bot should participate in hazard escape.
-// Hybrid healers suppressed when the owner is critically low (they
-// need to stay in range to cast emergency heals).
+// Returns true if bot should participate in hazard escape based on
+// role rules loaded from the DB.
 bool ShouldEscapeHazard(Player const* bot, Player const* owner)
 {
-    if (IsTankClass(bot))
-        return false;
+    std::string const roleKey = GetHazardRoleKey(bot);
+    model::HazardRoleRule const* rule =
+        GetHazardConfigService().GetRoleRule(roleKey);
 
-    // Mirrors HealOwnerCritical = 50.0f from CompanionAI.cpp
-    uint8_t const c = bot->getClass();
-    bool const isHybridHealer = (c == CLASS_DRUID
-                                || c == CLASS_PALADIN
-                                || c == CLASS_SHAMAN);
-    if (isHybridHealer && owner->GetHealthPct() < 50.0f)
-        return false;
+    if (rule && rule->skipEscape)
+    {
+        if (rule->requiresAggroToSkip)
+        {
+            Unit* target = bot->GetVictim();
+            bool const holdsAggro = target &&
+                target->GetThreatMgr().GetCurrentVictim() == bot;
+            if (holdsAggro)
+                return false;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    if (rule && rule->ownerHpGatePct > 0.0f)
+    {
+        if (owner->GetHealthPct() < rule->ownerHpGatePct)
+            return false;
+    }
 
     return true;
 }
@@ -125,7 +116,9 @@ bool ShouldEscapeHazard(Player const* bot, Player const* owner)
 // Check Layer 1: bot has at least one known hazard aura.
 bool HasKnownHazardAura(Player const* bot, uint32_t& outSpellId)
 {
-    for (uint32_t id : GetKnownHazardAuras())
+    std::unordered_set<uint32_t> const auraIds =
+        GetHazardConfigService().GetHazardAuraIds();
+    for (uint32_t id : auraIds)
     {
         if (bot->HasAura(id))
         {
@@ -141,14 +134,16 @@ bool HasKnownHazardAura(Player const* bot, uint32_t& outSpellId)
 // movement anchor. Falls back to the owner when the bot is ungrouped.
 Player* FindNearestCleanPartyMember(Player* bot, Player* owner)
 {
-    // Helper lambda — checks a candidate and returns distance if valid.
+    float const searchRadius =
+        GetHazardConfigService().GetTuning().anchorSearchRadius;
+
     auto IsCleanCandidate = [&](Player* candidate) -> bool
     {
         if (!candidate || candidate == bot)
             return false;
         if (!candidate->IsAlive() || !candidate->IsInWorld())
             return false;
-        if (bot->GetDistance(candidate) > HazardSafeAnchorSearchRadius)
+        if (bot->GetDistance(candidate) > searchRadius)
             return false;
         uint32_t unused = 0;
         return !HasKnownHazardAura(candidate, unused);
@@ -183,9 +178,11 @@ Player* FindNearestCleanPartyMember(Player* bot, Player* owner)
 // a wall or over a ledge edge. Correct ground height is also resolved.
 void IssueEscapeStep(Player* bot, Player* anchor)
 {
+    float const stepYards =
+        GetHazardConfigService().GetTuning().escapeStepYards;
     float const angle = bot->GetAngle(anchor);
     Position dest = bot->GetPosition();
-    bot->MovePositionToFirstCollision(dest, HazardEscapeStepYards, angle);
+    bot->MovePositionToFirstCollision(dest, stepYards, angle);
     bot->GetMotionMaster()->MovePoint(0, dest.GetPositionX(), dest.GetPositionY(), dest.GetPositionZ());
 }
 
@@ -215,6 +212,7 @@ bool ProcessHazardTick(Player* bot, Player* owner)
 
     auto const now = std::chrono::steady_clock::now();
     uint64_t const key = bot->GetGUID().GetCounter();
+    model::HazardTuning const tuning = GetHazardConfigService().GetTuning();
 
     // Copy tracking state out under mutex so mutations are safe
     // even if ClearHazardState races from a dismissal path.
@@ -243,7 +241,7 @@ bool ProcessHazardTick(Player* bot, Player* owner)
     float const hpDrop = tracking.lastHealthPct - currentHpPct;
     float const moved  = tracking.lastPosition.GetExactDist2d(currentPos);
 
-    if (hpDrop > HazardDamageThreshold && moved < HazardMaxMovementYards)
+    if (hpDrop > tuning.damageThresholdPct && moved < tuning.maxMovementYards)
     {
         // Took significant damage while barely moving.
         // Only count as a consecutive tick if it arrived within ~750ms
@@ -258,7 +256,7 @@ bool ProcessHazardTick(Player* bot, Player* owner)
 
         tracking.lastDamageTick = now;
 
-        if (tracking.consecutiveDamageTicks >= HazardConsecutiveTicks)
+        if (tracking.consecutiveDamageTicks >= tuning.consecutiveDamageTicks)
             layer2Triggered = true;
     }
     else if (hpDrop <= 0.0f)
@@ -331,7 +329,8 @@ bool ProcessHazardTick(Player* bot, Player* owner)
         // Pick a new anchor and reset the commitment window.
         anchor = FindNearestCleanPartyMember(bot, owner);
         tracking.moveState.IsEscapingHazard      = true;
-        tracking.moveState.NextHazardDecisionTime = now + HazardCommitWindowMs;
+        tracking.moveState.NextHazardDecisionTime =
+            now + std::chrono::milliseconds(tuning.commitWindowMs);
         tracking.moveState.EscapeStartedTime      = now;
         tracking.moveState.SafeAnchorGuid =
             anchor ? anchor->GetGUID() : ObjectGuid::Empty;

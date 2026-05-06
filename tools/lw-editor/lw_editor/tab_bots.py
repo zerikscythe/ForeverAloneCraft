@@ -14,6 +14,7 @@ from .db import db
 from .helpers import lbl, entry_w, combo_w, check_w, unix_text
 from .widgets import ProfileHeaderFrame, DefaultProfilePicker
 from .rotation import RotationEditor, _class_from_spec
+from .ooc_panel import OocProfilePanel
 
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -200,19 +201,35 @@ class BotProfilesTab(ttk.Frame):
         ttk.Button(btn, text="+ New slot",  command=self._new_profile).pack(side=tk.LEFT, padx=2)
         ttk.Button(btn, text="✕ Delete",    command=self._del_profile).pack(side=tk.LEFT, padx=2)
 
-        # ── Right: profile editor ────────────────────────────────────────────
+        # ── Right: character-level OOC behaviour + per-slot profile editor ───
         right = ttk.Frame(pane)
         pane.add(right, weight=1)
 
-        self._hdr = ProfileHeaderFrame(right, is_default=False)
+        # OOC panel — character-level, one set of settings regardless of slot.
+        self._ooc = OocProfilePanel(right)
+        self._ooc.pack(fill=tk.X, padx=4, pady=4)
+
+        ttk.Separator(right, orient="horizontal").pack(fill=tk.X)
+
+        # Profile header and slot-level editor below.
+        slot_frame = ttk.Frame(right)
+        slot_frame.pack(fill=tk.BOTH, expand=True)
+
+        self._hdr = ProfileHeaderFrame(slot_frame, is_default=False)
         self._hdr.pack(fill=tk.X, padx=4, pady=4)
 
-        save_row = ttk.Frame(right)
+        save_row = ttk.Frame(slot_frame)
         save_row.pack(fill=tk.X, padx=4)
-        ttk.Button(save_row, text="💾 Save profile header",
+        ttk.Button(save_row, text="💾 Save profile",
                    command=self._save_header).pack(side=tk.LEFT, padx=2)
 
-        ttk.Separator(right, orient="horizontal").pack(fill=tk.X, pady=4)
+        ttk.Separator(slot_frame, orient="horizontal").pack(fill=tk.X, pady=4)
+
+        profile_nb = ttk.Notebook(slot_frame)
+        profile_nb.pack(fill=tk.BOTH, expand=True, padx=4, pady=4)
+
+        combat_tab = ttk.Frame(profile_nb)
+        profile_nb.add(combat_tab, text="  Combat  ")
 
         cbs = dict(
             load_entries    = db.load_bot_entries,
@@ -224,9 +241,9 @@ class BotProfilesTab(ttk.Frame):
             upsert_condition= db.upsert_bot_condition,
             delete_condition= db.delete_bot_condition,
         )
-        self._rot = RotationEditor(right, cbs)
+        self._rot = RotationEditor(combat_tab, cbs)
         self._hdr._on_class_change_cb = self._rot.set_class
-        self._rot.pack(fill=tk.BOTH, expand=True, padx=4, pady=4)
+        self._rot.pack(fill=tk.BOTH, expand=True)
 
     def _account_label(self, row: dict) -> str:
         return f"{row.get('username', '')} [{row.get('account_id')}] ({row.get('char_count', 0)} chars)"
@@ -284,7 +301,7 @@ class BotProfilesTab(ttk.Frame):
         if not db.ok():
             return
         try:
-            self._accounts = db.load_player_accounts()
+            self._accounts = db.load_bot_pool_accounts()
             labels = [self._account_label(row) for row in self._accounts]
             self._account_by_label = {self._account_label(row): row.get("account_id") for row in self._accounts}
             self._acct_cb.configure(values=labels)
@@ -308,6 +325,8 @@ class BotProfilesTab(ttk.Frame):
             return
         # Pre-load class spells so the rotation editor is ready when a profile loads
         self._rot.set_class(self._sel_char.get("class"))
+        self._hdr.set_class_from_character(self._sel_char.get("class"))
+        self._ooc.load_for_char(self._sel_char["guid"])
         try:
             self._profiles = db.load_bot_profiles(guid)
             self._prof_lb.delete(0, tk.END)
@@ -316,6 +335,7 @@ class BotProfilesTab(ttk.Frame):
                     f"Slot {p['slot']}: {p.get('profile_name') or '(unnamed)'}")
             self._sel_prof = None
             self._hdr.clear()
+            self._ooc.clear()
             self._rot.clear()
         except MySQLError as e:
             messagebox.showerror("DB error", str(e))
@@ -326,6 +346,7 @@ class BotProfilesTab(ttk.Frame):
             return
         self._sel_prof = self._profiles[sel[0]]
         self._hdr.load(self._sel_prof, forced_class_id=self._sel_char.get("class") if self._sel_char else None)
+        self._ooc.load(self._sel_prof)
         self._rot.load_profile(self._sel_prof["profile_id"])
 
     def _save_header(self):
@@ -472,6 +493,7 @@ class BotProfilesTab(ttk.Frame):
             db.delete_bot_profile(self._sel_prof["profile_id"])
             self._sel_prof = None
             self._on_char_select()
+            self._ooc.clear()
             self._rot.clear()
         except MySQLError as e:
             messagebox.showerror("DB error", str(e))

@@ -63,6 +63,69 @@ enum class BotCombatConditionOperator : std::uint8_t
     Exists = 8
 };
 
+enum class BotBuffScope : std::uint8_t
+{
+    Off    = 0,  // never cast maintenance buffs
+    Self   = 1,  // buff only this bot
+    Party  = 2,  // buff all connected party members
+};
+
+// Bitmask for item categories that are always looted regardless of lootQualityMin.
+// Gold is always collected implicitly and has no flag here.
+// Bit positions mirror LOOT_CATEGORY_DEFS in constants.py.
+enum BotLootCategoryFlags : uint32_t
+{
+    LootCatNone         = 0x00,
+    LootCatClothLeather = 0x01,  // Trade Goods class 7, subclass 5 & 6
+    LootCatOreMetal     = 0x02,  // Trade Goods class 7, subclass 7
+    LootCatHerbs        = 0x04,  // Trade Goods class 7, subclass 1
+    LootCatEnchanting   = 0x08,  // Trade Goods class 7, subclass 10
+    LootCatRecipes      = 0x10,  // Item class 9 (any subclass)
+    LootCatGems         = 0x20,  // Item class 3 (any subclass)
+};
+
+enum class BotGatherNodes : uint8_t
+{
+    Off = 0,
+    On  = 1,   // auto-detect profession; gather herbs & ore while travelling
+};
+
+enum class BotGatherSkin : uint8_t
+{
+    Off = 0,
+    On  = 1,   // skin corpses after the kill if the bot has skinning
+};
+
+// Out-of-combat maintenance behaviour attached to a per-bot profile slot.
+// NULL/absent optional values fall back to the global living_world_bot_global_config.
+struct BotOocBehavior
+{
+    // ── Buff maintenance ────────────────────────────────────────────────────
+    BotBuffScope    buffScope        = BotBuffScope::Party;
+    std::uint16_t   buffReapplySecs  = 30;   // re-cast when aura has < N seconds left
+    bool            buffOnSpawn      = true; // cast immediately when bot logs in
+
+    // ── Movement override ───────────────────────────────────────────────────
+    // std::nullopt  → use global role-based distance
+    std::optional<float> followDistOverride;
+
+    // ── Looting ─────────────────────────────────────────────────────────────
+    // std::nullopt  → use global auto_loot setting
+    std::optional<bool>  autoLootOverride;
+    std::uint8_t    lootQualityMin      = 0;    // 0=all, 1=white+, 2=green+, 3=blue+, 4=purple+
+    uint32_t        lootCategoryFlags   = 0;    // BotLootCategoryFlags — always loot these even if below quality min
+
+    // ── Gathering ───────────────────────────────────────────────────────────
+    BotGatherNodes  gatherNodes      = BotGatherNodes::Off;
+    BotGatherSkin   gatherSkin       = BotGatherSkin::Off;
+    std::uint8_t    skinLootQualityMax = 0;  // skin if all loot <= this quality (0=gray only)
+
+    // ── Future: chat reactions ───────────────────────────────────────────────
+    // Placeholder — implementation deferred.
+    // bot_chat_reactions table (trigger_type, message_template, emote_id) will
+    // reference profile_id once the loot/gather events are hooked up.
+};
+
 struct BotCombatProfileSettings
 {
     BotCombatConservationMode conservationMode =

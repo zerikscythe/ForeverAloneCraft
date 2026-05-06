@@ -13,6 +13,7 @@ from .tab_bots import BotProfilesTab, DefaultProfilesTab
 from .tab_character import CharacterEditorTab
 from .tab_accounts import AccountsTab
 from .tab_diagnostics import DiagnosticsTab
+from .tab_hazard_config import HazardConfigTab
 
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -288,16 +289,18 @@ class App(tk.Tk):
     def _build_notebook(self):
         self.nb = ttk.Notebook(self)
         self.nb.pack(fill=tk.BOTH, expand=True, padx=6, pady=6)
+        self.tab_hazard_config = HazardConfigTab(self.nb)
         self.tab_defaults = DefaultProfilesTab(self.nb)
         self.tab_profiles = BotProfilesTab(self.nb)
         self.tab_character_editor = CharacterEditorTab(self.nb)
         self.tab_accounts = AccountsTab(self.nb)
         self.tab_diagnostics = DiagnosticsTab(self.nb)
-        self.nb.add(self.tab_defaults, text="  Class Defaults  ")
-        self.nb.add(self.tab_profiles, text="  Bot Profiles  ")
+        self.nb.add(self.tab_hazard_config,    text="  🌐 Global Rules  ")
+        self.nb.add(self.tab_defaults,         text="  Class Defaults  ")
+        self.nb.add(self.tab_profiles,         text="  Bot Profiles  ")
         self.nb.add(self.tab_character_editor, text="  Character Editor  ")
-        self.nb.add(self.tab_accounts, text="  Accounts  ")
-        self.nb.add(self.tab_diagnostics, text="  🔧 Diagnostics  ")
+        self.nb.add(self.tab_accounts,         text="  Accounts  ")
+        self.nb.add(self.tab_diagnostics,      text="  🔧 Diagnostics  ")
 
     def _connect(self):
         try:
@@ -331,6 +334,7 @@ class App(tk.Tk):
             self.tab_profiles.refresh()
             self.tab_character_editor.refresh()
             self.tab_accounts.refresh()
+            self.tab_hazard_config.refresh()
             self.tab_diagnostics.refresh()
         except (MySQLError, ValueError, ImportError) as e:
             self.v_status.set(f"✗ {e}")

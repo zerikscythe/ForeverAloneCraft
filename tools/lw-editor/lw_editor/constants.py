@@ -122,6 +122,38 @@ ITEM_QUALITY_COLORS = {
     4: "Epic", 5: "Legendary", 6: "Artifact", 7: "Heirloom",
 }
 
+# ── Loot category exception flags ──────────────────────────────────────────
+# Stored as a bitmask in living_world_bot_combat_profile.loot_category_flags.
+# Items whose (item_class, item_subclass) fall into a flagged category are
+# always looted regardless of loot_quality_min.
+# Gold is always collected implicitly and has no flag.
+#
+# (bit, label, description, set of (item_class, item_subclass or None=any))
+LOOT_CATEGORY_DEFS: list[tuple[int, str, str, set]] = [
+    (0x01, "Cloth & Leather",
+     "Bolts of cloth, hides, leather strips — Trade Goods class 7 sub 5/6",
+     {(7, 5), (7, 6)}),
+    (0x02, "Ore & Stone",
+     "Raw ore and stone — Trade Goods class 7 sub 7",
+     {(7, 7)}),
+    (0x04, "Herbs",
+     "Gathered herbs and plants — Trade Goods class 7 sub 1",
+     {(7, 1)}),
+    (0x08, "Enchanting Mats",
+     "Dusts, essences, shards — Trade Goods class 7 sub 10",
+     {(7, 10)}),
+    (0x10, "Recipes & Formulas",
+     "All recipe/formula/pattern items — Item class 9",
+     {(9, None)}),
+    (0x20, "Gems",
+     "Cut and uncut gems — Item class 3",
+     {(3, None)}),
+]
+# Flat list of (bit, label) for UI use
+LOOT_CATEGORY_FLAGS: list[tuple[int, str]] = [
+    (bit, label) for bit, label, _, __ in LOOT_CATEGORY_DEFS
+]
+
 ITEM_MOD_NAMES = {
     0: "Mana", 1: "Health", 3: "Agility", 4: "Strength",
     5: "Intellect", 6: "Spirit", 7: "Stamina",

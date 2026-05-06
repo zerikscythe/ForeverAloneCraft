@@ -17,7 +17,7 @@ BotCombatResolvedProfile BuildResolvedProfile(
     std::optional<model::BotCombatDefaultProfileRecord> const& defaultProfile)
 {
     BotCombatResolvedProfile resolved;
-    resolved.settings = profile.settings;
+    resolved.settings    = profile.settings;
     resolved.interruptEntries = profile.interruptEntries;
     resolved.rotationEntries = profile.rotationEntries;
 

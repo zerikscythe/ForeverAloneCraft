@@ -167,28 +167,273 @@ class DBCtx:
         self._migrate_schema()
 
     def _migrate_schema(self):
-        """Apply any lightweight schema additions needed by the editor.
-        Uses IF NOT EXISTS checks so it is safe to run on every connect."""
+        """Run named migrations exactly once each.
+
+        Each entry in _MIGRATIONS is a (migration_id, db_attr, sql) tuple.
+        The migration_id is recorded in living_world_editor_migrations after
+        the SQL runs successfully.  Re-connecting never re-runs a migration
+        that already completed — so edits made through the editor are safe.
+
+        To add a future schema change: append a new tuple with a unique id.
+        Never edit or reorder existing entries.
+        """
         if not self.ok():
             return
-        migrations = [
-            # Add class_key to default profiles so the class combobox
-            # can be restored without guessing from spec name.
-            (self.world,
-             "SELECT COUNT(*) AS c FROM information_schema.COLUMNS "
-             "WHERE TABLE_SCHEMA='acore_world' "
-             "AND TABLE_NAME='living_world_bot_combat_default_profile' "
-             "AND COLUMN_NAME='class_key'",
-             "ALTER TABLE acore_world.living_world_bot_combat_default_profile "
-             "ADD COLUMN class_key VARCHAR(20) DEFAULT NULL AFTER display_name"),
-        ]
-        for conn, check_sql, alter_sql in migrations:
+
+        # Ensure the migration tracking table exists first.
+        try:
+            self.run(self.world,
+                "CREATE TABLE IF NOT EXISTS living_world_editor_migrations ("
+                "  migration_id VARCHAR(100) NOT NULL,"
+                "  applied_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+                "  PRIMARY KEY (migration_id)"
+                ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci")
+        except Exception as e:
+            print(f"[lw-editor] Could not create migration table: {e}", flush=True)
+            return
+
+        applied = {
+            r.get("migration_id")
+            for r in (self.q(self.world,
+                "SELECT migration_id FROM living_world_editor_migrations") or [])
+        }
+
+        for migration_id, db_attr, sql in self._MIGRATIONS:
+            if migration_id in applied:
+                continue
+            conn = getattr(self, db_attr, None)
+            if conn is None:
+                continue
             try:
-                rows = self.q(conn, check_sql)
-                if rows and int(rows[0].get("c", 0)) == 0:
-                    self.run(conn, alter_sql)
-            except Exception:
-                pass  # table may not exist yet (fresh server), silently skip
+                self.run(conn, sql)
+            except Exception as e:
+                import mysql.connector
+                # Error 1060 = Duplicate column name: column already exists,
+                # desired state is already reached — mark applied and move on.
+                # Error 1050 = Table already exists: same logic.
+                if hasattr(e, 'errno') and e.errno in (1050, 1060):
+                    pass
+                else:
+                    print(f"[lw-editor] Migration '{migration_id}' failed: {e}", flush=True)
+                    continue
+            try:
+                self.run(self.world,
+                    "INSERT IGNORE INTO living_world_editor_migrations (migration_id) VALUES (%s)",
+                    (migration_id,))
+                applied.add(migration_id)
+            except Exception as e:
+                print(f"[lw-editor] Could not record migration '{migration_id}': {e}", flush=True)
+
+    # -----------------------------------------------------------------------
+    # Migration registry — append only, never edit existing entries.
+    # -----------------------------------------------------------------------
+    _MIGRATIONS = [
+
+        # ── Pre-existing column addition ────────────────────────────────────
+        ("2024_01_combat_profile_class_key",
+         "world",
+         "ALTER TABLE living_world_bot_combat_default_profile "
+         "ADD COLUMN class_key VARCHAR(20) DEFAULT NULL AFTER display_name"),
+
+        # ── Hazard sensor tables ─────────────────────────────────────────────
+        ("2025_01_hazard_auras_table",
+         "world",
+         "CREATE TABLE IF NOT EXISTS living_world_hazard_auras ("
+         "  id       INT UNSIGNED NOT NULL AUTO_INCREMENT,"
+         "  spell_id INT UNSIGNED NOT NULL,"
+         "  severity FLOAT        NOT NULL DEFAULT 1.0,"
+         "  notes    VARCHAR(255)          DEFAULT NULL,"
+         "  enabled  TINYINT(1)   NOT NULL DEFAULT 1,"
+         "  PRIMARY KEY (id),"
+         "  UNIQUE KEY uq_spell (spell_id)"
+         ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"),
+
+        ("2025_02_hazard_auras_seed",
+         "world",
+         "INSERT IGNORE INTO living_world_hazard_auras (spell_id, severity, notes) VALUES"
+         "  (28524, 1.0, 'Naxxramas - Slime Pool (Grobbulus)'),"
+         "  (26575, 1.0, 'Generic - Void Zone'),"
+         "  (37591, 1.0, 'Serpentshrine Cavern - Toxic Spores'),"
+         "  (40923, 1.0, 'Black Temple - Fel Eruption'),"
+         "  (46228, 1.0, 'Sunwell - Dark Decay (Eredar Twins)'),"
+         "  (63018, 1.5, 'Ulduar - Searing Flames (Ignis)'),"
+         "  (64290, 1.5, 'Ulduar - Saronite Vapors (General Vezax)'),"
+         "  (67480, 1.0, 'Trial of the Crusader - Firebomb (Jaraxxus)'),"
+         "  (70952, 2.0, 'Icecrown Citadel - Defile (Lich King)'),"
+         "  (72754, 1.5, 'Icecrown Citadel - Frozen Orb ground effect'),"
+         "  (74527, 1.5, 'Ruby Sanctum - Combustion ground fire')"),
+
+        ("2025_03_hazard_class_rules_table",
+         "world",
+         "CREATE TABLE IF NOT EXISTS living_world_hazard_class_rules ("
+         "  id                     INT UNSIGNED     NOT NULL AUTO_INCREMENT,"
+         "  class_id               TINYINT UNSIGNED NOT NULL,"
+         "  skip_escape            TINYINT(1)       NOT NULL DEFAULT 0,"
+         "  owner_hp_gate_pct      FLOAT            NOT NULL DEFAULT 0.0,"
+         "  requires_aggro_to_skip TINYINT(1)       NOT NULL DEFAULT 0,"
+         "  notes                  VARCHAR(255)              DEFAULT NULL,"
+         "  PRIMARY KEY (id),"
+         "  UNIQUE KEY uq_class (class_id)"
+         ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"),
+
+        ("2025_04_hazard_class_rules_seed",
+         "world",
+         "INSERT IGNORE INTO living_world_hazard_class_rules"
+         "  (class_id, skip_escape, owner_hp_gate_pct, requires_aggro_to_skip, notes) VALUES"
+         "  (1,  1, 0.0, 1, 'Warrior - skip escape only while tanking'),"
+         "  (6,  1, 0.0, 1, 'Death Knight - skip escape only while tanking'),"
+         "  (2,  0, 50.0, 0, 'Paladin - suppress escape when healing emergency'),"
+         "  (7,  0, 50.0, 0, 'Shaman - suppress escape when healing emergency'),"
+         "  (11, 0, 50.0, 0, 'Druid - suppress escape when healing emergency')"),
+
+        ("2025_05_hazard_config_table",
+         "world",
+         "CREATE TABLE IF NOT EXISTS living_world_hazard_config ("
+         "  config_key   VARCHAR(64) NOT NULL,"
+         "  config_value FLOAT       NOT NULL,"
+         "  notes        VARCHAR(255)         DEFAULT NULL,"
+         "  PRIMARY KEY (config_key)"
+         ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"),
+
+        ("2025_06_hazard_config_seed",
+         "world",
+         "INSERT IGNORE INTO living_world_hazard_config (config_key, config_value, notes) VALUES"
+         "  ('damage_threshold_pct',      2.0,    'HP drop per 500ms tick to count as damage'),"
+         "  ('consecutive_damage_ticks',  2.0,    'Ticks needed for layer-2 danger declaration'),"
+         "  ('max_movement_yards',        2.0,    'Max movement between ticks before ignoring HP drop'),"
+         "  ('anchor_search_radius',     40.0,    'Yards to search for a clean party anchor'),"
+         "  ('escape_step_yards',         5.0,    'Yards to step toward anchor per escape tick'),"
+         "  ('commit_window_ms',       2000.0,    'Ms to keep the same anchor before re-evaluating')"),
+
+        # ── Global bot behaviour ─────────────────────────────────────────────
+        ("2025_07_bot_global_config_table",
+         "world",
+         "CREATE TABLE IF NOT EXISTS living_world_bot_global_config ("
+         "  config_key   VARCHAR(64) NOT NULL,"
+         "  config_value FLOAT       NOT NULL,"
+         "  notes        VARCHAR(255)         DEFAULT NULL,"
+         "  PRIMARY KEY (config_key)"
+         ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"),
+
+        ("2025_08_bot_global_config_seed",
+         "world",
+         "INSERT IGNORE INTO living_world_bot_global_config (config_key, config_value, notes) VALUES"
+         "  ('follow_distance',   2.0, 'Yards bots keep from owner while following'),"
+         "  ('follow_formation',  0.0, '0=Ring  1=V-shape  2=Line  3=Cluster'),"
+         "  ('follow_slot_count', 7.0, 'Number of positions in Ring formation (3-9)'),"
+         "  ('mount_with_owner',  1.0, '1=bots mount when owner mounts (implementation pending)'),"
+         "  ('auto_loot',         0.0, '1=bots auto-loot nearby corpses (implementation pending)')"),
+
+        # ── Role-based hazard escape rules (replaces class-based table) ──────
+        ("2025_09_hazard_role_rules_table",
+         "world",
+         "CREATE TABLE IF NOT EXISTS living_world_hazard_role_rules ("
+         "  role_key               VARCHAR(20)  NOT NULL,"
+         "  skip_escape            TINYINT(1)   NOT NULL DEFAULT 0,"
+         "  owner_hp_gate_pct      FLOAT        NOT NULL DEFAULT 0.0,"
+         "  requires_aggro_to_skip TINYINT(1)   NOT NULL DEFAULT 0,"
+         "  notes                  VARCHAR(255)          DEFAULT NULL,"
+         "  PRIMARY KEY (role_key)"
+         ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"),
+
+        ("2025_10_hazard_role_rules_seed",
+         "world",
+         "INSERT IGNORE INTO living_world_hazard_role_rules"
+         "  (role_key, skip_escape, owner_hp_gate_pct, requires_aggro_to_skip, notes) VALUES"
+         "  ('TANK',          1, 0.0,  1, 'Skip escape only while actively holding aggro'),"
+         "  ('HEALER',        0, 50.0, 0, 'Suppress escape when owner HP is critical'),"
+         "  ('HYBRID_HEALER', 0, 50.0, 0, 'Suppress escape when owner HP is critical'),"
+         "  ('MELEE_DPS',     0, 0.0,  0, 'Always escape - no special handling'),"
+         "  ('RANGED_DPS',    0, 0.0,  0, 'Always escape - no special handling')"),
+
+        # ── Role-based follow distances ──────────────────────────────────────
+        ("2025_11_bot_follow_distance_by_role",
+         "world",
+         "INSERT IGNORE INTO living_world_bot_global_config (config_key, config_value, notes) VALUES"
+         "  ('follow_distance',         2.0, 'Fallback follow yards when role is unknown (Passive mode)'),"
+         "  ('follow_distance_melee',   1.0, 'Follow yards: Tank and Melee DPS'),"
+         "  ('follow_distance_healer',  1.5, 'Follow yards: Healer and Hybrid Healer'),"
+         "  ('follow_distance_ranged',  2.5, 'Follow yards: Ranged and caster DPS')"),
+
+        # ── OOC behavior columns on bot combat profile ───────────────────────
+        ("2025_12_bot_profile_ooc_buff_scope",
+         "chars",
+         "ALTER TABLE living_world_bot_combat_profile "
+         "ADD COLUMN buff_scope TINYINT NOT NULL DEFAULT 2 "
+         "COMMENT '0=off 1=self 2=party'"),
+
+        ("2025_13_bot_profile_ooc_buff_reapply",
+         "chars",
+         "ALTER TABLE living_world_bot_combat_profile "
+         "ADD COLUMN buff_reapply_secs SMALLINT NOT NULL DEFAULT 30 "
+         "COMMENT 'Re-cast when aura has fewer than N seconds remaining'"),
+
+        ("2025_14_bot_profile_ooc_buff_on_spawn",
+         "chars",
+         "ALTER TABLE living_world_bot_combat_profile "
+         "ADD COLUMN buff_on_spawn TINYINT NOT NULL DEFAULT 1"),
+
+        ("2025_15_bot_profile_ooc_follow_override",
+         "chars",
+         "ALTER TABLE living_world_bot_combat_profile "
+         "ADD COLUMN follow_dist_override FLOAT DEFAULT NULL "
+         "COMMENT 'NULL = use global role-based distance'"),
+
+        ("2025_16_bot_profile_ooc_auto_loot",
+         "chars",
+         "ALTER TABLE living_world_bot_combat_profile "
+         "ADD COLUMN auto_loot_override TINYINT DEFAULT NULL "
+         "COMMENT 'NULL=global  0=off  1=on'"),
+
+        ("2025_17_bot_profile_ooc_loot_quality",
+         "chars",
+         "ALTER TABLE living_world_bot_combat_profile "
+         "ADD COLUMN loot_quality_min TINYINT NOT NULL DEFAULT 0 "
+         "COMMENT '0=all  1=white+  2=green+  3=blue+  4=purple+'"),
+
+        ("2025_18_bot_profile_ooc_gather_nodes",
+         "chars",
+         "ALTER TABLE living_world_bot_combat_profile "
+         "ADD COLUMN gather_nodes TINYINT NOT NULL DEFAULT 0 "
+         "COMMENT '0=off  1=mining  2=herbing  3=both'"),
+
+        ("2025_19_bot_profile_ooc_gather_skin",
+         "chars",
+         "ALTER TABLE living_world_bot_combat_profile "
+         "ADD COLUMN gather_skin TINYINT NOT NULL DEFAULT 0 "
+         "COMMENT '0=off  1=if loot below threshold  2=always'"),
+
+        ("2025_20_bot_profile_ooc_skin_quality",
+         "chars",
+         "ALTER TABLE living_world_bot_combat_profile "
+         "ADD COLUMN skin_loot_quality_max TINYINT NOT NULL DEFAULT 0 "
+         "COMMENT '0=gray only 1=white and below 2=green and below etc.'"),
+
+        ("2025_21_bot_profile_loot_category_flags",
+         "chars",
+         "ALTER TABLE living_world_bot_combat_profile "
+         "ADD COLUMN loot_category_flags INT NOT NULL DEFAULT 0 "
+         "COMMENT 'Bitmask: 0x01=cloth/leather 0x02=ore 0x04=herbs 0x08=enchanting 0x10=recipes 0x20=gems'"),
+
+        # ── Per-character OOC config table (replaces per-profile OOC columns) ─
+        ("2025_22_bot_ooc_config_table",
+         "chars",
+         "CREATE TABLE IF NOT EXISTS living_world_bot_ooc_config ("
+         "  source_character_guid BIGINT UNSIGNED NOT NULL,"
+         "  buff_scope             TINYINT  NOT NULL DEFAULT 2,"
+         "  buff_reapply_secs      SMALLINT NOT NULL DEFAULT 30,"
+         "  buff_on_spawn          TINYINT  NOT NULL DEFAULT 1,"
+         "  follow_dist_override   FLOAT    DEFAULT NULL,"
+         "  auto_loot_override     TINYINT  DEFAULT NULL,"
+         "  loot_quality_min       TINYINT  NOT NULL DEFAULT 0,"
+         "  loot_category_flags    INT      NOT NULL DEFAULT 63,"
+         "  gather_nodes           TINYINT  NOT NULL DEFAULT 0,"
+         "  gather_skin            TINYINT  NOT NULL DEFAULT 0,"
+         "  skin_loot_quality_max  TINYINT  NOT NULL DEFAULT 0,"
+         "  PRIMARY KEY (source_character_guid)"
+         ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"),
+
+    ]
 
     def _close_ssh_tunnel(self):
         """Close SSH tunnel if active."""
@@ -593,6 +838,10 @@ class DBCtx:
                 "test" in lowered)
 
     # ── Spell name lookup ────────────────────────────────────────────────────
+
+    def spell_name_cache(self) -> dict[int, str]:
+        """Public access to the full {spell_id: name} mapping."""
+        return self._load_json_spell_cache()
 
     def spell_name(self, spell_id: int) -> str:
         """Try to resolve a human-readable spell name."""
@@ -1193,6 +1442,61 @@ class DBCtx:
             "HAVING COUNT(c.guid) > 0 "
             "ORDER BY a.username")
 
+    def load_bot_pool_accounts(self):
+        """Accounts that are registered in the bot pool — the only accounts
+        whose clone characters should ever have combat profiles."""
+        return self.q(self.auth,
+            "SELECT a.id AS account_id, a.username, COUNT(c.guid) AS char_count "
+            "FROM account a "
+            "INNER JOIN living_world_bot_account_pool p ON p.account_id = a.id "
+            "LEFT JOIN acore_characters.characters c ON c.account = a.id "
+            "GROUP BY a.id, a.username "
+            "ORDER BY a.username")
+
+    def load_bot_ooc_config(self, source_char_guid: int) -> dict:
+        """Load OOC config for a bot character. Returns defaults if no row exists."""
+        rows = self.q(self.chars,
+            "SELECT buff_scope, buff_reapply_secs, buff_on_spawn, "
+            "follow_dist_override, auto_loot_override, loot_quality_min, "
+            "loot_category_flags, gather_nodes, gather_skin, skin_loot_quality_max "
+            "FROM living_world_bot_ooc_config WHERE source_character_guid=%s",
+            (source_char_guid,))
+        if rows:
+            return rows[0]
+        # Return defaults — server will INSERT on first C++ load; editor mirrors defaults here.
+        return {
+            "buff_scope": 2, "buff_reapply_secs": 30, "buff_on_spawn": 1,
+            "follow_dist_override": None, "auto_loot_override": None,
+            "loot_quality_min": 0, "loot_category_flags": 0x3F,
+            "gather_nodes": 0, "gather_skin": 0, "skin_loot_quality_max": 0,
+        }
+
+    def save_bot_ooc_config(self, source_char_guid: int, p: dict):
+        self.run(self.chars,
+            "INSERT INTO living_world_bot_ooc_config "
+            "(source_character_guid, buff_scope, buff_reapply_secs, buff_on_spawn, "
+            "follow_dist_override, auto_loot_override, loot_quality_min, "
+            "loot_category_flags, gather_nodes, gather_skin, skin_loot_quality_max) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) "
+            "ON DUPLICATE KEY UPDATE "
+            "buff_scope=%s, buff_reapply_secs=%s, buff_on_spawn=%s, "
+            "follow_dist_override=%s, auto_loot_override=%s, loot_quality_min=%s, "
+            "loot_category_flags=%s, gather_nodes=%s, gather_skin=%s, skin_loot_quality_max=%s",
+            (source_char_guid,
+             p.get("buff_scope", 2), p.get("buff_reapply_secs", 30),
+             p.get("buff_on_spawn", 1), p.get("follow_dist_override"),
+             p.get("auto_loot_override"), p.get("loot_quality_min", 0),
+             p.get("loot_category_flags", 0x3F),
+             p.get("gather_nodes", 0), p.get("gather_skin", 0),
+             p.get("skin_loot_quality_max", 0),
+             # repeat for ON DUPLICATE UPDATE
+             p.get("buff_scope", 2), p.get("buff_reapply_secs", 30),
+             p.get("buff_on_spawn", 1), p.get("follow_dist_override"),
+             p.get("auto_loot_override"), p.get("loot_quality_min", 0),
+             p.get("loot_category_flags", 0x3F),
+             p.get("gather_nodes", 0), p.get("gather_skin", 0),
+             p.get("skin_loot_quality_max", 0)))
+
     def load_bot_profiles(self, source_char_guid: int):
         return self.q(self.chars,
             "SELECT * FROM living_world_bot_combat_profile "
@@ -1207,12 +1511,23 @@ class DBCtx:
                 "spec_override_key=%s, role_override_key=%s, conservation_mode=%s, "
                 "mana_low_water=%s, mana_high_water=%s, enable_down_rank=%s, "
                 "down_rank_floor=%s, default_aoe_mode=%s, default_aoe_min_targets=%s, "
-                "default_aoe_scan_radius=%s WHERE profile_id=%s",
+                "default_aoe_scan_radius=%s, "
+                "buff_scope=%s, buff_reapply_secs=%s, buff_on_spawn=%s, "
+                "follow_dist_override=%s, auto_loot_override=%s, loot_quality_min=%s, "
+                "gather_nodes=%s, gather_skin=%s, skin_loot_quality_max=%s, "
+                "loot_category_flags=%s "
+                "WHERE profile_id=%s",
                 (p["slot"], p["profile_name"], p["guessed_spec_key"], p["guessed_role_key"],
                  p.get("spec_override_key"), p.get("role_override_key"),
                  p["conservation_mode"], p["mana_low_water"], p["mana_high_water"],
                  p["enable_down_rank"], p["down_rank_floor"], p["default_aoe_mode"],
-                 p["default_aoe_min_targets"], p["default_aoe_scan_radius"], p["profile_id"]))
+                 p["default_aoe_min_targets"], p["default_aoe_scan_radius"],
+                 p.get("buff_scope", 2), p.get("buff_reapply_secs", 30),
+                 p.get("buff_on_spawn", 1), p.get("follow_dist_override"),
+                 p.get("auto_loot_override"), p.get("loot_quality_min", 0),
+                 p.get("gather_nodes", 0), p.get("gather_skin", 0),
+                 p.get("skin_loot_quality_max", 0),
+                 p.get("loot_category_flags", 0), p["profile_id"]))
             return p["profile_id"]
         return self.run(self.chars,
             "INSERT INTO living_world_bot_combat_profile "

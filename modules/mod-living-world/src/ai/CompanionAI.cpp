@@ -17,11 +17,16 @@
 #include "integration/SqlBotCombatDefaultProfileRepository.h"
 #include "integration/SqlBotCombatProfileRepository.h"
 #include "integration/SqlBotCombatProfileSelectionRepository.h"
+#include "integration/SqlBotGlobalConfigRepository.h"
 #include "model/BotCombatMode.h"
 #include "model/BotCombatProfile.h"
+#include "model/BotGlobalConfig.h"
+#include "service/BotOocConfigService.h"
+#include "integration/SqlBotOocConfigRepository.h"
 #include "service/BotCombatDoctrineResolver.h"
 #include "service/BotCombatProfilePreparationService.h"
 #include "service/BotCombatRuntimeEvaluator.h"
+#include "service/BotGlobalConfigService.h"
 #include "service/BotPlayerRegistry.h"
 #include "service/SimpleBotCombatSpecRoleResolver.h"
 
@@ -236,6 +241,20 @@ constexpr auto DoctrineCacheTtl = std::chrono::seconds(5);
 
 std::uint32_t FindBestKnownSpellInChain(Player* bot, std::uint32_t baseSpellId);
 
+service::BotGlobalConfigService& GetGlobalConfigService()
+{
+    static integration::SqlBotGlobalConfigRepository repo;
+    static service::BotGlobalConfigService            service(repo);
+    return service;
+}
+
+service::BotOocConfigService& GetOocConfigService()
+{
+    static integration::SqlBotOocConfigRepository repo;
+    static service::BotOocConfigService           service(repo);
+    return service;
+}
+
 service::BotCombatDoctrineResolver& GetDoctrineResolver()
 {
     static integration::SqlAccountAltRuntimeRepository runtimeRepository;
@@ -331,7 +350,7 @@ BotCombatDoctrine LoadCombatDoctrine(Player* bot, Player* owner)
             bot->GetGUID().GetCounter(),
             bot->getClass(),
             ownerAccountId);
-    doctrine.settings = resolution.profile.settings;
+    doctrine.settings    = resolution.profile.settings;
 
     doctrine.role = ResolveDoctrineRole(
         bot->getClass(),
@@ -561,7 +580,6 @@ std::uint32_t FindBestKnownSpellInChain(Player* bot, std::uint32_t baseSpellId)
 }
 
 // Returns true if the target has an aura from any rank of the given spell chain.
-// Works correctly for both single-rank spells and multi-rank chains.
 bool HasAuraFromChain(Unit const* target, std::uint32_t baseSpellId)
 {
     std::uint32_t candidate = sSpellMgr->GetLastSpellInChain(baseSpellId);
@@ -572,6 +590,34 @@ bool HasAuraFromChain(Unit const* target, std::uint32_t baseSpellId)
         candidate = sSpellMgr->GetPrevSpellInChain(candidate);
     }
     return false;
+}
+
+// Returns the remaining duration in milliseconds of the highest-rank aura from
+// the spell chain on target. Returns 0 if the aura is not present.
+int32 AuraRemainingMsFromChain(Unit const* target, std::uint32_t baseSpellId)
+{
+    std::uint32_t candidate = sSpellMgr->GetLastSpellInChain(baseSpellId);
+    while (candidate)
+    {
+        if (Aura const* aura = target->GetAura(candidate))
+        {
+            int32 dur = aura->GetDuration();
+            return dur > 0 ? dur : 0;
+        }
+        candidate = sSpellMgr->GetPrevSpellInChain(candidate);
+    }
+    return 0;
+}
+
+// Returns true if the aura from baseSpellId on target is missing or has fewer
+// than thresholdSecs seconds of duration remaining.
+bool AuraNeedsRefresh(Unit const* target, std::uint32_t baseSpellId,
+                      std::uint16_t thresholdSecs)
+{
+    int32 remainingMs = AuraRemainingMsFromChain(target, baseSpellId);
+    if (remainingMs == 0)
+        return true;
+    return remainingMs < static_cast<int32>(thresholdSecs) * 1000;
 }
 
 // Returns true when this bot can still fire mana-based spells. Non-mana
@@ -781,134 +827,111 @@ std::uint32_t GetHybridDamageSpell(Player* bot, Unit* target)
 // ---------------------------------------------------------------
 
 // Core buff application — no combat guard. Called by both the idle tick and
-// the explicit party buff command.
-void ApplyBotBuff(Player* bot, Player* owner)
+// the on-spawn path. Respects buffScope (self/party) and buffReapplySecs.
+void ApplyBotBuff(Player* bot, Player* owner, model::BotOocBehavior const& ooc)
 {
     if (bot->IsNonMeleeSpellCast(false))
         return;
+    if (ooc.buffScope == model::BotBuffScope::Off)
+        return;
+
+    uint16_t const thresh = ooc.buffReapplySecs;
+
+    // Helper: resolve the target list based on scope.
+    // Self scope: {bot}. Party scope: all connected party members + bot.
+    auto buildTargets = [&]() -> std::vector<Player*>
+    {
+        std::vector<Player*> targets;
+        if (ooc.buffScope == model::BotBuffScope::Self)
+        {
+            targets.push_back(bot);
+            return targets;
+        }
+        if (Group const* group = bot->GetGroup())
+        {
+            for (Group::MemberSlot const& slot : group->GetMemberSlots())
+            {
+                Player* t = ObjectAccessor::FindConnectedPlayer(slot.guid);
+                if (t && t->IsAlive() && t->IsInWorld())
+                    targets.push_back(t);
+            }
+        }
+        if (targets.empty())
+            targets.push_back(bot);
+        return targets;
+    };
 
     switch (bot->getClass())
     {
         case CLASS_WARRIOR:
         {
-            // Battle Shout: party-wide AP buff; cast on self, hits all nearby members
             std::uint32_t const shout = FindBestKnownSpellInChain(bot, 6673);
-            if (shout && !HasAuraFromChain(bot, 6673) && !HasAuraFromChain(owner, 6673))
+            if (shout && AuraNeedsRefresh(bot, 6673, thresh))
                 bot->CastSpell(bot, shout, false);
             break;
         }
 
         case CLASS_DEATH_KNIGHT:
         {
-            // Horn of Winter: party-wide Strength/Agility buff
-            if (bot->HasSpell(57330)
-                && !HasAuraFromChain(bot, 57330)
-                && !HasAuraFromChain(owner, 57330))
+            if (bot->HasSpell(57330) && AuraNeedsRefresh(bot, 57330, thresh))
                 bot->CastSpell(bot, 57330U, false);
             break;
         }
 
         case CLASS_PALADIN:
         {
-            // Re-apply seal if it dropped between fights
             if (!HasSealActive(bot))
             {
                 std::uint32_t const seal = GetPreferredSeal(bot);
-                if (seal)
-                { bot->CastSpell(bot, seal, false); break; }
+                if (seal) { bot->CastSpell(bot, seal, false); break; }
             }
-            // Blessing of Kings: prioritise owner, then self
-            {
-                std::uint32_t const bok = FindBestKnownSpellInChain(bot, 20217);
-                if (bok)
-                {
-                    if (!HasAuraFromChain(owner, 20217))
-                    { bot->CastSpell(owner, bok, false); break; }
-                    if (!HasAuraFromChain(bot, 20217))
-                    { bot->CastSpell(bot, bok, false); break; }
-                }
-            }
-            // Blessing of Might: fallback if Kings not known
-            {
-                std::uint32_t const bom = FindBestKnownSpellInChain(bot, 19740);
-                if (bom)
-                {
-                    if (!HasAuraFromChain(owner, 19740))
-                    { bot->CastSpell(owner, bom, false); break; }
-                    if (!HasAuraFromChain(bot, 19740))
-                    { bot->CastSpell(bot, bom, false); break; }
-                }
-            }
+            std::uint32_t const bok = FindBestKnownSpellInChain(bot, 20217);
+            std::uint32_t const bom = FindBestKnownSpellInChain(bot, 19740);
+            std::uint32_t const chosen = bok ? bok : bom;
+            std::uint32_t const base   = bok ? 20217 : 19740;
+            if (!chosen) break;
+            for (Player* t : buildTargets())
+                if (AuraNeedsRefresh(t, base, thresh))
+                { bot->CastSpell(t, chosen, false); return; }
             break;
         }
 
         case CLASS_PRIEST:
         {
-            // Power Word: Fortitude: Stamina buff for all group members
             std::uint32_t const pwf = FindBestKnownSpellInChain(bot, 1243);
             if (!pwf) break;
-            if (Group const* group = bot->GetGroup())
-            {
-                for (Group::MemberSlot const& slot : group->GetMemberSlots())
-                {
-                    Player* target = ObjectAccessor::FindConnectedPlayer(slot.guid);
-                    if (!target || !target->IsAlive() || !target->IsInWorld()) continue;
-                    if (!HasAuraFromChain(target, 1243))
-                    { bot->CastSpell(target, pwf, false); return; }
-                }
-            }
-            if (!HasAuraFromChain(bot, 1243))
-                bot->CastSpell(bot, pwf, false);
+            for (Player* t : buildTargets())
+                if (AuraNeedsRefresh(t, 1243, thresh))
+                { bot->CastSpell(t, pwf, false); return; }
             break;
         }
 
         case CLASS_DRUID:
         {
-            // Mark of the Wild: multi-stat buff for all group members
             std::uint32_t const motw = FindBestKnownSpellInChain(bot, 1126);
             if (!motw) break;
-            if (Group const* group = bot->GetGroup())
-            {
-                for (Group::MemberSlot const& slot : group->GetMemberSlots())
-                {
-                    Player* target = ObjectAccessor::FindConnectedPlayer(slot.guid);
-                    if (!target || !target->IsAlive() || !target->IsInWorld()) continue;
-                    if (!HasAuraFromChain(target, 1126))
-                    { bot->CastSpell(target, motw, false); return; }
-                }
-            }
-            if (!HasAuraFromChain(bot, 1126))
-                bot->CastSpell(bot, motw, false);
+            for (Player* t : buildTargets())
+                if (AuraNeedsRefresh(t, 1126, thresh))
+                { bot->CastSpell(t, motw, false); return; }
             break;
         }
 
         case CLASS_MAGE:
         {
-            // Arcane Intellect: Intellect buff for all group members
             std::uint32_t const ai = FindBestKnownSpellInChain(bot, 1459);
             if (!ai) break;
-            if (Group const* group = bot->GetGroup())
-            {
-                for (Group::MemberSlot const& slot : group->GetMemberSlots())
-                {
-                    Player* target = ObjectAccessor::FindConnectedPlayer(slot.guid);
-                    if (!target || !target->IsAlive() || !target->IsInWorld()) continue;
-                    if (!HasAuraFromChain(target, 1459))
-                    { bot->CastSpell(target, ai, false); return; }
-                }
-            }
-            if (!HasAuraFromChain(bot, 1459))
-                bot->CastSpell(bot, ai, false);
+            for (Player* t : buildTargets())
+                if (AuraNeedsRefresh(t, 1459, thresh))
+                { bot->CastSpell(t, ai, false); return; }
             break;
         }
 
         case CLASS_WARLOCK:
         {
-            // Fel Armor preferred; fall back to Demon Armor / Demon Skin — self-only
-            std::uint32_t armor = FindBestKnownSpellInChain(bot, 28176); // Fel Armor
-            if (!armor) armor   = FindBestKnownSpellInChain(bot, 706);   // Demon Armor
-            if (!armor) armor   = FindBestKnownSpellInChain(bot, 696);   // Demon Skin
-            if (armor && !bot->HasAura(armor))
+            std::uint32_t armor = FindBestKnownSpellInChain(bot, 28176);
+            if (!armor) armor   = FindBestKnownSpellInChain(bot, 706);
+            if (!armor) armor   = FindBestKnownSpellInChain(bot, 696);
+            if (armor && AuraNeedsRefresh(bot, armor, thresh))
                 bot->CastSpell(bot, armor, false);
             break;
         }
@@ -918,11 +941,12 @@ void ApplyBotBuff(Player* bot, Player* owner)
     }
 }
 
-void TryApplyOutOfCombatBuff(Player* bot, Player* owner)
+void TryApplyOutOfCombatBuff(Player* bot, Player* owner,
+                              model::BotOocBehavior const& ooc)
 {
     if (bot->IsInCombat() || owner->IsInCombat())
         return;
-    ApplyBotBuff(bot, owner);
+    ApplyBotBuff(bot, owner, ooc);
 }
 
 // ---------------------------------------------------------------
@@ -987,20 +1011,76 @@ void EnsureSupportRange(Player* bot, Player* owner, std::uint32_t spellId)
         bot->GetMotionMaster()->MoveChase(owner, std::max(1.0f, maxRange - 2.0f));
 }
 
-void IssueFormationFollow(Player* bot, Player* owner)
+void IssueFormationFollow(Player* bot, Player* owner, BotCombatRole role)
 {
     if (!bot || !owner)
         return;
 
-    // Deterministic per-bot slotting around the owner to avoid stack/bunching.
-    // Keep a minimum ~1y angular separation while maintaining the nominal
-    // follow ring distance.
-    std::uint64_t const seed = bot->GetGUID().GetCounter();
-    std::uint32_t const slot = static_cast<std::uint32_t>(seed % 7ULL); // 0..6
-    float const angleStep = 2.0f * 3.14159265358979323846f / 7.0f;
-    float const slotAngle = FollowAngle + (static_cast<float>(slot) * angleStep);
+    model::BotGlobalConfig const cfg = GetGlobalConfigService().Get();
 
-    bot->GetMotionMaster()->MoveFollow(owner, FollowDistance, slotAngle);
+    // Pick follow distance by combat role so bots naturally pre-position.
+    // Melee/Tank: close in and ready to engage.
+    // Healer/HybridHealer: mid-range, out of the melee pile but in cast range.
+    // Ranged: further back, pre-positioned for spells.
+    float baseDistance;
+    switch (role)
+    {
+        case BotCombatRole::Healer:
+        case BotCombatRole::HybridHealer:
+            baseDistance = cfg.followDistanceHealer;
+            break;
+        case BotCombatRole::Ranged:
+            baseDistance = cfg.followDistanceRanged;
+            break;
+        case BotCombatRole::Melee:
+        default:
+            baseDistance = cfg.followDistanceMelee;
+            break;
+    }
+
+    std::uint64_t const seed = bot->GetGUID().GetCounter();
+    uint32_t const slots = std::max(1u, cfg.followSlotCount);
+    std::uint32_t const slot = static_cast<std::uint32_t>(seed % slots);
+
+    float slotAngle = FollowAngle;
+    switch (cfg.followFormation)
+    {
+        case model::FollowFormation::Ring:
+        {
+            // Evenly distributed around the full circle.
+            float const angleStep = 2.0f * 3.14159265358979323846f / static_cast<float>(slots);
+            slotAngle = FollowAngle + (static_cast<float>(slot) * angleStep);
+            break;
+        }
+        case model::FollowFormation::V:
+        {
+            // Spread behind owner in a V: centre bot at π, others fan outward.
+            // Odd slots go right (+), even slots go left (-).
+            float const spread = 3.14159265358979323846f / 6.0f; // 30° per step
+            int const side  = (slot == 0) ? 0 : ((slot % 2 == 1) ? 1 : -1);
+            int const depth = static_cast<int>((slot + 1) / 2);
+            slotAngle = FollowAngle + static_cast<float>(side * depth) * spread;
+            break;
+        }
+        case model::FollowFormation::Line:
+        {
+            // Single file: all directly behind, staggered by distance.
+            // slotAngle stays at FollowAngle; caller uses default distance.
+            slotAngle = FollowAngle;
+            break;
+        }
+        case model::FollowFormation::Cluster:
+        default:
+            // All bots at same angle — bunched behind.
+            slotAngle = FollowAngle;
+            break;
+    }
+
+    float const dist = (cfg.followFormation == model::FollowFormation::Line)
+        ? baseDistance + static_cast<float>(slot) * 1.5f
+        : baseDistance;
+
+    bot->GetMotionMaster()->MoveFollow(owner, dist, slotAngle);
 }
 
 bool ShouldCombatFollowOverride(Player* bot, Player* owner, BotCombatRole role)
@@ -1425,10 +1505,14 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& conserving)
     {
         if (bot->GetVictim())
             bot->AttackStop();
-        TryApplyOutOfCombatBuff(bot, owner);
+        // Passive mode runs before doctrine resolution — load OOC directly.
+        TryApplyOutOfCombatBuff(bot, owner,
+            GetOocConfigService().Get(bot->GetGUID().GetCounter()));
         if (!bot->IsNonMeleeSpellCast(false)
             && !bot->IsWithinDistInMap(owner, RepositionDistance))
-            bot->GetMotionMaster()->MoveFollow(owner, FollowDistance, FollowAngle);
+            bot->GetMotionMaster()->MoveFollow(owner,
+                GetGlobalConfigService().Get().followDistanceFallback,
+                FollowAngle);
         return;
     }
 
@@ -1440,6 +1524,10 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& conserving)
 
     BotCombatDoctrine const doctrine = GetCombatDoctrine(bot, owner);
     BotCombatRole const role = doctrine.role;
+
+    // OOC config is per-character, resolved once per tick.
+    model::BotOocBehavior const oocBehavior =
+        GetOocConfigService().Get(bot->GetGUID().GetCounter());
 
     // Pure healers: profile rotation handles healing + offense in priority order;
     // hardcoded TickHealer fires only as a fallback when no profile is active.
@@ -1484,14 +1572,14 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& conserving)
             }
         }
 
-        TryApplyOutOfCombatBuff(bot, owner);
+        TryApplyOutOfCombatBuff(bot, owner, oocBehavior);
 
         if (ShouldCombatFollowOverride(bot, owner, role))
         {
             if (!bot->IsNonMeleeSpellCast(false))
             {
                 bot->GetMotionMaster()->Clear(false);
-                IssueFormationFollow(bot, owner);
+                IssueFormationFollow(bot, owner, role);
             }
             return;
         }
@@ -1505,7 +1593,7 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& conserving)
             && bot->GetMotionMaster()->GetCurrentMovementGeneratorType() != FOLLOW_MOTION_TYPE)
         {
             bot->GetMotionMaster()->Clear(false);
-            IssueFormationFollow(bot, owner);
+            IssueFormationFollow(bot, owner, role);
         }
         return;
     }
@@ -1526,7 +1614,7 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& conserving)
                 if (!bot->IsNonMeleeSpellCast(false))
                 {
                     bot->GetMotionMaster()->Clear(false);
-                    IssueFormationFollow(bot, owner);
+                    IssueFormationFollow(bot, owner, role);
                 }
                 return;
             }
@@ -1703,7 +1791,7 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& conserving)
         if (!bot->IsInCombat() && !owner->IsInCombat() && !IsBotAttackLocked(bot->GetGUID()))
         {
             bot->GetMotionMaster()->Clear(false);
-            IssueFormationFollow(bot, owner);
+            IssueFormationFollow(bot, owner, role);
         }
         return;
     }
@@ -1719,19 +1807,19 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& conserving)
             && bot->GetMotionMaster()->GetCurrentMovementGeneratorType() != FOLLOW_MOTION_TYPE)
         {
             bot->GetMotionMaster()->Clear(false);
-            IssueFormationFollow(bot, owner);
+            IssueFormationFollow(bot, owner, role);
         }
         return;
     }
 
-    TryApplyOutOfCombatBuff(bot, owner);
+    TryApplyOutOfCombatBuff(bot, owner, oocBehavior);
 
     if (!bot->IsNonMeleeSpellCast(false)
         && !IsBotAttackLocked(bot->GetGUID())
         && bot->GetMotionMaster()->GetCurrentMovementGeneratorType() != FOLLOW_MOTION_TYPE)
     {
         bot->GetMotionMaster()->Clear(false);
-        IssueFormationFollow(bot, owner);
+        IssueFormationFollow(bot, owner, role);
     }
 }
 
@@ -1808,7 +1896,8 @@ void ForceBotBuffRefresh(Player* bot, Player* owner)
 {
     if (!bot || !owner)
         return;
-    ApplyBotBuff(bot, owner);
+    ApplyBotBuff(bot, owner,
+        GetOocConfigService().Get(bot->GetGUID().GetCounter()));
 }
 
 void InvalidateBotCombatCaches(ObjectGuid botGuid)

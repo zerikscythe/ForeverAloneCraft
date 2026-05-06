@@ -40,12 +40,22 @@ class ProfileHeaderFrame(ttk.LabelFrame):
             self.v_slot     = tk.StringVar()
             entry_w(f, self.v_slot, 0, 3, width=4)
         _hr = 0 if self.is_default else 1
-        lbl(f, "Class:", _hr, 0)
         self.v_class = tk.StringVar()
-        class_cb = ttk.Combobox(f, textvariable=self.v_class, values=CLASS_OPTS,
-                                state="readonly", width=14)
-        class_cb.grid(row=_hr, column=1, sticky="w", padx=4, pady=2)
-        class_cb.bind("<<ComboboxSelected>>", self._on_class_change)
+        if self.is_default:
+            # Class Defaults tab: operator picks the class explicitly.
+            lbl(f, "Class:", _hr, 0)
+            class_cb = ttk.Combobox(f, textvariable=self.v_class, values=CLASS_OPTS,
+                                    state="readonly", width=14)
+            class_cb.grid(row=_hr, column=1, sticky="w", padx=4, pady=2)
+            class_cb.bind("<<ComboboxSelected>>", self._on_class_change)
+        else:
+            # Bot Profiles tab: class is already known from the character selection.
+            # Show it as a read-only badge; no need for the operator to set it.
+            lbl(f, "Class:", _hr, 0)
+            self._class_badge = ttk.Label(f, textvariable=self.v_class,
+                                          width=14, relief="sunken", anchor="w",
+                                          foreground="#0055cc")
+            self._class_badge.grid(row=_hr, column=1, sticky="w", padx=4, pady=2)
         lbl(f, "Spec:", _hr, 2)
         self.v_spec = tk.StringVar()
         self._spec_cb = ttk.Combobox(f, textvariable=self.v_spec, values=[],
@@ -95,6 +105,15 @@ class ProfileHeaderFrame(ttk.LabelFrame):
         self.v_aoe_radius = tk.StringVar()
         entry_w(f, self.v_aoe_radius, r, 8, width=6)
 
+    def set_class_from_character(self, class_id: int | None):
+        """Bot Profiles tab calls this when the character selection changes.
+        Updates the class badge and repopulates the spec combobox immediately,
+        before any profile is loaded."""
+        class_name = WOW_CLASSES.get(class_id, "") if class_id else ""
+        self.v_class.set(class_name)
+        self._apply_spec_values(class_name)
+        self._emit_class_change()
+
     def _spec_values_for_class(self, class_name: str) -> list[str]:
         class_id = CLASS_NAME_TO_ID.get(class_name)
         return CLASS_SPEC_OPTS.get(class_id, [])
@@ -118,7 +137,10 @@ class ProfileHeaderFrame(ttk.LabelFrame):
         self._emit_class_change()
 
     def clear(self):
-        self.v_class.set("")
+        if self.is_default:
+            self.v_class.set("")
+        # For bot profiles, leave v_class alone — it reflects the selected character
+        # and is reset by load() / set_class_from_character().
         self.v_spec.set("")
         self.v_role.set("")
         self.v_conservation.set(CONSERVATION_MODES[1])
