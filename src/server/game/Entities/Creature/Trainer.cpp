@@ -66,6 +66,7 @@ namespace Trainer
             trainerListSpell.SpellID = trainerSpell.SpellId;
             trainerListSpell.Usable = AsUnderlyingType(GetSpellState(player, &trainerSpell));
             trainerListSpell.MoneyCost = int32(trainerSpell.MoneyCost * reputationDiscount);
+            sScriptMgr->OnPlayerBeforeTrainerListSpellCost(player, npc, trainerSpell.SpellId, trainerListSpell.MoneyCost);
             trainerListSpell.PointCost[0] = 0; // spells don't cost talent points
             trainerListSpell.PointCost[1] = (primaryProfessionFirstRank ? 1 : 0);
             trainerListSpell.ReqLevel = trainerSpell.ReqLevel;
@@ -97,6 +98,7 @@ namespace Trainer
 
         float reputationDiscount = player->GetReputationPriceDiscount(npc);
         int32 moneyCost = int32(trainerSpell->MoneyCost * reputationDiscount);
+        sScriptMgr->OnPlayerBeforeTrainerTeachSpell(player, npc, spellId, moneyCost);
         if (!player->HasEnoughMoney(moneyCost))
         {
             SendTeachFailure(npc, player, spellId, FailReason::NotEnoughMoney);

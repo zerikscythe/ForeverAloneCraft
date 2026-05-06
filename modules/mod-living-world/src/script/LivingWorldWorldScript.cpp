@@ -1,10 +1,73 @@
 #include "Config.h"
-#include "DatabaseEnv.h"
 #include "IWorld.h"
 #include "Log.h"
 #include "ScriptMgr.h"
 #include "WorldConfig.h"
 #include "service/BotQuestRewardService.h"
+
+namespace
+{
+// Quality-ordered list matching qualityToBuyValueConfig in ObjectMgr.
+constexpr ServerConfigs kBuyValueRates[] =
+{
+    RATE_BUYVALUE_ITEM_POOR,
+    RATE_BUYVALUE_ITEM_NORMAL,
+    RATE_BUYVALUE_ITEM_UNCOMMON,
+    RATE_BUYVALUE_ITEM_RARE,
+    RATE_BUYVALUE_ITEM_EPIC,
+    RATE_BUYVALUE_ITEM_LEGENDARY,
+    RATE_BUYVALUE_ITEM_ARTIFACT,
+    RATE_BUYVALUE_ITEM_HEIRLOOM,
+};
+} // namespace
+
+class LivingWorldWorldScript final : public WorldScript
+{
+public:
+    LivingWorldWorldScript() : WorldScript("LivingWorldWorldScript") { }
+
+    // Fires after worldserver.conf is loaded, before ObjectMgr loads item
+    // templates. Setting rates here means itemTemplate.BuyPrice will already
+    // carry the scaled value when the world finishes initialising.
+    void OnAfterConfigLoad(bool reload) override
+    {
+        float const scale = sConfigMgr->GetOption<float>("LivingWorld.EconomyScale", 1.0f);
+        if (scale <= 0.0f)
+        {
+            LOG_ERROR(
+                "server.worldserver",
+                "[LivingWorld] EconomyScale must be > 0 (got {}). Using 1.0.",
+                scale);
+            return;
+        }
+
+        if (scale == 1.0f)
+            return;
+
+        // Vendor item buy prices (all eight quality tiers) and repair costs.
+        // These are in-memory rates — the item_template DB table is never touched.
+        for (ServerConfigs rate : kBuyValueRates)
+            sWorld->setRate(rate, scale);
+
+        sWorld->setRate(RATE_REPAIRCOST, scale);
+
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorld] EconomyScale={}{} — vendor prices and repair costs scaled.",
+            scale,
+            reload ? " (reload: repair cost updated; vendor prices require restart)" : "");
+    }
+
+    void OnStartup() override
+    {
+        living_world::service::BotQuestRewardService().EnsureSchema();
+    }
+};
+
+void AddSC_LivingWorldWorldScript()
+{
+    new LivingWorldWorldScript();
+}
 
 namespace
 {

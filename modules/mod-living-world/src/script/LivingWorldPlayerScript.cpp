@@ -952,6 +952,22 @@ public:
             synced);
     }
 
+    void OnPlayerBeforeTrainerListSpellCost(Player* /*player*/, Creature* /*trainer*/,
+        uint32 /*spellId*/, int32& moneyCost) override
+    {
+        float const scale = sConfigMgr->GetOption<float>("LivingWorld.EconomyScale", 1.0f);
+        if (scale > 0.0f && scale != 1.0f)
+            moneyCost = std::max(0, int32(moneyCost * scale));
+    }
+
+    void OnPlayerBeforeTrainerTeachSpell(Player* /*player*/, Creature* /*trainer*/,
+        uint32 /*spellId*/, int32& moneyCost) override
+    {
+        float const scale = sConfigMgr->GetOption<float>("LivingWorld.EconomyScale", 1.0f);
+        if (scale > 0.0f && scale != 1.0f)
+            moneyCost = std::max(0, int32(moneyCost * scale));
+    }
+
     void OnPlayerLearnSpell(Player* player, uint32 spellID) override
     {
         if (!player || !player->GetSession() || player->GetSession()->IsBotSession())
