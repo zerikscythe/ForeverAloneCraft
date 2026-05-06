@@ -243,10 +243,12 @@ model::BotCombatDefaultProfileRecord BuildDefaultProfile(Field const* fields)
 {
     model::BotCombatDefaultProfileRecord profile;
     profile.defaultProfileId = fields[0].Get<std::uint64_t>();
-    profile.specKey = fields[1].Get<std::string>();
-    profile.roleKey = fields[2].Get<std::string>();
-    profile.displayName = fields[3].Get<std::string>();
-    profile.settings = BuildSettings(fields, 4);
+    profile.specKey    = fields[1].Get<std::string>();
+    profile.roleKey    = fields[2].Get<std::string>();
+    profile.displayName= fields[3].Get<std::string>();
+    profile.classKey   = fields[4].IsNull() ? "" : fields[4].Get<std::string>();
+    profile.contextKey = fields[5].IsNull() ? "PvE" : fields[5].Get<std::string>();
+    profile.settings   = BuildSettings(fields, 6);
     return profile;
 }
 } // namespace
@@ -257,11 +259,12 @@ SqlBotCombatDefaultProfileRepository::ListDefaultProfiles() const
     std::vector<model::BotCombatDefaultProfileRecord> profiles;
     QueryResult result = WorldDatabase.Query(
         "SELECT default_profile_id, spec_key, role_key, display_name, "
+        "class_key, COALESCE(context_key,'PvE'), "
         "conservation_mode, mana_low_water, mana_high_water, "
         "enable_down_rank, down_rank_floor, default_aoe_mode, "
         "default_aoe_min_targets, default_aoe_scan_radius "
         "FROM living_world_bot_combat_default_profile "
-        "ORDER BY default_profile_id ASC");
+        "ORDER BY class_key, spec_key, context_key ASC");
     if (!result)
         return profiles;
 
@@ -279,23 +282,23 @@ SqlBotCombatDefaultProfileRepository::ListDefaultProfiles() const
 std::optional<model::BotCombatDefaultProfileRecord>
 SqlBotCombatDefaultProfileRepository::FindDefaultProfile(
     std::string const& specKey,
-    std::string const& roleKey) const
+    std::string const& roleKey,
+    std::string const& contextKey) const
 {
-    std::string escapedSpecKey = specKey;
-    std::string escapedRoleKey = roleKey;
-    WorldDatabase.EscapeString(escapedSpecKey);
-    WorldDatabase.EscapeString(escapedRoleKey);
+    std::string escapedSpecKey  = specKey;  WorldDatabase.EscapeString(escapedSpecKey);
+    std::string escapedRoleKey  = roleKey;  WorldDatabase.EscapeString(escapedRoleKey);
+    std::string escapedContext  = contextKey; WorldDatabase.EscapeString(escapedContext);
 
     QueryResult result = WorldDatabase.Query(
         "SELECT default_profile_id, spec_key, role_key, display_name, "
+        "class_key, COALESCE(context_key,'PvE'), "
         "conservation_mode, mana_low_water, mana_high_water, "
         "enable_down_rank, down_rank_floor, default_aoe_mode, "
         "default_aoe_min_targets, default_aoe_scan_radius "
         "FROM living_world_bot_combat_default_profile "
-        "WHERE spec_key = '{}' AND role_key = '{}' "
+        "WHERE spec_key = '{}' AND role_key = '{}' AND COALESCE(context_key,'PvE') = '{}' "
         "LIMIT 1",
-        escapedSpecKey,
-        escapedRoleKey);
+        escapedSpecKey, escapedRoleKey, escapedContext);
     if (!result)
         return std::nullopt;
 

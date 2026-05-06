@@ -14,7 +14,8 @@ public:
 
     std::optional<model::BotCombatDefaultProfileRecord> FindDefaultProfile(
         std::string const& specKey,
-        std::string const& roleKey) const override;
+        std::string const& roleKey,
+        std::string const& contextKey = "PvE") const override;
 };
 } // namespace integration
 } // namespace living_world

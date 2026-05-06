@@ -223,6 +223,8 @@ struct BotCombatDefaultProfileRecord
     std::uint64_t defaultProfileId = 0;
     std::string specKey;
     std::string roleKey;
+    std::string classKey;
+    std::string contextKey = "PvE";  // "PvE" | "PvP" (future: "Arena", "BG")
     std::string displayName;
     BotCombatProfileSettings settings;
     std::vector<BotCombatEntryDefinition> interruptEntries;

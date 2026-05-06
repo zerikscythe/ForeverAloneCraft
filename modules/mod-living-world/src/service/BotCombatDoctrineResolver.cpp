@@ -5,6 +5,7 @@
 #include "integration/BotCombatProfileRepository.h"
 #include "integration/BotCombatProfileSelectionRepository.h"
 #include "service/BotCombatSpecRoleResolver.h"
+#include "service/BotContextService.h"
 
 namespace living_world
 {
@@ -46,12 +47,14 @@ BotCombatDoctrineResolver::BotCombatDoctrineResolver(
     integration::BotCombatProfileRepository const& profileRepository,
     integration::BotCombatProfileSelectionRepository const& selectionRepository,
     integration::BotCombatDefaultProfileRepository const& defaultProfileRepository,
-    BotCombatSpecRoleResolver const& specRoleResolver)
+    BotCombatSpecRoleResolver const& specRoleResolver,
+    BotContextService const& contextService)
     : _runtimeRepository(runtimeRepository)
     , _profileRepository(profileRepository)
     , _selectionRepository(selectionRepository)
     , _defaultProfileRepository(defaultProfileRepository)
     , _specRoleResolver(specRoleResolver)
+    , _contextService(contextService)
 {
 }
 
@@ -111,7 +114,8 @@ BotCombatDoctrineResolution BotCombatDoctrineResolver::ResolveForBot(
 
     auto defaultProfile = _defaultProfileRepository.FindDefaultProfile(
         specRole.effectiveSpecKey,
-        specRole.effectiveRoleKey);
+        specRole.effectiveRoleKey,
+        _contextService.Get(resolution.sourceCharacterGuid));
     if (defaultProfile)
         resolution.defaultProfileId = defaultProfile->defaultProfileId;
 
@@ -132,6 +136,42 @@ BotCombatDoctrineResolution BotCombatDoctrineResolver::ResolveForBot(
         resolution.profile = BuildResolvedProfile(*defaultProfile);
         resolution.source = BotCombatDoctrineSource::DefaultProfile;
         return resolution;
+    }
+
+    return resolution;
+}
+
+BotCombatDoctrineResolution BotCombatDoctrineResolver::ResolveForWorldBot(
+    std::uint64_t botCharacterGuid,
+    std::uint8_t  botClassId,
+    std::string const& specKey,
+    std::string const& roleKey,
+    std::string const& contextKey) const
+{
+    BotCombatDoctrineResolution resolution;
+    resolution.botCharacterGuid    = botCharacterGuid;
+    resolution.sourceCharacterGuid = botCharacterGuid;
+    resolution.ownerAccountId      = 0;
+    resolution.guessedSpecKey      = specKey;
+    resolution.guessedRoleKey      = roleKey;
+    resolution.effectiveSpecKey    = specKey;
+    resolution.effectiveRoleKey    = roleKey;
+
+    auto defaultProfile = _defaultProfileRepository.FindDefaultProfile(
+        specKey, roleKey, contextKey);
+    if (!defaultProfile)
+    {
+        // Fallback: try PvE profile if the requested context has no profile yet.
+        if (contextKey != "PvE")
+            defaultProfile = _defaultProfileRepository.FindDefaultProfile(
+                specKey, roleKey, "PvE");
+    }
+
+    if (defaultProfile)
+    {
+        resolution.defaultProfileId = defaultProfile->defaultProfileId;
+        resolution.profile          = BuildResolvedProfile(*defaultProfile);
+        resolution.source           = BotCombatDoctrineSource::WorldBot;
     }
 
     return resolution;

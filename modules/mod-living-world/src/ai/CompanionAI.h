@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ObjectGuid.h"
+#include <string>
 
 class Player;
 class Unit;
@@ -39,5 +40,12 @@ void ForceBotBuffRefresh(Player* bot, Player* owner);
 // or slot changes take effect on the next AI tick instead of waiting for cache
 // TTL expiry.
 void InvalidateBotCombatCaches(ObjectGuid botGuid);
+
+// Set the active combat context for a bot. Contexts drive which default profile
+// the bot uses: "PvE" (default), "PvP", and future values like "Arena", "BG".
+// After changing context call InvalidateBotCombatCaches() if the new profile
+// should take effect on the very next tick.
+void SetBotContext(ObjectGuid botGuid, std::string const& contextKey);
+std::string GetBotContext(ObjectGuid botGuid);
 } // namespace ai
 } // namespace living_world

@@ -9,6 +9,7 @@ from .constants import (
     CONSERVATION_MODES, AOE_MODES,
     STAT_KEYS, SUBJECT_KEYS,
     _normalize_role,
+    CANONICAL_DEFAULT_PROFILES, CANONICAL_SPEC_LOOKUP, PROFILE_CONTEXTS,
 )
 from .db import db
 from .helpers import lbl, entry_w, combo_w, check_w, unix_text
@@ -24,6 +25,7 @@ class DefaultProfilesTab(ttk.Frame):
         super().__init__(parent, **kw)
         self._profiles  = []
         self._sel       = None
+        self._ctx_filter = tk.StringVar(value="All")
         self._build()
 
     def _build(self):
@@ -35,6 +37,21 @@ class DefaultProfilesTab(ttk.Frame):
         pane.add(left, weight=0)
 
         ttk.Label(left, text="Default profiles").pack(anchor="w", padx=4, pady=2)
+        ttk.Label(left,
+            text="These are live rules for world, guild & BG bots and serve as "
+                 "the starting template when creating a new account-bot profile.",
+            foreground="#555", wraplength=200, justify="left"
+        ).pack(anchor="w", padx=4, pady=(0, 4))
+
+        # Context filter bar
+        filter_row = ttk.Frame(left)
+        filter_row.pack(fill=tk.X, padx=4, pady=(0, 2))
+        ttk.Label(filter_row, text="Show:").pack(side=tk.LEFT)
+        for ctx in ["All"] + PROFILE_CONTEXTS:
+            ttk.Radiobutton(filter_row, text=ctx, value=ctx,
+                            variable=self._ctx_filter,
+                            command=self._refresh_listbox).pack(side=tk.LEFT, padx=2)
+
         self._lb = tk.Listbox(left, selectmode=tk.SINGLE, exportselection=False)
         self._lb.pack(fill=tk.BOTH, expand=True, padx=4)
         self._lb.bind("<<ListboxSelect>>", self._on_select)
@@ -77,21 +94,41 @@ class DefaultProfilesTab(ttk.Frame):
             return
         try:
             self._profiles = db.load_default_profiles()
-            self._lb.delete(0, tk.END)
-            for p in self._profiles:
-                self._lb.insert(tk.END, p.get("display_name") or
-                                f"{p['spec_key']} {p['role_key']}")
+            self._refresh_listbox()
             self._sel = None
             self._hdr.clear()
             self._rot.clear()
         except MySQLError as e:
             messagebox.showerror("DB error", str(e))
 
+    def _refresh_listbox(self):
+        ctx = self._ctx_filter.get()
+        self._lb.delete(0, tk.END)
+        self._lb_idx: list[int] = []  # maps listbox row → self._profiles index
+        for i, p in enumerate(self._profiles):
+            p_ctx = p.get("context_key") or "PvE"
+            if ctx != "All" and p_ctx != ctx:
+                continue
+            self._lb.insert(tk.END, self._profile_label(p))
+            self._lb_idx.append(i)
+
+    @staticmethod
+    def _profile_label(p: dict) -> str:
+        cls  = (p.get("class_key")   or "").strip()
+        spec = (p.get("spec_key")    or "").strip()
+        role = (p.get("role_key")    or "").strip()
+        ctx  = (p.get("context_key") or "PvE").strip()
+        name = (p.get("display_name") or "").strip()
+        is_canonical = (cls, spec, ctx) in CANONICAL_SPEC_LOOKUP
+        prefix = "" if is_canonical else "⚠ "
+        ctx_badge = f"[{ctx}] " if ctx != "PvE" else ""
+        return f"{prefix}{ctx_badge}{name or f'{cls} — {spec}'} ({role})"
+
     def _on_select(self, _=None):
         sel = self._lb.curselection()
         if not sel:
             return
-        self._sel = self._profiles[sel[0]]
+        self._sel = self._profiles[self._lb_idx[sel[0]]]
         self._hdr.load(self._sel)
         self._rot.load_profile(self._sel["default_profile_id"])
 
@@ -108,13 +145,80 @@ class DefaultProfilesTab(ttk.Frame):
     def _new_profile(self):
         if not db.ok():
             return
-        existing = {(p.get("spec_key", ""), _normalize_role(p.get("role_key", "")))
-                    for p in self._profiles}
-        next_idx = 1
-        while (f"NewSpec{next_idx}", "DPS") in existing:
-            next_idx += 1
-        p = dict(spec_key=f"NewSpec{next_idx}", role_key="DPS",
-                 display_name=f"New Profile {next_idx}",
+        covered = {(p.get("class_key", "").strip(),
+                    p.get("spec_key",   "").strip(),
+                    (p.get("context_key") or "PvE").strip())
+                   for p in self._profiles}
+        available = [(cls, spec, role, ctx, name)
+                     for cls, spec, role, ctx, name in CANONICAL_DEFAULT_PROFILES
+                     if (cls, spec, ctx) not in covered]
+        if not available:
+            messagebox.showinfo("Complete",
+                "All 60 canonical class/spec/context default profiles already exist.")
+            return
+
+        win = tk.Toplevel(self.winfo_toplevel())
+        win.title("New Default Profile")
+        win.grab_set()
+        win.resizable(False, False)
+
+        ttk.Label(win, text="Select a class / spec / context:",
+                  wraplength=380).pack(padx=12, pady=(10, 4))
+
+        # Context filter inside the picker
+        filter_var = tk.StringVar(value="All")
+        frow = ttk.Frame(win)
+        frow.pack(padx=12, fill=tk.X)
+        ttk.Label(frow, text="Filter:").pack(side=tk.LEFT)
+        for ctx in ["All"] + PROFILE_CONTEXTS:
+            ttk.Radiobutton(frow, text=ctx, value=ctx,
+                            variable=filter_var).pack(side=tk.LEFT, padx=2)
+
+        lb = tk.Listbox(win, selectmode=tk.SINGLE, exportselection=False,
+                        width=48, height=min(len(available), 18))
+        lb.pack(padx=12, fill=tk.BOTH, expand=True)
+
+        _visible: list[tuple] = []
+
+        def _repopulate(*_):
+            lb.delete(0, tk.END)
+            _visible.clear()
+            fv = filter_var.get()
+            for row in available:
+                if fv != "All" and row[3] != fv:
+                    continue
+                _visible.append(row)
+                ctx_badge = f"[{row[3]}] " if row[3] != "PvE" else ""
+                lb.insert(tk.END, f"{ctx_badge}{row[4]}  ({row[2]})")
+            if _visible:
+                lb.selection_set(0)
+
+        filter_var.trace_add("write", _repopulate)
+        _repopulate()
+
+        chosen: list[tuple] = []
+
+        def _ok():
+            sel = lb.curselection()
+            if sel:
+                chosen.append(_visible[sel[0]])
+            win.destroy()
+
+        def _cancel():
+            win.destroy()
+
+        btn_row = ttk.Frame(win)
+        btn_row.pack(pady=8)
+        ttk.Button(btn_row, text="Create", command=_ok).pack(side=tk.LEFT, padx=4)
+        ttk.Button(btn_row, text="Cancel", command=_cancel).pack(side=tk.LEFT, padx=4)
+        lb.bind("<Double-1>", lambda _: _ok())
+        win.wait_window()
+
+        if not chosen:
+            return
+        cls, spec, role, ctx, name = chosen[0]
+        p = dict(class_key=cls, spec_key=spec, role_key=role,
+                 context_key=ctx, display_name=name,
                  conservation_mode=1, mana_low_water=55, mana_high_water=75,
                  enable_down_rank=1, down_rank_floor=2,
                  default_aoe_mode=0, default_aoe_min_targets=2, default_aoe_scan_radius=10.0)
@@ -122,12 +226,13 @@ class DefaultProfilesTab(ttk.Frame):
             pid = db.upsert_default_profile(p)
             p["default_profile_id"] = pid
             self.refresh()
-            # Select the new one
             idx = next((i for i, x in enumerate(self._profiles)
                         if x["default_profile_id"] == pid), None)
             if idx is not None:
-                self._lb.selection_set(idx)
-                self._on_select()
+                lb_pos = next((j for j, k in enumerate(self._lb_idx) if k == idx), None)
+                if lb_pos is not None:
+                    self._lb.selection_set(lb_pos)
+                    self._on_select()
         except MySQLError as e:
             messagebox.showerror("DB error", str(e))
 

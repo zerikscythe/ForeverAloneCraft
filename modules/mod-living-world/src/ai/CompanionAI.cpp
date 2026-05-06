@@ -21,6 +21,7 @@
 #include "model/BotCombatMode.h"
 #include "model/BotCombatProfile.h"
 #include "model/BotGlobalConfig.h"
+#include "service/BotContextService.h"
 #include "service/BotOocConfigService.h"
 #include "integration/SqlBotOocConfigRepository.h"
 #include "service/BotCombatDoctrineResolver.h"
@@ -109,6 +110,7 @@ void ClearBotOverride(ObjectGuid botGuid)
     std::lock_guard<std::mutex> lock(s_overrideMutex);
     s_overrides.erase(botGuid);
     BotHazardSensor::ClearHazardState(botGuid);
+    GetContextService().Clear(botGuid.GetCounter());
 }
 
 bool SetBotRetreat(ObjectGuid botGuid, uint32_t durationMs)
@@ -248,6 +250,12 @@ service::BotGlobalConfigService& GetGlobalConfigService()
     return service;
 }
 
+service::BotContextService& GetContextService()
+{
+    static service::BotContextService service;
+    return service;
+}
+
 service::BotOocConfigService& GetOocConfigService()
 {
     static integration::SqlBotOocConfigRepository repo;
@@ -267,7 +275,8 @@ service::BotCombatDoctrineResolver& GetDoctrineResolver()
         profileRepository,
         selectionRepository,
         defaultProfileRepository,
-        resolver);
+        resolver,
+        GetContextService());
     return doctrineResolver;
 }
 
@@ -1916,6 +1925,16 @@ void InvalidateBotCombatCaches(ObjectGuid botGuid)
         std::lock_guard<std::mutex> lock(s_preparedProfileMutex);
         s_preparedProfileByBotGuid.erase(botGuidLow);
     }
+}
+
+void SetBotContext(ObjectGuid botGuid, std::string const& contextKey)
+{
+    GetContextService().Set(botGuid.GetCounter(), contextKey);
+}
+
+std::string GetBotContext(ObjectGuid botGuid)
+{
+    return GetContextService().Get(botGuid.GetCounter());
 }
 } // namespace ai
 } // namespace living_world

@@ -72,6 +72,62 @@ CLASS_SPEC_OPTS = {
 }
 ROLE_OPTS = ["DPS", "HEAL", "TANK", "OFF_TANK"]
 
+# ── Canonical default profile definitions ──────────────────────────────────
+# One entry per class per talent tree per context.
+# (class_name, spec_key, role_key, context_key, display_name)
+# context_key is 'PvE' or 'PvP'; future values: 'Arena', 'BG', etc.
+CANONICAL_DEFAULT_PROFILES: list[tuple[str, str, str, str, str]] = []
+_SPECS: list[tuple[str, str, str]] = [
+    ("Warrior",      "Arms",          "DPS"),
+    ("Warrior",      "Fury",          "DPS"),
+    ("Warrior",      "Protection",    "TANK"),
+    ("Paladin",      "Holy",          "HEAL"),
+    ("Paladin",      "Protection",    "TANK"),
+    ("Paladin",      "Retribution",   "DPS"),
+    ("Hunter",       "BeastMastery",  "DPS"),
+    ("Hunter",       "Marksmanship",  "DPS"),
+    ("Hunter",       "Survival",      "DPS"),
+    ("Rogue",        "Assassination", "DPS"),
+    ("Rogue",        "Combat",        "DPS"),
+    ("Rogue",        "Subtlety",      "DPS"),
+    ("Priest",       "Discipline",    "HEAL"),
+    ("Priest",       "Holy",          "HEAL"),
+    ("Priest",       "Shadow",        "DPS"),
+    ("Death Knight", "Blood",         "TANK"),
+    ("Death Knight", "Frost",         "DPS"),
+    ("Death Knight", "Unholy",        "DPS"),
+    ("Shaman",       "Elemental",     "DPS"),
+    ("Shaman",       "Enhancement",   "DPS"),
+    ("Shaman",       "Restoration",   "HEAL"),
+    ("Mage",         "Arcane",        "DPS"),
+    ("Mage",         "Fire",          "DPS"),
+    ("Mage",         "Frost",         "DPS"),
+    ("Warlock",      "Affliction",    "DPS"),
+    ("Warlock",      "Demonology",    "DPS"),
+    ("Warlock",      "Destruction",   "DPS"),
+    ("Druid",        "Balance",       "DPS"),
+    ("Druid",        "Feral",         "DPS"),
+    ("Druid",        "Restoration",   "HEAL"),
+]
+_SPEC_DISPLAY = {
+    "BeastMastery": "Beast Mastery",
+}
+PROFILE_CONTEXTS = ["PvE", "PvP"]
+for _ctx in PROFILE_CONTEXTS:
+    for _cls, _spec, _role in _SPECS:
+        _display_spec = _SPEC_DISPLAY.get(_spec, _spec)
+        _suffix = f" ({_ctx})" if _ctx != "PvE" else ""
+        CANONICAL_DEFAULT_PROFILES.append(
+            (_cls, _spec, _role, _ctx, f"{_cls} \u2014 {_display_spec}{_suffix}")
+        )
+del _SPECS, _SPEC_DISPLAY, _ctx, _cls, _spec, _role, _display_spec, _suffix
+
+# Fast lookup: (class_name, spec_key, context_key) → (role_key, display_name)
+CANONICAL_SPEC_LOOKUP: dict[tuple[str, str, str], tuple[str, str]] = {
+    (cls, spec, ctx): (role, name)
+    for cls, spec, role, ctx, name in CANONICAL_DEFAULT_PROFILES
+}
+
 WOW_RACES = {
     1: "Human", 2: "Orc", 3: "Dwarf", 4: "Night Elf", 5: "Undead",
     6: "Tauren", 7: "Gnome", 8: "Troll", 10: "Blood Elf", 11: "Draenei",

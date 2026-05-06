@@ -433,6 +433,57 @@ class DBCtx:
          "  PRIMARY KEY (source_character_guid)"
          ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"),
 
+        # ── context_key column + unique key on default profiles ──────────────
+        ("2025_24_default_profile_context_key",
+         "world",
+         "ALTER TABLE living_world_bot_combat_default_profile "
+         "ADD COLUMN context_key VARCHAR(10) NOT NULL DEFAULT 'PvE' "
+         "COMMENT 'PvE | PvP (future: Arena, BG)'"),
+
+        ("2025_25_default_profile_context_unique",
+         "world",
+         "ALTER TABLE living_world_bot_combat_default_profile "
+         "ADD UNIQUE KEY uq_class_spec_context (class_key, spec_key, context_key)"),
+
+        # ── PvP seed — mirrors every PvE entry with context_key='PvP' ────────
+        ("2025_26_pvp_profiles_seed",
+         "world",
+         "INSERT IGNORE INTO living_world_bot_combat_default_profile "
+         "(class_key, spec_key, role_key, context_key, display_name, "
+         " conservation_mode, mana_low_water, mana_high_water, "
+         " enable_down_rank, down_rank_floor, "
+         " default_aoe_mode, default_aoe_min_targets, default_aoe_scan_radius) VALUES "
+         "('Warrior','Arms','DPS','PvP','Warrior \u2014 Arms (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Warrior','Fury','DPS','PvP','Warrior \u2014 Fury (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Warrior','Protection','TANK','PvP','Warrior \u2014 Protection (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Paladin','Holy','HEAL','PvP','Paladin \u2014 Holy (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Paladin','Protection','TANK','PvP','Paladin \u2014 Protection (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Paladin','Retribution','DPS','PvP','Paladin \u2014 Retribution (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Hunter','BeastMastery','DPS','PvP','Hunter \u2014 Beast Mastery (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Hunter','Marksmanship','DPS','PvP','Hunter \u2014 Marksmanship (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Hunter','Survival','DPS','PvP','Hunter \u2014 Survival (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Rogue','Assassination','DPS','PvP','Rogue \u2014 Assassination (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Rogue','Combat','DPS','PvP','Rogue \u2014 Combat (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Rogue','Subtlety','DPS','PvP','Rogue \u2014 Subtlety (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Priest','Discipline','HEAL','PvP','Priest \u2014 Discipline (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Priest','Holy','HEAL','PvP','Priest \u2014 Holy (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Priest','Shadow','DPS','PvP','Priest \u2014 Shadow (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Death Knight','Blood','TANK','PvP','Death Knight \u2014 Blood (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Death Knight','Frost','DPS','PvP','Death Knight \u2014 Frost (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Death Knight','Unholy','DPS','PvP','Death Knight \u2014 Unholy (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Shaman','Elemental','DPS','PvP','Shaman \u2014 Elemental (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Shaman','Enhancement','DPS','PvP','Shaman \u2014 Enhancement (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Shaman','Restoration','HEAL','PvP','Shaman \u2014 Restoration (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Mage','Arcane','DPS','PvP','Mage \u2014 Arcane (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Mage','Fire','DPS','PvP','Mage \u2014 Fire (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Mage','Frost','DPS','PvP','Mage \u2014 Frost (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Warlock','Affliction','DPS','PvP','Warlock \u2014 Affliction (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Warlock','Demonology','DPS','PvP','Warlock \u2014 Demonology (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Warlock','Destruction','DPS','PvP','Warlock \u2014 Destruction (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Druid','Balance','DPS','PvP','Druid \u2014 Balance (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Druid','Feral','DPS','PvP','Druid \u2014 Feral (PvP)',1,55,75,1,2,0,2,10.0),"
+         "('Druid','Restoration','HEAL','PvP','Druid \u2014 Restoration (PvP)',1,55,75,1,2,0,2,10.0)"),
+
     ]
 
     def _close_ssh_tunnel(self):
@@ -1295,13 +1346,13 @@ class DBCtx:
         if p.get("default_profile_id"):
             self.run(self.world,
                 "UPDATE living_world_bot_combat_default_profile SET "
-                "spec_key=%s, role_key=%s, display_name=%s, class_key=%s, "
+                "spec_key=%s, role_key=%s, display_name=%s, class_key=%s, context_key=%s, "
                 "conservation_mode=%s, mana_low_water=%s, mana_high_water=%s, "
                 "enable_down_rank=%s, down_rank_floor=%s, default_aoe_mode=%s, "
                 "default_aoe_min_targets=%s, default_aoe_scan_radius=%s "
                 "WHERE default_profile_id=%s",
                 (p["spec_key"], p["role_key"], p.get("display_name"),
-                 p.get("class_key"),
+                 p.get("class_key"), p.get("context_key", "PvE"),
                  p["conservation_mode"], p["mana_low_water"], p["mana_high_water"],
                  p["enable_down_rank"], p["down_rank_floor"], p["default_aoe_mode"],
                  p["default_aoe_min_targets"], p["default_aoe_scan_radius"],
@@ -1309,11 +1360,12 @@ class DBCtx:
             return p["default_profile_id"]
         return self.run(self.world,
             "INSERT INTO living_world_bot_combat_default_profile "
-            "(spec_key, role_key, display_name, class_key, conservation_mode, "
+            "(spec_key, role_key, display_name, class_key, context_key, conservation_mode, "
             "mana_low_water, mana_high_water, enable_down_rank, down_rank_floor, "
             "default_aoe_mode, default_aoe_min_targets, default_aoe_scan_radius) VALUES "
-            "(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            "(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
             (p["spec_key"], p["role_key"], p.get("display_name"), p.get("class_key"),
+             p.get("context_key", "PvE"),
              p["conservation_mode"], p["mana_low_water"], p["mana_high_water"],
              p["enable_down_rank"], p["down_rank_floor"], p["default_aoe_mode"],
              p["default_aoe_min_targets"], p["default_aoe_scan_radius"]))
