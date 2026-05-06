@@ -731,6 +731,7 @@ public:
 
         if (!player->GetSession()->IsBotSession())
         {
+            RunOwnerStartupRecovery(player);
             CleanupStaleGroupBots(player);
             player->m_Events.AddEventAtOffset(
                 new DeferredOwnerGroupCleanupEvent(player->GetGUID()),

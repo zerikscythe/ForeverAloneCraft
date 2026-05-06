@@ -647,6 +647,91 @@ bool ExecuteSpawnRosterBodyAction(
         return true;
     }
 
+    // The two guards above use the source character guid, but AccountAlt bot
+    // sessions are registered and tracked under the clone character guid.
+    // Re-run both guards with the clone guid so that repeated requests while a
+    // clone is already active or pending do not spawn a second session for the
+    // same bot account (which would cause the session manager to kick/delete
+    // the live session and produce a use-after-free crash).
+    if (action.source == model::RosterEntrySource::AccountAlt)
+    {
+        integration::SqlAccountAltRuntimeRepository preCheckRepo;
+        std::optional<model::AccountAltRuntimeRecord> preCheckRuntime =
+            preCheckRepo.FindBySourceCharacter(
+                requester->GetSession()->GetAccountId(),
+                action.characterGuid);
+
+        if (preCheckRuntime && preCheckRuntime->cloneCharacterGuid != 0)
+        {
+            ObjectGuid const cloneGuid = ObjectGuid::Create<HighGuid::Player>(
+                preCheckRuntime->cloneCharacterGuid);
+
+            Player* cloneBot =
+                service::BotPlayerRegistry::Instance().FindBotForOwnerByGuid(
+                    requester->GetGUID(), cloneGuid);
+            if (cloneBot)
+            {
+                if (!cloneBot->GetSession() ||
+                    !cloneBot->GetSession()->IsBotSession())
+                {
+                    LOG_WARN(
+                        "server.worldserver",
+                        "[LivingWorld] AccountAlt spawn continuity: stale registry "
+                        "for clone guid={} — clearing and re-spawning.",
+                        cloneGuid.GetCounter());
+                    service::BotPlayerRegistry::Instance().UnregisterBotPlayer(
+                        cloneBot);
+                    // fall through to PlanSpawn
+                }
+                else
+                {
+                    if (!cloneBot->IsInSameGroupWith(requester))
+                    {
+                        Group* group = requester->GetGroup();
+                        if (!group)
+                        {
+                            group = new Group();
+                            if (group->Create(requester))
+                                sGroupMgr->AddGroup(group);
+                            else
+                            {
+                                delete group;
+                                group = nullptr;
+                            }
+                        }
+                        if (group && !group->IsFull())
+                            group->AddMember(cloneBot);
+                    }
+                    cloneBot->GetMotionMaster()->MoveFollow(
+                        requester,
+                        AltCompanionFollowDistance,
+                        AltCompanionFollowAngle);
+                    SendPlayerLog(
+                        handler,
+                        static_cast<std::uint8_t>(PlayerChatLogLevel::Detailed),
+                        "LivingWorld roster entry {} clone '{}' (guid {}) is "
+                        "already active.",
+                        action.rosterEntryId,
+                        cloneBot->GetName(),
+                        cloneBot->GetGUID().GetCounter());
+                    return true;
+                }
+            }
+
+            if (service::BotPlayerRegistry::Instance().IsPendingBotForOwner(
+                    requester->GetGUID(), cloneGuid))
+            {
+                SendPlayerLog(
+                    handler,
+                    static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+                    "LivingWorld roster entry {} is already logging in; "
+                    "please wait.",
+                    action.rosterEntryId);
+                return true;
+            }
+        }
+    }
+
     integration::SqlAccountAltRuntimeRepository runtimeRepository;
     integration::SqlBotAccountPoolRepository botAccountPoolRepository;
     integration::SqlCharacterCloneMaterializer cloneMaterializer;
@@ -1223,8 +1308,26 @@ void RenderDismissBot(
     if (Group* group = bot->GetGroup())
         group->RemoveMember(bot->GetGUID(), GROUP_REMOVEMETHOD_LEAVE);
 
-    if (!bot->GetSession()->PlayerLogout())
-        bot->GetSession()->LogoutPlayer(true);
+    WorldSession* botSession = bot->GetSession();
+    if (!botSession)
+    {
+        LOG_ERROR(
+            "server.worldserver",
+            "[LivingWorld] Dismiss: bot '{}' (guid {}) has a null session — "
+            "unregistering stale registry entry.",
+            bot->GetName(),
+            bot->GetGUID().GetCounter());
+        service::BotPlayerRegistry::Instance().UnregisterBotPlayer(bot);
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld {} had no active session and was unregistered.",
+            entry->controllableProfile.profile.name);
+        return;
+    }
+
+    if (!botSession->PlayerLogout())
+        botSession->LogoutPlayer(true);
     SendPlayerLog(
         handler,
         static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),

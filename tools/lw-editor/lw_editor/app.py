@@ -12,6 +12,7 @@ from lw_editor import CONFIG_FILE
 from .tab_bots import BotProfilesTab, DefaultProfilesTab
 from .tab_character import CharacterEditorTab
 from .tab_accounts import AccountsTab
+from .tab_diagnostics import DiagnosticsTab
 
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -291,10 +292,12 @@ class App(tk.Tk):
         self.tab_profiles = BotProfilesTab(self.nb)
         self.tab_character_editor = CharacterEditorTab(self.nb)
         self.tab_accounts = AccountsTab(self.nb)
+        self.tab_diagnostics = DiagnosticsTab(self.nb)
         self.nb.add(self.tab_defaults, text="  Class Defaults  ")
         self.nb.add(self.tab_profiles, text="  Bot Profiles  ")
         self.nb.add(self.tab_character_editor, text="  Character Editor  ")
         self.nb.add(self.tab_accounts, text="  Accounts  ")
+        self.nb.add(self.tab_diagnostics, text="  🔧 Diagnostics  ")
 
     def _connect(self):
         try:
@@ -328,6 +331,7 @@ class App(tk.Tk):
             self.tab_profiles.refresh()
             self.tab_character_editor.refresh()
             self.tab_accounts.refresh()
+            self.tab_diagnostics.refresh()
         except (MySQLError, ValueError, ImportError) as e:
             self.v_status.set(f"✗ {e}")
             self._status_lbl.configure(foreground="red")
