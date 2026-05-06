@@ -1,0 +1,524 @@
+{
+  "21": {
+    "name": "Booty Bay",
+    "parent_id": 169,
+    "parent_name": "Steamwheedle Cartel",
+    "expansion": "Classic"
+  },
+  "47": {
+    "name": "Ironforge",
+    "parent_id": 469,
+    "parent_name": "Alliance",
+    "expansion": "Classic"
+  },
+  "54": {
+    "name": "Gnomeregan Exiles",
+    "parent_id": 469,
+    "parent_name": "Alliance",
+    "expansion": "Classic"
+  },
+  "59": {
+    "name": "Thorium Brotherhood",
+    "parent_id": 1118,
+    "parent_name": "Classic",
+    "expansion": "Classic"
+  },
+  "67": {
+    "name": "Horde",
+    "parent_id": 1118,
+    "parent_name": "Classic",
+    "expansion": "Classic"
+  },
+  "68": {
+    "name": "Undercity",
+    "parent_id": 67,
+    "parent_name": "Horde",
+    "expansion": "Classic"
+  },
+  "69": {
+    "name": "Darnassus",
+    "parent_id": 469,
+    "parent_name": "Alliance",
+    "expansion": "Classic"
+  },
+  "70": {
+    "name": "Syndicate",
+    "parent_id": 0,
+    "parent_name": "",
+    "expansion": "Other"
+  },
+  "72": {
+    "name": "Stormwind",
+    "parent_id": 469,
+    "parent_name": "Alliance",
+    "expansion": "Classic"
+  },
+  "76": {
+    "name": "Orgrimmar",
+    "parent_id": 67,
+    "parent_name": "Horde",
+    "expansion": "Classic"
+  },
+  "81": {
+    "name": "Thunder Bluff",
+    "parent_id": 67,
+    "parent_name": "Horde",
+    "expansion": "Classic"
+  },
+  "87": {
+    "name": "Bloodsail Buccaneers",
+    "parent_id": 1118,
+    "parent_name": "Classic",
+    "expansion": "Classic"
+  },
+  "92": {
+    "name": "Gelkis Clan Centaur",
+    "parent_id": 1118,
+    "parent_name": "Classic",
+    "expansion": "Classic"
+  },
+  "93": {
+    "name": "Magram Clan Centaur",
+    "parent_id": 1118,
+    "parent_name": "Classic",
+    "expansion": "Classic"
+  },
+  "169": {
+    "name": "Steamwheedle Cartel",
+    "parent_id": 1118,
+    "parent_name": "Classic",
+    "expansion": "Classic"
+  },
+  "270": {
+    "name": "Zandalar Tribe",
+    "parent_id": 1118,
+    "parent_name": "Classic",
+    "expansion": "Classic"
+  },
+  "349": {
+    "name": "Ravenholdt",
+    "parent_id": 1118,
+    "parent_name": "Classic",
+    "expansion": "Classic"
+  },
+  "369": {
+    "name": "Gadgetzan",
+    "parent_id": 169,
+    "parent_name": "Steamwheedle Cartel",
+    "expansion": "Classic"
+  },
+  "469": {
+    "name": "Alliance",
+    "parent_id": 1118,
+    "parent_name": "Classic",
+    "expansion": "Classic"
+  },
+  "470": {
+    "name": "Ratchet",
+    "parent_id": 169,
+    "parent_name": "Steamwheedle Cartel",
+    "expansion": "Classic"
+  },
+  "471": {
+    "name": "Wildhammer Clan",
+    "parent_id": 0,
+    "parent_name": "",
+    "expansion": "Other"
+  },
+  "509": {
+    "name": "The League of Arathor",
+    "parent_id": 891,
+    "parent_name": "Alliance Forces",
+    "expansion": "Classic"
+  },
+  "510": {
+    "name": "The Defilers",
+    "parent_id": 892,
+    "parent_name": "Horde Forces",
+    "expansion": "Classic"
+  },
+  "529": {
+    "name": "Argent Dawn",
+    "parent_id": 1118,
+    "parent_name": "Classic",
+    "expansion": "Classic"
+  },
+  "530": {
+    "name": "Darkspear Trolls",
+    "parent_id": 67,
+    "parent_name": "Horde",
+    "expansion": "Classic"
+  },
+  "574": {
+    "name": "Caer Darrow",
+    "parent_id": 0,
+    "parent_name": "",
+    "expansion": "Other"
+  },
+  "576": {
+    "name": "Timbermaw Hold",
+    "parent_id": 1118,
+    "parent_name": "Classic",
+    "expansion": "Classic"
+  },
+  "577": {
+    "name": "Everlook",
+    "parent_id": 169,
+    "parent_name": "Steamwheedle Cartel",
+    "expansion": "Classic"
+  },
+  "589": {
+    "name": "Wintersaber Trainers",
+    "parent_id": 0,
+    "parent_name": "",
+    "expansion": "Other"
+  },
+  "609": {
+    "name": "Cenarion Circle",
+    "parent_id": 1118,
+    "parent_name": "Classic",
+    "expansion": "Classic"
+  },
+  "729": {
+    "name": "Frostwolf Clan",
+    "parent_id": 892,
+    "parent_name": "Horde Forces",
+    "expansion": "Classic"
+  },
+  "730": {
+    "name": "Stormpike Guard",
+    "parent_id": 891,
+    "parent_name": "Alliance Forces",
+    "expansion": "Classic"
+  },
+  "749": {
+    "name": "Hydraxian Waterlords",
+    "parent_id": 1118,
+    "parent_name": "Classic",
+    "expansion": "Classic"
+  },
+  "809": {
+    "name": "Shen'dralar",
+    "parent_id": 1118,
+    "parent_name": "Classic",
+    "expansion": "Classic"
+  },
+  "889": {
+    "name": "Warsong Outriders",
+    "parent_id": 892,
+    "parent_name": "Horde Forces",
+    "expansion": "Classic"
+  },
+  "890": {
+    "name": "Silverwing Sentinels",
+    "parent_id": 891,
+    "parent_name": "Alliance Forces",
+    "expansion": "Classic"
+  },
+  "891": {
+    "name": "Alliance Forces",
+    "parent_id": 1118,
+    "parent_name": "Classic",
+    "expansion": "Classic"
+  },
+  "892": {
+    "name": "Horde Forces",
+    "parent_id": 1118,
+    "parent_name": "Classic",
+    "expansion": "Classic"
+  },
+  "909": {
+    "name": "Darkmoon Faire",
+    "parent_id": 1118,
+    "parent_name": "Classic",
+    "expansion": "Classic"
+  },
+  "910": {
+    "name": "Brood of Nozdormu",
+    "parent_id": 1118,
+    "parent_name": "Classic",
+    "expansion": "Classic"
+  },
+  "911": {
+    "name": "Silvermoon City",
+    "parent_id": 67,
+    "parent_name": "Horde",
+    "expansion": "Classic"
+  },
+  "922": {
+    "name": "Tranquillien",
+    "parent_id": 1118,
+    "parent_name": "Classic",
+    "expansion": "Classic"
+  },
+  "930": {
+    "name": "Exodar",
+    "parent_id": 469,
+    "parent_name": "Alliance",
+    "expansion": "Classic"
+  },
+  "932": {
+    "name": "The Aldor",
+    "parent_id": 936,
+    "parent_name": "Shattrath City",
+    "expansion": "The Burning Crusade"
+  },
+  "933": {
+    "name": "The Consortium",
+    "parent_id": 980,
+    "parent_name": "The Burning Crusade",
+    "expansion": "The Burning Crusade"
+  },
+  "934": {
+    "name": "The Scryers",
+    "parent_id": 936,
+    "parent_name": "Shattrath City",
+    "expansion": "The Burning Crusade"
+  },
+  "935": {
+    "name": "The Sha'tar",
+    "parent_id": 936,
+    "parent_name": "Shattrath City",
+    "expansion": "The Burning Crusade"
+  },
+  "936": {
+    "name": "Shattrath City",
+    "parent_id": 980,
+    "parent_name": "The Burning Crusade",
+    "expansion": "The Burning Crusade"
+  },
+  "941": {
+    "name": "The Mag'har",
+    "parent_id": 980,
+    "parent_name": "The Burning Crusade",
+    "expansion": "The Burning Crusade"
+  },
+  "942": {
+    "name": "Cenarion Expedition",
+    "parent_id": 980,
+    "parent_name": "The Burning Crusade",
+    "expansion": "The Burning Crusade"
+  },
+  "946": {
+    "name": "Honor Hold",
+    "parent_id": 980,
+    "parent_name": "The Burning Crusade",
+    "expansion": "The Burning Crusade"
+  },
+  "947": {
+    "name": "Thrallmar",
+    "parent_id": 980,
+    "parent_name": "The Burning Crusade",
+    "expansion": "The Burning Crusade"
+  },
+  "967": {
+    "name": "The Violet Eye",
+    "parent_id": 980,
+    "parent_name": "The Burning Crusade",
+    "expansion": "The Burning Crusade"
+  },
+  "970": {
+    "name": "Sporeggar",
+    "parent_id": 980,
+    "parent_name": "The Burning Crusade",
+    "expansion": "The Burning Crusade"
+  },
+  "978": {
+    "name": "Kurenai",
+    "parent_id": 980,
+    "parent_name": "The Burning Crusade",
+    "expansion": "The Burning Crusade"
+  },
+  "980": {
+    "name": "The Burning Crusade",
+    "parent_id": 0,
+    "parent_name": "",
+    "expansion": "The Burning Crusade"
+  },
+  "989": {
+    "name": "Keepers of Time",
+    "parent_id": 980,
+    "parent_name": "The Burning Crusade",
+    "expansion": "The Burning Crusade"
+  },
+  "990": {
+    "name": "The Scale of the Sands",
+    "parent_id": 980,
+    "parent_name": "The Burning Crusade",
+    "expansion": "The Burning Crusade"
+  },
+  "1005": {
+    "name": "Friendly, Hidden",
+    "parent_id": 0,
+    "parent_name": "",
+    "expansion": "Other"
+  },
+  "1011": {
+    "name": "Lower City",
+    "parent_id": 936,
+    "parent_name": "Shattrath City",
+    "expansion": "The Burning Crusade"
+  },
+  "1012": {
+    "name": "Ashtongue Deathsworn",
+    "parent_id": 980,
+    "parent_name": "The Burning Crusade",
+    "expansion": "The Burning Crusade"
+  },
+  "1015": {
+    "name": "Netherwing",
+    "parent_id": 980,
+    "parent_name": "The Burning Crusade",
+    "expansion": "The Burning Crusade"
+  },
+  "1031": {
+    "name": "Sha'tari Skyguard",
+    "parent_id": 936,
+    "parent_name": "Shattrath City",
+    "expansion": "The Burning Crusade"
+  },
+  "1037": {
+    "name": "Alliance Vanguard",
+    "parent_id": 1097,
+    "parent_name": "Wrath of the Lich King",
+    "expansion": "Wrath of the Lich King"
+  },
+  "1038": {
+    "name": "Ogri'la",
+    "parent_id": 980,
+    "parent_name": "The Burning Crusade",
+    "expansion": "The Burning Crusade"
+  },
+  "1050": {
+    "name": "Valiance Expedition",
+    "parent_id": 1037,
+    "parent_name": "Alliance Vanguard",
+    "expansion": "Wrath of the Lich King"
+  },
+  "1052": {
+    "name": "Horde Expedition",
+    "parent_id": 1097,
+    "parent_name": "Wrath of the Lich King",
+    "expansion": "Wrath of the Lich King"
+  },
+  "1064": {
+    "name": "The Taunka",
+    "parent_id": 1052,
+    "parent_name": "Horde Expedition",
+    "expansion": "Wrath of the Lich King"
+  },
+  "1067": {
+    "name": "The Hand of Vengeance",
+    "parent_id": 1052,
+    "parent_name": "Horde Expedition",
+    "expansion": "Wrath of the Lich King"
+  },
+  "1068": {
+    "name": "Explorers' League",
+    "parent_id": 1037,
+    "parent_name": "Alliance Vanguard",
+    "expansion": "Wrath of the Lich King"
+  },
+  "1073": {
+    "name": "The Kalu'ak",
+    "parent_id": 1097,
+    "parent_name": "Wrath of the Lich King",
+    "expansion": "Wrath of the Lich King"
+  },
+  "1077": {
+    "name": "Shattered Sun Offensive",
+    "parent_id": 936,
+    "parent_name": "Shattrath City",
+    "expansion": "The Burning Crusade"
+  },
+  "1085": {
+    "name": "Warsong Offensive",
+    "parent_id": 1052,
+    "parent_name": "Horde Expedition",
+    "expansion": "Wrath of the Lich King"
+  },
+  "1090": {
+    "name": "Kirin Tor",
+    "parent_id": 1097,
+    "parent_name": "Wrath of the Lich King",
+    "expansion": "Wrath of the Lich King"
+  },
+  "1091": {
+    "name": "The Wyrmrest Accord",
+    "parent_id": 1097,
+    "parent_name": "Wrath of the Lich King",
+    "expansion": "Wrath of the Lich King"
+  },
+  "1094": {
+    "name": "The Silver Covenant",
+    "parent_id": 1037,
+    "parent_name": "Alliance Vanguard",
+    "expansion": "Wrath of the Lich King"
+  },
+  "1097": {
+    "name": "Wrath of the Lich King",
+    "parent_id": 0,
+    "parent_name": "",
+    "expansion": "Wrath of the Lich King"
+  },
+  "1098": {
+    "name": "Knights of the Ebon Blade",
+    "parent_id": 1097,
+    "parent_name": "Wrath of the Lich King",
+    "expansion": "Wrath of the Lich King"
+  },
+  "1104": {
+    "name": "Frenzyheart Tribe",
+    "parent_id": 1117,
+    "parent_name": "Sholazar Basin",
+    "expansion": "Wrath of the Lich King"
+  },
+  "1105": {
+    "name": "The Oracles",
+    "parent_id": 1117,
+    "parent_name": "Sholazar Basin",
+    "expansion": "Wrath of the Lich King"
+  },
+  "1106": {
+    "name": "Argent Crusade",
+    "parent_id": 1097,
+    "parent_name": "Wrath of the Lich King",
+    "expansion": "Wrath of the Lich King"
+  },
+  "1117": {
+    "name": "Sholazar Basin",
+    "parent_id": 1097,
+    "parent_name": "Wrath of the Lich King",
+    "expansion": "Wrath of the Lich King"
+  },
+  "1118": {
+    "name": "Classic",
+    "parent_id": 0,
+    "parent_name": "",
+    "expansion": "Classic"
+  },
+  "1119": {
+    "name": "The Sons of Hodir",
+    "parent_id": 1097,
+    "parent_name": "Wrath of the Lich King",
+    "expansion": "Wrath of the Lich King"
+  },
+  "1124": {
+    "name": "The Sunreavers",
+    "parent_id": 1052,
+    "parent_name": "Horde Expedition",
+    "expansion": "Wrath of the Lich King"
+  },
+  "1126": {
+    "name": "The Frostborn",
+    "parent_id": 1037,
+    "parent_name": "Alliance Vanguard",
+    "expansion": "Wrath of the Lich King"
+  },
+  "1156": {
+    "name": "The Ashen Verdict",
+    "parent_id": 1097,
+    "parent_name": "Wrath of the Lich King",
+    "expansion": "Wrath of the Lich King"
+  }
+}

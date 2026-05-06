@@ -38,14 +38,9 @@
 # LivingWorld bot editor — local DB credentials, never commit
 tools/lw-editor/config.ini
 
-# Generated data files — rebuilt by running extract_dbc_data.py.
-# spell_names.json, class_spells.json, and spell_lookup.csv are intentionally
-# tracked (shipped with the editor so users don't need the DBC extractor).
-# The files below require DBC files pulled from the server.
-tools/lw-editor/data/talent_data.json
-tools/lw-editor/data/faction_names.json
-tools/lw-editor/data/enchantment_data.json
-tools/lw-editor/data/gem_properties.json
+# Generated data files — all tracked so the editor works on a fresh clone
+# without needing the DBC extractor or WoW client files.
+# Run extract_dbc_data.py to regenerate from updated DBC files.
 
 # Throw-away diagnostic / session scripts — not part of the codebase
 tools/lw-editor/check_bot_accounts.py
