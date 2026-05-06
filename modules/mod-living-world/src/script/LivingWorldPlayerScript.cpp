@@ -32,6 +32,8 @@
 #include "QueryResult.h"
 #include "QuestDef.h"
 #include "ScriptMgr.h"
+#include "SpellInfo.h"
+#include "SpellMgr.h"
 #include "TradeData.h"
 #include "WorldSession.h"
 #include "Log.h"
@@ -43,6 +45,72 @@
 namespace
 {
 std::unordered_set<std::uint64_t> s_openedControlledTradeWindows;
+
+// Returns true if the spell summons a mount (applies SPELL_AURA_MOUNTED).
+bool IsMountSummonSpell(uint32 spellId)
+{
+    SpellInfo const* info = sSpellMgr->GetSpellInfo(spellId);
+    return info && info->HasAura(SPELL_AURA_MOUNTED);
+}
+
+// Returns true for the riding-skill spells that gate mount speed tiers.
+bool IsRidingSkillSpell(uint32 spellId)
+{
+    switch (spellId)
+    {
+        case 33388: // Apprentice Riding
+        case 33391: // Journeyman Riding
+        case 34090: // Expert Riding
+        case 34091: // Artisan Riding
+        case 54197: // Cold Weather Flying
+            return true;
+        default:
+            return false;
+    }
+}
+
+// Grants spellId to every character on accountId except learnedByGuid.
+// Online characters receive it immediately via learnSpell; offline characters
+// are updated directly in the DB so the knowledge persists at next login.
+void PropagateSpellToAccountChars(
+    uint32 accountId, ObjectGuid const& learnedByGuid, uint32 spellId)
+{
+    QueryResult result = CharacterDatabase.Query(
+        "SELECT guid FROM characters WHERE account = {}", accountId);
+    if (!result)
+        return;
+
+    do
+    {
+        uint64 const guidLow = (*result)[0].Get<uint64>();
+        ObjectGuid const guid = ObjectGuid::Create<HighGuid::Player>(guidLow);
+        if (guid == learnedByGuid)
+            continue;
+
+        if (Player* online = ObjectAccessor::FindPlayer(guid))
+        {
+            if (!online->HasSpell(spellId))
+            {
+                online->learnSpell(spellId, false);
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] AccountMount live: spellId={} -> '{}' guid={}",
+                    spellId, online->GetName(), guidLow);
+            }
+        }
+        else
+        {
+            CharacterDatabase.Execute(
+                "INSERT IGNORE INTO character_spell (guid, spell, specMask) "
+                "VALUES ({}, {}, 255)",
+                guidLow, spellId);
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] AccountMount offline: spellId={} -> guid={}",
+                spellId, guidLow);
+        }
+    } while (result->NextRow());
+}
 
 std::uint32_t CountQuestRows(std::uint64_t characterGuid, std::uint32_t questId)
 {
@@ -889,6 +957,19 @@ public:
         if (!player || !player->GetSession() || player->GetSession()->IsBotSession())
             return;
 
+        // Mount summons and riding skills are account-wide: every character on
+        // this account learns the spell so no toon is left without a mount
+        // their sibling earned.
+        if (IsMountSummonSpell(spellID) || IsRidingSkillSpell(spellID))
+        {
+            PropagateSpellToAccountChars(
+                player->GetSession()->GetAccountId(),
+                player->GetGUID(),
+                spellID);
+        }
+
+        // Mirror all learned spells (including the mount just learned) out to
+        // any active bot clones that belong to this owner.
         for (Player* bot : living_world::service::BotPlayerRegistry::Instance()
                                .FindBotsForOwner(player->GetGUID()))
         {
