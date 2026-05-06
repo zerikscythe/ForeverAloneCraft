@@ -99,11 +99,46 @@ Queued after quest panel work:
 - migrate hazard aura registry and tuning constants to DB tables
   (see "Bot Hazard Sensor: DB Migration Roadmap" under Phase 6)
 
+## Bot Tier Architecture (Design Decision)
+
+Three distinct bot tiers are planned. Each tier has different lifecycle requirements
+and reuses different amounts of the existing session/doctrine infrastructure.
+
+### Tier 1 — Account Alt Bots (current system)
+Clones of the player's own characters. Full clone lifecycle, name leasing, progress
+sync, crash recovery. The "it IS your character" case. Everything in the current
+account-alt slice belongs here.
+
+### Tier 2 — Pre-built Combat Bots
+Static characters created once with specific gear and spec. Dedicated pool accounts.
+No cloning, no name leasing, no progress sync. Spawn via `SpawnBotPlayerOnAccount`
+directly, bypassing `AccountAltRuntimeCoordinator` entirely. Use the same
+`CompanionAI`, doctrine profiles, hazard sensor, and group-joining infrastructure
+as Tier 1. Primary use cases: rival guild members, supplemental party members,
+dungeon fillers.
+
+### Tier 3 — Ambient / Scripted World Bots
+Player-appearance creatures driven by server-side task scripts rather than a bot
+session. Use SmartAI or a custom task AI state machine (waypoints, emotes, object
+interactions). No combat class mechanics, no real player stats. Primary use cases:
+town ambient population, questers, harvesters, foragers, AH runners, crafters.
+See Phase 7 (Ambient World and Rival Guild Population) and the Guild Workforce
+System extension track.
+
+**Key architectural rule:** the WoW server is fully authoritative. Once any bot
+character is loaded into the world — regardless of tier — it can move, cast,
+loot, gather, quest, and interact with the world entirely server-side. No client
+connection is required. The only current limitation is cross-map teleports
+(dungeon instances / continent portals) which require a client acknowledgement
+packet not yet faked for headless sessions.
+
+---
+
 ## Active Workstream
 
 **Current active priority:**
 
-- finish the bot combat runtime path and complete the migration toward a
+- finish the bot combat runtime path
   data-driven combat-doctrine system
 
 This is the active work because it is the highest-leverage path for getting
@@ -967,13 +1002,26 @@ server operator might want to tune without rebuilding belongs in DB.
 
 **Overall Status: Not Started**
 
+Rival guild members are **Tier 2 pre-built combat bots**. Each rival character
+is a real character in the DB with pre-set gear, spec, and a doctrine profile.
+They use `SpawnBotPlayerOnAccount` directly — no clone lifecycle, no sync.
+A typical rival roster would be 10–15 characters (tank, healer, DPS spread
+across factions/classes) stored on dedicated pool accounts separate from the
+account-alt pool. Spawning a rival encounter is a single coordinator call
+that loads specific characters by ID with no materialization overhead.
+
 #### Subtasks
 
 11.1 Persistent rival guild roster model — **Not Started**
+- `living_world_static_bot` table: bot_id, character_guid, account_id,
+  default_profile_id, faction, role, display_name
+- Separate pool account flag (`is_static_bot`) so static bots do not compete
+  with account-alt pool slots
 11.2 Rival group size/composition policy — **Not Started**
 11.3 Alert / engaged / disengage group states — **Not Started**
 11.4 Personality-driven caution/aggression rules — **Not Started**
 11.5 Encounter continuity/history tracking — **Not Started**
+11.6 Pre-built rival character creation workflow (editor tool support) — **Not Started**
 
 ---
 
@@ -2261,9 +2309,159 @@ D.11 Define doctrine-to-profile authoring workflow — **Partial**
 - [ ] Choose the exact 10 initial spec/role defaults to seed.
 - [ ] Author and validate those defaults against live class spell/rank data.
 
+### E) Guild Workforce System
+
+**Overall Status: Not Started**
+
+A server-owned profession and gathering workforce that operates independently
+of the player being online. The player interacts with a pedestal (custom
+`GameObject`) which opens a **Guild Ledger** panel in the LW addon. The panel
+shows the roster of guild worker bots, their current profession, status, and
+task. The player assigns tasks, the bots execute them autonomously, and results
+arrive in the player's mailbox when the task is complete.
+
+Worker bots are **Tier 3 scripted task bots** driven by a goal-directed
+`GuildTaskAI` state machine rather than the reactive `CompanionAI` used by
+party bots. They do not need an owner to be online. Tasks can be queued before
+logging out and completed while offline.
+
+#### Design decisions
+
+- **Route planning is data-driven from world DB.** Herb and ore node positions
+  are read from the `gameobject` table (exact spawn coordinates). A
+  nearest-neighbour path is computed at task-start through all node positions
+  for the target entry + zone. No manual waypoint authoring required.
+  A `waypoint_path_id` override remains available for curated routes.
+
+- **Multi-objective tasks via priority tiers.** The primary objective drives
+  the route (e.g., herb harvesting). Secondary objectives are opportunistic
+  and fire when a valid target appears within `search_radius` yards of the
+  current path segment (e.g., skinning valid mobs encountered while
+  travelling between herb nodes). A bot with herbalism + skinning assigned
+  to the same zone executes both in a single task assignment.
+
+- **Skill validation before each action.** The bot checks it has the required
+  skill at the required level before attempting any objective. Missing skills
+  cause that objective to be silently skipped.
+
+- **Stop conditions are per-objective.** Each objective row carries its own
+  `stop_item_id` (stop when this item is found) and `stop_count` (stop after
+  N collected). The overall task completes when all objectives are satisfied
+  or bags are full.
+
+- **Return and mail.** On task completion the bot paths to the nearest
+  mailbox and uses `MailDraft` to send collected items to the requesting
+  player. No player session is required for this step.
+
+#### DB schema (planned)
+
+```sql
+-- Pre-built guild worker roster (Tier 2/3 static bots)
+CREATE TABLE living_world_guild_bot (
+    bot_id               INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    character_guid       BIGINT UNSIGNED NOT NULL,
+    account_id           INT UNSIGNED NOT NULL,
+    display_name         VARCHAR(64)  NOT NULL,
+    class_id             TINYINT UNSIGNED NOT NULL,
+    profession_skill_id  INT UNSIGNED NOT NULL DEFAULT 0,
+    current_task_id      INT UNSIGNED DEFAULT NULL,
+    status               ENUM('idle','traveling','working','returning','offline')
+                         NOT NULL DEFAULT 'idle',
+    PRIMARY KEY (bot_id),
+    UNIQUE KEY uq_char (character_guid)
+);
+
+-- Task library
+CREATE TABLE living_world_guild_task (
+    task_id          INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+    display_name     VARCHAR(128)  NOT NULL,
+    target_zone_id   INT UNSIGNED  NOT NULL,
+    target_map_id    INT UNSIGNED  NOT NULL,
+    waypoint_path_id INT UNSIGNED  DEFAULT NULL,
+    PRIMARY KEY (task_id)
+);
+
+-- Per-task objectives (one row per activity; priority 1 drives the route)
+CREATE TABLE living_world_guild_task_objective (
+    objective_id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    task_id               INT UNSIGNED NOT NULL,
+    priority              TINYINT      NOT NULL DEFAULT 1,
+    activity_type         ENUM(
+                            'harvest_herb','harvest_ore',
+                            'skin_mob','kill_grind','loot_item'
+                          ) NOT NULL,
+    target_entry          INT UNSIGNED  NOT NULL,
+    required_skill_id     INT UNSIGNED  NOT NULL DEFAULT 0,
+    required_skill_level  SMALLINT      NOT NULL DEFAULT 0,
+    search_radius         FLOAT         NOT NULL DEFAULT 0.0,
+    stop_item_id          INT UNSIGNED  DEFAULT NULL,
+    stop_count            INT UNSIGNED  DEFAULT 0,
+    PRIMARY KEY (objective_id),
+    KEY idx_task_priority (task_id, priority)
+);
+
+-- Runtime state
+CREATE TABLE living_world_guild_task_runtime (
+    bot_id           INT UNSIGNED NOT NULL,
+    task_id          INT UNSIGNED NOT NULL,
+    assigned_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    items_collected  INT UNSIGNED DEFAULT 0,
+    state            ENUM('traveling','working','returning','done')
+                     NOT NULL DEFAULT 'traveling',
+    PRIMARY KEY (bot_id)
+);
+```
+
+#### GuildTaskAI state machine
+
+```
+IDLE
+  ↓ task assigned
+SPAWNING        bot session loaded into world
+  ↓
+TRAVELING       MotionMaster paths along computed node route
+  [each tick: scan search_radius for secondary-objective targets]
+  ↓ secondary target in range
+  DIVERT_TO_SECONDARY  →  fight/interact  →  loot/skin  →  resume route
+  ↓ primary node in range
+GATHERING / FIGHTING
+  ↓ auto-loot complete
+  [check all stop conditions]
+  ↓ not done
+TRAVELING (next node)
+  ↓ all objectives satisfied or bags full
+RETURNING       path to nearest mailbox
+  ↓
+DEPOSITING      MailDraft sends items to requesting player
+  ↓
+IDLE            bot session logged out / despawned
+```
+
+#### Candidate tasks
+
+E.1 Guild bot roster DB schema and model layer — **Not Started**
+E.2 Guild task + objective DB schema and repository layer — **Not Started**
+E.3 Node-route planner: query `gameobject` positions, nearest-neighbour
+    path — **Not Started**
+E.4 `GuildTaskAI` state machine — harvest_herb initial implementation — **Not
+    Started**
+E.5 Spawn/despawn coordinator for task bots (no owner online required) — **Not
+    Started**
+E.6 Mail-return path on task completion — **Not Started**
+E.7 kill_grind / skin_mob objective type — **Not Started**
+E.8 Multi-objective (primary route + opportunistic secondary) — **Not Started**
+E.9 Guild Ledger game object script — **Not Started**
+E.10 Guild Ledger addon panel (roster, task assignment, status) — **Not
+     Started**
+E.11 Guild bot character creation workflow in editor tool — **Not Started**
+E.12 Cross-continent travel support (world-port ack for headless sessions) —
+     **Not Started** (blocker for tasks that span continents)
+
+---
+
 #### Current active checklist
 
-- [x] Add DB schema for bot combat profiles, entries, actions, and conditions.
+- [x] Add DB schema for bot combat profiles
 - [x] Add baked-in default data/service path for one starter spec/role per
       class.
 - [x] Implement spec/role best-guess resolver with optional profile override.
