@@ -71,6 +71,9 @@
 
 using namespace Acore::ChatCommands;
 
+// Economy scale global defined in LivingWorldWorldScript.cpp.
+namespace living_world { extern float g_economyScale; extern void ApplyEconomyScale(float, bool); }
+
 namespace living_world
 {
 namespace script
@@ -4159,6 +4162,41 @@ private:
         }
 
         constexpr std::string_view loglevelToken = "loglevel";
+        constexpr std::string_view economyToken = "economy";
+
+        if (arguments.starts_with(economyToken))
+        {
+            if (handler->GetSession() &&
+                handler->GetSession()->GetSecurity() < SEC_GAMEMASTER)
+            {
+                handler->SendErrorMessage("LivingWorld economy requires GM access.");
+                return true;
+            }
+
+            arguments.remove_prefix(economyToken.size());
+            arguments = living_world::script::TrimRootWhitespace(arguments);
+
+            float scale = 0.0f;
+            auto const res = std::from_chars(
+                arguments.data(), arguments.data() + arguments.size(), scale);
+            if (res.ec != std::errc{} || scale <= 0.0f)
+            {
+                handler->PSendSysMessage(
+                    "LivingWorld economy: current scale is {:.2f}. "
+                    "Usage: .lw economy <value>  (e.g. 0.5, 1.0, 2.0)",
+                    living_world::g_economyScale);
+                return true;
+            }
+
+            living_world::ApplyEconomyScale(scale, /*isReload=*/true);
+            handler->PSendSysMessage(
+                "LivingWorld economy scale set to {:.2f}. "
+                "Repairs and trainer costs updated immediately. "
+                "Vendor prices take effect after the next restart.",
+                scale);
+            return true;
+        }
+
         if (!arguments.starts_with(loglevelToken))
         {
             handler->PSendSysMessage(

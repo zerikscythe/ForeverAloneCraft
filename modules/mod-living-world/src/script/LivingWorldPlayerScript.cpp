@@ -42,6 +42,9 @@
 #include <unordered_set>
 #include <vector>
 
+// Economy scale global defined in LivingWorldWorldScript.cpp.
+namespace living_world { extern float g_economyScale; extern void ApplyEconomyScale(float, bool); }
+
 namespace
 {
 std::unordered_set<std::uint64_t> s_openedControlledTradeWindows;
@@ -955,7 +958,7 @@ public:
     void OnPlayerBeforeTrainerListSpellCost(Player* /*player*/, Creature* /*trainer*/,
         uint32 /*spellId*/, int32& moneyCost) override
     {
-        float const scale = sConfigMgr->GetOption<float>("LivingWorld.EconomyScale", 1.0f);
+        float const scale = living_world::g_economyScale;
         if (scale > 0.0f && scale != 1.0f)
             moneyCost = std::max(0, int32(moneyCost * scale));
     }
@@ -963,7 +966,7 @@ public:
     void OnPlayerBeforeTrainerTeachSpell(Player* /*player*/, Creature* /*trainer*/,
         uint32 /*spellId*/, int32& moneyCost) override
     {
-        float const scale = sConfigMgr->GetOption<float>("LivingWorld.EconomyScale", 1.0f);
+        float const scale = living_world::g_economyScale;
         if (scale > 0.0f && scale != 1.0f)
             moneyCost = std::max(0, int32(moneyCost * scale));
     }
