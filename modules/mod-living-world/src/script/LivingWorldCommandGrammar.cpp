@@ -629,12 +629,31 @@ ParsedCommand ParseBotActionCommand(BotRef botRef, std::string_view remaining)
         return cmd;
     }
 
+    if (secondToken == "applytalent")
+    {
+        BotApplyTalentTemplateCommand cmd;
+        cmd.botRef = std::move(botRef);
+        std::string_view opt = ConsumeToken(remaining);
+        cmd.resetFirst = (opt == "reset");
+        return cmd;
+    }
+
+    if (secondToken == "favoritetalent")
+    {
+        BotTalentFavoriteCommand cmd;
+        cmd.botRef = std::move(botRef);
+        std::string_view opt = ConsumeToken(remaining);
+        if (!opt.empty() && opt != "auto")
+            cmd.specKey = std::string(opt);
+        return cmd;
+    }
+
     return MakeError(
         CommandParseErrorKind::UnknownVerb,
         std::string("expected 'profile', 'cast', 'attack', 'disengage', 'train', 'retreat', "
                     "'follow', 'refreshments', 'buff', 'bags', 'retrieve', 'equip', 'unequip', "
                     "'pickup', 'turnin', 'trainspell', 'trainall', 'reward', 'mode', 'info', "
-                    "'addtalent', or 'resettalents', got: ") +
+                    "'addtalent', 'resettalents', 'applytalent', or 'favoritetalent', got: ") +
             std::string(secondToken));
 }
 } // namespace

@@ -54,7 +54,11 @@
 #include "service/AccountAltRecoveryService.h"
 #include "service/AccountAltRuntimeCoordinator.h"
 #include "service/BotQuestRewardService.h"
+#include "service/BotTalentApplicator.h"
 #include "service/PartyBotService.h"
+#include "service/SimpleBotCombatSpecRoleResolver.h"
+#include "integration/SqlBotTalentTemplateRepository.h"
+#include "integration/SqlBotTalentPreferenceRepository.h"
 
 #include <algorithm>
 #include <array>
@@ -1695,6 +1699,196 @@ void HandleBotResetTalents(
         "resettalents: {} talent points refunded on {}.",
         bot->GetFreeTalentPoints(),
         bot->GetName());
+}
+
+void HandleBotApplyTalentTemplate(
+    ChatHandler* handler,
+    BotApplyTalentTemplateCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* owner = session ? session->GetPlayer() : nullptr;
+    if (!session || !owner)
+    {
+        handler->SendErrorMessage("LivingWorld applytalent requires an in-game player.");
+        return;
+    }
+
+    Player* bot = ResolveActiveBotForOwner(owner, command.botRef);
+    if (!bot)
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "applytalent: bot not found or not currently active.");
+        return;
+    }
+
+    integration::SqlBotTalentTemplateRepository templateRepo;
+    integration::SqlBotTalentPreferenceRepository preferenceRepo;
+    integration::SqlAccountAltRuntimeRepository altRuntimeRepo;
+    service::BotTalentApplicator applicator(templateRepo, preferenceRepo, altRuntimeRepo);
+
+    std::uint64_t const sourceCharGuid = bot->GetGUID().GetCounter();
+
+    if (command.resetFirst)
+    {
+        // Resolve template first so we can report errors before any reset.
+        std::optional<model::BotTalentPreference> pref =
+            preferenceRepo.GetPreference(sourceCharGuid);
+        std::uint64_t templateId = pref ? pref->templateId : 0;
+        std::optional<model::BotTalentTemplateRecord> tmpl;
+        if (templateId != 0)
+        {
+            tmpl = templateRepo.FindTemplate(templateId);
+        }
+        else
+        {
+            service::SimpleBotCombatSpecRoleResolver resolver;
+            service::BotCombatSpecRoleResolutionRequest req;
+            req.classId             = bot->getClass();
+            req.sourceCharacterGuid = sourceCharGuid;
+            service::BotCombatSpecRoleResolutionResult res = resolver.Resolve(req);
+            if (!res.effectiveSpecKey.empty())
+                tmpl = templateRepo.FindTemplateForSpec(
+                    res.effectiveSpecKey, bot->getClass());
+        }
+
+        if (!tmpl)
+        {
+            SendPlayerLog(
+                handler,
+                static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+                "applytalent: no template found for {} (class {}).",
+                bot->GetName(), static_cast<std::uint32_t>(bot->getClass()));
+            return;
+        }
+
+        service::TalentResetResult result =
+            applicator.ReapplyTemplate(bot, *tmpl);
+        if (result == service::TalentResetResult::InsufficientGold)
+        {
+            std::uint32_t cost = bot->resetTalentsCost();
+            std::uint32_t gold = bot->GetMoney() / 10000;
+            std::uint32_t costGold = cost / 10000;
+            SendPlayerLog(
+                handler,
+                static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+                "applytalent: reset costs {}g but {} only has {}g.",
+                costGold, bot->GetName(), gold);
+            return;
+        }
+
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "applytalent: applied '{}' to {} ({} free points remaining).",
+            tmpl->displayName, bot->GetName(), bot->GetFreeTalentPoints());
+    }
+    else
+    {
+        bool applied = applicator.ApplyPreferredTemplate(bot, sourceCharGuid);
+        if (!applied)
+        {
+            SendPlayerLog(
+                handler,
+                static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+                "applytalent: no template found for {} (class {}).",
+                bot->GetName(), static_cast<std::uint32_t>(bot->getClass()));
+            return;
+        }
+
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "applytalent: spent points on {} ({} free points remaining).",
+            bot->GetName(), bot->GetFreeTalentPoints());
+    }
+}
+
+void HandleBotTalentFavorite(
+    ChatHandler* handler,
+    BotTalentFavoriteCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* owner = session ? session->GetPlayer() : nullptr;
+    if (!session || !owner)
+    {
+        handler->SendErrorMessage("LivingWorld favoritetalent requires an in-game player.");
+        return;
+    }
+
+    Player* bot = ResolveActiveBotForOwner(owner, command.botRef);
+    if (!bot)
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "favoritetalent: bot not found or not currently active.");
+        return;
+    }
+
+    integration::SqlBotTalentTemplateRepository templateRepo;
+    integration::SqlBotTalentPreferenceRepository preferenceRepo;
+    std::uint64_t const sourceCharGuid = bot->GetGUID().GetCounter();
+
+    if (!command.specKey)
+    {
+        // Query mode: report current setting.
+        std::optional<model::BotTalentPreference> pref =
+            preferenceRepo.GetPreference(sourceCharGuid);
+        if (!pref || pref->templateId == 0)
+        {
+            service::SimpleBotCombatSpecRoleResolver resolver;
+            service::BotCombatSpecRoleResolutionRequest req;
+            req.classId             = bot->getClass();
+            req.sourceCharacterGuid = sourceCharGuid;
+            service::BotCombatSpecRoleResolutionResult res = resolver.Resolve(req);
+            SendPlayerLog(
+                handler,
+                static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+                "favoritetalent: {} — auto-detect (current spec: {}).",
+                bot->GetName(),
+                res.effectiveSpecKey.empty() ? "unknown" : res.effectiveSpecKey);
+        }
+        else
+        {
+            std::optional<model::BotTalentTemplateRecord> tmpl =
+                templateRepo.FindTemplate(pref->templateId);
+            SendPlayerLog(
+                handler,
+                static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+                "favoritetalent: {} — pinned to '{}' (id={}).",
+                bot->GetName(),
+                tmpl ? tmpl->displayName : "unknown",
+                pref->templateId);
+        }
+        return;
+    }
+
+    // Set mode: look up template by spec key and class, then save preference.
+    std::optional<model::BotTalentTemplateRecord> tmpl =
+        templateRepo.FindTemplateForSpec(*command.specKey, bot->getClass());
+    if (!tmpl)
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "favoritetalent: no template found for spec '{}' class {}.",
+            *command.specKey, static_cast<std::uint32_t>(bot->getClass()));
+        return;
+    }
+
+    model::BotTalentPreference pref;
+    pref.sourceCharacterGuid = sourceCharGuid;
+    pref.templateId          = tmpl->templateId;
+    pref.autoApplyOnLevel    = true;
+    preferenceRepo.SavePreference(pref);
+
+    SendPlayerLog(
+        handler,
+        static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+        "favoritetalent: {} pinned to '{}'.",
+        bot->GetName(), tmpl->displayName);
 }
 
 void HandleBotCast(
@@ -4125,6 +4319,20 @@ bool HandleParsedCommand(
         std::get_if<BotResetTalentsCommand>(&parsed))
     {
         HandleBotResetTalents(handler, *command);
+        return true;
+    }
+
+    if (BotApplyTalentTemplateCommand const* command =
+        std::get_if<BotApplyTalentTemplateCommand>(&parsed))
+    {
+        HandleBotApplyTalentTemplate(handler, *command);
+        return true;
+    }
+
+    if (BotTalentFavoriteCommand const* command =
+        std::get_if<BotTalentFavoriteCommand>(&parsed))
+    {
+        HandleBotTalentFavorite(handler, *command);
         return true;
     }
 

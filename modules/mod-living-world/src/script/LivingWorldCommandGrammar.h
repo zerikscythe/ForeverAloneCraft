@@ -283,6 +283,24 @@ struct BotResetTalentsCommand
     BotRef botRef;
 };
 
+// "<position|name> applytalent [reset]"
+// Spend all available free talent points using the bot's preferred template.
+// reset=true: reset all talents first, then fill the full build.
+struct BotApplyTalentTemplateCommand
+{
+    BotRef botRef;
+    bool resetFirst = false;
+};
+
+// "<position|name> favoritetalent [<specKey>|auto]"
+// No arg or "auto" → report the current preferred template (or auto-detected spec).
+// <specKey>         → pin the preferred template to the named spec.
+struct BotTalentFavoriteCommand
+{
+    BotRef botRef;
+    std::optional<std::string> specKey; // nullopt = query current setting
+};
+
 // "<position|name> mode assist|passive|hold|guard"
 //
 // Changes the bot's combat stance immediately. Stored in BotPlayerRegistry
@@ -333,7 +351,9 @@ using ParsedCommand = std::variant<
     BotModeSetCommand,
     BotInfoCommand,
     BotAddTalentCommand,
-    BotResetTalentsCommand>;
+    BotResetTalentsCommand,
+    BotApplyTalentTemplateCommand,
+    BotTalentFavoriteCommand>;
 
 
 // Parse a raw command argument string (everything after `.lwbot `). The

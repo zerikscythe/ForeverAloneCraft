@@ -6,6 +6,7 @@
 #include "integration/SqlBotGlobalConfigRepository.h"
 #include "integration/SqlBotHazardConfigRepository.h"
 #include "integration/SqlBotOocConfigRepository.h"
+#include "integration/SqlBotTalentPreferenceRepository.h"
 #include "service/BotQuestRewardService.h"
 
 namespace living_world
@@ -58,6 +59,7 @@ void ApplyEconomyScale(float scale, bool isReload)
                 living_world::integration::SqlBotHazardConfigRepository().EnsureSchema();
                 living_world::integration::SqlBotGlobalConfigRepository().EnsureSchema();
                 living_world::integration::SqlBotOocConfigRepository().EnsureSchema();
+                living_world::integration::SqlBotTalentPreferenceRepository().EnsureSchema();
             }
         };
 

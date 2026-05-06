@@ -23,6 +23,9 @@
 #include "service/AccountAltStartupRecoveryService.h"
 #include "service/BotQuestRewardService.h"
 #include "service/BotPlayerRegistry.h"
+#include "service/BotTalentApplicator.h"
+#include "integration/SqlBotTalentTemplateRepository.h"
+#include "integration/SqlBotTalentPreferenceRepository.h"
 
 #include "DatabaseEnv.h"
 #include "Group.h"
@@ -1182,6 +1185,27 @@ public:
             player->GetGUID().GetCounter());
         s_openedControlledTradeWindows.erase(player->GetGUID().GetCounter());
         DismissOwnerBot(player);
+    }
+
+    void OnPlayerLevelChanged(Player* player, uint8 /*oldLevel*/) override
+    {
+        if (!player || !player->GetSession() || !player->GetSession()->IsBotSession())
+            return;
+
+        std::uint64_t const sourceCharGuid = player->GetGUID().GetCounter();
+
+        living_world::integration::SqlBotTalentTemplateRepository templateRepo;
+        living_world::integration::SqlBotTalentPreferenceRepository preferenceRepo;
+        living_world::integration::SqlAccountAltRuntimeRepository altRuntimeRepo;
+
+        std::optional<living_world::model::BotTalentPreference> pref =
+            preferenceRepo.GetPreference(sourceCharGuid);
+        if (pref && !pref->autoApplyOnLevel)
+            return;
+
+        living_world::service::BotTalentApplicator applicator(
+            templateRepo, preferenceRepo, altRuntimeRepo);
+        applicator.ApplyPreferredTemplate(player, sourceCharGuid);
     }
 };
 
