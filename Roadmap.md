@@ -21,10 +21,30 @@ details have been intentionally removed here rather than copied forward.
 
 ## Recent Progress Snapshot
 
-The latest completed gameplay slice is quest-state continuity for account-alt
-bots plus the first bot quest UX layer.
+The latest completed gameplay slice is bot talent tree templates and
+auto-leveling.
 
 Completed recently:
+
+- talent tree templates seeded for all 19 spec+class combinations (19 world-DB
+  rows in `living_world_bot_talent_template`, priority-ordered entries in
+  `living_world_bot_talent_template_entry`)
+- `BotTalentApplicator` service: `ApplyTemplate` (spend free points, no reset),
+  `ReapplyTemplate` (reset + full apply; account-alts pay gold cost, generic
+  bots reset free), `ApplyPreferredTemplate` (auto-detect via
+  `SimpleBotCombatSpecRoleResolver` when no template pinned)
+- per-bot template preference stored in `living_world_bot_talent_preference`
+  (characters DB); `template_id = 0` = auto-detect, `auto_apply_on_level`
+  toggle controls whether `OnPlayerLevelChanged` fires auto-apply
+- `.lwbot <bot> applytalent [reset]` — spend all free points from preferred
+  template; `reset` keyword resets first then fills the full build
+- `.lwbot <bot> favoritetalent [<specKey>|auto]` — pin or query preferred
+  template for a bot
+- `OnPlayerLevelChanged` hook wired in `LivingWorldPlayerScript` — any bot
+  session with `auto_apply_on_level = 1` automatically spends new talent points
+  in priority order at each level gain
+
+Previously completed:
 
 - active quest accept now mirrors owner -> eligible active bots
 - clone -> source quest sync now preserves active quest rows and objective
@@ -2101,6 +2121,248 @@ The project has moved well past the initial foundation pass. Current state:
 The next milestone is **multi-bot support**: extend `BotPlayerRegistry` to
 track N bots per owner, update spawn guards, and scale `CompanionAI` scheduling
 to match — unlocking the full 5-player party gameplay goal.
+
+---
+
+## Planned Slice: Spawn-Time Talent Application
+
+**Status: Not Started** (small addition to the talent template slice)
+
+When a generic bot is summoned at level X it currently spawns with all talent
+points unspent. The `OnPlayerLevelChanged` hook only fires on level-gain, not
+at login. This slice closes the gap.
+
+### Change
+
+Wire a deferred event in `LivingWorldPlayerScript::OnPlayerLogin` (bot-session
+path, after `AddBotToOwnerGroup`) that calls
+`BotTalentApplicator::ApplyPreferredTemplate`. No reset is needed — a freshly
+spawned bot has all free points available. The deferred event fires after the
+bot is fully registered so `GetFreeTalentPoints()` reflects its level.
+
+This is a one-function addition; no schema changes required.
+
+---
+
+## Planned Slice: Bot Gear Loadout Templates
+
+**Status: Not Started**
+
+### Overview
+
+Generic bots summoned at any level should spawn already geared to a
+content-appropriate standard with natural variation — no manual equip
+commands required. This mirrors the talent template system: server-baked
+gear sets keyed by spec, class, content tier, and variant index.
+
+### Gear Tier Scale
+
+Tiers are stored as named keys with an integer ordinal used by the difficulty
+offset system. The ordinal ordering tracks item level, not content release
+order, so the offset math is always monotone.
+
+| Ordinal | Tier key    | Content                        | Approx ilvl |
+|---------|-------------|--------------------------------|-------------|
+| 0       | `pre_raid`  | Heroic 5-mans, crafted         | 187         |
+| 1       | `t7_10`     | Naxx / EoE / OS 10-man         | 200         |
+| 2       | `t7_25`     | Naxx / EoE / OS 25-man         | 213         |
+| 3       | `t8_10`     | Ulduar 10-man                  | 219–226     |
+| 4       | `t8_25`     | Ulduar 25-man                  | 226–232     |
+| 5       | `t9_10n`    | ToC 10-man normal              | 232         |
+| 6       | `t9_mid`    | ToC 10H / ToC 25N              | 245         |
+| 7       | `t9_25h`    | ToC 25-man heroic              | 258         |
+| 8       | `t10_10n`   | ICC 10-man normal              | 264         |
+| 9       | `t10_mid`   | ICC 10H / ICC 25N              | 271         |
+| 10      | `t10_25h`   | ICC 25-man heroic              | 277–284     |
+
+Leveling sub-tiers (levels 1–79) use a simpler scale keyed by level band:
+`leveling_1_29`, `leveling_30_59`, `leveling_60_69`, `leveling_70_79`.
+
+### Variant System
+
+Each `(spec_key, class_id, tier_key)` combination has **3–5 variants**
+(indexed 1–5). Within a tier:
+
+- **Variant 1** — lower end of the ilvl band; some previous-tier holdovers.
+  Represents a player who has just entered this content bracket.
+- **Variant 3** — middle; a realistic mid-clear loadout.
+- **Variant 5** — upper end; nearly full BiS for that tier, one or two
+  upgrades left.
+
+This gives natural spread without requiring manual curation of hundreds of
+hand-crafted sets.
+
+At spawn time one variant is selected using **weighted random** (default
+weight = 10 per variant; adjustable per row to bias toward stronger or weaker
+sets if desired).
+
+### Difficulty Offset System
+
+The raid-group request command accepts an integer offset applied to the
+content's base tier ordinal before gear is selected:
+
+```
+.lwbot raid request <content> <size><difficulty> [offset]
+```
+
+Examples:
+- `.lwbot raid request ICC 25H`     → ordinal 10, offset 0 → `t10_25h` gear
+- `.lwbot raid request ICC 25H -2`  → ordinal 10, offset -2 → `t8_25` gear
+- `.lwbot raid request NAX 10 +3`   → ordinal 1, offset +3 → `t8_25` gear
+- `.lwbot raid request ULD 25 -1`   → ordinal 4, offset -1 → `t7_25` gear
+
+Offset is clamped to `[0, 10]` so invalid inputs produce sensible results
+rather than errors. Negative offset = undergeared for the content (harder
+experience). Positive offset = overgeared (face-roll mode).
+
+The offset is a command-time parameter only — it is not persisted. The bot's
+`living_world_bot_talent_preference.template_id` (talent) and the gear variant
+are independent per-bot persistent settings.
+
+### Armor Type Rules
+
+The item generator enforces armor-type filtering by role, not just class,
+because stat-chasing sometimes crosses armor tiers in WotLK.
+
+| Role category          | Armor filter rule                                       |
+|------------------------|---------------------------------------------------------|
+| Tank (any class)       | **Strict** — primary armor type only (plate/leather).  |
+|                        | Armor value is a hard requirement.                      |
+| Physical melee DPS     | **Strict** — primary armor type only.                  |
+| Ranged DPS (Hunter)    | **Prefer** mail; allow leather if stat score ≥ 15%     |
+|                        | better. Never allow cloth.                              |
+| Enhancement Shaman     | **Prefer** mail; allow leather on same threshold.       |
+| Caster DPS / Healer    | **Stat weight only** — any armor the class can legally  |
+| (plate/mail classes)   | equip. Holy Paladin wearing cloth for throughput is     |
+|                        | realistic and should be reproduced here.                |
+| Cloth classes          | **Hard limit** — cloth only. Priests, Mages, Warlocks  |
+| (Priest, Mage, Lock)   | cannot equip leather. No flex at all.                   |
+| Druid (any spec)       | **Leather or cloth only** (class cap). Resto Druid      |
+|                        | may use cloth on stat-weight basis.                     |
+
+The armor filter is encoded in the generator script as a per-spec constant,
+not in the DB schema, because it reflects class mechanical constraints rather
+than configuration data.
+
+### DB Schema
+
+```sql
+-- One row per variant of a gear set.
+-- (spec_key, class_id, tier_key, variant_index) is the natural key.
+-- tier_ordinal is denormalized for fast offset arithmetic at query time.
+CREATE TABLE `living_world_bot_gear_template` (
+    `template_id`    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `spec_key`       VARCHAR(32) NOT NULL,
+    `class_id`       TINYINT UNSIGNED NOT NULL,
+    `tier_key`       VARCHAR(32) NOT NULL,
+    `tier_ordinal`   TINYINT UNSIGNED NOT NULL,
+    `min_level`      TINYINT UNSIGNED NOT NULL DEFAULT 1,
+    `variant_index`  TINYINT UNSIGNED NOT NULL,   -- 1-5
+    `display_name`   VARCHAR(64) NOT NULL,
+    `weight`         TINYINT UNSIGNED NOT NULL DEFAULT 10,
+    PRIMARY KEY (`template_id`),
+    UNIQUE KEY `uk_lwbg_variant` (`spec_key`, `class_id`, `tier_key`, `variant_index`),
+    KEY `idx_lwbg_ordinal` (`class_id`, `tier_ordinal`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- One row per gear slot per variant.
+-- slot matches EquipmentSlots enum (0-18).
+CREATE TABLE `living_world_bot_gear_template_entry` (
+    `entry_id`       BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `template_id`    BIGINT UNSIGNED NOT NULL,
+    `slot`           TINYINT UNSIGNED NOT NULL,
+    `item_id`        INT UNSIGNED NOT NULL,
+    PRIMARY KEY (`entry_id`),
+    UNIQUE KEY `uk_lwbg_slot` (`template_id`, `slot`),
+    KEY `idx_lwbg_template` (`template_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+### Seed Data Generator
+
+Seeding hundreds of gear sets by hand is not feasible. A generator script
+queries `item_template` directly from the live world DB, filtering by:
+
+- `AllowableClass` bitmask matching the spec's class
+- `InventoryType` matching the target slot
+- `ItemLevel` within the tier's ilvl band
+- `Quality` ≥ blue (quality 3+) for heroic+ tiers; green allowed for leveling
+- Stat weights biased toward the spec's primary stats:
+  - Tanks: stamina, defense, dodge/parry/block rating, armor
+  - Physical melee DPS: attack power, strength/agility, crit, ArP
+  - Ranged DPS: agility, attack power, crit, haste
+  - Caster DPS: spell power, hit, haste, crit
+  - Healers: spell power, haste, crit, mp5/spirit
+
+For each slot the generator ranks the N best candidates by stat weight, then
+distributes them across the 3–5 variants: variant 1 gets the lower-ranked
+candidates (weaker within the tier), variant 5 gets the top-ranked. Items
+shared across variants (where there is only one clear BiS) may appear in
+multiple variant rows.
+
+The generator outputs a SQL file in the same format as
+`rev_living_world_006_talent_templates.sql` with `ON DUPLICATE KEY UPDATE`
+for idempotent re-runs.
+
+### C++ Service
+
+`BotGearApplicator` (mirrors `BotTalentApplicator`):
+
+```cpp
+class BotGearApplicator {
+public:
+    // Equip the bot from the given gear template variant. Existing equipped
+    // items are moved to bags first; items that do not fit are dropped.
+    void ApplyGearTemplate(Player* bot,
+                           model::BotGearTemplateRecord const& tmpl) const;
+
+    // Resolve the best tier for the bot's level with the given offset,
+    // weighted-random pick a variant, then call ApplyGearTemplate.
+    // Returns false if no template is found.
+    bool ApplyGearForContent(Player* bot,
+                             std::string const& specKey,
+                             int tierOrdinal,
+                             int offset = 0) const;
+};
+```
+
+At spawn time (deferred event in `OnPlayerLogin`) the bot calls
+`ApplyGearForContent` with offset 0 and the auto-detected spec — same trigger
+point as the spawn-time talent application.
+
+Via the raid-request command the caller passes the content tier ordinal and
+the user-supplied offset.
+
+### Commands
+
+```
+.lwbot <bot> gear [<tierKey>]
+```
+Manually re-equip a specific bot from its preferred gear tier. No arg uses the
+auto-detected spec and the bot's current level to pick the best matching tier.
+
+```
+.lwbot raid request <content> <size><difficulty> [offset]
+```
+Spawn a raid-ready party for the given content. `content` is a short alias
+(ICC, ULD, NAX, TOC). `size` is 10 or 25. `difficulty` is N or H.
+`offset` is an integer in the range -5..+5.
+
+### Checklist
+
+- [ ] Write generator script against live world DB
+- [ ] Review and spot-check generated item IDs for at least 3 specs across
+      all tiers before committing seed data
+- [ ] Schema: `living_world_bot_gear_template` + `_entry`
+- [ ] Model: `BotGearTemplateRecord`, `BotGearTemplateEntry`
+- [ ] Integration: `BotGearTemplateRepository` interface +
+      `SqlBotGearTemplateRepository` impl
+- [ ] Service: `BotGearApplicator` (weighted variant selection, slot equip loop)
+- [ ] Wire spawn-time talent application (deferred event in `OnPlayerLogin`)
+- [ ] Wire spawn-time gear application alongside talent application
+- [ ] Grammar + command script: `.lwbot <bot> gear` handler
+- [ ] Grammar + command script: `.lwbot raid request` parser + handler
+- [ ] Verify armor type filtering in generator matches the rules table above
 
 ---
 
