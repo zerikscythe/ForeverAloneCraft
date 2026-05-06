@@ -150,3 +150,5 @@ lw_profset.txt
 lw_modeset.txt
 extract_resolve.ps1
 extract_handlers.ps1
+/collect_deployed_server_logs.ps1
+/_issues
