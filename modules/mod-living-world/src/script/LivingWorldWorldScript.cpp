@@ -3,7 +3,6 @@
 #include "IWorld.h"
 #include "Log.h"
 #include "ScriptMgr.h"
-#include "WorldConfig.h"
 #include "service/BotQuestRewardService.h"
 
 namespace living_world
@@ -27,27 +26,6 @@ void ApplyEconomyScale(float scale, bool isReload)
 
     // Repair cost is read dynamically on every repair — takes effect now.
     sWorld->setRate(RATE_REPAIRCOST, scale);
-
-    if (!isReload)
-    {
-        // Vendor item buy prices are baked into itemTemplate.BuyPrice once
-        // at startup. Setting rates here (before ObjectMgr::LoadItemTemplates)
-        // gives correctly scaled initial vendor prices. Changing the scale
-        // after startup has no effect on vendor windows until next restart.
-        static constexpr ServerConfigs kBuyValueRates[] =
-        {
-            RATE_BUYVALUE_ITEM_POOR,
-            RATE_BUYVALUE_ITEM_NORMAL,
-            RATE_BUYVALUE_ITEM_UNCOMMON,
-            RATE_BUYVALUE_ITEM_RARE,
-            RATE_BUYVALUE_ITEM_EPIC,
-            RATE_BUYVALUE_ITEM_LEGENDARY,
-            RATE_BUYVALUE_ITEM_ARTIFACT,
-            RATE_BUYVALUE_ITEM_HEIRLOOM,
-        };
-        for (ServerConfigs rate : kBuyValueRates)
-            sWorld->setRate(rate, scale);
-    }
 
     LOG_INFO("server.worldserver",
         "[LivingWorld] EconomyScale={}{} applied.",

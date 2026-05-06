@@ -971,6 +971,14 @@ public:
             moneyCost = std::max(0, int32(moneyCost * scale));
     }
 
+    void OnPlayerBeforeVendorItemPrice(Player* /*player*/, Creature* /*vendor*/,
+        uint32 /*itemId*/, uint32& price) override
+    {
+        float const scale = living_world::g_economyScale;
+        if (scale > 0.0f && scale != 1.0f)
+            price = uint32(price * scale);
+    }
+
     void OnPlayerLearnSpell(Player* player, uint32 spellID) override
     {
         if (!player || !player->GetSession() || player->GetSession()->IsBotSession())

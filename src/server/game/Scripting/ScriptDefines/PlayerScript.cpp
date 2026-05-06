@@ -454,6 +454,11 @@ void ScriptMgr::OnPlayerBeforeTrainerTeachSpell(Player* player, Creature* traine
     CALL_ENABLED_HOOKS(PlayerScript, PLAYERHOOK_ON_BEFORE_TRAINER_TEACH_SPELL, script->OnPlayerBeforeTrainerTeachSpell(player, trainer, spellId, moneyCost));
 }
 
+void ScriptMgr::OnPlayerBeforeVendorItemPrice(Player* player, Creature* vendor, uint32 itemId, uint32& price)
+{
+    CALL_ENABLED_HOOKS(PlayerScript, PLAYERHOOK_ON_BEFORE_VENDOR_ITEM_PRICE, script->OnPlayerBeforeVendorItemPrice(player, vendor, itemId, price));
+}
+
 void ScriptMgr::OnPlayerAfterStoreOrEquipNewItem(Player* player, uint32 vendorslot, Item* item, uint8 count, uint8 bag, uint8 slot, ItemTemplate const* pProto, Creature* pVendor, VendorItem const* crItem, bool bStore)
 {
     CALL_ENABLED_HOOKS(PlayerScript, PLAYERHOOK_ON_AFTER_STORE_OR_EQUIP_NEW_ITEM, script->OnPlayerAfterStoreOrEquipNewItem(player, vendorslot, item, count, bag, slot, pProto, pVendor, crItem, bStore));
