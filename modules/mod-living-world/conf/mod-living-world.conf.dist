@@ -1,6 +1,26 @@
 # Living world configuration.
 
 ###################################################################################################
+# ECONOMY SCALE
+#
+#    LivingWorld.EconomyScale
+#        A flat multiplier applied to all vendor purchase prices and repair costs.
+#        Trainer spell costs are also scaled at server startup.
+#
+#        1.0  = Blizzlike (default)
+#        0.5  = Everything half price  — forgiving solo experience
+#        2.0  = Everything double price — hard mode
+#
+#        Values must be > 0.  Changes require a server restart to take effect
+#        for vendor item prices and trainer costs (loaded once at startup).
+#        Repair costs reload dynamically with the config.
+#
+#        Default: 1.0
+###################################################################################################
+
+LivingWorld.EconomyScale = 1.0
+
+###################################################################################################
 # ACCOUNT-ALT ITEM RECOVERY POLICY
 #
 #    LivingWorld.AccountAlt.EnableInventorySync
