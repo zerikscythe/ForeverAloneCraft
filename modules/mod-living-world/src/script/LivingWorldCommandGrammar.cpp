@@ -3,6 +3,7 @@
 #include <cctype>
 #include <charconv>
 #include <limits>
+#include <vector>
 
 namespace living_world
 {
@@ -163,6 +164,7 @@ ParsedCommand ParseRosterVerb(
 //   "cast <Ability Name> [on <target>]"       → BotCastCommand
 //   "attack [<target>]"                       → BotAttackCommand
 //   "disengage"                               → BotDisengageCommand
+//   "reward <questId> <choiceNumber>"         -> BotRewardChoiceCommand
 ParsedCommand ParseBotActionCommand(BotRef botRef, std::string_view remaining)
 {
     std::string_view secondToken = ConsumeToken(remaining);
@@ -171,7 +173,7 @@ ParsedCommand ParseBotActionCommand(BotRef botRef, std::string_view remaining)
     {
         return MakeError(
             CommandParseErrorKind::UnknownVerb,
-            "expected 'profile', 'cast', 'attack', or 'disengage' after the bot reference");
+            "expected a verb like 'profile', 'cast', 'attack', 'pickup', 'turnin', etc. after the bot reference");
     }
 
     // "profile <slot>" path — unchanged.
@@ -291,6 +293,14 @@ ParsedCommand ParseBotActionCommand(BotRef botRef, std::string_view remaining)
         return cmd;
     }
 
+    // "yoink" path.
+    if (secondToken == "yoink")
+    {
+        BotYoinkCommand cmd;
+        cmd.botRef = std::move(botRef);
+        return cmd;
+    }
+
     // "refreshments" path.
     if (secondToken == "refreshments")
     {
@@ -394,10 +404,256 @@ ParsedCommand ParseBotActionCommand(BotRef botRef, std::string_view remaining)
         return cmd;
     }
 
+    if (secondToken == "pickup")
+    {
+        std::string_view questToken = ConsumeToken(remaining);
+        if (questToken.empty())
+        {
+            return MakeError(
+                CommandParseErrorKind::MissingArgument,
+                "pickup requires a quest id");
+        }
+
+        std::uint64_t questIdRaw = 0;
+        if (!ParseUInt64(questToken, questIdRaw) ||
+            questIdRaw > std::numeric_limits<std::uint32_t>::max())
+        {
+            return MakeError(
+                CommandParseErrorKind::InvalidArgument,
+                "pickup requires a numeric quest id");
+        }
+
+        BotQuestPickupCommand cmd;
+        cmd.botRef = std::move(botRef);
+        cmd.questId = static_cast<std::uint32_t>(questIdRaw);
+        return cmd;
+    }
+
+    if (secondToken == "turnin")
+    {
+        std::string_view questToken = ConsumeToken(remaining);
+        if (questToken.empty())
+        {
+            return MakeError(
+                CommandParseErrorKind::MissingArgument,
+                "turnin requires a quest id");
+        }
+
+        std::uint64_t questIdRaw = 0;
+        if (!ParseUInt64(questToken, questIdRaw) ||
+            questIdRaw > std::numeric_limits<std::uint32_t>::max())
+        {
+            return MakeError(
+                CommandParseErrorKind::InvalidArgument,
+                "turnin requires a numeric quest id");
+        }
+
+        BotQuestTurninCommand cmd;
+        cmd.botRef = std::move(botRef);
+        cmd.questId = static_cast<std::uint32_t>(questIdRaw);
+        return cmd;
+    }
+
+    if (secondToken == "trainspell")
+    {
+        std::string_view spellToken = ConsumeToken(remaining);
+        if (spellToken.empty())
+        {
+            return MakeError(
+                CommandParseErrorKind::MissingArgument,
+                "trainspell requires a trainer spell id");
+        }
+
+        std::uint64_t spellIdRaw = 0;
+        if (!ParseUInt64(spellToken, spellIdRaw) ||
+            spellIdRaw > std::numeric_limits<std::uint32_t>::max())
+        {
+            return MakeError(
+                CommandParseErrorKind::InvalidArgument,
+                "trainspell requires a numeric trainer spell id");
+        }
+
+        BotTrainSpellCommand cmd;
+        cmd.botRef = std::move(botRef);
+        cmd.trainerSpellId = static_cast<std::uint32_t>(spellIdRaw);
+        return cmd;
+    }
+
+    if (secondToken == "trainall")
+    {
+        BotTrainAllCommand cmd;
+        cmd.botRef = std::move(botRef);
+        return cmd;
+    }
+
+    if (secondToken == "reward")
+    {
+        std::string_view questToken = ConsumeToken(remaining);
+        if (questToken.empty())
+        {
+            return MakeError(
+                CommandParseErrorKind::MissingArgument,
+                "reward requires a quest id");
+        }
+
+        std::uint64_t questIdRaw = 0;
+        if (!ParseUInt64(questToken, questIdRaw) ||
+            questIdRaw > std::numeric_limits<std::uint32_t>::max())
+        {
+            return MakeError(
+                CommandParseErrorKind::InvalidArgument,
+                "reward requires a numeric quest id");
+        }
+
+        std::string_view choiceToken = ConsumeToken(remaining);
+        if (choiceToken.empty())
+        {
+            return MakeError(
+                CommandParseErrorKind::MissingArgument,
+                "reward requires a choice number");
+        }
+
+        std::uint64_t choiceRaw = 0;
+        if (!ParseUInt64(choiceToken, choiceRaw) ||
+            choiceRaw == 0 ||
+            choiceRaw > std::numeric_limits<std::uint8_t>::max())
+        {
+            return MakeError(
+                CommandParseErrorKind::InvalidArgument,
+                "reward choice number must be a positive integer");
+        }
+
+        BotRewardChoiceCommand cmd;
+        cmd.botRef = std::move(botRef);
+        cmd.questId = static_cast<std::uint32_t>(questIdRaw);
+        cmd.choiceNumber = static_cast<std::uint8_t>(choiceRaw);
+        return cmd;
+    }
+
+    // "mode assist|passive|hold|guard" path.
+    if (secondToken == "mode")
+    {
+        std::string_view modeTok = ConsumeToken(remaining);
+        if (modeTok.empty())
+        {
+            return MakeError(
+                CommandParseErrorKind::MissingArgument,
+                "mode required: assist, passive, hold, or guard");
+        }
+
+        model::BotCombatMode mode;
+        if (modeTok == "assist")
+            mode = model::BotCombatMode::Assist;
+        else if (modeTok == "passive")
+            mode = model::BotCombatMode::Passive;
+        else if (modeTok == "hold")
+            mode = model::BotCombatMode::Hold;
+        else if (modeTok == "guard")
+            mode = model::BotCombatMode::Guard;
+        else
+            return MakeError(
+                CommandParseErrorKind::InvalidArgument,
+                std::string("unknown mode '") + std::string(modeTok) +
+                    "'; expected assist, passive, hold, or guard");
+
+        BotModeSetCommand cmd;
+        cmd.botRef = std::move(botRef);
+        cmd.mode   = mode;
+        return cmd;
+    }
+
+    if (secondToken == "info")
+    {
+        BotInfoCommand cmd;
+        cmd.botRef = std::move(botRef);
+        return cmd;
+    }
+
+    if (secondToken == "addtalent")
+    {
+        // Consume all remaining tokens. The last token is the point count;
+        // everything before it is the talent name (multi-word supported).
+        std::string_view next = ConsumeToken(remaining);
+        if (next.empty())
+        {
+            return MakeError(
+                CommandParseErrorKind::MissingArgument,
+                "addtalent requires a talent name and point count");
+        }
+
+        // Collect tokens; the final one must be a number.
+        std::vector<std::string_view> parts;
+        while (!next.empty())
+        {
+            parts.push_back(next);
+            next = ConsumeToken(remaining);
+        }
+
+        if (parts.size() < 2)
+        {
+            return MakeError(
+                CommandParseErrorKind::MissingArgument,
+                "addtalent requires both a talent name and a point count");
+        }
+
+        // Last part is the point count.
+        std::uint64_t pointsRaw = 0;
+        if (!ParseUInt64(parts.back(), pointsRaw) || pointsRaw == 0 ||
+            pointsRaw > 5)
+        {
+            return MakeError(
+                CommandParseErrorKind::InvalidArgument,
+                "addtalent point count must be 1-5");
+        }
+
+        // All other parts form the talent name.
+        std::string talentName;
+        for (std::size_t i = 0; i + 1 < parts.size(); ++i)
+        {
+            if (i > 0)
+                talentName += ' ';
+            talentName += std::string(parts[i]);
+        }
+
+        BotAddTalentCommand cmd;
+        cmd.botRef     = std::move(botRef);
+        cmd.talentName = std::move(talentName);
+        cmd.points     = static_cast<std::uint8_t>(pointsRaw);
+        return cmd;
+    }
+
+    if (secondToken == "resettalents")
+    {
+        BotResetTalentsCommand cmd;
+        cmd.botRef = std::move(botRef);
+        return cmd;
+    }
+
+    if (secondToken == "applytalent")
+    {
+        BotApplyTalentTemplateCommand cmd;
+        cmd.botRef = std::move(botRef);
+        std::string_view opt = ConsumeToken(remaining);
+        cmd.resetFirst = (opt == "reset");
+        return cmd;
+    }
+
+    if (secondToken == "favoritetalent")
+    {
+        BotTalentFavoriteCommand cmd;
+        cmd.botRef = std::move(botRef);
+        std::string_view opt = ConsumeToken(remaining);
+        if (!opt.empty() && opt != "auto")
+            cmd.specKey = std::string(opt);
+        return cmd;
+    }
+
     return MakeError(
         CommandParseErrorKind::UnknownVerb,
         std::string("expected 'profile', 'cast', 'attack', 'disengage', 'train', 'retreat', "
-                    "'follow', 'refreshments', 'buff', 'bags', 'retrieve', 'equip', or 'unequip', got: ") +
+                    "'follow', 'refreshments', 'buff', 'bags', 'retrieve', 'equip', 'unequip', "
+                    "'pickup', 'turnin', 'trainspell', 'trainall', 'reward', 'mode', 'info', "
+                    "'addtalent', 'resettalents', 'applytalent', or 'favoritetalent', got: ") +
             std::string(secondToken));
 }
 } // namespace
@@ -433,6 +689,50 @@ ParsedCommand ParseLivingWorldCommand(std::string_view arguments)
         firstToken == "dismiss")
     {
         return ParseRosterVerb(firstToken, remaining);
+    }
+
+    if (firstToken == "questactions")
+    {
+        return QuestActionsCommand{};
+    }
+
+    if (firstToken == "trainactions")
+    {
+        return TrainActionsCommand{};
+    }
+
+    if (firstToken == "quests")
+    {
+        return QuestRewardsCommand{};
+    }
+
+    if (firstToken == "questmode")
+    {
+        std::string_view modeToken = ConsumeToken(remaining);
+        if (modeToken.empty())
+        {
+            return MakeError(
+                CommandParseErrorKind::MissingArgument,
+                "questmode requires 'smart' or 'manual'");
+        }
+
+        if (modeToken == "smart")
+        {
+            QuestRewardModeSetCommand cmd;
+            cmd.smartMode = true;
+            return cmd;
+        }
+
+        if (modeToken == "manual")
+        {
+            QuestRewardModeSetCommand cmd;
+            cmd.smartMode = false;
+            return cmd;
+        }
+
+        return MakeError(
+            CommandParseErrorKind::InvalidArgument,
+            "questmode must be 'smart' or 'manual'");
     }
 
     // `.lwbot <position> profile <slot>` — digit-leading token is always a position.

@@ -1,7 +1,10 @@
 #include "service/AccountAltRuntimeCoordinator.h"
+#include "integration/CharacterCloneStateGateway.h"
 #include "integration/CharacterAchievementSyncRepository.h"
 #include "integration/CharacterQuestSyncRepository.h"
 #include "integration/CharacterReputationSyncRepository.h"
+#include "integration/CharacterSkillSyncRepository.h"
+#include "integration/CharacterSpellSyncRepository.h"
 #include "gtest/gtest.h"
 
 #include <optional>
@@ -114,6 +117,36 @@ public:
     std::optional<model::AccountAltRuntimeRecord> requestedRuntime;
     integration::CharacterCloneMaterializationResult result;
     int materializeCalls = 0;
+};
+
+class FakeCloneStateGateway final
+    : public integration::CharacterCloneStateGateway
+{
+public:
+    std::optional<integration::CharacterCloneLoginState> LoadCloneLoginState(
+        std::uint64_t cloneCharacterGuid) const override
+    {
+        if (!loginState || requestedCloneGuid != cloneCharacterGuid)
+            return std::nullopt;
+        return loginState;
+    }
+
+    bool DeleteOfflineCloneCharacter(
+        std::uint32_t,
+        std::uint64_t cloneCharacterGuid,
+        std::string const&) const override
+    {
+        ++deleteCalls;
+        lastDeletedCloneGuid = cloneCharacterGuid;
+        return deleteShouldSucceed;
+    }
+
+    std::uint64_t requestedCloneGuid = 8001;
+    mutable int deleteCalls = 0;
+    mutable std::uint64_t lastDeletedCloneGuid = 0;
+    bool deleteShouldSucceed = true;
+    std::optional<integration::CharacterCloneLoginState> loginState =
+        integration::CharacterCloneLoginState { "Tester", 0, true };
 };
 
 class FakeItemSnapshotRepository final
@@ -246,6 +279,26 @@ public:
     }
 };
 
+class FakeSkillSyncRepository final
+    : public integration::CharacterSkillSyncRepository
+{
+public:
+    bool SyncSkillsFromCloneToSource(std::uint64_t, std::uint64_t) override
+    {
+        return true;
+    }
+};
+
+class FakeSpellSyncRepository final
+    : public integration::CharacterSpellSyncRepository
+{
+public:
+    bool SyncSpellsFromCloneToSource(std::uint64_t, std::uint64_t) override
+    {
+        return true;
+    }
+};
+
 class FakeSnapshotRepository final
     : public integration::CharacterProgressSnapshotRepository
 {
@@ -290,6 +343,7 @@ TEST(AccountAltRuntimeCoordinatorTest, NewRuntimeUsesReservedAccount)
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
+    FakeCloneStateGateway cloneStateGateway;
     FakeItemSnapshotRepository itemSnapshotRepository;
     FakeInventorySyncRepository inventorySyncRepository;
     FakeBankSyncRepository bankSyncRepository;
@@ -299,6 +353,8 @@ TEST(AccountAltRuntimeCoordinatorTest, NewRuntimeUsesReservedAccount)
     FakeReputationSyncRepository reputationSyncRepository;
     FakeQuestSyncRepository questSyncRepository;
     FakeAchievementSyncRepository achievementSyncRepository;
+    FakeSkillSyncRepository skillSyncRepository;
+    FakeSpellSyncRepository spellSyncRepository;
     AccountAltRecoveryService recoveryService;
 
     botAccountPoolRepository.lease = model::BotAccountLease { 701, "BOT701" };
@@ -313,6 +369,7 @@ TEST(AccountAltRuntimeCoordinatorTest, NewRuntimeUsesReservedAccount)
         runtimeRepository,
         botAccountPoolRepository,
         cloneMaterializer,
+        cloneStateGateway,
         itemSnapshotRepository,
         inventorySyncRepository,
         bankSyncRepository,
@@ -322,6 +379,8 @@ TEST(AccountAltRuntimeCoordinatorTest, NewRuntimeUsesReservedAccount)
         reputationSyncRepository,
         questSyncRepository,
         achievementSyncRepository,
+        skillSyncRepository,
+        spellSyncRepository,
         recoveryService);
 
     AccountAltSpawnDecision decision = coordinator.PlanSpawn(
@@ -346,6 +405,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
+    FakeCloneStateGateway cloneStateGateway;
     FakeItemSnapshotRepository itemSnapshotRepository;
     FakeInventorySyncRepository inventorySyncRepository;
     FakeBankSyncRepository bankSyncRepository;
@@ -355,6 +415,8 @@ TEST(AccountAltRuntimeCoordinatorTest,
     FakeReputationSyncRepository reputationSyncRepository;
     FakeQuestSyncRepository questSyncRepository;
     FakeAchievementSyncRepository achievementSyncRepository;
+    FakeSkillSyncRepository skillSyncRepository;
+    FakeSpellSyncRepository spellSyncRepository;
     AccountAltRecoveryService recoveryService;
 
     model::AccountAltRuntimeRecord runtime;
@@ -374,6 +436,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
         runtimeRepository,
         botAccountPoolRepository,
         cloneMaterializer,
+        cloneStateGateway,
         itemSnapshotRepository,
         inventorySyncRepository,
         bankSyncRepository,
@@ -383,6 +446,8 @@ TEST(AccountAltRuntimeCoordinatorTest,
         reputationSyncRepository,
         questSyncRepository,
         achievementSyncRepository,
+        skillSyncRepository,
+        spellSyncRepository,
         recoveryService);
 
     AccountAltSpawnDecision decision = coordinator.PlanSpawn(
@@ -405,6 +470,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
+    FakeCloneStateGateway cloneStateGateway;
     FakeItemSnapshotRepository itemSnapshotRepository;
     FakeInventorySyncRepository inventorySyncRepository;
     FakeBankSyncRepository bankSyncRepository;
@@ -414,6 +480,8 @@ TEST(AccountAltRuntimeCoordinatorTest,
     FakeReputationSyncRepository reputationSyncRepository;
     FakeQuestSyncRepository questSyncRepository;
     FakeAchievementSyncRepository achievementSyncRepository;
+    FakeSkillSyncRepository skillSyncRepository;
+    FakeSpellSyncRepository spellSyncRepository;
     AccountAltRecoveryService recoveryService;
 
     model::AccountAltRuntimeRecord runtime;
@@ -430,6 +498,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
         runtimeRepository,
         botAccountPoolRepository,
         cloneMaterializer,
+        cloneStateGateway,
         itemSnapshotRepository,
         inventorySyncRepository,
         bankSyncRepository,
@@ -439,6 +508,8 @@ TEST(AccountAltRuntimeCoordinatorTest,
         reputationSyncRepository,
         questSyncRepository,
         achievementSyncRepository,
+        skillSyncRepository,
+        spellSyncRepository,
         recoveryService);
 
     AccountAltSpawnDecision decision = coordinator.PlanSpawn(
@@ -457,6 +528,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
+    FakeCloneStateGateway cloneStateGateway;
     FakeItemSnapshotRepository itemSnapshotRepository;
     FakeInventorySyncRepository inventorySyncRepository;
     FakeBankSyncRepository bankSyncRepository;
@@ -466,6 +538,8 @@ TEST(AccountAltRuntimeCoordinatorTest,
     FakeReputationSyncRepository reputationSyncRepository;
     FakeQuestSyncRepository questSyncRepository;
     FakeAchievementSyncRepository achievementSyncRepository;
+    FakeSkillSyncRepository skillSyncRepository;
+    FakeSpellSyncRepository spellSyncRepository;
     AccountAltRecoveryService recoveryService;
 
     model::AccountAltRuntimeRecord runtime;
@@ -484,6 +558,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
         runtimeRepository,
         botAccountPoolRepository,
         cloneMaterializer,
+        cloneStateGateway,
         itemSnapshotRepository,
         inventorySyncRepository,
         bankSyncRepository,
@@ -493,6 +568,8 @@ TEST(AccountAltRuntimeCoordinatorTest,
         reputationSyncRepository,
         questSyncRepository,
         achievementSyncRepository,
+        skillSyncRepository,
+        spellSyncRepository,
         recoveryService);
 
     AccountAltSpawnDecision decision = coordinator.PlanSpawn(
@@ -519,6 +596,7 @@ TEST(AccountAltRuntimeCoordinatorTest, BlocksWhenCloneMaterializationFails)
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
+    FakeCloneStateGateway cloneStateGateway;
     FakeItemSnapshotRepository itemSnapshotRepository;
     FakeInventorySyncRepository inventorySyncRepository;
     FakeBankSyncRepository bankSyncRepository;
@@ -528,6 +606,8 @@ TEST(AccountAltRuntimeCoordinatorTest, BlocksWhenCloneMaterializationFails)
     FakeReputationSyncRepository reputationSyncRepository;
     FakeQuestSyncRepository questSyncRepository;
     FakeAchievementSyncRepository achievementSyncRepository;
+    FakeSkillSyncRepository skillSyncRepository;
+    FakeSpellSyncRepository spellSyncRepository;
     AccountAltRecoveryService recoveryService;
 
     botAccountPoolRepository.lease = model::BotAccountLease { 701, "BOT701" };
@@ -538,6 +618,7 @@ TEST(AccountAltRuntimeCoordinatorTest, BlocksWhenCloneMaterializationFails)
         runtimeRepository,
         botAccountPoolRepository,
         cloneMaterializer,
+        cloneStateGateway,
         itemSnapshotRepository,
         inventorySyncRepository,
         bankSyncRepository,
@@ -547,6 +628,8 @@ TEST(AccountAltRuntimeCoordinatorTest, BlocksWhenCloneMaterializationFails)
         reputationSyncRepository,
         questSyncRepository,
         achievementSyncRepository,
+        skillSyncRepository,
+        spellSyncRepository,
         recoveryService);
 
     AccountAltSpawnDecision decision = coordinator.PlanSpawn(
@@ -564,6 +647,7 @@ TEST(AccountAltRuntimeCoordinatorTest, ReuseCloneRunsEquipmentRecoveryWhenApprov
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
+    FakeCloneStateGateway cloneStateGateway;
     FakeItemSnapshotRepository itemSnapshotRepository;
     FakeInventorySyncRepository inventorySyncRepository;
     FakeBankSyncRepository bankSyncRepository;
@@ -573,6 +657,8 @@ TEST(AccountAltRuntimeCoordinatorTest, ReuseCloneRunsEquipmentRecoveryWhenApprov
     FakeReputationSyncRepository reputationSyncRepository;
     FakeQuestSyncRepository questSyncRepository;
     FakeAchievementSyncRepository achievementSyncRepository;
+    FakeSkillSyncRepository skillSyncRepository;
+    FakeSpellSyncRepository spellSyncRepository;
     AccountAltRecoveryService recoveryService;
 
     model::AccountAltRuntimeRecord runtime;
@@ -607,6 +693,7 @@ TEST(AccountAltRuntimeCoordinatorTest, ReuseCloneRunsEquipmentRecoveryWhenApprov
         runtimeRepository,
         botAccountPoolRepository,
         cloneMaterializer,
+        cloneStateGateway,
         itemSnapshotRepository,
         inventorySyncRepository,
         bankSyncRepository,
@@ -616,6 +703,8 @@ TEST(AccountAltRuntimeCoordinatorTest, ReuseCloneRunsEquipmentRecoveryWhenApprov
         reputationSyncRepository,
         questSyncRepository,
         achievementSyncRepository,
+        skillSyncRepository,
+        spellSyncRepository,
         recoveryService);
 
     AccountAltSpawnDecision decision = coordinator.PlanSpawn(
@@ -635,6 +724,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
+    FakeCloneStateGateway cloneStateGateway;
     FakeItemSnapshotRepository itemSnapshotRepository;
     FakeInventorySyncRepository inventorySyncRepository;
     FakeBankSyncRepository bankSyncRepository;
@@ -644,6 +734,8 @@ TEST(AccountAltRuntimeCoordinatorTest,
     FakeReputationSyncRepository reputationSyncRepository;
     FakeQuestSyncRepository questSyncRepository;
     FakeAchievementSyncRepository achievementSyncRepository;
+    FakeSkillSyncRepository skillSyncRepository;
+    FakeSpellSyncRepository spellSyncRepository;
     AccountAltRecoveryService recoveryService;
 
     model::AccountAltRuntimeRecord runtime;
@@ -692,6 +784,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
         runtimeRepository,
         botAccountPoolRepository,
         cloneMaterializer,
+        cloneStateGateway,
         itemSnapshotRepository,
         inventorySyncRepository,
         bankSyncRepository,
@@ -701,6 +794,8 @@ TEST(AccountAltRuntimeCoordinatorTest,
         reputationSyncRepository,
         questSyncRepository,
         achievementSyncRepository,
+        skillSyncRepository,
+        spellSyncRepository,
         recoveryService);
 
     AccountAltSpawnDecision decision = coordinator.PlanSpawn(
@@ -719,6 +814,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
     FakeRuntimeRepository runtimeRepository;
     FakeBotAccountPoolRepository botAccountPoolRepository;
     FakeCloneMaterializer cloneMaterializer;
+    FakeCloneStateGateway cloneStateGateway;
     FakeItemSnapshotRepository itemSnapshotRepository;
     FakeInventorySyncRepository inventorySyncRepository;
     FakeBankSyncRepository bankSyncRepository;
@@ -728,6 +824,8 @@ TEST(AccountAltRuntimeCoordinatorTest,
     FakeReputationSyncRepository reputationSyncRepository;
     FakeQuestSyncRepository questSyncRepository;
     FakeAchievementSyncRepository achievementSyncRepository;
+    FakeSkillSyncRepository skillSyncRepository;
+    FakeSpellSyncRepository spellSyncRepository;
     AccountAltRecoveryService recoveryService;
 
     model::AccountAltRuntimeRecord runtime;
@@ -776,6 +874,7 @@ TEST(AccountAltRuntimeCoordinatorTest,
         runtimeRepository,
         botAccountPoolRepository,
         cloneMaterializer,
+        cloneStateGateway,
         itemSnapshotRepository,
         inventorySyncRepository,
         bankSyncRepository,
@@ -785,6 +884,8 @@ TEST(AccountAltRuntimeCoordinatorTest,
         reputationSyncRepository,
         questSyncRepository,
         achievementSyncRepository,
+        skillSyncRepository,
+        spellSyncRepository,
         recoveryService,
         AccountAltItemRecoveryOptions { true, false });
 

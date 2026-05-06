@@ -2,6 +2,7 @@
 
 #include "integration/AccountAltRuntimeRepository.h"
 #include "integration/BotAccountPoolRepository.h"
+#include "integration/CharacterCloneStateGateway.h"
 #include "integration/CharacterAchievementSyncRepository.h"
 #include "integration/CharacterBankSyncRepository.h"
 #include "integration/CharacterCloneMaterializer.h"
@@ -12,6 +13,8 @@
 #include "integration/CharacterProgressSyncRepository.h"
 #include "integration/CharacterQuestSyncRepository.h"
 #include "integration/CharacterReputationSyncRepository.h"
+#include "integration/CharacterSkillSyncRepository.h"
+#include "integration/CharacterSpellSyncRepository.h"
 #include "model/AccountAltRuntime.h"
 #include "service/AccountAltItemRecoveryService.h"
 #include "service/AccountAltRecoveryService.h"
@@ -51,6 +54,7 @@ public:
         integration::AccountAltRuntimeRepository& runtimeRepository,
         integration::BotAccountPoolRepository& botAccountPoolRepository,
         integration::CharacterCloneMaterializer& cloneMaterializer,
+        integration::CharacterCloneStateGateway const& cloneStateGateway,
         integration::CharacterItemSnapshotRepository const& itemSnapshotRepository,
         integration::CharacterInventorySyncRepository& inventorySyncRepository,
         integration::CharacterBankSyncRepository& bankSyncRepository,
@@ -60,6 +64,8 @@ public:
         integration::CharacterReputationSyncRepository& reputationSyncRepository,
         integration::CharacterQuestSyncRepository& questSyncRepository,
         integration::CharacterAchievementSyncRepository& achievementSyncRepository,
+        integration::CharacterSkillSyncRepository& skillSyncRepository,
+        integration::CharacterSpellSyncRepository& spellSyncRepository,
         AccountAltRecoveryService const& recoveryService,
         AccountAltItemRecoveryOptions itemRecoveryOptions = {});
 
@@ -72,6 +78,7 @@ public:
 private:
     integration::AccountAltRuntimeRepository& _runtimeRepository;
     integration::CharacterCloneMaterializer& _cloneMaterializer;
+    integration::CharacterCloneStateGateway const& _cloneStateGateway;
     integration::CharacterItemSnapshotRepository const& _itemSnapshotRepository;
     integration::CharacterInventorySyncRepository& _inventorySyncRepository;
     integration::CharacterBankSyncRepository& _bankSyncRepository;
@@ -81,6 +88,8 @@ private:
     integration::CharacterReputationSyncRepository& _reputationSyncRepository;
     integration::CharacterQuestSyncRepository& _questSyncRepository;
     integration::CharacterAchievementSyncRepository& _achievementSyncRepository;
+    integration::CharacterSkillSyncRepository& _skillSyncRepository;
+    integration::CharacterSpellSyncRepository& _spellSyncRepository;
     AccountAltRecoveryService const& _recoveryService;
     AccountAltItemRecoveryOptions _itemRecoveryOptions;
     AccountAltRuntimeService _runtimeService;

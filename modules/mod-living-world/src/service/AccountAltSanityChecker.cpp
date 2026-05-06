@@ -41,6 +41,23 @@ model::AccountAltSanityCheckResult AccountAltSanityChecker::Check(
     if (cloneSnapshot.achievementCount >= sourceSnapshot.achievementCount)
         result.safeDomains.push_back(model::AccountAltSyncDomain::Achievements);
 
+    // Honor: only sync positive net gains within the per-session cap.
+    // totalKills is strictly additive; honor points can be spent by the bot so
+    // we take the net gain (clone - snapshot) and cap it.
+    bool const honorSafe =
+        cloneSnapshot.totalHonorPoints <= sourceSnapshot.totalHonorPoints + kMaxAllowedHonorGain &&
+        cloneSnapshot.totalKills >= sourceSnapshot.totalKills &&
+        (cloneSnapshot.totalKills - sourceSnapshot.totalKills) <= kMaxAllowedKillDelta;
+    if (honorSafe)
+        result.safeDomains.push_back(model::AccountAltSyncDomain::Honor);
+    else
+        result.failures.push_back("honor or kill delta exceeds the safe per-session threshold");
+
+    // Skills and spells are strictly additive (INSERT IGNORE / GREATEST).
+    // The clone can only accumulate them, never lose them. Always safe.
+    result.safeDomains.push_back(model::AccountAltSyncDomain::Skills);
+    result.safeDomains.push_back(model::AccountAltSyncDomain::Spells);
+
     if (result.failures.empty())
     {
         result.passed = true;

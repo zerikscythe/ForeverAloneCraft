@@ -21,7 +21,11 @@
 #include "service/AccountAltDismissalService.h"
 #include "service/AccountAltRecoveryService.h"
 #include "service/AccountAltStartupRecoveryService.h"
+#include "service/BotQuestRewardService.h"
 #include "service/BotPlayerRegistry.h"
+#include "service/BotTalentApplicator.h"
+#include "integration/SqlBotTalentTemplateRepository.h"
+#include "integration/SqlBotTalentPreferenceRepository.h"
 
 #include "DatabaseEnv.h"
 #include "Group.h"
@@ -31,6 +35,8 @@
 #include "QueryResult.h"
 #include "QuestDef.h"
 #include "ScriptMgr.h"
+#include "SpellInfo.h"
+#include "SpellMgr.h"
 #include "TradeData.h"
 #include "WorldSession.h"
 #include "Log.h"
@@ -39,9 +45,78 @@
 #include <unordered_set>
 #include <vector>
 
+// Economy scale global defined in LivingWorldWorldScript.cpp.
+namespace living_world { extern float g_economyScale; extern void ApplyEconomyScale(float, bool); }
+
 namespace
 {
 std::unordered_set<std::uint64_t> s_openedControlledTradeWindows;
+
+// Returns true if the spell summons a mount (applies SPELL_AURA_MOUNTED).
+bool IsMountSummonSpell(uint32 spellId)
+{
+    SpellInfo const* info = sSpellMgr->GetSpellInfo(spellId);
+    return info && info->HasAura(SPELL_AURA_MOUNTED);
+}
+
+// Returns true for the riding-skill spells that gate mount speed tiers.
+bool IsRidingSkillSpell(uint32 spellId)
+{
+    switch (spellId)
+    {
+        case 33388: // Apprentice Riding
+        case 33391: // Journeyman Riding
+        case 34090: // Expert Riding
+        case 34091: // Artisan Riding
+        case 54197: // Cold Weather Flying
+            return true;
+        default:
+            return false;
+    }
+}
+
+// Grants spellId to every character on accountId except learnedByGuid.
+// Online characters receive it immediately via learnSpell; offline characters
+// are updated directly in the DB so the knowledge persists at next login.
+void PropagateSpellToAccountChars(
+    uint32 accountId, ObjectGuid const& learnedByGuid, uint32 spellId)
+{
+    QueryResult result = CharacterDatabase.Query(
+        "SELECT guid FROM characters WHERE account = {}", accountId);
+    if (!result)
+        return;
+
+    do
+    {
+        uint64 const guidLow = (*result)[0].Get<uint64>();
+        ObjectGuid const guid = ObjectGuid::Create<HighGuid::Player>(guidLow);
+        if (guid == learnedByGuid)
+            continue;
+
+        if (Player* online = ObjectAccessor::FindPlayer(guid))
+        {
+            if (!online->HasSpell(spellId))
+            {
+                online->learnSpell(spellId, false);
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] AccountMount live: spellId={} -> '{}' guid={}",
+                    spellId, online->GetName(), guidLow);
+            }
+        }
+        else
+        {
+            CharacterDatabase.Execute(
+                "INSERT IGNORE INTO character_spell (guid, spell, specMask) "
+                "VALUES ({}, {}, 255)",
+                guidLow, spellId);
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] AccountMount offline: spellId={} -> guid={}",
+                spellId, guidLow);
+        }
+    } while (result->NextRow());
+}
 
 std::uint32_t CountQuestRows(std::uint64_t characterGuid, std::uint32_t questId)
 {
@@ -65,6 +140,63 @@ std::uint32_t CountActiveQuestRowsForQuest(std::uint64_t characterGuid, std::uin
         return 0;
 
     return result->Fetch()[0].Get<std::uint32_t>();
+}
+
+void SendLWBotAddonMessage(Player* player, std::string const& payload)
+{
+    if (!player || !player->GetSession())
+    {
+        return;
+    }
+
+    std::string msg = "LWBOT\t" + payload;
+    WorldPacket data;
+    ChatHandler::BuildChatPacket(
+        data, CHAT_MSG_WHISPER, LANG_ADDON, player, player, msg);
+    player->GetSession()->SendPacket(&data);
+}
+
+void SendQuestRewardsAddonState(Player* player)
+{
+    if (!player || !player->GetSession())
+    {
+        return;
+    }
+
+    living_world::service::BotQuestRewardService questRewardService;
+    SendLWBotAddonMessage(player, "QCLR");
+    SendLWBotAddonMessage(
+        player,
+        std::string("QMODE;") +
+            (questRewardService.GetRewardMode(player->GetGUID().GetCounter()) ==
+                    living_world::service::BotQuestRewardMode::Manual
+                ? "MANUAL"
+                : "SMART"));
+
+    for (living_world::service::PendingQuestReward const& pending :
+         questRewardService.BuildPendingRewards(player))
+    {
+        std::string payload = "QST;";
+        payload += pending.botName;
+        payload += ';';
+        payload += std::to_string(pending.questId);
+        payload += ';';
+        payload += pending.questTitle;
+
+        for (living_world::service::QuestRewardChoice const& choice : pending.choices)
+        {
+            payload += ';';
+            payload += std::to_string(choice.choiceNumber);
+            payload += ':';
+            payload += std::to_string(choice.itemId);
+            payload += ':';
+            payload += std::to_string(choice.count);
+        }
+
+        SendLWBotAddonMessage(player, payload);
+    }
+
+    SendLWBotAddonMessage(player, "QEND");
 }
 
 struct StartupRuntimeRecoverySummary
@@ -673,6 +805,7 @@ public:
 
         if (!player->GetSession()->IsBotSession())
         {
+            RunOwnerStartupRecovery(player);
             CleanupStaleGroupBots(player);
             player->m_Events.AddEventAtOffset(
                 new DeferredOwnerGroupCleanupEvent(player->GetGUID()),
@@ -747,6 +880,12 @@ public:
 
         RunBotDismissalRecovery(player);
 
+        // Release the pool account so it can be reused for the next spawn.
+        LoginDatabase.Execute(
+            "UPDATE living_world_bot_account_pool "
+            "SET is_available = 1, reserved_for = NULL WHERE account_id = {}",
+            player->GetSession()->GetAccountId());
+
         living_world::service::BotPlayerRegistry::Instance()
             .UnregisterBotPlayer(player);
     }
@@ -819,11 +958,48 @@ public:
             synced);
     }
 
+    void OnPlayerBeforeTrainerListSpellCost(Player* /*player*/, Creature* /*trainer*/,
+        uint32 /*spellId*/, int32& moneyCost) override
+    {
+        float const scale = living_world::g_economyScale;
+        if (scale > 0.0f && scale != 1.0f)
+            moneyCost = std::max(0, int32(moneyCost * scale));
+    }
+
+    void OnPlayerBeforeTrainerTeachSpell(Player* /*player*/, Creature* /*trainer*/,
+        uint32 /*spellId*/, int32& moneyCost) override
+    {
+        float const scale = living_world::g_economyScale;
+        if (scale > 0.0f && scale != 1.0f)
+            moneyCost = std::max(0, int32(moneyCost * scale));
+    }
+
+    void OnPlayerBeforeVendorItemPrice(Player* /*player*/, Creature* /*vendor*/,
+        uint32 /*itemId*/, uint32& price) override
+    {
+        float const scale = living_world::g_economyScale;
+        if (scale > 0.0f && scale != 1.0f)
+            price = uint32(price * scale);
+    }
+
     void OnPlayerLearnSpell(Player* player, uint32 spellID) override
     {
         if (!player || !player->GetSession() || player->GetSession()->IsBotSession())
             return;
 
+        // Mount summons and riding skills are account-wide: every character on
+        // this account learns the spell so no toon is left without a mount
+        // their sibling earned.
+        if (IsMountSummonSpell(spellID) || IsRidingSkillSpell(spellID))
+        {
+            PropagateSpellToAccountChars(
+                player->GetSession()->GetAccountId(),
+                player->GetGUID(),
+                spellID);
+        }
+
+        // Mirror all learned spells (including the mount just learned) out to
+        // any active bot clones that belong to this owner.
         for (Player* bot : living_world::service::BotPlayerRegistry::Instance()
                                .FindBotsForOwner(player->GetGUID()))
         {
@@ -916,6 +1092,46 @@ public:
         }
     }
 
+    void OnPlayerCompleteQuest(Player* player, Quest const* quest) override
+    {
+        if (!player || !quest || !player->GetSession())
+        {
+            return;
+        }
+
+        if (!player->GetSession()->IsBotSession())
+        {
+            living_world::service::BotQuestRewardService questRewardService;
+            questRewardService.ApplyOwnerQuestRewardToBots(player, quest);
+            SendQuestRewardsAddonState(player);
+
+            std::uint32_t const pendingCount =
+                static_cast<std::uint32_t>(
+                    questRewardService.BuildPendingRewards(player).size());
+            if (pendingCount > 0)
+            {
+                ChatHandler handler(player->GetSession());
+                living_world::script::SendPlayerLog(
+                    &handler,
+                    static_cast<std::uint8_t>(living_world::script::PlayerChatLogLevel::BareMinimum),
+                    "LivingWorld {} bot quest reward choice(s) waiting in the Quests tab.",
+                    pendingCount);
+            }
+
+            return;
+        }
+
+        uint32 const questId = quest->GetQuestId();
+        SyncActiveQuestStateToSource(player, questId, false);
+
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] QuestSync complete: bot='{}' guid={} questId={}.",
+            player->GetName(),
+            player->GetGUID().GetCounter(),
+            questId);
+    }
+
     void OnPlayerQuestAbandon(Player* player, uint32 questId) override
     {
         // Skip bots — abandons are mirrored from owner to bot, not bot to owner.
@@ -969,6 +1185,27 @@ public:
             player->GetGUID().GetCounter());
         s_openedControlledTradeWindows.erase(player->GetGUID().GetCounter());
         DismissOwnerBot(player);
+    }
+
+    void OnPlayerLevelChanged(Player* player, uint8 /*oldLevel*/) override
+    {
+        if (!player || !player->GetSession() || !player->GetSession()->IsBotSession())
+            return;
+
+        std::uint64_t const sourceCharGuid = player->GetGUID().GetCounter();
+
+        living_world::integration::SqlBotTalentTemplateRepository templateRepo;
+        living_world::integration::SqlBotTalentPreferenceRepository preferenceRepo;
+        living_world::integration::SqlAccountAltRuntimeRepository altRuntimeRepo;
+
+        std::optional<living_world::model::BotTalentPreference> pref =
+            preferenceRepo.GetPreference(sourceCharGuid);
+        if (pref && !pref->autoApplyOnLevel)
+            return;
+
+        living_world::service::BotTalentApplicator applicator(
+            templateRepo, preferenceRepo, altRuntimeRepo);
+        applicator.ApplyPreferredTemplate(player, sourceCharGuid);
     }
 };
 

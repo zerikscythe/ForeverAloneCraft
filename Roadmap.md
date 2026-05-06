@@ -19,6 +19,329 @@ The old roadmap included a number of emulator-specific tasks, file names,
 runtime assumptions, and command surfaces from a different server stack. Those
 details have been intentionally removed here rather than copied forward.
 
+## Recent Progress Snapshot
+
+The latest completed gameplay slice is bot talent tree templates and
+auto-leveling.
+
+Completed recently:
+
+- talent tree templates seeded for all 19 spec+class combinations (19 world-DB
+  rows in `living_world_bot_talent_template`, priority-ordered entries in
+  `living_world_bot_talent_template_entry`)
+- `BotTalentApplicator` service: `ApplyTemplate` (spend free points, no reset),
+  `ReapplyTemplate` (reset + full apply; account-alts pay gold cost, generic
+  bots reset free), `ApplyPreferredTemplate` (auto-detect via
+  `SimpleBotCombatSpecRoleResolver` when no template pinned)
+- per-bot template preference stored in `living_world_bot_talent_preference`
+  (characters DB); `template_id = 0` = auto-detect, `auto_apply_on_level`
+  toggle controls whether `OnPlayerLevelChanged` fires auto-apply
+- `.lwbot <bot> applytalent [reset]` — spend all free points from preferred
+  template; `reset` keyword resets first then fills the full build
+- `.lwbot <bot> favoritetalent [<specKey>|auto]` — pin or query preferred
+  template for a bot
+- `OnPlayerLevelChanged` hook wired in `LivingWorldPlayerScript` — any bot
+  session with `auto_apply_on_level = 1` automatically spends new talent points
+  in priority order at each level gain
+
+Previously completed:
+
+- active quest accept now mirrors owner -> eligible active bots
+- clone -> source quest sync now preserves active quest rows and objective
+  counters correctly
+- bot quest completion now syncs back during play via
+  `LivingWorldPlayerScript::OnPlayerCompleteQuest`
+- reward-choice quests now support a smart/manual bot reward flow
+- the LivingWorld addon now has a `Quests` tab for pending bot reward choices
+
+Bot hazard / floor sensor system (Phase 1) landed:
+
+- `BotHazardSensor` added to `src/ai/` — two detection layers per tick:
+  - Layer 1: known bad aura registry (`GetKnownHazardAuras`, hardcoded set for
+    now; designed to become DB-driven)
+  - Layer 2: repeated HP loss at a fixed position — catches unnamed fire patches
+    with no detectable aura
+- When danger is detected the bot steps 5 yards toward the nearest clean party
+  member and stops immediately once the hazard clears (does not run all the way
+  to the companion)
+- Anti-jitter: 2-second commitment window keeps the same anchor between ticks
+- Class exemptions: Warriors and Death Knights skip escape (tank proxy);
+  HybridHealers suppressed when owner HP is critically low
+- Integration point: `ProcessHazardTick` fires in `Tick()` after Hold/Passive
+  early-returns and before `GetCombatDoctrine()` — bots escaping fire skip the
+  DB doctrine lookup entirely while moving
+- Cleanup: `ClearHazardState` wired to `ClearBotOverride` for clean bot dismissal
+
+Design decision recorded: the aura registry, tuning constants, class exception
+rules, and encounter-specific override profiles are all intended to migrate to
+DB tables rather than stay hardcoded — same architecture as the combat doctrine
+system. See the "Bot Hazard Sensor: DB Migration Roadmap" section under Phase 6
+for the full breakdown and priority order.
+
+Additional recent engineering progress on the active combat migration:
+
+- `.lwbot <#|name> profile <1-10>` now writes to the new
+  `living_world_bot_combat_runtime_selection` table instead of the legacy
+  `character_bot_profile_slots` path
+- active bot profile-slot switches now invalidate live CompanionAI doctrine /
+  prepared-profile caches immediately, so slot changes apply on the next AI tick
+  instead of waiting for cache TTL expiry
+- `CompanionAI` now logs explicit doctrine-runtime fallback reasons:
+  - `reason=no_prepared_entries`
+  - `reason=no_runtime_action`
+- first focused combat-profile tests were added for
+  `SimpleBotCombatSpecRoleResolver`, and the doctrine-related filtered suite now
+  passes locally
+- investigation of the broader unit-test run found two categories of failures:
+  - stale `AccountAltSanityCheckerTest` expectations that still assume failed
+    sanity implies zero safe domains
+  - a real `AccountAltRuntimeCoordinator` test seam bug, where clone-present
+    paths escaped the fake test seams and touched live/global clone-login state
+- all stale unit-test failures are now resolved (15/15 passing)
+- DB-driven rotation doctrine seeded for all 10 default DPS specs across
+  `living_world_bot_combat_default_entry/action/condition`
+- `BotCombatRuntimeEvaluator` gained `combo_points` condition support
+  (stat_key='combo_points', subject_key='self') enabling correct Rogue rotation
+  gating on Eviscerate and Slice and Dice
+- hardcoded per-class spell selection removed from `TickRanged` and `TickMelee`;
+  both now delegate entirely to the profile evaluator path, with auto-attack
+  as the only implicit fallback — healer and hybrid-healer paths remain
+  hardcoded until healer profiles are seeded
+
+Current next-planned slice:
+
+- extend the `Quests` tab into a broader bot quest-actions panel that can show
+  bot-specific `Pick Up` / `Turn In` actions for a targeted quest giver,
+  including class-specific follow-up quests
+
+Queued after quest panel work:
+
+- migrate hazard aura registry and tuning constants to DB tables
+  (see "Bot Hazard Sensor: DB Migration Roadmap" under Phase 6)
+
+## Bot Tier Architecture (Design Decision)
+
+Three distinct bot tiers are planned. Each tier has different lifecycle requirements
+and reuses different amounts of the existing session/doctrine infrastructure.
+
+### Tier 1 — Account Alt Bots (current system)
+Clones of the player's own characters. Full clone lifecycle, name leasing, progress
+sync, crash recovery. The "it IS your character" case. Everything in the current
+account-alt slice belongs here.
+
+### Tier 2 — Pre-built Combat Bots
+Static characters created once with specific gear and spec. Dedicated pool accounts.
+No cloning, no name leasing, no progress sync. Spawn via `SpawnBotPlayerOnAccount`
+directly, bypassing `AccountAltRuntimeCoordinator` entirely. Use the same
+`CompanionAI`, doctrine profiles, hazard sensor, and group-joining infrastructure
+as Tier 1. Primary use cases: rival guild members, supplemental party members,
+dungeon fillers.
+
+### Tier 3 — Ambient / Scripted World Bots
+Player-appearance creatures driven by server-side task scripts rather than a bot
+session. Use SmartAI or a custom task AI state machine (waypoints, emotes, object
+interactions). No combat class mechanics, no real player stats. Primary use cases:
+town ambient population, questers, harvesters, foragers, AH runners, crafters.
+See Phase 7 (Ambient World and Rival Guild Population) and the Guild Workforce
+System extension track.
+
+**Key architectural rule:** the WoW server is fully authoritative. Once any bot
+character is loaded into the world — regardless of tier — it can move, cast,
+loot, gather, quest, and interact with the world entirely server-side. No client
+connection is required. The only current limitation is cross-map teleports
+(dungeon instances / continent portals) which require a client acknowledgement
+packet not yet faked for headless sessions.
+
+---
+
+## Active Workstream
+
+**Current active priority:**
+
+- finish the bot combat runtime path
+  data-driven combat-doctrine system
+
+This is the active work because it is the highest-leverage path for getting
+the bots fully usable while also reducing future maintenance cost.
+
+What this means in practice:
+
+1. make the combat cycle reliable end-to-end
+   - profile resolution
+   - target resolution
+   - action evaluation
+   - fallback behavior
+   - safe execution
+
+2. move doctrine/tuning out of hardcoded C++ and into the relational profile
+   system
+   - world defaults
+   - account defaults
+   - character overrides
+   - later context defaults for `pug`, `raid`, and `battleground`
+
+3. keep only minimal hardcoded fallback behavior in C++
+   - bots must remain functional when data is missing or incomplete
+
+4. treat addon/editor work as a follow-on surface for the same server-owned
+   doctrine system, not as a separate authority
+
+Reason for priority:
+
+- this work most directly improves real bot quality
+- this work reduces the need for server recompiles during combat tuning
+- this work gives one shared doctrine path for player bots and future system
+  bots
+- this work prevents further growth of one-off class/context hardcoded combat
+  branches
+
+Current agreed design workstream:
+
+- define and implement server-authoritative user-overrideable bot combat
+  profiles backed by relational DB tables rather than JSON blobs
+- ship a baked-in default combat doctrine for one starter spec/role per class,
+  with blank profiles falling back to that default behavior automatically
+- expose profile editing through an addon-facing API/message layer handled by
+  worldserver services/repositories, not by direct addon-to-database access
+- support row-based editing of actions/conditions/targets, including
+  `enemy_primary` and `enemy_trash` target resolution, primary/secondary
+  fallback timing, conservation modes, and optional down-ranking
+- extend that same doctrine system so server defaults, account defaults,
+  character overrides, and future context defaults (PUG / Raid /
+  Battleground) all flow through the same external data model rather than
+  requiring new hardcoded C++ behavior for tuning changes
+
+### Combat Doctrine Direction: Data-Driven by Default
+
+The combat system should continue moving toward a strict split between
+runtime engine code and externally authored doctrine data.
+
+#### Why this matters
+
+The project should not require a worldserver rebuild whenever bot combat logic
+needs tuning. Recompiling the server for every threshold, target preference,
+priority reorder, or context-specific doctrine adjustment creates avoidable
+friction and slows iteration.
+
+Using the same external doctrine system for all bot contexts gives the project:
+
+- faster iteration without new binaries
+- safer balancing through SQL/data updates
+- one consistent authoring model for defaults and overrides
+- less pressure to grow large hardcoded per-class/per-context C++ branches
+- a cleaner path for future PUG / Raid / Battleground bots
+
+#### Architectural rule
+
+Going forward, the intended split is:
+
+- **C++ owns the combat engine**
+  - action legality checks
+  - target resolution
+  - condition evaluation
+  - cooldown/range/resource validation
+  - safety fallback behavior
+  - execution scheduling
+
+- **DB/data owns combat doctrine**
+  - rotations
+  - interrupts
+  - thresholds
+  - conservation rules
+  - AoE preferences
+  - spec/role defaults
+  - context-specific default profiles
+  - account/character overrides
+  - hazard aura registry and tuning (see section 10 — the hazard sensor
+    follows the same split and its hardcoded values are temporary)
+
+In short:
+
+- **server code = interpreter/runtime**
+- **database = doctrine/configuration**
+
+Hardcoded C++ should remain only as the minimal emergency fallback for missing,
+invalid, or incomplete doctrine rows.
+
+#### Target resolution order
+
+The long-term profile lookup chain should become:
+
+1. character-specific override
+2. account default/override
+3. context default (`solo`, `party`, `pug`, `raid`, `battleground`)
+4. shipped world default for spec/role
+5. minimal hardcoded emergency fallback in C++
+
+This preserves operator flexibility without allowing missing data to break bot
+combat entirely.
+
+#### Why one shared system is important
+
+The same profile system should be reused for:
+
+- baked-in/default class doctrine
+- owner/account preference doctrine
+- individual character override doctrine
+- future matchmaking/context doctrine for PUG / Raid / Battleground bots
+
+This avoids creating parallel systems such as:
+
+- hardcoded defaults in C++
+- DB rows for account bots
+- a separate battleground-only behavior table
+- special-case raid AI code paths
+
+Those parallel systems would drift over time and make future maintenance much
+harder.
+
+#### Implementation direction
+
+The current relational combat-profile work should be expanded rather than
+replaced.
+
+Near-term design expectation:
+
+- keep using repositories/services as the only readers/writers of combat
+  doctrine data
+- add context-aware profile selection on top of the existing profile/default
+  repositories
+- move more fallback doctrine out of hardcoded C++ and into default-profile
+  DB rows
+- keep the addon/API layer as an editor/controller, never as an authority
+
+#### Rollout strategy
+
+This should be delivered in phases so the runtime stays stable:
+
+1. finish character profile + default profile DB path
+2. reduce hardcoded doctrine to best-effort emergency fallback only
+3. add account-level default selection
+4. add context-level default selection for `party`, `pug`, `raid`, `battleground`
+5. expose those context/default controls through the server API and addon UX
+6. add validation/versioning for doctrine rows so bad data fails safely
+
+Immediate combat-runtime status after the latest review/fix pass:
+
+- the live bot runtime resolves doctrine from the DB-backed profile/default
+  system; for all 10 DPS specs the profile evaluator is now the sole spell
+  selection path (no per-class C++ fallback for TickRanged/TickMelee)
+- healer and hybrid-healer ticks remain hardcoded; the next step is seeding
+  healer default profiles and migrating those paths to the evaluator
+- the `combo_points` condition is wired and tested through the Rogue rotation
+
+#### Non-goals
+
+This direction does **not** mean:
+
+- addon code talks directly to the DB
+- arbitrary user scripting runs inside the client addon
+- combat legality moves out of server code
+- every engine behavior becomes hot-swappable data
+
+The server remains authoritative. Only doctrine and tuning should become
+externally authored.
+
 ## Sensitive Data Review
 
 The old roadmap did not contain obvious secrets such as passwords, API keys, or
@@ -348,6 +671,11 @@ design and foundation code.
     immediately, bypassing the normal OOC guard
 - `party` is a valid bot reference for all commands except `cast` and `request/dismiss`.
   It fans out to all bots currently registered to the owner.
+- Quest UX command surface now also exists:
+  - `.lwbot quests` — push current pending bot reward-choice state to the addon
+  - `.lwbot questmode <smart|manual>` — toggle bot reward behavior per owner
+  - `.lwbot <#|name> reward <questId> <choiceNumber>` — apply a manual
+    reward-choice selection for a specific active bot
 - Full `[LivingWorldDebug]` trace remains server-log-first.
 - Switch control/possession target is still not implemented.
 
@@ -400,6 +728,11 @@ design and foundation code.
   quests, achievements, and mail.
 - Clone→source sync is now implemented for: level/XP/money, equipment,
   inventory, bank, reputations, quest completions, and achievements.
+- Quest sync now also preserves active/in-progress quest rows and objective
+  counters correctly during bot dismiss/logout recovery.
+- Quest completion with choice rewards now has a bot-facing reward pipeline:
+  smart auto-pick by class/item fit when the answer is clear, otherwise leave
+  the reward pending for manual selection in the addon.
 - `CharacterProgressSnapshot` now carries `completedQuestCount`,
   `achievementCount`, and `totalReputationStanding` for tiebreaking in
   "clone is ahead" comparisons across both `CloneProgressIsAhead` and
@@ -442,6 +775,231 @@ design and foundation code.
 
 9.5 Decide whether generic bots and account alts share one runtime pipeline — **Not Started**
 
+### 10) Bot Hazard Sensor System
+
+**Overall Status: Partial**
+
+Phase 1 (hardcoded engine) is complete. The remaining work is migrating the
+tunable parts to DB tables so they can be edited from an external tool without
+rebuilding the server, following the same architecture as the combat doctrine
+system.
+
+#### What is currently hardcoded (and why it should not stay that way)
+
+The Phase 1 implementation in `src/ai/BotHazardSensor.cpp` contains four
+categories of hardcoded values. Each one is a friction point every time a new
+dungeon, raid, or battleground is added, or when encounter behavior needs tuning:
+
+1. **The known hazard aura set** (`GetKnownHazardAuras`) — a `static
+   unordered_set<uint32_t>`. Adding a new boss ground effect requires a code
+   change + server rebuild.
+
+2. **Tuning constants** (`HazardDamageThreshold`, `HazardEscapeStepYards`,
+   `HazardCommitWindowMs`, etc.) — `constexpr` floats and durations. Any
+   balance tweak requires a rebuild.
+
+3. **Class/role exception rules** (`IsTankClass`, the HybridHealer HP gate) —
+   hardcoded class IDs and HP thresholds. Adding a new tank class or changing
+   the healer stay-threshold requires a rebuild.
+
+4. **Encounter-specific behavior** — currently absent. Some mechanics require
+   the opposite of "move away": move toward the boss, stack on a raid marker,
+   spread to avoid splash, or move along an arc. These cannot be expressed at
+   all without code changes under the current structure.
+
+#### DB Migration Roadmap
+
+Migrate in priority order. Each step is independent; they can ship separately.
+
+##### Step 1 — Aura registry in DB (highest value, lowest effort)
+
+**Status: Not Started**
+
+Add a single table to `acore_world`:
+
+```sql
+CREATE TABLE living_world_hazard_auras (
+    spell_id    INT UNSIGNED    NOT NULL,
+    severity    FLOAT           NOT NULL DEFAULT 1.0,
+    notes       VARCHAR(255)    NULL,
+    PRIMARY KEY (spell_id)
+);
+```
+
+- Add `SqlBotHazardAuraRepository` following the `SqlBotCombatProfileRepository`
+  pattern (load on first use, 5-second TTL cache, read-only from C++ side).
+- Replace the hardcoded `GetKnownHazardAuras()` set with a DB-backed query.
+- Seed the table from the current hardcoded list as the initial migration.
+- From this point on, new ground effects are added by inserting a row — no
+  rebuild needed.
+
+This single step covers the most common day-to-day tuning need.
+
+##### Step 2 — Tuning constants in DB (low effort, moderate value)
+
+**Status: Not Started**
+
+Add a key/value config table to `acore_world`:
+
+```sql
+CREATE TABLE living_world_hazard_config (
+    config_key   VARCHAR(64)     NOT NULL,
+    value_float  FLOAT           NOT NULL DEFAULT 0.0,
+    notes        VARCHAR(255)    NULL,
+    PRIMARY KEY (config_key)
+);
+-- Seed rows:
+-- 'damage_threshold_pct'    2.0
+-- 'escape_step_yards'       5.0
+-- 'commit_window_ms'        2000.0
+-- 'safe_anchor_radius'      40.0
+-- 'max_movement_yards'      2.0
+-- 'consecutive_ticks'       2.0
+```
+
+Replace the `constexpr` constants with a DB-backed config reader using the same
+TTL-cache pattern. Default values act as the fallback when rows are missing.
+
+##### Step 3 — Class/role exception rules in DB (moderate effort, moderate value)
+
+**Status: Not Started**
+
+```sql
+CREATE TABLE living_world_hazard_class_rules (
+    class_id            TINYINT UNSIGNED    NOT NULL,
+    skip_escape         TINYINT(1)          NOT NULL DEFAULT 0,
+    owner_hp_gate_pct   FLOAT               NOT NULL DEFAULT 0.0,
+    PRIMARY KEY (class_id)
+);
+-- Seed rows:
+-- CLASS_WARRIOR (1):         skip_escape=1, owner_hp_gate_pct=0
+-- CLASS_DEATH_KNIGHT (6):    skip_escape=1, owner_hp_gate_pct=0
+-- CLASS_DRUID (11):          skip_escape=0, owner_hp_gate_pct=50
+-- CLASS_PALADIN (2):         skip_escape=0, owner_hp_gate_pct=50
+-- CLASS_SHAMAN (7):          skip_escape=0, owner_hp_gate_pct=50
+```
+
+Replace `IsTankClass()` and the HybridHealer HP check with DB-backed lookups.
+Making this data-driven means adding a new tank spec or changing healer behavior
+is a row edit, not a code change.
+
+##### Step 4 — Encounter-specific behavior profiles (larger scope, highest ceiling)
+
+**Status: Not Started**
+
+This is the raid-support layer. Some encounters invert normal escape logic
+(move toward the thing) or require role-specific movement (healer arc, spread,
+stack). A behavior profile table handles all of these:
+
+```sql
+CREATE TABLE living_world_hazard_encounter_rules (
+    id              INT UNSIGNED    NOT NULL AUTO_INCREMENT,
+    encounter_id    INT UNSIGNED    NOT NULL DEFAULT 0,   -- 0 = any encounter
+    spell_id        INT UNSIGNED    NOT NULL DEFAULT 0,   -- 0 = layer-2 pattern
+    behavior        ENUM(
+                        'escape_away',      -- default: move away from hazard
+                        'escape_toward',    -- reversed: move toward boss/marker
+                        'spread',           -- move away from party members
+                        'stack',            -- move toward party members
+                        'none'              -- do nothing (suppress escape)
+                    )               NOT NULL DEFAULT 'escape_away',
+    anchor_type     ENUM(
+                        'clean_party',      -- default: nearest clean party member
+                        'tank',             -- move toward the current tank
+                        'owner',            -- move toward the player owner
+                        'none'              -- no anchor, use direction only
+                    )               NOT NULL DEFAULT 'clean_party',
+    step_yards      FLOAT           NOT NULL DEFAULT 5.0,
+    commit_ms       INT UNSIGNED    NOT NULL DEFAULT 2000,
+    tank_ignore     TINYINT(1)      NOT NULL DEFAULT 0,
+    notes           VARCHAR(255)    NULL,
+    PRIMARY KEY (id),
+    KEY idx_encounter_spell (encounter_id, spell_id)
+);
+```
+
+The runtime evaluator checks: does the current map/encounter have a matching
+row for this spell or layer-2 pattern? If yes, apply that behavior. Falls back
+to global defaults otherwise.
+
+This table is also where the "healer arc movement" variant belongs once it is
+designed — it could be expressed as a specialized `anchor_type` or a separate
+`movement_pattern` column.
+
+#### Architectural rule for this system
+
+The hazard sensor follows the same C++/DB split as the combat doctrine system:
+
+- **C++ owns the detection engine** — aura checking, HP delta tracking,
+  position tracking, movement commands, timing/jitter logic, safety checks.
+- **DB owns the doctrine** — which spells are dangerous, how dangerous they
+  are, how to respond to them, which classes are exempt, and what each
+  encounter requires.
+
+Hardcoded values in `BotHazardSensor.cpp` should be treated as emergency
+fallbacks only, not as the authoritative source of behavior. Any value that a
+server operator might want to tune without rebuilding belongs in DB.
+
+#### Current file locations
+
+- `modules/mod-living-world/src/ai/BotHazardSensor.h` — public API + structs
+- `modules/mod-living-world/src/ai/BotHazardSensor.cpp` — Phase 1 engine
+- Integration point: `Tick()` in `src/ai/CompanionAI.cpp`, after Hold/Passive
+  checks, before `GetCombatDoctrine()`
+- Cleanup: `ClearBotOverride()` in `CompanionAI.cpp` calls
+  `BotHazardSensor::ClearHazardState(botGuid)` on bot dismiss
+
+#### Subtasks
+
+10.1 Phase 1 engine (Layer 1 aura + Layer 2 HP trend + escape movement) — **Complete**
+
+10.1a Terrain-aware escape destination via `MovePositionToFirstCollision` — **Complete**
+
+- Raw `x + dist*cos(angle)` projection could produce a point inside a wall or
+  over a ledge, causing bots to walk into geometry or fall.
+- `MovePositionToFirstCollision(dest, stepDist, angle)` shoots a ray in the
+  escape direction, stops at the first vmap collision, and resolves correct
+  ground height — escape target is always a reachable surface point.
+- `MovePoint(generatePath=true)` then navmeshes to that point, routing around
+  any remaining obstacles.
+- **Dependency**: VMaps and MMaps must be extracted from the client and loaded
+  by the server (`mmap.enablePathFinding = 1` in `worldserver.conf`, `vmaps/`
+  and `mmaps/` folders populated). If MMaps are absent the call still returns a
+  reasonable position but wall-clipping may occur. Extraction tools are already
+  in the repo under `tools/` — one-time run against the 3.3.5a client data.
+
+10.2 Migrate aura registry to `living_world_hazard_auras` DB table — **Not Started**
+
+10.3 Migrate tuning constants to `living_world_hazard_config` DB table — **Not Started**
+
+10.4 Migrate class/role exception rules to `living_world_hazard_class_rules` — **Not Started**
+
+10.5 Add encounter-specific behavior profile table and evaluator — **Not Started**
+
+10.6 Expose hazard aura/config editing via external tool / addon API — **Not Started**
+
+#### Maybe / Future
+
+- **Escape-angle spread to prevent anchor stacking**: When multiple bots escape
+  toward the same clean anchor they land on the same point. Fix by adding a
+  slot-based angular offset at escape time (`angle += slot * spread_per_slot`,
+  where slot comes from the existing `GetGUID().GetCounter() % 7` pattern in
+  `IssueFormationFollow`). No post-escape timer needed; role-based positioning
+  disperses bots naturally within 1–2 ticks anyway. Deferred — only matters
+  for spread-sensitive mechanics.
+
+- **Owner-in-fire fallback fix**: Current no-anchor fallback does
+  `MoveFollow(owner)` without checking if the owner is also in the hazard.
+  Fix: check `HasKnownHazardAura(owner)` first; if owner is also in danger,
+  use a random escape direction instead.
+
+- **Stun/root guard**: If the bot is stunned or rooted when escape fires,
+  `MovePoint` silently fails but the hazard system keeps returning `true` and
+  suppressing the combat rotation. Fix: check
+  `bot->HasUnitState(UNIT_STATE_ROOT | UNIT_STATE_STUNNED)` before issuing
+  movement; skip the `MovePoint` but still return `true` so the rotation stays
+  suppressed until CC expires.
+
 ---
 
 ## Phase 7: Ambient World and Rival Guild Population
@@ -464,13 +1022,26 @@ design and foundation code.
 
 **Overall Status: Not Started**
 
+Rival guild members are **Tier 2 pre-built combat bots**. Each rival character
+is a real character in the DB with pre-set gear, spec, and a doctrine profile.
+They use `SpawnBotPlayerOnAccount` directly — no clone lifecycle, no sync.
+A typical rival roster would be 10–15 characters (tank, healer, DPS spread
+across factions/classes) stored on dedicated pool accounts separate from the
+account-alt pool. Spawning a rival encounter is a single coordinator call
+that loads specific characters by ID with no materialization overhead.
+
 #### Subtasks
 
 11.1 Persistent rival guild roster model — **Not Started**
+- `living_world_static_bot` table: bot_id, character_guid, account_id,
+  default_profile_id, faction, role, display_name
+- Separate pool account flag (`is_static_bot`) so static bots do not compete
+  with account-alt pool slots
 11.2 Rival group size/composition policy — **Not Started**
 11.3 Alert / engaged / disengage group states — **Not Started**
 11.4 Personality-driven caution/aggression rules — **Not Started**
 11.5 Encounter continuity/history tracking — **Not Started**
+11.6 Pre-built rival character creation workflow (editor tool support) — **Not Started**
 
 ---
 
@@ -963,7 +1534,88 @@ Important fixture note for future agents:
   a real bag-container change and should correctly route to manual review
   instead of bag sync
 
+### E) Unit-test seam hardening and current findings - **Partial**
+
+Follow-up validation after the bag-domain work surfaced two important facts:
+
+- `AccountAltSanityChecker` has intentionally evolved past its original test
+  assumptions. Reputation, quests, and achievements are now treated as
+  additive-only safe domains even when level/money sanity fails, so the older
+  tests expecting `safeDomains.empty()` are stale.
+- `AccountAltRuntimeCoordinator` had a real testability/runtime seam problem:
+  clone-present paths called direct clone-login / offline-delete helpers instead
+  of staying behind injected repositories. This caused the clone-present unit
+  tests to escape fake seams and crash with SEH `0xc0000094`.
+
+Current repair status:
+
+- a new clone-state integration seam is now being introduced so coordinator
+  clone-login-state lookup and offline-delete checks can be injected/faked in
+  tests while still using AzerothCore-backed behavior at runtime
+- after this seam refactor, the previously crashing coordinator suite runs far
+  enough to expose ordinary assertion failures instead of crashing immediately
+- remaining follow-up work is:
+  - finish reconciling the reusable-clone item-authority semantics with the
+    current equipment/inventory recovery tests
+  - then update the stale sanity-checker tests to the newer additive-domain
+    rules only after the coordinator path is stable again
+
 ---
+
+---
+
+## Completed Slice: DB-Driven DPS Combat Doctrine
+
+All 10 default DPS class doctrines are now live in the world DB and are the
+sole spell-selection path for ranged and melee bots.
+
+### A) Rotation seed data — **Complete**
+
+`rev_living_world_004_default_profile_entries.sql` seeded 48 rotation entries,
+63 actions, and 6 conditions across all 10 default DPS profiles.
+
+Every class except healers now drives combat through
+`living_world_bot_combat_default_entry / action / condition`.
+
+Key design choices:
+
+- `rank_mode=BestKnown` for all standard ranked spells — the evaluator walks
+  the chain and picks the highest rank the bot knows.
+- `rank_mode=ExactSpellId` for single-rank talents (Crusader Strike, Divine
+  Storm, Steady Shot, Lava Burst, Death Strike, etc.) so bots only attempt
+  them if actually learned.
+- DoT refreshes are accepted without aura-gate conditions on first pass; in
+  WotLK all damage DoTs refresh cleanly on re-cast.
+- DK disease entries (Icy Touch, Plague Strike) carry `aura/NotHas` conditions
+  using the debuff aura IDs (Frost Fever 55095, Blood Plague 55078) because
+  those debuffs are single-ID and `HasAura()` is reliable.
+- Rogue Eviscerate and Slice and Dice use the new `combo_points` condition.
+  Eviscerate fires at 4+ CP; Slice and Dice at 2+ CP; Sinister Strike fills
+  otherwise.
+
+### B) combo_points condition — **Complete**
+
+`BotCombatRuntimeEvaluator::EvaluateCondition` gained a `combo_points` stat
+branch. Uses `subject->GetComboPoints()` (defined on `Unit`).
+
+Condition format: `subject_key='self', stat_key='combo_points',
+comparison=GreaterThanOrEqual(5), numeric_value=4.0` (for "4+ combo points").
+
+### C) TickRanged / TickMelee doctrine removal — **Complete**
+
+`GetDamageSpell` (Mage, Warlock, Hunter hardcoded chains) and
+`GetMeleeOffensiveSpell` (Warrior, Rogue, Death Knight hardcoded chains)
+removed from `CompanionAI.cpp`.
+
+`TickRanged` and `TickMelee` now delegate entirely to
+`TryExecuteProfileRotation`. If no profile action fires (all entries on
+cooldown or no profile loaded), the tick is a no-op and auto-attack continues
+naturally through AzerothCore's combat engine.
+
+Healer and hybrid-healer helper functions (`GetDirectHealSpell`,
+`GetSustainedHealSpell`, `GetHybridDamageSpell`, `GetHealerOffensiveSpell`,
+`GetPreferredSeal`, `HasSealActive`) are retained unchanged — their paths are
+still data-hardcoded pending healer profile seeding.
 
 ---
 
@@ -1425,6 +2077,20 @@ After this, the next follow-on slice should be:
 - Next expansion: multi-bot support requires extending `.lwbot request` to
   allow queuing multiple bots and updating all registry lookups to 1-to-N.
 
+7. **Expand quest UX beyond reward-choice handling**
+- Reuse the existing addon `Quests` tab as the home for broader bot quest
+  actions rather than creating a second quest addon.
+- Primary next step: target-questgiver driven actions panel.
+- Goal: when the owner targets a quest giver, show bot-specific `Pick Up` and
+  `Turn In` actions for quests that active bots are eligible for even if the
+  owner is not, including class-specific trainer quests and chain
+  continuations.
+- Do not make proximity-based auto-accept the default behavior. Prefer
+  explicit player-triggered actions from the panel to avoid noisy or unsafe
+  automation.
+- Reward-choice turn-ins from that panel should continue to route through the
+  smart/manual reward system rather than a separate implementation.
+
 ---
 
 ## Coding Standards
@@ -1455,6 +2121,248 @@ The project has moved well past the initial foundation pass. Current state:
 The next milestone is **multi-bot support**: extend `BotPlayerRegistry` to
 track N bots per owner, update spawn guards, and scale `CompanionAI` scheduling
 to match — unlocking the full 5-player party gameplay goal.
+
+---
+
+## Planned Slice: Spawn-Time Talent Application
+
+**Status: Not Started** (small addition to the talent template slice)
+
+When a generic bot is summoned at level X it currently spawns with all talent
+points unspent. The `OnPlayerLevelChanged` hook only fires on level-gain, not
+at login. This slice closes the gap.
+
+### Change
+
+Wire a deferred event in `LivingWorldPlayerScript::OnPlayerLogin` (bot-session
+path, after `AddBotToOwnerGroup`) that calls
+`BotTalentApplicator::ApplyPreferredTemplate`. No reset is needed — a freshly
+spawned bot has all free points available. The deferred event fires after the
+bot is fully registered so `GetFreeTalentPoints()` reflects its level.
+
+This is a one-function addition; no schema changes required.
+
+---
+
+## Planned Slice: Bot Gear Loadout Templates
+
+**Status: Not Started**
+
+### Overview
+
+Generic bots summoned at any level should spawn already geared to a
+content-appropriate standard with natural variation — no manual equip
+commands required. This mirrors the talent template system: server-baked
+gear sets keyed by spec, class, content tier, and variant index.
+
+### Gear Tier Scale
+
+Tiers are stored as named keys with an integer ordinal used by the difficulty
+offset system. The ordinal ordering tracks item level, not content release
+order, so the offset math is always monotone.
+
+| Ordinal | Tier key    | Content                        | Approx ilvl |
+|---------|-------------|--------------------------------|-------------|
+| 0       | `pre_raid`  | Heroic 5-mans, crafted         | 187         |
+| 1       | `t7_10`     | Naxx / EoE / OS 10-man         | 200         |
+| 2       | `t7_25`     | Naxx / EoE / OS 25-man         | 213         |
+| 3       | `t8_10`     | Ulduar 10-man                  | 219–226     |
+| 4       | `t8_25`     | Ulduar 25-man                  | 226–232     |
+| 5       | `t9_10n`    | ToC 10-man normal              | 232         |
+| 6       | `t9_mid`    | ToC 10H / ToC 25N              | 245         |
+| 7       | `t9_25h`    | ToC 25-man heroic              | 258         |
+| 8       | `t10_10n`   | ICC 10-man normal              | 264         |
+| 9       | `t10_mid`   | ICC 10H / ICC 25N              | 271         |
+| 10      | `t10_25h`   | ICC 25-man heroic              | 277–284     |
+
+Leveling sub-tiers (levels 1–79) use a simpler scale keyed by level band:
+`leveling_1_29`, `leveling_30_59`, `leveling_60_69`, `leveling_70_79`.
+
+### Variant System
+
+Each `(spec_key, class_id, tier_key)` combination has **3–5 variants**
+(indexed 1–5). Within a tier:
+
+- **Variant 1** — lower end of the ilvl band; some previous-tier holdovers.
+  Represents a player who has just entered this content bracket.
+- **Variant 3** — middle; a realistic mid-clear loadout.
+- **Variant 5** — upper end; nearly full BiS for that tier, one or two
+  upgrades left.
+
+This gives natural spread without requiring manual curation of hundreds of
+hand-crafted sets.
+
+At spawn time one variant is selected using **weighted random** (default
+weight = 10 per variant; adjustable per row to bias toward stronger or weaker
+sets if desired).
+
+### Difficulty Offset System
+
+The raid-group request command accepts an integer offset applied to the
+content's base tier ordinal before gear is selected:
+
+```
+.lwbot raid request <content> <size><difficulty> [offset]
+```
+
+Examples:
+- `.lwbot raid request ICC 25H`     → ordinal 10, offset 0 → `t10_25h` gear
+- `.lwbot raid request ICC 25H -2`  → ordinal 10, offset -2 → `t8_25` gear
+- `.lwbot raid request NAX 10 +3`   → ordinal 1, offset +3 → `t8_25` gear
+- `.lwbot raid request ULD 25 -1`   → ordinal 4, offset -1 → `t7_25` gear
+
+Offset is clamped to `[0, 10]` so invalid inputs produce sensible results
+rather than errors. Negative offset = undergeared for the content (harder
+experience). Positive offset = overgeared (face-roll mode).
+
+The offset is a command-time parameter only — it is not persisted. The bot's
+`living_world_bot_talent_preference.template_id` (talent) and the gear variant
+are independent per-bot persistent settings.
+
+### Armor Type Rules
+
+The item generator enforces armor-type filtering by role, not just class,
+because stat-chasing sometimes crosses armor tiers in WotLK.
+
+| Role category          | Armor filter rule                                       |
+|------------------------|---------------------------------------------------------|
+| Tank (any class)       | **Strict** — primary armor type only (plate/leather).  |
+|                        | Armor value is a hard requirement.                      |
+| Physical melee DPS     | **Strict** — primary armor type only.                  |
+| Ranged DPS (Hunter)    | **Prefer** mail; allow leather if stat score ≥ 15%     |
+|                        | better. Never allow cloth.                              |
+| Enhancement Shaman     | **Prefer** mail; allow leather on same threshold.       |
+| Caster DPS / Healer    | **Stat weight only** — any armor the class can legally  |
+| (plate/mail classes)   | equip. Holy Paladin wearing cloth for throughput is     |
+|                        | realistic and should be reproduced here.                |
+| Cloth classes          | **Hard limit** — cloth only. Priests, Mages, Warlocks  |
+| (Priest, Mage, Lock)   | cannot equip leather. No flex at all.                   |
+| Druid (any spec)       | **Leather or cloth only** (class cap). Resto Druid      |
+|                        | may use cloth on stat-weight basis.                     |
+
+The armor filter is encoded in the generator script as a per-spec constant,
+not in the DB schema, because it reflects class mechanical constraints rather
+than configuration data.
+
+### DB Schema
+
+```sql
+-- One row per variant of a gear set.
+-- (spec_key, class_id, tier_key, variant_index) is the natural key.
+-- tier_ordinal is denormalized for fast offset arithmetic at query time.
+CREATE TABLE `living_world_bot_gear_template` (
+    `template_id`    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `spec_key`       VARCHAR(32) NOT NULL,
+    `class_id`       TINYINT UNSIGNED NOT NULL,
+    `tier_key`       VARCHAR(32) NOT NULL,
+    `tier_ordinal`   TINYINT UNSIGNED NOT NULL,
+    `min_level`      TINYINT UNSIGNED NOT NULL DEFAULT 1,
+    `variant_index`  TINYINT UNSIGNED NOT NULL,   -- 1-5
+    `display_name`   VARCHAR(64) NOT NULL,
+    `weight`         TINYINT UNSIGNED NOT NULL DEFAULT 10,
+    PRIMARY KEY (`template_id`),
+    UNIQUE KEY `uk_lwbg_variant` (`spec_key`, `class_id`, `tier_key`, `variant_index`),
+    KEY `idx_lwbg_ordinal` (`class_id`, `tier_ordinal`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- One row per gear slot per variant.
+-- slot matches EquipmentSlots enum (0-18).
+CREATE TABLE `living_world_bot_gear_template_entry` (
+    `entry_id`       BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `template_id`    BIGINT UNSIGNED NOT NULL,
+    `slot`           TINYINT UNSIGNED NOT NULL,
+    `item_id`        INT UNSIGNED NOT NULL,
+    PRIMARY KEY (`entry_id`),
+    UNIQUE KEY `uk_lwbg_slot` (`template_id`, `slot`),
+    KEY `idx_lwbg_template` (`template_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+### Seed Data Generator
+
+Seeding hundreds of gear sets by hand is not feasible. A generator script
+queries `item_template` directly from the live world DB, filtering by:
+
+- `AllowableClass` bitmask matching the spec's class
+- `InventoryType` matching the target slot
+- `ItemLevel` within the tier's ilvl band
+- `Quality` ≥ blue (quality 3+) for heroic+ tiers; green allowed for leveling
+- Stat weights biased toward the spec's primary stats:
+  - Tanks: stamina, defense, dodge/parry/block rating, armor
+  - Physical melee DPS: attack power, strength/agility, crit, ArP
+  - Ranged DPS: agility, attack power, crit, haste
+  - Caster DPS: spell power, hit, haste, crit
+  - Healers: spell power, haste, crit, mp5/spirit
+
+For each slot the generator ranks the N best candidates by stat weight, then
+distributes them across the 3–5 variants: variant 1 gets the lower-ranked
+candidates (weaker within the tier), variant 5 gets the top-ranked. Items
+shared across variants (where there is only one clear BiS) may appear in
+multiple variant rows.
+
+The generator outputs a SQL file in the same format as
+`rev_living_world_006_talent_templates.sql` with `ON DUPLICATE KEY UPDATE`
+for idempotent re-runs.
+
+### C++ Service
+
+`BotGearApplicator` (mirrors `BotTalentApplicator`):
+
+```cpp
+class BotGearApplicator {
+public:
+    // Equip the bot from the given gear template variant. Existing equipped
+    // items are moved to bags first; items that do not fit are dropped.
+    void ApplyGearTemplate(Player* bot,
+                           model::BotGearTemplateRecord const& tmpl) const;
+
+    // Resolve the best tier for the bot's level with the given offset,
+    // weighted-random pick a variant, then call ApplyGearTemplate.
+    // Returns false if no template is found.
+    bool ApplyGearForContent(Player* bot,
+                             std::string const& specKey,
+                             int tierOrdinal,
+                             int offset = 0) const;
+};
+```
+
+At spawn time (deferred event in `OnPlayerLogin`) the bot calls
+`ApplyGearForContent` with offset 0 and the auto-detected spec — same trigger
+point as the spawn-time talent application.
+
+Via the raid-request command the caller passes the content tier ordinal and
+the user-supplied offset.
+
+### Commands
+
+```
+.lwbot <bot> gear [<tierKey>]
+```
+Manually re-equip a specific bot from its preferred gear tier. No arg uses the
+auto-detected spec and the bot's current level to pick the best matching tier.
+
+```
+.lwbot raid request <content> <size><difficulty> [offset]
+```
+Spawn a raid-ready party for the given content. `content` is a short alias
+(ICC, ULD, NAX, TOC). `size` is 10 or 25. `difficulty` is N or H.
+`offset` is an integer in the range -5..+5.
+
+### Checklist
+
+- [ ] Write generator script against live world DB
+- [ ] Review and spot-check generated item IDs for at least 3 specs across
+      all tiers before committing seed data
+- [ ] Schema: `living_world_bot_gear_template` + `_entry`
+- [ ] Model: `BotGearTemplateRecord`, `BotGearTemplateEntry`
+- [ ] Integration: `BotGearTemplateRepository` interface +
+      `SqlBotGearTemplateRepository` impl
+- [ ] Service: `BotGearApplicator` (weighted variant selection, slot equip loop)
+- [ ] Wire spawn-time talent application (deferred event in `OnPlayerLogin`)
+- [ ] Wire spawn-time gear application alongside talent application
+- [ ] Grammar + command script: `.lwbot <bot> gear` handler
+- [ ] Grammar + command script: `.lwbot raid request` parser + handler
+- [ ] Verify armor type filtering in generator matches the rules table above
 
 ---
 
@@ -1526,15 +2434,27 @@ scattered checks
 
 ### D) Bot Control, Combat Profiles, and Addon UX
 
-**Overall Status: Not Started**
+**Overall Status: Partial**
+
+Primary design/handoff doc for this track:
+- `modules/mod-living-world/docs/BotCombatProfiles.md`
 
 #### Candidate tasks
 
-D.1 Define addon-friendly command grammar and stable bot IDs
+D.1 Define addon-friendly command grammar and stable bot IDs — **Partial**
+- [x] Keep bot/profile control server-authoritative through a worldserver API
+      layer rather than direct addon-to-database access.
+- [x] Treat addon actions as zoomed-out requests: addon -> API/messages ->
+      profile service -> repository -> DB.
+- [ ] Finalize the concrete request/response surface for profile CRUD,
+      row edits, priority changes, reset, and active-slot changes.
 
-D.2 Keep roster, behavior, and combat-profile control surfaces separate
+D.2 Keep roster, behavior, and combat-profile control surfaces separate — **Partial**
+- [x] Separate high-level concerns conceptually: roster selection, party
+      controls, and combat profile editing are distinct UI/API surfaces.
+- [ ] Reflect that split in the addon panel layout and command/message naming.
 
-D.3 Define `CombatProfile` data model
+D.3 Define `CombatProfile` data model — **Partial**
 - class
 - role/type
 - optional subtype/style
@@ -1545,27 +2465,68 @@ D.3 Define `CombatProfile` data model
 - racial rules
 - trinket rules
 
-D.4 Define structured rule/action/condition schema
+- [x] Decide that a blank player profile means "use baked-in default behavior"
+      for the effective spec/role.
+- [x] Decide that profile state should be stored in relational DB tables, not a
+      JSON blob.
+- [x] Decide each source character gets 10 profile slots.
+- [x] Decide each profile may carry a spec/role override while still retaining
+      a server-side best-guess fallback.
+- [ ] Finalize the exact schema for:
+  - profile settings table
+  - rotation entry table
+  - action table (primary/secondary)
+  - condition table
+  - baked-in default profile tables
+  - runtime active-profile slot linkage
 
-D.5 Define level-band strategy
+D.4 Define structured rule/action/condition schema — **Partial**
+- [x] Agree on row-based authoring model: add row -> action/item/spell,
+      optional target, condition subject/stat/operator/value.
+- [x] Agree on primary/secondary action slots per row.
+- [x] Agree on interrupt/global override rules that can break an active cast.
+- [x] Agree on primary fallback timing rule:
+  - wait if primary becomes usable within the next 500ms tick
+  - otherwise attempt secondary
+  - otherwise skip row
+- [x] Add target concepts `enemy_primary` and `enemy_trash` to the design.
+- [ ] Finalize the first-pass condition/operator vocabulary and DB-backed enum
+      mapping.
+- [ ] Finalize target-resolution rules for all supported target types.
+
+D.5 Define level-band strategy — **Not Started**
 - Support 5 to 10 level chunks.
 - Prefer 10-level bands first.
 
-D.6 Define loadout-aware combat doctrine
+D.6 Define loadout-aware combat doctrine — **Not Started**
 
-D.7 Define player override model
+D.7 Define player override model — **Partial**
 - default profile
 - bot-specific override
 - optional session override
 - reset path
 
-D.8 Define addon MVP surfaces
+- [x] Decide that user override is optional and should sit on top of server
+      defaults.
+- [x] Decide that "best guess" spec/role is the fallback when no override is
+      present.
+- [ ] Decide whether v1 uses full custom-profile replacement or partial merge
+      against baked-in defaults.
+- [ ] Define reset-to-default behavior precisely at the row/settings level.
+
+D.8 Define addon MVP surfaces — **Partial**
 - roster UI
 - party control UI
 - bot detail UI
 - combat editor UI
 
-D.9 Use external guide resources for combat doctrine only
+- [x] Agree that the combat editor should support row authoring with simple
+      controls such as spell/item, target, and `IF` conditions.
+- [ ] Design the first-pass combat profile editor layout, including spec/role
+      dropdowns and profile slot selection.
+- [ ] Define how the addon queries and refreshes server-stored profile data.
+
+D.9 Use external guide resources for combat doctrine only — **Not Started**
 - role identity
 - rotation philosophy
 - cooldown concepts
@@ -1573,10 +2534,216 @@ D.9 Use external guide resources for combat doctrine only
 - racial/trinket usage concepts
 - loadout assumptions
 
-D.10 Keep local runtime data authoritative for executable values
+D.10 Keep local runtime data authoritative for executable values — **Partial**
+- [x] Agree that executable truth stays on the server.
+- [x] Agree that the addon should send intent/edits, while the server resolves
+      spells, targets, cooldown timing, role guesses, and default behavior.
+- [ ] Define which runtime-derived values can be exposed back to the addon for
+      preview/debug without making the addon authoritative.
 
-D.11 Define doctrine-to-profile authoring workflow
+D.10A Expand external doctrine ownership beyond player profiles — **Not Started**
+- Use the same relational combat-profile system for:
+  - world/server defaults
+  - account defaults
+  - character overrides
+  - future `pug` / `raid` / `battleground` context defaults
+- Keep C++ focused on evaluation/execution and emergency fallback only.
+- Do this specifically to reduce recompiles and avoid shipping new server
+  binaries for doctrine tuning changes.
+
+D.10B Define profile-resolution precedence explicitly — **Not Started**
+- Final intended precedence:
+  1. character override
+  2. account override/default
+  3. context default
+  4. world default
+  5. hardcoded emergency fallback
+- This precedence should be implemented in one resolver/service path rather
+  than scattered callsite checks.
+
+D.11 Define doctrine-to-profile authoring workflow — **Partial**
 - read guide concepts
 - convert to structured internal profile data
 - validate against local runtime truth
 - execute only valid actions
+
+- [x] Decide v1 starter coverage is one baked-in default spec/role per class.
+- [ ] Choose the exact 10 initial spec/role defaults to seed.
+- [ ] Author and validate those defaults against live class spell/rank data.
+
+### E) Guild Workforce System
+
+**Overall Status: Not Started**
+
+A server-owned profession and gathering workforce that operates independently
+of the player being online. The player interacts with a pedestal (custom
+`GameObject`) which opens a **Guild Ledger** panel in the LW addon. The panel
+shows the roster of guild worker bots, their current profession, status, and
+task. The player assigns tasks, the bots execute them autonomously, and results
+arrive in the player's mailbox when the task is complete.
+
+Worker bots are **Tier 3 scripted task bots** driven by a goal-directed
+`GuildTaskAI` state machine rather than the reactive `CompanionAI` used by
+party bots. They do not need an owner to be online. Tasks can be queued before
+logging out and completed while offline.
+
+#### Design decisions
+
+- **Route planning is data-driven from world DB.** Herb and ore node positions
+  are read from the `gameobject` table (exact spawn coordinates). A
+  nearest-neighbour path is computed at task-start through all node positions
+  for the target entry + zone. No manual waypoint authoring required.
+  A `waypoint_path_id` override remains available for curated routes.
+
+- **Multi-objective tasks via priority tiers.** The primary objective drives
+  the route (e.g., herb harvesting). Secondary objectives are opportunistic
+  and fire when a valid target appears within `search_radius` yards of the
+  current path segment (e.g., skinning valid mobs encountered while
+  travelling between herb nodes). A bot with herbalism + skinning assigned
+  to the same zone executes both in a single task assignment.
+
+- **Skill validation before each action.** The bot checks it has the required
+  skill at the required level before attempting any objective. Missing skills
+  cause that objective to be silently skipped.
+
+- **Stop conditions are per-objective.** Each objective row carries its own
+  `stop_item_id` (stop when this item is found) and `stop_count` (stop after
+  N collected). The overall task completes when all objectives are satisfied
+  or bags are full.
+
+- **Return and mail.** On task completion the bot paths to the nearest
+  mailbox and uses `MailDraft` to send collected items to the requesting
+  player. No player session is required for this step.
+
+#### DB schema (planned)
+
+```sql
+-- Pre-built guild worker roster (Tier 2/3 static bots)
+CREATE TABLE living_world_guild_bot (
+    bot_id               INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    character_guid       BIGINT UNSIGNED NOT NULL,
+    account_id           INT UNSIGNED NOT NULL,
+    display_name         VARCHAR(64)  NOT NULL,
+    class_id             TINYINT UNSIGNED NOT NULL,
+    profession_skill_id  INT UNSIGNED NOT NULL DEFAULT 0,
+    current_task_id      INT UNSIGNED DEFAULT NULL,
+    status               ENUM('idle','traveling','working','returning','offline')
+                         NOT NULL DEFAULT 'idle',
+    PRIMARY KEY (bot_id),
+    UNIQUE KEY uq_char (character_guid)
+);
+
+-- Task library
+CREATE TABLE living_world_guild_task (
+    task_id          INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+    display_name     VARCHAR(128)  NOT NULL,
+    target_zone_id   INT UNSIGNED  NOT NULL,
+    target_map_id    INT UNSIGNED  NOT NULL,
+    waypoint_path_id INT UNSIGNED  DEFAULT NULL,
+    PRIMARY KEY (task_id)
+);
+
+-- Per-task objectives (one row per activity; priority 1 drives the route)
+CREATE TABLE living_world_guild_task_objective (
+    objective_id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    task_id               INT UNSIGNED NOT NULL,
+    priority              TINYINT      NOT NULL DEFAULT 1,
+    activity_type         ENUM(
+                            'harvest_herb','harvest_ore',
+                            'skin_mob','kill_grind','loot_item'
+                          ) NOT NULL,
+    target_entry          INT UNSIGNED  NOT NULL,
+    required_skill_id     INT UNSIGNED  NOT NULL DEFAULT 0,
+    required_skill_level  SMALLINT      NOT NULL DEFAULT 0,
+    search_radius         FLOAT         NOT NULL DEFAULT 0.0,
+    stop_item_id          INT UNSIGNED  DEFAULT NULL,
+    stop_count            INT UNSIGNED  DEFAULT 0,
+    PRIMARY KEY (objective_id),
+    KEY idx_task_priority (task_id, priority)
+);
+
+-- Runtime state
+CREATE TABLE living_world_guild_task_runtime (
+    bot_id           INT UNSIGNED NOT NULL,
+    task_id          INT UNSIGNED NOT NULL,
+    assigned_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    items_collected  INT UNSIGNED DEFAULT 0,
+    state            ENUM('traveling','working','returning','done')
+                     NOT NULL DEFAULT 'traveling',
+    PRIMARY KEY (bot_id)
+);
+```
+
+#### GuildTaskAI state machine
+
+```
+IDLE
+  ↓ task assigned
+SPAWNING        bot session loaded into world
+  ↓
+TRAVELING       MotionMaster paths along computed node route
+  [each tick: scan search_radius for secondary-objective targets]
+  ↓ secondary target in range
+  DIVERT_TO_SECONDARY  →  fight/interact  →  loot/skin  →  resume route
+  ↓ primary node in range
+GATHERING / FIGHTING
+  ↓ auto-loot complete
+  [check all stop conditions]
+  ↓ not done
+TRAVELING (next node)
+  ↓ all objectives satisfied or bags full
+RETURNING       path to nearest mailbox
+  ↓
+DEPOSITING      MailDraft sends items to requesting player
+  ↓
+IDLE            bot session logged out / despawned
+```
+
+#### Candidate tasks
+
+E.1 Guild bot roster DB schema and model layer — **Not Started**
+E.2 Guild task + objective DB schema and repository layer — **Not Started**
+E.3 Node-route planner: query `gameobject` positions, nearest-neighbour
+    path — **Not Started**
+E.4 `GuildTaskAI` state machine — harvest_herb initial implementation — **Not
+    Started**
+E.5 Spawn/despawn coordinator for task bots (no owner online required) — **Not
+    Started**
+E.6 Mail-return path on task completion — **Not Started**
+E.7 kill_grind / skin_mob objective type — **Not Started**
+E.8 Multi-objective (primary route + opportunistic secondary) — **Not Started**
+E.9 Guild Ledger game object script — **Not Started**
+E.10 Guild Ledger addon panel (roster, task assignment, status) — **Not
+     Started**
+E.11 Guild bot character creation workflow in editor tool — **Not Started**
+E.12 Cross-continent travel support (world-port ack for headless sessions) —
+     **Not Started** (blocker for tasks that span continents)
+
+---
+
+#### Current active checklist
+
+- [x] Add DB schema for bot combat profiles
+- [x] Add baked-in default data/service path for one starter spec/role per
+      class.
+- [x] Implement spec/role best-guess resolver with optional profile override.
+- [x] Add runtime resolver for blank-profile -> default-profile behavior.
+- [x] Add one explicit doctrine-resolution service that owns precedence and
+      keeps fallback behavior centralized.
+- [x] Add primary/secondary row execution with 500ms wait-or-fallback logic.
+- [x] Implement target resolvers for `enemy_primary` and `enemy_trash`.
+- [x] Remove per-class hardcoded spell selection from `TickRanged` and
+      `TickMelee`; DPS rotation is now fully DB-driven.
+- [ ] Seed healer/hybrid-healer default profiles (Priest Holy, Paladin Holy,
+      Shaman Restoration, Druid Restoration) and migrate `TickHealer` /
+      hybrid-healer offensive path to the profile evaluator.
+- [ ] Extend the runtime resolver so account defaults and future context
+      defaults (`pug` / `raid` / `battleground`) use the same doctrine lookup
+      system.
+- [ ] Add conservation mode enforcement through the evaluator path for DPS bots
+      (model and CompanionAI healer hysteresis exist; DPS mana thresholds are
+      not yet enforced at the evaluator level).
+- [ ] Add optional down-rank support with floor rules.
+- [ ] Expose profile CRUD/edit/reset/apply operations through the server API /
+      message layer for addon consumption.
+- [ ] Build the first addon-side combat profile editor against that API.

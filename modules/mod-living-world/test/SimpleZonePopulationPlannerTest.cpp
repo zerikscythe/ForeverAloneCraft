@@ -183,5 +183,178 @@ TEST(SimpleZonePopulationPlannerTest, ReordersSelectorOutputByPlannerScoreBefore
     EXPECT_EQ(plan.spawns.front().botId, 10u);
     EXPECT_GT(plan.spawns.front().score, 50.0f);
 }
+
+TEST(SimpleZonePopulationPlannerTest, SuppressesDeadBot)
+{
+    RecordingSpawnSelector spawnSelector;
+    FakeProgressionGateResolver gateResolver;
+    SimpleZonePopulationPlanner planner(spawnSelector, gateResolver);
+
+    std::vector<model::BotProfile> profiles =
+    {
+        { 1, "Alive",  1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Indifferent, model::BotRole::Damage, { 12 } },
+        { 2, "Dead",   1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Indifferent, model::BotRole::Damage, { 12 } }
+    };
+
+    std::vector<model::BotAbstractState> states =
+    {
+        { 1, 12, model::BotActivity::City, false, true,  0, 0, 0, 0.8f, 0.2f },
+        { 2, 12, model::BotActivity::City, false, false, 0, 0, 0, 0.8f, 0.2f }  // isAlive = false
+    };
+
+    model::BotSpawnContext context;
+    context.playerZoneId = 12;
+    context.localSpawnBudget = 5;
+    context.visibleBotLimit = 5;
+    context.allowCitySpawns = true;
+
+    model::ProgressionPhaseState phaseState;
+    phaseState.currentPhase = model::ProgressionPhase::Classic;
+    phaseState.maxPlayerLevel = 40;
+
+    ZonePopulationPlan plan = planner.BuildPlan(profiles, states, context, phaseState);
+
+    ASSERT_EQ(spawnSelector.lastProfileIds.size(), 1u);
+    EXPECT_EQ(spawnSelector.lastProfileIds.front(), 1u);
+}
+
+TEST(SimpleZonePopulationPlannerTest, SuppressesAlreadySpawnedBot)
+{
+    RecordingSpawnSelector spawnSelector;
+    FakeProgressionGateResolver gateResolver;
+    SimpleZonePopulationPlanner planner(spawnSelector, gateResolver);
+
+    std::vector<model::BotProfile> profiles =
+    {
+        { 1, "Idle",    1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Indifferent, model::BotRole::Damage, { 12 } },
+        { 2, "Spawned", 1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Indifferent, model::BotRole::Damage, { 12 } }
+    };
+
+    std::vector<model::BotAbstractState> states =
+    {
+        { 1, 12, model::BotActivity::City, false, true, 0, 0, 0, 0.8f, 0.2f },
+        { 2, 12, model::BotActivity::City, true,  true, 0, 0, 0, 0.8f, 0.2f }  // isSpawned = true
+    };
+
+    model::BotSpawnContext context;
+    context.playerZoneId = 12;
+    context.localSpawnBudget = 5;
+    context.visibleBotLimit = 5;
+    context.allowCitySpawns = true;
+
+    model::ProgressionPhaseState phaseState;
+    phaseState.currentPhase = model::ProgressionPhase::Classic;
+    phaseState.maxPlayerLevel = 40;
+
+    ZonePopulationPlan plan = planner.BuildPlan(profiles, states, context, phaseState);
+
+    ASSERT_EQ(spawnSelector.lastProfileIds.size(), 1u);
+    EXPECT_EQ(spawnSelector.lastProfileIds.front(), 1u);
+}
+
+TEST(SimpleZonePopulationPlannerTest, SuppressesBotOnRespawnCooldown)
+{
+    RecordingSpawnSelector spawnSelector;
+    FakeProgressionGateResolver gateResolver;
+    SimpleZonePopulationPlanner planner(spawnSelector, gateResolver);
+
+    std::vector<model::BotProfile> profiles =
+    {
+        { 1, "Ready",    1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Indifferent, model::BotRole::Damage, { 12 } },
+        { 2, "Cooldown", 1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Indifferent, model::BotRole::Damage, { 12 } }
+    };
+
+    std::vector<model::BotAbstractState> states =
+    {
+        { 1, 12, model::BotActivity::City, false, true,  0,  0, 0, 0.8f, 0.2f },
+        { 2, 12, model::BotActivity::City, false, true, 60, 0, 0, 0.8f, 0.2f }  // 60s respawn cooldown
+    };
+
+    model::BotSpawnContext context;
+    context.playerZoneId = 12;
+    context.localSpawnBudget = 5;
+    context.visibleBotLimit = 5;
+    context.allowCitySpawns = true;
+
+    model::ProgressionPhaseState phaseState;
+    phaseState.currentPhase = model::ProgressionPhase::Classic;
+    phaseState.maxPlayerLevel = 40;
+
+    ZonePopulationPlan plan = planner.BuildPlan(profiles, states, context, phaseState);
+
+    ASSERT_EQ(spawnSelector.lastProfileIds.size(), 1u);
+    EXPECT_EQ(spawnSelector.lastProfileIds.front(), 1u);
+}
+
+TEST(SimpleZonePopulationPlannerTest, BudgetLimitsOutputToLocalSpawnBudget)
+{
+    RecordingSpawnSelector spawnSelector;
+    FakeProgressionGateResolver gateResolver;
+    SimpleZonePopulationPlanner planner(spawnSelector, gateResolver);
+
+    std::vector<model::BotProfile> profiles =
+    {
+        { 1, "BotA", 1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Indifferent, model::BotRole::Damage, { 12 } },
+        { 2, "BotB", 1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Indifferent, model::BotRole::Damage, { 12 } },
+        { 3, "BotC", 1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Indifferent, model::BotRole::Damage, { 12 } }
+    };
+
+    std::vector<model::BotAbstractState> states =
+    {
+        { 1, 12, model::BotActivity::City, false, true, 0, 0, 0, 0.8f, 0.2f },
+        { 2, 12, model::BotActivity::City, false, true, 0, 0, 0, 0.8f, 0.2f },
+        { 3, 12, model::BotActivity::City, false, true, 0, 0, 0, 0.8f, 0.2f }
+    };
+
+    model::BotSpawnContext context;
+    context.playerZoneId = 12;
+    context.localSpawnBudget = 2; // only 2 allowed despite 3 eligible
+    context.visibleBotLimit = 10;
+    context.allowCitySpawns = true;
+
+    model::ProgressionPhaseState phaseState;
+    phaseState.currentPhase = model::ProgressionPhase::Classic;
+    phaseState.maxPlayerLevel = 40;
+
+    ZonePopulationPlan plan = planner.BuildPlan(profiles, states, context, phaseState);
+
+    EXPECT_EQ(spawnSelector.lastProfileCount, 3u); // all 3 eligible passed to selector
+    EXPECT_LE(plan.spawns.size(), 2u);             // but trimmed to budget
+    EXPECT_EQ(plan.reservedBudget, 2u);
+}
+
+TEST(SimpleZonePopulationPlannerTest, ReturnsEmptyPlanWhenNoProfilesEligible)
+{
+    RecordingSpawnSelector spawnSelector;
+    FakeProgressionGateResolver gateResolver;
+    SimpleZonePopulationPlanner planner(spawnSelector, gateResolver);
+
+    // All profiles exceed the level-40 gate
+    std::vector<model::BotProfile> profiles =
+    {
+        { 1, "HighLevel", 1, 1, model::BotFaction::Alliance, 50, "Guild", model::BotPersonality::Indifferent, model::BotRole::Damage, { 12 } }
+    };
+
+    std::vector<model::BotAbstractState> states =
+    {
+        { 1, 12, model::BotActivity::City, false, true, 0, 0, 0, 0.8f, 0.2f }
+    };
+
+    model::BotSpawnContext context;
+    context.playerZoneId = 12;
+    context.localSpawnBudget = 5;
+    context.visibleBotLimit = 5;
+    context.allowCitySpawns = true;
+
+    model::ProgressionPhaseState phaseState;
+    phaseState.currentPhase = model::ProgressionPhase::Classic;
+    phaseState.maxPlayerLevel = 40;
+
+    ZonePopulationPlan plan = planner.BuildPlan(profiles, states, context, phaseState);
+
+    EXPECT_EQ(spawnSelector.lastProfileCount, 0u);
+    EXPECT_TRUE(plan.spawns.empty());
+    EXPECT_EQ(plan.reservedBudget, 0u);
+}
 } // namespace planner
 } // namespace living_world

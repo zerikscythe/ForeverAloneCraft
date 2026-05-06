@@ -1,0 +1,3 @@
+mysql-connector-python>=8.0
+sshtunnel>=0.4.0
+paramiko<3.0  # Required for sshtunnel DSA key support

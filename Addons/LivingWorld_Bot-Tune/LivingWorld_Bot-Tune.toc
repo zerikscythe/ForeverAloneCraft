@@ -1,0 +1,7 @@
+## Interface: 30300
+## Title: |cff33ccffLivingWorld|r Bot-Tune
+## Notes: Read-only bot tuning shell for owned LivingWorld bots.
+## Version: 0.1.0
+
+LivingWorld_Bot-Tune.lua
+LivingWorld_Bot-Tune.xml

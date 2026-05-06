@@ -1,13 +1,8 @@
 #include "service/AccountAltRuntimeCoordinator.h"
-#include "CharacterCache.h"
 #include "DatabaseEnv.h"
 #include "Log.h"
-#include "ObjectAccessor.h"
-#include "ObjectMgr.h"
 #include "Player.h"
-#include "QueryResult.h"
 #include "SharedDefines.h"
-#include "WorldSessionMgr.h"
 #include "service/AccountAltEquipmentSyncExecutor.h"
 #include "service/AccountAltBankSyncExecutor.h"
 #include "service/AccountAltInventorySyncExecutor.h"
@@ -27,13 +22,6 @@ namespace service
 {
 namespace
 {
-struct CloneLoginState
-{
-    std::string name;
-    std::uint16_t atLoginFlags = 0;
-    bool loginNameValid = false;
-};
-
 AccountAltSpawnDecision BuildBlockedDecision(std::string reason)
 {
     AccountAltSpawnDecision decision;
@@ -50,52 +38,11 @@ AccountAltSpawnDecision BuildManualReviewDecision(std::string reason)
     return decision;
 }
 
-std::optional<CloneLoginState> LoadCloneLoginState(
-    std::uint64_t cloneCharacterGuid)
-{
-    QueryResult result = CharacterDatabase.Query(
-        "SELECT name, at_login FROM characters WHERE guid = {} LIMIT 1",
-        cloneCharacterGuid);
-    if (!result)
-    {
-        return std::nullopt;
-    }
-
-    CloneLoginState state;
-    state.name = result->Fetch()[0].Get<std::string>();
-    state.atLoginFlags = result->Fetch()[1].Get<std::uint16_t>();
-    state.loginNameValid =
-        ObjectMgr::CheckPlayerName(state.name) == CHAR_NAME_SUCCESS;
-    return state;
-}
-
-bool CloneRequiresRefresh(CloneLoginState const& state)
+bool CloneRequiresRefresh(
+    integration::CharacterCloneLoginState const& state)
 {
     return !state.loginNameValid ||
         (state.atLoginFlags & AT_LOGIN_RENAME) != 0;
-}
-
-bool DeleteOfflineCloneCharacter(
-    std::uint32_t accountId,
-    std::uint64_t cloneCharacterGuid,
-    std::string const& cloneCharacterName)
-{
-    if (cloneCharacterGuid == 0)
-    {
-        return false;
-    }
-
-    ObjectGuid cloneGuid =
-        ObjectGuid::Create<HighGuid::Player>(cloneCharacterGuid);
-    if (ObjectAccessor::FindConnectedPlayer(cloneGuid) ||
-        sWorldSessionMgr->FindOfflineSessionForCharacterGUID(cloneCharacterGuid))
-    {
-        return false;
-    }
-
-    Player::DeleteFromDB(cloneCharacterGuid, accountId, true, true);
-    sCharacterCache->DeleteCharacterCacheEntry(cloneGuid, cloneCharacterName);
-    return true;
 }
 
 bool SourceProgressIsAhead(
@@ -120,6 +67,7 @@ AccountAltRuntimeCoordinator::AccountAltRuntimeCoordinator(
     integration::AccountAltRuntimeRepository& runtimeRepository,
     integration::BotAccountPoolRepository& botAccountPoolRepository,
     integration::CharacterCloneMaterializer& cloneMaterializer,
+    integration::CharacterCloneStateGateway const& cloneStateGateway,
     integration::CharacterItemSnapshotRepository const& itemSnapshotRepository,
     integration::CharacterInventorySyncRepository& inventorySyncRepository,
     integration::CharacterBankSyncRepository& bankSyncRepository,
@@ -129,10 +77,13 @@ AccountAltRuntimeCoordinator::AccountAltRuntimeCoordinator(
     integration::CharacterReputationSyncRepository& reputationSyncRepository,
     integration::CharacterQuestSyncRepository& questSyncRepository,
     integration::CharacterAchievementSyncRepository& achievementSyncRepository,
+    integration::CharacterSkillSyncRepository& skillSyncRepository,
+    integration::CharacterSpellSyncRepository& spellSyncRepository,
     AccountAltRecoveryService const& recoveryService,
     AccountAltItemRecoveryOptions itemRecoveryOptions)
     : _runtimeRepository(runtimeRepository),
       _cloneMaterializer(cloneMaterializer),
+      _cloneStateGateway(cloneStateGateway),
       _itemSnapshotRepository(itemSnapshotRepository),
       _inventorySyncRepository(inventorySyncRepository),
       _bankSyncRepository(bankSyncRepository),
@@ -142,6 +93,8 @@ AccountAltRuntimeCoordinator::AccountAltRuntimeCoordinator(
       _reputationSyncRepository(reputationSyncRepository),
       _questSyncRepository(questSyncRepository),
       _achievementSyncRepository(achievementSyncRepository),
+      _skillSyncRepository(skillSyncRepository),
+      _spellSyncRepository(spellSyncRepository),
       _recoveryService(recoveryService),
       _itemRecoveryOptions(itemRecoveryOptions),
       _runtimeService(runtimeRepository, botAccountPoolRepository)
@@ -270,8 +223,8 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
 
     if (runtime.cloneCharacterGuid != 0)
     {
-        std::optional<CloneLoginState> cloneLoginState =
-            LoadCloneLoginState(runtime.cloneCharacterGuid);
+        std::optional<integration::CharacterCloneLoginState> cloneLoginState =
+            _cloneStateGateway.LoadCloneLoginState(runtime.cloneCharacterGuid);
         if (!cloneLoginState)
         {
             LOG_WARN(
@@ -296,7 +249,7 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
                 cloneLoginState->atLoginFlags,
                 cloneLoginState->loginNameValid);
 
-            if (!DeleteOfflineCloneCharacter(
+            if (!_cloneStateGateway.DeleteOfflineCloneCharacter(
                     runtime.cloneAccountId,
                     runtime.cloneCharacterGuid,
                     cloneLoginState->name))
@@ -488,7 +441,7 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
             case model::AccountAltItemRecoveryPlanKind::SyncEquipmentToSource:
                 if (!cloneAuthoritativeForItems)
                 {
-                    if (!DeleteOfflineCloneCharacter(
+                    if (!_cloneStateGateway.DeleteOfflineCloneCharacter(
                             currentRuntime.cloneAccountId,
                             currentRuntime.cloneCharacterGuid,
                             currentRuntime.cloneCharacterName))
@@ -561,7 +514,7 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
             case model::AccountAltItemRecoveryPlanKind::SyncBagDomainsToSource:
                 if (!cloneAuthoritativeForItems)
                 {
-                    if (!DeleteOfflineCloneCharacter(
+                    if (!_cloneStateGateway.DeleteOfflineCloneCharacter(
                             currentRuntime.cloneAccountId,
                             currentRuntime.cloneCharacterGuid,
                             currentRuntime.cloneCharacterName))
@@ -683,7 +636,7 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
 
             if (SourceProgressIsAhead(*sourceSnapshot, *cloneSnapshot))
             {
-                if (!DeleteOfflineCloneCharacter(
+                if (!_cloneStateGateway.DeleteOfflineCloneCharacter(
                         runtime.cloneAccountId,
                         runtime.cloneCharacterGuid,
                         runtime.cloneCharacterName))
@@ -725,13 +678,14 @@ AccountAltSpawnDecision AccountAltRuntimeCoordinator::PlanSpawn(
                 return refreshedDecision;
             }
 
-            return applyItemRecovery(runtime, false);
+            return applyItemRecovery(runtime, true);
         case model::AccountAltRecoveryPlanKind::SyncCloneToSource:
         {
             AccountAltSyncExecutor executor(
                 _runtimeRepository, _syncRepository,
                 _reputationSyncRepository, _questSyncRepository,
-                _achievementSyncRepository);
+                _achievementSyncRepository, _skillSyncRepository,
+                _spellSyncRepository);
             if (!executor.Execute(runtime, *cloneSnapshot, recoveryPlan.domainsToSync))
             {
                 LOG_ERROR(

@@ -11,12 +11,16 @@ AccountAltSyncExecutor::AccountAltSyncExecutor(
     integration::CharacterProgressSyncRepository& syncRepository,
     integration::CharacterReputationSyncRepository& reputationSyncRepository,
     integration::CharacterQuestSyncRepository& questSyncRepository,
-    integration::CharacterAchievementSyncRepository& achievementSyncRepository)
+    integration::CharacterAchievementSyncRepository& achievementSyncRepository,
+    integration::CharacterSkillSyncRepository& skillSyncRepository,
+    integration::CharacterSpellSyncRepository& spellSyncRepository)
     : _runtimeRepository(runtimeRepository),
       _syncRepository(syncRepository),
       _reputationSyncRepository(reputationSyncRepository),
       _questSyncRepository(questSyncRepository),
-      _achievementSyncRepository(achievementSyncRepository)
+      _achievementSyncRepository(achievementSyncRepository),
+      _skillSyncRepository(skillSyncRepository),
+      _spellSyncRepository(spellSyncRepository)
 {
 }
 
@@ -42,6 +46,13 @@ bool AccountAltSyncExecutor::Execute(
     if (hasDomain(model::AccountAltSyncDomain::Money))
     {
         target.money = cloneSnapshot.money;
+    }
+    if (hasDomain(model::AccountAltSyncDomain::Honor))
+    {
+        // Forward the clone's honor/kills. The SQL layer uses GREATEST so
+        // spending on the bot never reduces the source's honor.
+        target.totalHonorPoints = cloneSnapshot.totalHonorPoints;
+        target.totalKills = cloneSnapshot.totalKills;
     }
 
     // Mark SyncingBack before any mutation. A crash here leaves a recoverable
@@ -74,7 +85,19 @@ bool AccountAltSyncExecutor::Execute(
             runtime.sourceCharacterGuid, runtime.cloneCharacterGuid);
     }
 
-    // Sync succeeded — update the persisted source snapshot and clear the
+    if (hasDomain(model::AccountAltSyncDomain::Skills))
+    {
+        _skillSyncRepository.SyncSkillsFromCloneToSource(
+            runtime.sourceCharacterGuid, runtime.cloneCharacterGuid);
+    }
+
+    if (hasDomain(model::AccountAltSyncDomain::Spells))
+    {
+        _spellSyncRepository.SyncSpellsFromCloneToSource(
+            runtime.sourceCharacterGuid, runtime.cloneCharacterGuid);
+    }
+
+    // Sync succeeded
     // SyncingBack flag so the runtime is ready for reuse.
     mutable_runtime.sourceSnapshot = target;
     mutable_runtime.state = model::AccountAltRuntimeState::Active;

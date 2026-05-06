@@ -21,6 +21,8 @@
 #include "Common.h"
 #include "Random.h"
 #include "SpellMgr.h"
+#include "DataStores/DBCStores.h"
+#include "DataStores/DBCStructure.h"
 #include "Util.h"
 #include "TemporarySummon.h"
 #include "integration/AzerothWorldFacade.h"
@@ -28,9 +30,11 @@
 #include "integration/RosterRepository.h"
 #include "integration/SqlAccountAltRuntimeRepository.h"
 #include "integration/SqlBotAccountPoolRepository.h"
+#include "integration/AzerothCharacterCloneStateGateway.h"
 #include "integration/SqlCharacterAchievementSyncRepository.h"
 #include "integration/SqlCharacterCloneMaterializer.h"
 #include "integration/SqlCharacterBankSyncRepository.h"
+#include "integration/SqlBotCombatProfileSelectionRepository.h"
 #include "integration/SqlCharacterEquipmentSyncRepository.h"
 #include "integration/SqlCharacterInventorySyncRepository.h"
 #include "integration/SqlCharacterItemSnapshotRepository.h"
@@ -38,6 +42,8 @@
 #include "integration/SqlCharacterProgressSyncRepository.h"
 #include "integration/SqlCharacterQuestSyncRepository.h"
 #include "integration/SqlCharacterReputationSyncRepository.h"
+#include "integration/SqlCharacterSkillSyncRepository.h"
+#include "integration/SqlCharacterSpellSyncRepository.h"
 #include "integration/WorldCommitAction.h"
 #include "model/AccountAltRuntime.h"
 #include "model/PlayerRosterRequest.h"
@@ -47,11 +53,18 @@
 #include "service/BotPlayerRegistry.h"
 #include "service/AccountAltRecoveryService.h"
 #include "service/AccountAltRuntimeCoordinator.h"
+#include "service/BotQuestRewardService.h"
+#include "service/BotTalentApplicator.h"
 #include "service/PartyBotService.h"
+#include "service/SimpleBotCombatSpecRoleResolver.h"
+#include "integration/SqlBotTalentTemplateRepository.h"
+#include "integration/SqlBotTalentPreferenceRepository.h"
 
+#include <algorithm>
 #include <array>
 #include <charconv>
 #include <cctype>
+#include <cmath>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -61,6 +74,9 @@
 #include <vector>
 
 using namespace Acore::ChatCommands;
+
+// Economy scale global defined in LivingWorldWorldScript.cpp.
+namespace living_world { extern float g_economyScale; extern void ApplyEconomyScale(float, bool); }
 
 namespace living_world
 {
@@ -128,6 +144,11 @@ void BotSayTargetNotFound(Player* bot)
     std::uint32_t const idx = urand(0, static_cast<std::uint32_t>(BotTargetNotFoundPhrases.size() - 1));
     bot->Say(BotTargetNotFoundPhrases[idx], LANG_UNIVERSAL);
 }
+
+void BotSayModeAssist(Player* bot)  { if (bot) bot->Say("I got your back.", LANG_UNIVERSAL); }
+void BotSayModePassive(Player* bot) { if (bot) bot->Say("Staying out of it.", LANG_UNIVERSAL); }
+void BotSayModeHold(Player* bot)    { if (bot) bot->Say("Not moving.", LANG_UNIVERSAL); }
+void BotSayModeGuard(Player* bot)   { if (bot) bot->Say("Nobody touches you.", LANG_UNIVERSAL); }
 
 struct CommitExecutionSummary
 {
@@ -272,11 +293,16 @@ void RenderUsage(ChatHandler* handler)
     handler->PSendSysMessage("  .lwbot <#|name> retreat  (30s no-combat flee mode; repeat to cancel)");
     handler->PSendSysMessage("  .lwbot <#|name> train  (must be near a class trainer)");
     handler->PSendSysMessage("  .lwbot <#|name|party> follow");
+    handler->PSendSysMessage("  .lwbot <#|name|party> yoink  (teleport stuck bots to you)");
     handler->PSendSysMessage("  .lwbot <#|name|party> refreshments  (eat/drink if HP or mana < 60%%)");
     handler->PSendSysMessage("  .lwbot <#|name|party> buff  (force re-apply class buffs)");
     handler->PSendSysMessage("  .lwbot <#|name> retrieve <itemGuid> [count]");
     handler->PSendSysMessage("  .lwbot <#|name> equip <itemGuid>");
     handler->PSendSysMessage("  .lwbot <#|name> unequip <itemGuid>");
+    handler->PSendSysMessage("  .lwbot quests");
+    handler->PSendSysMessage("  .lwbot questmode <smart|manual>");
+    handler->PSendSysMessage("  .lwbot <#|name> reward <questId> <choiceNumber>");
+    handler->PSendSysMessage("  .lwbot <#|name> mode assist|passive|hold|guard");
 }
 
 std::string_view TrimRootWhitespace(std::string_view input)
@@ -628,9 +654,95 @@ bool ExecuteSpawnRosterBodyAction(
         return true;
     }
 
+    // The two guards above use the source character guid, but AccountAlt bot
+    // sessions are registered and tracked under the clone character guid.
+    // Re-run both guards with the clone guid so that repeated requests while a
+    // clone is already active or pending do not spawn a second session for the
+    // same bot account (which would cause the session manager to kick/delete
+    // the live session and produce a use-after-free crash).
+    if (action.source == model::RosterEntrySource::AccountAlt)
+    {
+        integration::SqlAccountAltRuntimeRepository preCheckRepo;
+        std::optional<model::AccountAltRuntimeRecord> preCheckRuntime =
+            preCheckRepo.FindBySourceCharacter(
+                requester->GetSession()->GetAccountId(),
+                action.characterGuid);
+
+        if (preCheckRuntime && preCheckRuntime->cloneCharacterGuid != 0)
+        {
+            ObjectGuid const cloneGuid = ObjectGuid::Create<HighGuid::Player>(
+                preCheckRuntime->cloneCharacterGuid);
+
+            Player* cloneBot =
+                service::BotPlayerRegistry::Instance().FindBotForOwnerByGuid(
+                    requester->GetGUID(), cloneGuid);
+            if (cloneBot)
+            {
+                if (!cloneBot->GetSession() ||
+                    !cloneBot->GetSession()->IsBotSession())
+                {
+                    LOG_WARN(
+                        "server.worldserver",
+                        "[LivingWorld] AccountAlt spawn continuity: stale registry "
+                        "for clone guid={} — clearing and re-spawning.",
+                        cloneGuid.GetCounter());
+                    service::BotPlayerRegistry::Instance().UnregisterBotPlayer(
+                        cloneBot);
+                    // fall through to PlanSpawn
+                }
+                else
+                {
+                    if (!cloneBot->IsInSameGroupWith(requester))
+                    {
+                        Group* group = requester->GetGroup();
+                        if (!group)
+                        {
+                            group = new Group();
+                            if (group->Create(requester))
+                                sGroupMgr->AddGroup(group);
+                            else
+                            {
+                                delete group;
+                                group = nullptr;
+                            }
+                        }
+                        if (group && !group->IsFull())
+                            group->AddMember(cloneBot);
+                    }
+                    cloneBot->GetMotionMaster()->MoveFollow(
+                        requester,
+                        AltCompanionFollowDistance,
+                        AltCompanionFollowAngle);
+                    SendPlayerLog(
+                        handler,
+                        static_cast<std::uint8_t>(PlayerChatLogLevel::Detailed),
+                        "LivingWorld roster entry {} clone '{}' (guid {}) is "
+                        "already active.",
+                        action.rosterEntryId,
+                        cloneBot->GetName(),
+                        cloneBot->GetGUID().GetCounter());
+                    return true;
+                }
+            }
+
+            if (service::BotPlayerRegistry::Instance().IsPendingBotForOwner(
+                    requester->GetGUID(), cloneGuid))
+            {
+                SendPlayerLog(
+                    handler,
+                    static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+                    "LivingWorld roster entry {} is already logging in; "
+                    "please wait.",
+                    action.rosterEntryId);
+                return true;
+            }
+        }
+    }
+
     integration::SqlAccountAltRuntimeRepository runtimeRepository;
     integration::SqlBotAccountPoolRepository botAccountPoolRepository;
     integration::SqlCharacterCloneMaterializer cloneMaterializer;
+    integration::AzerothCharacterCloneStateGateway cloneStateGateway;
     integration::SqlCharacterItemSnapshotRepository itemSnapshotRepository;
     integration::SqlCharacterInventorySyncRepository inventorySyncRepository;
     integration::SqlCharacterBankSyncRepository bankSyncRepository;
@@ -640,6 +752,8 @@ bool ExecuteSpawnRosterBodyAction(
     integration::SqlCharacterReputationSyncRepository reputationSyncRepository;
     integration::SqlCharacterQuestSyncRepository questSyncRepository;
     integration::SqlCharacterAchievementSyncRepository achievementSyncRepository;
+    integration::SqlCharacterSkillSyncRepository skillSyncRepository;
+    integration::SqlCharacterSpellSyncRepository spellSyncRepository;
     service::AccountAltRecoveryService recoveryService;
     service::AccountAltItemRecoveryOptions itemRecoveryOptions;
     itemRecoveryOptions.enableInventorySync =
@@ -650,6 +764,7 @@ bool ExecuteSpawnRosterBodyAction(
         runtimeRepository,
         botAccountPoolRepository,
         cloneMaterializer,
+        cloneStateGateway,
         itemSnapshotRepository,
         inventorySyncRepository,
         bankSyncRepository,
@@ -659,6 +774,8 @@ bool ExecuteSpawnRosterBodyAction(
         reputationSyncRepository,
         questSyncRepository,
         achievementSyncRepository,
+        skillSyncRepository,
+        spellSyncRepository,
         recoveryService,
         itemRecoveryOptions);
 
@@ -738,22 +855,24 @@ bool ExecuteAttachToPartyAction(
     Creature* body = FindActiveRosterBody(requester, action.rosterEntryId);
     if (!body)
     {
-        if (Player* bot =
-            service::BotPlayerRegistry::Instance().FindBotForOwner(
-                requester->GetGUID()))
+        std::vector<Player*> bots =
+            service::BotPlayerRegistry::Instance().FindBotsForOwner(
+                requester->GetGUID());
+        if (!bots.empty())
         {
-            bot->GetMotionMaster()->MoveFollow(
-                requester,
-                AltCompanionFollowDistance,
-                AltCompanionFollowAngle);
-            SendPlayerLog(
-                handler,
-                static_cast<std::uint8_t>(PlayerChatLogLevel::Detailed),
-                "LivingWorld attached roster entry {} as bot-player '{}' "
-                "(guid {}).",
-                action.rosterEntryId,
-                bot->GetName(),
-                bot->GetGUID().GetCounter());
+            for (Player* bot : bots)
+            {
+                bot->GetMotionMaster()->MoveFollow(
+                    requester,
+                    AltCompanionFollowDistance,
+                    AltCompanionFollowAngle);
+                SendPlayerLog(
+                    handler,
+                    static_cast<std::uint8_t>(PlayerChatLogLevel::Detailed),
+                    "LivingWorld attached bot-player '{}' (guid {}).",
+                    bot->GetName(),
+                    bot->GetGUID().GetCounter());
+            }
             return true;
         }
 
@@ -1196,8 +1315,26 @@ void RenderDismissBot(
     if (Group* group = bot->GetGroup())
         group->RemoveMember(bot->GetGUID(), GROUP_REMOVEMETHOD_LEAVE);
 
-    if (!bot->GetSession()->PlayerLogout())
-        bot->GetSession()->LogoutPlayer(true);
+    WorldSession* botSession = bot->GetSession();
+    if (!botSession)
+    {
+        LOG_ERROR(
+            "server.worldserver",
+            "[LivingWorld] Dismiss: bot '{}' (guid {}) has a null session — "
+            "unregistering stale registry entry.",
+            bot->GetName(),
+            bot->GetGUID().GetCounter());
+        service::BotPlayerRegistry::Instance().UnregisterBotPlayer(bot);
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld {} had no active session and was unregistered.",
+            entry->controllableProfile.profile.name);
+        return;
+    }
+
+    if (!botSession->PlayerLogout())
+        botSession->LogoutPlayer(true);
     SendPlayerLog(
         handler,
         static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
@@ -1326,6 +1463,432 @@ std::uint32_t ResolveSpellByName(Player const* bot, std::string const& name)
     }
 
     return bestSpellId;
+}
+
+std::string_view BotCombatModeToString(model::BotCombatMode mode)
+{
+    switch (mode)
+    {
+        case model::BotCombatMode::Passive: return "passive";
+        case model::BotCombatMode::Hold:    return "hold";
+        case model::BotCombatMode::Guard:   return "guard";
+        default:                            return "assist";
+    }
+}
+
+void SendBotInfoMessage(
+    ChatHandler* handler,
+    model::RosterEntry const& entry,
+    std::uint32_t rosterPosition)
+{
+    WorldSession* session = handler->GetSession();
+    Player* owner = session ? session->GetPlayer() : nullptr;
+    if (!owner)
+        return;
+
+    integration::SqlBotCombatProfileSelectionRepository selectionRepo;
+    auto selection = selectionRepo.FindRuntimeSelection(entry.characterGuid);
+    std::uint8_t const slot = selection ? selection->activeProfileSlot : 0;
+
+    model::BotCombatMode const mode =
+        service::BotPlayerRegistry::Instance().GetBotMode(owner->GetGUID());
+
+    handler->PSendSysMessage(
+        "LWBT:BINFO:%s:%u:%u:%s",
+        entry.controllableProfile.profile.name.c_str(),
+        rosterPosition,
+        static_cast<std::uint32_t>(slot),
+        BotCombatModeToString(mode).data());
+}
+
+void HandleBotModeSet(
+    ChatHandler* handler,
+    BotModeSetCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld bot mode commands require an in-game player.");
+        return;
+    }
+
+    std::vector<Player*> bots =
+        service::BotPlayerRegistry::Instance().FindBotsForOwner(
+            player->GetGUID());
+    if (bots.empty())
+    {
+        handler->PSendSysMessage(
+            "LivingWorld no active bots. Use '.lwbot request <id>' first.");
+        return;
+    }
+
+    service::BotPlayerRegistry::Instance().SetBotMode(player->GetGUID(), command.mode);
+
+    for (Player* bot : bots)
+    {
+        switch (command.mode)
+        {
+            case model::BotCombatMode::Assist:  BotSayModeAssist(bot);  break;
+            case model::BotCombatMode::Passive: BotSayModePassive(bot); break;
+            case model::BotCombatMode::Hold:    BotSayModeHold(bot);    break;
+            case model::BotCombatMode::Guard:   BotSayModeGuard(bot);   break;
+        }
+    }
+
+    // Push updated state to Bot-Tune addon for all active bots.
+    {
+        std::vector<model::RosterEntry> entries =
+            BuildVisibleRosterEntries(session->GetAccountId());
+        for (Player* bot : bots)
+        {
+            ObjectGuid const botGuid = bot->GetGUID();
+            for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(entries.size()); ++i)
+            {
+                if (entries[i].characterGuid == botGuid.GetCounter())
+                {
+                    SendBotInfoMessage(handler, entries[i], i + 1);
+                    break;
+                }
+            }
+        }
+    }
+}
+
+void HandleBotAddTalent(
+    ChatHandler* handler,
+    BotAddTalentCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* owner = session ? session->GetPlayer() : nullptr;
+    if (!session || !owner)
+    {
+        handler->SendErrorMessage("LivingWorld addtalent requires an in-game player.");
+        return;
+    }
+
+    Player* bot = ResolveActiveBotForOwner(owner, command.botRef);
+    if (!bot)
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "addtalent: bot not found or not currently active.");
+        return;
+    }
+
+    // Normalise the talent name
+    std::string searchName = command.talentName;
+    for (char& c : searchName)
+        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+
+    // Scan sTalentStore to find a matching talent by the name of its first
+    // rank spell. We match case-insensitively against the spell name.
+    TalentEntry const* foundTalent = nullptr;
+    for (std::uint32_t i = 0; i < sTalentStore.GetNumRows(); ++i)
+    {
+        TalentEntry const* talent = sTalentStore.LookupEntry(i);
+        if (!talent || talent->RankID[0] == 0)
+            continue;
+
+        // Only consider talents that belong to the bot's class.
+        TalentTabEntry const* tab = sTalentTabStore.LookupEntry(talent->TalentTab);
+        if (!tab || !(tab->ClassMask & (1 << (bot->getClass() - 1))))
+            continue;
+
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(talent->RankID[0]);
+        if (!spellInfo)
+            continue;
+
+        std::string spellName = spellInfo->SpellName[0];
+        for (char& c : spellName)
+            c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+
+        if (spellName == searchName)
+        {
+            foundTalent = talent;
+            break;
+        }
+    }
+
+    if (!foundTalent)
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "addtalent: no talent named '{}' found for {}.",
+            command.talentName,
+            bot->GetName());
+        return;
+    }
+
+    // Determine max rank (number of non-zero RankID entries).
+    std::uint8_t maxRank = 0;
+    for (std::uint32_t spellId : foundTalent->RankID)
+        if (spellId) ++maxRank;
+
+    // Determine current rank (highest rank the bot already knows).
+    std::uint8_t currentRank = 0;
+    for (std::uint8_t r = 0; r < maxRank; ++r)
+        if (bot->HasSpell(foundTalent->RankID[r]))
+            currentRank = r + 1;
+
+    std::uint8_t canAdd = static_cast<std::uint8_t>(maxRank - currentRank);
+    std::uint8_t toAdd  = std::min(command.points, canAdd);
+
+    if (toAdd == 0)
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "addtalent: '{}' is already at max rank ({}/{}) on {}.",
+            command.talentName, currentRank, maxRank, bot->GetName());
+        return;
+    }
+
+    if (bot->GetFreeTalentPoints() < toAdd)
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "addtalent: {} only has {} free talent point(s); {} needed.",
+            bot->GetName(), bot->GetFreeTalentPoints(), toAdd);
+        return;
+    }
+
+    // Use the core LearnTalent path which handles prerequisite checks,
+    // spell learning, character_talent persistence, and point deduction.
+    for (std::uint8_t r = 0; r < toAdd; ++r)
+        bot->LearnTalent(foundTalent->TalentID, currentRank + r);
+
+    SendPlayerLog(
+        handler,
+        static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+        "addtalent: added {} point(s) to '{}' on {} (now {}/{}).",
+        toAdd, command.talentName, bot->GetName(),
+        currentRank + toAdd, maxRank);
+}
+
+void HandleBotResetTalents(
+    ChatHandler* handler,
+    BotResetTalentsCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* owner = session ? session->GetPlayer() : nullptr;
+    if (!session || !owner)
+    {
+        handler->SendErrorMessage("LivingWorld resettalents requires an in-game player.");
+        return;
+    }
+
+    Player* bot = ResolveActiveBotForOwner(owner, command.botRef);
+    if (!bot)
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "resettalents: bot not found or not currently active.");
+        return;
+    }
+
+    bot->resetTalents(true);
+
+    SendPlayerLog(
+        handler,
+        static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+        "resettalents: {} talent points refunded on {}.",
+        bot->GetFreeTalentPoints(),
+        bot->GetName());
+}
+
+void HandleBotApplyTalentTemplate(
+    ChatHandler* handler,
+    BotApplyTalentTemplateCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* owner = session ? session->GetPlayer() : nullptr;
+    if (!session || !owner)
+    {
+        handler->SendErrorMessage("LivingWorld applytalent requires an in-game player.");
+        return;
+    }
+
+    Player* bot = ResolveActiveBotForOwner(owner, command.botRef);
+    if (!bot)
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "applytalent: bot not found or not currently active.");
+        return;
+    }
+
+    integration::SqlBotTalentTemplateRepository templateRepo;
+    integration::SqlBotTalentPreferenceRepository preferenceRepo;
+    integration::SqlAccountAltRuntimeRepository altRuntimeRepo;
+    service::BotTalentApplicator applicator(templateRepo, preferenceRepo, altRuntimeRepo);
+
+    std::uint64_t const sourceCharGuid = bot->GetGUID().GetCounter();
+
+    if (command.resetFirst)
+    {
+        // Resolve template first so we can report errors before any reset.
+        std::optional<model::BotTalentPreference> pref =
+            preferenceRepo.GetPreference(sourceCharGuid);
+        std::uint64_t templateId = pref ? pref->templateId : 0;
+        std::optional<model::BotTalentTemplateRecord> tmpl;
+        if (templateId != 0)
+        {
+            tmpl = templateRepo.FindTemplate(templateId);
+        }
+        else
+        {
+            service::SimpleBotCombatSpecRoleResolver resolver;
+            service::BotCombatSpecRoleResolutionRequest req;
+            req.classId             = bot->getClass();
+            req.sourceCharacterGuid = sourceCharGuid;
+            service::BotCombatSpecRoleResolutionResult res = resolver.Resolve(req);
+            if (!res.effectiveSpecKey.empty())
+                tmpl = templateRepo.FindTemplateForSpec(
+                    res.effectiveSpecKey, bot->getClass());
+        }
+
+        if (!tmpl)
+        {
+            SendPlayerLog(
+                handler,
+                static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+                "applytalent: no template found for {} (class {}).",
+                bot->GetName(), static_cast<std::uint32_t>(bot->getClass()));
+            return;
+        }
+
+        service::TalentResetResult result =
+            applicator.ReapplyTemplate(bot, *tmpl);
+        if (result == service::TalentResetResult::InsufficientGold)
+        {
+            std::uint32_t cost = bot->resetTalentsCost();
+            std::uint32_t gold = bot->GetMoney() / 10000;
+            std::uint32_t costGold = cost / 10000;
+            SendPlayerLog(
+                handler,
+                static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+                "applytalent: reset costs {}g but {} only has {}g.",
+                costGold, bot->GetName(), gold);
+            return;
+        }
+
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "applytalent: applied '{}' to {} ({} free points remaining).",
+            tmpl->displayName, bot->GetName(), bot->GetFreeTalentPoints());
+    }
+    else
+    {
+        bool applied = applicator.ApplyPreferredTemplate(bot, sourceCharGuid);
+        if (!applied)
+        {
+            SendPlayerLog(
+                handler,
+                static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+                "applytalent: no template found for {} (class {}).",
+                bot->GetName(), static_cast<std::uint32_t>(bot->getClass()));
+            return;
+        }
+
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "applytalent: spent points on {} ({} free points remaining).",
+            bot->GetName(), bot->GetFreeTalentPoints());
+    }
+}
+
+void HandleBotTalentFavorite(
+    ChatHandler* handler,
+    BotTalentFavoriteCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* owner = session ? session->GetPlayer() : nullptr;
+    if (!session || !owner)
+    {
+        handler->SendErrorMessage("LivingWorld favoritetalent requires an in-game player.");
+        return;
+    }
+
+    Player* bot = ResolveActiveBotForOwner(owner, command.botRef);
+    if (!bot)
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "favoritetalent: bot not found or not currently active.");
+        return;
+    }
+
+    integration::SqlBotTalentTemplateRepository templateRepo;
+    integration::SqlBotTalentPreferenceRepository preferenceRepo;
+    std::uint64_t const sourceCharGuid = bot->GetGUID().GetCounter();
+
+    if (!command.specKey)
+    {
+        // Query mode: report current setting.
+        std::optional<model::BotTalentPreference> pref =
+            preferenceRepo.GetPreference(sourceCharGuid);
+        if (!pref || pref->templateId == 0)
+        {
+            service::SimpleBotCombatSpecRoleResolver resolver;
+            service::BotCombatSpecRoleResolutionRequest req;
+            req.classId             = bot->getClass();
+            req.sourceCharacterGuid = sourceCharGuid;
+            service::BotCombatSpecRoleResolutionResult res = resolver.Resolve(req);
+            SendPlayerLog(
+                handler,
+                static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+                "favoritetalent: {} — auto-detect (current spec: {}).",
+                bot->GetName(),
+                res.effectiveSpecKey.empty() ? "unknown" : res.effectiveSpecKey);
+        }
+        else
+        {
+            std::optional<model::BotTalentTemplateRecord> tmpl =
+                templateRepo.FindTemplate(pref->templateId);
+            SendPlayerLog(
+                handler,
+                static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+                "favoritetalent: {} — pinned to '{}' (id={}).",
+                bot->GetName(),
+                tmpl ? tmpl->displayName : "unknown",
+                pref->templateId);
+        }
+        return;
+    }
+
+    // Set mode: look up template by spec key and class, then save preference.
+    std::optional<model::BotTalentTemplateRecord> tmpl =
+        templateRepo.FindTemplateForSpec(*command.specKey, bot->getClass());
+    if (!tmpl)
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "favoritetalent: no template found for spec '{}' class {}.",
+            *command.specKey, static_cast<std::uint32_t>(bot->getClass()));
+        return;
+    }
+
+    model::BotTalentPreference pref;
+    pref.sourceCharacterGuid = sourceCharGuid;
+    pref.templateId          = tmpl->templateId;
+    pref.autoApplyOnLevel    = true;
+    preferenceRepo.SavePreference(pref);
+
+    SendPlayerLog(
+        handler,
+        static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+        "favoritetalent: {} pinned to '{}'.",
+        bot->GetName(), tmpl->displayName);
 }
 
 void HandleBotCast(
@@ -1494,15 +2057,203 @@ void HandleBotAttack(
     BotSayConfirm(bots.front());
 }
 
-// Trains all class trainer spells that are Available (learnable, not yet known)
-// for a single bot. Charges the owner. Returns the number of spells taught.
-std::uint32_t TrainBotFromClassTrainers(Player* owner, Player* bot)
+void HandleBotYoink(
+    ChatHandler* handler,
+    BotYoinkCommand const& command)
 {
-    std::uint32_t taught = 0;
-    std::uint64_t totalCost = 0;
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld bot yoink requires an in-game player.");
+        return;
+    }
 
-    // First pass: calculate total cost and collect teachable spells.
-    struct TeachEntry { std::uint32_t spellId; std::uint32_t cost; };
+    std::vector<Player*> bots = ResolveSelectedBotsForOwner(player, command.botRef);
+    if (bots.empty())
+    {
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld no active bot. Use '.lwbot request <id>' first.");
+        return;
+    }
+
+    std::uint32_t yoinkedCount = 0;
+    for (Player* bot : bots)
+    {
+        if (!bot || bot == player)
+            continue;
+
+        if (bot->GetMapId() != player->GetMapId())
+            continue;
+
+        living_world::ai::SetBotDisengaged(bot->GetGUID(), false);
+        bot->AttackStop();
+        bot->InterruptNonMeleeSpells(false);
+        bot->GetMotionMaster()->Clear(false);
+        bot->NearTeleportTo(
+            player->GetPositionX(),
+            player->GetPositionY(),
+            player->GetPositionZ(),
+            player->GetOrientation(),
+            true);
+        bot->GetMotionMaster()->MoveFollow(player, 2.5f, 3.14159f);
+        ++yoinkedCount;
+    }
+
+    if (yoinkedCount == 0)
+    {
+        handler->SendErrorMessage("LivingWorld yoink failed: no active bots on your map.");
+        return;
+    }
+
+    BotSayConfirm(bots.front());
+}
+
+struct TaughtAbilityEntry
+{
+    std::uint32_t spellId = 0;
+    std::string name;
+    std::string rank;
+};
+
+struct BotTrainingResult
+{
+    std::uint64_t availableCost = 0;
+    std::vector<TaughtAbilityEntry> taughtAbilities;
+};
+
+std::string FormatTrainingMoney(std::uint64_t amount)
+{
+    std::uint64_t const gold = amount / GOLD;
+    amount %= GOLD;
+    std::uint64_t const silver = amount / SILVER;
+    amount %= SILVER;
+    std::uint64_t const copper = amount;
+
+    std::string text;
+    if (gold > 0)
+        text += std::to_string(gold) + " Gold";
+    if (silver > 0)
+    {
+        if (!text.empty())
+            text += ' ';
+        text += std::to_string(silver) + " Silver";
+    }
+    if (copper > 0 || text.empty())
+    {
+        if (!text.empty())
+            text += ' ';
+        text += std::to_string(copper) + " Copper";
+    }
+
+    return text;
+}
+
+std::vector<TaughtAbilityEntry> ResolveTrainerSpellAbilities(
+    std::uint32_t trainerSpellId,
+    LocaleConstant locale)
+{
+    std::vector<TaughtAbilityEntry> abilities;
+
+    auto appendSpell = [locale, &abilities](std::uint32_t spellId)
+    {
+        if (!spellId)
+            return;
+
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+
+        TaughtAbilityEntry entry;
+        entry.spellId = spellId;
+        if (spellInfo)
+        {
+            char const* spellName = spellInfo->SpellName[locale];
+            if (!spellName || spellName[0] == '\0')
+                spellName = spellInfo->SpellName[DEFAULT_LOCALE];
+            char const* spellRank = spellInfo->Rank[locale];
+            if (!spellRank || spellRank[0] == '\0')
+                spellRank = spellInfo->Rank[DEFAULT_LOCALE];
+
+            entry.name = (spellName && spellName[0] != '\0')
+                ? spellName
+                : "Ability " + std::to_string(spellId);
+            if (spellRank && spellRank[0] != '\0')
+                entry.rank = spellRank;
+        }
+        else
+        {
+            entry.name = "Ability " + std::to_string(spellId);
+        }
+
+        abilities.push_back(std::move(entry));
+    };
+
+    SpellInfo const* trainerSpellInfo = sSpellMgr->GetSpellInfo(trainerSpellId);
+    bool learnedTriggeredSpell = false;
+    if (trainerSpellInfo)
+    {
+        for (SpellEffectInfo const& spellEffectInfo : trainerSpellInfo->GetEffects())
+        {
+            if (!spellEffectInfo.IsEffect(SPELL_EFFECT_LEARN_SPELL) ||
+                !spellEffectInfo.TriggerSpell)
+                continue;
+
+            appendSpell(spellEffectInfo.TriggerSpell);
+            learnedTriggeredSpell = true;
+        }
+    }
+
+    if (!learnedTriggeredSpell)
+        appendSpell(trainerSpellId);
+
+    return abilities;
+}
+
+void PersistLearnedBotSpell(Player* bot, std::uint32_t spellId)
+{
+    CharacterDatabase.Execute(
+        "INSERT IGNORE INTO character_spell (guid, spell, specMask) "
+        "SELECT source_character_guid, {}, 1 "
+        "FROM living_world_account_alt_runtime "
+        "WHERE clone_character_guid = {} LIMIT 1",
+        spellId,
+        bot->GetGUID().GetCounter());
+}
+
+bool DeductTrainingCost(Player* bot, Player* owner, std::uint32_t cost)
+{
+    if (cost == 0)
+        return true;
+
+    std::uint64_t const botGold = bot->GetMoney();
+    if (botGold >= cost)
+    {
+        bot->ModifyMoney(-static_cast<int64>(cost));
+        return true;
+    }
+
+    std::uint32_t const remainder = cost - static_cast<std::uint32_t>(botGold);
+    if (owner->GetMoney() < remainder)
+        return false;
+
+    if (botGold > 0)
+        bot->ModifyMoney(-static_cast<int64>(botGold));
+    owner->ModifyMoney(-static_cast<int64>(remainder));
+    return true;
+}
+
+BotTrainingResult TrainBotFromClassTrainers(
+    Player* owner,
+    Player* bot,
+    LocaleConstant locale)
+{
+    struct TeachEntry
+    {
+        std::uint32_t trainerSpellId = 0;
+        std::uint32_t cost = 0;
+        std::vector<TaughtAbilityEntry> learnedAbilities;
+    };
+
+    BotTrainingResult result;
     std::vector<TeachEntry> toTeach;
 
     std::vector<Trainer::Trainer const*> const& trainers =
@@ -1512,53 +2263,108 @@ std::uint32_t TrainBotFromClassTrainers(Player* owner, Player* bot)
     {
         if (!trainer)
             continue;
+
         for (Trainer::Spell const& trainerSpell : trainer->GetSpells())
         {
-            // Skip if bot already knows it or can't learn it yet.
             if (!trainer->CanTeachSpell(bot, &trainerSpell))
                 continue;
-            // Avoid duplicates across trainers.
+
             bool already = false;
-            for (auto const& e : toTeach)
-                if (e.spellId == trainerSpell.SpellId) { already = true; break; }
+            for (TeachEntry const& entry : toTeach)
+            {
+                if (entry.trainerSpellId == trainerSpell.SpellId)
+                {
+                    already = true;
+                    break;
+                }
+            }
+
             if (already)
                 continue;
-            totalCost += trainerSpell.MoneyCost;
-            toTeach.push_back({ trainerSpell.SpellId, trainerSpell.MoneyCost });
+
+            result.availableCost += trainerSpell.MoneyCost;
+
+            TeachEntry entry;
+            entry.trainerSpellId = trainerSpell.SpellId;
+            entry.cost = trainerSpell.MoneyCost;
+            entry.learnedAbilities = ResolveTrainerSpellAbilities(
+                trainerSpell.SpellId,
+                locale);
+            toTeach.push_back(std::move(entry));
         }
     }
 
     if (toTeach.empty())
-        return 0;
+        return result;
 
-    // Check owner has enough gold (copper).
-    if (owner->GetMoney() < totalCost)
-        return std::numeric_limits<std::uint32_t>::max(); // sentinel: not enough gold
+    std::stable_sort(
+        toTeach.begin(),
+        toTeach.end(),
+        [](TeachEntry const& left, TeachEntry const& right)
+        {
+            return left.cost < right.cost;
+        });
 
-    // Deduct gold from owner.
-    owner->ModifyMoney(-static_cast<int64>(totalCost));
-
-    // Teach spells to bot.
-    for (auto const& entry : toTeach)
+    for (TeachEntry const& entry : toTeach)
     {
-        bot->learnSpell(entry.spellId, false);
+        if (!DeductTrainingCost(bot, owner, entry.cost))
+            break;
 
-        // Also persist to the SOURCE character's character_spell so the skill
-        // survives the sync-back when the bot is dismissed. The source guid is
-        // stored in living_world_account_alt_runtime.source_character_guid.
-        // We write directly here; the dismissal sync will see it in the DB.
-        CharacterDatabase.Execute(
-            "INSERT IGNORE INTO character_spell (guid, spell, specMask) "
-            "SELECT source_character_guid, {}, 1 "
-            "FROM living_world_account_alt_runtime "
-            "WHERE clone_character_guid = {} LIMIT 1",
-            entry.spellId,
-            bot->GetGUID().GetCounter());
-
-        ++taught;
+        for (TaughtAbilityEntry const& ability : entry.learnedAbilities)
+        {
+            bot->learnSpell(ability.spellId, false);
+            PersistLearnedBotSpell(bot, ability.spellId);
+            result.taughtAbilities.push_back(ability);
+        }
     }
 
-    return taught;
+    return result;
+}
+
+void SendBotTrainingOutput(
+    ChatHandler* handler,
+    Player* bot,
+    BotTrainingResult const& result)
+{
+    if (!handler || !bot)
+        return;
+
+    if (result.taughtAbilities.empty())
+    {
+        if (result.availableCost > 0)
+        {
+            handler->PSendSysMessage(
+                "Abilities are available for {}",
+                FormatTrainingMoney(result.availableCost));
+        }
+        else
+        {
+            handler->PSendSysMessage(
+                "{} already knows everything available at this level.",
+                bot->GetName());
+        }
+
+        return;
+    }
+
+    for (TaughtAbilityEntry const& ability : result.taughtAbilities)
+    {
+        if (ability.rank.empty())
+        {
+            handler->PSendSysMessage(
+                "{} Gaind {}",
+                bot->GetName(),
+                ability.name);
+        }
+        else
+        {
+            handler->PSendSysMessage(
+                "{} Gaind {} {}",
+                bot->GetName(),
+                ability.name,
+                ability.rank);
+        }
+    }
 }
 
 void HandleBotTrain(
@@ -1570,33 +2376,6 @@ void HandleBotTrain(
     if (!session || !player)
     {
         handler->SendErrorMessage("LivingWorld bot train requires an in-game player.");
-        return;
-    }
-
-    // Proximity check: owner must be within 10y of a class trainer NPC.
-    constexpr float TrainerProximity = 10.0f;
-    bool nearTrainer = false;
-    {
-        std::list<Creature*> creatures;
-        player->GetCreatureListWithEntryInGrid(creatures, 0, TrainerProximity);
-        // entry=0 returns all nearby creatures; filter for class trainers.
-        for (Creature* c : creatures)
-        {
-            if (!c || !c->IsAlive() || !c->IsTrainer())
-                continue;
-            Trainer::Trainer const* t = sObjectMgr->GetTrainer(c->GetEntry());
-            if (!t || t->GetTrainerType() != Trainer::Type::Class)
-                continue;
-            if (!t->IsTrainerValidForPlayer(player))
-                continue;
-            nearTrainer = true;
-            break;
-        }
-    }
-
-    if (!nearTrainer)
-    {
-        handler->PSendSysMessage("LivingWorld: you must be near a class trainer to train your bots.");
         return;
     }
 
@@ -1612,76 +2391,39 @@ void HandleBotTrain(
 
     if (IsPartyBotRef(command.botRef))
     {
-        std::uint32_t totalTaught = 0;
-        std::uint32_t trainedBots = 0;
-        bool ranOutOfGold = false;
+        bool taughtAnything = false;
 
         for (Player* bot : bots)
         {
-            std::uint32_t const result = TrainBotFromClassTrainers(player, bot);
-            if (result == std::numeric_limits<std::uint32_t>::max())
-            {
-                ranOutOfGold = true;
-                break;
-            }
-
-            if (result == 0)
-                continue;
-
-            totalTaught += result;
-            ++trainedBots;
+            BotTrainingResult const result = TrainBotFromClassTrainers(
+                player,
+                bot,
+                static_cast<LocaleConstant>(session->GetSessionDbcLocale()));
+            if (!result.taughtAbilities.empty())
+                taughtAnything = true;
+            SendBotTrainingOutput(handler, bot, result);
         }
 
-        if (totalTaught == 0)
+        if (!taughtAnything)
         {
-            if (ranOutOfGold)
-                handler->PSendSysMessage("LivingWorld: not enough gold to train the party.");
-            else
-                handler->PSendSysMessage("LivingWorld: no active party bots have anything available to train.");
             return;
         }
 
         BotSayConfirm(bots.front());
-        if (ranOutOfGold)
-        {
-            SendPlayerLog(
-                handler,
-                static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
-                "LivingWorld trained {} spell(s) across {} bot(s) before running out of gold.",
-                totalTaught,
-                trainedBots);
-            return;
-        }
-
-        SendPlayerLog(
-            handler,
-            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
-            "LivingWorld trained {} spell(s) across {} bot(s).",
-            totalTaught,
-            trainedBots);
         return;
     }
 
     Player* bot = bots.front();
-    std::uint32_t const result = TrainBotFromClassTrainers(player, bot);
-    if (result == std::numeric_limits<std::uint32_t>::max())
-    {
-        handler->PSendSysMessage("LivingWorld: not enough gold to train {}.", bot->GetName());
+    BotTrainingResult const result = TrainBotFromClassTrainers(
+        player,
+        bot,
+        static_cast<LocaleConstant>(session->GetSessionDbcLocale()));
+    SendBotTrainingOutput(handler, bot, result);
+
+    if (result.taughtAbilities.empty())
         return;
-    }
-    if (result == 0)
-    {
-        handler->PSendSysMessage("LivingWorld: {} already knows everything available at this level.", bot->GetName());
-        return;
-    }
 
     BotSayConfirm(bot);
-    SendPlayerLog(
-        handler,
-        static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
-        "LivingWorld trained {} spell(s) for {}.",
-        result,
-        bot->GetName());
 }
 
 void HandleBotDisengage(
@@ -1875,6 +2617,57 @@ void HandleBotRetreat(
         Milliseconds(30000));
 }
 
+void HandleBotInfo(
+    ChatHandler* handler,
+    BotInfoCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    if (!session)
+    {
+        handler->SendErrorMessage("LivingWorld bot info requires an in-game session.");
+        return;
+    }
+
+    std::vector<model::RosterEntry> entries =
+        BuildVisibleRosterEntries(session->GetAccountId());
+
+    std::optional<model::RosterEntry> entry;
+    std::uint32_t rosterPosition = 0;
+
+    if (std::uint32_t const* pos = std::get_if<std::uint32_t>(&command.botRef))
+    {
+        if (*pos > 0 && *pos <= static_cast<std::uint32_t>(entries.size()))
+        {
+            entry = entries[*pos - 1];
+            rosterPosition = *pos;
+        }
+    }
+    else
+    {
+        std::string const& name = std::get<std::string>(command.botRef);
+        for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(entries.size()); ++i)
+        {
+            if (entries[i].controllableProfile.profile.name == name)
+            {
+                entry = entries[i];
+                rosterPosition = i + 1;
+                break;
+            }
+        }
+    }
+
+    if (!entry)
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld bot not found in roster.");
+        return;
+    }
+
+    SendBotInfoMessage(handler, *entry, rosterPosition);
+}
+
 void HandleBotProfileSet(
     ChatHandler* handler,
     BotProfileSetCommand const& command)
@@ -1909,12 +2702,15 @@ void HandleBotProfileSet(
     std::uint64_t const characterGuid = entry->characterGuid;
     std::uint8_t const slot = command.profileSlot;
 
-    CharacterDatabase.Execute(
-        "INSERT INTO character_bot_profile_slots (characterGuid, activeSlot) "
-        "VALUES ({}, {}) ON DUPLICATE KEY UPDATE activeSlot = {}",
-        characterGuid,
-        static_cast<std::uint32_t>(slot),
-        static_cast<std::uint32_t>(slot));
+    integration::SqlBotCombatProfileSelectionRepository selectionRepository;
+    selectionRepository.SaveRuntimeSelection(
+        model::BotCombatRuntimeSelection {
+            characterGuid,
+            slot,
+        });
+
+    if (Player* activeBot = ResolveActiveBotForOwner(session->GetPlayer(), command.botRef))
+        living_world::ai::InvalidateBotCombatCaches(activeBot->GetGUID());
 
     SendPlayerLog(
         handler,
@@ -1922,6 +2718,23 @@ void HandleBotProfileSet(
         "LivingWorld set active profile slot {} for {}.",
         static_cast<std::uint32_t>(slot),
         entry->controllableProfile.profile.name);
+
+    // Push updated state to Bot-Tune addon.
+    {
+        std::vector<model::RosterEntry> entries =
+            BuildVisibleRosterEntries(session->GetAccountId());
+        std::uint32_t pos = 0;
+        for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(entries.size()); ++i)
+        {
+            if (entries[i].characterGuid == entry->characterGuid)
+            {
+                pos = i + 1;
+                break;
+            }
+        }
+        if (pos > 0)
+            SendBotInfoMessage(handler, *entry, pos);
+    }
 }
 
 // ---------------------------------------------------------------
@@ -2075,6 +2888,13 @@ void HandleBotBuff(
     BotSayConfirm(bots.front());
 }
 
+std::string SanitizeAddonField(std::string_view input)
+{
+    std::string out(input);
+    std::replace(out.begin(), out.end(), ';', ',');
+    return out;
+}
+
 // Send an addon message to a player's client using the LWBOT prefix.
 // The client fires CHAT_MSG_ADDON with prefix="LWBOT" and the payload as
 // the message argument. No 255-byte limit applies — this is server→client.
@@ -2085,6 +2905,60 @@ void SendLWBotAddonMessage(Player* player, std::string const& payload)
     ChatHandler::BuildChatPacket(
         data, CHAT_MSG_WHISPER, LANG_ADDON, player, player, msg);
     player->GetSession()->SendPacket(&data);
+}
+
+void SendQuestRewardModeAddonMessage(
+    Player* player,
+    service::BotQuestRewardMode mode)
+{
+    if (!player || !player->GetSession())
+    {
+        return;
+    }
+
+    SendLWBotAddonMessage(
+        player,
+        std::string("QMODE;") +
+            (mode == service::BotQuestRewardMode::Manual ? "MANUAL" : "SMART"));
+}
+
+void SendQuestRewardsAddonState(Player* player)
+{
+    if (!player || !player->GetSession())
+    {
+        return;
+    }
+
+    service::BotQuestRewardService questRewardService;
+    SendLWBotAddonMessage(player, "QCLR");
+    SendQuestRewardModeAddonMessage(
+        player,
+        questRewardService.GetRewardMode(player->GetGUID().GetCounter()));
+
+    for (service::PendingQuestReward const& pending :
+         questRewardService.BuildPendingRewards(player))
+    {
+        std::string payload = "QST;";
+        payload += pending.botName;
+        payload += ';';
+        payload += std::to_string(pending.questId);
+        payload += ';';
+        payload += pending.questTitle;
+
+        for (service::QuestRewardChoice const& choice : pending.choices)
+        {
+            payload += ';';
+            payload += std::to_string(choice.choiceNumber);
+            payload += ':';
+            payload += std::to_string(choice.itemId);
+            payload += ':';
+            payload += std::to_string(choice.count);
+        }
+
+        SendLWBotAddonMessage(player, payload);
+    }
+
+    SendLWBotAddonMessage(player, "QEND");
 }
 
 // Serialize a single item's link fields into the shared colon-delimited format.
@@ -2329,6 +3203,83 @@ void HandleBotRetrieve(
     SendLWBotAddonMessage(player, BuildBotInventoryPayload(bot));
 }
 
+uint8 ResolveBotBagMoveDestination(std::uint8_t bagIndex)
+{
+    if (bagIndex == 0)
+        return NULL_BAG;
+    if (bagIndex >= 1 && bagIndex <= 4)
+        return static_cast<uint8>(INVENTORY_SLOT_BAG_START + (bagIndex - 1));
+    return NULL_SLOT;
+}
+
+void HandleBotBagMove(
+    ChatHandler* handler,
+    BotBagMoveCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld bagmove requires an in-game player.");
+        return;
+    }
+
+    std::vector<Player*> bots = ResolveSelectedBotsForOwner(player, command.botRef);
+    if (bots.empty())
+    {
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld no active bot. Use '.lwbot request <id>' first.");
+        return;
+    }
+
+    Player* bot = bots.front();
+    uint8 foundBag = 0, foundSlot = 0;
+    Item* item = FindBotItemByGuidLow(bot, command.itemGuidLow, foundBag, foundSlot);
+    if (!item)
+    {
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld bagmove: item not found on bot.");
+        return;
+    }
+
+    uint8 const destinationBag = ResolveBotBagMoveDestination(command.bagIndex);
+    if (destinationBag == NULL_SLOT)
+    {
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld bagmove: invalid target bag index.");
+        return;
+    }
+
+    if (command.bagIndex > 0 && !bot->GetBagByPos(destinationBag))
+    {
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld bagmove: that bag slot is empty.");
+        return;
+    }
+
+    ItemPosCountVec dest;
+    InventoryResult const canStore = bot->CanStoreItem(destinationBag, NULL_SLOT, dest, item, false);
+    if (canStore != EQUIP_ERR_OK)
+    {
+        BotSayDeny(bot);
+        SendPlayerLog(handler, static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld bagmove: no room in that bag.");
+        return;
+    }
+
+    uint16 const src = (static_cast<uint16>(foundBag) << 8) | static_cast<uint16>(foundSlot);
+    if (dest.size() == 1 && dest[0].pos == src)
+    {
+        SendLWBotAddonMessage(player, BuildBotInventoryPayload(bot));
+        return;
+    }
+
+    bot->RemoveItem(foundBag, foundSlot, true);
+    bot->StoreItem(dest, item, true);
+    BotSayConfirm(bot);
+    SendLWBotAddonMessage(player, BuildBotInventoryPayload(bot));
+}
+
 void HandleBotEquip(
     ChatHandler* handler,
     BotEquipCommand const& command)
@@ -2454,6 +3405,686 @@ void HandleBotUnequip(
     SendLWBotAddonMessage(player, BuildBotInventoryPayload(bot));
 }
 
+void SendQuestActionsAddonState(Player* player)
+{
+    if (!player || !player->GetSession())
+        return;
+
+    SendLWBotAddonMessage(player, "QACLR");
+
+    Unit* target = player->GetSelectedUnit();
+    Creature* creature = target ? target->ToCreature() : nullptr;
+    if (!creature || !creature->IsAlive() ||
+        !(creature->GetNpcFlags() & UNIT_NPC_FLAG_QUESTGIVER))
+    {
+        SendLWBotAddonMessage(player, "QAEND");
+        return;
+    }
+
+    std::uint32_t const npcEntry = creature->GetEntry();
+    QuestRelationBounds questRelations =
+        sObjectMgr->GetCreatureQuestRelationBounds(npcEntry);
+    QuestRelationBounds questInvolvedRelations =
+        sObjectMgr->GetCreatureQuestInvolvedRelationBounds(npcEntry);
+
+    for (Player* bot :
+         service::BotPlayerRegistry::Instance().FindBotsForOwner(player->GetGUID()))
+    {
+        if (!bot || !bot->GetSession() || !bot->GetSession()->IsBotSession())
+            continue;
+
+        for (auto it = questRelations.first; it != questRelations.second; ++it)
+        {
+            std::uint32_t const questId = it->second;
+            Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
+            if (!quest)
+                continue;
+
+            if (bot->GetQuestStatus(questId) != QUEST_STATUS_NONE)
+                continue;
+
+            if (!bot->CanTakeQuest(quest, false))
+                continue;
+
+            if (!bot->CanAddQuest(quest, false))
+                continue;
+
+            std::string payload = "QA;";
+            payload += bot->GetName();
+            payload += ';';
+            payload += std::to_string(questId);
+            payload += ';';
+            payload += SanitizeAddonField(quest->GetTitle());
+            payload += ";PICKUP";
+            SendLWBotAddonMessage(player, payload);
+        }
+
+        for (auto it = questInvolvedRelations.first;
+             it != questInvolvedRelations.second; ++it)
+        {
+            std::uint32_t const questId = it->second;
+            Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
+            if (!quest)
+                continue;
+
+            QuestStatus const status = bot->GetQuestStatus(questId);
+            if (status != QUEST_STATUS_COMPLETE)
+                continue;
+
+            if (bot->GetQuestRewardStatus(questId))
+                continue;
+
+            std::string payload = "QA;";
+            payload += bot->GetName();
+            payload += ';';
+            payload += std::to_string(questId);
+            payload += ';';
+            payload += SanitizeAddonField(quest->GetTitle());
+            payload += ";TURNIN";
+
+            if (quest->GetRewChoiceItemsCount() > 0)
+                payload += ";CHOICES";
+
+            SendLWBotAddonMessage(player, payload);
+        }
+    }
+
+    SendLWBotAddonMessage(player, "QAEND");
+}
+
+void HandleQuestActions(
+    ChatHandler* handler,
+    QuestActionsCommand const&)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld questactions requires an in-game player.");
+        return;
+    }
+
+    SendQuestActionsAddonState(player);
+}
+
+void HandleBotQuestPickup(
+    ChatHandler* handler,
+    BotQuestPickupCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld pickup requires an in-game player.");
+        return;
+    }
+
+    Player* bot = ResolveActiveBotForOwner(player, command.botRef);
+    if (!bot || !bot->GetSession() || !bot->GetSession()->IsBotSession())
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld no active bot. Use '.lwbot request <id>' first.");
+        return;
+    }
+
+    Quest const* quest = sObjectMgr->GetQuestTemplate(command.questId);
+    if (!quest)
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld pickup: quest {} not found.",
+            command.questId);
+        return;
+    }
+
+    if (!bot->CanTakeQuest(quest, false) || !bot->CanAddQuest(quest, false))
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld pickup: {} cannot take quest [{}].",
+            bot->GetName(), quest->GetTitle());
+        return;
+    }
+
+    bot->AddQuestAndCheckCompletion(quest, nullptr);
+
+    BotSayConfirm(bot);
+    SendPlayerLog(
+        handler,
+        static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+        "LivingWorld {} picked up [{}].",
+        bot->GetName(), quest->GetTitle());
+
+    SendQuestActionsAddonState(player);
+}
+
+void HandleBotQuestTurnin(
+    ChatHandler* handler,
+    BotQuestTurninCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld turnin requires an in-game player.");
+        return;
+    }
+
+    Player* bot = ResolveActiveBotForOwner(player, command.botRef);
+    if (!bot || !bot->GetSession() || !bot->GetSession()->IsBotSession())
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld no active bot. Use '.lwbot request <id>' first.");
+        return;
+    }
+
+    Quest const* quest = sObjectMgr->GetQuestTemplate(command.questId);
+    if (!quest)
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld turnin: quest {} not found.",
+            command.questId);
+        return;
+    }
+
+    if (bot->GetQuestStatus(command.questId) != QUEST_STATUS_COMPLETE ||
+        bot->GetQuestRewardStatus(command.questId))
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld turnin: {} has not completed [{}].",
+            bot->GetName(), quest->GetTitle());
+        return;
+    }
+
+    if (!bot->CanRewardQuest(quest, false))
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld turnin: {} cannot turn in [{}] right now.",
+            bot->GetName(), quest->GetTitle());
+        return;
+    }
+
+    if (quest->GetRewChoiceItemsCount() > 0)
+    {
+        service::BotQuestRewardService questRewardService;
+        service::BotQuestRewardMode const mode =
+            questRewardService.GetRewardMode(player->GetGUID().GetCounter());
+
+        if (mode == service::BotQuestRewardMode::Smart)
+        {
+            std::string error;
+            std::optional<std::uint32_t> smartChoice;
+
+            struct SmartPick
+            {
+                float score = -1000000.0f;
+                std::uint32_t index = 0;
+            };
+
+            SmartPick best;
+            SmartPick second;
+
+            for (std::uint32_t i = 0; i < quest->GetRewChoiceItemsCount(); ++i)
+            {
+                if (!quest->RewardChoiceItemId[i] ||
+                    !bot->CanRewardQuest(quest, i, false))
+                    continue;
+
+                ItemTemplate const* tmpl =
+                    sObjectMgr->GetItemTemplate(quest->RewardChoiceItemId[i]);
+                float score = tmpl ? static_cast<float>(tmpl->SellPrice) / 1000.0f
+                                     + static_cast<float>(tmpl->ItemLevel)
+                                   : 0.0f;
+                if (score > best.score)
+                {
+                    second = best;
+                    best = { score, i };
+                }
+                else if (score > second.score)
+                {
+                    second = { score, i };
+                }
+            }
+
+            if (best.score > -999999.0f &&
+                (second.score <= -999999.0f ||
+                 std::fabs(best.score - second.score) >= 25.0f))
+            {
+                questRewardService.RewardBotQuestById(
+                    player, bot, command.questId,
+                    static_cast<std::uint8_t>(best.index + 1), error);
+                BotSayConfirm(bot);
+            }
+        }
+
+        SendQuestRewardsAddonState(player);
+    }
+    else
+    {
+        bot->RewardQuest(quest, 0, bot, false);
+        BotSayConfirm(bot);
+    }
+
+    SendPlayerLog(
+        handler,
+        static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+        "LivingWorld {} turned in [{}].",
+        bot->GetName(), quest->GetTitle());
+
+    SendQuestActionsAddonState(player);
+}
+
+// ---------------------------------------------------------------
+// Training actions — target-based trainer spell browsing / learning
+// ---------------------------------------------------------------
+
+Trainer::Trainer const* ResolveTargetedTrainer(Player* player)
+{
+    Unit* target = player->GetSelectedUnit();
+    Creature* creature = target ? target->ToCreature() : nullptr;
+    if (!creature || !creature->IsAlive() ||
+        !(creature->GetNpcFlags() & UNIT_NPC_FLAG_TRAINER))
+        return nullptr;
+
+    Trainer::Trainer const* trainer = sObjectMgr->GetTrainer(creature->GetEntry());
+    if (!trainer || trainer->GetTrainerType() != Trainer::Type::Class)
+        return nullptr;
+
+    if (!trainer->IsTrainerValidForPlayer(player))
+        return nullptr;
+
+    return trainer;
+}
+
+struct BotTrainerSpellOption
+{
+    std::uint32_t trainerSpellId = 0;
+    std::uint32_t cost = 0;
+    std::vector<TaughtAbilityEntry> abilities;
+};
+
+std::vector<BotTrainerSpellOption> CollectBotTrainerSpellOptions(
+    Player* bot,
+    LocaleConstant locale)
+{
+    std::vector<BotTrainerSpellOption> options;
+
+    std::vector<Trainer::Trainer const*> const& trainers =
+        sObjectMgr->GetClassTrainers(bot->getClass());
+
+    for (Trainer::Trainer const* trainer : trainers)
+    {
+        if (!trainer)
+            continue;
+
+        for (Trainer::Spell const& trainerSpell : trainer->GetSpells())
+        {
+            if (!trainer->CanTeachSpell(bot, &trainerSpell))
+                continue;
+
+            bool already = false;
+            for (BotTrainerSpellOption const& option : options)
+            {
+                if (option.trainerSpellId == trainerSpell.SpellId)
+                {
+                    already = true;
+                    break;
+                }
+            }
+
+            if (already)
+                continue;
+
+            BotTrainerSpellOption option;
+            option.trainerSpellId = trainerSpell.SpellId;
+            option.cost = trainerSpell.MoneyCost;
+            option.abilities = ResolveTrainerSpellAbilities(
+                trainerSpell.SpellId,
+                locale);
+            options.push_back(std::move(option));
+        }
+    }
+
+    std::stable_sort(
+        options.begin(),
+        options.end(),
+        [](BotTrainerSpellOption const& left, BotTrainerSpellOption const& right)
+        {
+            return left.cost < right.cost;
+        });
+
+    return options;
+}
+
+BotTrainerSpellOption const* FindBotTrainerSpellOption(
+    std::vector<BotTrainerSpellOption> const& options,
+    std::uint32_t trainerSpellId)
+{
+    for (BotTrainerSpellOption const& option : options)
+    {
+        if (option.trainerSpellId == trainerSpellId)
+            return &option;
+    }
+
+    return nullptr;
+}
+
+void SendTrainActionsAddonState(Player* player)
+{
+    if (!player || !player->GetSession())
+        return;
+
+    SendLWBotAddonMessage(player, "TACLR");
+
+    Trainer::Trainer const* trainer = ResolveTargetedTrainer(player);
+    if (!trainer)
+    {
+        SendLWBotAddonMessage(player,
+            "TAEND;" + std::to_string(player->GetMoney()));
+        return;
+    }
+
+    LocaleConstant const locale =
+        static_cast<LocaleConstant>(player->GetSession()->GetSessionDbcLocale());
+
+    for (Player* bot :
+         service::BotPlayerRegistry::Instance().FindBotsForOwner(player->GetGUID()))
+    {
+        if (!bot || !bot->GetSession() || !bot->GetSession()->IsBotSession())
+            continue;
+
+        std::vector<BotTrainerSpellOption> const options =
+            CollectBotTrainerSpellOptions(bot, locale);
+        if (options.empty())
+            continue;
+
+        bool hasBotHeader = false;
+
+        for (BotTrainerSpellOption const& option : options)
+        {
+            if (!hasBotHeader)
+            {
+                std::string header = "TABOT;";
+                header += bot->GetName();
+                header += ';';
+                header += std::to_string(bot->GetMoney());
+                SendLWBotAddonMessage(player, header);
+                hasBotHeader = true;
+            }
+
+            std::string spellLabel;
+            for (TaughtAbilityEntry const& ability : option.abilities)
+            {
+                if (!spellLabel.empty())
+                    spellLabel += ", ";
+                spellLabel += ability.name;
+                if (!ability.rank.empty())
+                {
+                    spellLabel += " (";
+                    spellLabel += ability.rank;
+                    spellLabel += ')';
+                }
+            }
+            if (spellLabel.empty())
+                spellLabel = "Spell " + std::to_string(option.trainerSpellId);
+
+            std::string payload = "TA;";
+            payload += bot->GetName();
+            payload += ';';
+            payload += std::to_string(option.trainerSpellId);
+            payload += ';';
+            payload += SanitizeAddonField(spellLabel);
+            payload += ';';
+            payload += std::to_string(option.cost);
+            SendLWBotAddonMessage(player, payload);
+        }
+    }
+
+    SendLWBotAddonMessage(player,
+        "TAEND;" + std::to_string(player->GetMoney()));
+}
+
+void HandleTrainActions(
+    ChatHandler* handler,
+    TrainActionsCommand const&)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld trainactions requires an in-game player.");
+        return;
+    }
+
+    SendTrainActionsAddonState(player);
+}
+
+void HandleBotTrainSpell(
+    ChatHandler* handler,
+    BotTrainSpellCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld trainspell requires an in-game player.");
+        return;
+    }
+
+    Player* bot = ResolveActiveBotForOwner(player, command.botRef);
+    if (!bot || !bot->GetSession() || !bot->GetSession()->IsBotSession())
+    {
+        SendPlayerLog(handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld no active bot.");
+        return;
+    }
+
+    if (!ResolveTargetedTrainer(player))
+    {
+        SendPlayerLog(handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld trainspell: target a trainer NPC first.");
+        return;
+    }
+
+    LocaleConstant const locale =
+        static_cast<LocaleConstant>(session->GetSessionDbcLocale());
+    std::vector<BotTrainerSpellOption> const options =
+        CollectBotTrainerSpellOptions(bot, locale);
+    BotTrainerSpellOption const* option =
+        FindBotTrainerSpellOption(options, command.trainerSpellId);
+    if (!option)
+    {
+        SendPlayerLog(handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld trainspell: spell not available for {}.",
+            bot->GetName());
+        return;
+    }
+
+    BotTrainingResult result;
+    result.availableCost = option->cost;
+
+    if (DeductTrainingCost(bot, player, option->cost))
+    {
+        for (TaughtAbilityEntry const& ability : option->abilities)
+        {
+            bot->learnSpell(ability.spellId, false);
+            PersistLearnedBotSpell(bot, ability.spellId);
+            result.taughtAbilities.push_back(ability);
+        }
+    }
+
+    SendBotTrainingOutput(handler, bot, result);
+    if (!result.taughtAbilities.empty())
+        BotSayConfirm(bot);
+    SendTrainActionsAddonState(player);
+}
+
+void HandleBotTrainAll(
+    ChatHandler* handler,
+    BotTrainAllCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld trainall requires an in-game player.");
+        return;
+    }
+
+    Player* bot = ResolveActiveBotForOwner(player, command.botRef);
+    if (!bot || !bot->GetSession() || !bot->GetSession()->IsBotSession())
+    {
+        SendPlayerLog(handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld no active bot.");
+        return;
+    }
+
+    if (!ResolveTargetedTrainer(player))
+    {
+        SendPlayerLog(handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld trainall: target a trainer NPC first.");
+        return;
+    }
+
+    LocaleConstant const locale =
+        static_cast<LocaleConstant>(session->GetSessionDbcLocale());
+    std::vector<BotTrainerSpellOption> const toLearn =
+        CollectBotTrainerSpellOptions(bot, locale);
+
+    if (toLearn.empty())
+    {
+        SendPlayerLog(handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld trainall: {} has nothing to learn here.",
+            bot->GetName());
+        SendTrainActionsAddonState(player);
+        return;
+    }
+
+    BotTrainingResult result;
+    for (BotTrainerSpellOption const& entry : toLearn)
+    {
+        result.availableCost += entry.cost;
+
+        if (!DeductTrainingCost(bot, player, entry.cost))
+            break;
+
+        for (TaughtAbilityEntry const& ability : entry.abilities)
+        {
+            bot->learnSpell(ability.spellId, false);
+            PersistLearnedBotSpell(bot, ability.spellId);
+            result.taughtAbilities.push_back(ability);
+        }
+    }
+
+    SendBotTrainingOutput(handler, bot, result);
+    if (!result.taughtAbilities.empty())
+        BotSayConfirm(bot);
+
+    SendTrainActionsAddonState(player);
+}
+
+void HandleQuestRewards(
+    ChatHandler* handler,
+    QuestRewardsCommand const&)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld quests requires an in-game player.");
+        return;
+    }
+
+    SendQuestRewardsAddonState(player);
+}
+
+void HandleQuestRewardModeSet(
+    ChatHandler* handler,
+    QuestRewardModeSetCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld questmode requires an in-game player.");
+        return;
+    }
+
+    service::BotQuestRewardService questRewardService;
+    service::BotQuestRewardMode const mode = command.smartMode
+        ? service::BotQuestRewardMode::Smart
+        : service::BotQuestRewardMode::Manual;
+    questRewardService.SetRewardMode(player->GetGUID().GetCounter(), mode);
+
+    SendPlayerLog(
+        handler,
+        static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+        "LivingWorld quest reward mode set to {}.",
+        command.smartMode ? "smart" : "manual");
+
+    SendQuestRewardModeAddonMessage(player, mode);
+}
+
+void HandleBotRewardChoice(
+    ChatHandler* handler,
+    BotRewardChoiceCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld reward requires an in-game player.");
+        return;
+    }
+
+    Player* bot = ResolveActiveBotForOwner(player, command.botRef);
+    if (!bot || !bot->GetSession() || !bot->GetSession()->IsBotSession())
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld no active bot. Use '.lwbot request <id>' first.");
+        return;
+    }
+
+    service::BotQuestRewardService questRewardService;
+    std::string error;
+    if (!questRewardService.RewardBotQuestById(
+            player,
+            bot,
+            command.questId,
+            command.choiceNumber,
+            error))
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld reward failed: {}.",
+            error);
+        return;
+    }
+
+    SendQuestRewardsAddonState(player);
+}
+
 bool HandleParsedCommand(
     ChatHandler* handler,
     ParsedCommand const& parsed)
@@ -2492,6 +4123,13 @@ bool HandleParsedCommand(
         std::get_if<RosterDismissCommand>(&parsed))
     {
         RenderDismissBot(handler, *command);
+        return true;
+    }
+
+    if (BotInfoCommand const* command =
+        std::get_if<BotInfoCommand>(&parsed))
+    {
+        HandleBotInfo(handler, *command);
         return true;
     }
 
@@ -2544,6 +4182,13 @@ bool HandleParsedCommand(
         return true;
     }
 
+    if (BotYoinkCommand const* command =
+        std::get_if<BotYoinkCommand>(&parsed))
+    {
+        HandleBotYoink(handler, *command);
+        return true;
+    }
+
     if (BotRefreshmentsCommand const* command =
         std::get_if<BotRefreshmentsCommand>(&parsed))
     {
@@ -2572,6 +4217,13 @@ bool HandleParsedCommand(
         return true;
     }
 
+    if (BotBagMoveCommand const* command =
+        std::get_if<BotBagMoveCommand>(&parsed))
+    {
+        HandleBotBagMove(handler, *command);
+        return true;
+    }
+
     if (BotEquipCommand const* command =
         std::get_if<BotEquipCommand>(&parsed))
     {
@@ -2583,6 +4235,104 @@ bool HandleParsedCommand(
         std::get_if<BotUnequipCommand>(&parsed))
     {
         HandleBotUnequip(handler, *command);
+        return true;
+    }
+
+    if (QuestActionsCommand const* command =
+        std::get_if<QuestActionsCommand>(&parsed))
+    {
+        HandleQuestActions(handler, *command);
+        return true;
+    }
+
+    if (BotQuestPickupCommand const* command =
+        std::get_if<BotQuestPickupCommand>(&parsed))
+    {
+        HandleBotQuestPickup(handler, *command);
+        return true;
+    }
+
+    if (BotQuestTurninCommand const* command =
+        std::get_if<BotQuestTurninCommand>(&parsed))
+    {
+        HandleBotQuestTurnin(handler, *command);
+        return true;
+    }
+
+    if (TrainActionsCommand const* command =
+        std::get_if<TrainActionsCommand>(&parsed))
+    {
+        HandleTrainActions(handler, *command);
+        return true;
+    }
+
+    if (BotTrainSpellCommand const* command =
+        std::get_if<BotTrainSpellCommand>(&parsed))
+    {
+        HandleBotTrainSpell(handler, *command);
+        return true;
+    }
+
+    if (BotTrainAllCommand const* command =
+        std::get_if<BotTrainAllCommand>(&parsed))
+    {
+        HandleBotTrainAll(handler, *command);
+        return true;
+    }
+
+    if (QuestRewardsCommand const* command =
+        std::get_if<QuestRewardsCommand>(&parsed))
+    {
+        HandleQuestRewards(handler, *command);
+        return true;
+    }
+
+    if (QuestRewardModeSetCommand const* command =
+        std::get_if<QuestRewardModeSetCommand>(&parsed))
+    {
+        HandleQuestRewardModeSet(handler, *command);
+        return true;
+    }
+
+    if (BotRewardChoiceCommand const* command =
+        std::get_if<BotRewardChoiceCommand>(&parsed))
+    {
+        HandleBotRewardChoice(handler, *command);
+        return true;
+    }
+
+    if (BotModeSetCommand const* command =
+        std::get_if<BotModeSetCommand>(&parsed))
+    {
+        HandleBotModeSet(handler, *command);
+        return true;
+    }
+
+    if (BotAddTalentCommand const* command =
+        std::get_if<BotAddTalentCommand>(&parsed))
+    {
+        HandleBotAddTalent(handler, *command);
+        return true;
+    }
+
+    if (BotResetTalentsCommand const* command =
+        std::get_if<BotResetTalentsCommand>(&parsed))
+    {
+        HandleBotResetTalents(handler, *command);
+        return true;
+    }
+
+    if (BotApplyTalentTemplateCommand const* command =
+        std::get_if<BotApplyTalentTemplateCommand>(&parsed))
+    {
+        HandleBotApplyTalentTemplate(handler, *command);
+        return true;
+    }
+
+    if (BotTalentFavoriteCommand const* command =
+        std::get_if<BotTalentFavoriteCommand>(&parsed))
+    {
+        HandleBotTalentFavorite(handler, *command);
         return true;
     }
 
@@ -2620,6 +4370,41 @@ private:
         }
 
         constexpr std::string_view loglevelToken = "loglevel";
+        constexpr std::string_view economyToken = "economy";
+
+        if (arguments.starts_with(economyToken))
+        {
+            if (handler->GetSession() &&
+                handler->GetSession()->GetSecurity() < SEC_GAMEMASTER)
+            {
+                handler->SendErrorMessage("LivingWorld economy requires GM access.");
+                return true;
+            }
+
+            arguments.remove_prefix(economyToken.size());
+            arguments = living_world::script::TrimRootWhitespace(arguments);
+
+            float scale = 0.0f;
+            auto const res = std::from_chars(
+                arguments.data(), arguments.data() + arguments.size(), scale);
+            if (res.ec != std::errc{} || scale <= 0.0f)
+            {
+                handler->PSendSysMessage(
+                    "LivingWorld economy: current scale is {:.2f}. "
+                    "Usage: .lw economy <value>  (e.g. 0.5, 1.0, 2.0)",
+                    living_world::g_economyScale);
+                return true;
+            }
+
+            living_world::ApplyEconomyScale(scale, /*isReload=*/true);
+            handler->PSendSysMessage(
+                "LivingWorld economy scale set to {:.2f}. "
+                "Repairs and trainer costs updated immediately. "
+                "Vendor prices take effect after the next restart.",
+                scale);
+            return true;
+        }
+
         if (!arguments.starts_with(loglevelToken))
         {
             handler->PSendSysMessage(

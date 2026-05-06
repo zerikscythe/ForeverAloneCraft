@@ -1,0 +1,46 @@
+[db]
+# Example configuration file for LivingWorld Bot Editor
+# Copy this to 'config.ini' and update with your settings
+
+# ============================================================================
+# DIRECT CONNECTION EXAMPLE (no SSH tunnel)
+# ============================================================================
+# [database]
+# host = 192.168.0.93
+# port = 3306
+# user = acore
+# password = acore
+#
+# [ssh]
+# enabled = 0
+
+# ============================================================================
+# SSH TUNNEL EXAMPLE (database through jump host)
+# ============================================================================
+[database]
+host = 127.0.0.1
+port = 3306
+user = acore
+password = acore
+
+[ssh]
+enabled = 1
+
+# SSH connection to the jump host
+host = 192.168.0.50
+port = 22
+user = youruser
+password = yourpassword
+key_file = 
+
+# OR use SSH key instead of password (more secure):
+# password = 
+# key_file = C:\Users\YourName\.ssh\id_rsa
+
+# MySQL server address as seen FROM the jump host
+db_host = 192.168.0.93
+db_port = 3306
+db_user = acore
+db_password = acore
+
+# See SSH_SETUP.md for detailed configuration instructions

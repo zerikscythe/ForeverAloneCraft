@@ -13,11 +13,14 @@
 //   .lwbot roster dismiss <rosterEntryId>
 //   .lwbot <position|name> profile <1-10>
 //   .lwbot <position|name> cast <Ability Name> [on <target>]
+//   .lwbot <position|name> mode assist|passive|hold|guard
 //
 // The parser intentionally produces a structured command object rather
 // than executing anything. Parse errors are returned as a dedicated
 // variant alternative so callers can render a precise error message
 // without exception handling.
+
+#include "model/BotCombatMode.h"
 
 #include <cstdint>
 #include <optional>
@@ -133,6 +136,14 @@ struct BotFollowCommand
     BotRef botRef;
 };
 
+// "<position|name|party> yoink" — teleport a bot or the whole active bot
+// party to the owner's current position. Intended as a recovery command for
+// stuck/fallen bots.
+struct BotYoinkCommand
+{
+    BotRef botRef;
+};
+
 // "<position|name|party> refreshments" — each bot consumes food if HP < 60%
 // and/or drink if mana < 60%.
 struct BotRefreshmentsCommand
@@ -163,6 +174,15 @@ struct BotRetrieveCommand
     std::optional<std::uint32_t> itemCount;
 };
 
+// "bagmove" — move an item (by GUID low) into a target bag container on the
+// bot. bagIndex 0 means backpack, 1-4 are equipped bag slots.
+struct BotBagMoveCommand
+{
+    BotRef botRef;
+    std::uint32_t itemGuidLow;
+    std::uint8_t bagIndex;
+};
+
 // "equip" — equip an item (by GUID low) from the bot's bags onto the bot.
 // If the destination slot is occupied, the existing item is moved to bags first.
 struct BotEquipCommand
@@ -179,6 +199,126 @@ struct BotUnequipCommand
     std::uint32_t itemGuidLow;
 };
 
+// "questactions" — query the owner's current target (quest giver NPC) for
+// bot-specific quest pick-up and turn-in opportunities.
+struct QuestActionsCommand
+{
+};
+
+// "<position|name> pickup <questId>" — have a bot accept a specific quest
+// from the owner's targeted quest giver.
+struct BotQuestPickupCommand
+{
+    BotRef botRef;
+    std::uint32_t questId = 0;
+};
+
+// "<position|name> turnin <questId>" — have a bot turn in a completed quest
+// to the owner's targeted quest giver.
+struct BotQuestTurninCommand
+{
+    BotRef botRef;
+    std::uint32_t questId = 0;
+};
+
+// "trainactions" — query the owner's current target (trainer NPC) for
+// bot-specific spell training opportunities.
+struct TrainActionsCommand
+{
+};
+
+// "<position|name> trainspell <trainerSpellId>" — have a bot learn a single
+// spell from the owner's targeted trainer NPC.
+struct BotTrainSpellCommand
+{
+    BotRef botRef;
+    std::uint32_t trainerSpellId = 0;
+};
+
+// "<position|name> trainall" — have a bot learn all available spells from the
+// owner's targeted trainer NPC.
+struct BotTrainAllCommand
+{
+    BotRef botRef;
+};
+
+// "quests" - request the current pending bot quest reward choices plus the
+// owner's current smart/manual reward mode.
+struct QuestRewardsCommand
+{
+};
+
+// "questmode <smart|manual>" - change the default reward mode used when the
+// owner turns in a quest for active bots.
+struct QuestRewardModeSetCommand
+{
+    bool smartMode = true;
+};
+
+// "<position|name> reward <questId> <choiceNumber>" - manually reward a
+// completed bot quest using the selected 1-based reward choice number.
+struct BotRewardChoiceCommand
+{
+    BotRef botRef;
+    std::uint32_t questId = 0;
+    std::uint8_t choiceNumber = 0;
+};
+
+// "<position|name> addtalent <Talent Name> <points>" — add one or more
+// talent points to a named talent on a bot. talentName is the spell name
+// of the talent's first rank (multi-word names are supported). points is
+// how many ranks to add (1-5). All prerequisite and available-point checks
+// are enforced server-side in the handler.
+struct BotAddTalentCommand
+{
+    BotRef botRef;
+    std::string talentName;
+    std::uint8_t points = 1;
+};
+
+// "<position|name> resettalents" — refund all talent points on the bot's
+// active spec, restoring free talent points to their level-appropriate cap.
+struct BotResetTalentsCommand
+{
+    BotRef botRef;
+};
+
+// "<position|name> applytalent [reset]"
+// Spend all available free talent points using the bot's preferred template.
+// reset=true: reset all talents first, then fill the full build.
+struct BotApplyTalentTemplateCommand
+{
+    BotRef botRef;
+    bool resetFirst = false;
+};
+
+// "<position|name> favoritetalent [<specKey>|auto]"
+// No arg or "auto" → report the current preferred template (or auto-detected spec).
+// <specKey>         → pin the preferred template to the named spec.
+struct BotTalentFavoriteCommand
+{
+    BotRef botRef;
+    std::optional<std::string> specKey; // nullopt = query current setting
+};
+
+// "<position|name> mode assist|passive|hold|guard"
+//
+// Changes the bot's combat stance immediately. Stored in BotPlayerRegistry
+// and consulted at the top of every CompanionAI tick.
+struct BotModeSetCommand
+{
+    BotRef botRef;
+    model::BotCombatMode mode = model::BotCombatMode::Assist;
+};
+
+// "<position|name> info" — request the bot's current config state pushed back
+// as a LWBT:BINFO system message so the Bot-Tune addon can render it.
+struct BotInfoCommand
+{
+    BotRef botRef;
+};
+
+
 using ParsedCommand = std::variant<
     CommandParseError,
     RosterListCommand,
@@ -191,12 +331,30 @@ using ParsedCommand = std::variant<
     BotTrainCommand,
     BotRetreatCommand,
     BotFollowCommand,
+    BotYoinkCommand,
     BotRefreshmentsCommand,
     BotBuffCommand,
     BotBagsCommand,
     BotRetrieveCommand,
+    BotBagMoveCommand,
     BotEquipCommand,
-    BotUnequipCommand>;
+    BotUnequipCommand,
+    QuestActionsCommand,
+    BotQuestPickupCommand,
+    BotQuestTurninCommand,
+    TrainActionsCommand,
+    BotTrainSpellCommand,
+    BotTrainAllCommand,
+    QuestRewardsCommand,
+    QuestRewardModeSetCommand,
+    BotRewardChoiceCommand,
+    BotModeSetCommand,
+    BotInfoCommand,
+    BotAddTalentCommand,
+    BotResetTalentsCommand,
+    BotApplyTalentTemplateCommand,
+    BotTalentFavoriteCommand>;
+
 
 // Parse a raw command argument string (everything after `.lwbot `). The
 // input is expected to be trimmed of the command prefix but may still

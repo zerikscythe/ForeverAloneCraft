@@ -2,6 +2,8 @@
 #include "integration/CharacterAchievementSyncRepository.h"
 #include "integration/CharacterQuestSyncRepository.h"
 #include "integration/CharacterReputationSyncRepository.h"
+#include "integration/CharacterSkillSyncRepository.h"
+#include "integration/CharacterSpellSyncRepository.h"
 #include "gtest/gtest.h"
 
 #include <optional>
@@ -234,6 +236,26 @@ public:
     }
 };
 
+class FakeSkillSyncRepository final
+    : public integration::CharacterSkillSyncRepository
+{
+public:
+    bool SyncSkillsFromCloneToSource(std::uint64_t, std::uint64_t) override
+    {
+        return true;
+    }
+};
+
+class FakeSpellSyncRepository final
+    : public integration::CharacterSpellSyncRepository
+{
+public:
+    bool SyncSpellsFromCloneToSource(std::uint64_t, std::uint64_t) override
+    {
+        return true;
+    }
+};
+
 model::AccountAltRuntimeRecord BuildRuntime(model::AccountAltRuntimeState state)
 {
     model::AccountAltRuntimeRecord runtime;
@@ -274,6 +296,8 @@ TEST(AccountAltStartupRecoveryServiceTest, RetriesInterruptedSyncOnLogin)
     FakeReputationSyncRepository reputationSyncRepository;
     FakeQuestSyncRepository questSyncRepository;
     FakeAchievementSyncRepository achievementSyncRepository;
+    FakeSkillSyncRepository skillSyncRepository;
+    FakeSpellSyncRepository spellSyncRepository;
     AccountAltRecoveryService recoveryService;
 
     runtimeRepository.runtimes.push_back(
@@ -294,6 +318,8 @@ TEST(AccountAltStartupRecoveryServiceTest, RetriesInterruptedSyncOnLogin)
         reputationSyncRepository,
         questSyncRepository,
         achievementSyncRepository,
+        skillSyncRepository,
+        spellSyncRepository,
         recoveryService);
 
     AccountAltStartupRecoverySummary summary = service.RecoverForAccount(7);
@@ -327,6 +353,8 @@ TEST(AccountAltStartupRecoveryServiceTest,
     FakeReputationSyncRepository reputationSyncRepository;
     FakeQuestSyncRepository questSyncRepository;
     FakeAchievementSyncRepository achievementSyncRepository;
+    FakeSkillSyncRepository skillSyncRepository;
+    FakeSpellSyncRepository spellSyncRepository;
     AccountAltRecoveryService recoveryService;
 
     runtimeRepository.runtimes.push_back(
@@ -347,6 +375,8 @@ TEST(AccountAltStartupRecoveryServiceTest,
         reputationSyncRepository,
         questSyncRepository,
         achievementSyncRepository,
+        skillSyncRepository,
+        spellSyncRepository,
         recoveryService);
 
     AccountAltStartupRecoverySummary summary = service.RecoverForAccount(7);
@@ -370,6 +400,8 @@ TEST(AccountAltStartupRecoveryServiceTest,
     FakeReputationSyncRepository reputationSyncRepository;
     FakeQuestSyncRepository questSyncRepository;
     FakeAchievementSyncRepository achievementSyncRepository;
+    FakeSkillSyncRepository skillSyncRepository;
+    FakeSpellSyncRepository spellSyncRepository;
     AccountAltRecoveryService recoveryService;
 
     runtimeRepository.runtimes.push_back(
@@ -390,6 +422,8 @@ TEST(AccountAltStartupRecoveryServiceTest,
         reputationSyncRepository,
         questSyncRepository,
         achievementSyncRepository,
+        skillSyncRepository,
+        spellSyncRepository,
         recoveryService);
 
     AccountAltStartupRecoverySummary summary = service.RecoverForAccount(7);
@@ -417,8 +451,9 @@ TEST(AccountAltStartupRecoveryServiceTest,
     FakeReputationSyncRepository reputationSyncRepository;
     FakeQuestSyncRepository questSyncRepository;
     FakeAchievementSyncRepository achievementSyncRepository;
+    FakeSkillSyncRepository skillSyncRepository;
+    FakeSpellSyncRepository spellSyncRepository;
     AccountAltRecoveryService recoveryService;
-
     runtimeRepository.runtimes.push_back(
         BuildRuntime(model::AccountAltRuntimeState::SyncingInventory));
     snapshotRepository.sourceSnapshot = Snapshot(10, 200, 1000);
@@ -463,6 +498,8 @@ TEST(AccountAltStartupRecoveryServiceTest,
         reputationSyncRepository,
         questSyncRepository,
         achievementSyncRepository,
+        skillSyncRepository,
+        spellSyncRepository,
         recoveryService,
         AccountAltItemRecoveryOptions { true, false });
 

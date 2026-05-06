@@ -1,0 +1,48 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "vs2022-debug-workpc",
+      "displayName": "VS2022 Debug (WorkPC)",
+      "description": "Machine-specific overrides for WorkPC — MySQL and OpenSSL are installed outside vcpkg.",
+      "inherits": "vs2022-debug",
+      "cacheVariables": {
+        "MYSQL_ROOT_DIR": "D:/Program Files/MySQL/MySQL Server 8.0",
+        "MYSQL_INCLUDE_DIR": "D:/Program Files/MySQL/MySQL Server 8.0/include",
+        "MYSQL_LIBRARY": "D:/Program Files/MySQL/MySQL Server 8.0/lib/libmysql.lib",
+        "OPENSSL_ROOT_DIR": "D:/Program Files/OpenSSL-Win64"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "vs2022-debug-workpc-worldserver",
+      "displayName": "Build worldserver (Debug, WorkPC)",
+      "configurePreset": "vs2022-debug-workpc",
+      "configuration": "Debug",
+      "targets": [
+        "worldserver"
+      ]
+    },
+    {
+      "name": "vs2022-debug-workpc-unit-tests",
+      "displayName": "Build unit_tests (Debug, WorkPC)",
+      "configurePreset": "vs2022-debug-workpc",
+      "configuration": "Debug",
+      "targets": [
+        "unit_tests"
+      ]
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "vs2022-debug-workpc-ctest",
+      "displayName": "CTest Debug (WorkPC)",
+      "configurePreset": "vs2022-debug-workpc",
+      "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

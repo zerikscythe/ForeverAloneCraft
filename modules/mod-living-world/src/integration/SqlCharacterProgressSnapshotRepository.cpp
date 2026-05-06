@@ -15,7 +15,8 @@ SqlCharacterProgressSnapshotRepository::LoadSnapshot(
         "SELECT c.level, c.xp, c.money, "
         "COALESCE((SELECT COUNT(*) FROM character_queststatus_rewarded WHERE guid = c.guid), 0), "
         "COALESCE((SELECT COUNT(*) FROM character_achievement WHERE guid = c.guid), 0), "
-        "COALESCE((SELECT SUM(GREATEST(standing, 0)) FROM character_reputation WHERE guid = c.guid), 0) "
+        "COALESCE((SELECT SUM(GREATEST(standing, 0)) FROM character_reputation WHERE guid = c.guid), 0), "
+        "c.totalHonorPoints, c.totalKills "
         "FROM characters c WHERE c.guid = {} LIMIT 1",
         characterGuid);
     if (!result)
@@ -31,6 +32,8 @@ SqlCharacterProgressSnapshotRepository::LoadSnapshot(
     snapshot.completedQuestCount = fields[3].Get<std::uint32_t>();
     snapshot.achievementCount = fields[4].Get<std::uint32_t>();
     snapshot.totalReputationStanding = fields[5].Get<std::int64_t>();
+    snapshot.totalHonorPoints = fields[6].Get<std::uint32_t>();
+    snapshot.totalKills = fields[7].Get<std::uint32_t>();
     return snapshot;
 }
 } // namespace integration

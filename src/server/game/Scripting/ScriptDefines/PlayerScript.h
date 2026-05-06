@@ -212,6 +212,9 @@ enum PlayerHook
     PLAYERHOOK_ON_GIVE_REPUTATION,
     PLAYERHOOK_ON_GET_REPUTATION_PRICE_DISCOUNT,
     PLAYERHOOK_ON_LEARN_TAXI_NODE,
+    PLAYERHOOK_ON_BEFORE_TRAINER_LIST_SPELL_COST,
+    PLAYERHOOK_ON_BEFORE_TRAINER_TEACH_SPELL,
+    PLAYERHOOK_ON_BEFORE_VENDOR_ITEM_PRICE,
     PLAYERHOOK_END
 };
 
@@ -448,6 +451,18 @@ public:
 
     // Before durability repair action, you can even modify the discount value
     virtual void OnPlayerBeforeDurabilityRepair(Player* /*player*/, ObjectGuid /*npcGUID*/, ObjectGuid /*itemGUID*/, float&/*discountMod*/, uint8 /*guildBank*/) { }
+
+    // Called while building the trainer spell list sent to the client.
+    // Modify moneyCost to change the price shown in the trainer window.
+    virtual void OnPlayerBeforeTrainerListSpellCost(Player* /*player*/, Creature* /*trainer*/, uint32 /*spellId*/, int32& /*moneyCost*/) { }
+
+    // Called just before a trainer spell is taught and the cost is charged.
+    // Modify moneyCost to change the amount actually debited from the player.
+    virtual void OnPlayerBeforeTrainerTeachSpell(Player* /*player*/, Creature* /*trainer*/, uint32 /*spellId*/, int32& /*moneyCost*/) { }
+
+    // Called after the reputation discount is applied to a vendor item price
+    // and before the HasEnoughMoney check. Modify price to scale the final cost.
+    virtual void OnPlayerBeforeVendorItemPrice(Player* /*player*/, Creature* /*vendor*/, uint32 /*itemId*/, uint32& /*price*/) { }
 
     //Before buying something from any vendor
     virtual void OnPlayerBeforeBuyItemFromVendor(Player* /*player*/, ObjectGuid /*vendorguid*/, uint32 /*vendorslot*/, uint32& /*item*/, uint8 /*count*/, uint8 /*bag*/, uint8 /*slot*/) { };

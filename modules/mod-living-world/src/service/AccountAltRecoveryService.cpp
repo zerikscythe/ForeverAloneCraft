@@ -20,7 +20,11 @@ bool CloneProgressIsAhead(
         return clone.completedQuestCount > source.completedQuestCount;
     if (clone.achievementCount != source.achievementCount)
         return clone.achievementCount > source.achievementCount;
-    return clone.totalReputationStanding > source.totalReputationStanding;
+    if (clone.totalReputationStanding != source.totalReputationStanding)
+        return clone.totalReputationStanding > source.totalReputationStanding;
+    if (clone.totalHonorPoints != source.totalHonorPoints)
+        return clone.totalHonorPoints > source.totalHonorPoints;
+    return clone.totalKills > source.totalKills;
 }
 } // namespace
 

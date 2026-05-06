@@ -23,6 +23,11 @@ private:
     // Maximum money gain (copper) considered plausible in a single bot session.
     // 500 gold = 5,000,000 copper.
     static constexpr std::uint32_t kMaxAllowedMoneyGainCopper = 5'000'000;
+    // Maximum net honor gain considered plausible in a single bot session.
+    // 15,000 honor is a generous but realistic PvP session cap.
+    static constexpr std::uint32_t kMaxAllowedHonorGain = 15'000;
+    // Maximum honorable kills considered plausible in a single bot session.
+    static constexpr std::uint32_t kMaxAllowedKillDelta = 500;
 };
 } // namespace service
 } // namespace living_world

@@ -194,6 +194,13 @@ foreach(SOURCE_MODULE ${MODULES_MODULE_LIST})
       CollectSourceFiles(${MODULE_SOURCE_PATH} PRIVATE_SOURCES_MODULES)
       CollectIncludeDirectories(${MODULE_SOURCE_PATH} PUBLIC_INCLUDES)
 
+      # Ensure newly added module sources are always linked into the static
+      # module build even when a stale generated project misses them.
+      if (SOURCE_MODULE STREQUAL "mod-living-world")
+        list(APPEND PRIVATE_SOURCES_MODULES
+          ${MODULE_SOURCE_PATH}/ai/BotHazardSensor.cpp)
+      endif()
+
       # Skip deprecated api loaders
       if (AC_SCRIPTS_INCLUDES MATCHES "${SOURCE_MODULE}")
         message("> Module (${SOURCE_MODULE}) using deprecated loader api")

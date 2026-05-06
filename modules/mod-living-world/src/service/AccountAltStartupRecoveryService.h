@@ -10,6 +10,8 @@
 #include "integration/CharacterProgressSyncRepository.h"
 #include "integration/CharacterQuestSyncRepository.h"
 #include "integration/CharacterReputationSyncRepository.h"
+#include "integration/CharacterSkillSyncRepository.h"
+#include "integration/CharacterSpellSyncRepository.h"
 #include "service/AccountAltRecoveryService.h"
 #include "service/AccountAltItemRecoveryService.h"
 
@@ -50,6 +52,8 @@ public:
         integration::CharacterReputationSyncRepository& reputationSyncRepository,
         integration::CharacterQuestSyncRepository& questSyncRepository,
         integration::CharacterAchievementSyncRepository& achievementSyncRepository,
+        integration::CharacterSkillSyncRepository& skillSyncRepository,
+        integration::CharacterSpellSyncRepository& spellSyncRepository,
         AccountAltRecoveryService const& recoveryService,
         AccountAltItemRecoveryOptions itemRecoveryOptions = {});
 
@@ -67,6 +71,8 @@ private:
     integration::CharacterReputationSyncRepository& _reputationSyncRepository;
     integration::CharacterQuestSyncRepository& _questSyncRepository;
     integration::CharacterAchievementSyncRepository& _achievementSyncRepository;
+    integration::CharacterSkillSyncRepository& _skillSyncRepository;
+    integration::CharacterSpellSyncRepository& _spellSyncRepository;
     AccountAltRecoveryService const& _recoveryService;
     AccountAltItemRecoveryOptions _itemRecoveryOptions;
 };

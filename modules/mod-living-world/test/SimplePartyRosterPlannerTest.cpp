@@ -79,5 +79,236 @@ TEST(SimplePartyRosterPlannerTest, RejectsAccountAltOwnedByAnotherAccount)
     EXPECT_EQ(plan.failureReason, PartyRosterFailureReason::OwnershipMismatch);
     EXPECT_EQ(plan.plannedSpawn.rosterEntryId, 0u);
 }
+
+TEST(SimplePartyRosterPlannerTest, RejectsWhenRosterEntryNotFound)
+{
+    SimplePartyRosterPlanner planner;
+
+    model::RosterEntry entry;
+    entry.rosterEntryId = 10;
+    entry.ownerAccountId = 77;
+    entry.isEnabled = true;
+
+    std::vector<model::RosterEntry> rosterEntries = { entry };
+
+    model::PlayerRosterRequest request;
+    request.requesterAccountId = 77;
+    request.requestedRosterEntryId = 99; // does not exist
+    request.possessionMode = model::PossessionMode::Assisted;
+
+    model::PlayerRosterContext context;
+    context.playerIsInWorld = true;
+    context.playerCanControlCompanions = true;
+    context.partyMemberCount = 0;
+    context.maxPartyMembers = 5;
+
+    PartyRosterPlan plan = planner.BuildPlan(rosterEntries, request, context);
+
+    EXPECT_FALSE(plan.isApproved);
+    EXPECT_EQ(plan.failureReason, PartyRosterFailureReason::RosterEntryNotFound);
+}
+
+TEST(SimplePartyRosterPlannerTest, RejectsWhenEntryIsDisabled)
+{
+    SimplePartyRosterPlanner planner;
+
+    model::RosterEntry entry;
+    entry.rosterEntryId = 10;
+    entry.ownerAccountId = 77;
+    entry.isEnabled = false;
+
+    std::vector<model::RosterEntry> rosterEntries = { entry };
+
+    model::PlayerRosterRequest request;
+    request.requesterAccountId = 77;
+    request.requestedRosterEntryId = 10;
+    request.possessionMode = model::PossessionMode::Assisted;
+
+    model::PlayerRosterContext context;
+    context.playerIsInWorld = true;
+    context.playerCanControlCompanions = true;
+    context.partyMemberCount = 0;
+    context.maxPartyMembers = 5;
+
+    PartyRosterPlan plan = planner.BuildPlan(rosterEntries, request, context);
+
+    EXPECT_FALSE(plan.isApproved);
+    EXPECT_EQ(plan.failureReason, PartyRosterFailureReason::RosterEntryDisabled);
+}
+
+TEST(SimplePartyRosterPlannerTest, RejectsWhenEntryAlreadySummoned)
+{
+    SimplePartyRosterPlanner planner;
+
+    model::RosterEntry entry;
+    entry.rosterEntryId = 10;
+    entry.ownerAccountId = 77;
+    entry.isEnabled = true;
+    entry.isAlreadySummoned = true;
+
+    std::vector<model::RosterEntry> rosterEntries = { entry };
+
+    model::PlayerRosterRequest request;
+    request.requesterAccountId = 77;
+    request.requestedRosterEntryId = 10;
+    request.possessionMode = model::PossessionMode::Assisted;
+
+    model::PlayerRosterContext context;
+    context.playerIsInWorld = true;
+    context.playerCanControlCompanions = true;
+    context.partyMemberCount = 1;
+    context.maxPartyMembers = 5;
+
+    PartyRosterPlan plan = planner.BuildPlan(rosterEntries, request, context);
+
+    EXPECT_FALSE(plan.isApproved);
+    EXPECT_EQ(plan.failureReason, PartyRosterFailureReason::RosterEntryAlreadySummoned);
+}
+
+TEST(SimplePartyRosterPlannerTest, RejectsWhenPartyFull)
+{
+    SimplePartyRosterPlanner planner;
+
+    model::RosterEntry entry;
+    entry.rosterEntryId = 10;
+    entry.ownerAccountId = 77;
+    entry.isEnabled = true;
+
+    std::vector<model::RosterEntry> rosterEntries = { entry };
+
+    model::PlayerRosterRequest request;
+    request.requesterAccountId = 77;
+    request.requestedRosterEntryId = 10;
+    request.addToPlayerParty = true;
+    request.possessionMode = model::PossessionMode::Assisted;
+
+    model::PlayerRosterContext context;
+    context.playerIsInWorld = true;
+    context.playerCanControlCompanions = true;
+    context.partyMemberCount = 5;
+    context.maxPartyMembers = 5;
+
+    PartyRosterPlan plan = planner.BuildPlan(rosterEntries, request, context);
+
+    EXPECT_FALSE(plan.isApproved);
+    EXPECT_EQ(plan.failureReason, PartyRosterFailureReason::PartyFull);
+}
+
+TEST(SimplePartyRosterPlannerTest, RejectsWhenPlayerNotInWorld)
+{
+    SimplePartyRosterPlanner planner;
+
+    model::RosterEntry entry;
+    entry.rosterEntryId = 10;
+    entry.ownerAccountId = 77;
+    entry.isEnabled = true;
+
+    std::vector<model::RosterEntry> rosterEntries = { entry };
+
+    model::PlayerRosterRequest request;
+    request.requesterAccountId = 77;
+    request.requestedRosterEntryId = 10;
+    request.possessionMode = model::PossessionMode::Assisted;
+
+    model::PlayerRosterContext context;
+    context.playerIsInWorld = false;
+    context.playerCanControlCompanions = true;
+    context.partyMemberCount = 0;
+    context.maxPartyMembers = 5;
+
+    PartyRosterPlan plan = planner.BuildPlan(rosterEntries, request, context);
+
+    EXPECT_FALSE(plan.isApproved);
+    EXPECT_EQ(plan.failureReason, PartyRosterFailureReason::RequesterUnavailable);
+}
+
+TEST(SimplePartyRosterPlannerTest, RejectsWhenPlayerCannotControlCompanions)
+{
+    SimplePartyRosterPlanner planner;
+
+    model::RosterEntry entry;
+    entry.rosterEntryId = 10;
+    entry.ownerAccountId = 77;
+    entry.isEnabled = true;
+
+    std::vector<model::RosterEntry> rosterEntries = { entry };
+
+    model::PlayerRosterRequest request;
+    request.requesterAccountId = 77;
+    request.requestedRosterEntryId = 10;
+    request.possessionMode = model::PossessionMode::Assisted;
+
+    model::PlayerRosterContext context;
+    context.playerIsInWorld = true;
+    context.playerCanControlCompanions = false;
+    context.partyMemberCount = 0;
+    context.maxPartyMembers = 5;
+
+    PartyRosterPlan plan = planner.BuildPlan(rosterEntries, request, context);
+
+    EXPECT_FALSE(plan.isApproved);
+    EXPECT_EQ(plan.failureReason, PartyRosterFailureReason::RequesterUnavailable);
+}
+
+TEST(SimplePartyRosterPlannerTest, RejectsDirectControlWhenNotSupported)
+{
+    SimplePartyRosterPlanner planner;
+
+    model::RosterEntry entry;
+    entry.rosterEntryId = 10;
+    entry.ownerAccountId = 77;
+    entry.isEnabled = true;
+    entry.controllableProfile.canBePlayerControlled = false;
+
+    std::vector<model::RosterEntry> rosterEntries = { entry };
+
+    model::PlayerRosterRequest request;
+    request.requesterAccountId = 77;
+    request.requestedRosterEntryId = 10;
+    request.possessionMode = model::PossessionMode::DirectControl;
+
+    model::PlayerRosterContext context;
+    context.playerIsInWorld = true;
+    context.playerCanControlCompanions = true;
+    context.partyMemberCount = 0;
+    context.maxPartyMembers = 5;
+
+    PartyRosterPlan plan = planner.BuildPlan(rosterEntries, request, context);
+
+    EXPECT_FALSE(plan.isApproved);
+    EXPECT_EQ(plan.failureReason, PartyRosterFailureReason::DirectControlNotSupported);
+}
+
+TEST(SimplePartyRosterPlannerTest, ApprovesAtExactPartyCapWhenNotAddingToParty)
+{
+    SimplePartyRosterPlanner planner;
+
+    model::RosterEntry entry;
+    entry.rosterEntryId = 10;
+    entry.ownerAccountId = 77;
+    entry.isEnabled = true;
+    entry.controllableProfile.canBePlayerControlled = true;
+    entry.controllableProfile.canEarnProgression = true;
+
+    std::vector<model::RosterEntry> rosterEntries = { entry };
+
+    model::PlayerRosterRequest request;
+    request.requesterAccountId = 77;
+    request.requestedRosterEntryId = 10;
+    request.addToPlayerParty = false; // not joining party — cap irrelevant
+    request.possessionMode = model::PossessionMode::Assisted;
+
+    model::PlayerRosterContext context;
+    context.playerIsInWorld = true;
+    context.playerCanControlCompanions = true;
+    context.partyMemberCount = 5;
+    context.maxPartyMembers = 5;
+
+    PartyRosterPlan plan = planner.BuildPlan(rosterEntries, request, context);
+
+    EXPECT_TRUE(plan.isApproved);
+    EXPECT_EQ(plan.failureReason, PartyRosterFailureReason::None);
+    EXPECT_FALSE(plan.shouldJoinPlayerParty);
+}
 } // namespace planner
 } // namespace living_world

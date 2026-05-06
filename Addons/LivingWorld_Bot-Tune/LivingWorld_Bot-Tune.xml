@@ -1,0 +1,197 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+    <Frame name="LWBTFrame" parent="UIParent" toplevel="true" enableMouse="true" movable="true" hidden="true">
+        <Size x="420" y="460" />
+        <Anchors>
+            <Anchor point="CENTER" />
+        </Anchors>
+        <Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
+            <BackgroundInsets>
+                <AbsInset left="12" right="12" top="12" bottom="12" />
+            </BackgroundInsets>
+            <TileSize>
+                <AbsValue val="32" />
+            </TileSize>
+            <EdgeSize>
+                <AbsValue val="32" />
+            </EdgeSize>
+            <Color r="0" g="0" b="0" a="0.88" />
+        </Backdrop>
+        <Scripts>
+            <OnLoad>LWBT_OnLoad(this); this:RegisterForDrag("LeftButton");</OnLoad>
+            <OnDragStart>this:StartMoving();</OnDragStart>
+            <OnDragStop>this:StopMovingOrSizing();</OnDragStop>
+            <OnEvent>LWBT_OnEvent(this, event, arg1, arg2, arg3, arg4);</OnEvent>
+            <OnShow>LWBT_OnShow();</OnShow>
+        </Scripts>
+        <Layers>
+            <Layer level="OVERLAY">
+                <FontString name="LWBTTitle" inherits="GameFontHighlightLarge" text="LivingWorld Bot-Tune">
+                    <Size x="260" y="18" />
+                    <Anchors>
+                        <Anchor point="TOP">
+                            <Offset>
+                                <AbsDimension x="0" y="-20" />
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+                <FontString name="LWBTSubtitle" inherits="GameFontHighlightSmall" text="Owned bot combat tuning shell">
+                    <Size x="280" y="14" />
+                    <Anchors>
+                        <Anchor point="TOP" relativeTo="LWBTTitle" relativePoint="BOTTOM">
+                            <Offset>
+                                <AbsDimension x="0" y="-4" />
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+            </Layer>
+        </Layers>
+        <Frames>
+            <Button name="LWBTRefreshButton" inherits="UIPanelButtonTemplate" text="Refresh Bots">
+                <Size x="92" y="24" />
+                <Anchors>
+                    <Anchor point="TOPLEFT">
+                        <Offset>
+                            <AbsDimension x="22" y="-22" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>LWBT_Refresh();</OnClick>
+                </Scripts>
+            </Button>
+            <Button name="LWBTCloseButton" inherits="UIPanelButtonTemplate" text="Close">
+                <Size x="72" y="24" />
+                <Anchors>
+                    <Anchor point="TOPRIGHT">
+                        <Offset>
+                            <AbsDimension x="-22" y="-22" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>LWBT_Close();</OnClick>
+                </Scripts>
+            </Button>
+            <Frame name="LWBTBlankState">
+                <Size x="360" y="240" />
+                <Anchors>
+                    <Anchor point="CENTER">
+                        <Offset>
+                            <AbsDimension x="0" y="-8" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Layers>
+                    <Layer level="OVERLAY">
+                        <FontString name="LWBTBlankTitle" inherits="GameFontNormalLarge" text="No owned bot selected">
+                            <Size x="320" y="18" />
+                            <Anchors>
+                                <Anchor point="TOP">
+                                    <Offset>
+                                        <AbsDimension x="0" y="-20" />
+                                    </Offset>
+                                </Anchor>
+                            </Anchors>
+                        </FontString>
+                        <FontString name="LWBTBlankBody" inherits="GameFontHighlightSmall" text="Click one of your owned bots in the world or party, then open this panel.&#10;&#10;The panel stays blank for non-owned targets.&#10;&#10;Current slice: UI shell + owned-bot selection only.">
+                            <Size x="320" y="120" />
+                            <Anchors>
+                                <Anchor point="TOP" relativeTo="LWBTBlankTitle" relativePoint="BOTTOM">
+                                    <Offset>
+                                        <AbsDimension x="0" y="-18" />
+                                    </Offset>
+                                </Anchor>
+                            </Anchors>
+                        </FontString>
+                    </Layer>
+                </Layers>
+            </Frame>
+            <Frame name="LWBTDetailState" hidden="true">
+                <Size x="378" y="340" />
+                <Anchors>
+                    <Anchor point="TOP">
+                        <Offset>
+                            <AbsDimension x="0" y="-78" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Layers>
+                    <Layer level="OVERLAY">
+                        <FontString name="LWBTOwnedBotName" inherits="GameFontNormalLarge" text="Selected Bot">
+                            <Size x="320" y="18" />
+                            <Anchors>
+                                <Anchor point="TOP">
+                                    <Offset>
+                                        <AbsDimension x="0" y="-8" />
+                                    </Offset>
+                                </Anchor>
+                            </Anchors>
+                        </FontString>
+                        <FontString name="LWBTOwnedBotMeta" inherits="GameFontHighlightSmall" text="">
+                            <Size x="340" y="16" />
+                            <Anchors>
+                                <Anchor point="TOP" relativeTo="LWBTOwnedBotName" relativePoint="BOTTOM">
+                                    <Offset>
+                                        <AbsDimension x="0" y="-6" />
+                                    </Offset>
+                                </Anchor>
+                            </Anchors>
+                        </FontString>
+                        <FontString name="LWBTMainRotationTitle" inherits="GameFontNormal" text="-- Main Rotation --">
+                            <Size x="320" y="16" />
+                            <Anchors>
+                                <Anchor point="TOP" relativeTo="LWBTOwnedBotMeta" relativePoint="BOTTOM">
+                                    <Offset>
+                                        <AbsDimension x="0" y="-26" />
+                                    </Offset>
+                                </Anchor>
+                            </Anchors>
+                        </FontString>
+                        <FontString name="LWBTMainRotationBody" inherits="GameFontHighlightSmall" text="">
+                            <Size x="330" y="90" />
+                            <Anchors>
+                                <Anchor point="TOP" relativeTo="LWBTMainRotationTitle" relativePoint="BOTTOM">
+                                    <Offset>
+                                        <AbsDimension x="0" y="-10" />
+                                    </Offset>
+                                </Anchor>
+                            </Anchors>
+                        </FontString>
+                        <FontString name="LWBTGlobalBreaksTitle" inherits="GameFontNormal" text="-- Global Rotation Breaks --">
+                            <Size x="320" y="16" />
+                            <Anchors>
+                                <Anchor point="TOP" relativeTo="LWBTMainRotationBody" relativePoint="BOTTOM">
+                                    <Offset>
+                                        <AbsDimension x="0" y="-18" />
+                                    </Offset>
+                                </Anchor>
+                            </Anchors>
+                        </FontString>
+                        <FontString name="LWBTGlobalBreaksBody" inherits="GameFontHighlightSmall" text="">
+                            <Size x="330" y="104" />
+                            <Anchors>
+                                <Anchor point="TOP" relativeTo="LWBTGlobalBreaksTitle" relativePoint="BOTTOM">
+                                    <Offset>
+                                        <AbsDimension x="0" y="-10" />
+                                    </Offset>
+                                </Anchor>
+                            </Anchors>
+                        </FontString>
+                        <FontString name="LWBTFooter" inherits="GameFontDisableSmall" text="Read-only shell for now. Next slice is the server profile read API.">
+                            <Size x="340" y="14" />
+                            <Anchors>
+                                <Anchor point="BOTTOM">
+                                    <Offset>
+                                        <AbsDimension x="0" y="8" />
+                                    </Offset>
+                                </Anchor>
+                            </Anchors>
+                        </FontString>
+                    </Layer>
+                </Layers>
+            </Frame>
+        </Frames>
+    </Frame>
+</Ui>

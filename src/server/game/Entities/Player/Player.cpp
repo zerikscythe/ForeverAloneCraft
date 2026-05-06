@@ -10786,6 +10786,8 @@ bool Player::BuyItemFromVendorSlot(ObjectGuid vendorguid, uint32 vendorslot, uin
         // reputation discount
         price = uint32(std::floor(price * GetReputationPriceDiscount(creature)));
 
+        sScriptMgr->OnPlayerBeforeVendorItemPrice(this, creature, item, price);
+
         if (!HasEnoughMoney(price))
         {
             SendBuyError(BUY_ERR_NOT_ENOUGHT_MONEY, creature, item, 0);

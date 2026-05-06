@@ -1,5 +1,7 @@
 #include "ai/CompanionAI.h"
+#include "ai/BotHazardSensor.h"
 
+#include "Chat.h"
 #include "Duration.h"
 #include "EventProcessor.h"
 #include "Log.h"
@@ -10,11 +12,30 @@
 #include "SharedDefines.h"
 #include "SpellMgr.h"
 #include "Unit.h"
+#include "WorldPacket.h"
+#include "integration/SqlAccountAltRuntimeRepository.h"
+#include "integration/SqlBotCombatDefaultProfileRepository.h"
+#include "integration/SqlBotCombatProfileRepository.h"
+#include "integration/SqlBotCombatProfileSelectionRepository.h"
+#include "integration/SqlBotGlobalConfigRepository.h"
+#include "model/BotCombatMode.h"
+#include "model/BotCombatProfile.h"
+#include "model/BotGlobalConfig.h"
+#include "service/BotContextService.h"
+#include "service/BotOocConfigService.h"
+#include "integration/SqlBotOocConfigRepository.h"
+#include "service/BotCombatDoctrineResolver.h"
+#include "service/BotCombatProfilePreparationService.h"
+#include "service/BotCombatRuntimeEvaluator.h"
+#include "service/BotGlobalConfigService.h"
+#include "service/BotPlayerRegistry.h"
+#include "service/SimpleBotCombatSpecRoleResolver.h"
 
 #include <array>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
+#include <optional>
 #include <mutex>
 #include <unordered_map>
 
@@ -88,6 +109,8 @@ void ClearBotOverride(ObjectGuid botGuid)
 {
     std::lock_guard<std::mutex> lock(s_overrideMutex);
     s_overrides.erase(botGuid);
+    BotHazardSensor::ClearHazardState(botGuid);
+    GetContextService().Clear(botGuid.GetCounter());
 }
 
 bool SetBotRetreat(ObjectGuid botGuid, uint32_t durationMs)
@@ -132,6 +155,7 @@ namespace
 // --- Follow / reposition constants ---
 constexpr float FollowDistance        = 2.0f;
 constexpr float FollowAngle           = 3.14159265358979323846f;
+constexpr float CombatFollowOverrideDistance = 20.0f;
 constexpr float RepositionDistance    = 8.0f;
 constexpr float RangedMinDistance     = 8.0f;    // Back away when closer than this
 constexpr float RangedOptimalDistance = 25.0f;   // Target spacing for ranged bots
@@ -150,10 +174,6 @@ constexpr float HybridHealThreshold  = 70.0f;
 // --- Healer mana thresholds for hybrid offense ---
 constexpr float HealerManaConserveBelow = 40.0f;  // Stop attacking below this
 constexpr float HealerManaResumeAbove   = 60.0f;  // Resume attacking above this
-
-// --- DK disease aura IDs ---
-constexpr std::uint32_t AuraFrostFever  = 55095;
-constexpr std::uint32_t AuraBloodPlague = 55078;
 
 // --- Priest Weakened Soul debuff: prevents re-shielding for 15 seconds ---
 constexpr std::uint32_t AuraWeakenedSoul = 6788;
@@ -189,6 +209,367 @@ BotCombatRole GetCombatRole(std::uint8_t classId)
     }
 }
 
+struct BotCombatResolvedProfile
+{
+    model::BotCombatProfileSettings settings;
+    std::vector<model::BotCombatEntryDefinition> interruptEntries;
+    std::vector<model::BotCombatEntryDefinition> rotationEntries;
+};
+
+struct BotCombatDoctrine
+{
+    BotCombatRole role = BotCombatRole::Melee;
+    BotCombatResolvedProfile profile;
+    model::BotCombatProfileSettings settings;
+};
+
+struct CachedBotCombatDoctrine
+{
+    BotCombatDoctrine doctrine;
+    std::chrono::steady_clock::time_point expiresAt;
+};
+
+struct CachedPreparedBotCombatProfile
+{
+    service::BotCombatPreparedProfile profile;
+    std::chrono::steady_clock::time_point expiresAt;
+};
+
+std::mutex s_doctrineMutex;
+std::unordered_map<std::uint64_t, CachedBotCombatDoctrine> s_doctrineByBotGuid;
+std::mutex s_preparedProfileMutex;
+std::unordered_map<std::uint64_t, CachedPreparedBotCombatProfile> s_preparedProfileByBotGuid;
+constexpr auto DoctrineCacheTtl = std::chrono::seconds(5);
+
+std::uint32_t FindBestKnownSpellInChain(Player* bot, std::uint32_t baseSpellId);
+
+service::BotGlobalConfigService& GetGlobalConfigService()
+{
+    static integration::SqlBotGlobalConfigRepository repo;
+    static service::BotGlobalConfigService            service(repo);
+    return service;
+}
+
+service::BotContextService& GetContextService()
+{
+    static service::BotContextService service;
+    return service;
+}
+
+service::BotOocConfigService& GetOocConfigService()
+{
+    static integration::SqlBotOocConfigRepository repo;
+    static service::BotOocConfigService           service(repo);
+    return service;
+}
+
+service::BotCombatDoctrineResolver& GetDoctrineResolver()
+{
+    static integration::SqlAccountAltRuntimeRepository runtimeRepository;
+    static integration::SqlBotCombatProfileRepository profileRepository;
+    static integration::SqlBotCombatProfileSelectionRepository selectionRepository;
+    static integration::SqlBotCombatDefaultProfileRepository defaultProfileRepository;
+    static service::SimpleBotCombatSpecRoleResolver resolver;
+    static service::BotCombatDoctrineResolver doctrineResolver(
+        runtimeRepository,
+        profileRepository,
+        selectionRepository,
+        defaultProfileRepository,
+        resolver,
+        GetContextService());
+    return doctrineResolver;
+}
+
+service::BotCombatProfilePreparationService& GetProfilePreparationService()
+{
+    static service::BotCombatProfilePreparationService preparationService(
+        GetDoctrineResolver());
+    return preparationService;
+}
+
+service::BotCombatRuntimeEvaluator& GetRuntimeEvaluator()
+{
+    static service::BotCombatRuntimeEvaluator runtimeEvaluator;
+    return runtimeEvaluator;
+}
+
+BotCombatRole ResolveDoctrineRole(
+    std::uint8_t classId,
+    std::string const& specKey,
+    std::string const& roleKey)
+{
+    if (roleKey == "HEAL")
+    {
+        switch (classId)
+        {
+            case CLASS_PRIEST:
+                return BotCombatRole::Healer;
+            case CLASS_DRUID:
+            case CLASS_PALADIN:
+            case CLASS_SHAMAN:
+                return BotCombatRole::HybridHealer;
+            default:
+                return BotCombatRole::Healer;
+        }
+    }
+
+    if (roleKey == "TANK")
+        return BotCombatRole::Melee;
+
+    if (roleKey == "DPS")
+    {
+        switch (classId)
+        {
+            case CLASS_HUNTER:
+            case CLASS_MAGE:
+            case CLASS_WARLOCK:
+                return BotCombatRole::Ranged;
+            case CLASS_PRIEST:
+                return specKey == "Shadow"
+                    ? BotCombatRole::Ranged
+                    : BotCombatRole::Healer;
+            case CLASS_DRUID:
+                return specKey == "Balance"
+                    ? BotCombatRole::Ranged
+                    : BotCombatRole::Melee;
+            case CLASS_SHAMAN:
+                return specKey == "Elemental"
+                    ? BotCombatRole::Ranged
+                    : BotCombatRole::Melee;
+            case CLASS_PALADIN:
+                return specKey == "Holy"
+                    ? BotCombatRole::HybridHealer
+                    : BotCombatRole::Melee;
+            default:
+                return BotCombatRole::Melee;
+        }
+    }
+
+    return GetCombatRole(classId);
+}
+
+BotCombatDoctrine LoadCombatDoctrine(Player* bot, Player* owner)
+{
+    BotCombatDoctrine doctrine;
+    std::uint32_t ownerAccountId = owner->GetSession()
+        ? owner->GetSession()->GetAccountId()
+        : 0;
+    service::BotCombatDoctrineResolution resolution =
+        GetDoctrineResolver().ResolveForBot(
+            bot->GetGUID().GetCounter(),
+            bot->getClass(),
+            ownerAccountId);
+    doctrine.settings    = resolution.profile.settings;
+
+    doctrine.role = ResolveDoctrineRole(
+        bot->getClass(),
+        resolution.effectiveSpecKey,
+        resolution.effectiveRoleKey);
+    return doctrine;
+}
+
+BotCombatDoctrine GetCombatDoctrine(Player* bot, Player* owner)
+{
+    std::uint64_t const botGuid = bot->GetGUID().GetCounter();
+    auto const now = std::chrono::steady_clock::now();
+
+    {
+        std::lock_guard<std::mutex> lock(s_doctrineMutex);
+        auto it = s_doctrineByBotGuid.find(botGuid);
+        if (it != s_doctrineByBotGuid.end() && it->second.expiresAt > now)
+            return it->second.doctrine;
+    }
+
+    BotCombatDoctrine doctrine = LoadCombatDoctrine(bot, owner);
+
+    {
+        std::lock_guard<std::mutex> lock(s_doctrineMutex);
+        s_doctrineByBotGuid[botGuid] = { doctrine, now + DoctrineCacheTtl };
+    }
+
+    return doctrine;
+}
+
+service::BotCombatPreparedProfile GetPreparedCombatProfile(Player* bot, Player* owner)
+{
+    std::uint64_t const botGuid = bot->GetGUID().GetCounter();
+    auto const now = std::chrono::steady_clock::now();
+
+    {
+        std::lock_guard<std::mutex> lock(s_preparedProfileMutex);
+        auto it = s_preparedProfileByBotGuid.find(botGuid);
+        if (it != s_preparedProfileByBotGuid.end() && it->second.expiresAt > now)
+            return it->second.profile;
+    }
+
+    std::uint32_t ownerAccountId = owner->GetSession()
+        ? owner->GetSession()->GetAccountId()
+        : 0;
+    service::BotCombatPreparedProfile preparedProfile =
+        GetProfilePreparationService().PrepareForBot(bot, ownerAccountId);
+
+    {
+        std::lock_guard<std::mutex> lock(s_preparedProfileMutex);
+        s_preparedProfileByBotGuid[botGuid] =
+            { preparedProfile, now + DoctrineCacheTtl };
+    }
+
+    return preparedProfile;
+}
+
+void PushThreatAddonMessage(Player* bot, Player* owner, Unit* primaryTarget)
+{
+    if (!bot || !owner || !owner->GetSession() || !primaryTarget)
+        return;
+
+    ThreatManager& mgr = primaryTarget->GetThreatMgr();
+    float const myThreat = mgr.GetThreat(bot);
+    float topThreat = 0.0f;
+    for (ThreatReference const* ref : mgr.GetSortedThreatList())
+    {
+        if (ref->IsOnline())
+        {
+            topThreat = ref->GetThreat();
+            break;
+        }
+    }
+    int const threatPct = (topThreat > 0.0f)
+        ? static_cast<int>(myThreat / topThreat * 100.0f) : 0;
+    bool const holdsAggro = (mgr.GetCurrentVictim() == bot);
+
+    std::string const msg = "LWBOT\tLWBT:THREAT:" + bot->GetName()
+        + ":" + std::to_string(threatPct)
+        + ":" + (holdsAggro ? "1" : "0");
+    WorldPacket data;
+    ChatHandler::BuildChatPacket(
+        data, CHAT_MSG_WHISPER, LANG_ADDON, owner, owner, msg);
+    owner->GetSession()->SendPacket(&data);
+}
+
+bool TryExecuteProfileRotation(Player* bot, Player* owner, Unit* primaryTarget)
+{
+    if (!bot || !owner)
+        return false;
+
+    PushThreatAddonMessage(bot, owner, primaryTarget);
+
+    service::BotCombatPreparedProfile preparedProfile =
+        GetPreparedCombatProfile(bot, owner);
+    if (preparedProfile.interruptEntries.empty()
+        && preparedProfile.rotationEntries.empty())
+    {
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] ProfileFallback bot='{}' guid={} reason=no_prepared_entries sourceGuid={} slot={} spec='{}' role='{}' sourceKind={}",
+            bot->GetName(),
+            bot->GetGUID().GetCounter(),
+            preparedProfile.resolution.sourceCharacterGuid,
+            static_cast<std::uint32_t>(preparedProfile.resolution.activeProfileSlot),
+            preparedProfile.resolution.effectiveSpecKey,
+            preparedProfile.resolution.effectiveRoleKey,
+            static_cast<std::uint32_t>(preparedProfile.resolution.source));
+        return false;
+    }
+
+    service::BotCombatRuntimeContext context;
+    context.bot = bot;
+    context.owner = owner;
+    context.primaryTarget = primaryTarget;
+    context.rotationWaitMs = preparedProfile.resolution.profile.settings.rotationWaitMs;
+
+    auto const handleEvaluationResult =
+        [&](service::BotCombatEvaluationResult const& result, char const* phase) -> bool
+        {
+            if (result.disposition == service::BotCombatEvaluationDisposition::None)
+                return false;
+
+            if (result.disposition == service::BotCombatEvaluationDisposition::Wait)
+            {
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] ProfileActionWait bot='{}' guid={} phase={} waitMs={}",
+                    bot->GetName(),
+                    bot->GetGUID().GetCounter(),
+                    phase,
+                    result.waitMs);
+                return true;
+            }
+
+            if (!result.action)
+                return false;
+
+            service::BotCombatEvaluatedAction const& evaluatedAction = *result.action;
+
+            if (evaluatedAction.breaksCurrentCast && bot->IsNonMeleeSpellCast(false))
+            {
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] ProfileActionBreakCast bot='{}' guid={} phase={} entryId={} actionId={} spellId={}",
+                    bot->GetName(),
+                    bot->GetGUID().GetCounter(),
+                    phase,
+                    evaluatedAction.entryId,
+                    evaluatedAction.actionId,
+                    evaluatedAction.spellId);
+                bot->InterruptNonMeleeSpells(false);
+            }
+
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] ProfileActionCast bot='{}' guid={} phase={} entryId={} actionId={} spellId={} targetKey='{}' targetGuid={} breaksCurrentCast={}",
+                bot->GetName(),
+                bot->GetGUID().GetCounter(),
+                phase,
+                evaluatedAction.entryId,
+                evaluatedAction.actionId,
+                evaluatedAction.spellId,
+                evaluatedAction.targetKey,
+                evaluatedAction.target ? evaluatedAction.target->GetGUID().GetCounter() : 0,
+                evaluatedAction.breaksCurrentCast);
+
+            bot->CastSpell(evaluatedAction.target, evaluatedAction.spellId, false);
+            return true;
+        };
+
+    if (handleEvaluationResult(
+            GetRuntimeEvaluator().EvaluateInterrupts(preparedProfile, context),
+            "interrupt"))
+    {
+        return true;
+    }
+
+    if (handleEvaluationResult(
+            GetRuntimeEvaluator().EvaluateRotation(preparedProfile, context),
+            "rotation"))
+    {
+        return true;
+    }
+
+    LOG_INFO(
+        "server.worldserver",
+        "[LivingWorldDebug] ProfileFallback bot='{}' guid={} reason=no_runtime_action sourceGuid={} slot={} spec='{}' role='{}' interruptEntries={} rotationEntries={} targetGuid={}",
+        bot->GetName(),
+        bot->GetGUID().GetCounter(),
+        preparedProfile.resolution.sourceCharacterGuid,
+        static_cast<std::uint32_t>(preparedProfile.resolution.activeProfileSlot),
+        preparedProfile.resolution.effectiveSpecKey,
+        preparedProfile.resolution.effectiveRoleKey,
+        preparedProfile.interruptEntries.size(),
+        preparedProfile.rotationEntries.size(),
+        primaryTarget ? primaryTarget->GetGUID().GetCounter() : 0);
+    return false;
+}
+
+bool IsOffenseSuppressed(
+    model::BotCombatConservationMode mode,
+    bool conserving)
+{
+    if (mode == model::BotCombatConservationMode::JitCasting)
+        return true;
+
+    return mode == model::BotCombatConservationMode::Conservative && conserving;
+}
+
 // ---------------------------------------------------------------
 // Spell utilities
 // ---------------------------------------------------------------
@@ -208,7 +589,6 @@ std::uint32_t FindBestKnownSpellInChain(Player* bot, std::uint32_t baseSpellId)
 }
 
 // Returns true if the target has an aura from any rank of the given spell chain.
-// Works correctly for both single-rank spells and multi-rank chains.
 bool HasAuraFromChain(Unit const* target, std::uint32_t baseSpellId)
 {
     std::uint32_t candidate = sSpellMgr->GetLastSpellInChain(baseSpellId);
@@ -221,6 +601,34 @@ bool HasAuraFromChain(Unit const* target, std::uint32_t baseSpellId)
     return false;
 }
 
+// Returns the remaining duration in milliseconds of the highest-rank aura from
+// the spell chain on target. Returns 0 if the aura is not present.
+int32 AuraRemainingMsFromChain(Unit const* target, std::uint32_t baseSpellId)
+{
+    std::uint32_t candidate = sSpellMgr->GetLastSpellInChain(baseSpellId);
+    while (candidate)
+    {
+        if (Aura const* aura = target->GetAura(candidate))
+        {
+            int32 dur = aura->GetDuration();
+            return dur > 0 ? dur : 0;
+        }
+        candidate = sSpellMgr->GetPrevSpellInChain(candidate);
+    }
+    return 0;
+}
+
+// Returns true if the aura from baseSpellId on target is missing or has fewer
+// than thresholdSecs seconds of duration remaining.
+bool AuraNeedsRefresh(Unit const* target, std::uint32_t baseSpellId,
+                      std::uint16_t thresholdSecs)
+{
+    int32 remainingMs = AuraRemainingMsFromChain(target, baseSpellId);
+    if (remainingMs == 0)
+        return true;
+    return remainingMs < static_cast<int32>(thresholdSecs) * 1000;
+}
+
 // Returns true when this bot can still fire mana-based spells. Non-mana
 // users (Warriors, Rogues, DKs) always return true. A caster at zero mana
 // should switch to melee autoattack rather than spamming failed cast attempts.
@@ -229,6 +637,53 @@ bool BotHasManaToFight(Player const* bot)
     if (bot->GetMaxPower(POWER_MANA) == 0)
         return true;
     return bot->GetPower(POWER_MANA) > 0;
+}
+
+BotCombatResolvedProfile LoadResolvedCombatProfile(Player* bot, Player* owner)
+{
+    BotCombatResolvedProfile resolvedProfile;
+    service::BotCombatPreparedProfile preparedProfile =
+        GetPreparedCombatProfile(bot, owner);
+
+    resolvedProfile.settings = preparedProfile.resolution.profile.settings;
+    resolvedProfile.interruptEntries = std::move(preparedProfile.interruptEntries);
+    resolvedProfile.rotationEntries = std::move(preparedProfile.rotationEntries);
+
+    char const* sourceKind = "none";
+    switch (preparedProfile.resolution.source)
+    {
+        case service::BotCombatDoctrineSource::DefaultProfile:
+            sourceKind = "default";
+            break;
+        case service::BotCombatDoctrineSource::CustomProfile:
+            sourceKind = "custom";
+            break;
+        case service::BotCombatDoctrineSource::CustomProfileWithDefaultFallback:
+            sourceKind = "custom_with_default_fallback";
+            break;
+        case service::BotCombatDoctrineSource::None:
+        default:
+            sourceKind = "none";
+            break;
+    }
+
+    LOG_INFO(
+        "server.worldserver",
+        "[LivingWorldDebug] ProfileLoad bot='{}' guid={} sourceGuid={} ownerAccountId={} slot={} sourceKind={} customProfileId={} defaultProfileId={} spec='{}' role='{}' interruptEntries={} rotationEntries={}",
+        bot->GetName(),
+        bot->GetGUID().GetCounter(),
+        preparedProfile.resolution.sourceCharacterGuid,
+        preparedProfile.resolution.ownerAccountId,
+        static_cast<std::uint32_t>(preparedProfile.resolution.activeProfileSlot),
+        sourceKind,
+        preparedProfile.resolution.customProfileId.value_or(0),
+        preparedProfile.resolution.defaultProfileId.value_or(0),
+        preparedProfile.resolution.effectiveSpecKey,
+        preparedProfile.resolution.effectiveRoleKey,
+        resolvedProfile.interruptEntries.size(),
+        resolvedProfile.rotationEntries.size());
+
+    return resolvedProfile;
 }
 
 // ---------------------------------------------------------------
@@ -284,96 +739,6 @@ std::uint32_t GetHealerOffensiveSpell(Player* bot, Unit* target)
     }
 }
 
-// ---------------------------------------------------------------
-// Offensive spells — melee roles
-// ---------------------------------------------------------------
-
-// Returns the best melee-range offensive ability for the bot's class and state.
-std::uint32_t GetMeleeOffensiveSpell(Player* bot, Unit* target)
-{
-    switch (bot->getClass())
-    {
-        case CLASS_WARRIOR:
-        {
-            // Execute: highest-priority finisher at low target health
-            std::uint32_t const execute = FindBestKnownSpellInChain(bot, 5308);
-            if (execute && target->GetHealthPct() < 20.0f)
-                return execute;
-
-            // Mortal Strike (Arms)
-            std::uint32_t spell = FindBestKnownSpellInChain(bot, 12294);
-            if (spell)
-                return spell;
-
-            // Bloodthirst (Fury)
-            spell = FindBestKnownSpellInChain(bot, 23881);
-            if (spell)
-                return spell;
-
-            // Rend: apply the bleed DoT when not present on target
-            {
-                std::uint32_t const rend = FindBestKnownSpellInChain(bot, 772);
-                if (rend && !target->HasAura(rend))
-                    return rend;
-            }
-
-            // Heroic Strike: basic melee filler
-            return FindBestKnownSpellInChain(bot, 78);
-        }
-
-        case CLASS_ROGUE:
-        {
-            std::uint32_t const snd   = FindBestKnownSpellInChain(bot, 5171); // Slice and Dice
-            std::uint32_t const evisc = FindBestKnownSpellInChain(bot, 2098); // Eviscerate
-            std::uint32_t const ss    = FindBestKnownSpellInChain(bot, 1752); // Sinister Strike
-
-            std::uint8_t const cp = bot->GetComboPoints();
-
-            // At 2+ combo points, apply Slice and Dice when the haste buff is missing
-            if (cp >= 2 && snd && !bot->HasAura(snd))
-                return snd;
-
-            // At 4+ combo points spend with Eviscerate
-            if (cp >= 4 && evisc)
-                return evisc;
-
-            return ss;
-        }
-
-        case CLASS_DEATH_KNIGHT:
-        {
-            bool const hasFrostFever  = target->HasAura(AuraFrostFever);
-            bool const hasBloodPlague = target->HasAura(AuraBloodPlague);
-
-            // Apply diseases before committing to strike abilities
-            if (!hasBloodPlague && bot->HasSpell(45462))
-                return 45462; // Plague Strike — applies Blood Plague
-            if (!hasFrostFever && bot->HasSpell(45477))
-                return 45477; // Icy Touch — applies Frost Fever
-
-            // Diseases up: Death Strike when off cooldown (damage + self-heal)
-            if (bot->HasSpell(49998) && !bot->HasSpellCooldown(49998))
-                return 49998;
-
-            // Death Strike is on cooldown — fill with rune strikes
-            {
-                std::uint32_t const heartStrike = FindBestKnownSpellInChain(bot, 55050);
-                if (heartStrike && !bot->HasSpellCooldown(heartStrike))
-                    return heartStrike; // Heart Strike
-            }
-            if (bot->HasSpell(45902) && !bot->HasSpellCooldown(45902))
-                return 45902; // Blood Strike
-
-            // Fallback: let the engine handle the cooldown; autoattack continues
-            if (bot->HasSpell(49998))
-                return 49998;
-            return 0;
-        }
-
-        default:
-            return 0;
-    }
-}
 
 // ---------------------------------------------------------------
 // Offensive spells — Paladin seal helpers
@@ -465,219 +830,117 @@ std::uint32_t GetHybridDamageSpell(Player* bot, Unit* target)
     }
 }
 
-// ---------------------------------------------------------------
-// Offensive spells — ranged roles
-// ---------------------------------------------------------------
-
-// Returns the best ranged damage spell, preferring DoTs when not yet applied.
-std::uint32_t GetDamageSpell(Player* bot, Unit* target)
-{
-    switch (bot->getClass())
-    {
-        case CLASS_MAGE:
-        {
-            // Walk the Frostbolt chain; if chain lookup fails (e.g. rank data
-            // missing), fall back to direct spell ID checks for common ranks.
-            std::uint32_t fb = FindBestKnownSpellInChain(bot, 116);
-            if (fb)
-                return fb;
-            // Direct fallback: Frostbolt ranks 1-14 in reverse order
-            static constexpr std::uint32_t FrostboltRanks[] = {
-                42842, 42841, 38697, 27072, 25304, 10161, 10160, 10159,
-                8406,  8405,  8404,  837,   228,   116
-            };
-            for (std::uint32_t id : FrostboltRanks)
-                if (bot->HasSpell(id))
-                    return id;
-            // No Frostbolt — try Fireball as alternate
-            fb = FindBestKnownSpellInChain(bot, 133);
-            if (fb)
-                return fb;
-            // Frostfire Bolt (dual-school, learned via talent)
-            if (bot->HasSpell(44614))
-                return 44614;
-            return 0;
-        }
-
-        case CLASS_WARLOCK:
-        {
-            // Curse of Agony: highest-DPS curse, apply first
-            std::uint32_t const coa = FindBestKnownSpellInChain(bot, 980);
-            if (coa && !target->HasAura(coa))
-                return coa;
-
-            // Immolate: fire DoT, apply when missing
-            std::uint32_t const immolate = FindBestKnownSpellInChain(bot, 348);
-            if (immolate && !target->HasAura(immolate))
-                return immolate;
-
-            // Corruption: instant shadow DoT
-            std::uint32_t const corruption = FindBestKnownSpellInChain(bot, 172);
-            if (corruption && !target->HasAura(corruption))
-                return corruption;
-
-            // Shadow Bolt: primary filler when all DoTs are rolling
-            return FindBestKnownSpellInChain(bot, 686);
-        }
-
-        case CLASS_HUNTER:
-        {
-            // Serpent Sting: nature DoT, apply when missing
-            std::uint32_t const serpent = FindBestKnownSpellInChain(bot, 1978);
-            if (serpent && !target->HasAura(serpent))
-                return serpent;
-
-            // Multi-Shot: strong filler when off cooldown
-            std::uint32_t const multiShot = FindBestKnownSpellInChain(bot, 2643);
-            if (multiShot && !bot->HasSpellCooldown(multiShot))
-                return multiShot;
-
-            // Steady Shot: primary ranged filler
-            if (bot->HasSpell(34120))
-                return 34120;
-
-            // Arcane Shot: fallback if Steady Shot is not yet learned
-            return FindBestKnownSpellInChain(bot, 3044);
-        }
-
-        default:
-            return 0;
-    }
-}
 
 // ---------------------------------------------------------------
 // Out-of-combat maintenance
 // ---------------------------------------------------------------
 
 // Core buff application — no combat guard. Called by both the idle tick and
-// the explicit party buff command.
-void ApplyBotBuff(Player* bot, Player* owner)
+// the on-spawn path. Respects buffScope (self/party) and buffReapplySecs.
+void ApplyBotBuff(Player* bot, Player* owner, model::BotOocBehavior const& ooc)
 {
     if (bot->IsNonMeleeSpellCast(false))
         return;
+    if (ooc.buffScope == model::BotBuffScope::Off)
+        return;
+
+    uint16_t const thresh = ooc.buffReapplySecs;
+
+    // Helper: resolve the target list based on scope.
+    // Self scope: {bot}. Party scope: all connected party members + bot.
+    auto buildTargets = [&]() -> std::vector<Player*>
+    {
+        std::vector<Player*> targets;
+        if (ooc.buffScope == model::BotBuffScope::Self)
+        {
+            targets.push_back(bot);
+            return targets;
+        }
+        if (Group const* group = bot->GetGroup())
+        {
+            for (Group::MemberSlot const& slot : group->GetMemberSlots())
+            {
+                Player* t = ObjectAccessor::FindConnectedPlayer(slot.guid);
+                if (t && t->IsAlive() && t->IsInWorld())
+                    targets.push_back(t);
+            }
+        }
+        if (targets.empty())
+            targets.push_back(bot);
+        return targets;
+    };
 
     switch (bot->getClass())
     {
         case CLASS_WARRIOR:
         {
-            // Battle Shout: party-wide AP buff; cast on self, hits all nearby members
             std::uint32_t const shout = FindBestKnownSpellInChain(bot, 6673);
-            if (shout && !HasAuraFromChain(bot, 6673) && !HasAuraFromChain(owner, 6673))
+            if (shout && AuraNeedsRefresh(bot, 6673, thresh))
                 bot->CastSpell(bot, shout, false);
             break;
         }
 
         case CLASS_DEATH_KNIGHT:
         {
-            // Horn of Winter: party-wide Strength/Agility buff
-            if (bot->HasSpell(57330)
-                && !HasAuraFromChain(bot, 57330)
-                && !HasAuraFromChain(owner, 57330))
+            if (bot->HasSpell(57330) && AuraNeedsRefresh(bot, 57330, thresh))
                 bot->CastSpell(bot, 57330U, false);
             break;
         }
 
         case CLASS_PALADIN:
         {
-            // Re-apply seal if it dropped between fights
             if (!HasSealActive(bot))
             {
                 std::uint32_t const seal = GetPreferredSeal(bot);
-                if (seal)
-                { bot->CastSpell(bot, seal, false); break; }
+                if (seal) { bot->CastSpell(bot, seal, false); break; }
             }
-            // Blessing of Kings: prioritise owner, then self
-            {
-                std::uint32_t const bok = FindBestKnownSpellInChain(bot, 20217);
-                if (bok)
-                {
-                    if (!HasAuraFromChain(owner, 20217))
-                    { bot->CastSpell(owner, bok, false); break; }
-                    if (!HasAuraFromChain(bot, 20217))
-                    { bot->CastSpell(bot, bok, false); break; }
-                }
-            }
-            // Blessing of Might: fallback if Kings not known
-            {
-                std::uint32_t const bom = FindBestKnownSpellInChain(bot, 19740);
-                if (bom)
-                {
-                    if (!HasAuraFromChain(owner, 19740))
-                    { bot->CastSpell(owner, bom, false); break; }
-                    if (!HasAuraFromChain(bot, 19740))
-                    { bot->CastSpell(bot, bom, false); break; }
-                }
-            }
+            std::uint32_t const bok = FindBestKnownSpellInChain(bot, 20217);
+            std::uint32_t const bom = FindBestKnownSpellInChain(bot, 19740);
+            std::uint32_t const chosen = bok ? bok : bom;
+            std::uint32_t const base   = bok ? 20217 : 19740;
+            if (!chosen) break;
+            for (Player* t : buildTargets())
+                if (AuraNeedsRefresh(t, base, thresh))
+                { bot->CastSpell(t, chosen, false); return; }
             break;
         }
 
         case CLASS_PRIEST:
         {
-            // Power Word: Fortitude: Stamina buff for all group members
             std::uint32_t const pwf = FindBestKnownSpellInChain(bot, 1243);
             if (!pwf) break;
-            if (Group const* group = bot->GetGroup())
-            {
-                for (Group::MemberSlot const& slot : group->GetMemberSlots())
-                {
-                    Player* target = ObjectAccessor::FindConnectedPlayer(slot.guid);
-                    if (!target || !target->IsAlive() || !target->IsInWorld()) continue;
-                    if (!HasAuraFromChain(target, 1243))
-                    { bot->CastSpell(target, pwf, false); return; }
-                }
-            }
-            if (!HasAuraFromChain(bot, 1243))
-                bot->CastSpell(bot, pwf, false);
+            for (Player* t : buildTargets())
+                if (AuraNeedsRefresh(t, 1243, thresh))
+                { bot->CastSpell(t, pwf, false); return; }
             break;
         }
 
         case CLASS_DRUID:
         {
-            // Mark of the Wild: multi-stat buff for all group members
             std::uint32_t const motw = FindBestKnownSpellInChain(bot, 1126);
             if (!motw) break;
-            if (Group const* group = bot->GetGroup())
-            {
-                for (Group::MemberSlot const& slot : group->GetMemberSlots())
-                {
-                    Player* target = ObjectAccessor::FindConnectedPlayer(slot.guid);
-                    if (!target || !target->IsAlive() || !target->IsInWorld()) continue;
-                    if (!HasAuraFromChain(target, 1126))
-                    { bot->CastSpell(target, motw, false); return; }
-                }
-            }
-            if (!HasAuraFromChain(bot, 1126))
-                bot->CastSpell(bot, motw, false);
+            for (Player* t : buildTargets())
+                if (AuraNeedsRefresh(t, 1126, thresh))
+                { bot->CastSpell(t, motw, false); return; }
             break;
         }
 
         case CLASS_MAGE:
         {
-            // Arcane Intellect: Intellect buff for all group members
             std::uint32_t const ai = FindBestKnownSpellInChain(bot, 1459);
             if (!ai) break;
-            if (Group const* group = bot->GetGroup())
-            {
-                for (Group::MemberSlot const& slot : group->GetMemberSlots())
-                {
-                    Player* target = ObjectAccessor::FindConnectedPlayer(slot.guid);
-                    if (!target || !target->IsAlive() || !target->IsInWorld()) continue;
-                    if (!HasAuraFromChain(target, 1459))
-                    { bot->CastSpell(target, ai, false); return; }
-                }
-            }
-            if (!HasAuraFromChain(bot, 1459))
-                bot->CastSpell(bot, ai, false);
+            for (Player* t : buildTargets())
+                if (AuraNeedsRefresh(t, 1459, thresh))
+                { bot->CastSpell(t, ai, false); return; }
             break;
         }
 
         case CLASS_WARLOCK:
         {
-            // Fel Armor preferred; fall back to Demon Armor / Demon Skin — self-only
-            std::uint32_t armor = FindBestKnownSpellInChain(bot, 28176); // Fel Armor
-            if (!armor) armor   = FindBestKnownSpellInChain(bot, 706);   // Demon Armor
-            if (!armor) armor   = FindBestKnownSpellInChain(bot, 696);   // Demon Skin
-            if (armor && !bot->HasAura(armor))
+            std::uint32_t armor = FindBestKnownSpellInChain(bot, 28176);
+            if (!armor) armor   = FindBestKnownSpellInChain(bot, 706);
+            if (!armor) armor   = FindBestKnownSpellInChain(bot, 696);
+            if (armor && AuraNeedsRefresh(bot, armor, thresh))
                 bot->CastSpell(bot, armor, false);
             break;
         }
@@ -687,11 +950,12 @@ void ApplyBotBuff(Player* bot, Player* owner)
     }
 }
 
-void TryApplyOutOfCombatBuff(Player* bot, Player* owner)
+void TryApplyOutOfCombatBuff(Player* bot, Player* owner,
+                              model::BotOocBehavior const& ooc)
 {
     if (bot->IsInCombat() || owner->IsInCombat())
         return;
-    ApplyBotBuff(bot, owner);
+    ApplyBotBuff(bot, owner, ooc);
 }
 
 // ---------------------------------------------------------------
@@ -739,20 +1003,106 @@ void EnsureRangedApproach(Player* bot, Unit* target)
     bot->GetMotionMaster()->MoveChase(target, RangedOptimalDistance);
 }
 
-void IssueFormationFollow(Player* bot, Player* owner)
+void EnsureSupportRange(Player* bot, Player* owner, std::uint32_t spellId)
+{
+    if (!bot || !owner || !spellId)
+        return;
+
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    if (!spellInfo)
+        return;
+
+    float const maxRange = bot->GetSpellMaxRangeForTarget(owner, spellInfo);
+    if (maxRange <= 0.0f)
+        return;
+
+    if (!bot->IsWithinCombatRange(owner, maxRange))
+        bot->GetMotionMaster()->MoveChase(owner, std::max(1.0f, maxRange - 2.0f));
+}
+
+void IssueFormationFollow(Player* bot, Player* owner, BotCombatRole role)
 {
     if (!bot || !owner)
         return;
 
-    // Deterministic per-bot slotting around the owner to avoid stack/bunching.
-    // Keep a minimum ~1y angular separation while maintaining the nominal
-    // follow ring distance.
-    std::uint64_t const seed = bot->GetGUID().GetCounter();
-    std::uint32_t const slot = static_cast<std::uint32_t>(seed % 7ULL); // 0..6
-    float const angleStep = 2.0f * 3.14159265358979323846f / 7.0f;
-    float const slotAngle = FollowAngle + (static_cast<float>(slot) * angleStep);
+    model::BotGlobalConfig const cfg = GetGlobalConfigService().Get();
 
-    bot->GetMotionMaster()->MoveFollow(owner, FollowDistance, slotAngle);
+    // Pick follow distance by combat role so bots naturally pre-position.
+    // Melee/Tank: close in and ready to engage.
+    // Healer/HybridHealer: mid-range, out of the melee pile but in cast range.
+    // Ranged: further back, pre-positioned for spells.
+    float baseDistance;
+    switch (role)
+    {
+        case BotCombatRole::Healer:
+        case BotCombatRole::HybridHealer:
+            baseDistance = cfg.followDistanceHealer;
+            break;
+        case BotCombatRole::Ranged:
+            baseDistance = cfg.followDistanceRanged;
+            break;
+        case BotCombatRole::Melee:
+        default:
+            baseDistance = cfg.followDistanceMelee;
+            break;
+    }
+
+    std::uint64_t const seed = bot->GetGUID().GetCounter();
+    uint32_t const slots = std::max(1u, cfg.followSlotCount);
+    std::uint32_t const slot = static_cast<std::uint32_t>(seed % slots);
+
+    float slotAngle = FollowAngle;
+    switch (cfg.followFormation)
+    {
+        case model::FollowFormation::Ring:
+        {
+            // Evenly distributed around the full circle.
+            float const angleStep = 2.0f * 3.14159265358979323846f / static_cast<float>(slots);
+            slotAngle = FollowAngle + (static_cast<float>(slot) * angleStep);
+            break;
+        }
+        case model::FollowFormation::V:
+        {
+            // Spread behind owner in a V: centre bot at π, others fan outward.
+            // Odd slots go right (+), even slots go left (-).
+            float const spread = 3.14159265358979323846f / 6.0f; // 30° per step
+            int const side  = (slot == 0) ? 0 : ((slot % 2 == 1) ? 1 : -1);
+            int const depth = static_cast<int>((slot + 1) / 2);
+            slotAngle = FollowAngle + static_cast<float>(side * depth) * spread;
+            break;
+        }
+        case model::FollowFormation::Line:
+        {
+            // Single file: all directly behind, staggered by distance.
+            // slotAngle stays at FollowAngle; caller uses default distance.
+            slotAngle = FollowAngle;
+            break;
+        }
+        case model::FollowFormation::Cluster:
+        default:
+            // All bots at same angle — bunched behind.
+            slotAngle = FollowAngle;
+            break;
+    }
+
+    float const dist = (cfg.followFormation == model::FollowFormation::Line)
+        ? baseDistance + static_cast<float>(slot) * 1.5f
+        : baseDistance;
+
+    bot->GetMotionMaster()->MoveFollow(owner, dist, slotAngle);
+}
+
+bool ShouldCombatFollowOverride(Player* bot, Player* owner, BotCombatRole role)
+{
+    if (!bot || !owner)
+        return false;
+
+    if (role != BotCombatRole::Healer
+        && role != BotCombatRole::HybridHealer
+        && role != BotCombatRole::Ranged)
+        return false;
+
+    return bot->GetDistance(owner) > CombatFollowOverrideDistance;
 }
 
 void BreakFollowForAttack(Player* bot)
@@ -780,6 +1130,18 @@ void TickHealer(Player* bot, Player* owner)
     if (bot->IsNonMeleeSpellCast(false))
         return;
 
+    std::uint32_t const directSpell    = GetDirectHealSpell(bot);
+    std::uint32_t const sustainedSpell = GetSustainedHealSpell(bot);
+
+    if (owner->GetHealthPct() < HealOwnerModerate)
+    {
+        std::uint32_t const supportSpell = owner->GetHealthPct() < HealOwnerCritical
+            ? directSpell
+            : sustainedSpell;
+        if (supportSpell)
+            EnsureSupportRange(bot, owner, supportSpell);
+    }
+
     // Power Word: Shield (Priest only): proactive absorb while the owner is in
     // combat. Applied as soon as the fight starts so damage is partially absorbed
     // before reactive heals are needed. Weakened Soul prevents re-shielding for
@@ -789,95 +1151,125 @@ void TickHealer(Player* bot, Player* owner)
         std::uint32_t const pws = FindBestKnownSpellInChain(bot, 17);
         if (pws && !owner->HasAura(pws) && !owner->HasAura(AuraWeakenedSoul))
         {
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] HealerAI cast attempt: bot='{}' guid={} action=shield_owner spell={} targetGuid={} ownerHp={:.1f} botHp={:.1f}",
+                bot->GetName(),
+                bot->GetGUID().GetCounter(),
+                pws,
+                owner->GetGUID().GetCounter(),
+                owner->GetHealthPct(),
+                bot->GetHealthPct());
             bot->CastSpell(owner, pws, false);
             return;
         }
     }
 
-    std::uint32_t const directSpell    = GetDirectHealSpell(bot);
-    std::uint32_t const sustainedSpell = GetSustainedHealSpell(bot);
-
     if (owner->GetHealthPct() < HealOwnerCritical)
     {
         if (directSpell)
+        {
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] HealerAI cast attempt: bot='{}' guid={} action=direct_heal_owner spell={} targetGuid={} ownerHp={:.1f} botHp={:.1f}",
+                bot->GetName(),
+                bot->GetGUID().GetCounter(),
+                directSpell,
+                owner->GetGUID().GetCounter(),
+                owner->GetHealthPct(),
+                bot->GetHealthPct());
             bot->CastSpell(owner, directSpell, false);
+        }
         return;
     }
 
     if (owner->GetHealthPct() < HealOwnerModerate)
     {
         if (sustainedSpell && !owner->HasAura(sustainedSpell))
+        {
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] HealerAI cast attempt: bot='{}' guid={} action=sustain_owner spell={} targetGuid={} ownerHp={:.1f} botHp={:.1f}",
+                bot->GetName(),
+                bot->GetGUID().GetCounter(),
+                sustainedSpell,
+                owner->GetGUID().GetCounter(),
+                owner->GetHealthPct(),
+                bot->GetHealthPct());
             bot->CastSpell(owner, sustainedSpell, false);
+        }
         return;
     }
 
     if (bot->GetHealthPct() < HealSelfCritical)
     {
         if (directSpell)
+        {
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] HealerAI cast attempt: bot='{}' guid={} action=direct_heal_self spell={} targetGuid={} ownerHp={:.1f} botHp={:.1f}",
+                bot->GetName(),
+                bot->GetGUID().GetCounter(),
+                directSpell,
+                bot->GetGUID().GetCounter(),
+                owner->GetHealthPct(),
+                bot->GetHealthPct());
             bot->CastSpell(bot, directSpell, false);
+        }
         return;
     }
 
     if (bot->GetHealthPct() < HealSelfModerate)
     {
         if (sustainedSpell && !bot->HasAura(sustainedSpell))
+        {
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] HealerAI cast attempt: bot='{}' guid={} action=sustain_self spell={} targetGuid={} ownerHp={:.1f} botHp={:.1f}",
+                bot->GetName(),
+                bot->GetGUID().GetCounter(),
+                sustainedSpell,
+                bot->GetGUID().GetCounter(),
+                owner->GetHealthPct(),
+                bot->GetHealthPct());
             bot->CastSpell(bot, sustainedSpell, false);
+        }
     }
 }
 
-void TickRanged(Player* bot, Unit* target)
+void UpdateConservationState(
+    model::BotCombatProfileSettings const& settings,
+    Player const* bot,
+    bool& conserving)
 {
-    if (bot->IsNonMeleeSpellCast(false))
+    if (settings.conservationMode != model::BotCombatConservationMode::Conservative)
     {
-        LOG_INFO(
-            "server.worldserver",
-            "[LivingWorldDebug] RangedAI cast blocked: bot='{}' guid={} targetGuid={} reason=already_casting",
-            bot->GetName(),
-            bot->GetGUID().GetCounter(),
-            target ? target->GetGUID().GetCounter() : 0);
+        conserving = false;
         return;
     }
-
-    std::uint32_t const spell = GetDamageSpell(bot, target);
-    if (!spell)
-    {
-        LOG_INFO(
-            "server.worldserver",
-            "[LivingWorldDebug] RangedAI cast blocked: bot='{}' guid={} class={} targetGuid={} distance={:.2f} mana={}/{} reason=no_spell_selected",
-            bot->GetName(),
-            bot->GetGUID().GetCounter(),
-            static_cast<std::uint32_t>(bot->getClass()),
-            target ? target->GetGUID().GetCounter() : 0,
-            target ? bot->GetDistance(target) : 0.0f,
-            static_cast<std::uint32_t>(bot->GetPower(POWER_MANA)),
-            static_cast<std::uint32_t>(bot->GetMaxPower(POWER_MANA)));
+    if (bot->GetMaxPower(POWER_MANA) == 0)
         return;
+    float const manaPct = 100.0f * static_cast<float>(bot->GetPower(POWER_MANA))
+                                 / static_cast<float>(bot->GetMaxPower(POWER_MANA));
+    if (conserving)
+    {
+        if (manaPct >= settings.manaHighWater)
+            conserving = false;
     }
-
-    LOG_INFO(
-        "server.worldserver",
-        "[LivingWorldDebug] RangedAI cast attempt: bot='{}' guid={} class={} spell={} targetGuid={} distance={:.2f} mana={}/{} victimGuid={}",
-        bot->GetName(),
-        bot->GetGUID().GetCounter(),
-        static_cast<std::uint32_t>(bot->getClass()),
-        spell,
-        target ? target->GetGUID().GetCounter() : 0,
-        target ? bot->GetDistance(target) : 0.0f,
-        static_cast<std::uint32_t>(bot->GetPower(POWER_MANA)),
-        static_cast<std::uint32_t>(bot->GetMaxPower(POWER_MANA)),
-        bot->GetVictim() ? bot->GetVictim()->GetGUID().GetCounter() : 0);
-
-    bot->CastSpell(target, spell, false);
+    else if (manaPct < settings.manaLowWater)
+    {
+        conserving = true;
+    }
 }
 
-void TickMelee(Player* bot, Unit* target)
+void TickRanged(Player* bot, Player* owner, Unit* target)
 {
-    if (bot->IsNonMeleeSpellCast(false))
-        return;
+    TryExecuteProfileRotation(bot, owner, target);
+}
 
-    std::uint32_t const spell = GetMeleeOffensiveSpell(bot, target);
-    if (spell)
-        bot->CastSpell(target, spell, false);
+void TickMelee(Player* bot, Player* owner, Unit* target)
+{
+    TryExecuteProfileRotation(bot, owner, target);
 }
 
 // ---------------------------------------------------------------
@@ -931,14 +1323,28 @@ Unit* ResolveAssistTarget(Player* bot, Player* owner)
 
     // Retreat mode: bot follows and heals only — no combat at all.
     if (ovr.retreatExpiry > now)
+    {
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=retreat result=none",
+            bot->GetName(),
+            bot->GetGUID().GetCounter());
         return nullptr;
+    }
 
     // If the player ordered disengage, hold — but auto-expire after 500ms so
     // a subsequent r-click (owner attacks → mob agros back → bot assists) works.
     if (ovr.disengaged)
     {
         if (now < ovr.disengageExpiry)
+        {
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=disengaged result=none",
+                bot->GetName(),
+                bot->GetGUID().GetCounter());
             return nullptr;
+        }
         // Expired — clear the flag and fall through to normal assist.
         ClearBotOverride(bot->GetGUID());
     }
@@ -948,7 +1354,15 @@ Unit* ResolveAssistTarget(Player* bot, Player* owner)
     {
         Unit* forced = ObjectAccessor::GetUnit(*bot, ovr.forcedTarget);
         if (forced && IsViableCommandTarget(bot, owner, forced))
+        {
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=forced targetGuid={}",
+                bot->GetName(),
+                bot->GetGUID().GetCounter(),
+                forced->GetGUID().GetCounter());
             return forced;
+        }
         // Target gone — clear the override and fall through.
         SetBotForcedTarget(bot->GetGUID(), ObjectGuid::Empty);
     }
@@ -961,13 +1375,29 @@ Unit* ResolveAssistTarget(Player* bot, Player* owner)
         if (Unit* current = bot->GetVictim())
         {
             if (IsViableCommandTarget(bot, owner, current))
+            {
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=attack_locked source=current_victim targetGuid={}",
+                    bot->GetName(),
+                    bot->GetGUID().GetCounter(),
+                    current->GetGUID().GetCounter());
                 return current;
+            }
         }
 
         if (Unit* ownerVictim = owner->GetVictim())
         {
             if (IsViableCommandTarget(bot, owner, ownerVictim))
+            {
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=attack_locked source=owner_victim targetGuid={}",
+                    bot->GetName(),
+                    bot->GetGUID().GetCounter(),
+                    ownerVictim->GetGUID().GetCounter());
                 return ownerVictim;
+            }
         }
 
         ObjectGuid const ownerSelection = owner->GetTarget();
@@ -976,7 +1406,15 @@ Unit* ResolveAssistTarget(Player* bot, Player* owner)
             if (Unit* selected = ObjectAccessor::GetUnit(*bot, ownerSelection))
             {
                 if (IsViableCommandTarget(bot, owner, selected))
+                {
+                    LOG_INFO(
+                        "server.worldserver",
+                        "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=attack_locked source=owner_selection targetGuid={}",
+                        bot->GetName(),
+                        bot->GetGUID().GetCounter(),
+                        selected->GetGUID().GetCounter());
                     return selected;
+                }
             }
         }
 
@@ -996,7 +1434,15 @@ Unit* ResolveAssistTarget(Player* bot, Player* owner)
     if (Unit* current = bot->GetVictim())
     {
         if (IsValidAssistTarget(bot, owner, current))
+        {
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=assist source=current_victim targetGuid={}",
+                bot->GetName(),
+                bot->GetGUID().GetCounter(),
+                current->GetGUID().GetCounter());
             return current;
+        }
     }
 
     // 2. Pick up owner's active victim only when that mob is fighting back —
@@ -1007,7 +1453,39 @@ Unit* ResolveAssistTarget(Player* bot, Player* owner)
     {
         if (IsValidAssistTarget(bot, owner, ownerVictim)
             && ownerVictim->GetVictim() == owner)
+        {
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=assist source=owner_victim targetGuid={}",
+                bot->GetName(),
+                bot->GetGUID().GetCounter(),
+                ownerVictim->GetGUID().GetCounter());
             return ownerVictim;
+        }
+    }
+
+    LOG_INFO(
+        "server.worldserver",
+        "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=assist result=none",
+        bot->GetName(),
+        bot->GetGUID().GetCounter());
+    return nullptr;
+}
+
+// Picks up an attacker that is currently hitting the owner, preferring the
+// bot's current victim if it qualifies. Used by Guard mode.
+Unit* ResolveGuardTarget(Player* bot, Player* owner)
+{
+    if (Unit* current = bot->GetVictim())
+    {
+        if (IsValidAssistTarget(bot, owner, current))
+            return current;
+    }
+
+    for (Unit* attacker : owner->getAttackers())
+    {
+        if (IsValidAssistTarget(bot, owner, attacker))
+            return attacker;
     }
 
     return nullptr;
@@ -1017,66 +1495,103 @@ Unit* ResolveAssistTarget(Player* bot, Player* owner)
 // Main tick
 // ---------------------------------------------------------------
 
-void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConserving)
+void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& conserving)
 {
-    BotCombatRole const role = GetCombatRole(bot->getClass());
+    model::BotCombatMode const mode =
+        service::BotPlayerRegistry::Instance().GetBotMode(owner->GetGUID());
 
-    // Pure healers: heal first, then optionally attack based on mana.
+    // Hold: stop all combat and stand still.
+    if (mode == model::BotCombatMode::Hold)
+    {
+        if (bot->GetVictim())
+            bot->AttackStop();
+        bot->GetMotionMaster()->Clear(false);
+        return;
+    }
+
+    // Passive: follow and buff, never engage.
+    if (mode == model::BotCombatMode::Passive)
+    {
+        if (bot->GetVictim())
+            bot->AttackStop();
+        // Passive mode runs before doctrine resolution — load OOC directly.
+        TryApplyOutOfCombatBuff(bot, owner,
+            GetOocConfigService().Get(bot->GetGUID().GetCounter()));
+        if (!bot->IsNonMeleeSpellCast(false)
+            && !bot->IsWithinDistInMap(owner, RepositionDistance))
+            bot->GetMotionMaster()->MoveFollow(owner,
+                GetGlobalConfigService().Get().followDistanceFallback,
+                FollowAngle);
+        return;
+    }
+
+    // Hazard escape: fires before doctrine resolution so ground effects
+    // are handled regardless of combat role, and skips the DB-cached
+    // doctrine lookup entirely while the bot is actively fleeing.
+    if (BotHazardSensor::ProcessHazardTick(bot, owner))
+        return;
+
+    BotCombatDoctrine const doctrine = GetCombatDoctrine(bot, owner);
+    BotCombatRole const role = doctrine.role;
+
+    // OOC config is per-character, resolved once per tick.
+    model::BotOocBehavior const oocBehavior =
+        GetOocConfigService().Get(bot->GetGUID().GetCounter());
+
+    // Pure healers: profile rotation handles healing + offense in priority order;
+    // hardcoded TickHealer fires only as a fallback when no profile is active.
     if (role == BotCombatRole::Healer)
     {
-        TickHealer(bot, owner);
+        UpdateConservationState(doctrine.settings, bot, conserving);
 
-        // Hysteresis: stop attacking below 40% mana, resume above 60%.
-        if (bot->GetMaxPower(POWER_MANA) > 0)
-        {
-            float const manaPct = 100.0f * static_cast<float>(bot->GetPower(POWER_MANA))
-                                         / static_cast<float>(bot->GetMaxPower(POWER_MANA));
-            if (healerConserving)
-            {
-                if (manaPct >= HealerManaResumeAbove)
-                    healerConserving = false;
-            }
-            else if (manaPct < HealerManaConserveBelow)
-            {
-                healerConserving = true;
-            }
-        }
-
-        // Keep a valid assist target snapshot so follow logic does not yank
-        // healers back to 2y during active combat.
         Unit* attackTarget = ResolveAssistTarget(bot, owner);
         if (attackTarget && bot->GetVictim() != attackTarget)
-        {
-            // Match ranged behavior: lock victim/combat state without forcing
-            // chase movement that can interrupt casts.
             bot->Attack(attackTarget, false);
-        }
 
-        if (attackTarget && IsBotAttackLocked(bot->GetGUID()))
+        if (attackTarget)
             BreakFollowForAttack(bot);
+
+        // Profile rotation handles both healing (lowest_hp_party entries) and
+        // offense (enemy_primary entries) in a single priority-ordered pass.
+        // When mana-conserving, pass nullptr as the primary target so offense
+        // entries are naturally skipped while healing entries still resolve via
+        // lowest_hp_party independently of the combat target.
+        bool const offenseSuppressed =
+            IsOffenseSuppressed(doctrine.settings.conservationMode, conserving);
+        if (!TryExecuteProfileRotation(
+                bot, owner, offenseSuppressed ? nullptr : attackTarget))
+        {
+            // Fallback: hardcoded healing when no profile is configured.
+            TickHealer(bot, owner);
+            if (attackTarget && !offenseSuppressed && !bot->IsNonMeleeSpellCast(false))
+            {
+                std::uint32_t const spell = GetHealerOffensiveSpell(bot, attackTarget);
+                if (spell)
+                    bot->CastSpell(attackTarget, spell, false);
+            }
+        }
 
         if (attackTarget)
         {
             float const distance = bot->GetDistance(attackTarget);
             if (!bot->IsNonMeleeSpellCast(false) && distance > RangedCastRange)
             {
-                // Priests/healers need explicit approach just like ranged DPS,
-                // otherwise they can stay latched to owner follow spacing when
-                // the pull starts far away.
                 EnsureRangedApproach(bot, attackTarget);
                 return;
             }
         }
 
-        // Attempt an offensive spell if not already casting and mana is healthy.
-        if (attackTarget && !healerConserving && !bot->IsNonMeleeSpellCast(false))
-        {
-            std::uint32_t const spell = GetHealerOffensiveSpell(bot, attackTarget);
-            if (spell)
-                bot->CastSpell(attackTarget, spell, false);
-        }
+        TryApplyOutOfCombatBuff(bot, owner, oocBehavior);
 
-        TryApplyOutOfCombatBuff(bot, owner);
+        if (ShouldCombatFollowOverride(bot, owner, role))
+        {
+            if (!bot->IsNonMeleeSpellCast(false))
+            {
+                bot->GetMotionMaster()->Clear(false);
+                IssueFormationFollow(bot, owner, role);
+            }
+            return;
+        }
 
         if (!attackTarget
             && !bot->GetVictim()
@@ -1087,16 +1602,32 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
             && bot->GetMotionMaster()->GetCurrentMovementGeneratorType() != FOLLOW_MOTION_TYPE)
         {
             bot->GetMotionMaster()->Clear(false);
-            IssueFormationFollow(bot, owner);
+            IssueFormationFollow(bot, owner, role);
         }
         return;
     }
 
-    Unit* const assistTarget = ResolveAssistTarget(bot, owner);
+    // DPS roles track mana conservation every tick so out-of-combat mana regen
+    // properly clears the conserving state before the next pull.
+    if (role == BotCombatRole::Ranged || role == BotCombatRole::Melee)
+        UpdateConservationState(doctrine.settings, bot, conserving);
 
-    if (assistTarget)
-    {
-        if (IsBotAttackLocked(bot->GetGUID()))
+    Unit* const assistTarget = (mode == model::BotCombatMode::Guard)
+        ? ResolveGuardTarget(bot, owner)
+        : ResolveAssistTarget(bot, owner);
+
+        if (assistTarget)
+        {
+            if (ShouldCombatFollowOverride(bot, owner, role))
+            {
+                if (!bot->IsNonMeleeSpellCast(false))
+                {
+                    bot->GetMotionMaster()->Clear(false);
+                    IssueFormationFollow(bot, owner, role);
+                }
+                return;
+            }
+
             BreakFollowForAttack(bot);
 
         if (role == BotCombatRole::HybridHealer)
@@ -1106,6 +1637,11 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
             // of attention shift.
             if (owner->GetHealthPct() < HybridHealThreshold)
             {
+                std::uint32_t const emergencySpell = owner->GetHealthPct() < HealOwnerCritical
+                    ? GetDirectHealSpell(bot)
+                    : GetSustainedHealSpell(bot);
+                if (emergencySpell)
+                    EnsureSupportRange(bot, owner, emergencySpell);
                 TickHealer(bot, owner);
                 return;
             }
@@ -1127,9 +1663,25 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
             }
 
             EnsureChasingVictim(bot, assistTarget);
+            if (TryExecuteProfileRotation(bot, owner, assistTarget))
+                return;
+
             std::uint32_t const spell = GetHybridDamageSpell(bot, assistTarget);
             if (spell && !bot->IsNonMeleeSpellCast(false))
+            {
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] HybridAI cast attempt: bot='{}' guid={} class={} spell={} targetGuid={} distance={:.2f} ownerHp={:.1f} botHp={:.1f}",
+                    bot->GetName(),
+                    bot->GetGUID().GetCounter(),
+                    static_cast<std::uint32_t>(bot->getClass()),
+                    spell,
+                    assistTarget->GetGUID().GetCounter(),
+                    bot->GetDistance(assistTarget),
+                    owner->GetHealthPct(),
+                    bot->GetHealthPct());
                 bot->CastSpell(assistTarget, spell, false);
+            }
             return;
         }
 
@@ -1194,6 +1746,18 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
                 // Target is beyond spell range: close to optimal distance.
                 EnsureRangedApproach(bot, assistTarget);
             }
+            else if (IsOffenseSuppressed(doctrine.settings.conservationMode, conserving))
+            {
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] RangedAI decision: bot='{}' guid={} targetGuid={} distance={:.2f} mana={}/{} action=conserving",
+                    bot->GetName(),
+                    bot->GetGUID().GetCounter(),
+                    assistTarget->GetGUID().GetCounter(),
+                    distance,
+                    static_cast<std::uint32_t>(bot->GetPower(POWER_MANA)),
+                    static_cast<std::uint32_t>(bot->GetMaxPower(POWER_MANA)));
+            }
             else
             {
                 LOG_INFO(
@@ -1206,7 +1770,7 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
                     static_cast<std::uint32_t>(bot->GetPower(POWER_MANA)),
                     static_cast<std::uint32_t>(bot->GetMaxPower(POWER_MANA)));
 
-                TickRanged(bot, assistTarget);
+                TickRanged(bot, owner, assistTarget);
             }
         }
         else // Melee
@@ -1215,7 +1779,8 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
                 bot->Attack(assistTarget, true);
 
             EnsureChasingVictim(bot, assistTarget);
-            TickMelee(bot, assistTarget);
+            if (!IsOffenseSuppressed(doctrine.settings.conservationMode, conserving))
+                TickMelee(bot, owner, assistTarget);
         }
 
         return;
@@ -1235,7 +1800,7 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
         if (!bot->IsInCombat() && !owner->IsInCombat() && !IsBotAttackLocked(bot->GetGUID()))
         {
             bot->GetMotionMaster()->Clear(false);
-            IssueFormationFollow(bot, owner);
+            IssueFormationFollow(bot, owner, role);
         }
         return;
     }
@@ -1245,16 +1810,25 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& healerConservin
     // mode, to avoid killing the active follow generator every 500ms tick which
     // causes the bot to appear frozen or to stutter.
     if (bot->IsInCombat() || owner->IsInCombat())
+    {
+        if (ShouldCombatFollowOverride(bot, owner, role)
+            && !bot->IsNonMeleeSpellCast(false)
+            && bot->GetMotionMaster()->GetCurrentMovementGeneratorType() != FOLLOW_MOTION_TYPE)
+        {
+            bot->GetMotionMaster()->Clear(false);
+            IssueFormationFollow(bot, owner, role);
+        }
         return;
+    }
 
-    TryApplyOutOfCombatBuff(bot, owner);
+    TryApplyOutOfCombatBuff(bot, owner, oocBehavior);
 
     if (!bot->IsNonMeleeSpellCast(false)
         && !IsBotAttackLocked(bot->GetGUID())
         && bot->GetMotionMaster()->GetCurrentMovementGeneratorType() != FOLLOW_MOTION_TYPE)
     {
         bot->GetMotionMaster()->Clear(false);
-        IssueFormationFollow(bot, owner);
+        IssueFormationFollow(bot, owner, role);
     }
 }
 
@@ -1268,10 +1842,10 @@ public:
     CompanionAIEvent(ObjectGuid botGuid, ObjectGuid ownerGuid,
                      std::uint8_t notInWorldRetries = 0,
                      float retreatHpPct = RangedRetreatTrigger,
-                     bool healerConserving = false)
+                     bool conserving = false)
         : _botGuid(botGuid), _ownerGuid(ownerGuid)
         , _notInWorldRetries(notInWorldRetries), _retreatHpPct(retreatHpPct)
-        , _healerConserving(healerConserving)
+        , _conserving(conserving)
     {
     }
 
@@ -1290,7 +1864,7 @@ public:
             // Backoff: 500ms, 1s, 2s, 4s, 4s, 4s, ...
             Milliseconds const delay = 500ms * (1u << std::min(_notInWorldRetries, std::uint8_t{3}));
             bot->m_Events.AddEventAtOffset(
-                new CompanionAIEvent(_botGuid, _ownerGuid, _notInWorldRetries + 1, _retreatHpPct, _healerConserving),
+                new CompanionAIEvent(_botGuid, _ownerGuid, _notInWorldRetries + 1, _retreatHpPct, _conserving),
                 delay);
             return true;
         }
@@ -1299,9 +1873,9 @@ public:
         if (_retreatHpPct < RangedRetreatTrigger && bot && bot->GetHealthPct() >= RangedRetreatTrigger)
             _retreatHpPct = RangedRetreatTrigger;
 
-        Tick(bot, owner, _retreatHpPct, _healerConserving);
+        Tick(bot, owner, _retreatHpPct, _conserving);
         bot->m_Events.AddEventAtOffset(
-            new CompanionAIEvent(_botGuid, _ownerGuid, 0, _retreatHpPct, _healerConserving),
+            new CompanionAIEvent(_botGuid, _ownerGuid, 0, _retreatHpPct, _conserving),
             500ms);
         return true;
     }
@@ -1313,7 +1887,7 @@ private:
     ObjectGuid   _ownerGuid;
     std::uint8_t _notInWorldRetries;
     float        _retreatHpPct;
-    bool         _healerConserving;
+    bool         _conserving;
 };
 } // namespace
 
@@ -1331,7 +1905,36 @@ void ForceBotBuffRefresh(Player* bot, Player* owner)
 {
     if (!bot || !owner)
         return;
-    ApplyBotBuff(bot, owner);
+    ApplyBotBuff(bot, owner,
+        GetOocConfigService().Get(bot->GetGUID().GetCounter()));
+}
+
+void InvalidateBotCombatCaches(ObjectGuid botGuid)
+{
+    if (!botGuid.IsPlayer())
+        return;
+
+    std::uint64_t const botGuidLow = botGuid.GetCounter();
+
+    {
+        std::lock_guard<std::mutex> lock(s_doctrineMutex);
+        s_doctrineByBotGuid.erase(botGuidLow);
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(s_preparedProfileMutex);
+        s_preparedProfileByBotGuid.erase(botGuidLow);
+    }
+}
+
+void SetBotContext(ObjectGuid botGuid, std::string const& contextKey)
+{
+    GetContextService().Set(botGuid.GetCounter(), contextKey);
+}
+
+std::string GetBotContext(ObjectGuid botGuid)
+{
+    return GetContextService().Get(botGuid.GetCounter());
 }
 } // namespace ai
 } // namespace living_world
