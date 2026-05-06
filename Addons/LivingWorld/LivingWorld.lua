@@ -244,6 +244,11 @@ end
 
 function LWCP_HandlePlayerLogin()
     DEFAULT_CHAT_FRAME:AddMessage("|cff00cc44LWCP:|r addon build " .. LWCP_BUILD .. " loaded.")
+    if LWCPFrame then
+        DEFAULT_CHAT_FRAME:AddMessage("|cff00cc44LWCP:|r frame ready. Use /lwcp")
+    else
+        DEFAULT_CHAT_FRAME:AddMessage("|cff00cc44LWCP:|r frame missing. Check LivingWorld XML load errors.")
+    end
 end
 
 -- -----------------------------------------------
@@ -428,6 +433,11 @@ SlashCmdList["LWCP"] = function(msg)
         return
     end
 
+    if not LWCPFrame then
+        DEFAULT_CHAT_FRAME:AddMessage("|cff00cc44LWCP:|r frame not created. Check LivingWorld XML load errors.")
+        return
+    end
+
     if LWCPFrame:IsVisible() then
         LWCPFrame:Hide()
     else
@@ -460,7 +470,7 @@ function LWCPButton_BeingDragged()
     local xmin, ymin = Minimap:GetLeft(), Minimap:GetBottom()
     xpos = xmin - xpos / UIParent:GetScale() + 70
     ypos = ypos / UIParent:GetScale() - ymin - 70
-    local angle = math.deg(math.atan2(ypos, xpos))
+    local angle = math.deg(math.atan(ypos, xpos))
     if angle < 0 then angle = angle + 360 end
     LWCPButtonAngle = angle
     LWCPButton_UpdatePosition()
@@ -2062,46 +2072,3 @@ function LWCP_HandleAddonMsg(prefix, payload, channel, sender)
     end
 end
 
--- -----------------------------------------------
--- Gear tab — commands
--- -----------------------------------------------
-function LWCP_RequestBotBags(silent)
-    if IsPartySelected() then
-        if not silent then
-            DEFAULT_CHAT_FRAME:AddMessage("|cff00cc44LWCP:|r Select a specific bot on the Bots tab first.")
-        end
-        return
-    end
-    SendChatMessage(CMD_LWBOT .. GetBotRef() .. " bags")
-end
-
-function LWCP_RetrieveItem(guidLow, count)
-    if not guidLow then return end
-    if IsPartySelected() then
-        DEFAULT_CHAT_FRAME:AddMessage("|cff00cc44LWCP:|r Select a specific bot on the Bots tab first.")
-        return
-    end
-    if count and count > 0 then
-        SendChatMessage(CMD_LWBOT .. GetBotRef() .. " retrieve " .. guidLow .. " " .. count)
-    else
-        SendChatMessage(CMD_LWBOT .. GetBotRef() .. " retrieve " .. guidLow)
-    end
-end
-
-function LWCP_EquipItem(guidLow)
-    if not guidLow then return end
-    if IsPartySelected() then
-        DEFAULT_CHAT_FRAME:AddMessage("|cff00cc44LWCP:|r Select a specific bot on the Bots tab first.")
-        return
-    end
-    SendChatMessage(CMD_LWBOT .. GetBotRef() .. " equip " .. guidLow)
-end
-
-function LWCP_UnequipItem(guidLow)
-    if not guidLow then return end
-    if IsPartySelected() then
-        DEFAULT_CHAT_FRAME:AddMessage("|cff00cc44LWCP:|r Select a specific bot on the Bots tab first.")
-        return
-    end
-    SendChatMessage(CMD_LWBOT .. GetBotRef() .. " unequip " .. guidLow)
-end
