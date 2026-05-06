@@ -1767,14 +1767,15 @@ void HandleBotApplyTalentTemplate(
             applicator.ReapplyTemplate(bot, *tmpl);
         if (result == service::TalentResetResult::InsufficientGold)
         {
-            std::uint32_t cost = bot->resetTalentsCost();
-            std::uint32_t gold = bot->GetMoney() / 10000;
-            std::uint32_t costGold = cost / 10000;
+            std::uint32_t cost   = bot->resetTalentsCost();
+            std::uint32_t have   = bot->GetMoney();
             SendPlayerLog(
                 handler,
                 static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
-                "applytalent: reset costs {}g but {} only has {}g.",
-                costGold, bot->GetName(), gold);
+                "applytalent: reset costs {}g {}s {}c but {} only has {}g {}s {}c.",
+                cost / 10000, (cost % 10000) / 100, cost % 100,
+                bot->GetName(),
+                have / 10000, (have % 10000) / 100, have % 100);
             return;
         }
 
@@ -1878,10 +1879,12 @@ void HandleBotTalentFavorite(
         return;
     }
 
+    std::optional<model::BotTalentPreference> existing =
+        preferenceRepo.GetPreference(sourceCharGuid);
     model::BotTalentPreference pref;
     pref.sourceCharacterGuid = sourceCharGuid;
     pref.templateId          = tmpl->templateId;
-    pref.autoApplyOnLevel    = true;
+    pref.autoApplyOnLevel    = existing ? existing->autoApplyOnLevel : true;
     preferenceRepo.SavePreference(pref);
 
     SendPlayerLog(

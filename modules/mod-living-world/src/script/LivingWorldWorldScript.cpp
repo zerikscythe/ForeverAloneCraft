@@ -39,31 +39,29 @@ void ApplyEconomyScale(float scale, bool isReload)
             : "");
 }
 } // namespace living_world
-            "WHERE MoneyCostBase = 0 AND MoneyCost > 0");
-        } // namespace living_world
 
-        class LivingWorldWorldScript final : public WorldScript
-        {
-        public:
-            LivingWorldWorldScript() : WorldScript("LivingWorldWorldScript") { }
+class LivingWorldWorldScript final : public WorldScript
+{
+public:
+    LivingWorldWorldScript() : WorldScript("LivingWorldWorldScript") { }
 
-            void OnAfterConfigLoad(bool reload) override
-            {
-                float const scale = sConfigMgr->GetOption<float>("LivingWorld.EconomyScale", 1.0f);
-                living_world::ApplyEconomyScale(scale, reload);
-            }
+    void OnAfterConfigLoad(bool reload) override
+    {
+        float const scale = sConfigMgr->GetOption<float>("LivingWorld.EconomyScale", 1.0f);
+        living_world::ApplyEconomyScale(scale, reload);
+    }
 
-            void OnStartup() override
-            {
-                living_world::service::BotQuestRewardService().EnsureSchema();
-                living_world::integration::SqlBotHazardConfigRepository().EnsureSchema();
-                living_world::integration::SqlBotGlobalConfigRepository().EnsureSchema();
-                living_world::integration::SqlBotOocConfigRepository().EnsureSchema();
-                living_world::integration::SqlBotTalentPreferenceRepository().EnsureSchema();
-            }
-        };
+    void OnStartup() override
+    {
+        living_world::service::BotQuestRewardService().EnsureSchema();
+        living_world::integration::SqlBotHazardConfigRepository().EnsureSchema();
+        living_world::integration::SqlBotGlobalConfigRepository().EnsureSchema();
+        living_world::integration::SqlBotOocConfigRepository().EnsureSchema();
+        living_world::integration::SqlBotTalentPreferenceRepository().EnsureSchema();
+    }
+};
 
-        void AddSC_LivingWorldWorldScript()
-        {
-            new LivingWorldWorldScript();
-        }
+void AddSC_LivingWorldWorldScript()
+{
+    new LivingWorldWorldScript();
+}

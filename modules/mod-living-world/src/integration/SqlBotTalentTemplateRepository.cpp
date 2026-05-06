@@ -90,7 +90,7 @@ SqlBotTalentTemplateRepository::FindTemplateForSpec(
     QueryResult result = WorldDatabase.Query(
         "SELECT template_id, spec_key, class_id, display_name "
         "FROM living_world_bot_talent_template "
-        "WHERE spec_key = '{}' AND class_id = {} LIMIT 1",
+        "WHERE LOWER(spec_key) = LOWER('{}') AND class_id = {} LIMIT 1",
         escapedSpec, static_cast<std::uint32_t>(classId));
     if (!result)
         return std::nullopt;
