@@ -108,7 +108,31 @@ Additional recent engineering progress on the active combat migration:
   as the only implicit fallback — healer and hybrid-healer paths remain
   hardcoded until healer profiles are seeded
 
+Class-specific healer default profiles fully seeded (`rev_living_world_007`):
+
+- dropped old `uk_living_world_bot_combat_default_profile_spec_role` unique key
+  that was blocking multiple class-specific profiles per spec+role
+- profile 11 (`Holy/HEAL/Paladin`) updated: replaced mixed Priest+Paladin entries
+  with a pure Paladin rotation (Beacon of Light, Flash of Light, Holy Light, Holy
+  Shock, Judgement, Seal of Light, Consecration, Exorcism/Crusader Strike)
+- profile 12 (`Restoration/HEAL/Druid`) updated: replaced mixed entries with
+  pure Druid rotation (Lifebloom, Regrowth, Rejuvenation, Wild Growth, Healing
+  Touch, Moonfire, Wrath)
+- profile 31 (`Holy/HEAL/Priest`) added: PW:Shield self, Flash Heal, Renew,
+  Prayer of Healing, PW:Shield party, SW:Pain, Holy Fire/Smite
+- profile 33 (`Restoration/HEAL/Shaman`) added: Earth Shield, Riptide, Lesser
+  Healing Wave, Chain Heal, Healing Wave, Flame Shock, Earth Shock/Lightning Bolt
+- `FindDefaultProfile` already orders class-specific rows first (CASE … THEN 0)
+  so no C++ changes were required
+
 Current next-planned slice:
+
+- remove remaining `TickHealer` / `HybridHealThreshold` hardcoded fallback
+  paths from `CompanionAI` now that all four healer classes have seeded profiles
+- add focused resolver/evaluator unit tests for healer thresholds, `lowest_hp_party`
+  target selection, and mana conservation behavior
+
+Queued after healer C++ cleanup:
 
 - extend the `Quests` tab into a broader bot quest-actions panel that can show
   bot-specific `Pick Up` / `Turn In` actions for a targeted quest giver,
@@ -116,8 +140,92 @@ Current next-planned slice:
 
 Queued after quest panel work:
 
-- migrate hazard aura registry and tuning constants to DB tables
-  (see "Bot Hazard Sensor: DB Migration Roadmap" under Phase 6)
+- extend the hazard system with encounter-specific behavior rules and external
+  editing surfaces (see "Bot Hazard Sensor: DB Migration Roadmap" under Phase 6)
+
+### Best bang-for-buck next slice: healer / hybrid-healer doctrine migration
+
+**Status: Partial**
+
+Why this remains the best next slice:
+
+- it completes the current combat-runtime workstream instead of opening a new one
+- it removes more of the remaining hardcoded combat behavior in `CompanionAI`
+- it improves party survivability and sustain immediately
+- it continues reusing the DB/runtime doctrine path that is already working for
+  DPS
+
+Current repo state against this slice:
+
+- default healer doctrine has started landing in
+  `data/sql/updates/pending_db_world/rev_living_world_005_healer_tank_profiles.sql`
+- healer defaults are currently seeded as two shared spec/role profiles rather
+  than four separate class-specific profiles:
+  - active dev DB (`192.168.0.93` / `acore_world`) currently has:
+    - `Holy:HEAL` shared by Priest Holy / Paladin Holy
+    - `Restoration:HEAL` shared by Shaman Restoration / Druid Restoration
+  - `class_key` already exists on `living_world_bot_combat_default_profile`,
+    but those healer rows are still `NULL` today
+  - active dev DB does **not** currently expose `context_key` on
+    `living_world_bot_combat_default_profile`, so resolver/repository work had
+    to be aligned with the live schema before class-specific healer defaults
+    could land
+- pure healer runtime has partially migrated:
+  - `CompanionAI` now tries `TryExecuteProfileRotation(...)` first for
+    `BotCombatRole::Healer`
+  - healing uses `lowest_hp_party` doctrine targets
+  - mana conservation suppresses offensive doctrine entries by passing a null
+    primary target while leaving heal entries available
+  - hardcoded `TickHealer(...)` plus hardcoded healer offense still remain as
+    fallback when no usable profile action resolves
+- hybrid-healer runtime is still partial, but has moved forward:
+  - hybrid-healer ticks now try `TryExecuteProfileRotation(...)` first for both
+    healing and offense arbitration
+  - mana conservation suppresses offensive doctrine entries by passing a null
+    primary target while leaving healer entries available
+  - the older `HybridHealThreshold` / `TickHealer(...)` owner-first logic still
+    remains as fallback when no doctrine action resolves
+  - this means hybrid healer arbitration is no longer offense-only on the
+    doctrine path, but hardcoded fallback is still present
+- default-profile lookup has now advanced:
+  - `BotCombatDoctrineResolver` now passes doctrine `class_key` values during
+    default-profile resolution
+  - `SqlBotCombatDefaultProfileRepository` now prefers class-specific rows when
+    present and otherwise falls back to shared `NULL` / empty `class_key` rows
+  - repository queries were aligned with the live schema by removing the
+    nonexistent `context_key` column dependency from the SQL path
+  - `BotCombatDoctrineResolverTest` now includes explicit class-key coverage for
+    bot and world-bot default-profile lookup
+- focused healer evaluator coverage is still missing:
+  - no focused evaluator/resolver tests yet exist for healer thresholds,
+    `lowest_hp_party` target selection, or healer mana conservation behavior
+
+Remaining concrete work:
+
+- seed class-specific healer default rows for:
+  - Priest Holy
+  - Paladin Holy
+  - Shaman Restoration
+  - Druid Restoration
+- finish migrating `TickHealer` and hybrid-healer heal/offense decisions onto
+  the profile evaluator so hardcoded paths shrink further toward
+  fallback-only behavior
+- add focused resolver/evaluator tests for healer thresholds, target selection,
+  and mana behavior
+
+After that:
+
+**Second-best next slice:** multi-bot support
+
+- bigger gameplay unlock
+- higher implementation risk
+- touches registry shape, spawn guards, command fanout, and AI scheduling
+
+Priority order:
+
+1. **Healer/hybrid-healer DB doctrine migration**
+2. **Multi-bot support (1-to-N registry)**
+3. **Encounter-specific hazard rules/editor surface**
 
 ## Bot Tier Architecture (Design Decision)
 
@@ -326,8 +434,17 @@ Immediate combat-runtime status after the latest review/fix pass:
 - the live bot runtime resolves doctrine from the DB-backed profile/default
   system; for all 10 DPS specs the profile evaluator is now the sole spell
   selection path (no per-class C++ fallback for TickRanged/TickMelee)
-- healer and hybrid-healer ticks remain hardcoded; the next step is seeding
-  healer default profiles and migrating those paths to the evaluator
+- healer doctrine has partially landed:
+  - default healer rows are seeded in
+    `rev_living_world_005_healer_tank_profiles.sql`
+  - pure healer runtime now tries the evaluator first, with hardcoded healer
+    logic retained as fallback
+  - hybrid-healer runtime now also enters the evaluator-first path for
+    heal/offense arbitration, with the older owner-first hybrid logic retained
+    as fallback
+- the remaining next step is finishing healer/hybrid-healer migration so the
+  remaining `TickHealer` / `HybridHealThreshold` fallback logic shrinks to
+  emergency-only behavior
 - the `combo_points` condition is wired and tested through the Rogue rotation
 
 #### Non-goals
@@ -662,11 +779,13 @@ design and foundation code.
     — issue a natural-language cast command to a specific bot
   - `.lwbot <#|name|party> attack` — force bot(s) to attack owner's current target
   - `.lwbot <#|name|party> disengage` — stop combat and hold position briefly
-  - `.lwbot <#|name|party> retreat [<duration>]` — enter retreat mode (follow +
-    instant heals only) for the specified duration
-  - `.lwbot <#|name|party> follow` — clear combat overrides, resume following owner
-  - `.lwbot <#|name|party> refreshments` — consume food if HP < 60%, drink if
-    mana < 60%
+- `.lwbot <#|name|party> retreat [<duration>]` — enter retreat mode (follow +
+  instant heals only) for the specified duration
+- `.lwbot <#|name|party> follow` — clear combat overrides, resume following owner
+- `.lwbot <#|name|party> mode <assist|passive|hold|guard>` — set the bot combat
+  mode used by `CompanionAI` and persisted in the active bot registry
+- `.lwbot <#|name|party> refreshments` — consume food if HP < 60%, drink if
+  mana < 60%
   - `.lwbot <#|name|party> buff` — force re-apply OOC class maintenance buffs
     immediately, bypassing the normal OOC guard
 - `party` is a valid bot reference for all commands except `cast` and `request/dismiss`.
@@ -689,7 +808,13 @@ design and foundation code.
 - Combat-state restrictions — not yet: no explicit block on requesting a bot
   while in combat.
 
-8.4 Add follow/assist/control mode definitions — **Not Started**
+8.4 Add follow/assist/control mode definitions — **Complete**
+- `model::BotCombatMode` now defines the live mode surface (`assist`, `passive`,
+  `hold`, `guard`).
+- `service::BotPlayerRegistry` stores per-bot mode state, and
+  `LivingWorldCommandScript` exposes `.lwbot ... mode <assist|passive|hold|guard>`.
+- `CompanionAI` already honors these modes in the live tick path; possession /
+  direct control remains separate future work.
 
 8.5 Define possession rules separate from spawn rules — **Not Started**
 - A bot being active in the world is not the same as the player actively
@@ -707,18 +832,20 @@ design and foundation code.
   rejection, and `PartyBotService`'s pre-planner cross-account guard.
 
 9.2 Define runtime representation for account-derived roster entries — **Partial**
-- `model::AccountAltRuntimeRecord` and
-  `service::AccountAltRuntimeService` now define the first clone-account
-  lifecycle seam: prepare a new runtime clone, reuse an active clone, recover
-  an interrupted clone, or block when no bot account is available.
-- Runtime clones are intended to live on bot-owned account-pool accounts rather
-  than by rewriting AzerothCore's one-active-session-per-account assumption.
-- New clone materialization now begins the safer exact-name path: the offline
-  source alt can be parked under its reserved hidden name so the runtime clone
-  can lease the real player-facing alt name during spawn.
-- `AccountAltRecoveryService` now defines the first pure recovery-plan seam:
-  clone progress can be reused, blocked, routed to manual review, or synced
-  back to the source only after sanity checks identify safe domains.
+- `model::AccountAltRuntimeRecord`, `service::AccountAltRuntimeService`, and
+  `service::AccountAltRuntimeCoordinator` now define the live durable runtime
+  model for account-alt bots.
+- Runtime rows track source account/character, last requesting owner, reserved
+  bot account, materialized clone character, runtime state, and source/clone
+  progress snapshots.
+- Spawn planning now covers the real lifecycle: allocate or reuse a reserved
+  bot account, materialize or refresh the clone, recover interrupted runtimes,
+  run sanity/recovery planning, and perform approved sync work before login.
+- Runtime clones live on bot-owned pool accounts rather than trying to break
+  AzerothCore's one-active-session-per-account model.
+- Exact-name leasing is now part of the materialization path: the offline
+  source alt can be parked under its hidden reserved name so the active clone
+  can temporarily lease the player-facing alt name while spawned.
 
 9.3 Define progression for XP / items / rep ownership — **Partial**
 - The runtime model now carries source/clone progress snapshots and marks the
@@ -744,34 +871,24 @@ design and foundation code.
 - Mail domain remains unimplemented.
 
 9.4 Block conflicting login/runtime states — **Partial**
-- Need explicit rules for:
-  - alt already online
-  - alt already active as bot
-  - persistence/save timing
-- `PartyBotService` already blocks owned alts that are online as normal
-  characters. `AccountAltRuntimeService` now blocks/reuses/recovers existing
-  runtime records before reserving a new bot account.
-- `LivingWorldPlayerScript::OnPlayerLogin` now runs a lightweight owner-login
-  recovery pass. It retries `SyncingBack` progress-only runtimes, reports
-  pending recovery when a materialized clone is ahead, and surfaces manual
-  review / blocked counts without performing broader destructive sync.
-- `LivingWorldPlayerScript::OnPlayerUpdate` now drives the stock trade flow for
-  owner-controlled bot-session clones: it auto-opens the trade window on the
-  bot side, then auto-confirms only after the real player clicks accept. The
-  bot still uses AzerothCore's native trade handlers, so inventory-space and
-  trade-validity checks remain authoritative. This is the current in-game test
-  seam for account-alt inventory persistence.
-- Owner-triggered clone dismissal now starts from
-  `LivingWorldPlayerScript::OnPlayerBeforeLogout`, and it calls the bot
-  session's real `LogoutPlayer(true)` path rather than `KickPlayer()`. This is
-  important for socketless bot sessions because recovery/name-release/item-sync
-  work lives on the normal logout path.
-- Clean dismissal now retires the runtime row after successful sync/name
-  restore instead of leaving a stale `Active` record behind. Bot accounts stay
-  reserved to the source alt, and fresh spawn on that reserved account now
-  deletes any stale leftover clone body before rebuilding from the current
-  source state. This prevents old offline clone equipment from being treated as
-  authoritative after the real source alt logs in and changes gear/items.
+- Explicit guard paths now exist for the major conflicts:
+  - alt already online as a normal character
+  - alt already active or recoverable as a bot runtime
+  - interrupted sync/login states that need retry or manual review
+- `PartyBotService` blocks owned alts that are online normally, and
+  `AccountAltRuntimeService` blocks / reuses / recovers existing runtime rows
+  before any new bot-account reservation happens.
+- `LivingWorldAccountScript::OnAccountLogin` and `LivingWorldPlayerScript`
+  now run real recovery hooks so interrupted dismiss/sync states are handled on
+  owner login rather than being left stranded until later gameplay.
+- Owner-triggered dismiss uses the bot session's normal `LogoutPlayer(true)`
+  path, which keeps save timing, clone cleanup, sync-back, and name-restore
+  work on the authoritative logout pipeline.
+- Successful dismiss/recovery now retires the runtime row after cleanup, while
+  fresh spawn on the reserved account deletes stale leftover clone bodies
+  before rebuilding from current source state.
+- Remaining work is broader validation of restart/crash edge cases and any
+  final conflict rules needed for future multi-bot support.
 
 9.5 Decide whether generic bots and account alts share one runtime pipeline — **Not Started**
 
@@ -779,10 +896,10 @@ design and foundation code.
 
 **Overall Status: Partial**
 
-Phase 1 (hardcoded engine) is complete. The remaining work is migrating the
-tunable parts to DB tables so they can be edited from an external tool without
-rebuilding the server, following the same architecture as the combat doctrine
-system.
+Phase 1 (runtime hazard detection + movement) is complete, and the first DB-backed
+migration slice has also landed. Aura registry data, role-rule exceptions, and
+global tuning are now loaded from world DB tables; the remaining work is the
+encounter-specific behavior layer and external editing surfaces.
 
 #### What is currently hardcoded (and why it should not stay that way)
 
@@ -813,7 +930,7 @@ Migrate in priority order. Each step is independent; they can ship separately.
 
 ##### Step 1 — Aura registry in DB (highest value, lowest effort)
 
-**Status: Not Started**
+**Status: Complete**
 
 Add a single table to `acore_world`:
 
@@ -837,7 +954,7 @@ This single step covers the most common day-to-day tuning need.
 
 ##### Step 2 — Tuning constants in DB (low effort, moderate value)
 
-**Status: Not Started**
+**Status: Complete**
 
 Add a key/value config table to `acore_world`:
 
@@ -862,10 +979,10 @@ TTL-cache pattern. Default values act as the fallback when rows are missing.
 
 ##### Step 3 — Class/role exception rules in DB (moderate effort, moderate value)
 
-**Status: Not Started**
+**Status: Complete**
 
 ```sql
-CREATE TABLE living_world_hazard_class_rules (
+CREATE TABLE living_world_hazard_role_rules (
     class_id            TINYINT UNSIGNED    NOT NULL,
     skip_escape         TINYINT(1)          NOT NULL DEFAULT 0,
     owner_hp_gate_pct   FLOAT               NOT NULL DEFAULT 0.0,
@@ -968,11 +1085,11 @@ server operator might want to tune without rebuilding belongs in DB.
   reasonable position but wall-clipping may occur. Extraction tools are already
   in the repo under `tools/` — one-time run against the 3.3.5a client data.
 
-10.2 Migrate aura registry to `living_world_hazard_auras` DB table — **Not Started**
+10.2 Migrate aura registry to `living_world_hazard_auras` DB table — **Complete**
 
-10.3 Migrate tuning constants to `living_world_hazard_config` DB table — **Not Started**
+10.3 Migrate tuning constants to `living_world_hazard_config` DB table — **Complete**
 
-10.4 Migrate class/role exception rules to `living_world_hazard_class_rules` — **Not Started**
+10.4 Migrate class/role exception rules to `living_world_hazard_role_rules` — **Complete**
 
 10.5 Add encounter-specific behavior profile table and evaluator — **Not Started**
 
@@ -1067,11 +1184,11 @@ that loads specific characters by ID with no materialization overhead.
 
 ## Phase 9: Persistence, Config, and Data
 
-**Overall Status: Not Started**
+**Overall Status: Partial**
 
 ### 13) SQL / Config / Tuning Surfaces
 
-**Overall Status: Not Started**
+**Overall Status: Partial**
 
 #### Subtasks
 
@@ -1086,8 +1203,13 @@ that loads specific characters by ID with no materialization overhead.
   max-counter merge for criteria progress).
 - Remaining work is mail sync and broader lifecycle persistence hardening.
 
-13.2 Define tunable config values — **Not Started**
-- Examples:
+13.2 Define tunable config values — **Partial**
+- Live tunable surfaces already exist for several active systems:
+  - bot global follow/formation settings via `living_world_bot_global_config`
+  - out-of-combat behavior settings via `living_world_bot_ooc_config`
+  - hazard tuning via `living_world_hazard_config`
+  - account-alt inventory/bank sync policy via `mod-living-world.conf.dist`
+- Broader planner/world tuning still remains future work:
   - local population caps
   - rival encounter cooldowns
   - roster limits
@@ -1096,7 +1218,14 @@ that loads specific characters by ID with no materialization overhead.
 
 13.3 Add seed/default data for bot identities and rival guilds — **Not Started**
 
-13.4 Separate tuning data from hardcoded logic — **Not Started**
+13.4 Separate tuning data from hardcoded logic — **Partial**
+- Combat doctrine for DPS specs is now DB-driven through the combat profile /
+  default-profile tables.
+- Hazard aura registry, role rules, and tuning constants now have DB-backed
+  repositories and schema.
+- Some important behavior still remains hardcoded for now, including healer /
+  hybrid-healer combat paths, encounter-specific hazard movement, and broader
+  planner-policy tuning.
 
 ---
 
@@ -1115,7 +1244,14 @@ that loads specific characters by ID with no materialization overhead.
 
 14.2 Add more planner contract tests — **Not Started**
 
-14.3 Add service-level tests once orchestration exists — **Not Started**
+14.3 Add service-level tests once orchestration exists — **Partial**
+- Service-level/unit seams now exist and are exercised for several live paths,
+  including `PartyBotService`, account-alt runtime/recovery services, and
+  combat doctrine resolver behavior.
+- Recent validation fixed stale unit-test drift and restored the current
+  filtered living-world suite to passing status.
+- Remaining work is broader orchestration coverage and deeper crash/restart
+  regression matrices.
 
 14.4 Add regression tests for Windows builds — **Partial**
 - Current build/test fixes are in place, but no CI automation exists yet.
@@ -2734,9 +2870,13 @@ E.12 Cross-continent travel support (world-port ack for headless sessions) —
 - [x] Implement target resolvers for `enemy_primary` and `enemy_trash`.
 - [x] Remove per-class hardcoded spell selection from `TickRanged` and
       `TickMelee`; DPS rotation is now fully DB-driven.
-- [ ] Seed healer/hybrid-healer default profiles (Priest Holy, Paladin Holy,
-      Shaman Restoration, Druid Restoration) and migrate `TickHealer` /
-      hybrid-healer offensive path to the profile evaluator.
+- [x] Seed healer/hybrid-healer default profiles (Priest Holy, Paladin Holy,
+      Shaman Restoration, Druid Restoration) — class-specific profiles landed
+      in `rev_living_world_007`; doctrine resolver already orders class-specific
+      rows first so no C++ changes were required.
+- [ ] Migrate `TickHealer` / hybrid-healer offensive path to the profile
+      evaluator (remove remaining hardcoded healer fallback from `CompanionAI`
+      now that all four healer classes have seeded profiles).
 - [ ] Extend the runtime resolver so account defaults and future context
       defaults (`pug` / `raid` / `battleground`) use the same doctrine lookup
       system.
