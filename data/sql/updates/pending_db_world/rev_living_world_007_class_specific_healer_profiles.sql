@@ -50,7 +50,7 @@ DEALLOCATE PREPARE stmt;
 -- =========================================================================
 INSERT INTO living_world_bot_combat_default_profile
     (default_profile_id, spec_key, role_key, class_key, display_name,
-     conservation_mode, mana_low_water, mana_high_water,
+     conservation_mode, resource_low_water, resource_high_water,
      enable_down_rank, down_rank_floor,
      default_aoe_mode, default_aoe_min_targets, default_aoe_scan_radius)
 VALUES
@@ -60,8 +60,8 @@ ON DUPLICATE KEY UPDATE
     display_name            = VALUES(display_name),
     class_key               = VALUES(class_key),
     conservation_mode       = VALUES(conservation_mode),
-    mana_low_water          = VALUES(mana_low_water),
-    mana_high_water         = VALUES(mana_high_water),
+    resource_low_water          = VALUES(resource_low_water),
+    resource_high_water         = VALUES(resource_high_water),
     enable_down_rank        = VALUES(enable_down_rank),
     down_rank_floor         = VALUES(down_rank_floor),
     default_aoe_mode        = VALUES(default_aoe_mode),
@@ -79,7 +79,7 @@ DELETE FROM living_world_bot_combat_default_entry WHERE default_profile_id = 11;
 
 INSERT INTO living_world_bot_combat_default_profile
     (default_profile_id, spec_key, role_key, class_key, display_name,
-     conservation_mode, mana_low_water, mana_high_water,
+     conservation_mode, resource_low_water, resource_high_water,
      enable_down_rank, down_rank_floor,
      default_aoe_mode, default_aoe_min_targets, default_aoe_scan_radius)
 VALUES
@@ -88,8 +88,8 @@ ON DUPLICATE KEY UPDATE
     display_name            = VALUES(display_name),
     class_key               = VALUES(class_key),
     conservation_mode       = VALUES(conservation_mode),
-    mana_low_water          = VALUES(mana_low_water),
-    mana_high_water         = VALUES(mana_high_water);
+    resource_low_water          = VALUES(resource_low_water),
+    resource_high_water         = VALUES(resource_high_water);
 
 -- Priority order:
 --   5   Beacon of Light on owner (keep active)
@@ -156,7 +156,7 @@ DELETE FROM living_world_bot_combat_default_entry WHERE default_profile_id = 12;
 
 INSERT INTO living_world_bot_combat_default_profile
     (default_profile_id, spec_key, role_key, class_key, display_name,
-     conservation_mode, mana_low_water, mana_high_water,
+     conservation_mode, resource_low_water, resource_high_water,
      enable_down_rank, down_rank_floor,
      default_aoe_mode, default_aoe_min_targets, default_aoe_scan_radius)
 VALUES
@@ -165,8 +165,8 @@ ON DUPLICATE KEY UPDATE
     display_name            = VALUES(display_name),
     class_key               = VALUES(class_key),
     conservation_mode       = VALUES(conservation_mode),
-    mana_low_water          = VALUES(mana_low_water),
-    mana_high_water         = VALUES(mana_high_water);
+    resource_low_water          = VALUES(resource_low_water),
+    resource_high_water         = VALUES(resource_high_water);
 
 -- Priority order:
 --   5   Lifebloom stack on owner (< 3 stacks)
