@@ -17,7 +17,9 @@ set_property(GLOBAL APPEND PROPERTY ACORE_MODULE_TEST_SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/test/SimpleBotCombatSpecRoleResolverTest.cpp
   ${CMAKE_CURRENT_LIST_DIR}/test/CharacterItemSnapshotClassifierTest.cpp
   ${CMAKE_CURRENT_LIST_DIR}/test/CharacterItemSanityCheckerTest.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/test/LivingWorldCommandGrammarTest.cpp)
+  ${CMAKE_CURRENT_LIST_DIR}/test/LivingWorldCommandGrammarTest.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/test/BotCombatRuntimeEvaluatorTest.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/test/BotTalentApplicatorTest.cpp)
 
 set_property(GLOBAL APPEND PROPERTY ACORE_MODULE_TEST_INCLUDES
   ${CMAKE_CURRENT_LIST_DIR}/src)

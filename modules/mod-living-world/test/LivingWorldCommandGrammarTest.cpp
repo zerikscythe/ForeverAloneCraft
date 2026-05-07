@@ -634,5 +634,166 @@ TEST(LivingWorldCommandGrammarTest, ModeRejectsUnknownToken)
     ASSERT_NE(error, nullptr);
     EXPECT_EQ(error->kind, CommandParseErrorKind::InvalidArgument);
 }
+
+// ── BotAddTalentCommand ───────────────────────────────────────────────────────
+
+TEST(LivingWorldCommandGrammarTest, AddTalentParsesPositionNameAndPoints)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 addtalent Mortal Strike 2");
+
+    auto const* add = std::get_if<BotAddTalentCommand>(&cmd);
+    ASSERT_NE(add, nullptr);
+    auto const* position = std::get_if<std::uint32_t>(&add->botRef);
+    ASSERT_NE(position, nullptr);
+    EXPECT_EQ(*position, 1u);
+    EXPECT_EQ(add->talentName, "Mortal Strike");
+    EXPECT_EQ(add->points, 2u);
+}
+
+TEST(LivingWorldCommandGrammarTest, AddTalentDefaultsToOnePointWhenOmitted)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 addtalent Mortal Strike");
+
+    auto const* add = std::get_if<BotAddTalentCommand>(&cmd);
+    ASSERT_NE(add, nullptr);
+    EXPECT_EQ(add->talentName, "Mortal Strike");
+    EXPECT_EQ(add->points, 1u);
+}
+
+TEST(LivingWorldCommandGrammarTest, AddTalentParsesByName)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("Thrall addtalent Improved Fireball 3");
+
+    auto const* add = std::get_if<BotAddTalentCommand>(&cmd);
+    ASSERT_NE(add, nullptr);
+    auto const* name = std::get_if<std::string>(&add->botRef);
+    ASSERT_NE(name, nullptr);
+    EXPECT_EQ(*name, "Thrall");
+    EXPECT_EQ(add->talentName, "Improved Fireball");
+    EXPECT_EQ(add->points, 3u);
+}
+
+TEST(LivingWorldCommandGrammarTest, AddTalentRejectsMissingTalentName)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 addtalent");
+
+    auto const* error = std::get_if<CommandParseError>(&cmd);
+    ASSERT_NE(error, nullptr);
+    EXPECT_EQ(error->kind, CommandParseErrorKind::MissingArgument);
+}
+
+// ── BotResetTalentsCommand ────────────────────────────────────────────────────
+
+TEST(LivingWorldCommandGrammarTest, ResetTalentsParsesPosition)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("2 resettalents");
+
+    auto const* reset = std::get_if<BotResetTalentsCommand>(&cmd);
+    ASSERT_NE(reset, nullptr);
+    auto const* position = std::get_if<std::uint32_t>(&reset->botRef);
+    ASSERT_NE(position, nullptr);
+    EXPECT_EQ(*position, 2u);
+}
+
+TEST(LivingWorldCommandGrammarTest, ResetTalentsParsesName)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("Arthas resettalents");
+
+    auto const* reset = std::get_if<BotResetTalentsCommand>(&cmd);
+    ASSERT_NE(reset, nullptr);
+    auto const* name = std::get_if<std::string>(&reset->botRef);
+    ASSERT_NE(name, nullptr);
+    EXPECT_EQ(*name, "Arthas");
+}
+
+// ── BotApplyTalentTemplateCommand ─────────────────────────────────────────────
+
+TEST(LivingWorldCommandGrammarTest, ApplyTalentParsesWithoutResetFlag)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 applytalent");
+
+    auto const* apply = std::get_if<BotApplyTalentTemplateCommand>(&cmd);
+    ASSERT_NE(apply, nullptr);
+    EXPECT_FALSE(apply->resetFirst);
+}
+
+TEST(LivingWorldCommandGrammarTest, ApplyTalentParsesWithResetFlag)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 applytalent reset");
+
+    auto const* apply = std::get_if<BotApplyTalentTemplateCommand>(&cmd);
+    ASSERT_NE(apply, nullptr);
+    EXPECT_TRUE(apply->resetFirst);
+}
+
+TEST(LivingWorldCommandGrammarTest, ApplyTalentParsesByName)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("Thrall applytalent reset");
+
+    auto const* apply = std::get_if<BotApplyTalentTemplateCommand>(&cmd);
+    ASSERT_NE(apply, nullptr);
+    auto const* name = std::get_if<std::string>(&apply->botRef);
+    ASSERT_NE(name, nullptr);
+    EXPECT_EQ(*name, "Thrall");
+    EXPECT_TRUE(apply->resetFirst);
+}
+
+// ── BotTalentFavoriteCommand ──────────────────────────────────────────────────
+
+TEST(LivingWorldCommandGrammarTest, FavoriteTalentWithNoArgQueriesCurrentSetting)
+{
+    // No spec key → nullopt, meaning "query current setting".
+    ParsedCommand cmd = ParseLivingWorldCommand("1 favoritetalent");
+
+    auto const* fav = std::get_if<BotTalentFavoriteCommand>(&cmd);
+    ASSERT_NE(fav, nullptr);
+    EXPECT_FALSE(fav->specKey.has_value());
+}
+
+TEST(LivingWorldCommandGrammarTest, FavoriteTalentWithAutoKeyword)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 favoritetalent auto");
+
+    auto const* fav = std::get_if<BotTalentFavoriteCommand>(&cmd);
+    ASSERT_NE(fav, nullptr);
+    // "auto" should clear the pinned spec (nullopt or explicit "auto" string,
+    // depending on grammar semantics — either is acceptable here).
+    // The grammar normalises "auto" to nullopt to mean auto-detect.
+    EXPECT_FALSE(fav->specKey.has_value());
+}
+
+TEST(LivingWorldCommandGrammarTest, FavoriteTalentPinsSpecKey)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 favoritetalent Arms");
+
+    auto const* fav = std::get_if<BotTalentFavoriteCommand>(&cmd);
+    ASSERT_NE(fav, nullptr);
+    ASSERT_TRUE(fav->specKey.has_value());
+    EXPECT_EQ(*fav->specKey, "Arms");
+}
+
+TEST(LivingWorldCommandGrammarTest, FavoriteTalentPinsMultiWordSpecKey)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("1 favoritetalent Beast Mastery");
+
+    auto const* fav = std::get_if<BotTalentFavoriteCommand>(&cmd);
+    ASSERT_NE(fav, nullptr);
+    ASSERT_TRUE(fav->specKey.has_value());
+    EXPECT_EQ(*fav->specKey, "Beast Mastery");
+}
+
+TEST(LivingWorldCommandGrammarTest, FavoriteTalentParsesByName)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("Thrall favoritetalent Holy");
+
+    auto const* fav = std::get_if<BotTalentFavoriteCommand>(&cmd);
+    ASSERT_NE(fav, nullptr);
+    auto const* name = std::get_if<std::string>(&fav->botRef);
+    ASSERT_NE(name, nullptr);
+    EXPECT_EQ(*name, "Thrall");
+    ASSERT_TRUE(fav->specKey.has_value());
+    EXPECT_EQ(*fav->specKey, "Holy");
+}
+
 } // namespace script
 } // namespace living_world
