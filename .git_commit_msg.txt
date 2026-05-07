@@ -1,0 +1,20 @@
+bot_expansion phases 1+2: raid pool bots and hostile bot AI
+
+Phase 1 - .lwbot raid request/dismiss:
+- RaidRequestCommand / RaidDismissCommand added to grammar
+- ParseRaidVerb with ClassNameToId helper
+- HandleRaidRequest: queries living_world_pool_character, reserves account
+  and character slot, calls SpawnBotPlayerOnAccount
+- HandleRaidDismiss: finds bot by name/position, calls LogoutPlayer
+- OnPlayerLogout: reset living_world_pool_character.is_available (no-op for clones)
+- Schema: data/sql/characters/living_world_pool_character.sql
+
+Phase 2 - hostile ownerless bots:
+- BotSessionFactory::SpawnHostileBotPlayerOnAccount: no owner param,
+  registers ObjectGuid::Empty as sentinel, no position seeding
+- CompanionAI null-hardening: LoadCombatDoctrine, GetPreparedCombatProfile,
+  TryExecuteProfileRotation all safe with owner=nullptr
+- TickHostile: no follow/buffs, picks GetVictim()/attacker, runs full doctrine
+- CompanionAIEvent::Execute: ownerless branch on _ownerGuid.IsEmpty()
+- ScheduleHostileCompanionAI: schedules event with ObjectGuid::Empty
+- OnPlayerLogin: detects ownerGuid.GetCounter()==0, routes to hostile path

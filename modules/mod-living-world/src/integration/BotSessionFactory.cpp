@@ -297,3 +297,5 @@ BotSessionSpawnResult BotSessionFactory::SpawnHostileBotPlayerOnAccount(
     sWorldSessionMgr->AddSession(session);
     return result;
 }
+} // namespace integration
+} // namespace living_world

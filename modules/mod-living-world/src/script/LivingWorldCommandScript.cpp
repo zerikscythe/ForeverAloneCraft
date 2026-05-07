@@ -1390,6 +1390,7 @@ void HandleRaidDismiss(
         botName);
 }
 
+void RenderDismissBot(
     ChatHandler* handler,
     RosterDismissCommand const& command)
 {

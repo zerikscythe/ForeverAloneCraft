@@ -10,7 +10,12 @@ namespace living_world
 {
 namespace ai
 {
-void ScheduleCompanionAI(Player* botPlayer, Player* ownerPlayer);\n\n// Schedule the hostile (ownerless) AI tick for a bot that has no owner.\n// The bot fights back against anything that attacks it using its doctrine,\n// but never follows anyone or applies OOC buffs.\nvoid ScheduleHostileCompanionAI(Player* botPlayer);
+void ScheduleCompanionAI(Player* botPlayer, Player* ownerPlayer);
+
+// Schedule the hostile (ownerless) AI tick for a bot that has no owner.
+// The bot fights back against anything that attacks it using its doctrine,
+// but never follows anyone or applies OOC buffs.
+void ScheduleHostileCompanionAI(Player* botPlayer);
 
 // Force a bot to attack a specific target on the next AI tick.
 // Passing ObjectGuid::Empty clears any forced target.
