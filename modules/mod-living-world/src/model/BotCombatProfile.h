@@ -15,11 +15,24 @@ namespace model
 // See `modules/mod-living-world/docs/BotCombatProfiles.md` for the full design
 // direction and table concepts that this model is expected to support.
 
+// Controls how a bot manages its primary combat resource (mana for casters,
+// rage/energy for physical classes) during a fight.
+//
+// FullForce   — spend everything; no reservation (Warriors, Rogues, DKs,
+//               pure nukers with no utility)
+// Reserve     — stay above a floor (resourceLowWater) for utility spells
+//               (Cleanse, Remove Curse, interrupt, emergency heal); otherwise
+//               full offense. No high-water resume band. (Ret Paladin, Enhance
+//               Shaman, Balance Druid)
+// Conservative — full hysteresis: stop all offense below resourceLowWater,
+//               resume above resourceHighWater. (Pure healers, hybrid healers)
+// JitCasting  — offense entries always suppressed; cast only on external command
 enum class BotCombatConservationMode : std::uint8_t
 {
-    FullForce = 0,
-    Conservative = 1,
-    JitCasting = 2
+    FullForce    = 0,
+    Reserve      = 1,
+    Conservative = 2,
+    JitCasting   = 3
 };
 
 enum class BotCombatActionType : std::uint8_t
@@ -131,8 +144,12 @@ struct BotCombatProfileSettings
     BotCombatConservationMode conservationMode =
         BotCombatConservationMode::Conservative;
     std::uint32_t rotationWaitMs = 500;
-    std::uint8_t manaLowWater = 55;
-    std::uint8_t manaHighWater = 75;
+    // resourceLowWater: enter conservation (Conservative) or floor for utility
+    // reserve (Reserve). Ignored for FullForce and JitCasting.
+    std::uint8_t resourceLowWater = 55;
+    // resourceHighWater: exit conservation once resource recovers above this
+    // threshold. Only used by Conservative mode; ignored by Reserve.
+    std::uint8_t resourceHighWater = 75;
     bool enableDownRank = true;
     std::uint8_t downRankFloor = 2;
     BotCombatAoEMode defaultAoEMode = BotCombatAoEMode::Centroid;
@@ -195,6 +212,7 @@ struct BotCombatProfileRecord
     std::optional<std::string> roleOverrideKey;
 
     BotCombatProfileSettings settings;
+    BotOocBehavior oocBehavior;
     std::vector<BotCombatEntryDefinition> interruptEntries;
     std::vector<BotCombatEntryDefinition> rotationEntries;
 

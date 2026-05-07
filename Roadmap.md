@@ -125,20 +125,40 @@ Class-specific healer default profiles fully seeded (`rev_living_world_007`):
 - `FindDefaultProfile` already orders class-specific rows first (CASE … THEN 0)
   so no C++ changes were required
 
-Current next-planned slice:
+Completed slices (`rev_living_world_008`):
 
-- remove remaining `TickHealer` / `HybridHealThreshold` hardcoded fallback
-  paths from `CompanionAI` now that all four healer classes have seeded profiles
-- add focused resolver/evaluator unit tests for healer thresholds, `lowest_hp_party`
-  target selection, and mana conservation behavior
+- **healer C++ cleanup** — `TickHealer`, `GetHealerOffensiveSpell`,
+  `GetHybridDamageSpell`, and dead constants removed from `CompanionAI`; both
+  Healer and HybridHealer tick paths now delegate entirely to
+  `TryExecuteProfileRotation` with no hardcoded spell fallback;
+  `BotCombatHealerDoctrineTest.cpp` added (9 tests)
 
-Queued after healer C++ cleanup:
+- **Reserve conservation mode + column rename** (`rev_living_world_008`):
+  - `BotCombatConservationMode` enum gains `Reserve = 1` (simple mana floor;
+    offense suppressed only while below `resourceLowWater`, resumes immediately
+    above — no high-water band); existing `Conservative` re-encoded to `2`,
+    `JitCasting` to `3`
+  - `mana_low_water` / `mana_high_water` columns renamed to
+    `resource_low_water` / `resource_high_water` on both
+    `living_world_bot_combat_default_profile` (world DB) and
+    `living_world_bot_combat_profile` (characters DB); C++ model fields
+    renamed to `resourceLowWater` / `resourceHighWater`
+  - `UpdateConservationState` in `CompanionAI` handles Reserve with a simple
+    floor check; `IsOffenseSuppressed` covers both Reserve and Conservative
+  - `FromDbConservationMode` updated in both SQL repositories
+  - idempotent migration SQL in `rev_living_world_008_reserve_mode_and_column_rename.sql`
+    (world DB + characters DB)
+  - test field references updated in `BotCombatDoctrineResolverTest.cpp` and
+    `BotCombatHealerDoctrineTest.cpp`
 
+Current next-planned slice (`rev_living_world_009`):
 - extend the `Quests` tab into a broader bot quest-actions panel that can show
   bot-specific `Pick Up` / `Turn In` actions for a targeted quest giver,
   including class-specific follow-up quests
 
 Queued after quest panel work:
+
+Queued after conservation-mode cleanup:
 
 - extend the hazard system with encounter-specific behavior rules and external
   editing surfaces (see "Bot Hazard Sensor: DB Migration Roadmap" under Phase 6)
@@ -2874,15 +2894,17 @@ E.12 Cross-continent travel support (world-port ack for headless sessions) —
       Shaman Restoration, Druid Restoration) — class-specific profiles landed
       in `rev_living_world_007`; doctrine resolver already orders class-specific
       rows first so no C++ changes were required.
-- [ ] Migrate `TickHealer` / hybrid-healer offensive path to the profile
-      evaluator (remove remaining hardcoded healer fallback from `CompanionAI`
-      now that all four healer classes have seeded profiles).
+- [x] Migrate `TickHealer` / hybrid-healer offensive path to the profile
+      evaluator — `TickHealer`, `GetHealerOffensiveSpell`, `GetHybridDamageSpell`,
+      and dead constants removed from `CompanionAI` in `rev_living_world_008`;
+      9 focused healer doctrine tests added in `BotCombatHealerDoctrineTest.cpp`.
 - [ ] Extend the runtime resolver so account defaults and future context
       defaults (`pug` / `raid` / `battleground`) use the same doctrine lookup
       system.
-- [ ] Add conservation mode enforcement through the evaluator path for DPS bots
-      (model and CompanionAI healer hysteresis exist; DPS mana thresholds are
-      not yet enforced at the evaluator level).
+- [x] Add conservation mode enforcement — `Reserve` mode added to
+      `BotCombatConservationMode`; `mana_low_water`/`mana_high_water` renamed to
+      `resource_low_water`/`resource_high_water`; `UpdateConservationState` and
+      `IsOffenseSuppressed` updated in `CompanionAI` (`rev_living_world_008`).
 - [ ] Add optional down-rank support with floor rules.
 - [ ] Expose profile CRUD/edit/reset/apply operations through the server API /
       message layer for addon consumption.

@@ -17,9 +17,11 @@ model::BotCombatConservationMode FromDbConservationMode(std::uint8_t value)
     {
         case 0:
             return model::BotCombatConservationMode::FullForce;
-        case 2:
-            return model::BotCombatConservationMode::JitCasting;
         case 1:
+            return model::BotCombatConservationMode::Reserve;
+        case 3:
+            return model::BotCombatConservationMode::JitCasting;
+        case 2:
         default:
             return model::BotCombatConservationMode::Conservative;
     }
@@ -121,8 +123,8 @@ model::BotCombatProfileSettings BuildSettings(Field const* fields, std::size_t o
 {
     model::BotCombatProfileSettings settings;
     settings.conservationMode = FromDbConservationMode(fields[offset + 0].Get<std::uint8_t>());
-    settings.manaLowWater = fields[offset + 1].Get<std::uint8_t>();
-    settings.manaHighWater = fields[offset + 2].Get<std::uint8_t>();
+    settings.resourceLowWater = fields[offset + 1].Get<std::uint8_t>();
+    settings.resourceHighWater = fields[offset + 2].Get<std::uint8_t>();
     settings.enableDownRank = fields[offset + 3].Get<bool>();
     settings.downRankFloor = fields[offset + 4].Get<std::uint8_t>();
     settings.defaultAoEMode = FromDbAoEMode(fields[offset + 5].Get<std::uint8_t>());
@@ -398,7 +400,7 @@ SqlBotCombatProfileRepository::ListProfilesForCharacter(
     QueryResult result = CharacterDatabase.Query(
         "SELECT profile_id, source_character_guid, owner_account_id, slot, profile_name, "
         "guessed_spec_key, guessed_role_key, spec_override_key, role_override_key, "
-        "conservation_mode, mana_low_water, mana_high_water, enable_down_rank, "
+        "conservation_mode, resource_low_water, resource_high_water, enable_down_rank, "
         "down_rank_floor, default_aoe_mode, default_aoe_min_targets, default_aoe_scan_radius, "
         "COALESCE(buff_scope,2), COALESCE(buff_reapply_secs,30), COALESCE(buff_on_spawn,1), "
         "follow_dist_override, auto_loot_override, COALESCE(loot_quality_min,0), "
@@ -431,7 +433,7 @@ SqlBotCombatProfileRepository::FindProfileForCharacterSlot(
     QueryResult result = CharacterDatabase.Query(
         "SELECT profile_id, source_character_guid, owner_account_id, slot, profile_name, "
         "guessed_spec_key, guessed_role_key, spec_override_key, role_override_key, "
-        "conservation_mode, mana_low_water, mana_high_water, enable_down_rank, "
+        "conservation_mode, resource_low_water, resource_high_water, enable_down_rank, "
         "down_rank_floor, default_aoe_mode, default_aoe_min_targets, default_aoe_scan_radius, "
         "COALESCE(buff_scope,2), COALESCE(buff_reapply_secs,30), COALESCE(buff_on_spawn,1), "
         "follow_dist_override, auto_loot_override, COALESCE(loot_quality_min,0), "
@@ -458,7 +460,7 @@ void SqlBotCombatProfileRepository::SaveProfile(
         "INSERT INTO living_world_bot_combat_profile ("
         "source_character_guid, owner_account_id, slot, profile_name, guessed_spec_key, "
         "guessed_role_key, spec_override_key, role_override_key, conservation_mode, "
-        "mana_low_water, mana_high_water, enable_down_rank, down_rank_floor, default_aoe_mode, "
+        "resource_low_water, resource_high_water, enable_down_rank, down_rank_floor, default_aoe_mode, "
         "default_aoe_min_targets, default_aoe_scan_radius, "
         "buff_scope, buff_reapply_secs, buff_on_spawn, follow_dist_override, "
         "auto_loot_override, loot_quality_min, gather_nodes, gather_skin, skin_loot_quality_max, "
@@ -471,8 +473,8 @@ void SqlBotCombatProfileRepository::SaveProfile(
         "spec_override_key = VALUES(spec_override_key), "
         "role_override_key = VALUES(role_override_key), "
         "conservation_mode = VALUES(conservation_mode), "
-        "mana_low_water = VALUES(mana_low_water), "
-        "mana_high_water = VALUES(mana_high_water), "
+        "resource_low_water = VALUES(resource_low_water), "
+        "resource_high_water = VALUES(resource_high_water), "
         "enable_down_rank = VALUES(enable_down_rank), "
         "down_rank_floor = VALUES(down_rank_floor), "
         "default_aoe_mode = VALUES(default_aoe_mode), "
@@ -497,8 +499,8 @@ void SqlBotCombatProfileRepository::SaveProfile(
         QuoteOptionalString(profile.specOverrideKey),
         QuoteOptionalString(profile.roleOverrideKey),
         static_cast<std::uint32_t>(profile.settings.conservationMode),
-        static_cast<std::uint32_t>(profile.settings.manaLowWater),
-        static_cast<std::uint32_t>(profile.settings.manaHighWater),
+        static_cast<std::uint32_t>(profile.settings.resourceLowWater),
+        static_cast<std::uint32_t>(profile.settings.resourceHighWater),
         profile.settings.enableDownRank ? 1 : 0,
         static_cast<std::uint32_t>(profile.settings.downRankFloor),
         static_cast<std::uint32_t>(profile.settings.defaultAoEMode),

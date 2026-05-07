@@ -44,6 +44,12 @@ namespace living_world
 namespace ai
 {
 
+service::BotContextService& GetSharedContextService()
+{
+    static service::BotContextService service;
+    return service;
+}
+
 // ---------------------------------------------------------------
 // Per-bot command override state
 // ---------------------------------------------------------------
@@ -110,7 +116,7 @@ void ClearBotOverride(ObjectGuid botGuid)
     std::lock_guard<std::mutex> lock(s_overrideMutex);
     s_overrides.erase(botGuid);
     BotHazardSensor::ClearHazardState(botGuid);
-    GetContextService().Clear(botGuid.GetCounter());
+    GetSharedContextService().Clear(botGuid.GetCounter());
 }
 
 bool SetBotRetreat(ObjectGuid botGuid, uint32_t durationMs)
@@ -167,13 +173,6 @@ constexpr float RangedRetreatReset    = 60.0f;   // Allow another retreat only a
 // --- Heal thresholds ---
 constexpr float HealOwnerCritical    = 50.0f;
 constexpr float HealOwnerModerate    = 85.0f;
-constexpr float HealSelfCritical     = 40.0f;
-constexpr float HealSelfModerate     = 65.0f;
-constexpr float HybridHealThreshold  = 70.0f;
-
-// --- Healer mana thresholds for hybrid offense ---
-constexpr float HealerManaConserveBelow = 40.0f;  // Stop attacking below this
-constexpr float HealerManaResumeAbove   = 60.0f;  // Resume attacking above this
 
 // --- Priest Weakened Soul debuff: prevents re-shielding for 15 seconds ---
 constexpr std::uint32_t AuraWeakenedSoul = 6788;
@@ -250,12 +249,6 @@ service::BotGlobalConfigService& GetGlobalConfigService()
     return service;
 }
 
-service::BotContextService& GetContextService()
-{
-    static service::BotContextService service;
-    return service;
-}
-
 service::BotOocConfigService& GetOocConfigService()
 {
     static integration::SqlBotOocConfigRepository repo;
@@ -276,7 +269,7 @@ service::BotCombatDoctrineResolver& GetDoctrineResolver()
         selectionRepository,
         defaultProfileRepository,
         resolver,
-        GetContextService());
+        GetSharedContextService());
     return doctrineResolver;
 }
 
@@ -567,7 +560,11 @@ bool IsOffenseSuppressed(
     if (mode == model::BotCombatConservationMode::JitCasting)
         return true;
 
-    return mode == model::BotCombatConservationMode::Conservative && conserving;
+    // Conservative: suppress offense during full hysteresis window.
+    // Reserve: suppress offense only while below the resource floor.
+    return conserving &&
+        (mode == model::BotCombatConservationMode::Conservative ||
+         mode == model::BotCombatConservationMode::Reserve);
 }
 
 // ---------------------------------------------------------------
@@ -716,30 +713,6 @@ std::uint32_t GetSustainedHealSpell(Player* bot)
     }
 }
 
-// Offensive spells available to pure healers when mana allows.
-std::uint32_t GetHealerOffensiveSpell(Player* bot, Unit* target)
-{
-    switch (bot->getClass())
-    {
-        case CLASS_PRIEST:
-        {
-            // Shadow Word: Pain — instant DoT, apply when missing
-            std::uint32_t const swp = FindBestKnownSpellInChain(bot, 589);
-            if (swp && !HasAuraFromChain(target, 589))
-                return swp;
-            // Mind Blast — direct shadow nuke
-            std::uint32_t const mb = FindBestKnownSpellInChain(bot, 8092);
-            if (mb && !bot->HasSpellCooldown(mb))
-                return mb;
-            // Smite — holy filler when Mind Blast is on cooldown
-            return FindBestKnownSpellInChain(bot, 585);
-        }
-        default:
-            return 0;
-    }
-}
-
-
 // ---------------------------------------------------------------
 // Offensive spells — Paladin seal helpers
 // ---------------------------------------------------------------
@@ -774,62 +747,6 @@ bool HasSealActive(Player const* bot)
     }
     return false;
 }
-
-// ---------------------------------------------------------------
-// Offensive spells — hybrid healers acting offensively
-// ---------------------------------------------------------------
-
-// Returns the best short-range DPS ability for hybrid healers acting offensively.
-std::uint32_t GetHybridDamageSpell(Player* bot, Unit* target)
-{
-    switch (bot->getClass())
-    {
-        case CLASS_PALADIN:
-        {
-            // Hammer of Wrath: execute-range burst, requires target below 20% HP
-            std::uint32_t const how = FindBestKnownSpellInChain(bot, 24275);
-            if (how && target->GetHealthPct() < 20.0f
-                && !bot->HasSpellCooldown(how))
-                return how;
-
-            // Judgement of Light: holy damage + party heal proc on hit
-            std::uint32_t const jol = FindBestKnownSpellInChain(bot, 20271);
-            if (jol && !bot->HasSpellCooldown(jol))
-                return jol;
-
-            // Consecration: sustained AoE holy damage field
-            std::uint32_t const cons = FindBestKnownSpellInChain(bot, 20116);
-            if (cons && !bot->HasSpellCooldown(cons))
-                return cons;
-
-            // Crusader Strike: primary single-target melee ability
-            if (bot->HasSpell(35395) && !bot->HasSpellCooldown(35395))
-                return 35395;
-
-            return 0;
-        }
-
-        case CLASS_SHAMAN:
-        {
-            std::uint32_t const flameShock = FindBestKnownSpellInChain(bot, 8050);
-            if (flameShock && !target->HasAura(flameShock))
-                return flameShock; // Apply Flame Shock DoT first
-            return FindBestKnownSpellInChain(bot, 8042); // Earth Shock filler
-        }
-
-        case CLASS_DRUID:
-        {
-            std::uint32_t const moonfire = FindBestKnownSpellInChain(bot, 8921);
-            if (moonfire && !target->HasAura(moonfire))
-                return moonfire; // Apply Moonfire DoT first
-            return FindBestKnownSpellInChain(bot, 5176); // Wrath filler
-        }
-
-        default:
-            return 0;
-    }
-}
-
 
 // ---------------------------------------------------------------
 // Out-of-combat maintenance
@@ -1125,124 +1042,13 @@ void BreakFollowForAttack(Player* bot)
 // Per-role combat ticks
 // ---------------------------------------------------------------
 
-void TickHealer(Player* bot, Player* owner)
-{
-    if (bot->IsNonMeleeSpellCast(false))
-        return;
-
-    std::uint32_t const directSpell    = GetDirectHealSpell(bot);
-    std::uint32_t const sustainedSpell = GetSustainedHealSpell(bot);
-
-    if (owner->GetHealthPct() < HealOwnerModerate)
-    {
-        std::uint32_t const supportSpell = owner->GetHealthPct() < HealOwnerCritical
-            ? directSpell
-            : sustainedSpell;
-        if (supportSpell)
-            EnsureSupportRange(bot, owner, supportSpell);
-    }
-
-    // Power Word: Shield (Priest only): proactive absorb while the owner is in
-    // combat. Applied as soon as the fight starts so damage is partially absorbed
-    // before reactive heals are needed. Weakened Soul prevents re-shielding for
-    // 15 seconds after the absorb is consumed.
-    if (bot->getClass() == CLASS_PRIEST && owner->IsInCombat())
-    {
-        std::uint32_t const pws = FindBestKnownSpellInChain(bot, 17);
-        if (pws && !owner->HasAura(pws) && !owner->HasAura(AuraWeakenedSoul))
-        {
-            LOG_INFO(
-                "server.worldserver",
-                "[LivingWorldDebug] HealerAI cast attempt: bot='{}' guid={} action=shield_owner spell={} targetGuid={} ownerHp={:.1f} botHp={:.1f}",
-                bot->GetName(),
-                bot->GetGUID().GetCounter(),
-                pws,
-                owner->GetGUID().GetCounter(),
-                owner->GetHealthPct(),
-                bot->GetHealthPct());
-            bot->CastSpell(owner, pws, false);
-            return;
-        }
-    }
-
-    if (owner->GetHealthPct() < HealOwnerCritical)
-    {
-        if (directSpell)
-        {
-            LOG_INFO(
-                "server.worldserver",
-                "[LivingWorldDebug] HealerAI cast attempt: bot='{}' guid={} action=direct_heal_owner spell={} targetGuid={} ownerHp={:.1f} botHp={:.1f}",
-                bot->GetName(),
-                bot->GetGUID().GetCounter(),
-                directSpell,
-                owner->GetGUID().GetCounter(),
-                owner->GetHealthPct(),
-                bot->GetHealthPct());
-            bot->CastSpell(owner, directSpell, false);
-        }
-        return;
-    }
-
-    if (owner->GetHealthPct() < HealOwnerModerate)
-    {
-        if (sustainedSpell && !owner->HasAura(sustainedSpell))
-        {
-            LOG_INFO(
-                "server.worldserver",
-                "[LivingWorldDebug] HealerAI cast attempt: bot='{}' guid={} action=sustain_owner spell={} targetGuid={} ownerHp={:.1f} botHp={:.1f}",
-                bot->GetName(),
-                bot->GetGUID().GetCounter(),
-                sustainedSpell,
-                owner->GetGUID().GetCounter(),
-                owner->GetHealthPct(),
-                bot->GetHealthPct());
-            bot->CastSpell(owner, sustainedSpell, false);
-        }
-        return;
-    }
-
-    if (bot->GetHealthPct() < HealSelfCritical)
-    {
-        if (directSpell)
-        {
-            LOG_INFO(
-                "server.worldserver",
-                "[LivingWorldDebug] HealerAI cast attempt: bot='{}' guid={} action=direct_heal_self spell={} targetGuid={} ownerHp={:.1f} botHp={:.1f}",
-                bot->GetName(),
-                bot->GetGUID().GetCounter(),
-                directSpell,
-                bot->GetGUID().GetCounter(),
-                owner->GetHealthPct(),
-                bot->GetHealthPct());
-            bot->CastSpell(bot, directSpell, false);
-        }
-        return;
-    }
-
-    if (bot->GetHealthPct() < HealSelfModerate)
-    {
-        if (sustainedSpell && !bot->HasAura(sustainedSpell))
-        {
-            LOG_INFO(
-                "server.worldserver",
-                "[LivingWorldDebug] HealerAI cast attempt: bot='{}' guid={} action=sustain_self spell={} targetGuid={} ownerHp={:.1f} botHp={:.1f}",
-                bot->GetName(),
-                bot->GetGUID().GetCounter(),
-                sustainedSpell,
-                bot->GetGUID().GetCounter(),
-                owner->GetHealthPct(),
-                bot->GetHealthPct());
-            bot->CastSpell(bot, sustainedSpell, false);
-        }
-    }
-}
-
 void UpdateConservationState(
     model::BotCombatProfileSettings const& settings,
     Player const* bot,
     bool& conserving)
 {
-    if (settings.conservationMode != model::BotCombatConservationMode::Conservative)
+    if (settings.conservationMode == model::BotCombatConservationMode::FullForce ||
+        settings.conservationMode == model::BotCombatConservationMode::JitCasting)
     {
         conserving = false;
         return;
@@ -1251,14 +1057,22 @@ void UpdateConservationState(
         return;
     float const manaPct = 100.0f * static_cast<float>(bot->GetPower(POWER_MANA))
                                  / static_cast<float>(bot->GetMaxPower(POWER_MANA));
-    if (conserving)
+    if (settings.conservationMode == model::BotCombatConservationMode::Reserve)
     {
-        if (manaPct >= settings.manaHighWater)
-            conserving = false;
+        // Reserve: simple floor — suppress while below low water, resume immediately once above.
+        conserving = manaPct < static_cast<float>(settings.resourceLowWater);
     }
-    else if (manaPct < settings.manaLowWater)
+    else // Conservative: full hysteresis band
     {
-        conserving = true;
+        if (conserving)
+        {
+            if (manaPct >= static_cast<float>(settings.resourceHighWater))
+                conserving = false;
+        }
+        else if (manaPct < static_cast<float>(settings.resourceLowWater))
+        {
+            conserving = true;
+        }
     }
 }
 
@@ -1538,8 +1352,7 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& conserving)
     model::BotOocBehavior const oocBehavior =
         GetOocConfigService().Get(bot->GetGUID().GetCounter());
 
-    // Pure healers: profile rotation handles healing + offense in priority order;
-    // hardcoded TickHealer fires only as a fallback when no profile is active.
+    // Pure healers: profile rotation owns all healing and offense decisions.
     if (role == BotCombatRole::Healer)
     {
         UpdateConservationState(doctrine.settings, bot, conserving);
@@ -1558,18 +1371,8 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& conserving)
         // lowest_hp_party independently of the combat target.
         bool const offenseSuppressed =
             IsOffenseSuppressed(doctrine.settings.conservationMode, conserving);
-        if (!TryExecuteProfileRotation(
-                bot, owner, offenseSuppressed ? nullptr : attackTarget))
-        {
-            // Fallback: hardcoded healing when no profile is configured.
-            TickHealer(bot, owner);
-            if (attackTarget && !offenseSuppressed && !bot->IsNonMeleeSpellCast(false))
-            {
-                std::uint32_t const spell = GetHealerOffensiveSpell(bot, attackTarget);
-                if (spell)
-                    bot->CastSpell(attackTarget, spell, false);
-            }
-        }
+        TryExecuteProfileRotation(
+            bot, owner, offenseSuppressed ? nullptr : attackTarget);
 
         if (attackTarget)
         {
@@ -1616,74 +1419,78 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& conserving)
         ? ResolveGuardTarget(bot, owner)
         : ResolveAssistTarget(bot, owner);
 
-        if (assistTarget)
-        {
-            if (ShouldCombatFollowOverride(bot, owner, role))
-            {
-                if (!bot->IsNonMeleeSpellCast(false))
-                {
-                    bot->GetMotionMaster()->Clear(false);
-                    IssueFormationFollow(bot, owner, role);
-                }
-                return;
-            }
+    if (role == BotCombatRole::HybridHealer)
+    {
+        UpdateConservationState(doctrine.settings, bot, conserving);
 
+        std::uint32_t const directSpell = GetDirectHealSpell(bot);
+        std::uint32_t const sustainedSpell = GetSustainedHealSpell(bot);
+
+        if (owner->GetHealthPct() < HealOwnerModerate)
+        {
+            std::uint32_t const supportSpell = owner->GetHealthPct() < HealOwnerCritical
+                ? directSpell
+                : sustainedSpell;
+            if (supportSpell)
+                EnsureSupportRange(bot, owner, supportSpell);
+        }
+
+        if (assistTarget && bot->GetVictim() != assistTarget)
+            bot->Attack(assistTarget, true);
+
+        if (assistTarget)
             BreakFollowForAttack(bot);
 
-        if (role == BotCombatRole::HybridHealer)
-        {
-            // Hybrid casters still triage owner health first. Only commit to
-            // damage when the owner is healthy enough to take a few seconds
-            // of attention shift.
-            if (owner->GetHealthPct() < HybridHealThreshold)
-            {
-                std::uint32_t const emergencySpell = owner->GetHealthPct() < HealOwnerCritical
-                    ? GetDirectHealSpell(bot)
-                    : GetSustainedHealSpell(bot);
-                if (emergencySpell)
-                    EnsureSupportRange(bot, owner, emergencySpell);
-                TickHealer(bot, owner);
-                return;
-            }
+        bool const offenseSuppressed =
+            IsOffenseSuppressed(doctrine.settings.conservationMode, conserving);
 
-            if (bot->GetVictim() != assistTarget)
-                bot->Attack(assistTarget, true);
+        // Profile rotation owns all heal/offense arbitration for hybrid healers.
+        // When mana-conserving, offense entries are suppressed via nullptr target.
+        TryExecuteProfileRotation(
+            bot, owner, offenseSuppressed ? nullptr : assistTarget);
 
-            // Ensure seal is active before striking
-            if (bot->getClass() == CLASS_PALADIN && !HasSealActive(bot)
-                && !bot->IsNonMeleeSpellCast(false))
-            {
-                std::uint32_t const seal = GetPreferredSeal(bot);
-                if (seal)
-                {
-                    bot->CastSpell(bot, seal, false);
-                    EnsureChasingVictim(bot, assistTarget);
-                    return;
-                }
-            }
-
+        if (assistTarget && !offenseSuppressed && !bot->IsNonMeleeSpellCast(false))
             EnsureChasingVictim(bot, assistTarget);
-            if (TryExecuteProfileRotation(bot, owner, assistTarget))
-                return;
 
-            std::uint32_t const spell = GetHybridDamageSpell(bot, assistTarget);
-            if (spell && !bot->IsNonMeleeSpellCast(false))
+        TryApplyOutOfCombatBuff(bot, owner, oocBehavior);
+
+        if (ShouldCombatFollowOverride(bot, owner, role))
+        {
+            if (!bot->IsNonMeleeSpellCast(false))
             {
-                LOG_INFO(
-                    "server.worldserver",
-                    "[LivingWorldDebug] HybridAI cast attempt: bot='{}' guid={} class={} spell={} targetGuid={} distance={:.2f} ownerHp={:.1f} botHp={:.1f}",
-                    bot->GetName(),
-                    bot->GetGUID().GetCounter(),
-                    static_cast<std::uint32_t>(bot->getClass()),
-                    spell,
-                    assistTarget->GetGUID().GetCounter(),
-                    bot->GetDistance(assistTarget),
-                    owner->GetHealthPct(),
-                    bot->GetHealthPct());
-                bot->CastSpell(assistTarget, spell, false);
+                bot->GetMotionMaster()->Clear(false);
+                IssueFormationFollow(bot, owner, role);
             }
             return;
         }
+
+        if (!assistTarget
+            && !bot->GetVictim()
+            && !bot->IsNonMeleeSpellCast(false)
+            && !bot->IsInCombat()
+            && !owner->IsInCombat()
+            && !IsBotAttackLocked(bot->GetGUID())
+            && bot->GetMotionMaster()->GetCurrentMovementGeneratorType() != FOLLOW_MOTION_TYPE)
+        {
+            bot->GetMotionMaster()->Clear(false);
+            IssueFormationFollow(bot, owner, role);
+        }
+        return;
+    }
+
+    if (assistTarget)
+    {
+        if (ShouldCombatFollowOverride(bot, owner, role))
+        {
+            if (!bot->IsNonMeleeSpellCast(false))
+            {
+                bot->GetMotionMaster()->Clear(false);
+                IssueFormationFollow(bot, owner, role);
+            }
+            return;
+        }
+
+        BreakFollowForAttack(bot);
 
         if (role == BotCombatRole::Ranged)
         {
@@ -1929,12 +1736,12 @@ void InvalidateBotCombatCaches(ObjectGuid botGuid)
 
 void SetBotContext(ObjectGuid botGuid, std::string const& contextKey)
 {
-    GetContextService().Set(botGuid.GetCounter(), contextKey);
+    GetSharedContextService().Set(botGuid.GetCounter(), contextKey);
 }
 
 std::string GetBotContext(ObjectGuid botGuid)
 {
-    return GetContextService().Get(botGuid.GetCounter());
+    return GetSharedContextService().Get(botGuid.GetCounter());
 }
 } // namespace ai
 } // namespace living_world

@@ -15,9 +15,11 @@ model::BotCombatConservationMode FromDbConservationMode(std::uint8_t value)
     {
         case 0:
             return model::BotCombatConservationMode::FullForce;
-        case 2:
-            return model::BotCombatConservationMode::JitCasting;
         case 1:
+            return model::BotCombatConservationMode::Reserve;
+        case 3:
+            return model::BotCombatConservationMode::JitCasting;
+        case 2:
         default:
             return model::BotCombatConservationMode::Conservative;
     }
@@ -103,8 +105,8 @@ model::BotCombatProfileSettings BuildSettings(Field const* fields, std::size_t o
 {
     model::BotCombatProfileSettings settings;
     settings.conservationMode = FromDbConservationMode(fields[offset + 0].Get<std::uint8_t>());
-    settings.manaLowWater = fields[offset + 1].Get<std::uint8_t>();
-    settings.manaHighWater = fields[offset + 2].Get<std::uint8_t>();
+    settings.resourceLowWater = fields[offset + 1].Get<std::uint8_t>();
+    settings.resourceHighWater = fields[offset + 2].Get<std::uint8_t>();
     settings.enableDownRank = fields[offset + 3].Get<bool>();
     settings.downRankFloor = fields[offset + 4].Get<std::uint8_t>();
     settings.defaultAoEMode = FromDbAoEMode(fields[offset + 5].Get<std::uint8_t>());
@@ -247,8 +249,7 @@ model::BotCombatDefaultProfileRecord BuildDefaultProfile(Field const* fields)
     profile.roleKey    = fields[2].Get<std::string>();
     profile.displayName= fields[3].Get<std::string>();
     profile.classKey   = fields[4].IsNull() ? "" : fields[4].Get<std::string>();
-    profile.contextKey = fields[5].IsNull() ? "PvE" : fields[5].Get<std::string>();
-    profile.settings   = BuildSettings(fields, 6);
+    profile.settings   = BuildSettings(fields, 5);
     return profile;
 }
 } // namespace
@@ -259,12 +260,11 @@ SqlBotCombatDefaultProfileRepository::ListDefaultProfiles() const
     std::vector<model::BotCombatDefaultProfileRecord> profiles;
     QueryResult result = WorldDatabase.Query(
         "SELECT default_profile_id, spec_key, role_key, display_name, "
-        "class_key, COALESCE(context_key,'PvE'), "
-        "conservation_mode, mana_low_water, mana_high_water, "
+        "class_key, conservation_mode, resource_low_water, resource_high_water, "
         "enable_down_rank, down_rank_floor, default_aoe_mode, "
         "default_aoe_min_targets, default_aoe_scan_radius "
         "FROM living_world_bot_combat_default_profile "
-        "ORDER BY class_key, spec_key, context_key ASC");
+        "ORDER BY spec_key ASC, role_key ASC, class_key ASC, default_profile_id ASC");
     if (!result)
         return profiles;
 
@@ -283,22 +283,48 @@ std::optional<model::BotCombatDefaultProfileRecord>
 SqlBotCombatDefaultProfileRepository::FindDefaultProfile(
     std::string const& specKey,
     std::string const& roleKey,
+    std::string const& classKey,
     std::string const& contextKey) const
 {
+    (void)contextKey;
+
     std::string escapedSpecKey  = specKey;  WorldDatabase.EscapeString(escapedSpecKey);
     std::string escapedRoleKey  = roleKey;  WorldDatabase.EscapeString(escapedRoleKey);
-    std::string escapedContext  = contextKey; WorldDatabase.EscapeString(escapedContext);
+    std::string escapedClassKey = classKey; WorldDatabase.EscapeString(escapedClassKey);
 
-    QueryResult result = WorldDatabase.Query(
-        "SELECT default_profile_id, spec_key, role_key, display_name, "
-        "class_key, COALESCE(context_key,'PvE'), "
-        "conservation_mode, mana_low_water, mana_high_water, "
-        "enable_down_rank, down_rank_floor, default_aoe_mode, "
-        "default_aoe_min_targets, default_aoe_scan_radius "
-        "FROM living_world_bot_combat_default_profile "
-        "WHERE spec_key = '{}' AND role_key = '{}' AND COALESCE(context_key,'PvE') = '{}' "
-        "LIMIT 1",
-        escapedSpecKey, escapedRoleKey, escapedContext);
+    QueryResult result;
+    if (escapedClassKey.empty())
+    {
+        result = WorldDatabase.Query(
+            "SELECT default_profile_id, spec_key, role_key, display_name, "
+            "class_key, conservation_mode, resource_low_water, resource_high_water, "
+            "enable_down_rank, down_rank_floor, default_aoe_mode, "
+            "default_aoe_min_targets, default_aoe_scan_radius "
+            "FROM living_world_bot_combat_default_profile "
+            "WHERE spec_key = '{}' AND role_key = '{}' "
+            "AND (class_key IS NULL OR class_key = '') "
+            "ORDER BY default_profile_id ASC "
+            "LIMIT 1",
+            escapedSpecKey, escapedRoleKey);
+    }
+    else
+    {
+        result = WorldDatabase.Query(
+            "SELECT default_profile_id, spec_key, role_key, display_name, "
+            "class_key, conservation_mode, resource_low_water, resource_high_water, "
+            "enable_down_rank, down_rank_floor, default_aoe_mode, "
+            "default_aoe_min_targets, default_aoe_scan_radius "
+            "FROM living_world_bot_combat_default_profile "
+            "WHERE spec_key = '{}' AND role_key = '{}' "
+            "AND (class_key = '{}' OR class_key IS NULL OR class_key = '') "
+            "ORDER BY CASE "
+                "WHEN class_key = '{}' THEN 0 "
+                "WHEN class_key IS NULL OR class_key = '' THEN 1 "
+                "ELSE 2 END, "
+                "default_profile_id ASC "
+            "LIMIT 1",
+            escapedSpecKey, escapedRoleKey, escapedClassKey, escapedClassKey);
+    }
     if (!result)
         return std::nullopt;
 
