@@ -1,5 +1,13 @@
 # Roadmap
 
+> **Agent orientation:** Before starting any task on this project, read this
+> file in full. Also read `db.local` in the repo root — it contains the MySQL
+> host, port, user, and password used for all local DB work. The active dev
+> database server is at the host listed there (currently `192.168.0.93:3306`).
+> World DB = `acore_world`, characters DB = `acore_characters`, auth DB =
+> `acore_auth`. Use `pymysql` to connect and apply migrations; do not assume
+> `127.0.0.1` is reachable.
+
 ## Project Scope
 
 This roadmap tracks the AzerothCore living-world project for
