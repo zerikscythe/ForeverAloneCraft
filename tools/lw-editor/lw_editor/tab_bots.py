@@ -219,7 +219,7 @@ class DefaultProfilesTab(ttk.Frame):
         cls, spec, role, ctx, name = chosen[0]
         p = dict(class_key=cls, spec_key=spec, role_key=role,
                  context_key=ctx, display_name=name,
-                 conservation_mode=1, mana_low_water=55, mana_high_water=75,
+                 conservation_mode=1, resource_low_water=55, resource_high_water=75,
                  enable_down_rank=1, down_rank_floor=2,
                  default_aoe_mode=0, default_aoe_min_targets=2, default_aoe_scan_radius=10.0)
         try:
@@ -496,8 +496,8 @@ class BotProfilesTab(ttk.Frame):
         target["spec_override_key"] = src.get("spec_key") or None
         target["role_override_key"] = _normalize_role(src.get("role_key", "")) or None
         target["conservation_mode"] = src.get("conservation_mode", 1)
-        target["mana_low_water"] = src.get("mana_low_water", 55)
-        target["mana_high_water"] = src.get("mana_high_water", 75)
+        target["resource_low_water"] = src.get("resource_low_water", 55)
+        target["resource_high_water"] = src.get("resource_high_water", 75)
         target["enable_down_rank"] = src.get("enable_down_rank", 1)
         target["down_rank_floor"] = src.get("down_rank_floor", 2)
         if "default_aoe_mode" in src:
@@ -569,7 +569,7 @@ class BotProfilesTab(ttk.Frame):
                      slot=slot, profile_name=f"Profile {slot}",
                      guessed_spec_key="", guessed_role_key="DPS",
                      spec_override_key=None, role_override_key=None,
-                     conservation_mode=1, mana_low_water=55, mana_high_water=75,
+                     conservation_mode=1, resource_low_water=55, resource_high_water=75,
                      enable_down_rank=1, down_rank_floor=2,
                      default_aoe_mode=0, default_aoe_min_targets=2,
                      default_aoe_scan_radius=10.0)

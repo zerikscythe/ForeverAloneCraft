@@ -178,8 +178,8 @@ class ProfileHeaderFrame(ttk.LabelFrame):
         self._apply_spec_values(class_name, raw_spec)
         self.v_role.set(_normalize_role(raw_role))
         self.v_conservation.set(CONSERVATION_MODES.get(p.get("conservation_mode", 1), "Conservative"))
-        self.v_mana_low.set(str(p.get("mana_low_water", 55)))
-        self.v_mana_high.set(str(p.get("mana_high_water", 75)))
+        self.v_mana_low.set(str(p.get("resource_low_water", 55)))
+        self.v_mana_high.set(str(p.get("resource_high_water", 75)))
         self.v_downrank.set(bool(p.get("enable_down_rank", 1)))
         self.v_dr_floor.set(str(p.get("down_rank_floor", 2)))
         self.v_aoe_mode.set(AOE_MODES.get(p.get("default_aoe_mode", 0), "Centroid"))
@@ -194,8 +194,8 @@ class ProfileHeaderFrame(ttk.LabelFrame):
 
     def collect(self, base: dict) -> dict:
         base["conservation_mode"]    = CONSERVATION_INV.get(self.v_conservation.get(), 1)
-        base["mana_low_water"]       = int(self.v_mana_low.get() or 55)
-        base["mana_high_water"]      = int(self.v_mana_high.get() or 75)
+        base["resource_low_water"]       = int(self.v_mana_low.get() or 55)
+        base["resource_high_water"]      = int(self.v_mana_high.get() or 75)
         base["enable_down_rank"]     = int(self.v_downrank.get())
         base["down_rank_floor"]      = int(self.v_dr_floor.get() or 2)
         base["default_aoe_mode"]     = AOE_INV.get(self.v_aoe_mode.get(), 0)

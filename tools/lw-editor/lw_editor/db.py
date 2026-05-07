@@ -450,7 +450,7 @@ class DBCtx:
          "world",
          "INSERT IGNORE INTO living_world_bot_combat_default_profile "
          "(class_key, spec_key, role_key, context_key, display_name, "
-         " conservation_mode, mana_low_water, mana_high_water, "
+         " conservation_mode, resource_low_water, resource_high_water, "
          " enable_down_rank, down_rank_floor, "
          " default_aoe_mode, default_aoe_min_targets, default_aoe_scan_radius) VALUES "
          "('Warrior','Arms','DPS','PvP','Warrior \u2014 Arms (PvP)',1,55,75,1,2,0,2,10.0),"
@@ -1347,13 +1347,13 @@ class DBCtx:
             self.run(self.world,
                 "UPDATE living_world_bot_combat_default_profile SET "
                 "spec_key=%s, role_key=%s, display_name=%s, class_key=%s, context_key=%s, "
-                "conservation_mode=%s, mana_low_water=%s, mana_high_water=%s, "
+                "conservation_mode=%s, resource_low_water=%s, resource_high_water=%s, "
                 "enable_down_rank=%s, down_rank_floor=%s, default_aoe_mode=%s, "
                 "default_aoe_min_targets=%s, default_aoe_scan_radius=%s "
                 "WHERE default_profile_id=%s",
                 (p["spec_key"], p["role_key"], p.get("display_name"),
                  p.get("class_key"), p.get("context_key", "PvE"),
-                 p["conservation_mode"], p["mana_low_water"], p["mana_high_water"],
+                 p["conservation_mode"], p["resource_low_water"], p["resource_high_water"],
                  p["enable_down_rank"], p["down_rank_floor"], p["default_aoe_mode"],
                  p["default_aoe_min_targets"], p["default_aoe_scan_radius"],
                  p["default_profile_id"]))
@@ -1361,12 +1361,12 @@ class DBCtx:
         return self.run(self.world,
             "INSERT INTO living_world_bot_combat_default_profile "
             "(spec_key, role_key, display_name, class_key, context_key, conservation_mode, "
-            "mana_low_water, mana_high_water, enable_down_rank, down_rank_floor, "
+            "resource_low_water, resource_high_water, enable_down_rank, down_rank_floor, "
             "default_aoe_mode, default_aoe_min_targets, default_aoe_scan_radius) VALUES "
             "(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
             (p["spec_key"], p["role_key"], p.get("display_name"), p.get("class_key"),
              p.get("context_key", "PvE"),
-             p["conservation_mode"], p["mana_low_water"], p["mana_high_water"],
+             p["conservation_mode"], p["resource_low_water"], p["resource_high_water"],
              p["enable_down_rank"], p["down_rank_floor"], p["default_aoe_mode"],
              p["default_aoe_min_targets"], p["default_aoe_scan_radius"]))
 
@@ -1561,7 +1561,7 @@ class DBCtx:
                 "UPDATE living_world_bot_combat_profile SET "
                 "slot=%s, profile_name=%s, guessed_spec_key=%s, guessed_role_key=%s, "
                 "spec_override_key=%s, role_override_key=%s, conservation_mode=%s, "
-                "mana_low_water=%s, mana_high_water=%s, enable_down_rank=%s, "
+                "resource_low_water=%s, resource_high_water=%s, enable_down_rank=%s, "
                 "down_rank_floor=%s, default_aoe_mode=%s, default_aoe_min_targets=%s, "
                 "default_aoe_scan_radius=%s, "
                 "buff_scope=%s, buff_reapply_secs=%s, buff_on_spawn=%s, "
@@ -1571,7 +1571,7 @@ class DBCtx:
                 "WHERE profile_id=%s",
                 (p["slot"], p["profile_name"], p["guessed_spec_key"], p["guessed_role_key"],
                  p.get("spec_override_key"), p.get("role_override_key"),
-                 p["conservation_mode"], p["mana_low_water"], p["mana_high_water"],
+                 p["conservation_mode"], p["resource_low_water"], p["resource_high_water"],
                  p["enable_down_rank"], p["down_rank_floor"], p["default_aoe_mode"],
                  p["default_aoe_min_targets"], p["default_aoe_scan_radius"],
                  p.get("buff_scope", 2), p.get("buff_reapply_secs", 30),
@@ -1584,13 +1584,13 @@ class DBCtx:
         return self.run(self.chars,
             "INSERT INTO living_world_bot_combat_profile "
             "(source_character_guid, owner_account_id, slot, profile_name, "
-            "guessed_spec_key, guessed_role_key, conservation_mode, mana_low_water, "
-            "mana_high_water, enable_down_rank, down_rank_floor, default_aoe_mode, "
+            "guessed_spec_key, guessed_role_key, conservation_mode, resource_low_water, "
+            "resource_high_water, enable_down_rank, down_rank_floor, default_aoe_mode, "
             "default_aoe_min_targets, default_aoe_scan_radius) VALUES "
             "(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
             (p["source_character_guid"], p["owner_account_id"], p["slot"],
              p["profile_name"], p["guessed_spec_key"], p["guessed_role_key"],
-             p["conservation_mode"], p["mana_low_water"], p["mana_high_water"],
+             p["conservation_mode"], p["resource_low_water"], p["resource_high_water"],
              p["enable_down_rank"], p["down_rank_floor"], p["default_aoe_mode"],
              p["default_aoe_min_targets"], p["default_aoe_scan_radius"]))
 
