@@ -19,6 +19,7 @@
 #include "Creature.h"
 #include "NPCPackets.h"
 #include "Player.h"
+#include "ScriptMgr.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
 

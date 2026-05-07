@@ -1,0 +1,22 @@
+MSBuild version 17.14.40+3e7442088 for .NET Framework
+
+  zlib.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\deps\zlib\Debug\zlib.lib
+  Detour.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\deps\recastnavigation\Detour\Debug\Detour.lib
+  argon2.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\deps\argon2\Debug\argon2.lib
+  fmt.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\deps\fmt\Debug\fmt.lib
+  g3dlib.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\deps\g3dlite\Debug\g3dlib.lib
+  sfmt.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\deps\SFMT\Debug\sfmt.lib
+  common.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\src\common\Debug\common.lib
+  database.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\src\server\database\Debug\database.lib
+  shared.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\src\server\shared\Debug\shared.lib
+  game.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\src\server\game\Debug\game.lib
+  gsoap.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\deps\gsoap\Debug\gsoap.lib
+  SqlBotGlobalConfigRepository.cpp
+  SqlBotOocConfigRepository.cpp
+  SqlBotTalentTemplateRepository.cpp
+  LivingWorldCommandScript.cpp
+  LivingWorldPlayerScript.cpp
+  modules.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\modules\Debug\modules.lib
+  scripts.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\src\server\scripts\Debug\scripts.lib
+     Creating library D:/src/azerothcore-wotlk/out/build-vs2022/src/server/apps/Debug/worldserver.lib and object D:/src/azerothcore-wotlk/out/build-vs2022/src/server/apps/Debug/worldserver.exp
+  worldserver.vcxproj -> D:\src\azerothcore-wotlk\out\build-vs2022\bin\Debug\worldserver.exe

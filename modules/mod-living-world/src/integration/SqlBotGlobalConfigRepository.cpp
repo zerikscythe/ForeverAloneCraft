@@ -21,7 +21,7 @@ void SqlBotGlobalConfigRepository::EnsureSchema() const
     // INSERT IGNORE: existing operator-edited values are never overwritten.
     WorldDatabase.DirectExecute(
         "INSERT IGNORE INTO living_world_bot_global_config (config_key, config_value, notes) VALUES"
-        "  ('follow_distance',          2.0, 'Fallback follow yards when role is unknown (e.g. Passive mode)');"
+        "  ('follow_distance',          2.0, 'Fallback follow yards when role is unknown (e.g. Passive mode)'),"
         "  ('follow_distance_melee',   1.0, 'Follow yards: Tank and Melee DPS'),"
         "  ('follow_distance_healer',  1.5, 'Follow yards: Healer and Hybrid Healer'),"
         "  ('follow_distance_ranged',  2.5, 'Follow yards: Ranged and caster DPS'),"
@@ -29,6 +29,7 @@ void SqlBotGlobalConfigRepository::EnsureSchema() const
         "  ('follow_slot_count',       7.0, 'Number of positions in Ring formation (3-9)'),"
         "  ('mount_with_owner',        1.0, '1=bots mount when owner mounts (implementation pending)'),"
         "  ('auto_loot',               0.0, '1=bots auto-loot nearby corpses (implementation pending)')");
+}
 
 model::BotGlobalConfig SqlBotGlobalConfigRepository::Load() const
 {

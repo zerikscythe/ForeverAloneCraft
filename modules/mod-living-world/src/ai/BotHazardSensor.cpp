@@ -154,7 +154,7 @@ Player* FindNearestCleanPartyMember(Player* bot, Player* owner)
         return IsCleanCandidate(owner) ? owner : nullptr;
 
     Player* best     = nullptr;
-    float   bestDist = HazardSafeAnchorSearchRadius + 1.0f;
+    float   bestDist = searchRadius + 1.0f;
 
     for (Group::MemberSlot const& slot : group->GetMemberSlots())
     {

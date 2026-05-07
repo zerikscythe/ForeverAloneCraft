@@ -13,6 +13,35 @@ namespace service
 {
 namespace
 {
+std::string_view ToDoctrineClassKey(std::uint8_t classId)
+{
+    switch (classId)
+    {
+        case 1:
+            return "Warrior";
+        case 2:
+            return "Paladin";
+        case 3:
+            return "Hunter";
+        case 4:
+            return "Rogue";
+        case 5:
+            return "Priest";
+        case 6:
+            return "Death Knight";
+        case 7:
+            return "Shaman";
+        case 8:
+            return "Mage";
+        case 9:
+            return "Warlock";
+        case 11:
+            return "Druid";
+        default:
+            return "";
+    }
+}
+
 BotCombatResolvedProfile BuildResolvedProfile(
     model::BotCombatProfileRecord const& profile,
     std::optional<model::BotCombatDefaultProfileRecord> const& defaultProfile)
@@ -115,6 +144,7 @@ BotCombatDoctrineResolution BotCombatDoctrineResolver::ResolveForBot(
     auto defaultProfile = _defaultProfileRepository.FindDefaultProfile(
         specRole.effectiveSpecKey,
         specRole.effectiveRoleKey,
+        std::string(ToDoctrineClassKey(botClassId)),
         _contextService.Get(resolution.sourceCharacterGuid));
     if (defaultProfile)
         resolution.defaultProfileId = defaultProfile->defaultProfileId;
@@ -158,13 +188,13 @@ BotCombatDoctrineResolution BotCombatDoctrineResolver::ResolveForWorldBot(
     resolution.effectiveRoleKey    = roleKey;
 
     auto defaultProfile = _defaultProfileRepository.FindDefaultProfile(
-        specKey, roleKey, contextKey);
+        specKey, roleKey, std::string(ToDoctrineClassKey(botClassId)), contextKey);
     if (!defaultProfile)
     {
         // Fallback: try PvE profile if the requested context has no profile yet.
         if (contextKey != "PvE")
             defaultProfile = _defaultProfileRepository.FindDefaultProfile(
-                specKey, roleKey, "PvE");
+                specKey, roleKey, std::string(ToDoctrineClassKey(botClassId)), "PvE");
     }
 
     if (defaultProfile)

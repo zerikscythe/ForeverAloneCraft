@@ -1,6 +1,7 @@
 #pragma once
 
 #include "integration/BotTalentTemplateRepository.h"
+#include "QueryResult.h"
 
 namespace living_world
 {

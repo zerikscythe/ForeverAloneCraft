@@ -23,6 +23,7 @@ public:
     virtual std::optional<model::BotCombatDefaultProfileRecord> FindDefaultProfile(
         std::string const& specKey,
         std::string const& roleKey,
+        std::string const& classKey = "",
         std::string const& contextKey = "PvE") const = 0;
 };
 } // namespace integration

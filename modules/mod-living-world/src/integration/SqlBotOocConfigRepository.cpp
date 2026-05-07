@@ -1,6 +1,7 @@
 #include "integration/SqlBotOocConfigRepository.h"
 
 #include "DatabaseEnv.h"
+#include "QueryResult.h"
 
 namespace living_world
 {
