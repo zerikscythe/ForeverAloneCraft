@@ -35,6 +35,12 @@ public:
     static BotSessionSpawnResult SpawnBotPlayer(
         ObjectGuid characterGuid,
         ObjectGuid ownerCharacterGuid);
+
+    // Spawn a bot with no owner. The bot fights back when attacked using its
+    // doctrine but joins no player's group and has no companion relationship.
+    static BotSessionSpawnResult SpawnHostileBotPlayerOnAccount(
+        std::uint32_t botAccountId,
+        ObjectGuid characterGuid);
 };
 } // namespace integration
 } // namespace living_world

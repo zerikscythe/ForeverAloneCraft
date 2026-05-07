@@ -658,6 +658,91 @@ ParsedCommand ParseBotActionCommand(BotRef botRef, std::string_view remaining)
 }
 } // namespace
 
+// Maps a lowercase class name token to the WoW class ID used in the DB.
+// Returns 0 for unknown names so the caller can emit a clean error.
+std::uint8_t ClassNameToId(std::string_view name)
+{
+    if (name == "warrior")                       return 1;
+    if (name == "paladin")                       return 2;
+    if (name == "hunter")                        return 3;
+    if (name == "rogue")                         return 4;
+    if (name == "priest")                        return 5;
+    if (name == "dk" || name == "deathknight")   return 6;
+    if (name == "shaman")                        return 7;
+    if (name == "mage")                          return 8;
+    if (name == "warlock")                       return 9;
+    if (name == "druid")                         return 11;
+    return 0;
+}
+
+ParsedCommand ParseRaidVerb(
+    std::string_view verb, std::string_view remaining)
+{
+    if (verb == "request")
+    {
+        std::string_view classToken = ConsumeToken(remaining);
+        if (classToken.empty())
+            return MakeError(
+                CommandParseErrorKind::MissingArgument,
+                "class required (warrior/paladin/hunter/rogue/priest/dk/"
+                "shaman/mage/warlock/druid)");
+
+        std::uint8_t const classId = ClassNameToId(classToken);
+        if (classId == 0)
+            return MakeError(
+                CommandParseErrorKind::InvalidArgument,
+                std::string("unknown class: ") + std::string(classToken));
+
+        std::string_view specToken = ConsumeToken(remaining);
+        if (specToken.empty())
+            return MakeError(
+                CommandParseErrorKind::MissingArgument,
+                "spec/role required (tank/healer/dps)");
+        if (specToken != "tank" && specToken != "healer" && specToken != "dps")
+            return MakeError(
+                CommandParseErrorKind::InvalidArgument,
+                "spec must be tank, healer, or dps");
+
+        std::string_view levelToken = ConsumeToken(remaining);
+        std::uint64_t level = 0;
+        if (levelToken.empty() || !ParseUInt64(levelToken, level)
+            || level < 1 || level > 80)
+            return MakeError(
+                CommandParseErrorKind::InvalidArgument,
+                "level must be 1-80");
+
+        std::string_view ilvlToken = ConsumeToken(remaining);
+        std::uint64_t ilvl = 0;
+        if (ilvlToken.empty() || !ParseUInt64(ilvlToken, ilvl))
+            return MakeError(
+                CommandParseErrorKind::InvalidArgument,
+                "min_ilvl must be a number");
+
+        RaidRequestCommand cmd;
+        cmd.classId  = classId;
+        cmd.specRole = std::string(specToken);
+        cmd.minLevel = static_cast<std::uint8_t>(level);
+        cmd.minIlvl  = static_cast<std::uint16_t>(ilvl > 65535 ? 65535 : ilvl);
+        return cmd;
+    }
+
+    if (verb == "dismiss")
+    {
+        std::string_view refToken = ConsumeToken(remaining);
+        auto botRefResult = ParseBotRef(refToken);
+        if (CommandParseError const* err =
+                std::get_if<CommandParseError>(&botRefResult))
+            return *err;
+        RaidDismissCommand cmd;
+        cmd.botRef = std::get<BotRef>(std::move(botRefResult));
+        return cmd;
+    }
+
+    return MakeError(
+        CommandParseErrorKind::UnknownVerb,
+        std::string("unknown raid verb: ") + std::string(verb));
+}
+
 ParsedCommand ParseLivingWorldCommand(std::string_view arguments)
 {
     std::string_view remaining = TrimWhitespace(arguments);
@@ -678,6 +763,16 @@ ParsedCommand ParseLivingWorldCommand(std::string_view arguments)
         }
 
         return ParseRosterVerb(verb, remaining);
+    }
+
+    if (firstToken == "raid")
+    {
+        std::string_view verb = ConsumeToken(remaining);
+        if (verb.empty())
+            return MakeError(
+                CommandParseErrorKind::MissingArgument,
+                "raid verb required (request/dismiss)");
+        return ParseRaidVerb(verb, remaining);
     }
 
     // Support the shorter `.lwbot list|request|dismiss` forms in addition to

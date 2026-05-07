@@ -821,7 +821,22 @@ public:
             return;
         }
 
-        // Copy all spells the owner has learned. The bot is a fidelity clone —
+        // ownerGuid counter == 0 is the hostile-bot sentinel written by
+        // SpawnHostileBotPlayerOnAccount (ObjectGuid::Empty as owner).
+        // These bots fight back but join no group and have no owner.
+        if (ownerGuid->GetCounter() == 0)
+        {
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] HostileBotLogin bot='{}' guid={} — "
+                "scheduling hostile AI, no group join.",
+                player->GetName(),
+                player->GetGUID().GetCounter());
+            living_world::ai::ScheduleHostileCompanionAI(player);
+            return;
+        }
+
+        // Copy all spells the owner has learned.
         // it knows exactly what the owner knows, no more. Use .lwbot train to
         // teach new spells at a class trainer (charges the owner gold).
         Player* owner = ObjectAccessor::FindPlayer(*ownerGuid);
@@ -885,6 +900,13 @@ public:
             "UPDATE living_world_bot_account_pool "
             "SET is_available = 1, reserved_for = NULL WHERE account_id = {}",
             player->GetSession()->GetAccountId());
+
+        // Release the raid pool character slot if this was a pool bot.
+        // This is a no-op (0 rows updated) for AccountAlt clone bots.
+        CharacterDatabase.Execute(
+            "UPDATE living_world_pool_character SET is_available = 1 "
+            "WHERE character_guid = {}",
+            player->GetGUID().GetCounter());
 
         living_world::service::BotPlayerRegistry::Instance()
             .UnregisterBotPlayer(player);

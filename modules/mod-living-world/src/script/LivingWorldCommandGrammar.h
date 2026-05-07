@@ -318,6 +318,26 @@ struct BotInfoCommand
     BotRef botRef;
 };
 
+// "raid request <class> <spec_role> <level> <min_ilvl>"
+// Pull a matching server-pool bot, spawn at player, add to raid group.
+// class    : warrior | paladin | hunter | rogue | priest | dk | shaman | mage | warlock | druid
+// spec_role: tank | healer | dps
+// level    : 1-80
+// min_ilvl : 0-N (average item level floor)
+struct RaidRequestCommand
+{
+    std::uint8_t  classId  = 0;
+    std::string   specRole;       // "tank", "healer", "dps"
+    std::uint8_t  minLevel = 1;
+    std::uint16_t minIlvl  = 0;
+};
+
+// "raid dismiss <name|#>" — log out a raid pool bot and return it to the pool.
+struct RaidDismissCommand
+{
+    BotRef botRef;
+};
+
 
 using ParsedCommand = std::variant<
     CommandParseError,
@@ -353,7 +373,9 @@ using ParsedCommand = std::variant<
     BotAddTalentCommand,
     BotResetTalentsCommand,
     BotApplyTalentTemplateCommand,
-    BotTalentFavoriteCommand>;
+    BotTalentFavoriteCommand,
+    RaidRequestCommand,
+    RaidDismissCommand>;
 
 
 // Parse a raw command argument string (everything after `.lwbot `). The

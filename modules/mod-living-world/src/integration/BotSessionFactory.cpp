@@ -226,5 +226,74 @@ BotSessionSpawnResult BotSessionFactory::SpawnBotPlayerOnAccount(
     sWorldSessionMgr->AddSession(session);
     return result;
 }
-} // namespace integration
-} // namespace living_world
+
+BotSessionSpawnResult BotSessionFactory::SpawnHostileBotPlayerOnAccount(
+    std::uint32_t botAccountId,
+    ObjectGuid characterGuid)
+{
+    BotSessionSpawnResult result;
+    if (!characterGuid.IsPlayer())
+    {
+        result.status = BotSessionSpawnStatus::InvalidCharacterGuid;
+        LOG_ERROR(
+            "server.worldserver",
+            "[LivingWorld] SpawnHostileBotPlayerOnAccount invalid guid "
+            "botAccountId={} characterGuid={}",
+            botAccountId,
+            characterGuid.GetCounter());
+        return result;
+    }
+
+    std::optional<BotAccountInfo> account = LoadBotAccountInfo(botAccountId);
+    if (!account)
+    {
+        result.status = BotSessionSpawnStatus::BotAccountNotFound;
+        result.botAccountId = botAccountId;
+        LOG_ERROR(
+            "server.worldserver",
+            "[LivingWorld] SpawnHostileBotPlayerOnAccount failed account lookup "
+            "botAccountId={} characterGuid={}",
+            botAccountId,
+            characterGuid.GetCounter());
+        return result;
+    }
+
+    std::string accountName = account->name;
+    auto session = new WorldSession(
+        account->id,
+        std::move(account->name),
+        account->flags,
+        nullptr,
+        account->security,
+        account->expansion,
+        account->muteTime,
+        account->locale,
+        account->recruiter,
+        false,
+        true,
+        account->totalTime);
+    session->EnableBotMode();
+    session->SetBotLoginTarget(characterGuid);
+
+    // Register with ObjectGuid::Empty as the owner sentinel so OnPlayerLogin
+    // recognises this as an ownerless hostile bot and schedules HostileCompanionAI.
+    service::BotPlayerRegistry::Instance().RegisterPendingOwner(
+        characterGuid,
+        ObjectGuid::Empty);
+
+    // No DB position seeding — hostile bots spawn wherever their character
+    // record currently places them (set up by the admin at bot creation time).
+
+    result.status = BotSessionSpawnStatus::SpawnQueued;
+    result.botAccountId = account->id;
+    result.botAccountName = accountName;
+    LOG_INFO(
+        "server.worldserver",
+        "[LivingWorld] SpawnHostileBotPlayerOnAccount queuing session "
+        "botAccountId={} botAccountName='{}' characterGuid={}",
+        account->id,
+        accountName,
+        characterGuid.GetCounter());
+    sWorldSessionMgr->AddSession(session);
+    return result;
+}

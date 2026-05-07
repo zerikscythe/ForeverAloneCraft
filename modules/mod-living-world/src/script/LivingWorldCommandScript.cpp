@@ -1229,7 +1229,167 @@ void RenderRosterRequest(
         execution.failed);
 }
 
-void RenderDismissBot(
+// ---------------------------------------------------------------------------
+// Raid pool commands  (.lwbot raid request / .lwbot raid dismiss)
+// ---------------------------------------------------------------------------
+
+void HandleRaidRequest(
+    ChatHandler* handler,
+    RaidRequestCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage(
+            "LivingWorld raid request requires an in-game player.");
+        return;
+    }
+
+    // Match pool character faction to the requester's faction.
+    std::uint8_t const faction =
+        player->GetTeamId() == TEAM_HORDE ? 2 : 1;
+
+    QueryResult result = CharacterDatabase.Query(
+        "SELECT bot_account_id, character_guid "
+        "FROM living_world_pool_character "
+        "WHERE class_id = {} AND spec_role = '{}' "
+        "  AND level >= {} AND avg_ilvl >= {} "
+        "  AND faction = {} AND is_available = 1 "
+        "ORDER BY RAND() LIMIT 1",
+        command.classId,
+        command.specRole,
+        command.minLevel,
+        command.minIlvl,
+        faction);
+
+    if (!result)
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld no available pool bot for class {} role '{}' "
+            "level {}+ ilvl {}+.",
+            command.classId,
+            command.specRole,
+            command.minLevel,
+            command.minIlvl);
+        return;
+    }
+
+    std::uint32_t const botAccountId = (*result)[0].Get<std::uint32_t>();
+    std::uint64_t const charGuidLow  = (*result)[1].Get<std::uint64_t>();
+    ObjectGuid const charGuid =
+        ObjectGuid::Create<HighGuid::Player>(charGuidLow);
+
+    // Reserve both the pool character row and the bot account row before
+    // queuing the session; DirectExecute blocks until the write is committed.
+    CharacterDatabase.DirectExecute(
+        "UPDATE living_world_pool_character SET is_available = 0 "
+        "WHERE character_guid = {}",
+        charGuidLow);
+
+    LoginDatabase.DirectExecute(
+        "UPDATE living_world_bot_account_pool "
+        "SET is_available = 0, reserved_for = {} WHERE account_id = {}",
+        player->GetGUID().GetCounter(),
+        botAccountId);
+
+    integration::BotSessionSpawnResult const spawnResult =
+        integration::BotSessionFactory::SpawnBotPlayerOnAccount(
+            botAccountId,
+            charGuid,
+            player->GetGUID());
+
+    if (spawnResult.status != integration::BotSessionSpawnStatus::SpawnQueued)
+    {
+        // Roll back both reservations so the slot stays available.
+        CharacterDatabase.Execute(
+            "UPDATE living_world_pool_character SET is_available = 1 "
+            "WHERE character_guid = {}",
+            charGuidLow);
+        LoginDatabase.Execute(
+            "UPDATE living_world_bot_account_pool "
+            "SET is_available = 1, reserved_for = NULL WHERE account_id = {}",
+            botAccountId);
+
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld failed to spawn raid bot: {}.",
+            ToBotSpawnStatusText(spawnResult.status));
+        return;
+    }
+
+    SendPlayerLog(
+        handler,
+        static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+        "LivingWorld queued raid bot login — class {} role '{}' "
+        "using bot account {}.",
+        command.classId,
+        command.specRole,
+        spawnResult.botAccountId);
+}
+
+void HandleRaidDismiss(
+    ChatHandler* handler,
+    RaidDismissCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage(
+            "LivingWorld raid dismiss requires an in-game player.");
+        return;
+    }
+
+    std::vector<Player*> const bots =
+        service::BotPlayerRegistry::Instance().FindBotsForOwner(
+            player->GetGUID());
+
+    Player* targetBot = nullptr;
+    if (std::uint32_t const* position =
+            std::get_if<std::uint32_t>(&command.botRef))
+    {
+        std::uint32_t const idx = *position;
+        if (idx >= 1 && idx <= static_cast<std::uint32_t>(bots.size()))
+            targetBot = bots[idx - 1];
+    }
+    else
+    {
+        std::string const& name = std::get<std::string>(command.botRef);
+        for (Player* bot : bots)
+            if (bot->GetName() == name) { targetBot = bot; break; }
+    }
+
+    if (!targetBot)
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld no active bot found matching that reference.");
+        return;
+    }
+
+    // Capture name before session teardown invalidates the pointer.
+    std::string const botName = targetBot->GetName();
+
+    if (Group* group = targetBot->GetGroup())
+        group->RemoveMember(targetBot->GetGUID(), GROUP_REMOVEMETHOD_LEAVE);
+
+    if (!targetBot->GetSession()->PlayerLogout())
+        targetBot->GetSession()->LogoutPlayer(true);
+
+    // OnPlayerLogout releases living_world_bot_account_pool and
+    // living_world_pool_character.is_available for us.
+    SendPlayerLog(
+        handler,
+        static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+        "LivingWorld dismissed raid bot '{}'.",
+        botName);
+}
+
     ChatHandler* handler,
     RosterDismissCommand const& command)
 {
@@ -4336,6 +4496,20 @@ bool HandleParsedCommand(
         std::get_if<BotTalentFavoriteCommand>(&parsed))
     {
         HandleBotTalentFavorite(handler, *command);
+        return true;
+    }
+
+    if (RaidRequestCommand const* command =
+        std::get_if<RaidRequestCommand>(&parsed))
+    {
+        HandleRaidRequest(handler, *command);
+        return true;
+    }
+
+    if (RaidDismissCommand const* command =
+        std::get_if<RaidDismissCommand>(&parsed))
+    {
+        HandleRaidDismiss(handler, *command);
         return true;
     }
 

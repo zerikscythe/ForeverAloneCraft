@@ -344,7 +344,7 @@ BotCombatRole ResolveDoctrineRole(
 BotCombatDoctrine LoadCombatDoctrine(Player* bot, Player* owner)
 {
     BotCombatDoctrine doctrine;
-    std::uint32_t ownerAccountId = owner->GetSession()
+    std::uint32_t ownerAccountId = (owner && owner->GetSession())
         ? owner->GetSession()->GetAccountId()
         : 0;
     service::BotCombatDoctrineResolution resolution =
@@ -395,7 +395,7 @@ service::BotCombatPreparedProfile GetPreparedCombatProfile(Player* bot, Player* 
             return it->second.profile;
     }
 
-    std::uint32_t ownerAccountId = owner->GetSession()
+    std::uint32_t ownerAccountId = (owner && owner->GetSession())
         ? owner->GetSession()->GetAccountId()
         : 0;
     service::BotCombatPreparedProfile preparedProfile =
@@ -441,7 +441,7 @@ void PushThreatAddonMessage(Player* bot, Player* owner, Unit* primaryTarget)
 
 bool TryExecuteProfileRotation(Player* bot, Player* owner, Unit* primaryTarget)
 {
-    if (!bot || !owner)
+    if (!bot)
         return false;
 
     PushThreatAddonMessage(bot, owner, primaryTarget);
@@ -1643,6 +1643,38 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& conserving)
 // Event class
 // ---------------------------------------------------------------
 
+// Called for hostile (ownerless) bots each tick.
+// No follow, no OOC buffs, no owner reference.
+// Resolves target from GetVictim() / attacker list, then runs the full
+// doctrine rotation (owner=nullptr is safe after null-hardening above).
+void TickHostile(Player* bot, float& retreatHpPct, bool& conserving)
+{
+    BotCombatDoctrine const doctrine = GetCombatDoctrine(bot, nullptr);
+    UpdateConservationState(doctrine.settings, bot, conserving);
+
+    Unit* target = bot->GetVictim();
+    if (!target)
+    {
+        for (Unit* attacker : bot->getAttackers())
+        {
+            if (attacker && attacker->IsAlive()
+                && bot->IsValidAttackTarget(attacker))
+            {
+                target = attacker;
+                break;
+            }
+        }
+    }
+
+    if (!target)
+        return; // No combat context — stand idle.
+
+    if (bot->GetVictim() != target)
+        bot->Attack(target, true);
+
+    TryExecuteProfileRotation(bot, nullptr, target);
+}
+
 class CompanionAIEvent final : public BasicEvent
 {
 public:
@@ -1660,6 +1692,34 @@ public:
     {
         Player* bot   = ObjectAccessor::FindPlayer(_botGuid);
         Player* owner = ObjectAccessor::FindConnectedPlayer(_ownerGuid);
+
+        // Ownerless hostile bot — tick independently, no owner required.
+        if (_ownerGuid.IsEmpty())
+        {
+            if (!bot)
+                return true; // Bot gone; stop event.
+            if (!bot->IsInWorld())
+            {
+                if (_notInWorldRetries >= MaxNotInWorldRetries)
+                    return true;
+                Milliseconds const delay =
+                    500ms * (1u << std::min(_notInWorldRetries, std::uint8_t{3}));
+                bot->m_Events.AddEventAtOffset(
+                    new CompanionAIEvent(
+                        _botGuid, ObjectGuid::Empty,
+                        _notInWorldRetries + 1, _retreatHpPct, _conserving),
+                    delay);
+                return true;
+            }
+            TickHostile(bot, _retreatHpPct, _conserving);
+            bot->m_Events.AddEventAtOffset(
+                new CompanionAIEvent(
+                    _botGuid, ObjectGuid::Empty,
+                    0, _retreatHpPct, _conserving),
+                500ms);
+            return true;
+        }
+
         if (!bot || !owner)
             return true;
 
@@ -1705,6 +1765,17 @@ void ScheduleCompanionAI(Player* botPlayer, Player* ownerPlayer)
 
     botPlayer->m_Events.AddEventAtOffset(
         new CompanionAIEvent(botPlayer->GetGUID(), ownerPlayer->GetGUID()),
+        500ms);
+}
+
+void ScheduleHostileCompanionAI(Player* botPlayer)
+{
+    if (!botPlayer)
+        return;
+
+    // ObjectGuid::Empty as ownerGuid signals the hostile (ownerless) tick path.
+    botPlayer->m_Events.AddEventAtOffset(
+        new CompanionAIEvent(botPlayer->GetGUID(), ObjectGuid::Empty),
         500ms);
 }
 
