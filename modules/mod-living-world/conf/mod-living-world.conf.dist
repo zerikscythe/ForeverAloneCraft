@@ -21,6 +21,22 @@
 LivingWorld.EconomyScale = 1.0
 
 ###################################################################################################
+# AMBIENT WORLD POPULATION
+#
+#    LivingWorld.AmbientPopulation
+#        Target number of ambient bots the server tries to keep active at all times.
+#        Set to 0 to disable the ambient population system entirely.
+#        Default: 3
+#
+#    LivingWorld.AmbientPopulationTickMs
+#        How often (milliseconds) the population tick checks whether new ambient
+#        bots need to be spawned. Default: 300000 (5 minutes).
+###################################################################################################
+
+LivingWorld.AmbientPopulation = 3
+LivingWorld.AmbientPopulationTickMs = 300000
+
+###################################################################################################
 # ACCOUNT-ALT ITEM RECOVERY POLICY
 #
 #    LivingWorld.AccountAlt.EnableInventorySync

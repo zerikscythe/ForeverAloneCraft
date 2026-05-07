@@ -3,7 +3,9 @@
 #include "Config.h"
 #include "Duration.h"
 #include "EventProcessor.h"
+#include "ai/AmbientBotAI.h"
 #include "ai/CompanionAI.h"
+#include "integration/BotActivityLog.h"
 #include "script/LivingWorldChatConfig.h"
 #include "integration/SqlAccountAltRuntimeRepository.h"
 #include "integration/SqlCharacterAchievementSyncRepository.h"
@@ -821,18 +823,37 @@ public:
             return;
         }
 
-        // ownerGuid counter == 0 is the hostile-bot sentinel written by
+        // ownerGuid counter == 0 is the ownerless sentinel written by
         // SpawnHostileBotPlayerOnAccount (ObjectGuid::Empty as owner).
-        // These bots fight back but join no group and have no owner.
+        // Check living_world_ambient_bot to determine which AI path to take:
+        //   - ambient bot  → AmbientBotAI  (travel + activity, no combat)
+        //   - hostile bot  → HostileCompanionAI (fight back, no follow)
         if (ownerGuid->GetCounter() == 0)
         {
-            LOG_INFO(
-                "server.worldserver",
-                "[LivingWorldDebug] HostileBotLogin bot='{}' guid={} — "
-                "scheduling hostile AI, no group join.",
-                player->GetName(),
-                player->GetGUID().GetCounter());
-            living_world::ai::ScheduleHostileCompanionAI(player);
+            std::uint64_t const guid = player->GetGUID().GetCounter();
+            QueryResult ambientRow = CharacterDatabase.Query(
+                "SELECT 1 FROM living_world_ambient_bot WHERE character_guid = {}",
+                guid);
+            if (ambientRow)
+            {
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] AmbientBotLogin bot='{}' guid={} — "
+                    "scheduling ambient AI.",
+                    player->GetName(), guid);
+                living_world::integration::BotActivityLog::Record(
+                    player, "spawned");
+                living_world::ai::ScheduleAmbientBotAI(player);
+            }
+            else
+            {
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] HostileBotLogin bot='{}' guid={} — "
+                    "scheduling hostile AI, no group join.",
+                    player->GetName(), guid);
+                living_world::ai::ScheduleHostileCompanionAI(player);
+            }
             return;
         }
 
@@ -905,6 +926,13 @@ public:
         // This is a no-op (0 rows updated) for AccountAlt clone bots.
         CharacterDatabase.Execute(
             "UPDATE living_world_pool_character SET is_available = 1 "
+            "WHERE character_guid = {}",
+            player->GetGUID().GetCounter());
+
+        // Release ambient bot slot if this was an ambient bot.
+        CharacterDatabase.Execute(
+            "UPDATE living_world_ambient_bot "
+            "SET is_available = 1, last_activity_at = NOW() "
             "WHERE character_guid = {}",
             player->GetGUID().GetCounter());
 

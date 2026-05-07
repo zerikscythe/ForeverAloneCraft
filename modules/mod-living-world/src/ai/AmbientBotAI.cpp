@@ -1,0 +1,294 @@
+#include "ai/AmbientBotAI.h"
+#include "integration/BotActivityLog.h"
+#include "integration/SqlZoneIndexRepository.h"
+#include "service/BotActivitySessionComposer.h"
+
+#include "DatabaseEnv.h"
+#include "Duration.h"
+#include "EventProcessor.h"
+#include "Log.h"
+#include "MotionMaster.h"
+#include "ObjectAccessor.h"
+#include "Player.h"
+#include "WorldSession.h"
+
+#include <chrono>
+#include <cstddef>
+#include <optional>
+
+namespace living_world
+{
+namespace ai
+{
+namespace
+{
+// Yards — bot is considered "arrived" once within this distance of anchor.
+constexpr float ArrivalThreshold = 15.f;
+// How often we log an activity-tick heartbeat (every N ticks of 500ms = N*500ms).
+constexpr std::uint32_t ActivityLogIntervalTicks = 120; // 60 seconds
+
+// ---------------------------------------------------------------------------
+// Event
+// ---------------------------------------------------------------------------
+class AmbientBotAIEvent final : public BasicEvent
+{
+public:
+    AmbientBotAIEvent(
+        ObjectGuid botGuid,
+        service::AmbientSession session,
+        std::size_t currentStep = 0,
+        std::uint32_t stepElapsedSec = 0,
+        std::uint8_t  notInWorldRetries = 0,
+        std::uint32_t activityLogTick = 0)
+        : _botGuid(botGuid)
+        , _session(std::move(session))
+        , _currentStep(currentStep)
+        , _stepElapsedSec(stepElapsedSec)
+        , _notInWorldRetries(notInWorldRetries)
+        , _activityLogTick(activityLogTick)
+    {
+    }
+
+    bool Execute(uint64, uint32) override
+    {
+        Player* bot = ObjectAccessor::FindPlayer(_botGuid);
+        if (!bot)
+            return true; // Bot gone — stop.
+
+        if (!bot->IsInWorld())
+        {
+            constexpr std::uint8_t MaxRetries = 8;
+            if (_notInWorldRetries >= MaxRetries)
+                return true;
+            Milliseconds const delay =
+                500ms * (1u << std::min(_notInWorldRetries, std::uint8_t{3}));
+            bot->m_Events.AddEventAtOffset(
+                new AmbientBotAIEvent(
+                    _botGuid, _session, _currentStep,
+                    _stepElapsedSec, _notInWorldRetries + 1, _activityLogTick),
+                delay);
+            return true;
+        }
+
+        // All steps complete — log out and return to pool.
+        if (_currentStep >= _session.steps.size())
+        {
+            integration::BotActivityLog::Record(bot, "despawn",
+                "Session complete: " + _session.displayName);
+            CharacterDatabase.Execute(
+                "UPDATE living_world_ambient_bot "
+                "SET is_available = 1, last_activity_at = NOW() "
+                "WHERE character_guid = {}",
+                bot->GetGUID().GetCounter());
+            if (!bot->GetSession()->PlayerLogout())
+                bot->GetSession()->LogoutPlayer(true);
+            return true;
+        }
+
+        service::AmbientStep const& step = _session.steps[_currentStep];
+        TickStep(bot, step);
+        return true;
+    }
+
+private:
+    void TickStep(Player* bot, service::AmbientStep const& step)
+    {
+        using T = service::AmbientStepType;
+        switch (step.type)
+        {
+            case T::Travel:
+                TickTravel(bot, step);
+                break;
+            case T::GatherHerb:
+            case T::GatherOre:
+            case T::Fish:
+            case T::Patrol:
+            case T::Idle:
+                TickActivity(bot, step);
+                break;
+        }
+    }
+
+    void TickTravel(Player* bot, service::AmbientStep const& step)
+    {
+        // Cross-map travel: teleport the bot to the destination map/zone.
+        // Same-map travel: use MovePoint so the bot physically walks.
+        if (bot->GetMapId() != step.mapId)
+        {
+            integration::BotActivityLog::Record(bot, "travel_teleport",
+                step.label);
+            bot->TeleportTo(step.mapId, step.x, step.y, step.z,
+                bot->GetOrientation());
+            AdvanceAndReschedule(bot, 2000ms);
+            return;
+        }
+
+        float const dist = bot->GetDistance(step.x, step.y, step.z);
+        if (dist <= ArrivalThreshold)
+        {
+            integration::BotActivityLog::Record(bot, "travel_arrive",
+                step.label);
+            AdvanceAndReschedule(bot, 500ms);
+            return;
+        }
+
+        // Issue MovePoint only when we're not already heading there.
+        if (bot->GetMotionMaster()->GetCurrentMovementGeneratorType()
+            != POINT_MOTION_TYPE)
+        {
+            integration::BotActivityLog::Record(bot, "travel_start",
+                step.label + " (dist=" + std::to_string(static_cast<int>(dist)) + "m)");
+            bot->GetMotionMaster()->MovePoint(
+                static_cast<std::uint32_t>(_currentStep),
+                step.x, step.y, step.z);
+        }
+
+        Reschedule(bot, 500ms);
+    }
+
+    void TickActivity(Player* bot, service::AmbientStep const& step)
+    {
+        // Log activity start on the very first tick.
+        if (_stepElapsedSec == 0)
+        {
+            integration::BotActivityLog::Record(bot, "activity_start",
+                step.label);
+        }
+
+        // Periodic heartbeat log.
+        ++_activityLogTick;
+        if (_activityLogTick % ActivityLogIntervalTicks == 0)
+        {
+            integration::BotActivityLog::Record(bot, "activity_tick",
+                step.label + " (" + std::to_string(_stepElapsedSec) + "s elapsed)");
+        }
+
+        _stepElapsedSec += 1; // Each tick = ~1 second (2 ticks per second * 0.5s)
+
+        if (_stepElapsedSec >= step.durationSec)
+        {
+            integration::BotActivityLog::Record(bot, "activity_complete",
+                step.label);
+            AdvanceAndReschedule(bot, 500ms);
+            return;
+        }
+
+        Reschedule(bot, 500ms);
+    }
+
+    // Move to next step and reschedule.
+    void AdvanceAndReschedule(Player* bot, Milliseconds delay)
+    {
+        bot->m_Events.AddEventAtOffset(
+            new AmbientBotAIEvent(
+                _botGuid, _session, _currentStep + 1,
+                0, 0, _activityLogTick),
+            delay);
+    }
+
+    // Reschedule the same step.
+    void Reschedule(Player* bot, Milliseconds delay)
+    {
+        bot->m_Events.AddEventAtOffset(
+            new AmbientBotAIEvent(
+                _botGuid, _session, _currentStep,
+                _stepElapsedSec, 0, _activityLogTick),
+            delay);
+    }
+
+    ObjectGuid               _botGuid;
+    service::AmbientSession  _session;
+    std::size_t              _currentStep      = 0;
+    std::uint32_t            _stepElapsedSec   = 0;
+    std::uint8_t             _notInWorldRetries = 0;
+    std::uint32_t            _activityLogTick  = 0;
+};
+
+// Fetch ambient bot's skills from DB to inform session composition.
+struct AmbientBotProfile
+{
+    std::uint8_t faction       = 2;
+    std::uint8_t classId       = 0;
+    std::uint8_t level         = 1;
+    bool         hasHerbalism  = false;
+    bool         hasMining     = false;
+    bool         hasFishing    = false;
+};
+
+std::optional<AmbientBotProfile> LoadAmbientProfile(std::uint64_t charGuid)
+{
+    QueryResult qr = CharacterDatabase.Query(
+        "SELECT faction, class_id, level, "
+        "has_herbalism, has_mining, has_fishing "
+        "FROM living_world_ambient_bot WHERE character_guid = {}",
+        charGuid);
+    if (!qr)
+        return std::nullopt;
+
+    Field const* f = qr->Fetch();
+    AmbientBotProfile p;
+    p.faction      = f[0].Get<std::uint8_t>();
+    p.classId      = f[1].Get<std::uint8_t>();
+    p.level        = f[2].Get<std::uint8_t>();
+    p.hasHerbalism = f[3].Get<std::uint8_t>() != 0;
+    p.hasMining    = f[4].Get<std::uint8_t>() != 0;
+    p.hasFishing   = f[5].Get<std::uint8_t>() != 0;
+    return p;
+}
+} // namespace
+
+void ScheduleAmbientBotAI(Player* botPlayer)
+{
+    if (!botPlayer)
+        return;
+
+    std::uint64_t const guid = botPlayer->GetGUID().GetCounter();
+
+    auto profile = LoadAmbientProfile(guid);
+    if (!profile)
+    {
+        LOG_WARN("server.worldserver",
+            "[LivingWorld] ScheduleAmbientBotAI: no ambient profile for guid={}", guid);
+        return;
+    }
+
+    service::BotActivitySessionComposer composer;
+    auto session = composer.Compose(
+        profile->faction,
+        profile->level,
+        profile->hasHerbalism,
+        profile->hasMining,
+        profile->hasFishing);
+
+    if (!session)
+    {
+        LOG_WARN("server.worldserver",
+            "[LivingWorld] ScheduleAmbientBotAI: no eligible activity for guid={} "
+            "faction={} level={}",
+            guid, profile->faction, profile->level);
+        // Log out gracefully — nothing to do.
+        integration::BotActivityLog::Record(botPlayer, "despawn",
+            "No eligible activity found");
+        CharacterDatabase.Execute(
+            "UPDATE living_world_ambient_bot "
+            "SET is_available = 1 WHERE character_guid = {}",
+            guid);
+        if (!botPlayer->GetSession()->PlayerLogout())
+            botPlayer->GetSession()->LogoutPlayer(true);
+        return;
+    }
+
+    LOG_INFO("server.worldserver",
+        "[LivingWorld] AmbientBot guid={} name='{}' assigned activity '{}'",
+        guid, botPlayer->GetName(), session->displayName);
+
+    integration::BotActivityLog::Record(botPlayer, "ai_assigned",
+        session->displayName);
+
+    botPlayer->m_Events.AddEventAtOffset(
+        new AmbientBotAIEvent(botPlayer->GetGUID(), std::move(*session)),
+        500ms);
+}
+
+} // namespace ai
+} // namespace living_world
