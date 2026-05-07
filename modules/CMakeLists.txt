@@ -198,12 +198,17 @@ foreach(SOURCE_MODULE ${MODULES_MODULE_LIST})
       # module build even when a stale generated project misses them.
       if (SOURCE_MODULE STREQUAL "mod-living-world")
         list(APPEND PRIVATE_SOURCES_MODULES
+          ${MODULE_SOURCE_PATH}/ai/AmbientBotAI.cpp
           ${MODULE_SOURCE_PATH}/ai/BotHazardSensor.cpp
+          ${MODULE_SOURCE_PATH}/integration/BotActivityLog.cpp
+          ${MODULE_SOURCE_PATH}/integration/SqlActivityLibraryRepository.cpp
           ${MODULE_SOURCE_PATH}/integration/SqlBotGlobalConfigRepository.cpp
           ${MODULE_SOURCE_PATH}/integration/SqlBotHazardConfigRepository.cpp
           ${MODULE_SOURCE_PATH}/integration/SqlBotOocConfigRepository.cpp
           ${MODULE_SOURCE_PATH}/integration/SqlBotTalentPreferenceRepository.cpp
           ${MODULE_SOURCE_PATH}/integration/SqlBotTalentTemplateRepository.cpp
+          ${MODULE_SOURCE_PATH}/integration/SqlZoneIndexRepository.cpp
+          ${MODULE_SOURCE_PATH}/service/BotActivitySessionComposer.cpp
           ${MODULE_SOURCE_PATH}/service/BotContextService.cpp
           ${MODULE_SOURCE_PATH}/service/BotGlobalConfigService.cpp
           ${MODULE_SOURCE_PATH}/service/BotHazardConfigService.cpp
