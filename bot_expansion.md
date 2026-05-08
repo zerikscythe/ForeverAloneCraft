@@ -10,6 +10,177 @@ objects, and use the same CompanionAI / AmbientBotAI / GuildBotAI that drives
 the clone system. The taxonomy below is about **ownership, persistence, and
 command namespace** — not about different spawn technology.
 
+### Intent clarification: two tiers, one spawn technology
+
+Future agents must not confuse **account-owned** with **account-backed**.
+
+There are **two gameplay tiers** in this project:
+
+#### Tier 1 — Account Bots
+These are the player's own characters, materialized as persistent clones on
+BOTHOUSE/pool accounts.
+
+Key traits:
+- tied to a real player account and source character
+- spawned by the custom roster/account-alt command flow
+- persistent identity over time
+- clone progress syncs back to the original source character
+- this is the "your alt, but active as a bot right now" system
+
+#### Tier 2 — Non-Account Bots
+These are all other bots in the world: ambient bots, hostile faction bots, and
+specialized queue/instance bots.
+
+Key traits:
+- **not** tied to a player's personal alt roster
+- **not** part of the clone-sync-back-to-source pipeline
+- authored from DB/config templates rather than from an owned source character
+- assigned a session/task plan (travel, gather, patrol, fight, quest, etc.)
+- meant to **pretend to be players** in the world
+
+#### Intent clarification: Tier 2 bots are task-chain/session bots
+
+The intended behavior model for non-account bots is **not** "pick exactly one
+activity and idle there forever."
+
+Instead, each Tier 2 bot should be assembled from:
+- a bot template or generated identity
+- faction / class / role / level-range data
+- default combat doctrine/profile selection
+- a **random chained task list** for the session
+
+Initial design target:
+- each bot session should receive roughly **3 to 10 tasks**
+- tasks may be completed in sequence as a believable "day in the life"
+- travel is part of the chain, not an afterthought
+
+Example chained session:
+1. Go quest in a level-appropriate zone
+2. Travel there by walking or taxi
+3. Visit auction house
+4. Visit mailbox
+5. Travel to a mining zone
+6. Gather ore
+7. Travel to another hub
+8. Idle, patrol, or look for faction conflict
+
+So the planner should think in terms of:
+- **session composition**
+- **task chaining**
+- **travel between tasks**
+- **bot lifetime/session expiration**
+- not just single isolated destination picks
+
+#### Intent clarification: task types should be DB-authored
+
+The long-term plan is to keep a database/library entry for many different task
+types and let the session planner assemble a believable chain from them.
+
+Examples of task families:
+- questing in a level-appropriate zone
+- city errands
+  - auction house
+  - mailbox
+  - vendor
+  - inn
+  - trainer
+- gathering
+  - ore
+  - herbs
+  - fishing
+- travel
+  - walk
+  - taxi
+- patrol / roam
+- faction conflict / ambush / hunt-weaker-enemy behavior
+- dungeon / battleground / raid queue behavior for specialized subsets later
+
+The "thing" inside a task, such as:
+- a level-appropriate questing zone
+- a mining zone
+- a city hub
+- a contested PvP zone
+
+should come from lookup tables rather than hardcoded one-off choices.
+
+#### Intent clarification: zone lookup should be level-band aware
+
+A core planner rule is that zone/task selection should use lookup tables that
+support level-band matching.
+
+Initial expectation:
+- choose zones that are appropriate for the bot's level
+- allow a tolerance of about **±5 levels** around the bot where that makes
+  sense
+- use faction, continent, travel feasibility, and zone type as additional
+  filters later
+
+This supports believable variety:
+- low-level bots stay in starter/early zones
+- mid-level bots circulate through classic leveling regions
+- high-level bots can enter contested or expansion zones
+- specialized hostile bots can prefer dangerous cross-faction regions
+
+#### Intent clarification: scale target
+
+The long-term world-population target is much larger than the first validation
+slice.
+
+Early local validation can start small, but the intended live direction is:
+- a broad mix of level ranges
+- potentially **300–500 active bots per faction**
+- enough variety that the world feels inhabited rather than scripted
+
+That scale goal is why task composition, zone lookup, and cheap session logic
+must stay data-driven.
+
+#### Intent clarification: faction conflict tasks are valid session content
+
+Some Tier 2 bots should be able to receive more dangerous or aggressive tasks.
+
+Example:
+- a level 50+ rogue might get a task like:
+  - go to Stranglethorn
+  - hunt weaker opposite-faction targets
+  - create tension/spice in the zone
+
+These should still be planner-authored tasks, not special one-off hacks.
+They are part of making the world feel active, unpredictable, and occasionally
+hostile.
+
+Important terminology rule:
+- **"non-account bot" does _not_ mean "no AzerothCore account/session exists"**
+- it means **"not owned by a player's alt/account-bot sync model"**
+
+In other words:
+- Tier 1 and Tier 2 are different in **ownership and persistence rules**
+- but they may still share the same underlying Player-session spawn machinery
+
+This distinction exists to prevent a common misunderstanding:
+- Tier 1 bots are persistent player-owned clone bots
+- Tier 2 bots are world/system bots driven by DB-authored templates and task
+  sessions
+- both may still be spawned through the same lower-level factory/session path
+
+### Intent clarification: BotSessionFactory is infrastructure, not taxonomy
+
+`BotSessionFactory` is the shared low-level spawn/session mechanism.
+
+It should not be treated as proof that every gameplay bot category has the same
+ownership model.
+
+Examples:
+- Tier 1 account-alt clones may use `BotSessionFactory`
+- Tier 2 ambient/hostile/instance bots may also use `BotSessionFactory`
+
+That shared infrastructure does **not** collapse the design into one tier.
+What differs is:
+- where the bot identity comes from
+- whether it syncs to a source character
+- whether it is persistent or session-authored
+- how its task list/session is chosen
+- what command namespace or autonomous system owns it
+
 ---
 
 ## Bot Taxonomy
@@ -43,11 +214,11 @@ Status: **Already works.** No changes needed in this category.
 
 ### Category 2 — Raid Pool Bots (NEW — `.lwbot raid`)
 
-**What they are:** Server-side pre-generated characters. No account ownership.
-A GM/admin creates these characters once (leveled, geared) and registers them
-in the pool. When a player needs a warm body for a raid, they call one by role
-and gear level. The bot joins the group, uses CompanionAI and doctrine, and
-fights alongside the player.
+**What they are:** Server-side pre-generated characters. No player-account
+ownership or clone-sync relationship. A GM/admin creates these characters once
+(leveled, geared) and registers them in the pool. When a player needs a warm
+body for a raid, they call one by role and gear level. The bot joins the group,
+uses CompanionAI and doctrine, and fights alongside the player.
 
 **No progression sync. No guild affiliation. Pure companion utility.**
 
@@ -107,6 +278,60 @@ Players can also call guild bots to their location on demand.
 **Guild bots are persistent characters.** They are not drawn from a generic
 pool — each one is a named, ongoing guild member with its own history.
 
+#### Intent clarification: guild bots are a persistent Tier 2 subtype
+
+Guild bots are an important special case inside Tier 2.
+
+Unlike more disposable session-authored ambient bots, many guild bots should be
+treated as **permanent flavor characters**:
+- same name
+- same look
+- same guild membership
+- same broad identity over time
+
+These are still Tier 2 non-account bots:
+- not tied to a player's account-alt sync pipeline
+- not part of the roster/account clone system
+
+But they are meant to feel like recurring guild members rather than temporary
+faceless world population.
+
+#### Intent clarification: guild bots as "task rabbits"
+
+A primary use case for permanent guild bots is as controllable **task rabbits**.
+
+The intended gameplay loop is:
+- the player has guild bots registered to the guild
+- a custom in-world object, likely a **pedestal near the guild bank**, is used
+  to assign or force tasks
+- the selected guild bot is told to perform a task such as:
+  - gather ore
+  - gather herbs
+  - complete a delivery/run
+  - return and deposit into the guild bank
+
+This means guild bots need two operating modes:
+- **autonomous mode** — they choose/receive normal activity sessions
+- **forced-task mode** — the player explicitly assigns a task through the guild
+  control object or command surface
+
+Forced-task mode should override normal wandering behavior until the task is
+complete, cancelled, or times out.
+
+#### Intent clarification: guild bots may need real inventory/economy state
+
+Guild bots are the Tier 2 subtype most likely to need real gameplay state.
+
+Expected direction:
+- they may carry real items in bags
+- they may gather real resources from the world
+- they may deposit real items and/or gold into the guild bank
+
+If full player-like inventory is too heavy in an early slice, some parts may be
+faked temporarily, but the intended long-term direction is that guild task
+rabbits should be able to behave like real player gatherers with meaningful
+resource output.
+
 #### Guild Bot Autonomy Flow
 
 1. Server `OnUpdate` tick wakes a guild bot that has been offline long enough.
@@ -132,6 +357,11 @@ pool — each one is a named, ongoing guild member with its own history.
 - `.lwbot guild dismiss <name|#>` — release the bot back to autonomous mode.
 - `.lwbot guild deposit` — force an immediate deposit of whatever the bot
   currently carries to the guild bank.
+
+Longer-term control surface:
+- a custom guild-side in-world object, likely a **pedestal near the guild
+  bank**, should allow forced assignment of rabbit/work tasks to permanent guild
+  bots without needing to rely only on chat commands.
 
 #### DB Schema
 
@@ -185,6 +415,11 @@ new player logging in. They are **visually real but economically inert** — the
 simulate gathering (remove nodes) but items are discarded; they do not deposit
 anything anywhere.
 
+These are Tier 2 world/system bots:
+- not owned by a player
+- not source-clone bots
+- session/task driven rather than alt-sync driven
+
 No player command spawns or controls these. The server manages them entirely.
 
 Autonomous loop (same structure as guild bots, minus the deposit step):
@@ -194,6 +429,20 @@ Autonomous loop (same structure as guild bots, minus the deposit step):
 4. Gather steps interact with nodes and discard items (no inventory fill).
 5. Bot logs out after the session.
 
+Intended expansion of this loop:
+- ambient/world bots should eventually receive **multi-step chained sessions**
+  instead of only a single destination/activity pair
+- a session should be assembled from a task library and may include:
+  - questing
+  - city errands
+  - mailbox/AH visits
+  - gathering
+  - patrol
+  - faction-tension tasks
+- travel legs should explicitly connect the tasks
+- session length should feel like a believable wandering player routine rather
+  than a single scripted stop
+
 ---
 
 ### Category 5 — Hostile / Rival Bots (NEW — server auto-spawn or event trigger)
@@ -202,6 +451,11 @@ Autonomous loop (same structure as guild bots, minus the deposit step):
 during city raid events. When attacked, they fight back using CompanionAI in
 hostileless mode (no owner → pick attacker as primary target). They do not join
 any player's party.
+
+These are also Tier 2 world/system bots:
+- faction/world-presence driven
+- not tied to a player's account-alt lifecycle
+- may be spawned from DB-authored templates and encounter/session rules
 
 No player command controls these. Spawned by population events or city raid
 triggers.
@@ -369,7 +623,12 @@ with class spells → bot is not in player's party UI.
 **Effort: large (~200 lines + DB)**
 
 See zone index, activity library, and session composer design above (Categories
-4 and 5 share this infrastructure). Key deliverables:
+4 and 5 share this infrastructure). The first implementation may start with
+simple activity selection, but the intended target is a **multi-task chained
+session composer** that can build 3–10 step bot routines from DB-authored task
+types and level-appropriate lookup tables.
+
+Key deliverables:
 
 1. `living_world_zone_index` schema + ~70-row seed.
 2. `living_world_activity_library` schema + starter rows.
@@ -397,6 +656,16 @@ Player-model bots at the inn, near AH, moving on foot between districts.
 5. `.lwbot guild list/request/dismiss/deposit` command handlers.
 6. Autonomous wake tick in `LivingWorldWorldScript::OnUpdate` — respects
    `last_deposit_at` and `is_available` to avoid double-spawning.
+7. Add a guild-side forced-task surface for permanent guild bots:
+   - custom pedestal/object near the guild bank
+   - assign rabbit tasks like ore/herb runs
+   - force return/deposit behavior
+   - later allow richer task assignment without turning guild bots into generic
+     account-alt companions
+
+Additional design note:
+- guild bots are the main Tier 2 subtype that should keep a stable identity and
+  may justify real bags/inventory state rather than purely fake economic output.
 
 **Verification:**
 - Guild bot with herbalism spawns, travels to Felwood, gathers herbs (nodes

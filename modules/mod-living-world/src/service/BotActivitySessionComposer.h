@@ -29,15 +29,29 @@ struct AmbientStep
     float           y           = 0.f;
     float           z           = 0.f;
     std::uint32_t   durationSec = 600;
+    std::int32_t    taskIndex   = -1; // index into AmbientSession::tasks; -1 = session-level/no task
     std::string     label;
+};
+
+struct AmbientSessionTask
+{
+    std::uint32_t activityId   = 0;
+    std::string   activityKey;
+    std::string   displayName;
+    std::string   activityType;
+    std::string   taskFamily;
+    std::uint32_t targetZoneId = 0;
 };
 
 struct AmbientSession
 {
-    std::uint32_t           activityId  = 0;
-    std::string             activityKey;
-    std::string             displayName;
-    std::vector<AmbientStep> steps;    // always begins with a Travel step
+    // Legacy primary activity identity kept for compatibility with older callers.
+    // For chained sessions, tasks[] is the authoritative per-task metadata list.
+    std::uint32_t                  activityId  = 0;
+    std::string                    activityKey;
+    std::string                    displayName;
+    std::vector<AmbientSessionTask> tasks;
+    std::vector<AmbientStep>       steps;    // each task contributes Travel -> Activity
 };
 
 // Builds a destination-first activity session for a bot.

@@ -30,7 +30,10 @@ struct ActivityEntry
     std::uint32_t activityId         = 0;
     std::string   activityKey;
     std::string   displayName;
-    std::string   activityType;      // "patrol","gather_herb","gather_ore","fish","idle_city","idle_inn"
+    std::string   activityType;      // runtime primitive: patrol|gather_herb|gather_ore|fish|idle_city|idle_inn
+    std::string   taskFamily;        // authoring family: city_errand|gathering|patrol|fishing|questing
+    std::string   requiredZoneType;  // ""/any|city|wilderness|contested
+    std::uint8_t  maxPerSession      = 1;
     std::uint32_t targetZoneId       = 0;
     std::uint8_t  requiredFaction    = 0;
     std::uint8_t  minLevel           = 1;

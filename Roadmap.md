@@ -8,6 +8,10 @@
 > `password = acore`. World DB = `acore_world`, characters DB =
 > `acore_characters`, auth DB = `acore_auth`. Use `pymysql` to connect and
 > apply migrations; do not assume `127.0.0.1` is reachable.
+>
+> SQL compatibility rule: write and review all project SQL to remain compatible
+> with the deployed MySQL 8.0 target. Do not assume newer or variant-specific
+> DDL syntax is accepted without verification in the actual runtime environment.
 
 ## Project Scope
 

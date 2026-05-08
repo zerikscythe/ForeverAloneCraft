@@ -15,6 +15,7 @@
 #include <chrono>
 #include <cstddef>
 #include <optional>
+#include <string>
 
 namespace living_world
 {
@@ -26,6 +27,102 @@ namespace
 constexpr float ArrivalThreshold = 15.f;
 // How often we log an activity-tick heartbeat (every N ticks of 500ms = N*500ms).
 constexpr std::uint32_t ActivityLogIntervalTicks = 120; // 60 seconds
+
+service::AmbientSessionTask const* TryGetTask(
+    service::AmbientSession const& session,
+    std::int32_t taskIndex)
+{
+    if (taskIndex < 0)
+        return nullptr;
+
+    std::size_t const index = static_cast<std::size_t>(taskIndex);
+    if (index >= session.tasks.size())
+        return nullptr;
+
+    return &session.tasks[index];
+}
+
+std::string DescribeTask(
+    service::AmbientSession const& session,
+    std::int32_t taskIndex)
+{
+    service::AmbientSessionTask const* task = TryGetTask(session, taskIndex);
+    if (!task)
+        return "task=none";
+
+    return "task="
+        + std::to_string(static_cast<std::size_t>(taskIndex) + 1)
+        + "/" + std::to_string(session.tasks.size())
+        + " key='" + task->activityKey
+        + "' family='" + task->taskFamily
+        + "' type='" + task->activityType
+        + "' zone=" + std::to_string(task->targetZoneId)
+        + " name='" + task->displayName + "'";
+}
+
+std::string DescribeStep(
+    service::AmbientSession const& session,
+    std::size_t stepIndex,
+    service::AmbientStep const& step)
+{
+    std::string detail =
+        "step=" + std::to_string(stepIndex + 1)
+        + "/" + std::to_string(session.steps.size())
+        + " label='" + step.label + "' "
+        + DescribeTask(session, step.taskIndex);
+
+    return detail;
+}
+
+bool IsFirstStepForTask(
+    service::AmbientSession const& session,
+    std::size_t stepIndex,
+    service::AmbientStep const& step)
+{
+    if (step.taskIndex < 0)
+        return false;
+
+    if (stepIndex == 0)
+        return true;
+
+    return session.steps[stepIndex - 1].taskIndex != step.taskIndex;
+}
+
+bool IsLastStepForTask(
+    service::AmbientSession const& session,
+    std::size_t stepIndex,
+    service::AmbientStep const& step)
+{
+    if (step.taskIndex < 0)
+        return false;
+
+    if (stepIndex + 1 >= session.steps.size())
+        return true;
+
+    return session.steps[stepIndex + 1].taskIndex != step.taskIndex;
+}
+
+std::string DescribeSessionSummary(service::AmbientSession const& session)
+{
+    std::string detail =
+        "session='" + session.displayName
+        + "' tasks=" + std::to_string(session.tasks.size())
+        + " steps=" + std::to_string(session.steps.size());
+
+    for (std::size_t i = 0; i < session.tasks.size(); ++i)
+    {
+        service::AmbientSessionTask const& task = session.tasks[i];
+        detail += " | task="
+            + std::to_string(i + 1)
+            + "/" + std::to_string(session.tasks.size())
+            + " key='" + task.activityKey
+            + "' family='" + task.taskFamily
+            + "' zone=" + std::to_string(task.targetZoneId)
+            + " name='" + task.displayName + "'";
+    }
+
+    return detail;
+}
 
 // ---------------------------------------------------------------------------
 // Event
@@ -111,12 +208,24 @@ private:
 
     void TickTravel(Player* bot, service::AmbientStep const& step)
     {
+        if (_stepElapsedSec == 0)
+        {
+            if (IsFirstStepForTask(_session, _currentStep, step))
+            {
+                integration::BotActivityLog::Record(
+                    bot, "task_start", DescribeTask(_session, step.taskIndex));
+            }
+
+            integration::BotActivityLog::Record(
+                bot, "step_start", DescribeStep(_session, _currentStep, step));
+        }
+
         // Cross-map travel: teleport the bot to the destination map/zone.
         // Same-map travel: use MovePoint so the bot physically walks.
         if (bot->GetMapId() != step.mapId)
         {
-            integration::BotActivityLog::Record(bot, "travel_teleport",
-                step.label);
+            integration::BotActivityLog::Record(
+                bot, "travel_teleport", DescribeStep(_session, _currentStep, step));
             bot->TeleportTo(step.mapId, step.x, step.y, step.z,
                 bot->GetOrientation());
             AdvanceAndReschedule(bot, 2000ms);
@@ -126,8 +235,11 @@ private:
         float const dist = bot->GetDistance(step.x, step.y, step.z);
         if (dist <= ArrivalThreshold)
         {
-            integration::BotActivityLog::Record(bot, "travel_arrive",
-                step.label);
+            integration::BotActivityLog::Record(
+                bot,
+                "travel_arrive",
+                DescribeStep(_session, _currentStep, step)
+                    + " dist=" + std::to_string(static_cast<int>(dist)) + "m");
             AdvanceAndReschedule(bot, 500ms);
             return;
         }
@@ -136,8 +248,11 @@ private:
         if (bot->GetMotionMaster()->GetCurrentMovementGeneratorType()
             != POINT_MOTION_TYPE)
         {
-            integration::BotActivityLog::Record(bot, "travel_start",
-                step.label + " (dist=" + std::to_string(static_cast<int>(dist)) + "m)");
+            integration::BotActivityLog::Record(
+                bot,
+                "travel_start",
+                DescribeStep(_session, _currentStep, step)
+                    + " dist=" + std::to_string(static_cast<int>(dist)) + "m");
             bot->GetMotionMaster()->MovePoint(
                 static_cast<std::uint32_t>(_currentStep),
                 step.x, step.y, step.z);
@@ -151,24 +266,40 @@ private:
         // Log activity start on the very first tick.
         if (_stepElapsedSec == 0)
         {
-            integration::BotActivityLog::Record(bot, "activity_start",
-                step.label);
+            if (IsFirstStepForTask(_session, _currentStep, step))
+            {
+                integration::BotActivityLog::Record(
+                    bot, "task_start", DescribeTask(_session, step.taskIndex));
+            }
+
+            integration::BotActivityLog::Record(
+                bot, "activity_start", DescribeStep(_session, _currentStep, step));
         }
 
         // Periodic heartbeat log.
         ++_activityLogTick;
         if (_activityLogTick % ActivityLogIntervalTicks == 0)
         {
-            integration::BotActivityLog::Record(bot, "activity_tick",
-                step.label + " (" + std::to_string(_stepElapsedSec) + "s elapsed)");
+            integration::BotActivityLog::Record(
+                bot,
+                "activity_tick",
+                DescribeStep(_session, _currentStep, step)
+                    + " elapsed=" + std::to_string(_stepElapsedSec) + "s");
         }
 
         _stepElapsedSec += 1; // Each tick = ~1 second (2 ticks per second * 0.5s)
 
         if (_stepElapsedSec >= step.durationSec)
         {
-            integration::BotActivityLog::Record(bot, "activity_complete",
-                step.label);
+            integration::BotActivityLog::Record(
+                bot, "activity_complete", DescribeStep(_session, _currentStep, step));
+
+            if (IsLastStepForTask(_session, _currentStep, step))
+            {
+                integration::BotActivityLog::Record(
+                    bot, "task_complete", DescribeTask(_session, step.taskIndex));
+            }
+
             AdvanceAndReschedule(bot, 500ms);
             return;
         }
@@ -279,11 +410,11 @@ void ScheduleAmbientBotAI(Player* botPlayer)
     }
 
     LOG_INFO("server.worldserver",
-        "[LivingWorld] AmbientBot guid={} name='{}' assigned activity '{}'",
-        guid, botPlayer->GetName(), session->displayName);
+        "[LivingWorld] AmbientBot guid={} name='{}' assigned {}",
+        guid, botPlayer->GetName(), DescribeSessionSummary(*session));
 
-    integration::BotActivityLog::Record(botPlayer, "ai_assigned",
-        session->displayName);
+    integration::BotActivityLog::Record(
+        botPlayer, "ai_assigned", DescribeSessionSummary(*session));
 
     botPlayer->m_Events.AddEventAtOffset(
         new AmbientBotAIEvent(botPlayer->GetGUID(), std::move(*session)),
