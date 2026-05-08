@@ -1,5 +1,7 @@
 #include "service/BotCombatRuntimeEvaluator.h"
 
+#include "Creature.h"
+#include "GameTime.h"
 #include "Group.h"
 #include "ObjectAccessor.h"
 #include "Player.h"
@@ -21,6 +23,30 @@ namespace service
 {
 namespace
 {
+// Returns the remaining cooldown in milliseconds for the given spell on any Unit.
+// Dispatches to Player::GetSpellCooldownDelay or Creature::GetSpellCooldown.
+std::uint32_t GetSpellCooldownRemainingMs(Unit* bot, std::uint32_t spellId)
+{
+    if (!bot || spellId == 0)
+        return 0;
+    if (Player* player = bot->ToPlayer())
+        return player->GetSpellCooldownDelay(spellId);
+    if (Creature* creature = bot->ToCreature())
+        return creature->GetSpellCooldown(spellId);
+    return 0;
+}
+
+// Returns the global cooldown remaining in ms for a given spell on any Unit.
+// Creatures do not use the player GCD system; returns 0 for non-Player units.
+std::uint32_t GetGlobalCooldownRemainingMs(Unit* bot, SpellInfo const* spellInfo)
+{
+    if (!bot || !spellInfo)
+        return 0;
+    if (Player* player = bot->ToPlayer())
+        return player->GetGlobalCooldownMgr().GetGlobalCooldown(spellInfo);
+    return 0;
+}
+
 bool CompareNumeric(
     model::BotCombatConditionOperator op,
     float left,
@@ -80,7 +106,7 @@ float GetManaPct(Unit* unit)
         static_cast<float>(unit->GetMaxPower(POWER_MANA));
 }
 
-Player* FindLowestHealthPartyTarget(Player* bot, Player* owner)
+Player* FindLowestHealthPartyTarget(Unit* bot, Player* owner)
 {
     Player* lowest = nullptr;
     auto consider = [&](Player* candidate)
@@ -92,7 +118,7 @@ Player* FindLowestHealthPartyTarget(Player* bot, Player* owner)
     };
 
     consider(owner);
-    consider(bot);
+    consider(bot->ToPlayer());
 
     if (owner)
     {
@@ -393,7 +419,7 @@ std::optional<BotCombatEvaluatedAction> BotCombatRuntimeEvaluator::EvaluateActio
 
     std::uint32_t const spellId =
         BotCombatProfilePreparationService::ResolveKnownSpellForAction(
-            context.bot,
+            context.availableSpells,
             action);
     if (spellId == 0)
         return std::nullopt;
@@ -434,7 +460,7 @@ std::uint32_t BotCombatRuntimeEvaluator::GetActionWaitMs(
 
     std::uint32_t const spellId =
         BotCombatProfilePreparationService::ResolveKnownSpellForAction(
-            context.bot,
+            context.availableSpells,
             action);
     if (spellId == 0)
         return 0;
@@ -463,7 +489,7 @@ std::uint32_t BotCombatRuntimeEvaluator::GetCurrentCastHoldWaitMs(
 
     std::uint32_t const spellId =
         BotCombatProfilePreparationService::ResolveKnownSpellForAction(
-            context.bot,
+            context.availableSpells,
             action);
     if (spellId == 0)
         return 0;
@@ -482,7 +508,7 @@ std::uint32_t BotCombatRuntimeEvaluator::GetCurrentCastHoldWaitMs(
     if (context.bot->HasSpellCooldown(spellId))
         return 0;
 
-    if (context.bot->GetGlobalCooldownMgr().GetGlobalCooldown(spellInfo) > 0)
+    if (GetGlobalCooldownRemainingMs(context.bot, spellInfo) > 0)
         return 0;
 
     float const maxRange = context.bot->GetSpellMaxRangeForTarget(target, spellInfo);
@@ -530,7 +556,7 @@ Unit* BotCombatRuntimeEvaluator::ResolveActionTarget(
 }
 
 bool BotCombatRuntimeEvaluator::CanExecuteSpell(
-    Player* bot,
+    Unit* bot,
     Unit* target,
     std::uint32_t spellId)
 {
@@ -544,7 +570,7 @@ bool BotCombatRuntimeEvaluator::CanExecuteSpell(
     if (bot->HasSpellCooldown(spellId))
         return false;
 
-    if (bot->GetGlobalCooldownMgr().GetGlobalCooldown(spellInfo) > 0)
+    if (GetGlobalCooldownRemainingMs(bot, spellInfo) > 0)
         return false;
 
     float const maxRange = bot->GetSpellMaxRangeForTarget(target, spellInfo);
@@ -555,7 +581,7 @@ bool BotCombatRuntimeEvaluator::CanExecuteSpell(
 }
 
 std::uint32_t BotCombatRuntimeEvaluator::GetSpellWaitMs(
-    Player* bot,
+    Unit* bot,
     Unit* target,
     std::uint32_t spellId)
 {
@@ -570,9 +596,8 @@ std::uint32_t BotCombatRuntimeEvaluator::GetSpellWaitMs(
     if (maxRange > 0.0f && !bot->IsWithinCombatRange(target, maxRange))
         return 0;
 
-    std::uint32_t const spellCooldownMs = bot->GetSpellCooldownDelay(spellId);
-    std::uint32_t const globalCooldownMs =
-        bot->GetGlobalCooldownMgr().GetGlobalCooldown(spellInfo);
+    std::uint32_t const spellCooldownMs = GetSpellCooldownRemainingMs(bot, spellId);
+    std::uint32_t const globalCooldownMs = GetGlobalCooldownRemainingMs(bot, spellInfo);
     std::uint32_t const waitMs = std::max(spellCooldownMs, globalCooldownMs);
     if (waitMs == 0)
         return 0;
@@ -581,7 +606,7 @@ std::uint32_t BotCombatRuntimeEvaluator::GetSpellWaitMs(
 }
 
 bool BotCombatRuntimeEvaluator::CanBreakCurrentCast(
-    Player* bot,
+    Unit* bot,
     BotCombatEvaluatedAction const& evaluatedAction)
 {
     if (!bot || !bot->IsNonMeleeSpellCast(false))

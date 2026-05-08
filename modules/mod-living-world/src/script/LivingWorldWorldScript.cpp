@@ -3,13 +3,18 @@
 #include "DatabaseEnv.h"
 #include "IWorld.h"
 #include "Log.h"
+#include "MapMgr.h"
 #include "ScriptMgr.h"
-#include "integration/BotSessionFactory.h"
+#include "ai/WorldBotCreatureAI.h"
+#include "integration/SqlBotIdentityRepository.h"
 #include "integration/SqlBotGlobalConfigRepository.h"
 #include "integration/SqlBotHazardConfigRepository.h"
 #include "integration/SqlBotOocConfigRepository.h"
 #include "integration/SqlBotTalentPreferenceRepository.h"
+#include "service/BotActivitySessionComposer.h"
 #include "service/BotQuestRewardService.h"
+
+#include <vector>
 
 namespace living_world
 {
@@ -85,11 +90,25 @@ private:
     std::uint32_t _targetAmbientPop  = 3;
     std::uint32_t _populationTickMs  = 5 * 60 * 1000;
 
-    // Count how many ambient bots are currently marked unavailable (i.e. online).
-    static std::uint32_t CountOnlineAmbientBots()
+    // Entry ID of the generic world bot creature_template.
+    // Defined in data/sql/world/living_world_world_bot_template.sql.
+    static constexpr std::uint32_t WorldBotEntry = 9900001;
+
+    // Faction -> (map_id, spawn_x, spawn_y, spawn_z)
+    // Horde bots start near Crossroads (Kalimdor); Alliance near Stormwind (EK).
+    struct SpawnPoint { std::uint32_t mapId; float x, y, z; };
+    static SpawnPoint SpawnPointForFaction(std::uint8_t faction)
+    {
+        if (faction == 2) // Horde — Crossroads, Barrens, Kalimdor
+            return { 1, -462.f, -2642.f, 96.f };
+        return { 0, -8924.f, 529.f, 96.f }; // Alliance — outside Stormwind, EK
+    }
+
+    // Count currently active creature world bots in identity ledger.
+    static std::uint32_t CountOnlineWorldBots()
     {
         QueryResult qr = CharacterDatabase.Query(
-            "SELECT COUNT(*) FROM living_world_ambient_bot WHERE is_available = 0");
+            "SELECT COUNT(*) FROM living_world_bot_identity WHERE is_available = 0");
         if (!qr)
             return 0;
         return qr->Fetch()[0].Get<std::uint32_t>();
@@ -97,56 +116,89 @@ private:
 
     void TickAmbientPopulation()
     {
-        std::uint32_t const online = CountOnlineAmbientBots();
+        std::uint32_t const online = CountOnlineWorldBots();
         if (online >= _targetAmbientPop)
             return;
 
         std::uint32_t const toSpawn = _targetAmbientPop - online;
 
-        // Load available ambient bots from DB.
-        QueryResult qr = CharacterDatabase.Query(
-            "SELECT bot_account_id, character_guid FROM living_world_ambient_bot "
-            "WHERE is_available = 1 LIMIT {}",
-            toSpawn);
-        if (!qr)
+        // Load available identities — mix of factions.
+        living_world::integration::SqlBotIdentityRepository identityRepo;
+        std::vector<living_world::integration::BotIdentityRecord> identities =
+            identityRepo.LoadAvailable(0, toSpawn);
+
+        if (identities.empty())
         {
             LOG_DEBUG("server.worldserver",
-                "[LivingWorld] AmbientPopulationTick: no available ambient bots.");
+                "[LivingWorld] AmbientPopulationTick: no available bot identities.");
             return;
         }
 
-        do
+        living_world::service::BotActivitySessionComposer composer;
+
+        for (auto const& identity : identities)
         {
-            Field const* f          = qr->Fetch();
-            std::uint32_t accountId = f[0].Get<std::uint32_t>();
-            std::uint64_t charGuid  = f[1].Get<std::uint64_t>();
+            // Compose a session for this identity.
+            auto session = composer.Compose(
+                identity.faction,
+                identity.level,
+                identity.hasHerbalism,
+                identity.hasMining,
+                identity.hasFishing);
 
-            ObjectGuid guid = ObjectGuid::Create<HighGuid::Player>(charGuid);
-            auto result = living_world::integration::BotSessionFactory
-                ::SpawnHostileBotPlayerOnAccount(accountId, guid);
-
-            if (result.status ==
-                living_world::integration::BotSessionSpawnStatus::SpawnQueued)
+            if (!session)
             {
-                // Mark unavailable immediately to avoid double-spawn next tick.
-                CharacterDatabase.Execute(
-                    "UPDATE living_world_ambient_bot SET is_available = 0 "
-                    "WHERE character_guid = {}",
-                    charGuid);
+                LOG_WARN("server.worldserver",
+                    "[LivingWorld] AmbientPopulationTick: no session for "
+                    "identity='{}' level={} faction={}",
+                    identity.name, identity.level, identity.faction);
+                continue;
+            }
+
+            // Find the correct world map.
+            SpawnPoint const sp = SpawnPointForFaction(identity.faction);
+            Map* map = sMapMgr->FindMap(sp.mapId, 0);
+            if (!map)
+            {
+                LOG_WARN("server.worldserver",
+                    "[LivingWorld] AmbientPopulationTick: map {} not loaded, "
+                    "skipping identity='{}'",
+                    sp.mapId, identity.name);
+                continue;
+            }
+
+            // Summon the creature.
+            Position pos;
+            pos.Relocate(sp.x, sp.y, sp.z, 0.f);
+            Creature* bot = map->SummonCreature(WorldBotEntry, pos);
+            if (!bot)
+            {
+                LOG_ERROR("server.worldserver",
+                    "[LivingWorld] AmbientPopulationTick: SummonCreature failed "
+                    "for identity='{}'",
+                    identity.name);
+                continue;
+            }
+
+            // Give the AI its identity and session.
+            if (auto* ai = dynamic_cast<living_world::ai::WorldBotCreatureAI*>(bot->AI()))
+            {
+                ai->SetIdentityAndSession(identity, *session);
                 LOG_INFO("server.worldserver",
-                    "[LivingWorld] AmbientPopulationTick: spawning ambient bot "
-                    "accountId={} characterGuid={}",
-                    accountId, charGuid);
+                    "[LivingWorld] AmbientPopulationTick: spawned '{}' "
+                    "level={} spec='{}' steps={}",
+                    identity.name, identity.level,
+                    identity.specKey, session->steps.size());
             }
             else
             {
-                LOG_WARN("server.worldserver",
-                    "[LivingWorld] AmbientPopulationTick: spawn failed "
-                    "accountId={} characterGuid={} status={}",
-                    accountId, charGuid,
-                    static_cast<int>(result.status));
+                LOG_ERROR("server.worldserver",
+                    "[LivingWorld] AmbientPopulationTick: creature has wrong AI "
+                    "for identity='{}' — check creature_template ScriptName",
+                    identity.name);
+                bot->DespawnOrUnsummon(Milliseconds(0));
             }
-        } while (qr->NextRow());
+        }
     }
 };
 

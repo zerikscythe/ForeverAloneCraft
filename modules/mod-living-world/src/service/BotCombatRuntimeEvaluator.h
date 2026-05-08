@@ -4,6 +4,7 @@
 
 #include <optional>
 #include <string>
+#include <unordered_set>
 
 class Player;
 class Unit;
@@ -14,10 +15,14 @@ namespace service
 {
 struct BotCombatRuntimeContext
 {
-    Player* bot = nullptr;
-    Player* owner = nullptr;
+    Unit* bot = nullptr;      // Player* for session bots, Creature* for world bots
+    Player* owner = nullptr;  // Always a real player or nullptr
     Unit* primaryTarget = nullptr;
     std::uint32_t rotationWaitMs = 500;
+    // Spells available to this bot. For Player session bots this is built from
+    // GetSpellMap() during PrepareForPlayer. For creature bots it is loaded from
+    // living_world_bot_spell_list. Must not be empty when bot is a Creature.
+    std::unordered_set<std::uint32_t> availableSpells;
 };
 
 enum class BotCombatEvaluationDisposition : std::uint8_t
@@ -92,17 +97,17 @@ private:
         BotCombatRuntimeContext const& context);
 
     static bool CanExecuteSpell(
-        Player* bot,
+        Unit* bot,
         Unit* target,
         std::uint32_t spellId);
 
     static std::uint32_t GetSpellWaitMs(
-        Player* bot,
+        Unit* bot,
         Unit* target,
         std::uint32_t spellId);
 
     static bool CanBreakCurrentCast(
-        Player* bot,
+        Unit* bot,
         BotCombatEvaluatedAction const& evaluatedAction);
 
     static bool HasInterruptibleEnemyCast(Unit* target);

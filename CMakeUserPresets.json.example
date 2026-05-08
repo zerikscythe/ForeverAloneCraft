@@ -1,0 +1,51 @@
+{
+  "version": 6,
+  "include": ["CMakePresets.json"],
+  "configurePresets": [
+    {
+      "name": "vs2022-debug-local",
+      "displayName": "VS2022 Debug (this machine)",
+      "description": "Copy this file to CMakeUserPresets.json and fill in the paths for your machine.",
+      "inherits": "base-windows-vs2022",
+      "cacheVariables": {
+        "Boost_ROOT": "C:/path/to/boost",
+        "OPENSSL_ROOT_DIR": "C:/path/to/OpenSSL-Win64",
+        "OPENSSL_INCLUDE_DIR": "C:/path/to/OpenSSL-Win64/include",
+        "OPENSSL_SSL_LIBRARY": "C:/path/to/OpenSSL-Win64/lib/VC/x64/MD/libssl.lib",
+        "OPENSSL_CRYPTO_LIBRARY": "C:/path/to/OpenSSL-Win64/lib/VC/x64/MD/libcrypto.lib",
+        "MYSQL_ROOT_DIR": "C:/path/to/MySQL Server 8.0",
+        "MYSQL_INCLUDE_DIR": "C:/path/to/MySQL Server 8.0/include",
+        "MYSQL_LIBRARY": "C:/path/to/MySQL Server 8.0/lib/libmysql.lib",
+        "CMAKE_CXX_FLAGS": "/DWIN32 /D_WINDOWS /EHsc /utf-8 /I\"C:/path/to/boost/include\"",
+        "CMAKE_C_FLAGS": "/DWIN32 /D_WINDOWS /utf-8 /I\"C:/path/to/boost/include\""
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "local-worldserver",
+      "displayName": "Build worldserver (Debug, this machine)",
+      "configurePreset": "vs2022-debug-local",
+      "configuration": "Debug",
+      "targets": ["worldserver"]
+    },
+    {
+      "name": "local-unit-tests",
+      "displayName": "Build unit_tests (Debug, this machine)",
+      "configurePreset": "vs2022-debug-local",
+      "configuration": "Debug",
+      "targets": ["unit_tests"]
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "local-ctest",
+      "displayName": "CTest Debug (this machine)",
+      "configurePreset": "vs2022-debug-local",
+      "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

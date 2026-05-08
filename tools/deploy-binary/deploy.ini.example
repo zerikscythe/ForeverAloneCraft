@@ -1,0 +1,12 @@
+[deploy]
+# Credentials for the final server hop (admin@server.local).
+# The jump host credentials come from tools/lw-editor/config.ini [ssh].
+server_host     = server.local
+server_port     = 22
+server_user     = admin
+server_password = 
+
+# Path on the Windows server where worldserver.exe should be dropped.
+# Use forward slashes. For Windows OpenSSH the path is relative to the
+# drive root, e.g. C:\WOW_Private\Server becomes /C:/WOW_Private/Server
+remote_path = /C:/WOW_Private/Server

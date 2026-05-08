@@ -30,6 +30,10 @@
 /*.override.yml
 /*.override.yaml
 
+# Machine-local CMake dependency paths — each developer maintains their own copy.
+# See CMakeUserPresets.json.example to get started.
+CMakeUserPresets.json
+
 !.gitkeep
 
 # default build directory if not specified by CMAKE configuration
@@ -37,6 +41,9 @@
 
 # LivingWorld bot editor — local DB credentials, never commit
 tools/lw-editor/config.ini
+
+# Deploy binary tool — local server path, never commit
+tools/deploy-binary/deploy.ini
 
 # Generated data files — all tracked so the editor works on a fresh clone
 # without needing the DBC extractor or WoW client files.

@@ -18,89 +18,97 @@ This is intended as a **working engineering brief**, not marketing copy.
 
 # Machine-Specific Build Notes
 
-These notes matter because this repo has been used on more than one Windows
-machine with different local paths and different deployed runtime layouts.
+These notes matter because this repo is used on multiple Windows machines with
+different local dependency paths. **Never hard-code machine-specific paths into
+`CMakeLists.txt` or `CMakePresets.json`** — both are git-tracked and shared.
 
-## Current known machine
+---
 
-- Hostname: `Vajjination`
-- Repo path: `E:\WoWzers\azerothcore-wotlk`
-- Live server path: `E:\WoWzers\WotLK\Server`
-- vcpkg path used by this machine: `D:\tools\vcpkg\installed\x64-windows`
+## How the CMake multi-machine setup works
 
-## Important local nuance
+The project uses the CMake Presets split pattern:
 
-Do not assume an older commit or older local script from another machine will
-configure or deploy correctly on this machine without re-checking paths and
-runtime DLL choices.
+| File | Git tracked | Purpose |
+|---|---|---|
+| `CMakePresets.json` | ✅ Yes | Shared base preset — generator, arch, build dir, generic flags only. No paths. |
+| `CMakeUserPresets.json` | ❌ No (gitignored) | **This machine's** dependency paths. Each machine maintains its own copy. |
+| `CMakeUserPresets.json.example` | ✅ Yes | Template to copy when setting up a new machine. |
 
-## Important validation nuance
+### Setting up a new machine
+
+1. Copy `CMakeUserPresets.json.example` to `CMakeUserPresets.json` in the repo root.
+2. Fill in the real local paths for Boost, OpenSSL, and MySQL.
+3. Never commit `CMakeUserPresets.json` — it is gitignored by design.
+4. Configure with:
+   ```bat
+   cmake --preset vs2022-debug-local
+   ```
+5. Build with:
+   ```bat
+   cmake --build --preset local-worldserver
+   ```
+   or for unit tests:
+   ```bat
+   cmake --build --preset local-unit-tests
+   ```
+
+### If configure fails on a new machine
+
+1. Do not edit `CMakePresets.json` or `CMakeLists.txt` to add paths.
+2. Check your `CMakeUserPresets.json` has all required keys:
+   - `Boost_ROOT` — directory containing `include/boost/` and `lib/`
+   - `OPENSSL_ROOT_DIR`, `OPENSSL_INCLUDE_DIR`, `OPENSSL_SSL_LIBRARY`, `OPENSSL_CRYPTO_LIBRARY`
+   - `MYSQL_ROOT_DIR`, `MYSQL_INCLUDE_DIR`, `MYSQL_LIBRARY`
+   - `CMAKE_CXX_FLAGS` / `CMAKE_C_FLAGS` — must include `/I"<path-to-boost-include>"`
+3. If the build dir has a stale cache from a previous configure, delete
+   `out/build-vs2022/CMakeCache.txt` and `out/build-vs2022/CMakeFiles/` then re-run.
+
+### If cmake is not on PATH
+
+On some workstations `cmake` is not in `PATH` in a plain `cmd.exe` or
+PowerShell shell. Use the Visual Studio bundled CMake:
+
+```
+C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe
+```
+
+---
+
+## Known machines
+
+### WorkPC (primary dev machine)
+
+- OS: Windows, drive layout on `D:`
+- Repo path: `D:\Coding\zerikscythe\ForeverAloneCraft`
+- Boost: `D:\tools\vcpkg\installed\x64-windows` (headers + libs assembled here)
+- OpenSSL: `D:\Program Files\OpenSSL-Win64` (libs at `lib\VC\x64\MD\`)
+- MySQL: `D:\Program Files\MySQL\MySQL Server 8.0`
+- Preset name: `vs2022-debug-local`
+- Configure verified: ✅
+
+### Remote PC (to be configured)
+
+- Paths: TBD — follow the "Setting up a new machine" steps above.
+
+---
+
+## Important build nuances (apply to all machines)
 
 - The local MySQL instance on the workstation is not always the authoritative
-  live gameplay database.
-- When validating live character state, confirm whether the active data is on a
-  separate server machine before drawing conclusions from local DB rows.
+  live gameplay database. When validating live character state, confirm whether
+  the active data is on a separate server machine before drawing conclusions
+  from local DB rows.
 - Do not store passwords or private connection details in repo docs.
-
-The most important issue discovered on `Vajjination` was:
-
-- `RelWithDebInfo` could incorrectly link against debug Boost import libraries
-  (`boost_*mt-gd*`) while still producing a non-debug executable that loaded
-  the release CRT (`MSVCP140.dll`, `VCRUNTIME140.dll`).
-- That mismatch caused `worldserver` to crash very early in startup, inside
-  command-line parsing, before LivingWorld gameplay code had a chance to run.
-- The crash looked like a game/runtime regression at first, but the real cause
-  was dependency alignment on this machine.
-
-## What future agents should verify first on this machine
-
-- Check the generated link line for `worldserver` before assuming a gameplay
-  regression.
-- For `RelWithDebInfo`, verify Boost resolves to release import libraries such
-  as:
-  - `boost_filesystem-vc143-mt-x64-1_90.lib`
-  - `boost_program_options-vc143-mt-x64-1_90.lib`
-- Do not accept a `RelWithDebInfo` build that links to debug Boost libraries
-  such as `boost_*mt-gd*`.
-- If a deployed `worldserver.exe` crashes immediately, inspect imported DLLs
-  before reverting gameplay commits.
-
-## Build/deploy guidance for this machine
-
-- A clean baseline build on `Vajjination` was validated with `BUILD_TESTING=OFF`.
-- If a fresh configure fails, do not immediately blame recent gameplay work.
-  First verify:
-  - Boost imported target resolution
-  - MySQL imported target configuration mapping
-  - local path assumptions inherited from another machine
+- `RelWithDebInfo` can incorrectly link against debug Boost import libraries
+  (`boost_*mt-gd*`) while still producing a non-debug executable. That mismatch
+  causes `worldserver` to crash very early in startup inside command-line
+  parsing, before LivingWorld code runs. If a deployed `worldserver.exe` crashes
+  immediately, inspect imported DLLs before reverting gameplay commits.
 - The live server folder may contain a mix of release and debug DLLs from older
   manual copies. Treat that folder as suspect until imports are verified.
 - `scripts/deploy-local.sh` expects a repo-root `deploy.local` file with the
   target server path. If `deploy.local` is absent, deployment must be done
   manually or the file must be created for this machine.
-
-### Windows build invocation on this machine (important)
-
-On this workstation, `cmake` may not be on `PATH` in a plain `cmd.exe` shell.
-Use the Visual Studio bundled CMake directly when running builds from the repo:
-
-- `C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe`
-
-Known-good command for this repo/preset:
-
-```bat
-"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --build --preset vs2022-debug-worldserver --target worldserver
-```
-
-Unit-test target is also expected to compile on this machine during validation:
-
-```bat
-"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --build --preset vs2022-debug-unit-tests --target unit_tests
-```
-
-If `cmake --build ...` fails with "not recognized", do not assume source
-changes broke the build. First retry with the absolute Visual Studio CMake
-path above.
 
 ## Living-World spawn safety notes
 

@@ -1,0 +1,43 @@
+-- living_world_bot_identity (acore_characters)
+--
+-- Persistent identity ledger for creature-based world bots.
+-- Each row is a named individual who may appear in the world more than once.
+-- Creatures are spawned from this table instead of an anonymous template pool,
+-- giving the server population a sense of recurring faces.
+--
+-- The bot is a Creature, not a Player session. No account, no character guid.
+-- Identity fields drive the creature's display model, name, combat profile, and
+-- activity eligibility. Session tracking fields let the system (and future GM
+-- tools) show "last seen in Stranglethorn, 3 sessions total."
+
+CREATE TABLE IF NOT EXISTS living_world_bot_identity (
+    id              INT UNSIGNED     NOT NULL AUTO_INCREMENT PRIMARY KEY,
+
+    -- Who they are
+    name            VARCHAR(32)      NOT NULL,           -- display name shown in world
+    race_id         TINYINT UNSIGNED NOT NULL,           -- WoW race ID (1=Human, 2=Orc, etc.)
+    class_id        TINYINT UNSIGNED NOT NULL,           -- WoW class ID (1=Warrior, 4=Rogue, etc.)
+    spec_key        VARCHAR(32)      NOT NULL,           -- e.g. 'warrior_arms', 'mage_fire'
+    faction         TINYINT UNSIGNED NOT NULL,           -- 1=Alliance  2=Horde
+    display_id      INT UNSIGNED     NOT NULL,           -- creature_template displayid for visual
+    gender          TINYINT UNSIGNED NOT NULL DEFAULT 0, -- 0=male 1=female
+
+    -- Capability
+    level           TINYINT UNSIGNED NOT NULL,
+    gear_tier       TINYINT UNSIGNED NOT NULL DEFAULT 1, -- 1=questing 2=dungeon 3=raid
+    has_herbalism   TINYINT(1)       NOT NULL DEFAULT 0,
+    has_mining      TINYINT(1)       NOT NULL DEFAULT 0,
+    has_fishing     TINYINT(1)       NOT NULL DEFAULT 0,
+
+    -- Session state
+    is_available    TINYINT UNSIGNED NOT NULL DEFAULT 1, -- 1=ready to spawn  0=currently active
+    session_count   INT UNSIGNED     NOT NULL DEFAULT 0, -- total times spawned
+    last_seen_zone  INT UNSIGNED     NULL,               -- zone_id of last activity
+    last_seen_at    DATETIME         NULL,               -- wall time of last despawn
+    created_at      DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE KEY uq_name   (name),
+    KEY idx_spawn        (faction, class_id, level, is_available),
+    KEY idx_last_seen    (last_seen_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  COMMENT='Persistent identity ledger for creature-based world bots';

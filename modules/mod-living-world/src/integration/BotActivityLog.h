@@ -1,9 +1,11 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 #include <string_view>
 
 class Player;
+class Unit;
 
 namespace living_world
 {
@@ -16,8 +18,18 @@ namespace integration
 class BotActivityLog
 {
 public:
+    // Player session bots
     static void Record(
         Player* bot,
+        std::string_view eventType,
+        std::string_view detail = "");
+
+    // Creature bots — caller supplies identity name and guid since the creature
+    // may not have a character record.
+    static void Record(
+        Unit* bot,
+        std::string_view botName,
+        std::uint64_t    botIdentityId,
         std::string_view eventType,
         std::string_view detail = "");
 };

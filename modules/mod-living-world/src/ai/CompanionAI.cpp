@@ -38,6 +38,7 @@
 #include <optional>
 #include <mutex>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace living_world
 {
@@ -341,7 +342,7 @@ BotCombatRole ResolveDoctrineRole(
     return GetCombatRole(classId);
 }
 
-BotCombatDoctrine LoadCombatDoctrine(Player* bot, Player* owner)
+BotCombatDoctrine LoadCombatDoctrine(Unit* bot, Player* owner)
 {
     BotCombatDoctrine doctrine;
     std::uint32_t ownerAccountId = (owner && owner->GetSession())
@@ -361,7 +362,7 @@ BotCombatDoctrine LoadCombatDoctrine(Player* bot, Player* owner)
     return doctrine;
 }
 
-BotCombatDoctrine GetCombatDoctrine(Player* bot, Player* owner)
+BotCombatDoctrine GetCombatDoctrine(Unit* bot, Player* owner)
 {
     std::uint64_t const botGuid = bot->GetGUID().GetCounter();
     auto const now = std::chrono::steady_clock::now();
@@ -383,7 +384,7 @@ BotCombatDoctrine GetCombatDoctrine(Player* bot, Player* owner)
     return doctrine;
 }
 
-service::BotCombatPreparedProfile GetPreparedCombatProfile(Player* bot, Player* owner)
+service::BotCombatPreparedProfile GetPreparedCombatProfile(Unit* bot, Player* owner)
 {
     std::uint64_t const botGuid = bot->GetGUID().GetCounter();
     auto const now = std::chrono::steady_clock::now();
@@ -398,8 +399,21 @@ service::BotCombatPreparedProfile GetPreparedCombatProfile(Player* bot, Player* 
     std::uint32_t ownerAccountId = (owner && owner->GetSession())
         ? owner->GetSession()->GetAccountId()
         : 0;
+
+    // Build the known-spell set. For Player session bots use GetSpellMap().
+    // For creature bots this will be loaded from living_world_bot_spell_list
+    // once WorldBotCreatureAI is implemented.
+    std::unordered_set<std::uint32_t> knownSpells;
+    if (Player* player = bot->ToPlayer())
+    {
+        for (auto const& [spellId, playerSpell] : player->GetSpellMap())
+            if (playerSpell && playerSpell->State != PLAYERSPELL_REMOVED && playerSpell->Active)
+                knownSpells.insert(spellId);
+    }
+    // Creature path: knownSpells populated by WorldBotCreatureAI before calling.
+
     service::BotCombatPreparedProfile preparedProfile =
-        GetProfilePreparationService().PrepareForBot(bot, ownerAccountId);
+        GetProfilePreparationService().PrepareForUnit(bot, knownSpells, ownerAccountId);
 
     {
         std::lock_guard<std::mutex> lock(s_preparedProfileMutex);
@@ -439,12 +453,14 @@ void PushThreatAddonMessage(Player* bot, Player* owner, Unit* primaryTarget)
     owner->GetSession()->SendPacket(&data);
 }
 
-bool TryExecuteProfileRotation(Player* bot, Player* owner, Unit* primaryTarget)
+bool TryExecuteProfileRotation(Unit* bot, Player* owner, Unit* primaryTarget)
 {
     if (!bot)
         return false;
 
-    PushThreatAddonMessage(bot, owner, primaryTarget);
+    // Addon threat messages are only meaningful for Player session bots with an owner.
+    if (Player* botPlayer = bot->ToPlayer())
+        PushThreatAddonMessage(botPlayer, owner, primaryTarget);
 
     service::BotCombatPreparedProfile preparedProfile =
         GetPreparedCombatProfile(bot, owner);
@@ -469,6 +485,7 @@ bool TryExecuteProfileRotation(Player* bot, Player* owner, Unit* primaryTarget)
     context.owner = owner;
     context.primaryTarget = primaryTarget;
     context.rotationWaitMs = preparedProfile.resolution.profile.settings.rotationWaitMs;
+    context.availableSpells = preparedProfile.availableSpells;
 
     auto const handleEvaluationResult =
         [&](service::BotCombatEvaluationResult const& result, char const* phase) -> bool
