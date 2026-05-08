@@ -1372,6 +1372,23 @@ void HandleRaidDismiss(
         return;
     }
 
+    // Guard: only dismiss bots that are actually raid pool characters.
+    // FindBotsForOwner returns all bot types (roster companions included), so
+    // without this check a positional reference like "#1" could accidentally
+    // dismiss a roster companion instead of the intended pool bot.
+    QueryResult poolRow = CharacterDatabase.Query(
+        "SELECT 1 FROM living_world_pool_character WHERE character_guid = {}",
+        targetBot->GetGUID().GetCounter());
+    if (!poolRow)
+    {
+        SendPlayerLog(
+            handler,
+            static_cast<std::uint8_t>(PlayerChatLogLevel::BareMinimum),
+            "LivingWorld '{}' is not a raid pool bot. Use .lwbot roster dismiss to dismiss a companion.",
+            targetBot->GetName());
+        return;
+    }
+
     // Capture name before session teardown invalidates the pointer.
     std::string const botName = targetBot->GetName();
 

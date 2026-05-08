@@ -499,9 +499,16 @@ A bot never works in its spawn zone by accident.
 
 - AccountAlt clone system (Category 1) — complete
 - `BotSessionFactory::SpawnBotPlayerOnAccount` — general purpose
-- `CompanionAI` — doctrine loop, follow, hazard sensor, OOC buffs
+- `BotSessionFactory::SpawnHostileBotPlayerOnAccount` — ownerless spawn (shared by hostile and ambient bots)
+- `CompanionAI` — doctrine loop, follow, hazard sensor, OOC buffs; null-hardened for ownerless hostile bots
+- `ScheduleHostileCompanionAI` — fight-back AI with no owner or group
 - Pool account infrastructure
 - Doctrine profiles for all specs
+- Raid pool bot commands (`.lwbot raid request / dismiss`) — Category 2
+- Ambient world population tick + `AmbientBotAI` chained sessions — Category 4
+- `BotActivitySessionComposer` — destination-first multi-task session builder
+- `SqlZoneIndexRepository` / `SqlActivityLibraryRepository` — DB-backed zone and activity lookup
+- `living_world_zone_index` + `living_world_activity_library` schemas and seed data
 
 ---
 
@@ -622,6 +629,8 @@ with class spells → bot is not in player's party UI.
 ### Phase 3 — Ambient World Population
 **Effort: large (~200 lines + DB)**
 
+**Status: ✅ COMPLETE**
+
 See zone index, activity library, and session composer design above (Categories
 4 and 5 share this infrastructure). The first implementation may start with
 simple activity selection, but the intended target is a **multi-task chained
@@ -635,12 +644,80 @@ Key deliverables:
 3. `BotActivitySessionComposer` service — destination-first step-list builder.
 4. `AmbientBotAI` event — step executor, no combat, no owner.
 5. `LivingWorldWorldScript::OnUpdate` — population tick wires up ambient spawn
-   and despawn. `UpdateAbstractStateAction` and `EnqueueEncounterAction`
-   commit executors need to be filled in here.
+   and despawn.
 
-**Verification:** Ambient bot spawned anywhere → assigned "Herb Run - Felwood"
-→ walks to Felwood, never stops in its spawn zone. Walking through Orgrimmar:
-Player-model bots at the inn, near AH, moving on foot between districts.
+### Implementation notes
+
+**Spawn path:** Ambient bots reuse `SpawnHostileBotPlayerOnAccount` with
+`ObjectGuid::Empty` as the owner sentinel (same as hostile bots). The
+distinction is made at login: `OnPlayerLogin` checks for a row in
+`living_world_ambient_bot`; if found → `ScheduleAmbientBotAI`; if not →
+`ScheduleHostileCompanionAI`.
+
+**`BotActivitySessionComposer`** (`service/BotActivitySessionComposer.cpp`):
+- Loads eligible activities from `living_world_activity_library` filtered by
+  faction, level, and profession flags.
+- Cross-references `living_world_zone_index` to enforce zone-type and
+  level-band (±5 levels) constraints.
+- Selects 3–5 tasks via weighted random pick without replacement, subject to:
+  - per-family cap (`max_per_session`)
+  - per-zone cap (≤2 visits to the same zone per session)
+  - chain rules (same task family not back-to-back, except `city_errand`)
+  - relaxed chain-rule fallback so a session is never starved
+- Emits one `Travel` step + one activity step per task.
+  Travel: `MovePoint` for same-map; `TeleportTo` for cross-map.
+  Activity: time-elapsed simulation for Phase 3 (`GatherHerb`, `GatherOre`,
+  `Fish`, `Patrol`, `Idle`). Real node interaction deferred to Phase 4.
+
+**`AmbientBotAIEvent`** (`ai/AmbientBotAI.cpp`):
+- Fires every 500 ms via `m_Events`.
+- Handles `NotInWorld` retries (up to 8, exponential back-off).
+- Drives `TickTravel` (arrival-threshold check, re-issues `MovePoint` only
+  when not already heading there) and `TickActivity` (duration countdown,
+  60-second heartbeat log).
+- On session complete: writes `is_available = 1` / `last_activity_at = NOW()`
+  to `living_world_ambient_bot` and calls `LogoutPlayer`.
+
+**`LivingWorldWorldScript::OnUpdate`** (`script/LivingWorldWorldScript.cpp`):
+- `LivingWorld.AmbientPopulation` config key (default 3) sets target pop.
+- `LivingWorld.AmbientPopulationTickMs` (default 5 min) controls tick frequency.
+- Each tick: counts `is_available = 0` rows; spawns up to `toSpawn` available
+  bots; marks each `is_available = 0` immediately to prevent double-spawn.
+
+**`OnPlayerLogin`** (`script/LivingWorldPlayerScript.cpp`):
+- Ownerless sentinel path (`ownerGuid.GetCounter() == 0`) checks
+  `living_world_ambient_bot` first → `ScheduleAmbientBotAI`, else →
+  `ScheduleHostileCompanionAI`.
+
+**`OnPlayerLogout`** (`script/LivingWorldPlayerScript.cpp`):
+- Unconditionally executes `UPDATE living_world_ambient_bot SET is_available = 1`
+  (no-op for non-ambient bots).
+
+### Files changed
+
+| File | Change |
+|------|--------|
+| `ai/AmbientBotAI.h` | `ScheduleAmbientBotAI` declaration |
+| `ai/AmbientBotAI.cpp` | Step executor event: Travel, activity types, session completion, logout |
+| `service/BotActivitySessionComposer.h` | `AmbientStep`, `AmbientSessionTask`, `AmbientSession`, `BotActivitySessionComposer` |
+| `service/BotActivitySessionComposer.cpp` | Chained session builder: zone filter, weighted pick, chain rules |
+| `integration/SqlZoneIndexRepository.h/.cpp` | Reads `living_world_zone_index` |
+| `integration/SqlActivityLibraryRepository.h/.cpp` | Reads `living_world_activity_library` |
+| `integration/BotActivityLog.h/.cpp` | Structured activity event logging to `living_world_bot_activity_log` |
+| `script/LivingWorldPlayerScript.cpp` | Ownerless login → ambient vs hostile routing; logout cleanup |
+| `script/LivingWorldWorldScript.cpp` | `TickAmbientPopulation` population tick |
+| `data/sql/characters/living_world_ambient_bot.sql` | Schema: `bot_account_id`, `character_guid`, profile fields, `is_available` |
+| `data/sql/characters/living_world_bot_activity_log.sql` | Schema: per-event log rows |
+| `modules/…/pending_db_world/rev_living_world_009_zone_index.sql` | Schema + seed rows for `living_world_zone_index` |
+| `modules/…/pending_db_world/rev_living_world_010_activity_library.sql` | Schema + starter rows for `living_world_activity_library` |
+| `modules/…/pending_db_world/rev_living_world_011_task_library_fields.sql` | Added `task_family`, `max_per_session` columns |
+| `modules/…/pending_db_world/rev_living_world_012_tier2_seed_pass.sql` | Expanded activity seed: city idles, patrols, gathering, fishing |
+
+**Verification:** Ambient bot spawned anywhere → assigned a chained session
+(e.g. "Herb Run – Durotar → Patrol Stonetalon") → travels to first
+destination, never works in its spawn zone. World tick maintains configured
+number of ambient bots online. Bots log out on session completion and
+`is_available` returns to 1.
 
 ### Phase 4 — Guild Bots
 **Effort: large (~300 lines + DB)**
@@ -679,21 +756,22 @@ Additional design note:
 
 ## Critical Files
 
-| File | Phase | Change |
-|------|-------|--------|
-| `script/LivingWorldCommandScript.cpp` | 1 | Add `.lwbot raid` command handlers |
-| `integration/BotSessionFactory.h/.cpp` | 1,2 | Raid pool + hostile spawn modes |
-| `script/LivingWorldPlayerScript.cpp` | 1,2 | Detect bot type on login, route to correct AI |
-| `ai/CompanionAI.cpp` | 2 | Hostileless target fallback |
-| `data/sql/…/living_world_pool_character.sql` | 1 | Schema + seed characters |
-| `ai/AmbientBotAI.h/.cpp` | 3 | Ambient AI step executor |
-| `script/LivingWorldWorldScript.cpp` | 3,4 | Population tick — spawn/despawn ambient + guild bots |
-| `service/BotActivitySessionComposer.h/.cpp` | 3 | Destination-first step-list builder |
-| `integration/SqlZoneIndexRepository.h/.cpp` | 3 | Read `living_world_zone_index` |
-| `integration/SqlActivityLibraryRepository.h/.cpp` | 3 | Read `living_world_activity_library` |
-| `data/sql/…/living_world_zone_index.sql` | 3 | Schema + ~70-row seed |
-| `data/sql/…/living_world_activity_library.sql` | 3 | Schema + starter rows |
-| `ai/GuildBotAI.h/.cpp` | 4 | Guild AI — extends AmbientBotAI + DEPOSIT step |
-| `data/sql/…/living_world_guild_bot.sql` | 4 | Schema |
-| `data/sql/…/living_world_guild_bot_deposit_log.sql` | 4 | Schema |
-| `script/LivingWorldCommandScript.cpp` | 4 | Add `.lwbot guild` command handlers |
+| File | Phase | Status | Change |
+|------|-------|--------|--------|
+| `script/LivingWorldCommandScript.cpp` | 1 | ✅ done | Add `.lwbot raid` command handlers |
+| `integration/BotSessionFactory.h/.cpp` | 1,2 | ✅ done | Raid pool + hostile spawn modes |
+| `script/LivingWorldPlayerScript.cpp` | 1,2,3 | ✅ done | Detect bot type on login, route to correct AI; ambient/logout cleanup |
+| `ai/CompanionAI.cpp` | 2 | ✅ done | Hostileless target fallback |
+| `data/sql/…/living_world_pool_character.sql` | 1 | ✅ done | Schema + seed characters |
+| `ai/AmbientBotAI.h/.cpp` | 3 | ✅ done | Ambient AI step executor |
+| `script/LivingWorldWorldScript.cpp` | 3,4 | ✅/pending | Population tick — ambient done; guild bot tick pending |
+| `service/BotActivitySessionComposer.h/.cpp` | 3 | ✅ done | Destination-first step-list builder |
+| `integration/SqlZoneIndexRepository.h/.cpp` | 3 | ✅ done | Read `living_world_zone_index` |
+| `integration/SqlActivityLibraryRepository.h/.cpp` | 3 | ✅ done | Read `living_world_activity_library` |
+| `data/sql/…/living_world_zone_index.sql` | 3 | ✅ done | Schema + seed rows |
+| `data/sql/…/living_world_activity_library.sql` | 3 | ✅ done | Schema + starter/expanded rows |
+| `integration/BotActivityLog.h/.cpp` | 3 | ✅ done | Structured activity event logging |
+| `ai/GuildBotAI.h/.cpp` | 4 | ⬜ pending | Guild AI — extends AmbientBotAI + DEPOSIT step |
+| `data/sql/…/living_world_guild_bot.sql` | 4 | ⬜ pending | Schema |
+| `data/sql/…/living_world_guild_bot_deposit_log.sql` | 4 | ⬜ pending | Schema |
+| `script/LivingWorldCommandScript.cpp` | 4 | ⬜ pending | Add `.lwbot guild` command handlers |

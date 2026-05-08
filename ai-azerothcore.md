@@ -163,6 +163,32 @@ Current next quest slice:
 - keep auto-pickup off by default; prefer explicit player confirmation from the
   panel
 
+## Current bot expansion status (bot_expansion.md)
+
+Phase 1 (Raid Pool Bots) and Phase 2 (Hostile Bots) are both ✅ complete.
+
+Phase 3 (Ambient World Population) is ✅ complete:
+
+- `BotActivitySessionComposer` builds chained 3–5 task sessions from DB-authored
+  activity and zone libraries with weighted selection, family/zone repeat caps,
+  and chain-believability rules.
+- `AmbientBotAI` drives the session: Travel (MovePoint or TeleportTo) →
+  Activity (timed simulation) → logout on completion.
+- `LivingWorldWorldScript::OnUpdate` population tick maintains a configured
+  count of ambient bots online (default 3, config key
+  `LivingWorld.AmbientPopulation`).
+- Both hostile and ambient bots share the `SpawnHostileBotPlayerOnAccount`
+  spawn path; `OnPlayerLogin` differentiates by checking
+  `living_world_ambient_bot`.
+
+Bug fixed: `HandleRaidDismiss` now verifies the target bot has a row in
+`living_world_pool_character` before proceeding. Previously it queried all
+bots in the owner's registry, which could accidentally dismiss a roster
+companion if one was active alongside a raid bot.
+
+Phase 4 (Guild Bots) is the next bot_expansion slice. See `bot_expansion.md`
+Phase 4 section for the full design.
+
 ## Current active engineering focus
 
 The current active work is:
