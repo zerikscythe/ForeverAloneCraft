@@ -1,5 +1,6 @@
 #include "ai/CompanionAI.h"
 #include "ai/BotHazardSensor.h"
+#include "ai/CompanionFollowFormation.h"
 
 #include "Chat.h"
 #include "Duration.h"
@@ -32,6 +33,7 @@
 #include "service/SimpleBotCombatSpecRoleResolver.h"
 
 #include <array>
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
@@ -66,6 +68,21 @@ struct BotOverride
 
 static std::mutex                                    s_overrideMutex;
 static std::unordered_map<ObjectGuid, BotOverride>   s_overrides;
+
+struct FollowDiagnosticSnapshot
+{
+    std::uint32_t formation = 0;
+    std::uint32_t slotCount = 0;
+    std::uint32_t rosterSize = 0;
+    std::uint32_t rosterIndex = 0;
+    std::uint32_t slot = 0;
+    bool usedRosterSlot = false;
+    float angle = 0.0f;
+    float distance = 0.0f;
+};
+
+static std::mutex s_followDiagnosticMutex;
+static std::unordered_map<std::uint64_t, FollowDiagnosticSnapshot> s_lastFollowDiagnostics;
 
 static BotOverride GetOverride(ObjectGuid botGuid)
 {
@@ -162,18 +179,7 @@ namespace
 // --- Follow / reposition constants ---
 constexpr float FollowDistance        = 2.0f;
 constexpr float FollowAngle           = 3.14159265358979323846f;
-constexpr float CombatFollowOverrideDistance = 20.0f;
-constexpr float RepositionDistance    = 8.0f;
-constexpr float RangedMinDistance     = 8.0f;    // Back away when closer than this
-constexpr float RangedOptimalDistance = 25.0f;   // Target spacing for ranged bots
-constexpr float RangedCastRange      = 30.0f;   // Approach target when farther than this
-constexpr float RangedRetreatDistance = 5.0f;    // Short backstep when hurt in melee range
-constexpr float RangedRetreatTrigger  = 80.0f;   // Retreat when HP drops below this %
-constexpr float RangedRetreatReset    = 60.0f;   // Allow another retreat only after HP drops below this %
-
 // --- Heal thresholds ---
-constexpr float HealOwnerCritical    = 50.0f;
-constexpr float HealOwnerModerate    = 85.0f;
 
 // --- Priest Weakened Soul debuff: prevents re-shielding for 15 seconds ---
 constexpr std::uint32_t AuraWeakenedSoul = 6788;
@@ -701,36 +707,6 @@ BotCombatResolvedProfile LoadResolvedCombatProfile(Player* bot, Player* owner)
 }
 
 // ---------------------------------------------------------------
-// Heal spells
-// ---------------------------------------------------------------
-
-// Fast direct heal for when a target drops critically low.
-std::uint32_t GetDirectHealSpell(Player* bot)
-{
-    switch (bot->getClass())
-    {
-        case CLASS_PRIEST:  return FindBestKnownSpellInChain(bot, 2061);  // Flash Heal
-        case CLASS_DRUID:   return FindBestKnownSpellInChain(bot, 5185);  // Healing Touch
-        case CLASS_PALADIN: return FindBestKnownSpellInChain(bot, 19750); // Flash of Light
-        case CLASS_SHAMAN:  return FindBestKnownSpellInChain(bot, 8004);  // Lesser Healing Wave
-        default:            return 0;
-    }
-}
-
-// Sustained heal or HoT for topping off a moderately damaged target.
-std::uint32_t GetSustainedHealSpell(Player* bot)
-{
-    switch (bot->getClass())
-    {
-        case CLASS_PRIEST:  return FindBestKnownSpellInChain(bot, 139);  // Renew
-        case CLASS_DRUID:   return FindBestKnownSpellInChain(bot, 774);  // Rejuvenation
-        case CLASS_PALADIN: return FindBestKnownSpellInChain(bot, 635);  // Holy Light
-        case CLASS_SHAMAN:  return FindBestKnownSpellInChain(bot, 331);  // Healing Wave
-        default:            return 0;
-    }
-}
-
-// ---------------------------------------------------------------
 // Offensive spells — Paladin seal helpers
 // ---------------------------------------------------------------
 
@@ -918,13 +894,15 @@ void EnsureChasingVictim(Player* bot, Unit* target)
 // wall/cliff traps that a full 25y retreat would cause.
 void EnsureRangedPosition(Player* bot, Unit* target)
 {
-    if (bot->GetDistance(target) >= RangedMinDistance)
+    model::BotGlobalConfig const cfg = GetGlobalConfigService().Get();
+
+    if (bot->GetDistance(target) >= cfg.rangedMinDistance)
         return;
 
     // Angle pointing from target toward the bot — step further that way
     float const angle = target->GetAngle(bot);
-    float const x     = bot->GetPositionX() + RangedRetreatDistance * std::cos(angle);
-    float const y     = bot->GetPositionY() + RangedRetreatDistance * std::sin(angle);
+    float const x     = bot->GetPositionX() + cfg.rangedRetreatDistance * std::cos(angle);
+    float const y     = bot->GetPositionY() + cfg.rangedRetreatDistance * std::sin(angle);
     float const z     = bot->GetPositionZ();
     bot->GetMotionMaster()->MovePoint(0, x, y, z);
 }
@@ -934,24 +912,8 @@ void EnsureRangedPosition(Player* bot, Unit* target)
 // stops the bot at the right spot without overshooting into melee range.
 void EnsureRangedApproach(Player* bot, Unit* target)
 {
-    bot->GetMotionMaster()->MoveChase(target, RangedOptimalDistance);
-}
-
-void EnsureSupportRange(Player* bot, Player* owner, std::uint32_t spellId)
-{
-    if (!bot || !owner || !spellId)
-        return;
-
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
-    if (!spellInfo)
-        return;
-
-    float const maxRange = bot->GetSpellMaxRangeForTarget(owner, spellInfo);
-    if (maxRange <= 0.0f)
-        return;
-
-    if (!bot->IsWithinCombatRange(owner, maxRange))
-        bot->GetMotionMaster()->MoveChase(owner, std::max(1.0f, maxRange - 2.0f));
+    model::BotGlobalConfig const cfg = GetGlobalConfigService().Get();
+    bot->GetMotionMaster()->MoveChase(target, cfg.rangedOptimalDistance);
 }
 
 void IssueFormationFollow(Player* bot, Player* owner, BotCombatRole role)
@@ -981,49 +943,84 @@ void IssueFormationFollow(Player* bot, Player* owner, BotCombatRole role)
             break;
     }
 
-    std::uint64_t const seed = bot->GetGUID().GetCounter();
-    uint32_t const slots = std::max(1u, cfg.followSlotCount);
-    std::uint32_t const slot = static_cast<std::uint32_t>(seed % slots);
-
-    float slotAngle = FollowAngle;
-    switch (cfg.followFormation)
+    std::vector<std::uint64_t> ownerBotGuids;
+    for (Player* ownerBot : service::BotPlayerRegistry::Instance().FindBotsForOwner(owner->GetGUID()))
     {
-        case model::FollowFormation::Ring:
-        {
-            // Evenly distributed around the full circle.
-            float const angleStep = 2.0f * 3.14159265358979323846f / static_cast<float>(slots);
-            slotAngle = FollowAngle + (static_cast<float>(slot) * angleStep);
-            break;
-        }
-        case model::FollowFormation::V:
-        {
-            // Spread behind owner in a V: centre bot at π, others fan outward.
-            // Odd slots go right (+), even slots go left (-).
-            float const spread = 3.14159265358979323846f / 6.0f; // 30° per step
-            int const side  = (slot == 0) ? 0 : ((slot % 2 == 1) ? 1 : -1);
-            int const depth = static_cast<int>((slot + 1) / 2);
-            slotAngle = FollowAngle + static_cast<float>(side * depth) * spread;
-            break;
-        }
-        case model::FollowFormation::Line:
-        {
-            // Single file: all directly behind, staggered by distance.
-            // slotAngle stays at FollowAngle; caller uses default distance.
-            slotAngle = FollowAngle;
-            break;
-        }
-        case model::FollowFormation::Cluster:
-        default:
-            // All bots at same angle — bunched behind.
-            slotAngle = FollowAngle;
-            break;
+        if (ownerBot)
+            ownerBotGuids.push_back(ownerBot->GetGUID().GetCounter());
     }
 
-    float const dist = (cfg.followFormation == model::FollowFormation::Line)
-        ? baseDistance + static_cast<float>(slot) * 1.5f
-        : baseDistance;
+    CompanionFollowFormationResult const formation = ResolveCompanionFollowFormation(
+        { cfg.followFormation, baseDistance, cfg.followSlotCount, bot->GetGUID().GetCounter(), std::move(ownerBotGuids) });
 
-    bot->GetMotionMaster()->MoveFollow(owner, dist, slotAngle);
+    FollowDiagnosticSnapshot currentSnapshot;
+    currentSnapshot.formation = static_cast<std::uint32_t>(cfg.followFormation);
+    currentSnapshot.slotCount = std::max(1u, cfg.followSlotCount);
+    currentSnapshot.rosterSize = formation.rosterSize;
+    currentSnapshot.rosterIndex = formation.rosterIndex;
+    currentSnapshot.slot = formation.slot;
+    currentSnapshot.usedRosterSlot = formation.usedRosterSlot;
+    currentSnapshot.angle = formation.angle;
+    currentSnapshot.distance = formation.distance;
+
+    bool shouldLogFollowDiagnostic = false;
+    {
+        std::lock_guard<std::mutex> lock(s_followDiagnosticMutex);
+        std::uint64_t const botGuidLow = bot->GetGUID().GetCounter();
+        auto const it = s_lastFollowDiagnostics.find(botGuidLow);
+        if (it == s_lastFollowDiagnostics.end()
+            || it->second.formation != currentSnapshot.formation
+            || it->second.slotCount != currentSnapshot.slotCount
+            || it->second.rosterSize != currentSnapshot.rosterSize
+            || it->second.rosterIndex != currentSnapshot.rosterIndex
+            || it->second.slot != currentSnapshot.slot
+            || it->second.usedRosterSlot != currentSnapshot.usedRosterSlot
+            || std::fabs(it->second.angle - currentSnapshot.angle) > 0.01f
+            || std::fabs(it->second.distance - currentSnapshot.distance) > 0.01f)
+        {
+            s_lastFollowDiagnostics[botGuidLow] = currentSnapshot;
+            shouldLogFollowDiagnostic = true;
+        }
+    }
+
+    if (shouldLogFollowDiagnostic)
+    {
+        char const* formationName = "Cluster";
+        switch (cfg.followFormation)
+        {
+            case model::FollowFormation::Ring:
+                formationName = "Ring";
+                break;
+            case model::FollowFormation::V:
+                formationName = "V";
+                break;
+            case model::FollowFormation::Line:
+                formationName = "Line";
+                break;
+            case model::FollowFormation::Cluster:
+            default:
+                formationName = "Cluster";
+                break;
+        }
+
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] FollowFormation bot='{}' guid={} owner='{}' ownerGuid={} formation={} slotCount={} rosterSize={} rosterIndex={} slot={} source={} angle={:.3f} distance={:.2f}",
+            bot->GetName(),
+            bot->GetGUID().GetCounter(),
+            owner->GetName(),
+            owner->GetGUID().GetCounter(),
+            formationName,
+            currentSnapshot.slotCount,
+            currentSnapshot.rosterSize,
+            currentSnapshot.rosterIndex,
+            currentSnapshot.slot,
+            currentSnapshot.usedRosterSlot ? "owner_roster" : "guid_fallback",
+            currentSnapshot.angle,
+            currentSnapshot.distance);
+    }
+
+    bot->GetMotionMaster()->MoveFollow(owner, formation.distance, formation.angle);
 }
 
 bool ShouldCombatFollowOverride(Player* bot, Player* owner, BotCombatRole role)
@@ -1036,7 +1033,7 @@ bool ShouldCombatFollowOverride(Player* bot, Player* owner, BotCombatRole role)
         && role != BotCombatRole::Ranged)
         return false;
 
-    return bot->GetDistance(owner) > CombatFollowOverrideDistance;
+    return bot->GetDistance(owner) > GetGlobalConfigService().Get().combatFollowOverrideDistance;
 }
 
 void BreakFollowForAttack(Player* bot)
@@ -1110,7 +1107,11 @@ void TickMelee(Player* bot, Player* owner, Unit* target)
 // Returns true when this unit is something a bot should engage on the owner's
 // behalf: alive, on the same map, hostile to the owner, and currently flagged
 // as a legal attack target.
-bool IsValidAssistTarget(Player const* bot, Player const* owner, Unit const* candidate)
+bool IsValidAssistTarget(
+    Player const* bot,
+    Player const* owner,
+    Unit const* candidate,
+    model::BotGlobalConfig const& cfg)
 {
     if (!bot || !owner || !candidate || !candidate->IsInWorld() || !candidate->IsAlive())
         return false;
@@ -1122,7 +1123,8 @@ bool IsValidAssistTarget(Player const* bot, Player const* owner, Unit const* can
         return false;
     if (owner->IsFriendlyTo(candidate) || bot->IsFriendlyTo(candidate))
         return false;
-    if (!candidate->isTargetableForAttack(true, bot))
+    if (cfg.assistRequireTargetableForAttack
+        && !candidate->isTargetableForAttack(true, bot))
         return false;
     return true;
 }
@@ -1131,7 +1133,11 @@ bool IsValidAssistTarget(Player const* bot, Player const* owner, Unit const* can
 // While a player-issued attack command is latched, we still want casters to keep
 // their target and approach even if line-of-sight / targetable checks flicker
 // during pull movement or while the mob has not fully engaged yet.
-bool IsViableCommandTarget(Player const* bot, Player const* owner, Unit const* candidate)
+bool IsViableCommandTarget(
+    Player const* bot,
+    Player const* owner,
+    Unit const* candidate,
+    model::BotGlobalConfig const& cfg)
 {
     if (!bot || !owner || !candidate || !candidate->IsInWorld() || !candidate->IsAlive())
         return false;
@@ -1141,6 +1147,9 @@ bool IsViableCommandTarget(Player const* bot, Player const* owner, Unit const* c
         return false;
     if (owner->IsFriendlyTo(candidate) || bot->IsFriendlyTo(candidate))
         return false;
+    if (cfg.commandRequireTargetableForAttack
+        && !candidate->isTargetableForAttack(true, bot))
+        return false;
     return true;
 }
 
@@ -1149,6 +1158,7 @@ bool IsViableCommandTarget(Player const* bot, Player const* owner, Unit const* c
 Unit* ResolveAssistTarget(Player* bot, Player* owner)
 {
     BotOverride const ovr = GetOverride(bot->GetGUID());
+    model::BotGlobalConfig const cfg = GetGlobalConfigService().Get();
 
     auto const now = std::chrono::steady_clock::now();
 
@@ -1184,7 +1194,7 @@ Unit* ResolveAssistTarget(Player* bot, Player* owner)
     if (ovr.forcedTarget)
     {
         Unit* forced = ObjectAccessor::GetUnit(*bot, ovr.forcedTarget);
-        if (forced && IsViableCommandTarget(bot, owner, forced))
+        if (forced && IsViableCommandTarget(bot, owner, forced, cfg))
         {
             LOG_INFO(
                 "server.worldserver",
@@ -1205,7 +1215,7 @@ Unit* ResolveAssistTarget(Player* bot, Player* owner)
     {
         if (Unit* current = bot->GetVictim())
         {
-            if (IsViableCommandTarget(bot, owner, current))
+            if (IsViableCommandTarget(bot, owner, current, cfg))
             {
                 LOG_INFO(
                     "server.worldserver",
@@ -1217,26 +1227,31 @@ Unit* ResolveAssistTarget(Player* bot, Player* owner)
             }
         }
 
-        if (Unit* ownerVictim = owner->GetVictim())
+        if (cfg.attackLockUseOwnerVictim)
         {
-            if (IsViableCommandTarget(bot, owner, ownerVictim))
+            if (Unit* ownerVictim = owner->GetVictim())
             {
-                LOG_INFO(
-                    "server.worldserver",
-                    "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=attack_locked source=owner_victim targetGuid={}",
-                    bot->GetName(),
-                    bot->GetGUID().GetCounter(),
-                    ownerVictim->GetGUID().GetCounter());
-                return ownerVictim;
+                if (IsViableCommandTarget(bot, owner, ownerVictim, cfg))
+                {
+                    LOG_INFO(
+                        "server.worldserver",
+                        "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=attack_locked source=owner_victim targetGuid={}",
+                        bot->GetName(),
+                        bot->GetGUID().GetCounter(),
+                        ownerVictim->GetGUID().GetCounter());
+                    return ownerVictim;
+                }
             }
         }
 
-        ObjectGuid const ownerSelection = owner->GetTarget();
+        ObjectGuid const ownerSelection = cfg.attackLockUseOwnerSelection
+            ? owner->GetTarget()
+            : ObjectGuid::Empty;
         if (ownerSelection)
         {
             if (Unit* selected = ObjectAccessor::GetUnit(*bot, ownerSelection))
             {
-                if (IsViableCommandTarget(bot, owner, selected))
+                if (IsViableCommandTarget(bot, owner, selected, cfg))
                 {
                     LOG_INFO(
                         "server.worldserver",
@@ -1262,17 +1277,20 @@ Unit* ResolveAssistTarget(Player* bot, Player* owner)
 
     // Normal assist logic:
     // 1. Keep fighting the current victim while it's alive.
-    if (Unit* current = bot->GetVictim())
+    if (cfg.assistUseCurrentVictim)
     {
-        if (IsValidAssistTarget(bot, owner, current))
+        if (Unit* current = bot->GetVictim())
         {
-            LOG_INFO(
-                "server.worldserver",
-                "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=assist source=current_victim targetGuid={}",
-                bot->GetName(),
-                bot->GetGUID().GetCounter(),
-                current->GetGUID().GetCounter());
-            return current;
+            if (IsValidAssistTarget(bot, owner, current, cfg))
+            {
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=assist source=current_victim targetGuid={}",
+                    bot->GetName(),
+                    bot->GetGUID().GetCounter(),
+                    current->GetGUID().GetCounter());
+                return current;
+            }
         }
     }
 
@@ -1280,18 +1298,23 @@ Unit* ResolveAssistTarget(Player* bot, Player* owner)
     //    i.e. the mob's current victim is the owner. This prevents the bot from
     //    chasing a mob the owner merely auto-attacked once but that hasn't
     //    aggroed yet or that the owner accidentally clicked.
-    if (Unit* ownerVictim = owner->GetVictim())
+    if (cfg.assistUseOwnerVictim)
     {
-        if (IsValidAssistTarget(bot, owner, ownerVictim)
-            && ownerVictim->GetVictim() == owner)
+        if (Unit* ownerVictim = owner->GetVictim())
         {
-            LOG_INFO(
-                "server.worldserver",
-                "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=assist source=owner_victim targetGuid={}",
-                bot->GetName(),
-                bot->GetGUID().GetCounter(),
-                ownerVictim->GetGUID().GetCounter());
-            return ownerVictim;
+            bool const ownerVictimAllowed =
+                !cfg.assistOwnerVictimMustTargetOwner || ownerVictim->GetVictim() == owner;
+            if (IsValidAssistTarget(bot, owner, ownerVictim, cfg)
+                && ownerVictimAllowed)
+            {
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=assist source=owner_victim targetGuid={}",
+                    bot->GetName(),
+                    bot->GetGUID().GetCounter(),
+                    ownerVictim->GetGUID().GetCounter());
+                return ownerVictim;
+            }
         }
     }
 
@@ -1307,15 +1330,23 @@ Unit* ResolveAssistTarget(Player* bot, Player* owner)
 // bot's current victim if it qualifies. Used by Guard mode.
 Unit* ResolveGuardTarget(Player* bot, Player* owner)
 {
-    if (Unit* current = bot->GetVictim())
+    model::BotGlobalConfig const cfg = GetGlobalConfigService().Get();
+
+    if (cfg.guardUseCurrentVictim)
     {
-        if (IsValidAssistTarget(bot, owner, current))
-            return current;
+        if (Unit* current = bot->GetVictim())
+        {
+            if (IsValidAssistTarget(bot, owner, current, cfg))
+                return current;
+        }
     }
+
+    if (!cfg.guardUseOwnerAttackers)
+        return nullptr;
 
     for (Unit* attacker : owner->getAttackers())
     {
-        if (IsValidAssistTarget(bot, owner, attacker))
+        if (IsValidAssistTarget(bot, owner, attacker, cfg))
             return attacker;
     }
 
@@ -1349,7 +1380,7 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& conserving)
         TryApplyOutOfCombatBuff(bot, owner,
             GetOocConfigService().Get(bot->GetGUID().GetCounter()));
         if (!bot->IsNonMeleeSpellCast(false)
-            && !bot->IsWithinDistInMap(owner, RepositionDistance))
+            && !bot->IsWithinDistInMap(owner, GetGlobalConfigService().Get().repositionDistance))
             bot->GetMotionMaster()->MoveFollow(owner,
                 GetGlobalConfigService().Get().followDistanceFallback,
                 FollowAngle);
@@ -1394,7 +1425,7 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& conserving)
         if (attackTarget)
         {
             float const distance = bot->GetDistance(attackTarget);
-            if (!bot->IsNonMeleeSpellCast(false) && distance > RangedCastRange)
+            if (!bot->IsNonMeleeSpellCast(false) && distance > GetGlobalConfigService().Get().rangedCastRange)
             {
                 EnsureRangedApproach(bot, attackTarget);
                 return;
@@ -1439,18 +1470,6 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& conserving)
     if (role == BotCombatRole::HybridHealer)
     {
         UpdateConservationState(doctrine.settings, bot, conserving);
-
-        std::uint32_t const directSpell = GetDirectHealSpell(bot);
-        std::uint32_t const sustainedSpell = GetSustainedHealSpell(bot);
-
-        if (owner->GetHealthPct() < HealOwnerModerate)
-        {
-            std::uint32_t const supportSpell = owner->GetHealthPct() < HealOwnerCritical
-                ? directSpell
-                : sustainedSpell;
-            if (supportSpell)
-                EnsureSupportRange(bot, owner, supportSpell);
-        }
 
         if (assistTarget && bot->GetVictim() != assistTarget)
             bot->Attack(assistTarget, true);
@@ -1535,7 +1554,7 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& conserving)
                 // than wasting every tick on failed cast attempts.
                 EnsureChasingVictim(bot, assistTarget);
             }
-            else if (distance < RangedMinDistance
+            else if (distance < GetGlobalConfigService().Get().rangedMinDistance
                 && bot->GetHealthPct() < retreatHpPct)
             {
                 LOG_INFO(
@@ -1553,9 +1572,9 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& conserving)
                 // threshold to 60% so another retreat can only fire once the
                 // bot has taken more sustained damage.
                 EnsureRangedPosition(bot, assistTarget);
-                retreatHpPct = RangedRetreatReset;
+                retreatHpPct = GetGlobalConfigService().Get().rangedRetreatResetPct;
             }
-            else if (distance > RangedCastRange)
+            else if (distance > GetGlobalConfigService().Get().rangedCastRange)
             {
                 LOG_INFO(
                     "server.worldserver",
@@ -1697,7 +1716,7 @@ class CompanionAIEvent final : public BasicEvent
 public:
     CompanionAIEvent(ObjectGuid botGuid, ObjectGuid ownerGuid,
                      std::uint8_t notInWorldRetries = 0,
-                     float retreatHpPct = RangedRetreatTrigger,
+                     float retreatHpPct = 80.0f,
                      bool conserving = false)
         : _botGuid(botGuid), _ownerGuid(ownerGuid)
         , _notInWorldRetries(notInWorldRetries), _retreatHpPct(retreatHpPct)
@@ -1754,8 +1773,9 @@ public:
         }
 
         // Reset retreat threshold if the bot has healed back above the trigger level.
-        if (_retreatHpPct < RangedRetreatTrigger && bot && bot->GetHealthPct() >= RangedRetreatTrigger)
-            _retreatHpPct = RangedRetreatTrigger;
+        float const retreatTriggerPct = GetGlobalConfigService().Get().rangedRetreatTriggerPct;
+        if (_retreatHpPct < retreatTriggerPct && bot && bot->GetHealthPct() >= retreatTriggerPct)
+            _retreatHpPct = retreatTriggerPct;
 
         Tick(bot, owner, _retreatHpPct, _conserving);
         bot->m_Events.AddEventAtOffset(

@@ -42,6 +42,16 @@ public:
         std::unordered_set<std::uint32_t> const& knownSpells,
         std::uint32_t ownerAccountId) const;
 
+    // World bots — resolves through the world-bot default doctrine path using
+    // explicit spec/role keys, then filters the result against the provided
+    // level-appropriate known-spell set.
+    [[nodiscard]] BotCombatPreparedProfile PrepareForWorldBot(
+        Unit* unit,
+        std::unordered_set<std::uint32_t> const& knownSpells,
+        std::string const& specKey,
+        std::string const& roleKey,
+        std::string const& contextKey = "PvE") const;
+
     // Backwards-compat alias for Player session bots.
     [[nodiscard]] BotCombatPreparedProfile PrepareForBot(
         Player* bot,

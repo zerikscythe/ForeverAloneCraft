@@ -7,7 +7,7 @@ import pathlib
 VERSION = "0.1"
 
 # ── DB enum int → display string ───────────────────────────────────────────
-CONSERVATION_MODES = {0: "Full Force", 1: "Conservative", 2: "JIT Casting"}
+CONSERVATION_MODES = {0: "Full Force", 1: "Reserve", 2: "Conservative", 3: "JIT Casting"}
 ACTION_TYPES       = {0: "Spell",      1: "Item"}
 RANK_MODES         = {0: "Best Known", 1: "Exact Spell ID", 2: "Specific Rank"}
 COND_LOGIC         = {0: "All (AND)",  1: "Any (OR)"}
@@ -31,14 +31,26 @@ COND_LOGIC_OPTS   = list(COND_LOGIC.values())
 COND_OPS_OPTS     = list(COND_OPS.values())
 AOE_OPTS          = list(AOE_MODES.values())
 
-TARGET_KEYS   = ["enemy", "enemy_primary", "enemy_trash", "enemy_primary_victim",
-                 "self", "owner", "ally_lowest_hp", "lowest_hp_party", "focus"]
-SUBJECT_KEYS  = ["owner", "bot", "target", "owner.target"]
-STAT_KEYS     = ["hp_pct", "mana_pct", "rage", "energy", "runic_power",
-                 "combo_points", "aura", "aura_stacks", "distance",
-                 "threat_pct", "is_aggro_holder",
-                 "in_melee", "is_casting", "is_moving", "target_hp_pct"]
-BOOL_STAT_KEYS = {"in_melee", "is_casting", "is_moving", "is_aggro_holder"}
+TARGET_KEYS   = [
+    "enemy", "enemy_primary", "enemy_trash", "enemy_primary_victim",
+    "self", "owner", "lowest_hp_party",
+]
+SUBJECT_KEYS  = [
+    "enemy", "enemy_primary", "enemy_trash", "enemy_primary_victim",
+    "self", "owner", "lowest_hp_party",
+]
+STAT_KEYS     = [
+    "exists",
+    "hp_pct", "mana_pct", "power", "power_pct",
+    "runic_power", "runic_power_pct",
+    "distance",
+    "aura", "aura_remaining_secs", "aura_stacks",
+    "combo_points",
+    "threat_pct", "is_aggro_holder",
+    "runes_ready", "runes_available",
+    "nearby_enemies", "party_members_below_hp_pct",
+]
+BOOL_STAT_KEYS = {"is_aggro_holder"}
 
 WOW_CLASSES = {
     1: "Warrior", 2: "Paladin", 3: "Hunter", 4: "Rogue",

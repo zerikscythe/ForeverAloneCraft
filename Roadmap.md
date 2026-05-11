@@ -34,28 +34,46 @@ details have been intentionally removed here rather than copied forward.
 
 ## Recent Progress Snapshot
 
-The latest completed gameplay slice is bot talent tree templates and
-auto-leveling.
+The latest completed gameplay slice is ambient/world-bot runtime
+observability, live-validation support, and first-pass travel recovery.
 
 Completed recently:
 
-- talent tree templates seeded for all 19 spec+class combinations (19 world-DB
-  rows in `living_world_bot_talent_template`, priority-ordered entries in
-  `living_world_bot_talent_template_entry`)
-- `BotTalentApplicator` service: `ApplyTemplate` (spend free points, no reset),
-  `ReapplyTemplate` (reset + full apply; account-alts pay gold cost, generic
-  bots reset free), `ApplyPreferredTemplate` (auto-detect via
-  `SimpleBotCombatSpecRoleResolver` when no template pinned)
-- per-bot template preference stored in `living_world_bot_talent_preference`
-  (characters DB); `template_id = 0` = auto-detect, `auto_apply_on_level`
-  toggle controls whether `OnPlayerLevelChanged` fires auto-apply
-- `.lwbot <bot> applytalent [reset]` — spend all free points from preferred
-  template; `reset` keyword resets first then fills the full build
-- `.lwbot <bot> favoritetalent [<specKey>|auto]` — pin or query preferred
-  template for a bot
-- `OnPlayerLevelChanged` hook wired in `LivingWorldPlayerScript` — any bot
-  session with `auto_apply_on_level = 1` automatically spends new talent points
-  in priority order at each level gain
+- playlist/routine sanity pass rerun successfully: the Python editor compile
+  passed and `worldserver` rebuilt cleanly before the later watchdog slice
+- config-driven forced ambient spawn override added to
+  `LivingWorldWorldScript`, making it possible to pin a chosen number of
+  ambient bots to a live test location for visual validation
+- `AmbientSession` now carries `sourceKind` / `sourceKey`, and that provenance
+  is surfaced in composer output, spawn logs, and bot activity logs so it is
+  obvious whether a live session came from a legacy activity, task template, or
+  playlist
+- dedicated realtime DB viewer added under `tools/lw-editor/` to inspect live
+  world-bot state, selected session source, current position, and recent
+  activity; it now also supports row-state badges/coloring plus map/zone
+  filters
+- `AmbientSpawnOverride.h` extracted as a pure helper and covered by focused
+  unit tests (`AmbientSpawnOverrideTest.cpp`, 5 passing tests)
+- `TravelWatchdog.h` added as a pure helper for same-map travel
+  no-progress/timeout detection and integrated into both
+  `WorldBotCreatureAI` and `AmbientBotAI` for teleport-and-advance recovery
+- `TravelWatchdogTest.*` was rerun successfully after rebuilding
+  `unit_tests.exe`, and `worldserver.exe` was rebuilt successfully with the
+  current watchdog/world-bot code
+- headless validation proved ambient/world bots can spawn and run without a
+  live client connected, and also exposed an important runtime issue:
+  forced-spawned bots can be assigned cross-map playlist sessions they cannot
+  meaningfully complete from the forced location
+- new architecture decision recorded: world/ambient bots should be
+  **abstract-offscreen by default**, while account bots and guild/workforce
+  bots remain **always fully simulated** when active because they do real work
+- first-pass abstract/offscreen runtime now exists for world bots, including
+  timed offscreen step advancement, interpolated same-map travel resume, and
+  materialization back into spawned creature AI when a real player is present
+- v1 locality refinement now exists: player-interest zones stay **hot for 10
+  minutes** after a player leaves, fully materialized world bots can
+  dematerialize back into abstract runtime after that cooldown expires, and
+  taxi flyovers no longer count as valid interest for spawning/materialization
 
 Previously completed:
 
@@ -176,11 +194,11 @@ Queued after conservation-mode cleanup:
 - extend the hazard system with encounter-specific behavior rules and external
   editing surfaces (see "Bot Hazard Sensor: DB Migration Roadmap" under Phase 6)
 
-### Best bang-for-buck next slice: healer / hybrid-healer doctrine migration
+### Best bang-for-buck next slice within the companion-combat track: healer / hybrid-healer doctrine migration
 
 **Status: Partial**
 
-Why this remains the best next slice:
+Why this remains the best next slice for the companion-combat workstream:
 
 - it completes the current combat-runtime workstream instead of opening a new one
 - it removes more of the remaining hardcoded combat behavior in `CompanionAI`
@@ -246,7 +264,7 @@ Remaining concrete work:
 - add focused resolver/evaluator tests for healer thresholds, target selection,
   and mana behavior
 
-After that:
+After that, within the companion-combat track:
 
 **Second-best next slice:** multi-bot support
 
@@ -299,58 +317,59 @@ packet not yet faked for headless sessions.
 
 **Current active priority:**
 
-- finish the bot combat runtime path
-  data-driven combat-doctrine system
+- harden the ambient/world-bot runtime around player-interest activation
+- begin the first abstract-offscreen progression pass for world bots
 
-This is the active work because it is the highest-leverage path for getting
-the bots fully usable while also reducing future maintenance cost.
+This is the active work because it is the shortest path from "ambient bots can
+spawn and follow authored sessions" to "ambient bots scale to large population
+counts without burning CPU on offscreen full simulation."
 
 What this means in practice:
 
-1. make the combat cycle reliable end-to-end
-   - profile resolution
-   - target resolution
-   - action evaluation
-   - fallback behavior
-   - safe execution
+1. establish the simulation boundary explicitly
+   - world/ambient bots offscreen = abstract timer/state progression
+   - bots in a real player's active zone/town = full spawned simulation
+   - account bots and guild/workforce bots = always fully simulated when active
 
-2. move doctrine/tuning out of hardcoded C++ and into the relational profile
-   system
-   - world defaults
-   - account defaults
-   - character overrides
-   - later context defaults for `pug`, `raid`, and `battleground`
+2. implement first-pass abstract progression for world bots
+   - timed activity steps advance by elapsed duration while offscreen
+   - travel steps estimate duration from distance and baseline travel speed
+   - materialization can re-enter a session mid-step from a safe interpolated point
 
-3. keep only minimal hardcoded fallback behavior in C++
-   - bots must remain functional when data is missing or incomplete
+3. harden authored ambient session execution around activation rules
+   - keep playlist / task-template / legacy-activity provenance visible
+   - avoid cross-map forced-spawn/session mismatches
+   - add more regression coverage around spawn override, abstract travel, and recovery
 
-4. treat addon/editor work as a follow-on surface for the same server-owned
-   doctrine system, not as a separate authority
+4. expand content/data surfaces once the runtime is stable
+   - richer task points, routes, and playlist coverage
+   - broader identity seeding and race/gender name pools
 
 Reason for priority:
 
-- this work most directly improves real bot quality
-- this work reduces the need for server recompiles during combat tuning
-- this work gives one shared doctrine path for player bots and future system
-  bots
-- this work prevents further growth of one-off class/context hardcoded combat
-  branches
+- this work most directly improves the visible living-world illusion
+- this turns the recent world-bot infrastructure into something easy to test
+  and debug live
+- this clarifies what should remain creature-runtime-specific versus what can
+  later converge with shared combat/profile systems
+- this gives cleaner footing for later rival guild, workforce, and reassignment
+  slices
 
 Current agreed design workstream:
 
-- define and implement server-authoritative user-overrideable bot combat
-  profiles backed by relational DB tables rather than JSON blobs
-- ship a baked-in default combat doctrine for one starter spec/role per class,
-  with blank profiles falling back to that default behavior automatically
-- expose profile editing through an addon-facing API/message layer handled by
-  worldserver services/repositories, not by direct addon-to-database access
-- support row-based editing of actions/conditions/targets, including
-  `enemy_primary` and `enemy_trash` target resolution, primary/secondary
-  fallback timing, conservation modes, and optional down-ranking
-- extend that same doctrine system so server defaults, account defaults,
-  character overrides, and future context defaults (PUG / Raid /
-  Battleground) all flow through the same external data model rather than
-  requiring new hardcoded C++ behavior for tuning changes
+- keep world-bot orchestration server-authoritative and data-authored
+- treat `living_world_activity_library`, task templates, task points, transit
+  routes, and playlists as the primary authoring surfaces
+- treat offscreen world-bot progression as a cheap manager-owned state machine,
+  not as a fully spawned creature AI loop
+- keep account bots and guild/workforce bots outside that abstraction path;
+  those remain fully authoritative worker/player-session bots when active
+- use runtime logs and tooling to expose exactly why a bot is where it is and
+  which session source selected it
+- prefer targeted recovery/teleport safety guards over silent stuck failure
+- keep larger gameplay loops (gather -> fight -> resume, service roles,
+  reassignment) as explicit next slices rather than assuming they are already
+  complete
 
 ### Combat Doctrine Direction: Data-Driven by Default
 
@@ -1154,19 +1173,81 @@ server operator might want to tune without rebuilding belongs in DB.
 
 ## Phase 7: Ambient World and Rival Guild Population
 
-**Overall Status: Not Started**
+**Overall Status: Partial**
 
 ### 10) Ambient Population
 
-**Overall Status: Not Started**
+**Overall Status: Partial**
+
+Ambient/world-bot runtime now exists in a usable first-pass form. The current
+implementation supports:
+
+- DB-authored session composition from legacy activity chains, task templates,
+  and playlists
+- travel/task primitives backed by transit routes, taxi routes, and named task
+  points
+- live population maintenance via `LivingWorldWorldScript::OnUpdate`
+- session-source observability in `AmbientSession`, spawn logs, and activity
+  logs
+- config-driven forced spawn override for local validation
+- a dedicated realtime DB viewer for current bot state and recent activity
+- initial same-map travel watchdog recovery in `WorldBotCreatureAI` and
+  `AmbientBotAI`
+
+Simulation boundary now agreed:
+
+- **world/ambient bots** should be abstract while offscreen and only become
+  fully spawned/simulated inside player-interest zones/towns
+- after a player leaves, that zone should stay warm/hot for roughly **10
+  minutes** before nearby world bots are allowed to regress back to abstract
+  state
+- taxi flyover updates should **not** count as meaningful player interest for
+  materialization; destination preheat is still deferred follow-up work
+- **account bots** remain fully simulated when active
+- **guild/workforce bots** remain fully simulated when active because they do
+  real gathering/fishing/crafting/economy work
 
 #### Subtasks
 
-10.1 City ambient population planning — **Not Started**
-10.2 Travel corridor population planning — **Not Started**
-10.3 Outdoor activity planning — **Not Started**
-10.4 Despawn/respawn budget rules — **Not Started**
-10.5 Abstract-state cooling and relocation rules — **Not Started**
+10.1 City ambient population planning — **Partial**
+- city-service task points and hub-support data now exist; richer hub coverage
+  and more believable city behavior variety are still needed
+
+10.2 Travel corridor population planning — **Partial**
+- taxi routes, transit routes, and authored travel steps are in place; broader
+  route coverage and more live validation are still needed
+
+10.3 Outdoor activity planning — **Partial**
+- generic gathering templates/playlists exist, but the desired
+  gather -> threatened -> fight -> gather -> resume loop is not implemented yet
+
+10.4 Despawn/respawn budget rules — **Partial**
+- configured ambient population maintenance exists, and force-spawn override now
+  supports validation; broader budget tuning and locality rules remain future
+  work
+
+10.5 Abstract-state cooling and relocation rules — **Partial**
+- weighted session composition, repeat caps, and selection bias exist
+- first-pass offscreen abstract progression is in place
+- v1 hot-zone cooling is in place: spawned world bots remain materialized while
+  a real player is present or the zone is still inside the 10-minute hot window
+- flyover-only taxi presence is ignored for heat/materialization decisions
+- longer horizon abstract-history / retirement / relocation behavior is still
+  future work
+
+Immediate pending work:
+
+- avoid cross-map forced-spawn/session mismatches in the session-selection path
+- harden/validate the new hot-zone dematerialize/materialize loop under live
+  headless testing and logging review
+- optionally add taxi-destination preheat when a route is selected, without
+  treating every flyover zone as hot
+- evaluate whether a simple 2-zone-away override is still needed after live
+  testing the 10-minute cooldown behavior
+- extend outdoor tasking beyond timed simulation into reactive gather/combat/
+  resume behavior and better obstacle handling
+- expand seed identities toward a normalized level 5-55 spread and larger
+  race/gender name pools
 
 ### 11) Rival Guild System
 
@@ -1249,7 +1330,12 @@ that loads specific characters by ID with no materialization overhead.
   - aggression weights
   - abstract-state timers
 
-13.3 Add seed/default data for bot identities and rival guilds — **Not Started**
+13.3 Add seed/default data for bot identities and rival guilds — **Partial**
+- current characters-DB seed covers a small fixed starter set, and
+  `tools/seed_bot_identities.py` can already generate broader random identity
+  batches across faction/race/class/spec/profession/level distributions
+- remaining work is to normalize the level 5-55 spread, expand race/gender name
+  pools, and add dedicated rival/static-bot seed data
 
 13.4 Separate tuning data from hardcoded logic — **Partial**
 - Combat doctrine for DPS specs is now DB-driven through the combat profile /
@@ -1283,6 +1369,10 @@ that loads specific characters by ID with no materialization overhead.
   combat doctrine resolver behavior.
 - Recent validation fixed stale unit-test drift and restored the current
   filtered living-world suite to passing status.
+- New focused world-bot helper coverage now exists for
+  `AmbientSpawnOverrideTest.cpp`, and `TravelWatchdogTest.cpp` exists for
+  no-progress/timeout logic; the watchdog source fix still needs a fresh
+  filtered rerun after the latest rebuild.
 - Remaining work is broader orchestration coverage and deeper crash/restart
   regression matrices.
 
@@ -1301,6 +1391,21 @@ that loads specific characters by ID with no materialization overhead.
 - This roadmap replaces the old emulator-specific task list for this project.
 
 15.3 Add developer setup notes for working presets/builds — **Partial**
+
+15.4 Add visual world-route authoring tooling — **Backlog / Not Started**
+- preferred direction is a separate Python GUI route editor rather than manual
+  raw-coordinate editing
+- ideal workflow:
+  - dump zone/world map art locally from client assets where possible
+  - overlay existing LivingWorld task points, transit/taxi links, and mined NPC
+    patrol/waypoint routes
+  - allow brush/polyline route drawing on a layer above the map
+  - optionally use an AI-assisted tracing pass as a first draft, then review
+    and edit the strokes manually
+  - convert approved strokes into calibrated world-coordinate route points and
+    store them in LivingWorld route tables
+- online map sourcing should be treated as optional fallback only; preferred
+  source is local client data plus DBC/world metadata
 
 ---
 
@@ -2285,11 +2390,26 @@ The project has moved well past the initial foundation pass. Current state:
   switching, dismiss with name reclaim and progress/equipment sync.
 - Account-alt runtime records, sanity checking, sync executors, and startup
   recovery are all implemented and backed by unit tests.
-- The current system supports one active bot per owner (hard registry limit).
+- Ambient/world-bot runtime is now live in first-pass form: DB-authored
+  activity/task/playlist session composition, transit/task-point support,
+  population maintenance, forced-spawn validation, session-source observability,
+  viewer tooling, and initial travel watchdog recovery are all in place.
+- The current system still supports one active account-alt bot per owner (hard
+  registry limit), and rival/static bot tracks remain future work.
 
-The next milestone is **multi-bot support**: extend `BotPlayerRegistry` to
-track N bots per owner, update spawn guards, and scale `CompanionAI` scheduling
-to match — unlocking the full 5-player party gameplay goal.
+The immediate milestone is **world-bot runtime validation and hardening**:
+
+- rerun `TravelWatchdogTest.*`
+- rebuild and re-verify `worldserver` after the watchdog slice
+- live-validate forced spawn + viewer + session-source logs together
+- then extend tasking toward gather/combat/resume behavior and richer identity
+  seeding
+
+After that, larger follow-on slices remain:
+
+- multi-bot account-alt support
+- broader world-bot identity/name-pool work
+- rival guild / static combat bot systems
 
 ---
 

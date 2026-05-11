@@ -32,6 +32,17 @@ public:
         std::uint64_t    botIdentityId,
         std::string_view eventType,
         std::string_view detail = "");
+
+    static void RecordAbstract(
+        std::string_view botName,
+        std::uint64_t    botIdentityId,
+        std::string_view eventType,
+        std::string_view detail,
+        std::uint16_t    mapId,
+        std::uint32_t    zoneId,
+        float            x,
+        float            y,
+        float            z);
 };
 
 } // namespace integration

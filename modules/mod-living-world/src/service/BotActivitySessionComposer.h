@@ -19,6 +19,7 @@ enum class AmbientStepType : std::uint8_t
     Fish       = 4,  // Simulate fishing
     Idle       = 5,  // Stand at location for duration
     Patrol     = 6,  // Walk between anchor and nearby waypoints
+    TaxiFlight = 7,  // Timed fake-flight between authored taxi nodes
 };
 
 struct AmbientStep
@@ -30,6 +31,11 @@ struct AmbientStep
     float           z           = 0.f;
     std::uint32_t   durationSec = 600;
     std::int32_t    taskIndex   = -1; // index into AmbientSession::tasks; -1 = session-level/no task
+    std::string     subjectKind;
+    std::uint32_t   subjectId   = 0;
+    std::string     subjectKey;
+    std::string     returnAnchorRole;
+    std::uint8_t    cycleCount  = 1;
     std::string     label;
 };
 
@@ -50,6 +56,8 @@ struct AmbientSession
     std::uint32_t                  activityId  = 0;
     std::string                    activityKey;
     std::string                    displayName;
+    std::string                    sourceKind;   // legacy_activity|task_template|playlist
+    std::string                    sourceKey;    // activity key / template key / playlist key
     std::vector<AmbientSessionTask> tasks;
     std::vector<AmbientStep>       steps;    // each task contributes Travel -> Activity
 };
@@ -64,7 +72,11 @@ public:
         std::uint8_t level,
         bool hasHerbalism,
         bool hasMining,
-        bool hasFishing) const;
+        bool hasFishing,
+        std::uint32_t startZoneId = 0,
+        std::uint32_t homeZoneId = 0,
+        std::string const& homeAnchorPointKey = "",
+        std::string const& homeBindPointKey = "") const;
 };
 
 } // namespace service

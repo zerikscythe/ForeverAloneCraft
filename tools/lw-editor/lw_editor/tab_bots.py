@@ -1,5 +1,5 @@
 """
-tab_bots.py -- DefaultProfilesTab and BotProfilesTab.
+tab_bots.py -- DefaultProfilesTab and clone-profile editor tab.
 """
 import tkinter as tk
 from tkinter import ttk, messagebox
@@ -296,7 +296,7 @@ class BotProfilesTab(ttk.Frame):
 
         ttk.Separator(left, orient="horizontal").pack(fill=tk.X, pady=4)
 
-        ttk.Label(left, text="Profile slots (1-10)").pack(anchor="w", padx=4)
+        ttk.Label(left, text="Clone profile slots (1-10)").pack(anchor="w", padx=4)
         self._prof_lb = tk.Listbox(left, selectmode=tk.SINGLE, exportselection=False, height=10)
         self._prof_lb.pack(fill=tk.BOTH, expand=True, padx=4)
         self._prof_lb.bind("<<ListboxSelect>>", self._on_prof_select)
@@ -551,7 +551,7 @@ class BotProfilesTab(ttk.Frame):
                 return
             if not self._sel_char:
                 messagebox.showinfo("Select character",
-                                    "Select a character on the left before creating a bot profile slot.")
+                                    "Select a character on the left before creating a clone profile slot.")
                 return
             used_slots = {p["slot"] for p in self._profiles}
             slot = next((s for s in range(1, 11) if s not in used_slots), None)
@@ -561,7 +561,7 @@ class BotProfilesTab(ttk.Frame):
             picker = DefaultProfilePicker(
                 self.winfo_toplevel(),
                 self._default_profile_options_for_class(self._sel_char.get("class")),
-                title="New Bot Profile")
+                title="New Clone Profile")
             if picker.cancelled:
                 return
             p = dict(source_character_guid=self._sel_char["guid"],
@@ -602,5 +602,6 @@ class BotProfilesTab(ttk.Frame):
             self._rot.clear()
         except MySQLError as e:
             messagebox.showerror("DB error", str(e))
+
 
 

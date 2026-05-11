@@ -59,7 +59,8 @@ public:
     ~UpdateFetcher();
 
     UpdateResult Update(bool const redundancyChecks, bool const allowRehash,
-                        bool const archivedRedundancy, int32 const cleanDeadReferencesMaxCount) const;
+                        bool const archivedRedundancy, int32 const cleanDeadReferencesMaxCount,
+                        bool const warnMissingAppliedFiles) const;
 
 private:
     enum UpdateMode

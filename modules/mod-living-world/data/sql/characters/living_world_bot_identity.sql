@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS living_world_bot_identity (
     name            VARCHAR(32)      NOT NULL,           -- display name shown in world
     race_id         TINYINT UNSIGNED NOT NULL,           -- WoW race ID (1=Human, 2=Orc, etc.)
     class_id        TINYINT UNSIGNED NOT NULL,           -- WoW class ID (1=Warrior, 4=Rogue, etc.)
-    spec_key        VARCHAR(32)      NOT NULL,           -- e.g. 'warrior_arms', 'mage_fire'
+    spec_key        VARCHAR(32)      NOT NULL,           -- e.g. 'Arms', 'Frost', 'Retribution'
     faction         TINYINT UNSIGNED NOT NULL,           -- 1=Alliance  2=Horde
     display_id      INT UNSIGNED     NOT NULL,           -- creature_template displayid for visual
     gender          TINYINT UNSIGNED NOT NULL DEFAULT 0, -- 0=male 1=female
@@ -29,15 +29,30 @@ CREATE TABLE IF NOT EXISTS living_world_bot_identity (
     has_mining      TINYINT(1)       NOT NULL DEFAULT 0,
     has_fishing     TINYINT(1)       NOT NULL DEFAULT 0,
 
+    -- Home-base / return routing
+    home_zone_id          INT UNSIGNED     NULL,
+    home_anchor_point_key VARCHAR(64)      NULL,
+    home_bind_point_key   VARCHAR(64)      NULL,
+
     -- Session state
     is_available    TINYINT UNSIGNED NOT NULL DEFAULT 1, -- 1=ready to spawn  0=currently active
     session_count   INT UNSIGNED     NOT NULL DEFAULT 0, -- total times spawned
+    total_world_online_ms       BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    world_online_ms_since_level BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    post_max_world_online_ms    BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    active_world_session_ms     BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    active_world_session_start  DATETIME        NULL,
+    is_retired     TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    successor_spawned TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    retired_at     DATETIME         NULL,
     last_seen_zone  INT UNSIGNED     NULL,               -- zone_id of last activity
     last_seen_at    DATETIME         NULL,               -- wall time of last despawn
     created_at      DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     UNIQUE KEY uq_name   (name),
     KEY idx_spawn        (faction, class_id, level, is_available),
-    KEY idx_last_seen    (last_seen_at)
+    KEY idx_last_seen    (last_seen_at),
+    KEY idx_active       (is_available, is_retired),
+    KEY idx_retired      (is_retired, retired_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   COMMENT='Persistent identity ledger for creature-based world bots';

@@ -45,9 +45,9 @@ TEST(SimpleBotCombatSpecRoleResolverTest, AppliesRoleOverrideWithoutChangingGues
     request.roleOverrideKey = std::string("TANK");
 
     BotCombatSpecRoleResolutionResult const result = resolver.Resolve(request);
-    EXPECT_EQ(result.guessedSpecKey, "Arms");
+    EXPECT_EQ(result.guessedSpecKey, "Fury");
     EXPECT_EQ(result.guessedRoleKey, "DPS");
-    EXPECT_EQ(result.effectiveSpecKey, "Arms");
+    EXPECT_EQ(result.effectiveSpecKey, "Fury");
     EXPECT_EQ(result.effectiveRoleKey, "TANK");
 }
 
@@ -78,7 +78,7 @@ TEST(SimpleBotCombatSpecRoleResolverTest, UnknownClassReturnsEmptyDefaultsButPre
 
     BotCombatSpecRoleResolutionResult const result = resolver.Resolve(request);
     EXPECT_EQ(result.guessedSpecKey, "");
-    EXPECT_EQ(result.guessedRoleKey, "");
+    EXPECT_EQ(result.guessedRoleKey, "DPS");
     EXPECT_EQ(result.effectiveSpecKey, "CustomSpec");
     EXPECT_EQ(result.effectiveRoleKey, "CustomRole");
 }

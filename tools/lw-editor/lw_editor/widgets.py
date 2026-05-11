@@ -49,7 +49,7 @@ class ProfileHeaderFrame(ttk.LabelFrame):
             class_cb.grid(row=_hr, column=1, sticky="w", padx=4, pady=2)
             class_cb.bind("<<ComboboxSelected>>", self._on_class_change)
         else:
-            # Bot Profiles tab: class is already known from the character selection.
+            # Clone Profiles tab: class is already known from the character selection.
             # Show it as a read-only badge; no need for the operator to set it.
             lbl(f, "Class:", _hr, 0)
             self._class_badge = ttk.Label(f, textvariable=self.v_class,
@@ -106,7 +106,7 @@ class ProfileHeaderFrame(ttk.LabelFrame):
         entry_w(f, self.v_aoe_radius, r, 8, width=6)
 
     def set_class_from_character(self, class_id: int | None):
-        """Bot Profiles tab calls this when the character selection changes.
+        """Clone Profiles tab calls this when the character selection changes.
         Updates the class badge and repopulates the spec combobox immediately,
         before any profile is loaded."""
         class_name = WOW_CLASSES.get(class_id, "") if class_id else ""
@@ -285,5 +285,6 @@ class DefaultProfilePicker:
         if self._win and self._win.winfo_exists():
             self._win.grab_release()
             self._win.destroy()
+
 
 

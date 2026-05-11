@@ -249,7 +249,8 @@ model::BotCombatDefaultProfileRecord BuildDefaultProfile(Field const* fields)
     profile.roleKey    = fields[2].Get<std::string>();
     profile.displayName= fields[3].Get<std::string>();
     profile.classKey   = fields[4].IsNull() ? "" : fields[4].Get<std::string>();
-    profile.settings   = BuildSettings(fields, 5);
+    profile.contextKey = fields[5].IsNull() ? "PvE" : fields[5].Get<std::string>();
+    profile.settings   = BuildSettings(fields, 6);
     return profile;
 }
 } // namespace
@@ -260,11 +261,11 @@ SqlBotCombatDefaultProfileRepository::ListDefaultProfiles() const
     std::vector<model::BotCombatDefaultProfileRecord> profiles;
     QueryResult result = WorldDatabase.Query(
         "SELECT default_profile_id, spec_key, role_key, display_name, "
-        "class_key, conservation_mode, resource_low_water, resource_high_water, "
+        "class_key, context_key, conservation_mode, resource_low_water, resource_high_water, "
         "enable_down_rank, down_rank_floor, default_aoe_mode, "
         "default_aoe_min_targets, default_aoe_scan_radius "
         "FROM living_world_bot_combat_default_profile "
-        "ORDER BY spec_key ASC, role_key ASC, class_key ASC, default_profile_id ASC");
+        "ORDER BY spec_key ASC, role_key ASC, class_key ASC, context_key ASC, default_profile_id ASC");
     if (!result)
         return profiles;
 
@@ -286,44 +287,54 @@ SqlBotCombatDefaultProfileRepository::FindDefaultProfile(
     std::string const& classKey,
     std::string const& contextKey) const
 {
-    (void)contextKey;
-
     std::string escapedSpecKey  = specKey;  WorldDatabase.EscapeString(escapedSpecKey);
     std::string escapedRoleKey  = roleKey;  WorldDatabase.EscapeString(escapedRoleKey);
     std::string escapedClassKey = classKey; WorldDatabase.EscapeString(escapedClassKey);
+    std::string escapedContextKey = contextKey; WorldDatabase.EscapeString(escapedContextKey);
 
     QueryResult result;
     if (escapedClassKey.empty())
     {
         result = WorldDatabase.Query(
             "SELECT default_profile_id, spec_key, role_key, display_name, "
-            "class_key, conservation_mode, resource_low_water, resource_high_water, "
+            "class_key, context_key, conservation_mode, resource_low_water, resource_high_water, "
             "enable_down_rank, down_rank_floor, default_aoe_mode, "
             "default_aoe_min_targets, default_aoe_scan_radius "
             "FROM living_world_bot_combat_default_profile "
             "WHERE spec_key = '{}' AND role_key = '{}' "
+            "AND (context_key = '{}' OR context_key IS NULL OR context_key = '') "
             "AND (class_key IS NULL OR class_key = '') "
-            "ORDER BY default_profile_id ASC "
+            "ORDER BY CASE "
+                "WHEN context_key = '{}' THEN 0 "
+                "WHEN context_key IS NULL OR context_key = '' THEN 1 "
+                "ELSE 2 END, "
+                "default_profile_id ASC "
             "LIMIT 1",
-            escapedSpecKey, escapedRoleKey);
+            escapedSpecKey, escapedRoleKey, escapedContextKey, escapedContextKey);
     }
     else
     {
         result = WorldDatabase.Query(
             "SELECT default_profile_id, spec_key, role_key, display_name, "
-            "class_key, conservation_mode, resource_low_water, resource_high_water, "
+            "class_key, context_key, conservation_mode, resource_low_water, resource_high_water, "
             "enable_down_rank, down_rank_floor, default_aoe_mode, "
             "default_aoe_min_targets, default_aoe_scan_radius "
             "FROM living_world_bot_combat_default_profile "
             "WHERE spec_key = '{}' AND role_key = '{}' "
+            "AND (context_key = '{}' OR context_key IS NULL OR context_key = '') "
             "AND (class_key = '{}' OR class_key IS NULL OR class_key = '') "
             "ORDER BY CASE "
                 "WHEN class_key = '{}' THEN 0 "
                 "WHEN class_key IS NULL OR class_key = '' THEN 1 "
                 "ELSE 2 END, "
+                "CASE "
+                "WHEN context_key = '{}' THEN 0 "
+                "WHEN context_key IS NULL OR context_key = '' THEN 1 "
+                "ELSE 2 END, "
                 "default_profile_id ASC "
             "LIMIT 1",
-            escapedSpecKey, escapedRoleKey, escapedClassKey, escapedClassKey);
+            escapedSpecKey, escapedRoleKey, escapedContextKey,
+            escapedClassKey, escapedClassKey, escapedContextKey);
     }
     if (!result)
         return std::nullopt;

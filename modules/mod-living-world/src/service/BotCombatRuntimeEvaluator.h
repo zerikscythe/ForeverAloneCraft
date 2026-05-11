@@ -53,6 +53,11 @@ struct BotCombatEvaluationResult
 class BotCombatRuntimeEvaluator
 {
 public:
+    [[nodiscard]] static std::uint32_t CountPartyMembersBelowHealthPct(
+        Unit* bot,
+        Player* owner,
+        float thresholdPct);
+
     [[nodiscard]] BotCombatEvaluationResult EvaluateInterrupts(
         BotCombatPreparedProfile const& preparedProfile,
         BotCombatRuntimeContext const& context) const;

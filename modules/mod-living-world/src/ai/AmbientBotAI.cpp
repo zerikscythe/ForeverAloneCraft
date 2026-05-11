@@ -1,4 +1,5 @@
 #include "ai/AmbientBotAI.h"
+#include "ai/TravelWatchdog.h"
 #include "integration/BotActivityLog.h"
 #include "integration/SqlZoneIndexRepository.h"
 #include "service/BotActivitySessionComposer.h"
@@ -106,6 +107,8 @@ std::string DescribeSessionSummary(service::AmbientSession const& session)
 {
     std::string detail =
         "session='" + session.displayName
+        + "' source_kind='" + (session.sourceKind.empty() ? std::string("unknown") : session.sourceKind)
+        + "' source_key='" + (!session.sourceKey.empty() ? session.sourceKey : session.activityKey)
         + "' tasks=" + std::to_string(session.tasks.size())
         + " steps=" + std::to_string(session.steps.size());
 
@@ -136,13 +139,15 @@ public:
         std::size_t currentStep = 0,
         std::uint32_t stepElapsedSec = 0,
         std::uint8_t  notInWorldRetries = 0,
-        std::uint32_t activityLogTick = 0)
+        std::uint32_t activityLogTick = 0,
+        TravelWatchdogState travelWatchdog = {})
         : _botGuid(botGuid)
         , _session(std::move(session))
         , _currentStep(currentStep)
         , _stepElapsedSec(stepElapsedSec)
         , _notInWorldRetries(notInWorldRetries)
         , _activityLogTick(activityLogTick)
+        , _travelWatchdog(travelWatchdog)
     {
     }
 
@@ -162,7 +167,7 @@ public:
             bot->m_Events.AddEventAtOffset(
                 new AmbientBotAIEvent(
                     _botGuid, _session, _currentStep,
-                    _stepElapsedSec, _notInWorldRetries + 1, _activityLogTick),
+                    _stepElapsedSec, _notInWorldRetries + 1, _activityLogTick, _travelWatchdog),
                 delay);
             return true;
         }
@@ -196,6 +201,9 @@ private:
             case T::Travel:
                 TickTravel(bot, step);
                 break;
+            case T::TaxiFlight:
+                TickTaxiFlight(bot, step);
+                break;
             case T::GatherHerb:
             case T::GatherOre:
             case T::Fish:
@@ -210,6 +218,7 @@ private:
     {
         if (_stepElapsedSec == 0)
         {
+            ResetTravelWatchdog(_travelWatchdog);
             if (IsFirstStepForTask(_session, _currentStep, step))
             {
                 integration::BotActivityLog::Record(
@@ -244,6 +253,27 @@ private:
             return;
         }
 
+        TravelWatchdogSignal const signal = UpdateTravelWatchdog(
+            _travelWatchdog,
+            bot->GetPositionX(),
+            bot->GetPositionY(),
+            bot->GetPositionZ(),
+            500u);
+        if (signal == TravelWatchdogSignal::Stuck || signal == TravelWatchdogSignal::Timeout)
+        {
+            char const* eventType = signal == TravelWatchdogSignal::Timeout
+                ? "travel_timeout"
+                : "travel_stuck";
+            integration::BotActivityLog::Record(
+                bot,
+                eventType,
+                DescribeStep(_session, _currentStep, step)
+                    + " action=recover_teleport");
+            bot->NearTeleportTo(step.x, step.y, step.z, bot->GetOrientation());
+            AdvanceAndReschedule(bot, 500ms);
+            return;
+        }
+
         // Issue MovePoint only when we're not already heading there.
         if (bot->GetMotionMaster()->GetCurrentMovementGeneratorType()
             != POINT_MOTION_TYPE)
@@ -259,6 +289,41 @@ private:
         }
 
         Reschedule(bot, 500ms);
+    }
+
+    void TickTaxiFlight(Player* bot, service::AmbientStep const& step)
+    {
+        if (_stepElapsedSec == 0)
+        {
+            if (IsFirstStepForTask(_session, _currentStep, step))
+            {
+                integration::BotActivityLog::Record(
+                    bot, "task_start", DescribeTask(_session, step.taskIndex));
+            }
+
+            integration::BotActivityLog::Record(
+                bot, "travel_taxi_start", DescribeStep(_session, _currentStep, step));
+        }
+
+        _stepElapsedSec += 1;
+        if (_stepElapsedSec < step.durationSec)
+        {
+            Reschedule(bot, 1s);
+            return;
+        }
+
+        if (bot->GetMapId() != step.mapId)
+        {
+            bot->TeleportTo(step.mapId, step.x, step.y, step.z, bot->GetOrientation());
+        }
+        else
+        {
+            bot->NearTeleportTo(step.x, step.y, step.z, bot->GetOrientation());
+        }
+
+        integration::BotActivityLog::Record(
+            bot, "travel_taxi_arrive", DescribeStep(_session, _currentStep, step));
+        AdvanceAndReschedule(bot, 500ms);
     }
 
     void TickActivity(Player* bot, service::AmbientStep const& step)
@@ -313,7 +378,7 @@ private:
         bot->m_Events.AddEventAtOffset(
             new AmbientBotAIEvent(
                 _botGuid, _session, _currentStep + 1,
-                0, 0, _activityLogTick),
+                    0, 0, _activityLogTick, {}),
             delay);
     }
 
@@ -323,7 +388,7 @@ private:
         bot->m_Events.AddEventAtOffset(
             new AmbientBotAIEvent(
                 _botGuid, _session, _currentStep,
-                _stepElapsedSec, 0, _activityLogTick),
+                    _stepElapsedSec, 0, _activityLogTick, _travelWatchdog),
             delay);
     }
 
@@ -333,6 +398,7 @@ private:
     std::uint32_t            _stepElapsedSec   = 0;
     std::uint8_t             _notInWorldRetries = 0;
     std::uint32_t            _activityLogTick  = 0;
+    TravelWatchdogState      _travelWatchdog;
 };
 
 // Fetch ambient bot's skills from DB to inform session composition.
@@ -389,7 +455,11 @@ void ScheduleAmbientBotAI(Player* botPlayer)
         profile->level,
         profile->hasHerbalism,
         profile->hasMining,
-        profile->hasFishing);
+        profile->hasFishing,
+        botPlayer->GetZoneId(),
+        0,
+        "",
+        "");
 
     if (!session)
     {

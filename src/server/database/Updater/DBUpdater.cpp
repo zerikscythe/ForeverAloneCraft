@@ -276,7 +276,8 @@ bool DBUpdater<T>::Update(DatabaseWorkerPool<T>& pool, std::string_view modulesL
                      sConfigMgr->GetOption<bool>("Updates.Redundancy", true),
                      sConfigMgr->GetOption<bool>("Updates.AllowRehash", true),
                      sConfigMgr->GetOption<bool>("Updates.ArchivedRedundancy", false),
-                     sConfigMgr->GetOption<int32>("Updates.CleanDeadRefMaxCount", 3));
+                     sConfigMgr->GetOption<int32>("Updates.CleanDeadRefMaxCount", 3),
+                     sConfigMgr->GetOption<bool>("Updates.WarnMissingAppliedFiles", true));
     }
     catch (UpdateException&)
     {
@@ -346,7 +347,8 @@ bool DBUpdater<T>::Update(DatabaseWorkerPool<T>& pool, std::vector<std::string> 
                      sConfigMgr->GetOption<bool>("Updates.Redundancy", true),
                      sConfigMgr->GetOption<bool>("Updates.AllowRehash", true),
                      sConfigMgr->GetOption<bool>("Updates.ArchivedRedundancy", false),
-                     sConfigMgr->GetOption<int32>("Updates.CleanDeadRefMaxCount", 3));
+                     sConfigMgr->GetOption<int32>("Updates.CleanDeadRefMaxCount", 3),
+                     sConfigMgr->GetOption<bool>("Updates.WarnMissingAppliedFiles", true));
     }
     catch (UpdateException&)
     {

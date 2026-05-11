@@ -115,7 +115,7 @@ int LoadDominantTalentTab(std::uint64_t sourceCharacterGuid)
         return -1;
 
     QueryResult result = CharacterDatabase.Query(
-        "SELECT spell FROM character_talent WHERE guid = {} AND spec = 0",
+        "SELECT spell FROM character_talent WHERE guid = {} AND (specMask & 1) <> 0",
         sourceCharacterGuid);
     if (!result)
         return -1;

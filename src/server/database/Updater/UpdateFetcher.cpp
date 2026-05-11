@@ -240,7 +240,8 @@ std::string UpdateFetcher::ReadSQLUpdate(Path const& file) const
 UpdateResult UpdateFetcher::Update(bool const redundancyChecks,
                                    bool const allowRehash,
                                    bool const archivedRedundancy,
-                                   int32 const cleanDeadReferencesMaxCount) const
+                                   int32 const cleanDeadReferencesMaxCount,
+                                   bool const warnMissingAppliedFiles) const
 {
     LocaleFileStorage const available = GetFileList();
     if (_setDirectories && available.empty())
@@ -415,14 +416,21 @@ UpdateResult UpdateFetcher::Update(bool const redundancyChecks,
         {
             if (entry.second.state != MODULE)
             {
-                LOG_WARN("sql.updates",
-                         ">> The file \'{}\' was applied to the database, but is missing in"
-                         " your update directory now!",
-                         entry.first);
+                if (warnMissingAppliedFiles)
+                {
+                    LOG_WARN("sql.updates",
+                             ">> The file \'{}\' was applied to the database, but is missing in"
+                             " your update directory now!",
+                             entry.first);
+                }
 
                 if (doCleanup)
                 {
-                    LOG_INFO("sql.updates", "Deleting orphaned entry \'{}\'...", entry.first);
+                    if (warnMissingAppliedFiles)
+                        LOG_INFO("sql.updates", "Deleting orphaned entry \'{}\'...", entry.first);
+                    else
+                        LOG_DEBUG("sql.updates", "Deleting orphaned entry \'{}\'...", entry.first);
+
                     toCleanup.insert(entry);
                 }
             }
@@ -432,11 +440,17 @@ UpdateResult UpdateFetcher::Update(bool const redundancyChecks,
         {
             if (doCleanup)
                 CleanUp(toCleanup);
-            else
+            else if (warnMissingAppliedFiles)
             {
                 LOG_ERROR("sql.updates",
                           "Cleanup is disabled! There were {} dirty files applied to your database, "
                           "but they are now missing in your source directory!",
+                          toCleanup.size());
+            }
+            else
+            {
+                LOG_DEBUG("sql.updates",
+                          "Cleanup is disabled for {} orphaned applied update entries.",
                           toCleanup.size());
             }
         }

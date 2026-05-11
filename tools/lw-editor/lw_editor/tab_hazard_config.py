@@ -1,10 +1,11 @@
 """
-tab_hazard_config.py -- Hazard Sensor Configuration tab.
+tab_hazard_config.py -- World-rules and party-rules editor panels.
 
-Three inner sub-tabs:
-  Hazard Auras    -- living_world_hazard_auras
-  Class Rules     -- living_world_hazard_class_rules
-  Tuning          -- living_world_hazard_config (key/value)
+This file now exposes two top-level tabs used by the main editor:
+
+- WorldRulesTab: true world/global rules like hazard auras and hazard tuning
+- PartyRulesTab: direct companion / party behaviour rules backed by
+  living_world_bot_global_config
 """
 from __future__ import annotations
 
@@ -46,16 +47,14 @@ def _safe_float(val: str, default: float = 0.0) -> float:
         return default
 
 
-class HazardConfigTab(ttk.Frame):
+class WorldRulesTab(ttk.Frame):
     def __init__(self, parent: tk.Widget):
         super().__init__(parent)
         inner = ttk.Notebook(self)
         inner.pack(fill=tk.BOTH, expand=True, padx=4, pady=4)
-        self._behavior_panel = _BotBehaviorPanel(inner)
         self._aura_panel  = _AuraPanel(inner)
         self._role_panel  = _RoleRulePanel(inner)
         self._tune_panel  = _TuningPanel(inner)
-        inner.add(self._behavior_panel, text="  Bot Behaviour  ")
         inner.add(self._aura_panel,  text="  Hazard Auras  ")
         inner.add(self._role_panel,  text="  Role Rules  ")
         inner.add(self._tune_panel,  text="  Hazard Tuning  ")
@@ -63,10 +62,21 @@ class HazardConfigTab(ttk.Frame):
     def refresh(self):
         if not db.ok():
             return
-        self._behavior_panel.refresh()
         self._aura_panel.refresh()
         self._role_panel.refresh()
         self._tune_panel.refresh()
+
+
+class PartyRulesTab(ttk.Frame):
+    def __init__(self, parent: tk.Widget):
+        super().__init__(parent)
+        self._behavior_panel = _BotBehaviorPanel(self)
+        self._behavior_panel.pack(fill=tk.BOTH, expand=True)
+
+    def refresh(self):
+        if not db.ok():
+            return
+        self._behavior_panel.refresh()
 
 
 FORMATION_OPTIONS = ["Ring", "V-Shape", "Line", "Cluster"]
@@ -85,6 +95,40 @@ BEHAVIOR_KEYS = [
      "Ring=evenly spread around owner, V=fan behind, Line=single file, Cluster=bunched."),
     ("follow_slot_count",      "Ring Slot Count",     "int",
      "Positions in Ring formation (3–9). Ignored for other styles."),
+    ("combat_follow_override_distance", "Combat Follow Override", "float",
+     "If ranged/healer bots drift farther than this from owner, they snap back into follow behaviour."),
+    ("reposition_distance",    "Passive Reposition",   "float",
+     "In Passive mode, reissue follow when farther than this from the owner."),
+    ("ranged_min_distance",    "Ranged Min Distance",  "float",
+     "Back away when a ranged/healer bot is closer than this to its combat target."),
+    ("ranged_optimal_distance", "Ranged Optimal Distance", "float",
+     "Preferred chase stop distance for ranged/healer combat positioning."),
+    ("ranged_cast_range",      "Ranged Cast Range",    "float",
+     "If target is farther than this, move closer before trying to cast."),
+    ("ranged_retreat_distance", "Ranged Retreat Step",  "float",
+     "Backstep distance when retreating from melee range."),
+    ("ranged_retreat_trigger_pct", "Ranged Retreat Trigger %", "float",
+     "Retreat when ranged bot HP drops below this percent in melee range."),
+    ("ranged_retreat_reset_pct", "Ranged Retreat Reset %", "float",
+     "After a retreat, do not retreat again until HP drops below this percent."),
+    ("assist_use_current_victim", "Assist: Current Victim", "bool",
+     "Normal assist mode: keep fighting the bot's current valid victim."),
+    ("assist_use_owner_victim", "Assist: Owner Victim", "bool",
+     "Normal assist mode: allow switching to the owner's current victim."),
+    ("assist_owner_victim_must_target_owner", "Assist: Owner Victim Must Fight Back", "bool",
+     "Require the owner's victim to be actively targeting the owner before assist picks it."),
+    ("attack_lock_use_owner_victim", "Attack-Lock: Owner Victim", "bool",
+     "During attack-lock, fall back to the owner's current victim when the bot's current victim is unavailable."),
+    ("attack_lock_use_owner_selection", "Attack-Lock: Owner Selection", "bool",
+     "During attack-lock, consider the owner's current selected target as a fallback source."),
+    ("guard_use_current_victim", "Guard: Current Victim", "bool",
+     "Guard mode: keep the bot's current valid victim before looking for new threats."),
+    ("guard_use_owner_attackers", "Guard: Owner Attackers", "bool",
+     "Guard mode: consider units actively attacking the owner."),
+    ("assist_require_targetable_for_attack", "Assist/Guard: Require Attackable Target", "bool",
+     "Normal assist and guard modes: require the candidate to currently pass attackable-for-attack checks."),
+    ("command_require_targetable_for_attack", "Command/Attack-Lock: Require Attackable Target", "bool",
+     "Forced-target and attack-lock assist: require the candidate to currently pass attackable-for-attack checks instead of tolerating pull/setup flicker."),
     ("mount_with_owner",       "Mount With Owner",    "bool",
      "Bots mount up when the owner mounts. (Implementation pending.)"),
     ("auto_loot",              "Auto-Loot",           "bool",
@@ -101,21 +145,35 @@ class _BotBehaviorPanel(ttk.Frame):
 
     def _build(self):
         ttk.Label(self, text=(
-            "Global behaviour settings that apply to every bot. "
-            "Changes are picked up within 60 seconds without a server restart."
+            "Direct party / companion behaviour rules. These govern how your own summoned bots "
+            "follow, position, assist, and react in combat. Changes are picked up within 60 seconds "
+            "without a server restart."
         ), wraplength=820, justify=tk.LEFT).pack(anchor="w", padx=8, pady=(6, 4))
 
-        # ── Follow Distance section ──────────────────────────────────────────
-        fd = ttk.LabelFrame(self, text="Follow Distance (yards)")
-        fd.pack(fill=tk.X, padx=8, pady=4)
+        nb = ttk.Notebook(self)
+        nb.pack(fill=tk.BOTH, expand=True, padx=8, pady=(0, 4))
+
+        self._build_follow_tab(nb)
+        self._build_combat_movement_tab(nb)
+        self._build_targeting_tab(nb)
+        self._build_misc_tab(nb)
+
+        ttk.Button(self, text="Save All Changes",
+                   command=self._save_all).pack(anchor="e", padx=8, pady=6)
+
+    def _build_follow_tab(self, nb):
+        frame = ttk.Frame(nb)
+        nb.add(frame, text="  Follow & Formation  ")
+
+        fd = ttk.LabelFrame(frame, text="Follow Distance (yards)")
+        fd.pack(fill=tk.X, padx=8, pady=8)
 
         ttk.Label(fd, text=(
-            "Bots follow at a role-appropriate distance so melee bots crowd in, "
-            "healers stay at cast range, and ranged bots hang back."
+            "Role-based spacing for your direct companion party. Melee stays tighter, healers hold cast range, "
+            "and ranged bots hang farther back."
         ), wraplength=760, justify=tk.LEFT, foreground="#555").grid(
             row=0, column=0, columnspan=6, sticky="w", padx=8, pady=(4, 6))
 
-        # Row: Role labels + entries on one line
         role_fields = [
             ("follow_distance_melee",  "Melee / Tank"),
             ("follow_distance_healer", "Healer"),
@@ -130,50 +188,135 @@ class _BotBehaviorPanel(ttk.Frame):
                 row=1, column=col * 2 + 1, sticky="w", pady=6, padx=(0, 4))
             self._vars[key] = var
 
-        # default hints
-        for key, default in [("follow_distance_melee","1.0"),
-                              ("follow_distance_healer","1.5"),
-                              ("follow_distance_ranged","2.5"),
-                              ("follow_distance","2.0")]:
+        for key, default in [("follow_distance_melee", "1.0"),
+                              ("follow_distance_healer", "1.5"),
+                              ("follow_distance_ranged", "2.5"),
+                              ("follow_distance", "2.0")]:
             self._vars[key].set(default)
 
-        # ── Formation section ────────────────────────────────────────────────
-        ff = ttk.LabelFrame(self, text="Follow Formation")
-        ff.pack(fill=tk.X, padx=8, pady=4)
+        ff = ttk.LabelFrame(frame, text="Follow Formation")
+        ff.pack(fill=tk.X, padx=8, pady=(0, 8))
 
-        ttk.Label(ff, text="Style:").grid(row=0, column=0, sticky="e", padx=(12, 2), pady=8)
+        ttk.Label(ff, text=(
+            "Formation controls apply to your direct active companion group, not ambient world population."
+        ), wraplength=760, justify=tk.LEFT, foreground="#555").grid(
+            row=0, column=0, columnspan=5, sticky="w", padx=8, pady=(4, 6))
+
+        ttk.Label(ff, text="Style:").grid(row=1, column=0, sticky="e", padx=(12, 2), pady=8)
         fv = tk.StringVar()
         ttk.Combobox(ff, textvariable=fv, values=FORMATION_OPTIONS,
-                     state="readonly", width=14).grid(row=0, column=1, sticky="w", padx=(0, 16))
+                     state="readonly", width=14).grid(row=1, column=1, sticky="w", padx=(0, 16))
         self._vars["follow_formation"] = fv
         fv.set(FORMATION_OPTIONS[0])
 
-        ttk.Label(ff, text="Ring Slot Count:").grid(row=0, column=2, sticky="e", padx=(0, 2))
+        ttk.Label(ff, text="Ring Slot Count:").grid(row=1, column=2, sticky="e", padx=(0, 2))
         sv = tk.StringVar(value="7")
-        ttk.Entry(ff, textvariable=sv, width=5).grid(row=0, column=3, sticky="w", padx=(0, 8))
+        ttk.Entry(ff, textvariable=sv, width=5).grid(row=1, column=3, sticky="w", padx=(0, 8))
         self._vars["follow_slot_count"] = sv
 
         ttk.Label(ff, text="(3–9 slots, Ring formation only)",
-                  foreground="#555").grid(row=0, column=4, sticky="w", padx=8)
+                  foreground="#555").grid(row=1, column=4, sticky="w", padx=8)
 
-        # ── Misc toggles ─────────────────────────────────────────────────────
-        misc = ttk.LabelFrame(self, text="Misc")
-        misc.pack(fill=tk.X, padx=8, pady=4)
+    def _build_combat_movement_tab(self, nb):
+        frame = ttk.Frame(nb)
+        nb.add(frame, text="  Combat Movement  ")
+
+        combat = ttk.LabelFrame(frame, text="Combat Positioning")
+        combat.pack(fill=tk.X, padx=8, pady=8)
+
+        ttk.Label(combat, text=(
+            "These thresholds drive ranged/healer movement decisions inside your party: when companions snap back, "
+            "close distance, or step out of melee pressure."
+        ), wraplength=760, justify=tk.LEFT, foreground="#555").grid(
+            row=0, column=0, columnspan=8, sticky="w", padx=8, pady=(4, 6))
+
+        combat_fields = [
+            ("combat_follow_override_distance", "Combat Follow"),
+            ("reposition_distance", "Passive Reposition"),
+            ("ranged_min_distance", "Min Distance"),
+            ("ranged_optimal_distance", "Optimal Distance"),
+            ("ranged_cast_range", "Cast Range"),
+            ("ranged_retreat_distance", "Retreat Step"),
+            ("ranged_retreat_trigger_pct", "Retreat %"),
+            ("ranged_retreat_reset_pct", "Reset %"),
+        ]
+        for idx, (key, label) in enumerate(combat_fields):
+            row = 1 + idx // 4
+            col = (idx % 4) * 2
+            ttk.Label(combat, text=label + ":").grid(
+                row=row, column=col, sticky="e", padx=(12 if col == 0 else 8, 2), pady=6)
+            var = tk.StringVar()
+            ttk.Entry(combat, textvariable=var, width=7).grid(
+                row=row, column=col + 1, sticky="w", pady=6, padx=(0, 4))
+            self._vars[key] = var
+
+        for key, default in [
+            ("combat_follow_override_distance", "20.0"),
+            ("reposition_distance", "8.0"),
+            ("ranged_min_distance", "8.0"),
+            ("ranged_optimal_distance", "25.0"),
+            ("ranged_cast_range", "30.0"),
+            ("ranged_retreat_distance", "5.0"),
+            ("ranged_retreat_trigger_pct", "80.0"),
+            ("ranged_retreat_reset_pct", "60.0"),
+        ]:
+            self._vars[key].set(default)
+
+    def _build_targeting_tab(self, nb):
+        frame = ttk.Frame(nb)
+        nb.add(frame, text="  Targeting  ")
+
+        target = ttk.LabelFrame(frame, text="Assist / Guard / Attack-Lock")
+        target.pack(fill=tk.X, padx=8, pady=8)
+
+        ttk.Label(target, text=(
+            "These are direct party targeting rules: which sources companions may use in assist, guard, and attack-lock, "
+            "plus how strict target attackability should be in each context."
+        ), wraplength=760, justify=tk.LEFT, foreground="#555").grid(
+            row=0, column=0, columnspan=4, sticky="w", padx=8, pady=(4, 6))
+
+        bool_fields = [
+            ("assist_use_current_victim", "Assist: Current Victim", True),
+            ("assist_use_owner_victim", "Assist: Owner Victim", True),
+            ("assist_owner_victim_must_target_owner", "Assist: Victim Must Fight Back", True),
+            ("attack_lock_use_owner_victim", "Attack-Lock: Owner Victim", True),
+            ("attack_lock_use_owner_selection", "Attack-Lock: Owner Selection", True),
+            ("guard_use_current_victim", "Guard: Current Victim", True),
+            ("guard_use_owner_attackers", "Guard: Owner Attackers", True),
+            ("assist_require_targetable_for_attack", "Assist/Guard: Require Attackable Target", True),
+            ("command_require_targetable_for_attack", "Command/Attack-Lock: Require Attackable Target", False),
+        ]
+        for idx, (key, label, default) in enumerate(bool_fields):
+            row = 1 + idx // 2
+            col = idx % 2
+            var = tk.BooleanVar(value=default)
+            ttk.Checkbutton(target, text=label, variable=var).grid(
+                row=row, column=col, padx=12, pady=6, sticky="w")
+            self._vars[key] = var
+
+    def _build_misc_tab(self, nb):
+        frame = ttk.Frame(nb)
+        nb.add(frame, text="  Misc  ")
+
+        misc = ttk.LabelFrame(frame, text="Misc Party Behaviour")
+        misc.pack(fill=tk.X, padx=8, pady=8)
+
+        ttk.Label(misc, text=(
+            "These companion-party controls are reserved for future implementation, but they belong with party rules rather than world rules."
+        ), wraplength=760, justify=tk.LEFT, foreground="#555").grid(
+            row=0, column=0, columnspan=4, sticky="w", padx=8, pady=(4, 6))
 
         mv = tk.BooleanVar(value=True)
         ttk.Checkbutton(misc, text="Mount With Owner",
-                        variable=mv).grid(row=0, column=0, padx=12, pady=8, sticky="w")
-        ttk.Label(misc, text="(pending)", foreground="#999").grid(row=0, column=1, sticky="w")
+                        variable=mv).grid(row=1, column=0, padx=12, pady=8, sticky="w")
+        ttk.Label(misc, text="(pending)", foreground="#999").grid(row=1, column=1, sticky="w")
         self._vars["mount_with_owner"] = mv
 
         av = tk.BooleanVar(value=False)
         ttk.Checkbutton(misc, text="Auto-Loot",
-                        variable=av).grid(row=0, column=2, padx=24, pady=8, sticky="w")
-        ttk.Label(misc, text="(pending)", foreground="#999").grid(row=0, column=3, sticky="w")
+                        variable=av).grid(row=1, column=2, padx=24, pady=8, sticky="w")
+        ttk.Label(misc, text="(pending)", foreground="#999").grid(row=1, column=3, sticky="w")
         self._vars["auto_loot"] = av
-
-        ttk.Button(self, text="Save All Changes",
-                   command=self._save_all).pack(anchor="e", padx=8, pady=6)
 
     def refresh(self):
         rows = db.q(db.world,

@@ -1,7 +1,7 @@
 """
 db.py -- DBCtx database context class and module-level singleton.
 """
-import hashlib, json, pathlib, secrets, struct
+import hashlib, json, os, pathlib, secrets, struct
 import mysql.connector
 from mysql.connector import Error as MySQLError
 
@@ -99,6 +99,8 @@ class DBCtx:
         self._dbc_enchant_cache       = None
         self._dbc_gemproperties_cache = None
         self._json_faction_cache      = None
+        self._map_name_cache          = None
+        self._area_name_cache         = None
 
     def connect(self, host: str, port: int, user: str, password: str,
                  ssh_enabled: bool = False, ssh_host: str = "", ssh_port: int = 22,
@@ -164,6 +166,8 @@ class DBCtx:
         self.chars = mysql.connector.connect(**base, database="acore_characters")
         self._world_tables = None
         self._spell_rank_cache = None
+        self._map_name_cache = None
+        self._area_name_cache = None
         self._migrate_schema()
 
     def _migrate_schema(self):
@@ -484,6 +488,245 @@ class DBCtx:
          "('Druid','Feral','DPS','PvP','Druid \u2014 Feral (PvP)',1,55,75,1,2,0,2,10.0),"
          "('Druid','Restoration','HEAL','PvP','Druid \u2014 Restoration (PvP)',1,55,75,1,2,0,2,10.0)"),
 
+        # Move editor-seeded PvP defaults out of the low reserved ID range used
+        # by canonical world SQL patches such as rev_living_world_027.
+        ("2026_19_rekey_reserved_pvp_default_profile_entries",
+         "world",
+         "UPDATE living_world_bot_combat_default_entry e "
+         "JOIN living_world_bot_combat_default_profile p ON p.default_profile_id = e.default_profile_id "
+         "SET e.default_profile_id = e.default_profile_id + 1000 "
+         "WHERE p.context_key = 'PvP' AND p.default_profile_id BETWEEN 19 AND 34"),
+
+        ("2026_20_rekey_reserved_pvp_default_profiles",
+         "world",
+         "UPDATE living_world_bot_combat_default_profile "
+         "SET default_profile_id = default_profile_id + 1000 "
+         "WHERE context_key = 'PvP' AND default_profile_id BETWEEN 19 AND 34"),
+
+        # ── Combat positioning thresholds in global bot behaviour ─────────────
+        ("2025_27_bot_global_positioning_thresholds",
+         "world",
+         "INSERT IGNORE INTO living_world_bot_global_config (config_key, config_value, notes) VALUES"
+         "  ('combat_follow_override_distance', 20.0, 'If ranged/healer bots drift farther than this from owner, snap back to follow behaviour'),"
+         "  ('reposition_distance',             8.0, 'Passive-mode catch-up distance before reissuing follow'),"
+         "  ('ranged_min_distance',             8.0, 'Back away when a ranged/healer bot is closer than this to its target'),"
+         "  ('ranged_optimal_distance',        25.0, 'Preferred chase stop distance for ranged/healer combat positioning'),"
+         "  ('ranged_cast_range',              30.0, 'Approach target when farther than this spell-usage range'),"
+         "  ('ranged_retreat_distance',         5.0, 'Short backstep distance when retreating from melee range'),"
+         "  ('ranged_retreat_trigger_pct',     80.0, 'Retreat when ranged bot HP drops below this percent in melee range'),"
+         "  ('ranged_retreat_reset_pct',       60.0, 'Allow another retreat only after HP drops below this percent again')"),
+
+        ("2025_28_bot_global_targeting_policy",
+         "world",
+         "INSERT IGNORE INTO living_world_bot_global_config (config_key, config_value, notes) VALUES"
+         "  ('assist_use_current_victim', 1.0, 'Normal assist: keep fighting bot current victim if still valid'),"
+         "  ('assist_use_owner_victim',   1.0, 'Normal assist: consider owner current victim as follow-up target'),"
+         "  ('assist_owner_victim_must_target_owner', 1.0, 'Require owner victim to be actively fighting back against owner before assist picks it'),"
+         "  ('attack_lock_use_owner_victim', 1.0, 'During attack-lock, consider owner current victim if current bot victim is unavailable'),"
+         "  ('attack_lock_use_owner_selection', 1.0, 'During attack-lock, consider owner selected target if other sources are unavailable'),"
+         "  ('guard_use_current_victim', 1.0, 'Guard mode: keep bot current victim if still valid'),"
+         "  ('guard_use_owner_attackers', 1.0, 'Guard mode: consider units actively attacking the owner')"),
+
+        ("2025_29_bot_global_target_validity_policy",
+         "world",
+         "INSERT IGNORE INTO living_world_bot_global_config (config_key, config_value, notes) VALUES"
+         "  ('assist_require_targetable_for_attack', 1.0, 'Normal assist and guard: require candidate to currently pass attackable-for-attack checks'),"
+         "  ('command_require_targetable_for_attack', 0.0, 'Forced-target and attack-lock assist: require candidate to currently pass attackable-for-attack checks instead of allowing pull/setup flicker')"),
+
+        # ── Living World task/playlist editor schema sync ────────────────────
+        ("2026_01_world_task_point_table",
+         "world",
+         "CREATE TABLE IF NOT EXISTS living_world_task_point ("
+         "  point_id   INT UNSIGNED      NOT NULL AUTO_INCREMENT PRIMARY KEY,"
+         "  point_key  VARCHAR(64)       NOT NULL,"
+         "  zone_id    INT UNSIGNED      NOT NULL,"
+         "  map_id     SMALLINT UNSIGNED NOT NULL,"
+         "  point_type VARCHAR(32)       NOT NULL,"
+         "  point_name VARCHAR(100)      NOT NULL,"
+         "  x          FLOAT             NOT NULL,"
+         "  y          FLOAT             NOT NULL,"
+         "  z          FLOAT             NOT NULL,"
+         "  UNIQUE KEY uq_point_key (point_key),"
+         "  KEY idx_zone_type (zone_id, point_type)"
+         ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"),
+
+        ("2026_02_world_task_template_table",
+         "world",
+         "CREATE TABLE IF NOT EXISTS living_world_task_template ("
+         "  template_id         INT UNSIGNED      NOT NULL AUTO_INCREMENT PRIMARY KEY,"
+         "  template_key        VARCHAR(64)       NOT NULL,"
+         "  display_name        VARCHAR(100)      NOT NULL,"
+         "  task_family         VARCHAR(32)       NOT NULL DEFAULT 'misc',"
+         "  required_faction    TINYINT UNSIGNED  NOT NULL DEFAULT 0,"
+         "  min_level           TINYINT UNSIGNED  NOT NULL DEFAULT 1,"
+         "  max_level           TINYINT UNSIGNED  NOT NULL DEFAULT 80,"
+         "  requires_herbalism  TINYINT(1)        NOT NULL DEFAULT 0,"
+         "  requires_mining     TINYINT(1)        NOT NULL DEFAULT 0,"
+         "  requires_fishing    TINYINT(1)        NOT NULL DEFAULT 0,"
+         "  weight              TINYINT UNSIGNED  NOT NULL DEFAULT 1,"
+         "  is_enabled          TINYINT(1)        NOT NULL DEFAULT 1,"
+         "  UNIQUE KEY uq_template_key (template_key),"
+         "  KEY idx_template_match (is_enabled, required_faction, min_level, max_level)"
+         ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"),
+
+        ("2026_03_world_task_template_step_table",
+         "world",
+         "CREATE TABLE IF NOT EXISTS living_world_task_template_step ("
+         "  template_id         INT UNSIGNED      NOT NULL,"
+         "  step_order          SMALLINT UNSIGNED NOT NULL,"
+         "  step_type           VARCHAR(32)       NOT NULL,"
+         "  target_zone_id      INT UNSIGNED      NOT NULL,"
+         "  target_point_key    VARCHAR(64)       NULL,"
+         "  resolver_kind       VARCHAR(32)       NOT NULL DEFAULT 'zone',"
+         "  subject_kind        VARCHAR(32)       NULL,"
+         "  subject_id          INT UNSIGNED      NULL,"
+         "  subject_key         VARCHAR(64)       NULL,"
+         "  return_anchor_role  VARCHAR(32)       NULL,"
+         "  cycle_count         TINYINT UNSIGNED  NOT NULL DEFAULT 1,"
+         "  duration_min_sec    INT UNSIGNED      NOT NULL DEFAULT 0,"
+         "  duration_max_sec    INT UNSIGNED      NOT NULL DEFAULT 0,"
+         "  label               VARCHAR(100)      NOT NULL,"
+         "  PRIMARY KEY (template_id, step_order),"
+         "  KEY idx_step_zone (target_zone_id)"
+         ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"),
+
+        ("2026_04_world_task_template_step_target_point_key",
+         "world",
+         "ALTER TABLE living_world_task_template_step "
+         "ADD COLUMN target_point_key VARCHAR(64) NULL AFTER target_zone_id"),
+
+        ("2026_05_world_task_template_step_resolver_kind",
+         "world",
+         "ALTER TABLE living_world_task_template_step "
+         "ADD COLUMN resolver_kind VARCHAR(32) NOT NULL DEFAULT 'zone' AFTER target_point_key"),
+
+        ("2026_06_world_task_template_step_subject_kind",
+         "world",
+         "ALTER TABLE living_world_task_template_step "
+         "ADD COLUMN subject_kind VARCHAR(32) NULL AFTER resolver_kind"),
+
+        ("2026_07_world_task_template_step_subject_id",
+         "world",
+         "ALTER TABLE living_world_task_template_step "
+         "ADD COLUMN subject_id INT UNSIGNED NULL AFTER subject_kind"),
+
+        ("2026_08_world_task_template_step_subject_key",
+         "world",
+         "ALTER TABLE living_world_task_template_step "
+         "ADD COLUMN subject_key VARCHAR(64) NULL AFTER subject_id"),
+
+        ("2026_09_world_task_template_step_return_anchor_role",
+         "world",
+         "ALTER TABLE living_world_task_template_step "
+         "ADD COLUMN return_anchor_role VARCHAR(32) NULL AFTER subject_key"),
+
+        ("2026_10_world_task_template_step_cycle_count",
+         "world",
+         "ALTER TABLE living_world_task_template_step "
+         "ADD COLUMN cycle_count TINYINT UNSIGNED NOT NULL DEFAULT 1 AFTER return_anchor_role"),
+
+        ("2026_11_world_transit_route_table",
+         "world",
+         "CREATE TABLE IF NOT EXISTS living_world_transit_route ("
+         "  route_id          INT UNSIGNED      NOT NULL AUTO_INCREMENT PRIMARY KEY,"
+         "  route_key         VARCHAR(64)       NOT NULL,"
+         "  source_point_key  VARCHAR(64)       NOT NULL,"
+         "  dest_point_key    VARCHAR(64)       NOT NULL,"
+         "  transit_type      VARCHAR(16)       NOT NULL DEFAULT 'taxi',"
+         "  required_faction  TINYINT UNSIGNED  NOT NULL DEFAULT 0,"
+         "  min_level         TINYINT UNSIGNED  NOT NULL DEFAULT 1,"
+         "  max_level         TINYINT UNSIGNED  NOT NULL DEFAULT 80,"
+         "  duration_sec      INT UNSIGNED      NOT NULL DEFAULT 60,"
+         "  display_name      VARCHAR(100)      NOT NULL,"
+         "  UNIQUE KEY uq_route_key (route_key),"
+         "  UNIQUE KEY uq_route_pair (source_point_key, dest_point_key, transit_type)"
+         ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"),
+
+        ("2026_12_world_transit_route_transit_type",
+         "world",
+         "ALTER TABLE living_world_transit_route "
+         "ADD COLUMN transit_type VARCHAR(16) NOT NULL DEFAULT 'taxi' AFTER dest_point_key"),
+
+        ("2026_13_world_transit_route_min_level",
+         "world",
+         "ALTER TABLE living_world_transit_route "
+         "ADD COLUMN min_level TINYINT UNSIGNED NOT NULL DEFAULT 1 AFTER required_faction"),
+
+        ("2026_14_world_transit_route_max_level",
+         "world",
+         "ALTER TABLE living_world_transit_route "
+         "ADD COLUMN max_level TINYINT UNSIGNED NOT NULL DEFAULT 80 AFTER min_level"),
+
+        ("2026_15_world_playlist_table",
+         "world",
+         "CREATE TABLE IF NOT EXISTS living_world_playlist ("
+         "  playlist_id         INT UNSIGNED      NOT NULL AUTO_INCREMENT PRIMARY KEY,"
+         "  playlist_key        VARCHAR(64)       NOT NULL,"
+         "  display_name        VARCHAR(100)      NOT NULL,"
+         "  task_family         VARCHAR(32)       NOT NULL DEFAULT 'routine',"
+         "  required_faction    TINYINT UNSIGNED  NOT NULL DEFAULT 0,"
+         "  min_level           TINYINT UNSIGNED  NOT NULL DEFAULT 1,"
+         "  max_level           TINYINT UNSIGNED  NOT NULL DEFAULT 80,"
+         "  requires_herbalism  TINYINT(1)        NOT NULL DEFAULT 0,"
+         "  requires_mining     TINYINT(1)        NOT NULL DEFAULT 0,"
+         "  requires_fishing    TINYINT(1)        NOT NULL DEFAULT 0,"
+         "  weight              TINYINT UNSIGNED  NOT NULL DEFAULT 1,"
+         "  is_enabled          TINYINT(1)        NOT NULL DEFAULT 1,"
+         "  UNIQUE KEY uq_playlist_key (playlist_key)"
+         ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"),
+
+        ("2026_16_world_playlist_entry_table",
+         "world",
+         "CREATE TABLE IF NOT EXISTS living_world_playlist_entry ("
+         "  playlist_id       INT UNSIGNED      NOT NULL,"
+         "  entry_order       INT UNSIGNED      NOT NULL,"
+         "  task_template_id  INT UNSIGNED      NOT NULL,"
+         "  repeat_count      TINYINT UNSIGNED  NOT NULL DEFAULT 1,"
+         "  note              VARCHAR(255)      NULL,"
+         "  PRIMARY KEY (playlist_id, entry_order),"
+         "  KEY idx_playlist_template (task_template_id)"
+         ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"),
+
+        ("2026_17_world_zone_anchor_table",
+         "world",
+         "CREATE TABLE IF NOT EXISTS living_world_zone_anchor ("
+         "  anchor_id         INT UNSIGNED      NOT NULL AUTO_INCREMENT PRIMARY KEY,"
+         "  zone_id           INT UNSIGNED      NOT NULL,"
+         "  point_key         VARCHAR(64)       NOT NULL,"
+         "  anchor_role       VARCHAR(32)       NOT NULL,"
+         "  required_faction  TINYINT UNSIGNED  NOT NULL DEFAULT 0,"
+         "  min_level         TINYINT UNSIGNED  NOT NULL DEFAULT 1,"
+         "  max_level         TINYINT UNSIGNED  NOT NULL DEFAULT 80,"
+         "  weight            TINYINT UNSIGNED  NOT NULL DEFAULT 1,"
+         "  notes             VARCHAR(255)      NULL,"
+         "  UNIQUE KEY uq_zone_anchor_role_point (zone_id, anchor_role, point_key),"
+         "  KEY idx_zone_anchor_lookup (zone_id, anchor_role, required_faction, min_level, max_level),"
+         "  KEY idx_zone_anchor_point (point_key)"
+         ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"),
+
+        ("2026_18_world_zone_content_table",
+         "world",
+         "CREATE TABLE IF NOT EXISTS living_world_zone_content ("
+         "  content_id         INT UNSIGNED      NOT NULL AUTO_INCREMENT PRIMARY KEY,"
+         "  zone_id            INT UNSIGNED      NOT NULL,"
+         "  content_kind       VARCHAR(32)       NOT NULL,"
+         "  subject_id         INT UNSIGNED      NULL,"
+         "  subject_key        VARCHAR(64)       NULL,"
+         "  display_name       VARCHAR(100)      NOT NULL,"
+         "  required_faction   TINYINT UNSIGNED  NOT NULL DEFAULT 0,"
+         "  min_level          TINYINT UNSIGNED  NOT NULL DEFAULT 1,"
+         "  max_level          TINYINT UNSIGNED  NOT NULL DEFAULT 80,"
+         "  min_skill          SMALLINT UNSIGNED NOT NULL DEFAULT 0,"
+         "  max_skill          SMALLINT UNSIGNED NOT NULL DEFAULT 0,"
+         "  weight             TINYINT UNSIGNED  NOT NULL DEFAULT 1,"
+         "  anchor_point_key   VARCHAR(64)       NULL,"
+         "  return_anchor_role VARCHAR(32)       NULL,"
+         "  notes              VARCHAR(255)      NULL,"
+         "  UNIQUE KEY uq_zone_content_kind_name (zone_id, content_kind, display_name),"
+         "  KEY idx_zone_content_lookup (content_kind, zone_id, required_faction, min_level, max_level),"
+         "  KEY idx_zone_content_subject (content_kind, subject_id, subject_key)"
+         ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"),
+
     ]
 
     def _close_ssh_tunnel(self):
@@ -504,6 +747,8 @@ class DBCtx:
                 pass
         self.auth = self.world = self.chars = None
         self._world_tables = None
+        self._map_name_cache = None
+        self._area_name_cache = None
         self._close_ssh_tunnel()
 
     def ok(self) -> bool:
@@ -524,6 +769,60 @@ class DBCtx:
         lid = cur.lastrowid
         cur.close()
         return lid
+
+    def load_world_bot_statuses(self, active_only: bool = False) -> list[dict]:
+        where = "WHERE i.is_available = 0 AND i.is_retired = 0" if active_only else ""
+        return self.q(self.chars,
+            f"""
+            SELECT
+                i.id,
+                i.name,
+                i.race_id,
+                i.class_id,
+                i.spec_key,
+                i.faction,
+                i.level,
+                i.is_available,
+                i.is_retired,
+                i.session_count,
+                i.total_world_online_ms,
+                i.active_world_session_ms,
+                i.active_world_session_start,
+                i.last_seen_zone,
+                i.last_seen_at,
+                latest.event_type AS latest_event_type,
+                latest.detail AS latest_detail,
+                latest.map_id AS latest_map_id,
+                latest.zone_id AS latest_zone_id,
+                latest.pos_x AS latest_pos_x,
+                latest.pos_y AS latest_pos_y,
+                latest.pos_z AS latest_pos_z,
+                latest.logged_at AS latest_logged_at,
+                sess.detail AS session_start_detail,
+                sess.logged_at AS session_start_logged_at
+            FROM living_world_bot_identity i
+            LEFT JOIN living_world_bot_activity_log latest ON latest.id = (
+                SELECT MAX(id)
+                FROM living_world_bot_activity_log
+                WHERE bot_guid = i.id
+            )
+            LEFT JOIN living_world_bot_activity_log sess ON sess.id = (
+                SELECT MAX(id)
+                FROM living_world_bot_activity_log
+                WHERE bot_guid = i.id AND event_type = 'session_start'
+            )
+            {where}
+            ORDER BY i.is_retired ASC, i.is_available ASC, i.level DESC, i.name ASC
+            """)
+
+    def load_world_bot_activity_log(self, bot_guid: int, limit: int = 200) -> list[dict]:
+        return self.q(self.chars,
+            "SELECT id, event_type, detail, map_id, zone_id, pos_x, pos_y, pos_z, logged_at "
+            "FROM living_world_bot_activity_log "
+            "WHERE bot_guid = %s "
+            "ORDER BY id DESC "
+            "LIMIT %s",
+            (int(bot_guid), int(limit)))
 
     def _load_world_tables(self):
         if self._world_tables is not None or not self.world:
@@ -807,6 +1106,308 @@ class DBCtx:
         cache = self._load_faction_name_cache()
         entry = cache.get(int(faction_id))
         return entry["name"] if isinstance(entry, dict) else (entry or "")
+
+    def _load_map_name_cache(self) -> dict:
+        if self._map_name_cache is not None:
+            return self._map_name_cache
+        cache = {}
+        if self.ok() and self._has_world_table("map_dbc"):
+            try:
+                rows = self.q(self.world,
+                    "SELECT ID, MapName_Lang_enUS FROM map_dbc")
+                cache = {
+                    int(r["ID"]): (r.get("MapName_Lang_enUS") or "").strip()
+                    for r in rows
+                    if r.get("MapName_Lang_enUS")
+                }
+            except Exception:
+                cache = {}
+        self._map_name_cache = cache
+        return self._map_name_cache
+
+    def _load_area_name_cache(self) -> dict:
+        if self._area_name_cache is not None:
+            return self._area_name_cache
+        cache = {}
+        if self.ok() and self._has_world_table("areatable_dbc"):
+            try:
+                rows = self.q(self.world,
+                    "SELECT ID, AreaName_Lang_enUS FROM areatable_dbc")
+                cache = {
+                    int(r["ID"]): (r.get("AreaName_Lang_enUS") or "").strip()
+                    for r in rows
+                    if r.get("AreaName_Lang_enUS")
+                }
+            except Exception:
+                cache = {}
+        self._area_name_cache = cache
+        return self._area_name_cache
+
+    def map_name(self, map_id: int) -> str:
+        if map_id is None:
+            return ""
+        try:
+            mid = int(map_id)
+        except (TypeError, ValueError):
+            return ""
+        return self._load_map_name_cache().get(mid, "")
+
+    def area_name(self, area_id: int) -> str:
+        if area_id is None:
+            return ""
+        try:
+            aid = int(area_id)
+        except (TypeError, ValueError):
+            return ""
+        return self._load_area_name_cache().get(aid, "")
+
+    # -----------------------------------------------------------------------
+    # World-bot task points / templates
+    # -----------------------------------------------------------------------
+
+    def load_task_points(self) -> list[dict]:
+        return self.q(self.world,
+            "SELECT point_id, point_key, zone_id, map_id, point_type, point_name, x, y, z "
+            "FROM living_world_task_point ORDER BY point_type, point_key")
+
+    def upsert_task_point(self, row: dict) -> int:
+        point_id = row.get("point_id")
+        params = (
+            row.get("point_key", "").strip(),
+            int(row.get("zone_id") or 0),
+            int(row.get("map_id") or 0),
+            row.get("point_type", "").strip(),
+            row.get("point_name", "").strip(),
+            float(row.get("x") or 0),
+            float(row.get("y") or 0),
+            float(row.get("z") or 0),
+        )
+        if point_id:
+            self.run(self.world,
+                "UPDATE living_world_task_point SET point_key=%s, zone_id=%s, map_id=%s, point_type=%s, point_name=%s, x=%s, y=%s, z=%s WHERE point_id=%s",
+                params + (int(point_id),))
+            return int(point_id)
+        return self.run(self.world,
+            "INSERT INTO living_world_task_point (point_key, zone_id, map_id, point_type, point_name, x, y, z) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+            params)
+
+    def delete_task_point(self, point_id: int):
+        self.run(self.world, "DELETE FROM living_world_task_point WHERE point_id=%s", (int(point_id),))
+
+    def load_transit_routes(self) -> list[dict]:
+        return self.q(self.world,
+            "SELECT route_id, route_key, source_point_key, dest_point_key, transit_type, required_faction, min_level, max_level, duration_sec, display_name "
+            "FROM living_world_transit_route ORDER BY route_key")
+
+    def upsert_transit_route(self, row: dict) -> int:
+        route_id = row.get("route_id")
+        params = (
+            row.get("route_key", "").strip(),
+            row.get("source_point_key", "").strip(),
+            row.get("dest_point_key", "").strip(),
+            row.get("transit_type", "taxi").strip(),
+            int(row.get("required_faction") or 0),
+            int(row.get("min_level") or 1),
+            int(row.get("max_level") or 80),
+            int(row.get("duration_sec") or 0),
+            row.get("display_name", "").strip(),
+        )
+        if route_id:
+            self.run(self.world,
+                "UPDATE living_world_transit_route SET route_key=%s, source_point_key=%s, dest_point_key=%s, transit_type=%s, required_faction=%s, min_level=%s, max_level=%s, duration_sec=%s, display_name=%s WHERE route_id=%s",
+                params + (int(route_id),))
+            return int(route_id)
+        return self.run(self.world,
+            "INSERT INTO living_world_transit_route (route_key, source_point_key, dest_point_key, transit_type, required_faction, min_level, max_level, duration_sec, display_name) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            params)
+
+    def delete_transit_route(self, route_id: int):
+        self.run(self.world, "DELETE FROM living_world_transit_route WHERE route_id=%s", (int(route_id),))
+
+    def load_zone_anchors(self) -> list[dict]:
+        return self.q(self.world,
+            "SELECT anchor_id, zone_id, point_key, anchor_role, required_faction, min_level, max_level, weight, notes "
+            "FROM living_world_zone_anchor ORDER BY zone_id, anchor_role, point_key")
+
+    def upsert_zone_anchor(self, row: dict) -> int:
+        anchor_id = row.get("anchor_id")
+        params = (
+            int(row.get("zone_id") or 0),
+            (row.get("point_key") or "").strip(),
+            (row.get("anchor_role") or "").strip(),
+            int(row.get("required_faction") or 0),
+            int(row.get("min_level") or 1),
+            int(row.get("max_level") or 80),
+            int(row.get("weight") or 1),
+            (row.get("notes") or "").strip() or None,
+        )
+        if anchor_id:
+            self.run(self.world,
+                "UPDATE living_world_zone_anchor SET zone_id=%s, point_key=%s, anchor_role=%s, required_faction=%s, min_level=%s, max_level=%s, weight=%s, notes=%s WHERE anchor_id=%s",
+                params + (int(anchor_id),))
+            return int(anchor_id)
+        return self.run(self.world,
+            "INSERT INTO living_world_zone_anchor (zone_id, point_key, anchor_role, required_faction, min_level, max_level, weight, notes) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+            params)
+
+    def delete_zone_anchor(self, anchor_id: int):
+        self.run(self.world, "DELETE FROM living_world_zone_anchor WHERE anchor_id=%s", (int(anchor_id),))
+
+    def load_zone_content(self) -> list[dict]:
+        return self.q(self.world,
+            "SELECT content_id, zone_id, content_kind, subject_id, subject_key, display_name, required_faction, min_level, max_level, min_skill, max_skill, weight, anchor_point_key, return_anchor_role, notes "
+            "FROM living_world_zone_content ORDER BY content_kind, zone_id, display_name")
+
+    def upsert_zone_content(self, row: dict) -> int:
+        content_id = row.get("content_id")
+        params = (
+            int(row.get("zone_id") or 0),
+            (row.get("content_kind") or "").strip(),
+            int(row.get("subject_id") or 0) or None,
+            (row.get("subject_key") or "").strip() or None,
+            (row.get("display_name") or "").strip(),
+            int(row.get("required_faction") or 0),
+            int(row.get("min_level") or 1),
+            int(row.get("max_level") or 80),
+            int(row.get("min_skill") or 0),
+            int(row.get("max_skill") or 0),
+            int(row.get("weight") or 1),
+            (row.get("anchor_point_key") or "").strip() or None,
+            (row.get("return_anchor_role") or "").strip() or None,
+            (row.get("notes") or "").strip() or None,
+        )
+        if content_id:
+            self.run(self.world,
+                "UPDATE living_world_zone_content SET zone_id=%s, content_kind=%s, subject_id=%s, subject_key=%s, display_name=%s, required_faction=%s, min_level=%s, max_level=%s, min_skill=%s, max_skill=%s, weight=%s, anchor_point_key=%s, return_anchor_role=%s, notes=%s WHERE content_id=%s",
+                params + (int(content_id),))
+            return int(content_id)
+        return self.run(self.world,
+            "INSERT INTO living_world_zone_content (zone_id, content_kind, subject_id, subject_key, display_name, required_faction, min_level, max_level, min_skill, max_skill, weight, anchor_point_key, return_anchor_role, notes) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            params)
+
+    def delete_zone_content(self, content_id: int):
+        self.run(self.world, "DELETE FROM living_world_zone_content WHERE content_id=%s", (int(content_id),))
+
+    def load_task_templates(self) -> list[dict]:
+        return self.q(self.world,
+            "SELECT template_id, template_key, display_name, task_family, required_faction, min_level, max_level, requires_herbalism, requires_mining, requires_fishing, weight, is_enabled "
+            "FROM living_world_task_template ORDER BY template_key")
+
+    def load_task_template_steps(self, template_id: int) -> list[dict]:
+        return self.q(self.world,
+            "SELECT template_id, step_order, step_type, target_zone_id, target_point_key, resolver_kind, subject_kind, subject_id, subject_key, return_anchor_role, cycle_count, duration_min_sec, duration_max_sec, label "
+            "FROM living_world_task_template_step WHERE template_id=%s ORDER BY step_order",
+            (int(template_id),))
+
+    def upsert_task_template(self, row: dict) -> int:
+        template_id = row.get("template_id")
+        params = (
+            row.get("template_key", "").strip(),
+            row.get("display_name", "").strip(),
+            row.get("task_family", "").strip(),
+            int(row.get("required_faction") or 0),
+            int(row.get("min_level") or 1),
+            int(row.get("max_level") or 80),
+            int(bool(row.get("requires_herbalism") or 0)),
+            int(bool(row.get("requires_mining") or 0)),
+            int(bool(row.get("requires_fishing") or 0)),
+            int(row.get("weight") or 1),
+            int(bool(row.get("is_enabled") if row.get("is_enabled") is not None else 1)),
+        )
+        if template_id:
+            self.run(self.world,
+                "UPDATE living_world_task_template SET template_key=%s, display_name=%s, task_family=%s, required_faction=%s, min_level=%s, max_level=%s, requires_herbalism=%s, requires_mining=%s, requires_fishing=%s, weight=%s, is_enabled=%s WHERE template_id=%s",
+                params + (int(template_id),))
+            return int(template_id)
+        return self.run(self.world,
+            "INSERT INTO living_world_task_template (template_key, display_name, task_family, required_faction, min_level, max_level, requires_herbalism, requires_mining, requires_fishing, weight, is_enabled) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            params)
+
+    def delete_task_template(self, template_id: int):
+        self.run(self.world, "DELETE FROM living_world_task_template_step WHERE template_id=%s", (int(template_id),))
+        self.run(self.world, "DELETE FROM living_world_task_template WHERE template_id=%s", (int(template_id),))
+
+    def upsert_task_template_step(self, row: dict):
+        self.run(self.world,
+            "REPLACE INTO living_world_task_template_step (template_id, step_order, step_type, target_zone_id, target_point_key, resolver_kind, subject_kind, subject_id, subject_key, return_anchor_role, cycle_count, duration_min_sec, duration_max_sec, label) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            (
+                int(row.get("template_id") or 0),
+                int(row.get("step_order") or 0),
+                row.get("step_type", "").strip(),
+                int(row.get("target_zone_id") or 0),
+                (row.get("target_point_key") or "").strip() or None,
+                (row.get("resolver_kind") or "").strip() or None,
+                (row.get("subject_kind") or "").strip() or None,
+                int(row.get("subject_id") or 0) or None,
+                (row.get("subject_key") or "").strip() or None,
+                (row.get("return_anchor_role") or "").strip() or None,
+                int(row.get("cycle_count") or 1),
+                int(row.get("duration_min_sec") or 0),
+                int(row.get("duration_max_sec") or 0),
+                row.get("label", "").strip(),
+            ))
+
+    def delete_task_template_step(self, template_id: int, step_order: int):
+        self.run(self.world,
+            "DELETE FROM living_world_task_template_step WHERE template_id=%s AND step_order=%s",
+            (int(template_id), int(step_order)))
+
+    def load_playlists(self) -> list[dict]:
+        return self.q(self.world,
+            "SELECT playlist_id, playlist_key, display_name, task_family, required_faction, min_level, max_level, requires_herbalism, requires_mining, requires_fishing, weight, is_enabled "
+            "FROM living_world_playlist ORDER BY playlist_key")
+
+    def load_playlist_entries(self, playlist_id: int) -> list[dict]:
+        return self.q(self.world,
+            "SELECT e.playlist_id, e.entry_order, e.task_template_id, t.template_key, t.display_name AS template_display_name, e.repeat_count, e.note "
+            "FROM living_world_playlist_entry e "
+            "LEFT JOIN living_world_task_template t ON t.template_id = e.task_template_id "
+            "WHERE e.playlist_id=%s ORDER BY e.entry_order",
+            (int(playlist_id),))
+
+    def upsert_playlist(self, row: dict) -> int:
+        playlist_id = row.get("playlist_id")
+        params = (
+            row.get("playlist_key", "").strip(),
+            row.get("display_name", "").strip(),
+            row.get("task_family", "").strip(),
+            int(row.get("required_faction") or 0),
+            int(row.get("min_level") or 1),
+            int(row.get("max_level") or 80),
+            int(bool(row.get("requires_herbalism") or 0)),
+            int(bool(row.get("requires_mining") or 0)),
+            int(bool(row.get("requires_fishing") or 0)),
+            int(row.get("weight") or 1),
+            int(bool(row.get("is_enabled") if row.get("is_enabled") is not None else 1)),
+        )
+        if playlist_id:
+            self.run(self.world,
+                "UPDATE living_world_playlist SET playlist_key=%s, display_name=%s, task_family=%s, required_faction=%s, min_level=%s, max_level=%s, requires_herbalism=%s, requires_mining=%s, requires_fishing=%s, weight=%s, is_enabled=%s WHERE playlist_id=%s",
+                params + (int(playlist_id),))
+            return int(playlist_id)
+        return self.run(self.world,
+            "INSERT INTO living_world_playlist (playlist_key, display_name, task_family, required_faction, min_level, max_level, requires_herbalism, requires_mining, requires_fishing, weight, is_enabled) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            params)
+
+    def delete_playlist(self, playlist_id: int):
+        self.run(self.world, "DELETE FROM living_world_playlist_entry WHERE playlist_id=%s", (int(playlist_id),))
+        self.run(self.world, "DELETE FROM living_world_playlist WHERE playlist_id=%s", (int(playlist_id),))
+
+    def upsert_playlist_entry(self, row: dict):
+        self.run(self.world,
+            "REPLACE INTO living_world_playlist_entry (playlist_id, entry_order, task_template_id, repeat_count, note) VALUES (%s,%s,%s,%s,%s)",
+            (
+                int(row.get("playlist_id") or 0),
+                int(row.get("entry_order") or 0),
+                int(row.get("task_template_id") or 0),
+                int(row.get("repeat_count") or 1),
+                (row.get("note") or "").strip() or None,
+            ))
+
+    def delete_playlist_entry(self, playlist_id: int, entry_order: int):
+        self.run(self.world,
+            "DELETE FROM living_world_playlist_entry WHERE playlist_id=%s AND entry_order=%s",
+            (int(playlist_id), int(entry_order)))
 
     def _load_spell_name_cache(self):
         if self._spell_name_cache is not None:
@@ -1340,7 +1941,7 @@ class DBCtx:
     def load_default_profiles(self):
         return self.q(self.world,
             "SELECT * FROM living_world_bot_combat_default_profile "
-            "ORDER BY spec_key, role_key")
+            "ORDER BY class_key, spec_key, role_key, context_key, default_profile_id")
 
     def upsert_default_profile(self, p: dict) -> int:
         if p.get("default_profile_id"):
@@ -1428,9 +2029,11 @@ class DBCtx:
             self.run(self.world,
                 "INSERT INTO living_world_bot_combat_default_action "
                 "(entry_id, slot, action_type, spell_base_id, item_id, rank_mode, "
-                "rank_value, target_key) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+                "rank_value, target_key, aoe_mode, aoe_min_targets, aoe_radius) "
+                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
                 (entry_id, a["slot"], a["action_type"], a["spell_base_id"],
-                 a["item_id"], a["rank_mode"], a["rank_value"], a["target_key"]))
+                 a["item_id"], a["rank_mode"], a["rank_value"], a["target_key"],
+                 a.get("aoe_mode"), a.get("aoe_min_targets"), a.get("aoe_radius")))
 
     def delete_default_action(self, aid: int):
         self.run(self.world,
@@ -1904,11 +2507,6 @@ class DBCtx:
         self.run(self.auth, "DELETE FROM account_muted WHERE guid=%s", (account_id,))
         self.run(self.auth, "DELETE FROM living_world_bot_account_pool WHERE account_id=%s", (account_id,))
         self.run(self.auth, "DELETE FROM account WHERE id=%s", (account_id,))
-
-
-db = DBCtx()
-
-
 
 
 # Module-level singleton -- import this from all UI modules.

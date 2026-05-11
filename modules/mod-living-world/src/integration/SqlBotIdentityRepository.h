@@ -25,7 +25,16 @@ struct BotIdentityRecord
     bool          hasHerbalism = false;
     bool          hasMining    = false;
     bool          hasFishing   = false;
+    std::uint32_t homeZoneId   = 0;
+    std::string   homeAnchorPointKey;
+    std::string   homeBindPointKey;
     std::uint32_t sessionCount = 0;
+    std::uint64_t totalWorldOnlineMs = 0;
+    std::uint64_t worldOnlineMsSinceLevel = 0;
+    std::uint64_t postMaxWorldOnlineMs = 0;
+    std::uint64_t activeWorldSessionMs = 0;
+    std::uint32_t lastSeenZoneId = 0;
+    bool          isRetired    = false;
 };
 
 class SqlBotIdentityRepository
@@ -44,6 +53,17 @@ public:
     // Marks the identity as available again and records where it was last seen.
     // Call when the creature despawns.
     void MarkAvailable(std::uint32_t id, std::uint32_t lastSeenZoneId) const;
+
+    // Finalizes one counted world session, applying online-time progression and
+    // retirement rules before returning the identity to the available pool.
+    void CompleteWorldSession(
+        std::uint32_t id,
+        std::uint32_t lastSeenZoneId,
+        std::uint64_t sessionWorldOnlineMs) const;
+
+    // On worldserver startup, reset any stale active creature-bot sessions that
+    // were left marked active by a prior shutdown/crash.
+    std::uint32_t RecoverStaleActiveSessions() const;
 };
 
 } // namespace integration

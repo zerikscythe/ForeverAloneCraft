@@ -1,514 +1,620 @@
-# Plan: World Bot Spawning — Bot Taxonomy and Build Phases
+# Plan: Bot Expansion — Account Bots, Guild Bots, and World Bots
 
 ---
 
-## Core Design Principle
+## Core Model
 
-There are **two distinct spawn technologies** in this system. Which one a bot
-category uses is determined entirely by what it actually needs to do — not by
-what is easiest to implement.
+The bot system is no longer best described as five hard species of bot.
 
-### Spawn Technology A — Player Sessions (accounts required)
+The real top-level split is:
 
-Used when the bot must interact with systems that are gated behind a real
-`Player*` object: guild bank deposits, real profession skill checks, real
-inventory, appearing as an online guild member, gold transactions, quest
-progression that syncs back to a source character.
+1. `Account bots`
+2. `Guild bots`
+3. `World bots`
 
-Account pool: **BOTHOUSE** (account-alt clones only) and **GUILDBOT**
-(guild bots only). These are completely separate pools and must never be
-mixed.
+Everything else is a deployment mode, manager state, or behavior policy layered
+on top of one of those three families.
 
-### Spawn Technology B — Creatures (no accounts needed)
+In particular:
 
-Used for every bot that is purely **smoke and mirrors** — it exists in the
-world, moves, casts spells, and interacts with objects, but nothing it does
-produces real persistent economic output. Items gathered are discarded. Nodes
-despawn via their depletion state. No inventory is filled. No deposits are
-made.
+- `aggressive`, `cautious`, and `pacifist` are not bot categories
+- `raid helper`, `ambient`, `tasking`, and `assigned` are not bot categories
+- `hostile/rival` is not a bot family; faction conflict is emergent behavior in
+  a two-faction world, not a separate species of bot
 
-Creatures do not need WoW accounts. The AzerothCore session map constraint
-(one account = one concurrent session, hard-enforced in `WorldSessionMgr`)
-is entirely irrelevant for creature bots. You can spawn 500 creature bots
-without creating a single WoW account.
-
-### The full split
-
-| Category | Implementation | Accounts needed |
-|---|---|---|
-| Account Alt Clones | Player session (BOTHOUSE pool) | Yes — 1 per concurrent bot |
-| Guild Bots | Player session (GUILDBOT pool) | Yes — 1 per concurrent bot |
-| Raid Pool Bots | Creature + `WorldBotCreatureAI` | **No** |
-| Ambient World Bots | Creature + `WorldBotCreatureAI` | **No** |
-| Hostile / Rival Bots | Creature + `WorldBotCreatureAI` | **No** |
-
-**Future agents: do not revert creature categories to Player sessions.** The
-reason every category was originally written as a Player session was an early
-architectural assumption that has since been corrected. Creatures are the right
-model for any bot that does not need real economic output.
+If an Alliance bot and a Horde bot cross paths, natural conflict may happen
+depending on temperament, task, threat evaluation, and local context. Both
+factions can have bots that are passive, evasive, or aggressive.
 
 ---
 
-## Spell System — Creatures vs Players
+## Ownership Families
 
-This is the key technical gap that must be solved before creature bots can use
-the doctrine/combat profile system.
+### 1. `Account bots`
 
-### Player sessions
+These are real account-bound `Player` bots.
 
-A player bot reads its available spells directly from `GetSpellMap()` — the
-character's learned spell list stored in `character_spell`. The doctrine
-profile references spell IDs and the system checks whether the player knows
-them. This works automatically because the character was built with a spell set.
+They represent persistent player-owned or account-linked characters. They use
+real inventories, real progression, real player session behavior, and are the
+closest thing to a true player surrogate.
 
-### Creature bots
+Typical traits:
 
-Creatures do not have a spell map in the same sense. Their abilities are
-defined separately. For creature bots to use the same doctrine/profile system,
-the server needs a way to answer: **"what spells does a level 32 Arms Warrior
-know?"** without a character row.
+- real `Player` session
+- real spellbook / talents / inventory
+- persistent identity
+- progression can sync to an owning character or owning account model
+- when active, remain **fully simulated/rendered** rather than abstracted
 
-The solution is a new DB table:
+### 2. `Guild bots`
 
-```sql
-CREATE TABLE IF NOT EXISTS living_world_bot_spell_list (
-    id          INT UNSIGNED     NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    class_id    TINYINT UNSIGNED NOT NULL,
-    spec_key    VARCHAR(32)      NOT NULL,  -- e.g. 'warrior_arms', 'mage_fire'
-    min_level   TINYINT UNSIGNED NOT NULL,
-    max_level   TINYINT UNSIGNED NOT NULL,
-    spell_id    INT UNSIGNED     NOT NULL,
-    KEY idx_lookup (class_id, spec_key, min_level, max_level)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-  COMMENT='Spell availability bands for creature-based world bots';
-```
+These are also real account-bound `Player` bots, but they exist to serve guild
+economy and guild presence.
 
-`WorldBotCreatureAI` loads this table on spawn filtered by its class, spec,
-and level. The resulting spell set is used identically to a player's
-`GetSpellMap()` when evaluating doctrine profile entries. The profile does not
-care whether the caster is a `Player*` or `Creature*` — it only cares whether
-the spell ID is in the available set.
+They gather real materials, hold real items, and perform real deposits into the
+guild bank. Their economic behavior is not simulated.
 
-### Talent allocation
+Typical traits:
 
-For Player sessions, talent points are loaded from `character_talent`. For
-creature bots, a DB-authored talent band table (or the existing
-`living_world_bot_talent_template` system) defines which talents apply at a
-given level range. `WorldBotCreatureAI` applies these as passive spell
-registrations at spawn time — the creature is not using the player talent UI,
-it simply has the correct spells loaded.
+- real `Player` session
+- real inventory and profession interaction
+- real guild membership and guild bank access
+- persistent named characters
+- when active, remain **fully simulated/rendered** because their work is real
 
----
+### 3. `World bots`
 
-## Session Design — Tier 2 Bots (Categories 2–5)
+These are manager-owned spawned bots that are not account-bound.
 
-The intended behavior model for all world/system bots is **not** "pick exactly
-one activity and idle there forever."
+They are intended to converge toward the same class-identity and combat-doctrine
+model as account bots where practical, but the current live implementation is
+still narrower: a server-owned ambient runtime focused on DB-authored sessions,
+travel, observability, and first-pass recovery instead of a fully unified
+reassignment-capable combat actor.
 
-Each session bot should be assembled from:
-- a bot template (class, spec, faction, level range)
-- default combat doctrine for that spec
-- a **random chained task list** for the session (3–10 tasks)
+They may be:
 
-Example chained session:
-1. Travel to a level-appropriate zone
-2. Quest / grind mobs
-3. Travel to a city
-4. Visit auction house / mailbox / vendor / inn
-5. Travel to a gathering zone
-6. Gather ore or herbs
-7. Patrol or idle in a hub
-8. Despawn / return to pool
+- offline in the manager pool
+- online doing world tasks
+- temporarily redirected to support a group or dungeon need
+- pulled into combat naturally while already out in the world
 
-The session composer thinks in terms of:
-- **task chaining** — believable day-in-the-life sequence
-- **travel between tasks** — explicit travel legs connecting each step
-- **zone-level matching** — zones appropriate to the bot's level ±5
-- **session expiration** — bot despawns or returns to pool on completion
-
-Task types are DB-authored in `living_world_activity_library`. The planner
-assembles sessions from that library; no task logic is hardcoded.
-
-### Faction conflict tasks
-
-Some Tier 2 bots can receive aggressive tasks:
-- a level 50+ rogue goes to Stranglethorn to hunt weaker opposite-faction
-  targets
-- a hostile bot patrols a contested road looking for trouble
-
-These are normal planner-authored task types, not special one-off hacks.
-
-### Scale target
-
-Intended live direction: **300–500 active bots per faction** at peak, spanning
-a broad mix of level ranges and activities. This is why creature bots (no
-accounts) are the right model — you cannot realistically maintain 500+ WoW
-accounts for smoke-and-mirrors world population.
+This means `ambient world bot` and `raid helper world bot` are the same bot
+family. The difference is assignment, not species.
 
 ---
 
-## Bot Taxonomy
+## Spawn Technologies
 
-There are five distinct bot categories. They differ in who owns them, how
-players interact with them, and whether they have real economic persistence.
-**Never mix categories in the same command namespace.**
+There are still two spawn technologies, but they map to ownership and economy,
+not to an artificial five-category taxonomy.
 
----
+### Player-session bots
 
-### Category 1
+Used for bot families that require true `Player` behavior:
 
-**What they are:** The player's own account characters, cloned to bot house
-accounts as persistent avatars/aliases. When you roster-request your mage
-"Fireball", a clone of Fireball logs in on a pool account and follows you.
-The clone's progression syncs back to the source character.
+- real inventory
+- real profession skill checks
+- real guild bank deposits
+- real guild roster presence
+- real account persistence
 
-**Spawn technology: Player session. Account pool: BOTHOUSE.**
+This applies to:
 
-**Key rule: `.lwbot roster list` shows ONLY the requesting player's own account
-characters. Pre-built, guild, and world bots NEVER appear here.**
+- `Account bots`
+- `Guild bots`
 
-Commands:
-- `.lwbot roster list` — your account characters only
-- `.lwbot roster request <id|name>` — spawn the clone companion
-- `.lwbot roster dismiss <id|name>` — log the clone out
+Account pools remain separate:
 
-DB backing: `living_world_account_alt_runtime` (existing).
+- `BOTHOUSE` for account bot clone/session usage
+- `GUILDBOT` for guild bot accounts
 
-Status: **Already works.** No changes needed in this category.
+These pools must never be mixed.
 
----
+### Spawned world bots
 
-### Category 2 — Raid Pool Bots (`.lwbot raid`)
+Used for bots that should appear and behave like players in the world, but do
+not need true account persistence or true economic output.
 
-**What they are:** On-demand combat companions. A player calls one by role; it
-appears at their location, joins the group, and fights using doctrine combat
-logic. No ownership, no sync, no persistence between sessions.
+This applies to:
 
-**Spawn technology: Creature (`WorldBotCreatureAI`). No accounts needed.**
+- `World bots`
 
-`creature_template` provides model, level, and base stats. `WorldBotCreatureAI`
-loads the doctrine profile for the bot's class/spec and the spell list from
-`living_world_bot_spell_list` filtered to the bot's level. When dismissed it
-despawns and the template slot returns to `is_available = 1`.
+Target capabilities for world bots:
 
-Commands:
-- `.lwbot raid request <class> <spec> <level>` — spawns a matching creature bot
-  at the player, adds it to the raid group.
-- `.lwbot raid dismiss <name|#>` — despawns the creature, frees the slot.
+- move around the world
+- travel between tasks
+- fight using class-like spell logic
+- simulate gathering and deplete nodes
+- be reassigned into helper/service roles
 
-Pool table:
-```sql
-CREATE TABLE IF NOT EXISTS living_world_world_bot_template (
-    id           INT UNSIGNED     NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    class_id     TINYINT UNSIGNED NOT NULL,
-    spec_key     VARCHAR(32)      NOT NULL,
-    spec_role    VARCHAR(16)      NOT NULL,  -- 'tank','healer','dps'
-    faction      TINYINT UNSIGNED NOT NULL,  -- 1=Alliance 2=Horde
-    level        TINYINT UNSIGNED NOT NULL,
-    display_id   INT UNSIGNED     NOT NULL,  -- creature_template displayid
-    is_available TINYINT UNSIGNED NOT NULL DEFAULT 1,
-    KEY idx_role (class_id, spec_role, level, faction, is_available)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-```
+But by default they do **not** create real item ownership. If they gather a
+node, the node can still be depleted, while no actual item needs to exist in a
+bot inventory.
 
-**Implementation note — Phase 1 historical context:** The original Phase 1
-implementation used Player sessions (`BotSessionFactory::SpawnBotPlayerOnAccount`
-+ `living_world_pool_character`). That is functional but architecturally wrong.
-Migration to `WorldBotCreatureAI` is pending as part of Phase 5.
+Current implementation note:
+
+- the live slice already covers authored ambient session composition, travel,
+  population maintenance, activity logging, and validation tooling
+- the full gather/combat/resume loop and broader support-role reassignment are
+  still future work
+- the newly agreed direction is that offscreen world bots should usually be
+  **abstract progression only** rather than always-on full creature simulation
 
 ---
 
-### Category 3 — Guild Bots (`.lwbot guild`)
+## Shared Combat and Ability Layer
 
-**What they are:** Pre-generated characters that are registered members of the
-player's in-game guild. When a guild bot gathers resources, **those items
-actually exist** — real items in real inventory, deposited to the real guild
-bank.
+One important design correction must remain explicit in this document:
 
-**Spawn technology: Player session. Account pool: GUILDBOT (completely separate
-from BOTHOUSE). Needs real Player sessions because it requires guild bank
-access, real inventory, profession skill checks, and appearing as an online
-guild member.**
+the system is **not** meant to maintain one combat brain for `Player*` bots and
+another fake combat brain for spawned world bots.
 
-Guild bots are persistent named characters — same name, same look, same guild
-membership over time.
+The design direction is that player-specific combat handling was abstracted so
+more of the bot ability pipeline can operate against `Unit*`, not just
+`Player*`.
 
-#### Operating modes
+That matters because spawned bots should still be able to use player-like class
+abilities and spells in a way that mimics a real player as closely as possible.
 
-- **Autonomous** — bot selects a session from the activity library, travels,
-  gathers, deposits.
-- **Forced-task** — player assigns a task via guild pedestal or command.
-  Overrides wandering until complete or timed out.
+### Design intent
 
-#### Autonomy flow
+- bot doctrine and rotation logic should be shared whenever possible
+- spawned world bots should not feel like a lower-fidelity fake AI tier
+- differences between account/guild/world bots should mostly be about
+  ownership, persistence, and economy
+- combat behavior should stay as unified as possible through a `Unit`-driven
+  abstraction layer
 
-1. `LivingWorldWorldScript::OnUpdate` wakes a guild bot offline long enough.
-2. `BotActivitySessionComposer` selects activity for this bot's level/professions.
-3. Session: `[TRAVEL → destination, ACTIVITY, DEPOSIT → guild bank]`.
-4. Gather steps use the standard loot path — real items, real node depletion.
-5. Deposit step: travel to nearest guild bank NPC, deposit items and gold above
-   floor. Log row written.
-6. Bot logs out. `is_available` flips back.
+### Practical meaning
 
-#### Commands
+If an ability/rotation/profile system can target `Unit*`, then:
 
-- `.lwbot guild list` — guild bots with current activity and location.
-- `.lwbot guild request <name|#>` — call a guild bot to the player's location.
-- `.lwbot guild dismiss <name|#>` — release back to autonomous mode.
-- `.lwbot guild deposit` — force immediate deposit to guild bank.
+- `Player` bots can use it
+- spawned world bots can use it
+- both can cast the same class-style spells and follow the same doctrine rules
 
-Longer-term: a **pedestal near the guild bank** for forced task assignment.
-
-#### DB Schema
-
-```sql
-CREATE TABLE IF NOT EXISTS living_world_guild_bot (
-    id                INT UNSIGNED     NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    bot_account_id    INT UNSIGNED     NOT NULL,
-    character_guid    BIGINT UNSIGNED  NOT NULL,
-    guild_id          INT UNSIGNED     NOT NULL,
-    display_name      VARCHAR(24)      NOT NULL,
-    class_id          TINYINT UNSIGNED NOT NULL,
-    level             TINYINT UNSIGNED NOT NULL,
-    faction           TINYINT UNSIGNED NOT NULL,
-    profession_1      VARCHAR(32)      NULL,
-    profession_2      VARCHAR(32)      NULL,
-    is_available      TINYINT UNSIGNED NOT NULL DEFAULT 1,
-    current_activity  VARCHAR(64)      NULL,
-    last_seen_zone_id INT UNSIGNED     NULL,
-    last_deposit_at   DATETIME         NULL,
-    UNIQUE KEY uq_char (character_guid),
-    KEY idx_guild (guild_id, is_available)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE IF NOT EXISTS living_world_guild_bot_deposit_log (
-    id           BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    guild_bot_id INT UNSIGNED     NOT NULL,
-    guild_id     INT UNSIGNED     NOT NULL,
-    deposited_at DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    item_entry   INT UNSIGNED     NULL,
-    item_count   INT UNSIGNED     NULL,
-    gold_copper  INT UNSIGNED     NULL,
-    zone_id      INT UNSIGNED     NOT NULL,
-    KEY idx_bot   (guild_bot_id),
-    KEY idx_guild (guild_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-```
-
-Spawn path: `SpawnBotPlayerOnAccount` (GUILDBOT pool). `OnPlayerLogin` detects
-guild bot flag → schedules `GuildBotAI`.
+This is the preferred architecture for believable bot behavior.
 
 ---
 
-### Category 4 — Ambient World Bots (server auto-spawn, no commands)
+## World Bots Are Manager-Owned
 
-**What they are:** Background population. Walk through cities, travel roads,
-sit in inns, patrol zones. Visually real but **economically inert** — gathering
-triggers node depletion but awards no items, nothing is deposited.
+`World bots` belong to a world bot manager.
 
-**Spawn technology: Creature (`WorldBotCreatureAI`). No accounts needed.**
+They are not personal player property and not guild-owned economic actors.
+They are population and service actors controlled by server-side orchestration.
 
-`WorldBotCreatureAI` loads doctrine profile and spell list at spawn. The bot
-follows its session task list: travel to zone, execute activity steps (patrol,
-idle, simulate gathering), despawn on session complete. Node depletion is
-triggered via state change — no loot path invoked.
+The manager is responsible for:
 
-No player command spawns or controls these. The server manages them via the
-`LivingWorldWorldScript::OnUpdate` population tick.
+- deciding whether a bot is currently offline or online
+- selecting task chains
+- placing bots into the world
+- reclaiming them back into the pool
+- temporarily reassigning them to support roles
 
-Session structure: `[TRAVEL → destination, ACTIVITY, ...]` — travel-first,
-multi-task chained sessions of 3–10 steps.
-
-**Implementation note — Phase 3 historical context:** The original Phase 3
-implementation used Player sessions (`SpawnHostileBotPlayerOnAccount` +
-`living_world_ambient_bot` table). Functional but wrong technology. Migration
-to `WorldBotCreatureAI` is pending as part of Phase 5.
+This is why `world bots` should be modeled as a pool of reusable actors rather
+than as a collection of unrelated subcategories.
 
 ---
 
-### Category 5 — Hostile / Rival Bots (server auto-spawn or event trigger)
+## World Bot State Model
 
-**What they are:** Rival faction bots in contested zones or city raid events.
-When attacked they fight back using doctrine combat logic. Do not join any
-player's party.
+World bots are best understood as `type + state`, not as separate types.
 
-**Spawn technology: Creature (`WorldBotCreatureAI`). No accounts needed.**
+### Type
 
-`WorldBotCreatureAI` in hostile mode: no task list, no travel. Spawns in a
-contested zone, engages valid targets via doctrine profile. Despawns or resets
-when encounter ends.
+- `world`
 
-**Implementation note — Phase 2 historical context:** Original implementation
-used `SpawnHostileBotPlayerOnAccount` + `CompanionAI` hostileless mode. Should
-be migrated to `WorldBotCreatureAI` hostile mode in Phase 5.
+### State / assignment
 
----
+- `offline / pooled`
+- `offline / abstract progressing`
+- `online / tasking`
+- `temporarily assigned`
+- `returning to task pool`
 
-## Command Namespace Summary
+### Behavior policy
 
-| Command prefix | Bot category | Who can call it |
-|---|---|---|
-| `.lwbot roster …` | Account alt clones only | Owner of the account |
-| `.lwbot raid …` | Raid pool bots | Any player |
-| `.lwbot guild …` | Guild bots for this guild | Guild member |
-| *(none — server auto)* | Ambient world bots | No player command |
-| *(none — server auto)* | Hostile rival bots | No player command |
+- `pacifist`
+- `cautious`
+- `aggressive`
 
-**The roster namespace must never query world bot or guild bot tables.**
+### Economy mode
 
----
+- `simulated`
 
-## Shared Infrastructure
+Because of this, a world bot helping in a dungeon is still just a world bot.
+It was already either offline in the manager pool or online doing tasks, and is
+temporarily reassigned when needed.
 
-### All categories
+### Simulation mode boundary
 
-- `BotActivitySessionComposer` — destination-first chained session builder
-- `SqlZoneIndexRepository` / `SqlActivityLibraryRepository`
-- `living_world_zone_index` + `living_world_activity_library` seed data
-- `BotActivityLog` — structured event logging (works for Player* and Creature*)
-- Doctrine profile system — combat priority rules keyed on class/spec
-- `living_world_bot_talent_template` — talent bands by class/spec/level
+This now needs to stay explicit:
 
-### Player session categories only (1 and 3)
+- **world bots in a real player's active zone/town** should be fully spawned and
+  simulated
+- **world bots outside player-interest areas** should usually advance by
+  abstract timers/state instead of full pathing/combat ticks
+- once a player leaves, that map/zone should stay **hot for about 10 minutes**
+  before nearby world bots are allowed to fall back to abstract progression
+- a player merely flying over on a taxi should **not** count as meaningful
+  interest for spawning/materialization
+- **account bots** stay fully simulated when active
+- **guild/workforce bots** stay fully simulated when active because their
+  gathering/fishing/crafting work is materially real
 
-- `BotSessionFactory::SpawnBotPlayerOnAccount`
-- `LivingWorldPlayerScript::OnPlayerLogin` — bot type detection and AI routing
-- `BotPlayerRegistry` — active Player session bot tracking
-- `living_world_bot_account_pool` — account reservation/release
+Current v1 implementation direction:
 
-### Creature categories only (2, 4, and 5)
-
-- `WorldBotCreatureAI` — single `CreatureAI` for all creature bots; mode
-  (raid/ambient/hostile) set at spawn time
-- `living_world_bot_spell_list` — class/spec/level-band spell availability
-  (replaces `GetSpellMap()` from Player sessions)
-- `living_world_world_bot_template` — archetypes: class, spec, faction, level,
-  model display ID
+- world-bot interest is tracked by map/zone hotness
+- hotness refreshes from real player presence and decays on a 10-minute timer
+- spawned world bots can dematerialize back into an abstract runtime snapshot
+  after the hot timer expires
+- offscreen abstract bots only rematerialize when a real non-taxi player is
+  actually present in the relevant zone
+- taxi-destination preheat is intentionally deferred as a follow-up slice
 
 ---
 
-## WorldBotCreatureAI — Design Sketch
+## World Bot Ledger Progression
 
-```
-WorldBotCreatureAI
-  OnInitialize(creature, mode, spec_key)
-    load class_id, spec_key, level from spawn args
-    query living_world_bot_spell_list → _availableSpells
-    register talent passives from living_world_bot_talent_template
-    load doctrine profile from SqlBotCombatDefaultProfileRepository
-    if mode == AMBIENT or RAID: compose session from BotActivitySessionComposer
-    if mode == HOSTILE: combat only, no session
+The persistent `world bot ledger` should also track long-form life cycle state,
+not just identity and spawn availability.
 
-  UpdateAI(diff)
-    if in combat:
-      TryExecuteDoctrineRotation(creature, target, _availableSpells, _profile)
-    else if mode == AMBIENT:
-      TickSessionStep(creature)
-    else if mode == RAID:
-      FollowOwner(creature)
-    else if mode == HOSTILE:
-      ScanForTargets(creature)
-```
+For current implementation direction, each `world bot` identity should track:
 
----
+- `current level`
+- `total world-online time`
+- whether it is currently in an active world session
+- whether it has been retired
+- `last seen` location/time
 
-## What Already Works
+Progression rule:
 
-- AccountAlt clone system (Category 1) — ✅ complete
-- `BotSessionFactory` Player session spawn paths — ✅ complete
-- `CompanionAI` doctrine loop for Player session bots — ✅ complete
-- Doctrine profiles for all specs — ✅ complete
-- `.lwbot raid` commands — ✅ complete *(Player session; creature migration pending)*
-- Hostile bot fight-back AI — ✅ complete *(Player session; creature migration pending)*
-- Ambient world population tick + `AmbientBotAI` chained sessions — ✅ complete *(Player session; creature migration pending)*
-- `BotActivitySessionComposer` — ✅ complete
-- `SqlZoneIndexRepository` / `SqlActivityLibraryRepository` — ✅ complete
-- `living_world_zone_index` + `living_world_activity_library` seed data — ✅ complete
+- each `1 hour` of counted `world bot` online time grants `+1 level`
+- this counter is for normal world presence only
+- time spent in reassigned `BG` / `dungeon` / service roles should not count
+- after reaching max level, the bot may continue to appear for another `24`
+  combined counted world hours
+- after that it is retired from the active world-bot pool
 
-### Pending for creature migration (Phase 5)
+Retirement is intended to preserve history, not erase it.
 
-- `living_world_bot_spell_list` table + seed data — ⬜
-- `living_world_world_bot_template` table — ⬜
-- `WorldBotCreatureAI` (`CreatureScript`) — ⬜
-- `TryExecuteProfileRotation` abstracted to `Unit*` — ⬜
-- Phase 1/2/3 spawn paths migrated from Player sessions to creatures — ⬜
+The retired ledger row should remain as world history, while a later slice can
+generate a fresh replacement identity for the same faction at a low level.
 
 ---
 
-## Build Phases
+## Session and Tasking Model
 
-### Phase 1 — Raid Pool Bots (`.lwbot raid`)
-**Status: ✅ COMPLETE (Player session implementation — creature migration pending)**
+The intended behavior model is still chained session planning rather than
+single-purpose static spawning.
 
-Commands and DB schema done. Currently uses `BotSessionFactory` +
-`living_world_pool_character`. Migration to `WorldBotCreatureAI` in Phase 5.
+A bot session should be composed from:
 
-### Phase 2 — Hostile / Rival Bots
-**Status: ✅ COMPLETE (Player session implementation — creature migration pending)**
+- class / spec / faction / level identity
+- combat doctrine
+- a chained task list
 
-`SpawnHostileBotPlayerOnAccount` + `CompanionAI` hostileless mode working.
-Migration to `WorldBotCreatureAI` hostile mode in Phase 5.
+Example world bot session:
 
-### Phase 3 — Ambient World Population
-**Status: ✅ COMPLETE (Player session implementation — creature migration pending)**
+1. Travel to zone
+2. Patrol road
+3. Visit hub
+4. Move to gathering area
+5. Simulate gathering
+6. React to local threats or opportunities
+7. Return to route or despawn back to pool
 
-`AmbientBotAI`, session composer, zone index, activity library, population tick
-all working. Migration to `WorldBotCreatureAI` ambient mode in Phase 5.
+For world bots, this same actor may later be reassigned:
 
-### Phase 4 — Guild Bots (`.lwbot guild`)
-**Status: ⬜ Pending | Effort: large (~300 lines + DB)**
+1. Pulled from pool or interrupted mid-task
+2. Sent to support a group / dungeon / service request
+3. Performs combat role
+4. Returns to manager control
+5. Either resumes tasks or goes back offline
 
-1. Create GUILDBOT account pool (separate from BOTHOUSE).
-2. `living_world_guild_bot` and `living_world_guild_bot_deposit_log` schemas.
-3. `GuildBotAI` — Player session AI with DEPOSIT step at session end.
-4. GATHER steps with real node interaction and real loot.
-5. DEPOSIT step: travel to nearest guild bank NPC, deposit items and gold.
-6. `OnPlayerLogin` detects guild bot flag → `GuildBotAI`.
-7. `.lwbot guild list/request/dismiss/deposit` command handlers.
-8. Population tick for autonomous guild bot wake.
-9. Guild pedestal object for forced task assignment.
+That reassignment is normal and should be described as state transition, not as
+crossing into a different bot category.
 
-**Verification:** Guild bot with herbalism gathers herbs (nodes disappear, items
-in real inventory), travels to guild bank, deposits, log row written. `.lwbot
-guild request` calls it to the player's location.
+### Current abstract/offscreen runtime status
 
-### Phase 5 — Creature Bot Infrastructure (`WorldBotCreatureAI`)
-**Status: ⬜ Pending | Effort: large (~400 lines + DB seed)**
+The current live world-bot slice now has a usable first pass of this runtime:
 
-1. `living_world_bot_spell_list` schema + seed data for all class/spec/level bands.
-2. `living_world_world_bot_template` schema + initial archetype rows.
-3. Abstract `TryExecuteProfileRotation` to accept `Unit*` caster.
-4. Implement `WorldBotCreatureAI` as a `CreatureScript`.
-5. Migrate Phase 1 (raid), Phase 2 (hostile), Phase 3 (ambient) from Player
-   sessions to creature spawns.
-6. Retire `living_world_ambient_bot` table, remove dependence on
-   `SpawnHostileBotPlayerOnAccount` for world bots.
+- offscreen sessions can continue through abstract timed progression
+- same-map travel can rematerialize from an interpolated in-between position
+- fully spawned world bots can snapshot their current task/session state and
+  dematerialize back to abstract mode when their zone cools off
+- current v1 avoids taxi-flyover false positives by ignoring in-flight players
+  for interest/materialization checks
 
-**Verification:** Ambient creature bot spawns with correct class/spec visual,
-travels to a zone, executes session steps, node depletion fires without loot,
-despawns on session complete. Raid creature bot follows player, uses correct
-class spells, engages player targets.
+Still intentionally deferred for later:
+
+- taxi destination preheat when a route is selected
+- more aggressive distance-based cooldown override (for example, 2-zones-away)
+- durable DB persistence of abstract mid-session step state across server restarts
+
+### Direction update: DB-authored task templates and task steps
+
+The current activity-library system is now explicitly a bridge toward a richer
+editor-owned task model, not the final authoring shape.
+
+The intended evolution is:
+
+- `living_world_activity_library` remains the low-level activity vocabulary and
+  fallback selector surface
+- higher-level reusable work chains move into DB-authored task templates, with
+  ordered DB-authored task steps
+- the server runtime interprets those templates; it does not hardcode each new
+  task chain in C++
+
+The first vertical slice for this direction is:
+
+- **Travel -> generic gathering chain**
+
+Examples:
+
+- Travel to zone -> Gather herb (generic)
+- Travel to zone -> Gather ore (generic)
+- Travel to zone -> Fish (generic)
+
+This gives the editor/database ownership over:
+
+- where a bot should go
+- what generic work type it should perform there
+- how long it should spend doing it
+- which factions / level bands / profession flags are eligible
+
+Future slices should extend the same structure instead of adding one-off
+composer logic, for example:
+
+- Travel -> gather specific herb (`Kingsblood`)
+- Travel -> gather specific ore
+- Travel -> craft item -> repeat N
+- guild work orders / profession batches
+- city service points like bank / mailbox / AH / inn resolved from DB-authored
+  named task points rather than being hardcoded as generic zone anchors
+
+Architectural rule going forward:
+
+- **C++ owns the task runtime/interpreter**
+- **DB owns task definitions, ordering, weighting, and authorable work chains**
 
 ---
 
-## Critical Files
+## Economy Split
 
-| File | Phase | Status | Notes |
-|------|-------|--------|-------|
-| `script/LivingWorldCommandScript.cpp` | 1 | ✅ | `.lwbot raid` handlers |
-| `integration/BotSessionFactory.h/.cpp` | 1,2 | ✅ | Player session spawn paths |
-| `script/LivingWorldPlayerScript.cpp` | 1,2,3 | ✅ | Bot type detection on login |
-| `ai/CompanionAI.cpp` | 2 | ✅ | Hostileless target fallback |
-| `ai/AmbientBotAI.h/.cpp` | 3 | ✅ | Ambient session step executor |
-| `script/LivingWorldWorldScript.cpp` | 3 | ✅ | Population tick |
-| `service/BotActivitySessionComposer.h/.cpp` | 3 | ✅ | Chained session builder |
-| `integration/SqlZoneIndexRepository.h/.cpp` | 3 | ✅ | Zone lookup |
-| `integration/SqlActivityLibraryRepository.h/.cpp` | 3 | ✅ | Activity lookup |
-| `integration/BotActivityLog.h/.cpp` | 3 | ✅ | Event logging |
-| `data/sql/…/living_world_ambient_bot.sql` | 3 | ✅ | Current Player session pool table |
-| `ai/GuildBotAI.h/.cpp` | 4 | ⬜ | Guild AI + DEPOSIT step |
-| `data/sql/…/living_world_guild_bot.sql` | 4 | ⬜ | Schema |
-| `data/sql/…/living_world_guild_bot_deposit_log.sql` | 4 | ⬜ | Schema |
-| `ai/WorldBotCreatureAI.h/.cpp` | 5 | ⬜ | Creature AI for Cat 2/4/5 |
-| `data/sql/…/living_world_bot_spell_list.sql` | 5 | ⬜ | Spell bands for creatures |
-| `data/sql/…/living_world_world_bot_template.sql` | 5 | ⬜ | Archetypes |
+This is one of the most important boundaries in the system.
+
+### `Account bots` and `Guild bots`
+
+These operate in the **real economy**:
+
+- real items
+- real inventory
+- real profession outcomes
+- real deposits / transfers where applicable
+
+### `World bots`
+
+These operate in a **simulated economy**:
+
+- they can appear to gather
+- they can deplete nodes
+- they can perform believable world tasks
+- but no real item must exist in inventory unless explicitly designed otherwise
+
+This allows high world population without requiring massive account pools or
+economic distortion.
+
+---
+
+## Command Namespaces
+
+### `.lwbot roster`
+
+This namespace is for `account bots` only.
+
+It must never query guild bot or world bot pools.
+
+### `.lwbot guild`
+
+This namespace is for `guild bots` only.
+
+It controls persistent guild-function characters and real guild economy work.
+
+### World bot controls
+
+World bots may still have commands for testing, GM control, reassignment, or
+service requests, but those commands should be understood as manager controls,
+not ownership controls.
+
+The manager owns world bots.
+
+---
+
+## What World Bots Must Preserve From Player Bots
+
+Even though world bots are spawned and non-account-bound, they should preserve
+as much of the real player illusion as possible.
+
+That includes:
+
+- class/spec identity
+- familiar player spells and ability usage
+- believable travel and routing
+- reaction to enemies and threats
+- doctrine-driven combat behavior
+- enough shared behavior with account bots that the difference is hard to spot
+
+What should differ is mainly:
+
+- ownership
+- persistence
+- inventory reality
+- economic side effects
+
+---
+
+## Revised Taxonomy Summary
+
+### Real families
+
+1. `Account bots`
+2. `Guild bots`
+3. `World bots`
+
+### Not families
+
+- `ambient`
+- `raid helper`
+- `hostile`
+- `aggressive`
+- `cautious`
+- `pacifist`
+
+Those are assignment modes or behavior policies.
+
+---
+
+## Implementation Direction
+
+### Account bots
+
+Remain real `Player` session bots.
+
+### Guild bots
+
+Remain real `Player` session bots with real economy outputs.
+
+### World bots
+
+Remain manager-owned spawned bots that:
+
+- use the shared combat/ability abstraction
+- can task in the open world
+- can enter combat naturally while tasking
+- can be reassigned into support/service usage
+- can simulate gathering while still depleting world nodes
+
+The long-term architecture should continue pushing bot combat and spell logic
+toward shared `Unit*`-based systems rather than duplicating special cases for
+spawned bots.
+
+First implementation rule for scaling:
+
+- do **not** fully simulate every world bot all the time
+- keep offscreen world bots on an abstract progression path
+- only materialize full creature AI where a real player can observe/interact
+
+## Current Implementation Snapshot
+
+This document is still the target-model design note, but the repo now contains
+enough concrete world-bot work that the current status should be stated
+explicitly.
+
+### What is already live
+
+- account-alt bots are the most mature slice and already support real
+  player-session lifecycle, combat profiles, talent templates, quest sync, and
+  dismissal/recovery behavior
+- world bots now have a first-pass ambient runtime with:
+  - DB-authored session composition from legacy activities, task templates, and
+    playlists
+  - named task points plus taxi/transit route support for authored travel
+  - population maintenance in `LivingWorldWorldScript`
+  - forced-spawn override config for local visual testing
+  - session-source metadata (`legacy_activity`, `task_template`, `playlist`)
+    surfaced in spawn logs and activity logs
+  - dedicated realtime DB viewer tooling with filters, badges, and recent
+    activity panes
+  - focused helper tests for spawn override and travel-watchdog logic
+
+### What is in progress
+
+- same-map travel watchdog recovery now exists in both `WorldBotCreatureAI` and
+  `AmbientBotAI`; the filtered `TravelWatchdogTest.*` rerun and `worldserver`
+  rebuild were completed successfully during headless validation
+- the current outdoor runtime is still mainly
+  `travel -> simulate activity -> advance`, not yet the richer
+  `find herb -> travel -> fight if attacked -> gather -> resume` loop
+- obstacle handling is improved by watchdog-triggered teleport recovery, but
+  broader route recovery and more reactive world behavior are still future work
+- the next scaling pass is to make offscreen world bots abstract by default and
+  only fully materialize them in player-interest zones/towns
+- headless validation also exposed a real session-selection issue: forced spawn
+  can currently assign playlists whose early steps belong to other maps
+
+### Immediate next priorities
+
+1. implement abstract offscreen progression for world bots only
+2. keep account bots and guild/workforce bots on the always-real/full-sim path
+3. add player-interest activation/materialization rules for world bots
+4. prevent cross-map forced-spawn/session mismatches
+5. extend authored tasking into reactive gather/combat/resume behavior
+6. broaden identity seeding with normalized level-range coverage and larger
+   race/gender name pools
+
+### Captured follow-up gaps: world-bot combat buildout
+
+The current world-bot combat runtime is now shared enough to drive both
+session/account bots and headless/world bots, but the full `spawn flavor ->
+complete build` pipeline is still not closed yet. The missing pieces should be
+tracked explicitly here so they are not lost between slices:
+
+1. **Align world-bot identity spec keys with canonical doctrine/template keys**
+   - legacy identity rows and seed data still use values like `warrior_arms`,
+     `paladin_ret`, `mage_frost`
+   - seeded default combat profiles and seeded talent templates use canonical
+     names like `Arms`, `Retribution`, `Frost`
+   - first closure slice: normalize world-bot identities to the canonical keys
+     so default profile / talent-template lookup can work predictably
+
+2. **Close coverage gaps between seeded world-bot flavors and seeded defaults**
+   - several currently seeded world-bot flavors still do not yet have matching
+     default combat-profile / talent-template coverage in the DB vocabulary
+   - examples include `Marksmanship`, `Survival`, `Subtlety`, `Enhancement`,
+     `Arcane`, `Fire`, `Destruction`, and `Frost` for Death Knight flavor
+
+3. **Add a world-bot spawn/materialization build step**
+   - current materialization applies identity presentation/stats only
+   - missing step: resolve default combat profile + corresponding talent
+     template from bot flavor at spawn/materialization time
+
+4. **Add headless/world-bot talent progression application**
+   - the intended model is to store a full max-level talent template per
+     class/spec, then spend only the points available for the bot's current
+     level in template order
+   - by level 80 the build should match the full template
+   - deterministic re-application on each spawn/materialization is acceptable
+     for this first implementation
+
+5. **Derive world-bot known spells from the resolved build**
+   - current world-bot known-spell sourcing is still partial
+   - long-term the world-bot spell payload should be derived from
+     class/spec/level/build state so combat evaluation sees a believable
+     player-like spell set
+
+6. **Refresh the build package when ledger level increases**
+   - the world-bot ledger already advances level over time
+   - missing step: rebuild talent allocation / usable spell set after level-up
+     so progression affects the actual runtime build instead of only the stored
+     level field
+
+---
+
+## Critical Clarification For Future Revisions
+
+Do **not** reintroduce a document structure that implies:
+
+- `hostile bots` are a top-level bot family
+- `ambient bots` and `raid helper bots` are different species
+- spawned world bots require an entirely separate low-fidelity spell system
+
+The intended model is:
+
+- three bot ownership families
+- one shared bot behavior/combat direction as much as practical
+- world-bot manager ownership for non-account bots
+- faction conflict as emergent world behavior
+- simulated economy for world bots, real economy for account/guild bots

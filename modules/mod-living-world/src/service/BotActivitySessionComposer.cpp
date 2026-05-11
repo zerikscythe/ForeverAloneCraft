@@ -1,5 +1,8 @@
 #include "service/BotActivitySessionComposer.h"
+#include "service/AmbientTaskEligibility.h"
 #include "integration/SqlActivityLibraryRepository.h"
+#include "integration/SqlTaskPointRepository.h"
+#include "integration/SqlTaskTemplateRepository.h"
 #include "integration/SqlZoneIndexRepository.h"
 
 #include <algorithm>
@@ -13,6 +16,26 @@ namespace service
 {
 namespace
 {
+std::string EffectiveResolverKind(model::TaskTemplateStepEntry const& step)
+{
+    if (!step.resolverKind.empty())
+        return step.resolverKind;
+
+    return step.targetPointKey.empty() ? "zone" : "point";
+}
+
+std::string EffectiveSubjectKind(model::TaskTemplateStepEntry const& step)
+{
+    if (!step.subjectKind.empty())
+        return step.subjectKind;
+
+    if (step.stepType == "gather_herb") return "herb";
+    if (step.stepType == "gather_ore")  return "ore";
+    if (step.stepType == "fish")        return "fish";
+    if (step.stepType == "idle_city" || step.stepType == "idle_inn") return "city_service";
+    return "";
+}
+
 // Weighted random selection — picks an activity proportional to its weight.
 std::size_t WeightedPickIndex(
     std::vector<model::ActivityEntry> const& pool,
@@ -35,6 +58,37 @@ std::size_t WeightedPickIndex(
     return pool.empty() ? 0u : (pool.size() - 1u);
 }
 
+std::size_t WeightedPickIndexWithBias(
+    std::vector<model::ActivityEntry> const& pool,
+    bool openerPick,
+    std::mt19937& rng)
+{
+    std::uint32_t const totalWeight = std::accumulate(
+        pool.begin(), pool.end(), std::uint32_t{0},
+        [&](std::uint32_t sum, model::ActivityEntry const& e)
+        {
+            std::uint32_t const bias = openerPick
+                ? std::max<std::uint32_t>(1u, e.openerBias)
+                : std::max<std::uint32_t>(1u, e.followupBias);
+            return sum + (std::max<std::uint32_t>(1u, e.weight) * bias);
+        });
+
+    std::uniform_int_distribution<std::uint32_t> dist(1, totalWeight);
+    std::uint32_t roll = dist(rng);
+    for (std::size_t i = 0; i < pool.size(); ++i)
+    {
+        std::uint32_t const bias = openerPick
+            ? std::max<std::uint32_t>(1u, pool[i].openerBias)
+            : std::max<std::uint32_t>(1u, pool[i].followupBias);
+        std::uint32_t const effectiveWeight = std::max<std::uint32_t>(1u, pool[i].weight) * bias;
+        if (roll <= effectiveWeight)
+            return i;
+        roll -= effectiveWeight;
+    }
+
+    return pool.empty() ? 0u : (pool.size() - 1u);
+}
+
 AmbientStepType ActivityTypeToStepType(std::string const& activityType)
 {
     if (activityType == "gather_herb") return AmbientStepType::GatherHerb;
@@ -42,6 +96,452 @@ AmbientStepType ActivityTypeToStepType(std::string const& activityType)
     if (activityType == "fish")        return AmbientStepType::Fish;
     if (activityType == "patrol")      return AmbientStepType::Patrol;
     return AmbientStepType::Idle;
+}
+
+void AppendTravelStep(
+    AmbientSession& session,
+    std::int32_t taskIndex,
+    std::uint16_t mapId,
+    float x,
+    float y,
+    float z,
+    std::string const& label)
+{
+    AmbientStep travelStep;
+    travelStep.type        = AmbientStepType::Travel;
+    travelStep.mapId       = mapId;
+    travelStep.x           = x;
+    travelStep.y           = y;
+    travelStep.z           = z;
+    travelStep.durationSec = 0;
+    travelStep.taskIndex   = taskIndex;
+    travelStep.label       = label;
+    session.steps.push_back(travelStep);
+}
+
+void AppendTaxiFlightStep(
+    AmbientSession& session,
+    std::int32_t taskIndex,
+    std::uint16_t mapId,
+    float x,
+    float y,
+    float z,
+    std::uint32_t durationSec,
+    std::string const& label)
+{
+    AmbientStep flightStep;
+    flightStep.type        = AmbientStepType::TaxiFlight;
+    flightStep.mapId       = mapId;
+    flightStep.x           = x;
+    flightStep.y           = y;
+    flightStep.z           = z;
+    flightStep.durationSec = durationSec;
+    flightStep.taskIndex   = taskIndex;
+    flightStep.label       = label;
+    session.steps.push_back(flightStep);
+}
+
+bool ResolvePointTarget(
+    integration::SqlTaskPointRepository& pointRepo,
+    std::string const& pointKey,
+    std::uint16_t& mapId,
+    float& targetX,
+    float& targetY,
+    float& targetZ,
+    std::uint32_t& targetZoneId)
+{
+    auto const point = pointRepo.FindByKey(pointKey);
+    if (!point)
+        return false;
+
+    mapId = point->mapId;
+    targetX = point->x;
+    targetY = point->y;
+    targetZ = point->z;
+    targetZoneId = point->zoneId;
+    return true;
+}
+
+bool ResolveZoneTarget(
+    integration::SqlZoneIndexRepository& zoneRepo,
+    std::uint32_t zoneId,
+    std::uint16_t& mapId,
+    float& targetX,
+    float& targetY,
+    float& targetZ,
+    std::uint32_t& targetZoneId)
+{
+    auto const zone = zoneRepo.Find(zoneId);
+    if (!zone)
+        return false;
+
+    mapId = zone->mapId;
+    targetX = zone->anchorX;
+    targetY = zone->anchorY;
+    targetZ = zone->anchorZ;
+    targetZoneId = zone->zoneId;
+    return true;
+}
+
+bool ResolveTemplateStepTarget(
+    model::TaskTemplateStepEntry const& templateStep,
+    integration::SqlZoneIndexRepository& zoneRepo,
+    integration::SqlTaskPointRepository& pointRepo,
+    std::mt19937& rng,
+    std::uint8_t faction,
+    std::uint8_t level,
+    std::uint32_t currentZoneId,
+    std::uint32_t homeZoneId,
+    std::string const& homeAnchorPointKey,
+    std::string const& homeBindPointKey,
+    std::uint16_t& mapId,
+    float& targetX,
+    float& targetY,
+    float& targetZ,
+    std::uint32_t& targetZoneId)
+{
+    targetZoneId = templateStep.targetZoneId;
+    std::string const resolverKind = EffectiveResolverKind(templateStep);
+    std::string const subjectKind = EffectiveSubjectKind(templateStep);
+
+    if (!templateStep.targetPointKey.empty() || resolverKind == "point")
+        return ResolvePointTarget(pointRepo, templateStep.targetPointKey, mapId, targetX, targetY, targetZ, targetZoneId);
+
+    if (resolverKind == "zone")
+        return ResolveZoneTarget(zoneRepo, templateStep.targetZoneId, mapId, targetX, targetY, targetZ, targetZoneId);
+
+    if (resolverKind == "home_city")
+    {
+        if (!homeAnchorPointKey.empty()
+            && ResolvePointTarget(pointRepo, homeAnchorPointKey, mapId, targetX, targetY, targetZ, targetZoneId))
+        {
+            return true;
+        }
+
+        if (!homeBindPointKey.empty()
+            && ResolvePointTarget(pointRepo, homeBindPointKey, mapId, targetX, targetY, targetZ, targetZoneId))
+        {
+            return true;
+        }
+
+        if (homeZoneId != 0)
+        {
+            if (auto const anchor = pointRepo.FindZoneAnchor(homeZoneId, "home", faction, level))
+            {
+                if (ResolvePointTarget(pointRepo, anchor->pointKey, mapId, targetX, targetY, targetZ, targetZoneId))
+                    return true;
+            }
+
+            return ResolveZoneTarget(zoneRepo, homeZoneId, mapId, targetX, targetY, targetZ, targetZoneId);
+        }
+
+        return false;
+    }
+
+    if (resolverKind == "resource_zone" || resolverKind == "quest_zone" || resolverKind == "creature_zone")
+    {
+        if (templateStep.targetZoneId == 0)
+            return false;
+
+        if (!subjectKind.empty())
+        {
+            std::vector<model::ZoneContentEntry> const content = pointRepo.LoadZoneContentByZoneAndKind(
+                templateStep.targetZoneId,
+                subjectKind,
+                faction,
+                level);
+            if (!content.empty() && !content.front().anchorPointKey.empty())
+                return ResolvePointTarget(pointRepo, content.front().anchorPointKey, mapId, targetX, targetY, targetZ, targetZoneId);
+        }
+
+        return ResolveZoneTarget(zoneRepo, templateStep.targetZoneId, mapId, targetX, targetY, targetZ, targetZoneId);
+    }
+
+    if (resolverKind == "resource_auto" || resolverKind == "quest_auto" || resolverKind == "creature_auto")
+    {
+        if (subjectKind.empty())
+            return false;
+
+        std::vector<model::ZoneContentEntry> content = pointRepo.LoadZoneContentByKind(subjectKind, faction, level);
+        if (content.empty())
+            return false;
+
+        auto currentItr = std::find_if(content.begin(), content.end(),
+            [&](model::ZoneContentEntry const& entry)
+            {
+                return currentZoneId != 0 && entry.zoneId == currentZoneId;
+            });
+
+        model::ZoneContentEntry const* picked = nullptr;
+        if (currentItr != content.end())
+        {
+            picked = &(*currentItr);
+        }
+        else
+        {
+            std::uint32_t const totalWeight = std::accumulate(
+                content.begin(), content.end(), std::uint32_t{0},
+                [](std::uint32_t sum, model::ZoneContentEntry const& entry)
+                {
+                    return sum + std::max<std::uint32_t>(1u, entry.weight);
+                });
+
+            std::uniform_int_distribution<std::uint32_t> dist(1, totalWeight);
+            std::uint32_t roll = dist(rng);
+            for (model::ZoneContentEntry const& entry : content)
+            {
+                std::uint32_t const effectiveWeight = std::max<std::uint32_t>(1u, entry.weight);
+                if (roll <= effectiveWeight)
+                {
+                    picked = &entry;
+                    break;
+                }
+                roll -= effectiveWeight;
+            }
+
+            if (!picked)
+                picked = &content.back();
+        }
+
+        if (!picked->anchorPointKey.empty()
+            && ResolvePointTarget(pointRepo, picked->anchorPointKey, mapId, targetX, targetY, targetZ, targetZoneId))
+        {
+            return true;
+        }
+
+        return ResolveZoneTarget(zoneRepo, picked->zoneId, mapId, targetX, targetY, targetZ, targetZoneId);
+    }
+
+    return ResolveZoneTarget(zoneRepo, templateStep.targetZoneId, mapId, targetX, targetY, targetZ, targetZoneId);
+}
+
+std::optional<AmbientSession> BuildSessionFromTemplate(
+    model::TaskTemplateEntry const& tmpl,
+    integration::SqlZoneIndexRepository& zoneRepo,
+    std::mt19937& rng,
+    std::uint8_t faction,
+    std::uint8_t level,
+    std::uint32_t startZoneId,
+    std::uint32_t homeZoneId,
+    std::string const& homeAnchorPointKey,
+    std::string const& homeBindPointKey)
+{
+    AmbientSession session;
+    integration::SqlTaskPointRepository pointRepo;
+    std::uint32_t currentZoneId = startZoneId;
+
+    for (model::TaskTemplateStepEntry const& templateStep : tmpl.steps)
+    {
+        std::uint16_t mapId = 0;
+        float targetX = 0.f;
+        float targetY = 0.f;
+        float targetZ = 0.f;
+        std::uint32_t targetZoneId = templateStep.targetZoneId;
+
+        if (!ResolveTemplateStepTarget(
+                templateStep,
+                zoneRepo,
+                pointRepo,
+                rng,
+                faction,
+                level,
+                currentZoneId,
+                homeZoneId,
+                homeAnchorPointKey,
+                homeBindPointKey,
+                mapId,
+                targetX,
+                targetY,
+                targetZ,
+                targetZoneId))
+        {
+            return std::nullopt;
+        }
+
+        AmbientSessionTask task;
+        task.activityId   = 0;
+        task.activityKey  = tmpl.templateKey + ":" + templateStep.stepType;
+        task.displayName  = templateStep.label;
+        task.activityType = templateStep.stepType;
+        task.taskFamily   = tmpl.taskFamily;
+        task.targetZoneId = targetZoneId;
+
+        std::int32_t const taskIndex = static_cast<std::int32_t>(session.tasks.size());
+        session.tasks.push_back(std::move(task));
+
+        bool addedTransitRoute = false;
+        if (currentZoneId != 0 && currentZoneId != targetZoneId)
+        {
+            std::vector<model::TaskTransitRouteEntry> const transitPath = pointRepo.FindTransitPathForZones(
+                currentZoneId,
+                targetZoneId,
+                tmpl.requiredFaction,
+                tmpl.minLevel);
+            if (!transitPath.empty())
+            {
+                for (model::TaskTransitRouteEntry const& route : transitPath)
+                {
+                    AppendTravelStep(
+                        session,
+                        taskIndex,
+                        route.sourceMapId,
+                        route.sourceX,
+                        route.sourceY,
+                        route.sourceZ,
+                        "Travel to " + route.sourcePointName);
+                    AppendTaxiFlightStep(
+                        session,
+                        taskIndex,
+                        route.destMapId,
+                        route.destX,
+                        route.destY,
+                        route.destZ,
+                        std::max<std::uint32_t>(15u, route.durationSec),
+                        route.displayName);
+                }
+
+                if (transitPath.back().destPointKey != templateStep.targetPointKey)
+                {
+                    AppendTravelStep(
+                        session,
+                        taskIndex,
+                        mapId,
+                        targetX,
+                        targetY,
+                        targetZ,
+                        "Travel to " + templateStep.label);
+                }
+
+                addedTransitRoute = true;
+            }
+        }
+
+        if (!addedTransitRoute)
+        {
+            AppendTravelStep(session, taskIndex, mapId, targetX, targetY, targetZ, "Travel to " + templateStep.label);
+        }
+
+        AmbientStep activityStep;
+        activityStep.type      = ActivityTypeToStepType(templateStep.stepType);
+        activityStep.mapId     = mapId;
+        activityStep.x         = targetX;
+        activityStep.y         = targetY;
+        activityStep.z         = targetZ;
+        activityStep.taskIndex = taskIndex;
+        activityStep.subjectKind = templateStep.subjectKind;
+        activityStep.subjectId = templateStep.subjectId;
+        activityStep.subjectKey = templateStep.subjectKey;
+        activityStep.returnAnchorRole = templateStep.returnAnchorRole;
+        activityStep.cycleCount = std::max<std::uint8_t>(1u, templateStep.cycleCount);
+        activityStep.label     = templateStep.label;
+
+        if (templateStep.durationMinSec == 0 && templateStep.durationMaxSec == 0)
+        {
+            activityStep.durationSec = 600;
+        }
+        else
+        {
+            std::uniform_int_distribution<std::uint32_t> durDist(
+                templateStep.durationMinSec,
+                std::max(templateStep.durationMinSec, templateStep.durationMaxSec));
+            activityStep.durationSec = durDist(rng);
+        }
+
+        activityStep.durationSec *= std::max<std::uint32_t>(1u, templateStep.cycleCount);
+
+        session.steps.push_back(activityStep);
+
+        currentZoneId = targetZoneId;
+    }
+
+    if (session.tasks.empty() || session.steps.empty())
+        return std::nullopt;
+
+    session.activityId = 0;
+    session.activityKey = tmpl.templateKey;
+    session.displayName = tmpl.displayName;
+    session.sourceKind = "task_template";
+    session.sourceKey = tmpl.templateKey;
+    return session;
+}
+
+std::optional<model::TaskTemplateEntry> FindTemplateById(
+    std::vector<model::TaskTemplateEntry> const& templates,
+    std::uint32_t templateId)
+{
+    auto const itr = std::find_if(templates.begin(), templates.end(),
+        [&](model::TaskTemplateEntry const& tmpl)
+        {
+            return tmpl.templateId == templateId;
+        });
+    if (itr == templates.end())
+        return std::nullopt;
+
+    return *itr;
+}
+
+std::optional<AmbientSession> BuildSessionFromPlaylist(
+    model::PlaylistEntrySet const& playlist,
+    std::vector<model::TaskTemplateEntry> const& templates,
+    integration::SqlZoneIndexRepository& zoneRepo,
+    std::mt19937& rng,
+    std::uint8_t faction,
+    std::uint8_t level,
+    std::uint32_t startZoneId,
+    std::uint32_t homeZoneId,
+    std::string const& homeAnchorPointKey,
+    std::string const& homeBindPointKey)
+{
+    AmbientSession session;
+    std::uint32_t currentZoneId = startZoneId;
+
+    for (model::PlaylistEntryRef const& entry : playlist.entries)
+    {
+        auto const templateOpt = FindTemplateById(templates, entry.taskTemplateId);
+        if (!templateOpt)
+            return std::nullopt;
+
+        std::uint8_t const repeatCount = std::max<std::uint8_t>(1u, entry.repeatCount);
+        for (std::uint8_t repeatIndex = 0; repeatIndex < repeatCount; ++repeatIndex)
+        {
+            auto subSession = BuildSessionFromTemplate(
+                *templateOpt,
+                zoneRepo,
+                rng,
+                faction,
+                level,
+                currentZoneId,
+                homeZoneId,
+                homeAnchorPointKey,
+                homeBindPointKey);
+            if (!subSession)
+                return std::nullopt;
+
+            std::int32_t const taskIndexOffset = static_cast<std::int32_t>(session.tasks.size());
+            for (service::AmbientSessionTask task : subSession->tasks)
+                session.tasks.push_back(std::move(task));
+
+            for (service::AmbientStep step : subSession->steps)
+            {
+                if (step.taskIndex >= 0)
+                    step.taskIndex += taskIndexOffset;
+                session.steps.push_back(std::move(step));
+            }
+
+            if (!subSession->tasks.empty())
+                currentZoneId = subSession->tasks.back().targetZoneId;
+        }
+    }
+
+    if (session.tasks.empty() || session.steps.empty())
+        return std::nullopt;
+
+    session.activityId = 0;
+    session.activityKey = playlist.playlistKey;
+    session.displayName = playlist.displayName;
+    session.sourceKind = "playlist";
+    session.sourceKey = playlist.playlistKey;
+    return session;
 }
 
 // First realignment slice:
@@ -154,6 +654,19 @@ bool MatchesTaskFamilyChainRules(
     // feel like accidental loops rather than a varied session chain.
     return nextFamily == "city_errand";
 }
+
+bool IsCityErrand(model::ActivityEntry const& entry)
+{
+    return NormalizeTaskFamily(entry.taskFamily) == "city_errand";
+}
+
+bool HasAnyNonCityCandidate(std::vector<model::ActivityEntry> const& pool)
+{
+    return std::any_of(pool.begin(), pool.end(), [](model::ActivityEntry const& entry)
+    {
+        return !IsCityErrand(entry);
+    });
+}
 } // namespace
 
 std::optional<AmbientSession> BotActivitySessionComposer::Compose(
@@ -161,16 +674,135 @@ std::optional<AmbientSession> BotActivitySessionComposer::Compose(
     std::uint8_t level,
     bool hasHerbalism,
     bool hasMining,
-    bool hasFishing) const
+    bool hasFishing,
+    std::uint32_t startZoneId,
+    std::uint32_t homeZoneId,
+    std::string const& homeAnchorPointKey,
+    std::string const& homeBindPointKey) const
 {
+    AmbientProfessionCapabilities const professionCapabilities{
+        hasHerbalism,
+        hasMining,
+        hasFishing
+    };
+
     integration::SqlActivityLibraryRepository actRepo;
     auto eligible = actRepo.LoadEligible(
         faction, level, hasHerbalism, hasMining, hasFishing);
+
+    eligible.erase(
+        std::remove_if(
+            eligible.begin(),
+            eligible.end(),
+            [&](model::ActivityEntry const& entry)
+            {
+                return !MeetsProfessionRequirements(entry, professionCapabilities);
+            }),
+        eligible.end());
 
     if (eligible.empty())
         return std::nullopt;
 
     integration::SqlZoneIndexRepository zoneRepo;
+
+    integration::SqlTaskTemplateRepository taskTemplateRepo;
+    auto templates = taskTemplateRepo.LoadEligible(
+        faction, level, hasHerbalism, hasMining, hasFishing);
+    auto playlists = taskTemplateRepo.LoadEligiblePlaylists(
+        faction, level, hasHerbalism, hasMining, hasFishing);
+
+    templates.erase(
+        std::remove_if(
+            templates.begin(),
+            templates.end(),
+            [&](model::TaskTemplateEntry const& entry)
+            {
+                return !MeetsProfessionRequirements(entry, professionCapabilities);
+            }),
+        templates.end());
+
+    playlists.erase(
+        std::remove_if(
+            playlists.begin(),
+            playlists.end(),
+            [&](model::PlaylistEntrySet const& entry)
+            {
+                return !MeetsProfessionRequirements(entry, professionCapabilities);
+            }),
+        playlists.end());
+
+    if (!playlists.empty() && !templates.empty())
+    {
+        std::mt19937 rng(static_cast<std::uint32_t>(
+            std::chrono::steady_clock::now().time_since_epoch().count()));
+
+        std::uint32_t const totalPlaylistWeight = std::accumulate(
+            playlists.begin(), playlists.end(), std::uint32_t{0},
+            [](std::uint32_t sum, model::PlaylistEntrySet const& playlist)
+            {
+                return sum + std::max<std::uint32_t>(1u, playlist.weight);
+            });
+
+        std::uniform_int_distribution<std::uint32_t> dist(1, totalPlaylistWeight);
+        std::uint32_t roll = dist(rng);
+        for (model::PlaylistEntrySet const& playlist : playlists)
+        {
+            std::uint32_t const effectiveWeight = std::max<std::uint32_t>(1u, playlist.weight);
+            if (roll <= effectiveWeight)
+            {
+                if (auto session = BuildSessionFromPlaylist(
+                        playlist,
+                        templates,
+                        zoneRepo,
+                        rng,
+                        faction,
+                        level,
+                        startZoneId,
+                        homeZoneId,
+                        homeAnchorPointKey,
+                        homeBindPointKey))
+                    return session;
+                break;
+            }
+            roll -= effectiveWeight;
+        }
+    }
+
+    if (!templates.empty())
+    {
+        std::mt19937 rng(static_cast<std::uint32_t>(
+            std::chrono::steady_clock::now().time_since_epoch().count()));
+
+        std::uint32_t const totalTemplateWeight = std::accumulate(
+            templates.begin(), templates.end(), std::uint32_t{0},
+            [](std::uint32_t sum, model::TaskTemplateEntry const& tmpl)
+            {
+                return sum + std::max<std::uint32_t>(1u, tmpl.weight);
+            });
+
+        std::uniform_int_distribution<std::uint32_t> dist(1, totalTemplateWeight);
+        std::uint32_t roll = dist(rng);
+        for (model::TaskTemplateEntry const& tmpl : templates)
+        {
+            std::uint32_t const effectiveWeight = std::max<std::uint32_t>(1u, tmpl.weight);
+            if (roll <= effectiveWeight)
+            {
+                if (auto session = BuildSessionFromTemplate(
+                        tmpl,
+                        zoneRepo,
+                        rng,
+                        faction,
+                        level,
+                        startZoneId,
+                        homeZoneId,
+                        homeAnchorPointKey,
+                        homeBindPointKey))
+                    return session;
+                break;
+            }
+            roll -= effectiveWeight;
+        }
+    }
 
     std::vector<model::ActivityEntry> filtered;
     filtered.reserve(eligible.size());
@@ -214,6 +846,9 @@ std::optional<AmbientSession> BotActivitySessionComposer::Compose(
         {
             model::ActivityEntry const& candidate = filtered[candidateIndex];
 
+            if (selected.empty() && HasAnyNonCityCandidate(filtered) && IsCityErrand(candidate))
+                continue;
+
             if (!MatchesFamilyRepeatRules(selected, candidate))
                 continue;
 
@@ -235,6 +870,9 @@ std::optional<AmbientSession> BotActivitySessionComposer::Compose(
             {
                 model::ActivityEntry const& candidate = filtered[candidateIndex];
 
+                if (selected.empty() && HasAnyNonCityCandidate(filtered) && IsCityErrand(candidate))
+                    continue;
+
                 if (!MatchesFamilyRepeatRules(selected, candidate))
                     continue;
 
@@ -249,7 +887,10 @@ std::optional<AmbientSession> BotActivitySessionComposer::Compose(
         if (chainCandidates.empty())
             break;
 
-        std::size_t const pickedSubsetIndex = WeightedPickIndex(chainCandidates, rng);
+        std::size_t const pickedSubsetIndex = WeightedPickIndexWithBias(
+            chainCandidates,
+            selected.empty(),
+            rng);
         std::size_t const pickedIndex = chainCandidateIndices[pickedSubsetIndex];
         selected.push_back(filtered[pickedIndex]);
         filtered.erase(filtered.begin() + static_cast<std::ptrdiff_t>(pickedIndex));
@@ -316,6 +957,8 @@ std::optional<AmbientSession> BotActivitySessionComposer::Compose(
     session.displayName = session.tasks.size() > 1
         ? "Chained session (" + std::to_string(session.tasks.size()) + " tasks)"
         : session.tasks.front().displayName;
+    session.sourceKind = "legacy_activity";
+    session.sourceKey = session.activityKey;
 
     return session;
 }

@@ -1,7 +1,7 @@
 """
-ooc_panel.py  --  Out-of-combat behaviour panel for the Bot Profiles tab.
+ooc_panel.py  --  Out-of-combat behaviour panel for the Clone Profiles tab.
 
-Each bot profile slot carries its own OOC settings so a healing slot can buff
+Each clone profile slot carries its own OOC settings so a healing slot can buff
 the full party while a DPS slot buffs only itself, and gathering/looting rules
 can be tuned per character regardless of which combat profile is active.
 """

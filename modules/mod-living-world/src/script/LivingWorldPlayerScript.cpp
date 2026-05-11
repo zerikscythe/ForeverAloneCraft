@@ -7,6 +7,7 @@
 #include "ai/CompanionAI.h"
 #include "integration/BotActivityLog.h"
 #include "script/LivingWorldChatConfig.h"
+#include "script/WorldBotHotZoneTracker.h"
 #include "integration/SqlAccountAltRuntimeRepository.h"
 #include "integration/SqlCharacterAchievementSyncRepository.h"
 #include "integration/SqlCharacterBankSyncRepository.h"
@@ -807,6 +808,7 @@ public:
 
         if (!player->GetSession()->IsBotSession())
         {
+            living_world::script::ObserveWorldBotPlayerInterest(player, true);
             RunOwnerStartupRecovery(player);
             CleanupStaleGroupBots(player);
             player->m_Events.AddEventAtOffset(
@@ -868,6 +870,9 @@ public:
                 if (playerSpell
                     && playerSpell->State != PLAYERSPELL_REMOVED)
                 {
+                    if (player->HasSpell(spellId))
+                        continue;
+
                     player->learnSpell(spellId, false);
                 }
             }
@@ -897,7 +902,10 @@ public:
 
         s_openedControlledTradeWindows.erase(player->GetGUID().GetCounter());
         if (!player->GetSession()->IsBotSession())
+        {
+            living_world::script::ForgetWorldBotPlayerInterest(player);
             return;
+        }
 
         LOG_INFO(
             "server.worldserver",
@@ -1219,6 +1227,24 @@ public:
     void OnPlayerUpdate(Player* player, uint32 /*diff*/) override
     {
         MaybeAutoAcceptControlledBotTrade(player);
+
+        if (player && player->GetSession() && !player->GetSession()->IsBotSession())
+            living_world::script::ObserveWorldBotPlayerInterest(player);
+    }
+
+    void OnPlayerUpdateZone(Player* player, uint32 /*newZone*/, uint32 /*newArea*/) override
+    {
+        living_world::script::ObserveWorldBotPlayerInterest(player, true);
+    }
+
+    void OnPlayerUpdateArea(Player* player, uint32 /*oldArea*/, uint32 /*newArea*/) override
+    {
+        living_world::script::ObserveWorldBotPlayerInterest(player, true);
+    }
+
+    void OnPlayerMapChanged(Player* player) override
+    {
+        living_world::script::ObserveWorldBotPlayerInterest(player, true);
     }
 
     void OnPlayerBeforeLogout(Player* player) override

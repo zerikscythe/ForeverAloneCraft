@@ -338,6 +338,17 @@ Updates.ArchivedRedundancy = 0
 Updates.AllowRehash = 1
 
 #
+#    Updates.WarnMissingAppliedFiles
+#        Description: Warn when an SQL file listed as applied in the database is no longer present
+#                     in the current update directories.
+#                     Disable this to suppress historical missing-file warnings while still logging
+#                     newly applied, rehashed, renamed, or reapplied updates.
+#        Default:     1 - (Enabled)
+#                     0 - (Disabled)
+
+Updates.WarnMissingAppliedFiles = 1
+
+#
 #    Updates.CleanDeadRefMaxCount
 #        Description: Cleans dead/ orphaned references that occur if an update was removed or renamed and edited in one step.
 #                     It only starts the clean up if the count of the missing updates is below or equal the Updates.CleanDeadRefMaxCount value.

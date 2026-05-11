@@ -31,10 +31,69 @@ LivingWorld.EconomyScale = 1.0
 #    LivingWorld.AmbientPopulationTickMs
 #        How often (milliseconds) the population tick checks whether new ambient
 #        bots need to be spawned. Default: 300000 (5 minutes).
+#
+#    LivingWorld.AmbientForceSpawnCount
+#        Temporary testing override. If > 0, the ambient spawner will force up
+#        to this many active world bots to materialize at the coordinates below
+#        instead of their normal hub / resume / session-derived spawn point.
+#        Default: 0 (disabled)
+#
+#    LivingWorld.AmbientForceSpawnMapId
+#    LivingWorld.AmbientForceSpawnX
+#    LivingWorld.AmbientForceSpawnY
+#    LivingWorld.AmbientForceSpawnZ
+#        Map and coordinates used by the temporary forced ambient spawn override.
+#        All values must be set, and ForceSpawnCount must be > 0, for the
+#        override to activate.
 ###################################################################################################
 
 LivingWorld.AmbientPopulation = 3
-LivingWorld.AmbientPopulationTickMs = 300000
+LivingWorld.AmbientPopulationTickMs = 15000
+LivingWorld.AmbientForceSpawnCount = 0
+LivingWorld.AmbientForceSpawnMapId = 0
+LivingWorld.AmbientForceSpawnX = 0.0
+LivingWorld.AmbientForceSpawnY = 0.0
+LivingWorld.AmbientForceSpawnZ = 0.0
+
+###################################################################################################
+# DEBUG SYNTHETIC WORLD-BOT INTEREST BEACON
+#
+#    LivingWorld.DebugSyntheticInterestEnabled
+#        Test-only headless interest beacon. When enabled, the configured
+#        map/zone counts as if a real player is present there for purposes of
+#        world-bot materialization.
+#
+#    LivingWorld.DebugSyntheticInterestMapId
+#    LivingWorld.DebugSyntheticInterestZoneId
+#        Initial synthetic interest target. ZoneId 0 means map-wide interest.
+#
+#    LivingWorld.DebugSyntheticInterestSwitchMapId
+#    LivingWorld.DebugSyntheticInterestSwitchZoneId
+#    LivingWorld.DebugSyntheticInterestSwitchMs
+#        Optional one-time switch to a second synthetic interest zone after the
+#        given delay in milliseconds. Useful for headless tests that need to
+#        watch one hot zone become abstract while another becomes materialized.
+#
+#    LivingWorld.DebugSyntheticInterestClearMs
+#        Optional one-time clear of synthetic interest after the given delay in
+#        milliseconds from startup. Use this as a third phase after the switch
+#        to validate dematerialization once the hot-zone cooldown expires.
+#        Set to 0 to keep synthetic interest active.
+#
+#    LivingWorld.DebugHotZoneCooldownMs
+#        Optional test-only override for the world-bot hot-zone cooldown.
+#        Set to 0 to keep the normal 10-minute cooldown. Use a short value like
+#        10000 for fast server-only validation of dematerialization behavior.
+###################################################################################################
+
+LivingWorld.DebugSyntheticInterestEnabled = 0
+LivingWorld.DebugSyntheticInterestMapId = 0
+LivingWorld.DebugSyntheticInterestZoneId = 0
+LivingWorld.DebugSyntheticInterestSwitchMapId = 0
+LivingWorld.DebugSyntheticInterestSwitchZoneId = 0
+LivingWorld.DebugSyntheticInterestSwitchMs = 0
+LivingWorld.DebugSyntheticInterestClearMs = 0
+LivingWorld.DebugHotZoneCooldownMs = 0
 
 ###################################################################################################
 # ACCOUNT-ALT ITEM RECOVERY POLICY

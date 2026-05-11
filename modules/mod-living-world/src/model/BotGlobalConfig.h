@@ -30,6 +30,34 @@ struct BotGlobalConfig
     uint32_t        followSlotCount    = 7;
     bool            mountWithOwner     = true;
     bool            autoLoot           = false;
+
+    // Combat positioning / movement thresholds.
+    // These influence how ranged/healer bots decide when to re-follow, close in,
+    // back away, and reset retreat behavior.
+    float           combatFollowOverrideDistance = 20.0f;
+    float           repositionDistance           = 8.0f;
+    float           rangedMinDistance            = 8.0f;
+    float           rangedOptimalDistance        = 25.0f;
+    float           rangedCastRange              = 30.0f;
+    float           rangedRetreatDistance        = 5.0f;
+    float           rangedRetreatTriggerPct      = 80.0f;
+    float           rangedRetreatResetPct        = 60.0f;
+
+    // Assist / guard targeting policy.
+    bool            assistUseCurrentVictim            = true;
+    bool            assistUseOwnerVictim              = true;
+    bool            assistOwnerVictimMustTargetOwner  = true;
+    bool            attackLockUseOwnerVictim          = true;
+    bool            attackLockUseOwnerSelection       = true;
+    bool            guardUseCurrentVictim             = true;
+    bool            guardUseOwnerAttackers            = true;
+
+    // Assist / command target validity strictness.
+    // Safety checks like null/alive/self/map/friendly are always enforced.
+    // These booleans only control whether the candidate must also pass the
+    // current targetable-for-attack gate before the bot accepts it.
+    bool            assistRequireTargetableForAttack  = true;
+    bool            commandRequireTargetableForAttack = false;
 };
 
 } // namespace model

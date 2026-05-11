@@ -12,8 +12,10 @@ from lw_editor import CONFIG_FILE
 from .tab_bots import BotProfilesTab, DefaultProfilesTab
 from .tab_character import CharacterEditorTab
 from .tab_accounts import AccountsTab
+from .tab_bot_ledger import BotLedgerTab
 from .tab_diagnostics import DiagnosticsTab
-from .tab_hazard_config import HazardConfigTab
+from .tab_hazard_config import WorldRulesTab, PartyRulesTab
+from .tab_world_tasks import TaskPointsTab, ZoneAnchorsTab, ZoneContentTab, TaskTemplatesTab, TaxiRoutesTab, PlaylistsTab
 
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -289,17 +291,33 @@ class App(tk.Tk):
     def _build_notebook(self):
         self.nb = ttk.Notebook(self)
         self.nb.pack(fill=tk.BOTH, expand=True, padx=6, pady=6)
-        self.tab_hazard_config = HazardConfigTab(self.nb)
+        self.tab_world_rules = WorldRulesTab(self.nb)
+        self.tab_party_rules = PartyRulesTab(self.nb)
         self.tab_defaults = DefaultProfilesTab(self.nb)
         self.tab_profiles = BotProfilesTab(self.nb)
+        self.tab_bot_ledger = BotLedgerTab(self.nb)
         self.tab_character_editor = CharacterEditorTab(self.nb)
         self.tab_accounts = AccountsTab(self.nb)
         self.tab_diagnostics = DiagnosticsTab(self.nb)
-        self.nb.add(self.tab_hazard_config,    text="  🌐 Global Rules  ")
+        self.tab_task_points = TaskPointsTab(self.nb)
+        self.tab_zone_anchors = ZoneAnchorsTab(self.nb)
+        self.tab_zone_content = ZoneContentTab(self.nb)
+        self.tab_taxi_routes = TaxiRoutesTab(self.nb)
+        self.tab_task_templates = TaskTemplatesTab(self.nb)
+        self.tab_playlists = PlaylistsTab(self.nb)
+        self.nb.add(self.tab_world_rules,      text="  🌐 World Rules  ")
+        self.nb.add(self.tab_party_rules,      text="  👥 Party Rules  ")
         self.nb.add(self.tab_defaults,         text="  Class Defaults  ")
-        self.nb.add(self.tab_profiles,         text="  Bot Profiles  ")
+        self.nb.add(self.tab_profiles,         text="  Clone Profiles  ")
+        self.nb.add(self.tab_bot_ledger,       text="  🤖 Bot Ledger  ")
         self.nb.add(self.tab_character_editor, text="  Character Editor  ")
         self.nb.add(self.tab_accounts,         text="  Accounts  ")
+        self.nb.add(self.tab_task_points,      text="  Task Points  ")
+        self.nb.add(self.tab_zone_anchors,     text="  Zone Anchors  ")
+        self.nb.add(self.tab_zone_content,     text="  Zone Content  ")
+        self.nb.add(self.tab_taxi_routes,      text="  Transit Routes  ")
+        self.nb.add(self.tab_task_templates,   text="  Task Templates  ")
+        self.nb.add(self.tab_playlists,        text="  Playlists  ")
         self.nb.add(self.tab_diagnostics,      text="  🔧 Diagnostics  ")
 
     def _connect(self):
@@ -332,9 +350,17 @@ class App(tk.Tk):
             self._status_lbl.configure(foreground="#1a7f1a")
             self.tab_defaults.refresh()
             self.tab_profiles.refresh()
+            self.tab_bot_ledger.refresh()
             self.tab_character_editor.refresh()
             self.tab_accounts.refresh()
-            self.tab_hazard_config.refresh()
+            self.tab_world_rules.refresh()
+            self.tab_party_rules.refresh()
+            self.tab_task_points.refresh()
+            self.tab_zone_anchors.refresh()
+            self.tab_zone_content.refresh()
+            self.tab_taxi_routes.refresh()
+            self.tab_task_templates.refresh()
+            self.tab_playlists.refresh()
             self.tab_diagnostics.refresh()
         except (MySQLError, ValueError, ImportError) as e:
             self.v_status.set(f"✗ {e}")

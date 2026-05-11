@@ -83,6 +83,34 @@ BotCombatPreparedProfile BotCombatProfilePreparationService::PrepareForUnit(
     return prepared;
 }
 
+BotCombatPreparedProfile BotCombatProfilePreparationService::PrepareForWorldBot(
+    Unit* unit,
+    std::unordered_set<std::uint32_t> const& knownSpells,
+    std::string const& specKey,
+    std::string const& roleKey,
+    std::string const& contextKey) const
+{
+    BotCombatPreparedProfile prepared;
+    if (!unit)
+        return prepared;
+
+    prepared.resolution = _doctrineResolver.ResolveForWorldBot(
+        unit->GetGUID().GetCounter(),
+        unit->getClass(),
+        specKey,
+        roleKey,
+        contextKey);
+    prepared.availableSpells = knownSpells;
+    prepared.interruptEntries = FilterEntriesForKnownActions(
+        knownSpells,
+        prepared.resolution.profile.interruptEntries);
+    prepared.rotationEntries = FilterEntriesForKnownActions(
+        knownSpells,
+        prepared.resolution.profile.rotationEntries);
+
+    return prepared;
+}
+
 std::uint32_t BotCombatProfilePreparationService::ResolveKnownSpellForAction(
     std::unordered_set<std::uint32_t> const& knownSpells,
     model::BotCombatActionDefinition const& action)

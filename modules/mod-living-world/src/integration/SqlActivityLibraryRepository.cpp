@@ -18,16 +18,18 @@ model::ActivityEntry BuildActivityEntry(Field const* f)
     e.taskFamily        = f[4].Get<std::string>();
     e.requiredZoneType  = f[5].IsNull() ? "" : f[5].Get<std::string>();
     e.maxPerSession     = f[6].Get<std::uint8_t>();
-    e.targetZoneId      = f[7].Get<std::uint32_t>();
-    e.requiredFaction   = f[8].Get<std::uint8_t>();
-    e.minLevel          = f[9].Get<std::uint8_t>();
-    e.maxLevel          = f[10].Get<std::uint8_t>();
-    e.requiresHerbalism = f[11].Get<std::uint8_t>() != 0;
-    e.requiresMining    = f[12].Get<std::uint8_t>() != 0;
-    e.requiresFishing   = f[13].Get<std::uint8_t>() != 0;
-    e.weight            = f[14].Get<std::uint8_t>();
-    e.durationMinSec    = f[15].Get<std::uint32_t>();
-    e.durationMaxSec    = f[16].Get<std::uint32_t>();
+    e.openerBias        = f[7].Get<std::uint8_t>();
+    e.followupBias      = f[8].Get<std::uint8_t>();
+    e.targetZoneId      = f[9].Get<std::uint32_t>();
+    e.requiredFaction   = f[10].Get<std::uint8_t>();
+    e.minLevel          = f[11].Get<std::uint8_t>();
+    e.maxLevel          = f[12].Get<std::uint8_t>();
+    e.requiresHerbalism = f[13].Get<std::uint8_t>() != 0;
+    e.requiresMining    = f[14].Get<std::uint8_t>() != 0;
+    e.requiresFishing   = f[15].Get<std::uint8_t>() != 0;
+    e.weight            = f[16].Get<std::uint8_t>();
+    e.durationMinSec    = f[17].Get<std::uint32_t>();
+    e.durationMaxSec    = f[18].Get<std::uint32_t>();
     return e;
 }
 } // namespace
@@ -42,7 +44,7 @@ std::vector<model::ActivityEntry> SqlActivityLibraryRepository::LoadEligible(
     QueryResult qr = WorldDatabase.Query(
         "SELECT activity_id, activity_key, display_name, activity_type, "
         "task_family, required_zone_type, max_per_session, "
-        "target_zone_id, required_faction, min_level, max_level, "
+        "opener_bias, followup_bias, target_zone_id, required_faction, min_level, max_level, "
         "requires_herbalism, requires_mining, requires_fishing, "
         "weight, duration_min_sec, duration_max_sec "
         "FROM living_world_activity_library "

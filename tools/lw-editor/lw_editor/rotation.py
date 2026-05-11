@@ -254,6 +254,8 @@ class RotationEditor(ttk.Frame):
         if stat_key == "aura":
             raw_value = string_value if string_value not in (None, "") else numeric_value
             value_text = self._condition_spell_display(raw_value)
+        elif stat_key == "aura_remaining_secs":
+            value_text = f"{self._condition_spell_display(string_value)} secs={numeric_value}"
         elif stat_key == "aura_stacks":
             raw_value = string_value if string_value not in (None, "") else numeric_value
             spell_display = self._condition_spell_display(raw_value)
@@ -272,7 +274,7 @@ class RotationEditor(ttk.Frame):
 
     def _sync_condition_value_editor(self):
         aura_mode = self.v_stat.get() == "aura"
-        aura_stacks_mode = self.v_stat.get() == "aura_stacks"
+        aura_numeric_mode = self.v_stat.get() in {"aura_remaining_secs", "aura_stacks"}
         bool_mode = self.v_stat.get() in BOOL_STAT_KEYS
         if aura_mode:
             self._cond_value_label.pack_forget()
@@ -283,7 +285,7 @@ class RotationEditor(ttk.Frame):
             self._cond_bool_combo.pack_forget()
             self._cond_aura_label.pack(side=tk.LEFT)
             self._cond_spell_combo.pack(side=tk.LEFT, padx=2)
-        elif aura_stacks_mode:
+        elif aura_numeric_mode:
             self._cond_bool_label.pack_forget()
             self._cond_bool_combo.pack_forget()
             self._cond_aura_label.pack(side=tk.LEFT)
@@ -315,7 +317,7 @@ class RotationEditor(ttk.Frame):
         if self.v_stat.get() == "aura":
             raw_value = self.v_sval.get().strip() or self.v_nval.get().strip()
             self.v_cond_spell.set(self._condition_spell_display(raw_value))
-        elif self.v_stat.get() == "aura_stacks":
+        elif self.v_stat.get() in {"aura_remaining_secs", "aura_stacks"}:
             raw_value = self.v_sval.get().strip()
             self.v_cond_spell.set(self._condition_spell_display(raw_value))
         elif self.v_stat.get() in BOOL_STAT_KEYS:
@@ -332,17 +334,17 @@ class RotationEditor(ttk.Frame):
     def _on_cond_spell_pick(self, _=None):
         sid = self._parse_id_from_display(self.v_cond_spell.get())
         if sid is not None:
-            if self.v_stat.get() == "aura_stacks":
+            if self.v_stat.get() in {"aura_remaining_secs", "aura_stacks"}:
                 self.v_sval.set(str(sid))
             else:
-                self.v_nval.set(str(sid))
+                self.v_nval.set("0")
                 self.v_sval.set("")
             self.v_cond_spell.set(self._spell_display_for_id(sid))
 
     def _on_cond_spell_typed(self, _=None):
         raw = self.v_cond_spell.get().strip()
         if not raw:
-            if self.v_stat.get() == "aura_stacks":
+            if self.v_stat.get() in {"aura_remaining_secs", "aura_stacks"}:
                 self.v_sval.set("")
             else:
                 self.v_nval.set("0")
@@ -350,10 +352,10 @@ class RotationEditor(ttk.Frame):
             return
         sid = self._parse_id_from_display(raw)
         if sid is not None:
-            if self.v_stat.get() == "aura_stacks":
+            if self.v_stat.get() in {"aura_remaining_secs", "aura_stacks"}:
                 self.v_sval.set(str(sid))
             else:
-                self.v_nval.set(str(sid))
+                self.v_nval.set("0")
                 self.v_sval.set("")
             self.v_cond_spell.set(self._spell_display_for_id(sid))
 
@@ -627,6 +629,9 @@ class RotationEditor(ttk.Frame):
                 raw_value = c.get("string_value", "") or c.get("numeric_value", "")
                 self.v_cond_spell.set(self._condition_spell_display(raw_value))
                 self.v_cond_bool.set("False")
+            elif c.get("stat_key") in {"aura_remaining_secs", "aura_stacks"}:
+                self.v_cond_spell.set(self._condition_spell_display(c.get("string_value", "") or ""))
+                self.v_cond_bool.set("False")
             elif c.get("stat_key") in BOOL_STAT_KEYS:
                 try:
                     self.v_cond_bool.set(
@@ -767,8 +772,13 @@ class RotationEditor(ttk.Frame):
         string_value = self.v_sval.get()
         if self.v_stat.get() == "aura":
             self._on_cond_spell_typed()
-            numeric_value = float(self.v_nval.get() or 0)
-            string_value = ""
+            numeric_value = 0.0
+            string_value = self.v_cond_spell.get().strip()
+            sid = self._parse_id_from_display(string_value)
+            string_value = str(sid) if sid is not None else string_value
+        elif self.v_stat.get() in {"aura_remaining_secs", "aura_stacks"}:
+            self._on_cond_spell_typed()
+            string_value = self.v_sval.get().strip()
         elif self.v_stat.get() in BOOL_STAT_KEYS:
             self._on_cond_bool_changed()
             numeric_value = float(self.v_nval.get() or 0)

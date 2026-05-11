@@ -154,6 +154,34 @@ Primary/secondary fallback uses that same window.
 If the server knows the primary action is ready by the next tick, the bot waits.
 Otherwise it attempts the fallback.
 
+### 3.2 Account bots vs world bots
+
+The combat runtime is intentionally **shared** between:
+
+- account/session bots backed by real `Player` objects
+- non-account/world bots backed by `Creature` objects
+
+The important split is **not** the doctrine or row executor. The split is in how
+the bot arrives at the runtime:
+
+- session/account bots build their known-spell set from `Player::GetSpellMap()`
+- world bots build a synthetic player-like known-spell set from:
+  - creature spell slots
+  - doctrine/profile action spells
+  - spell-chain rank resolution
+  - level gating
+
+After that, both paths converge on the same layers:
+
+- `BotCombatDoctrineResolver`
+- `BotCombatProfilePreparationService`
+- `BotCombatRuntimeEvaluator`
+
+So world bots should be thought of as using a **modified Player-style combat
+preparation flow**, not as a wholly separate combat engine. Creature-specific
+helpers such as `Creature::CanCastSpell(...)` are only one final feasibility
+check inside that broader shared runtime path.
+
 ---
 
 ## 4. Conservation Modes
@@ -285,6 +313,96 @@ Each row should support:
 - one or more conditions
 - AND/OR condition logic at the row level
 
+Useful condition keys supported by the current runtime include:
+
+- `hp_pct`
+- `mana_pct`
+- `power`
+- `power_pct`
+- `runic_power`
+- `runic_power_pct`
+- `distance`
+- `aura` / `has_aura`
+- `aura_stacks`
+- `aura_remaining_secs`
+- `combo_points`
+- `threat_pct`
+- `is_aggro_holder`
+- `party_members_below_hp_pct`
+- `nearby_enemies` (`numericValue` = enemy count threshold, `stringValue` = scan radius)
+- `runes_ready` / `runes_available` (`numericValue` = ready-rune threshold, `stringValue` = `blood|frost|unholy|death|any`)
+
+### 7.1 Smart profile adjustments inside one spec/profile
+
+The current model is already capable of handling a large class of
+"smart-adjustment" behavior inside a **single** spec/profile.
+
+That is the preferred direction for rotations such as:
+
+- Death Knight single-target vs AoE
+- Mage single-target vs cleave
+- healer triage vs group-heal branches
+
+The recommended authoring model is:
+
+- keep one canonical profile for `Spec + Role (+ Context)`
+- encode alternate branches as separate priority rows
+- gate those rows with conditions such as:
+  - `nearby_enemies`
+  - `party_members_below_hp_pct`
+  - `aura_remaining_secs`
+  - resource/rune/runic-power thresholds
+- optionally use row/action AoE metadata (`aoe_mode`, `aoe_min_targets`, `aoe_radius`)
+
+That means the runtime can swap behavior **without changing profile identity**.
+For example, a Frost DK PvE profile can contain:
+
+- single-target rows for disease maintenance, Obliterate, Frost Strike
+- AoE rows for Howling Blast / pestilence-style behavior
+- conditions such as `nearby_enemies >= 2` or `>= 3`
+
+In practice, the row conditions act like the mode-switch flag.
+
+This is preferable to splitting one spec into separate "single-target profile"
+and "AoE profile" records unless the behavior is so different that maintenance
+becomes unmanageable.
+
+### 7.2 Current schema/runtime fit for smart switching
+
+The current storage layout already supports this style reasonably well:
+
+- profile-level defaults:
+  - `default_aoe_mode`
+  - `default_aoe_min_targets`
+  - `default_aoe_scan_radius`
+- per-action overrides:
+  - `aoe_mode`
+  - `aoe_min_targets`
+  - `aoe_radius`
+- per-entry condition lists:
+  - `subject_key`
+  - `stat_key`
+  - `comparison`
+  - `numeric_value`
+  - `string_value`
+
+So the present model can already express:
+
+- "use AoE action when at least N enemies are nearby"
+- "use single-target action otherwise"
+- "refresh disease/buff/debuff only when aura time is low"
+- "switch to spender only when runic power / combo points / mana state allows it"
+
+The likely next design question is not whether the model can switch modes at
+all, but whether we later want explicit authoring affordances such as:
+
+- named rotation branches (`SingleTarget`, `AoE`, `Execute`, `EmergencyHeal`)
+- branch-level debugging/telemetry
+- branch-level editor grouping in the addon/UI
+
+Those would be ergonomics improvements, not proof that separate profiles are
+required.
+
 ---
 
 ## 8. Database Schema Concepts
@@ -338,6 +456,25 @@ The account-alt runtime row should eventually carry:
 - `active_profile_slot`
 
 so the active bot session knows which player profile slot to use.
+
+### 8.4 Current practical takeaway for Icy Veins-style rotations
+
+For guide-driven rotations sourced from places like Icy Veins, the current
+system should be treated as:
+
+- one profile per spec/role/context,
+- many rows within that profile,
+- condition-driven switching between rotation branches.
+
+In other words, if a guide says:
+
+- "single target do X"
+- "on 2+ targets do Y"
+- "refresh disease at low remaining time"
+- "dump runic power above threshold"
+
+the first implementation target should be **more rows and better conditions**,
+not more profile identities.
 
 ---
 

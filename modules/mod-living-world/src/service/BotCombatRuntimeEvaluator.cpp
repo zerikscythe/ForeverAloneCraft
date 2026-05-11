@@ -1,7 +1,11 @@
 #include "service/BotCombatRuntimeEvaluator.h"
 
+#include "CellImpl.h"
 #include "Creature.h"
+#include "DataStores/DBCStores.h"
 #include "GameTime.h"
+#include "GridNotifiers.h"
+#include "GridNotifiersImpl.h"
 #include "Group.h"
 #include "ObjectAccessor.h"
 #include "Player.h"
@@ -12,6 +16,7 @@
 #include "Unit.h"
 
 #include <algorithm>
+#include <cctype>
 #include <charconv>
 #include <cmath>
 #include <optional>
@@ -78,18 +83,18 @@ bool CompareNumeric(
 std::optional<std::uint32_t> ParseConditionSpellId(
     model::BotCombatConditionDefinition const& condition)
 {
+    if (!condition.stringValue.empty())
+    {
+        std::uint32_t spellId = 0;
+        auto const* begin = condition.stringValue.data();
+        auto const* end = begin + condition.stringValue.size();
+        auto const result = std::from_chars(begin, end, spellId);
+        if (result.ec == std::errc{} && result.ptr == end)
+            return spellId;
+    }
+
     if (condition.numericValue > 0.0f)
         return static_cast<std::uint32_t>(condition.numericValue);
-
-    if (condition.stringValue.empty())
-        return std::nullopt;
-
-    std::uint32_t spellId = 0;
-    auto const* begin = condition.stringValue.data();
-    auto const* end = begin + condition.stringValue.size();
-    auto const result = std::from_chars(begin, end, spellId);
-    if (result.ec == std::errc{} && result.ptr == end)
-        return spellId;
 
     return std::nullopt;
 }
@@ -104,6 +109,214 @@ float GetManaPct(Unit* unit)
 
     return 100.0f * static_cast<float>(unit->GetPower(POWER_MANA)) /
         static_cast<float>(unit->GetMaxPower(POWER_MANA));
+}
+
+float NormalizeDisplayedPower(Powers powerType, std::int32_t rawValue)
+{
+    if (powerType == POWER_RAGE || powerType == POWER_RUNIC_POWER)
+        return static_cast<float>(rawValue) / 10.0f;
+
+    return static_cast<float>(rawValue);
+}
+
+float GetPower(Unit* unit, Powers powerType)
+{
+    if (!unit)
+        return 0.0f;
+
+    return NormalizeDisplayedPower(powerType, unit->GetPower(powerType));
+}
+
+float GetPowerPct(Unit* unit, Powers powerType)
+{
+    if (!unit)
+        return 0.0f;
+
+    std::uint32_t const maxPower = unit->GetMaxPower(powerType);
+    if (maxPower == 0)
+        return 100.0f;
+
+    return 100.0f * static_cast<float>(unit->GetPower(powerType)) /
+        static_cast<float>(maxPower);
+}
+
+std::string ToLowerCopy(std::string value)
+{
+    std::transform(
+        value.begin(),
+        value.end(),
+        value.begin(),
+        [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return value;
+}
+
+bool TryParseRuneType(
+    std::string const& value,
+    std::optional<RuneType>& runeType)
+{
+    std::string const lowered = ToLowerCopy(value);
+    if (lowered.empty() || lowered == "any")
+    {
+        runeType = std::nullopt;
+        return true;
+    }
+
+    if (lowered == "blood" || lowered == "b")
+    {
+        runeType = RUNE_BLOOD;
+        return true;
+    }
+
+    if (lowered == "frost" || lowered == "f")
+    {
+        runeType = RUNE_FROST;
+        return true;
+    }
+
+    if (lowered == "unholy" || lowered == "u")
+    {
+        runeType = RUNE_UNHOLY;
+        return true;
+    }
+
+    if (lowered == "death" || lowered == "d")
+    {
+        runeType = RUNE_DEATH;
+        return true;
+    }
+
+    return false;
+}
+
+bool RuneMatchesRequested(RuneType currentRune, RuneType requestedRune)
+{
+    if (requestedRune == RUNE_DEATH)
+        return currentRune == RUNE_DEATH;
+
+    return currentRune == requestedRune || currentRune == RUNE_DEATH;
+}
+
+std::uint32_t CountReadyRunes(Player* player, std::optional<RuneType> requestedRune)
+{
+    if (!player)
+        return 0;
+
+    std::uint32_t ready = 0;
+    for (std::uint8_t i = 0; i < MAX_RUNES; ++i)
+    {
+        if (player->GetRuneCooldown(i) != 0)
+            continue;
+
+        RuneType const currentRune = player->GetCurrentRune(i);
+        if (!requestedRune || RuneMatchesRequested(currentRune, *requestedRune))
+            ++ready;
+    }
+
+    return ready;
+}
+
+bool HasRequiredRunes(Player* player, std::uint32_t runeCostId)
+{
+    if (!player || runeCostId == 0)
+        return true;
+
+    SpellRuneCostEntry const* runeCostData = sSpellRuneCostStore.LookupEntry(runeCostId);
+    if (!runeCostData || runeCostData->NoRuneCost())
+        return true;
+
+    int32 runeCost[NUM_RUNE_TYPES] = { 0, 0, 0, 0 };
+    for (std::uint32_t i = 0; i < RUNE_DEATH; ++i)
+        runeCost[i] = runeCostData->RuneCost[i];
+
+    for (std::uint8_t i = 0; i < MAX_RUNES; ++i)
+    {
+        RuneType const rune = player->GetCurrentRune(i);
+        if (player->GetRuneCooldown(i) == 0 && runeCost[rune] > 0)
+            --runeCost[rune];
+    }
+
+    int32 deathRuneDeficit = 0;
+    for (std::uint32_t i = 0; i < RUNE_DEATH; ++i)
+    {
+        if (runeCost[i] > 0)
+            deathRuneDeficit += runeCost[i];
+    }
+
+    if (deathRuneDeficit == 0)
+        return true;
+
+    for (std::uint8_t i = 0; i < MAX_RUNES; ++i)
+    {
+        if (player->GetRuneCooldown(i) == 0 && player->GetCurrentRune(i) == RUNE_DEATH)
+            --deathRuneDeficit;
+    }
+
+    return deathRuneDeficit <= 0;
+}
+
+float GetAuraRemainingSecs(Unit* unit, std::uint32_t spellId)
+{
+    if (!unit || spellId == 0)
+        return 0.0f;
+
+    Aura const* aura = unit->GetAura(spellId);
+    if (!aura)
+        return 0.0f;
+
+    return static_cast<float>(aura->GetDuration()) / 1000.0f;
+}
+
+std::uint32_t CountNearbyEnemies(
+    BotCombatRuntimeContext const& context,
+    Unit* subject,
+    float radius)
+{
+    if (!subject || radius <= 0.0f)
+        return 0;
+
+    Unit* hostilityReference = context.bot ? context.bot : subject;
+    std::vector<Unit*> targets;
+    Acore::AnyUnfriendlyUnitInObjectRangeCheck check(subject, hostilityReference, radius);
+    Acore::UnitListSearcher<Acore::AnyUnfriendlyUnitInObjectRangeCheck> searcher(subject, targets, check);
+    Cell::VisitObjects(subject, searcher, radius);
+    return static_cast<std::uint32_t>(targets.size());
+}
+
+std::uint32_t CountPartyMembersBelowHealthPctImpl(
+    Unit* bot,
+    Player* owner,
+    float thresholdPct)
+{
+    std::uint32_t count = 0;
+
+    auto consider = [&](Player* candidate)
+    {
+        if (!candidate || !candidate->IsAlive())
+            return;
+
+        if (candidate->GetHealthPct() <= thresholdPct)
+            ++count;
+    };
+
+    consider(owner);
+    consider(bot ? bot->ToPlayer() : nullptr);
+
+    if (owner)
+    {
+        if (Group const* group = owner->GetGroup())
+        {
+            for (Group::MemberSlot const& slot : group->GetMemberSlots())
+            {
+                Player* member = ObjectAccessor::FindConnectedPlayer(slot.guid);
+                if (!member || member == owner || member == bot)
+                    continue;
+
+                consider(member);
+            }
+        }
+    }
+
+    return count;
 }
 
 Player* FindLowestHealthPartyTarget(Unit* bot, Player* owner)
@@ -167,6 +380,14 @@ Spell* GetCurrentNonMeleeSpell(Unit* unit)
     return nullptr;
 }
 } // namespace
+
+std::uint32_t BotCombatRuntimeEvaluator::CountPartyMembersBelowHealthPct(
+    Unit* bot,
+    Player* owner,
+    float thresholdPct)
+{
+    return CountPartyMembersBelowHealthPctImpl(bot, owner, thresholdPct);
+}
 
 BotCombatEvaluationResult BotCombatRuntimeEvaluator::EvaluateInterrupts(
     BotCombatPreparedProfile const& preparedProfile,
@@ -317,6 +538,30 @@ bool BotCombatRuntimeEvaluator::EvaluateCondition(
     if (condition.statKey == "mana_pct")
         return CompareNumeric(condition.comparison, GetManaPct(subject), condition.numericValue);
 
+    if (condition.statKey == "power_pct")
+        return CompareNumeric(
+            condition.comparison,
+            GetPowerPct(subject, subject->getPowerType()),
+            condition.numericValue);
+
+    if (condition.statKey == "power")
+        return CompareNumeric(
+            condition.comparison,
+            GetPower(subject, subject->getPowerType()),
+            condition.numericValue);
+
+    if (condition.statKey == "runic_power_pct")
+        return CompareNumeric(
+            condition.comparison,
+            GetPowerPct(subject, POWER_RUNIC_POWER),
+            condition.numericValue);
+
+    if (condition.statKey == "runic_power")
+        return CompareNumeric(
+            condition.comparison,
+            GetPower(subject, POWER_RUNIC_POWER),
+            condition.numericValue);
+
     if (condition.statKey == "distance")
     {
         if (!context.bot)
@@ -352,6 +597,18 @@ bool BotCombatRuntimeEvaluator::EvaluateCondition(
                     hasAura ? 1.0f : 0.0f,
                     condition.numericValue);
         }
+    }
+
+    if (condition.statKey == "aura_remaining_secs")
+    {
+        std::optional<std::uint32_t> spellId = ParseConditionSpellId(condition);
+        if (!spellId)
+            return false;
+
+        return CompareNumeric(
+            condition.comparison,
+            GetAuraRemainingSecs(subject, *spellId),
+            condition.numericValue);
     }
 
     if (condition.statKey == "combo_points")
@@ -400,6 +657,71 @@ bool BotCombatRuntimeEvaluator::EvaluateCondition(
         return CompareNumeric(
             condition.comparison,
             static_cast<float>(stacks),
+            condition.numericValue);
+    }
+
+    if (condition.statKey == "runes_ready" || condition.statKey == "runes_available")
+    {
+        Player* player = subject->ToPlayer();
+        if (!player)
+            return false;
+
+        std::optional<RuneType> requestedRune;
+        if (!TryParseRuneType(condition.stringValue, requestedRune))
+            return false;
+
+        return CompareNumeric(
+            condition.comparison,
+            static_cast<float>(CountReadyRunes(player, requestedRune)),
+            condition.numericValue);
+    }
+
+    if (condition.statKey == "nearby_enemies")
+    {
+        float radius = 10.0f;
+        if (!condition.stringValue.empty())
+        {
+            try
+            {
+                radius = std::stof(condition.stringValue);
+            }
+            catch (...)
+            {
+                return false;
+            }
+        }
+
+        return CompareNumeric(
+            condition.comparison,
+            static_cast<float>(CountNearbyEnemies(context, subject, radius)),
+            condition.numericValue);
+    }
+
+    if (condition.statKey == "party_members_below_hp_pct")
+    {
+        float thresholdPct = 0.0f;
+        if (!condition.stringValue.empty())
+        {
+            try
+            {
+                thresholdPct = std::stof(condition.stringValue);
+            }
+            catch (...)
+            {
+                return false;
+            }
+        }
+        else
+        {
+            thresholdPct = condition.numericValue;
+        }
+
+        std::uint32_t const memberCount =
+            CountPartyMembersBelowHealthPctImpl(context.bot, context.owner, thresholdPct);
+
+        return CompareNumeric(
+            condition.comparison,
+            static_cast<float>(memberCount),
             condition.numericValue);
     }
 
@@ -566,6 +888,38 @@ bool BotCombatRuntimeEvaluator::CanExecuteSpell(
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
     if (!spellInfo)
         return false;
+
+    if (bot->isMoving() &&
+        spellInfo->CalcCastTime(bot) > 0 &&
+        (spellInfo->InterruptFlags & SPELL_INTERRUPT_FLAG_MOVEMENT))
+    {
+        return false;
+    }
+
+    if (Creature* creature = bot->ToCreature())
+    {
+        if (!creature->CanCastSpell(spellId))
+            return false;
+    }
+
+    if (Player* player = bot->ToPlayer())
+    {
+        int32 const powerCost = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+        if (powerCost > 0)
+        {
+            if (spellInfo->PowerType == POWER_RUNE)
+            {
+                if (!HasRequiredRunes(player, spellInfo->RuneCostID))
+                    return false;
+            }
+            else if (spellInfo->PowerType >= POWER_MANA && spellInfo->PowerType <= POWER_RUNIC_POWER)
+            {
+                Powers const powerType = static_cast<Powers>(spellInfo->PowerType);
+                if (player->GetPower(powerType) < powerCost)
+                    return false;
+            }
+        }
+    }
 
     if (bot->HasSpellCooldown(spellId))
         return false;
