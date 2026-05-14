@@ -1172,9 +1172,10 @@ public:
 
     // Skills values
     [[nodiscard]] virtual uint32 GetShieldBlockValue() const = 0;
+    [[nodiscard]] uint32 GetShieldBlockValueForCombat() const;
     [[nodiscard]] uint32 GetShieldBlockValue(uint32 soft_cap, uint32 hard_cap) const
     {
-        uint32 value = GetShieldBlockValue();
+        uint32 value = GetShieldBlockValueForCombat();
         if (value >= hard_cap)
         {
             value = (soft_cap + hard_cap) / 2;

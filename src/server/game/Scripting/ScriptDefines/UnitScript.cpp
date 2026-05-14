@@ -89,6 +89,11 @@ void ScriptMgr::OnCalculateSpellBaseHealingBonusDone(Unit const* attacker, Spell
     CALL_ENABLED_HOOKS(UnitScript, UNITHOOK_ON_CALCULATE_SPELL_BASE_HEALING_BONUS_DONE, script->OnCalculateSpellBaseHealingBonusDone(attacker, schoolMask, advertisedBenefit));
 }
 
+void ScriptMgr::OnCalculateShieldBlockValue(Unit const* unit, uint32& blockValue)
+{
+    CALL_ENABLED_HOOKS(UnitScript, UNITHOOK_ON_CALCULATE_SHIELD_BLOCK_VALUE, script->OnCalculateShieldBlockValue(unit, blockValue));
+}
+
 void ScriptMgr::OnCalculatePowerRegen(Unit* unit, Powers power, float& addValue)
 {
     CALL_ENABLED_HOOKS(UnitScript, UNITHOOK_ON_CALCULATE_POWER_REGEN, script->OnCalculatePowerRegen(unit, power, addValue));

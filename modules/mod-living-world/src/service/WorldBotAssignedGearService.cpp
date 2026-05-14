@@ -756,6 +756,7 @@ model::WorldBotAssignedGearSummary WorldBotAssignedGearService::SummarizeAssigne
             continue;
 
         summary.bonusArmor += static_cast<std::int32_t>(itemTemplate->Armor);
+        summary.bonusBlockValue += static_cast<std::int32_t>(itemTemplate->Block);
 
         for (std::uint32_t i = 0; i < itemTemplate->StatsCount && i < MAX_ITEM_PROTO_STATS; ++i)
         {

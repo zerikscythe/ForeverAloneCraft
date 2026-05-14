@@ -34,6 +34,7 @@ enum UnitHook
     UNITHOOK_ON_CALCULATE_MAGIC_SPELL_HIT_CHANCE,
     UNITHOOK_ON_CALCULATE_SPELL_BASE_DAMAGE_BONUS_DONE,
     UNITHOOK_ON_CALCULATE_SPELL_BASE_HEALING_BONUS_DONE,
+    UNITHOOK_ON_CALCULATE_SHIELD_BLOCK_VALUE,
     UNITHOOK_ON_CALCULATE_POWER_REGEN,
     UNITHOOK_ON_AURA_APPLY,
     UNITHOOK_ON_AURA_REMOVE,
@@ -92,6 +93,8 @@ public:
     virtual void OnCalculateSpellBaseDamageBonusDone(Unit const* /*attacker*/, SpellSchoolMask /*schoolMask*/, int32& /*doneAdvertisedBenefit*/) { }
 
     virtual void OnCalculateSpellBaseHealingBonusDone(Unit const* /*attacker*/, SpellSchoolMask /*schoolMask*/, int32& /*advertisedBenefit*/) { }
+
+    virtual void OnCalculateShieldBlockValue(Unit const* /*unit*/, uint32& /*blockValue*/) { }
 
     virtual void OnCalculatePowerRegen(Unit* /*unit*/, Powers /*power*/, float& /*addValue*/) { }
 

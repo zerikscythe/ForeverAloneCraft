@@ -324,13 +324,24 @@ New helper / hook?
 
 ### 4.4 Block Value
 
-Status: `Missing`.
+Status: `Partial`.
 
 Checklist:
 
-- [ ] Add player-like shield block value baseline
-- [ ] Decide whether strength and shield itemization should contribute
-- [ ] Apply value in the actual blocked-damage path, not only in UI-like fields
+- [x] Add player-like shield block value baseline
+- [x] Decide whether strength and shield itemization should contribute
+- [x] Apply value in the actual blocked-damage path, not only in UI-like fields
+
+Implementation notes:
+
+- Added a world-bot-only shield block value runtime hook at combat read time.
+- Uses the player block-value shape: `strength * 0.5 + flat block value - 10`,
+  floored at zero and multiplied by shield-block-value percent auras.
+- Assigned shield/item block value now includes both `ITEM_MOD_BLOCK_VALUE` stats
+  and the shield template `Block` field, with flat/pct block-value auras read at
+  runtime for creatures.
+- The hook feeds both ordinary blocked melee damage and weapon-based spell damage
+  that can be blocked; non-world-bot creature behavior is unchanged.
 
 Files to touch:
 

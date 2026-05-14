@@ -6,6 +6,7 @@
 #include "SpellAuraEffects.h"
 #include "SpellInfo.h"
 #include "World.h"
+#include "service/WorldBotBlockValueBaseline.h"
 #include "service/WorldBotCombatRatingBaseline.h"
 #include "service/WorldBotCriticalStrikeBaseline.h"
 #include "service/WorldBotDefensiveCombatBaseline.h"
@@ -236,6 +237,24 @@ public:
             unit->IsUnderLastManaUseEffect(),
             sWorld->getRate(RATE_POWER_MANA),
             CREATURE_REGEN_INTERVAL);
+    }
+
+    void OnCalculateShieldBlockValue(Unit const* unit, uint32& blockValue) override
+    {
+        ai::WorldBotCreatureAI const* worldBotAI = GetWorldBotCreatureAI(unit);
+        if (!worldBotAI || !unit)
+            return;
+
+        model::WorldBotAssignedGearSummary const& gearSummary = worldBotAI->GetAssignedGearSummary();
+        float const flatBlockValue =
+            static_cast<float>(gearSummary.bonusBlockValue)
+                + static_cast<float>(unit->GetTotalAuraModifier(SPELL_AURA_MOD_SHIELD_BLOCKVALUE));
+
+        blockValue = service::BuildWorldBotShieldBlockValue(
+            worldBotAI->HasShieldBaseline(),
+            unit->GetStat(STAT_STRENGTH),
+            flatBlockValue,
+            unit->GetTotalAuraMultiplier(SPELL_AURA_MOD_SHIELD_BLOCKVALUE_PCT));
     }
 
     void OnBeforeRollMeleeOutcomeAgainst(
