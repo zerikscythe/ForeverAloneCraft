@@ -710,13 +710,23 @@ New helper / hook?
 
 ## 9. Armor Penetration
 
-Status: `Missing`.
+Status: `Partial`.
 
 Checklist:
 
-- [ ] Decide whether armor penetration belongs in the world-bot combat target
+- [x] Decide whether armor penetration belongs in the world-bot combat target
   fidelity envelope
-- [ ] If yes, model it in physical damage reduction, not only in item scoring
+- [x] If yes, model it in physical damage reduction, not only in item scoring
+
+Implementation notes:
+
+- Added a world-bot-only armor-reduction hook inside `CalcArmorReducedDamage`.
+- Assigned armor penetration rating now converts through the same combat-rating
+  DBC path used by other bot rating slices, then applies against the WotLK armor
+  penetration cap before physical damage reduction is computed.
+- `SPELL_AURA_MOD_ARMOR_PENETRATION_PCT` is included for ordinary spell/class
+  auras. Auras with explicit equipped-item requirements remain skipped for now
+  because world bots still do not expose real player inventory checks.
 
 Files to touch:
 

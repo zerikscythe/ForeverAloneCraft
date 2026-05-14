@@ -94,6 +94,11 @@ void ScriptMgr::OnCalculateShieldBlockValue(Unit const* unit, uint32& blockValue
     CALL_ENABLED_HOOKS(UnitScript, UNITHOOK_ON_CALCULATE_SHIELD_BLOCK_VALUE, script->OnCalculateShieldBlockValue(unit, blockValue));
 }
 
+void ScriptMgr::OnCalculateArmorForDamageReduction(Unit const* attacker, Unit const* victim, SpellInfo const* spellInfo, float& armor)
+{
+    CALL_ENABLED_HOOKS(UnitScript, UNITHOOK_ON_CALCULATE_ARMOR_FOR_DAMAGE_REDUCTION, script->OnCalculateArmorForDamageReduction(attacker, victim, spellInfo, armor));
+}
+
 void ScriptMgr::OnCalculatePowerRegen(Unit* unit, Powers power, float& addValue)
 {
     CALL_ENABLED_HOOKS(UnitScript, UNITHOOK_ON_CALCULATE_POWER_REGEN, script->OnCalculatePowerRegen(unit, power, addValue));

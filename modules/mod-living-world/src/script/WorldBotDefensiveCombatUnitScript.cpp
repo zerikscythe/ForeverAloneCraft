@@ -6,6 +6,7 @@
 #include "SpellAuraEffects.h"
 #include "SpellInfo.h"
 #include "World.h"
+#include "service/WorldBotArmorPenetrationBaseline.h"
 #include "service/WorldBotBlockValueBaseline.h"
 #include "service/WorldBotCombatRatingBaseline.h"
 #include "service/WorldBotCriticalStrikeBaseline.h"
@@ -39,6 +40,21 @@ ai::WorldBotCreatureAI const* GetWorldBotCreatureAI(Unit const* victim)
         return nullptr;
 
     return static_cast<ai::WorldBotCreatureAI const*>(creature->AI());
+}
+
+bool IsWorldBotArmorPenetrationAuraApplicable(AuraEffect const* auraEffect, SpellInfo const* spellInfo)
+{
+    if (!auraEffect || !auraEffect->GetSpellInfo())
+        return false;
+
+    SpellInfo const* auraSpellInfo = auraEffect->GetSpellInfo();
+    if (auraSpellInfo->EquippedItemClass != -1)
+        return false;
+
+    if (!spellInfo || auraEffect->IsAffectedOnSpell(spellInfo) || auraEffect->GetMiscValue() & spellInfo->GetSchoolMask())
+        return true;
+
+    return !auraEffect->GetMiscValue() && !auraEffect->HasSpellClassMask();
 }
 
 float ResolveWorldBotDodgeRatio(std::uint8_t classId, std::uint8_t level)
@@ -255,6 +271,31 @@ public:
             unit->GetStat(STAT_STRENGTH),
             flatBlockValue,
             unit->GetTotalAuraMultiplier(SPELL_AURA_MOD_SHIELD_BLOCKVALUE_PCT));
+    }
+
+    void OnCalculateArmorForDamageReduction(
+        Unit const* attacker,
+        Unit const* victim,
+        SpellInfo const* spellInfo,
+        float& armor) override
+    {
+        ai::WorldBotCreatureAI const* worldBotAI = GetWorldBotCreatureAI(attacker);
+        if (!worldBotAI || !attacker || !victim)
+            return;
+
+        float bonusPct = service::ResolveWorldBotCombatRatingBonus(
+            attacker,
+            CR_ARMOR_PENETRATION,
+            worldBotAI->GetAssignedGearSummary().bonusArmorPenetrationRating);
+
+        bonusPct += attacker->GetTotalAuraModifier(
+            SPELL_AURA_MOD_ARMOR_PENETRATION_PCT,
+            [spellInfo](AuraEffect const* auraEffect)
+            {
+                return IsWorldBotArmorPenetrationAuraApplicable(auraEffect, spellInfo);
+            });
+
+        armor = service::ApplyWorldBotArmorPenetration(armor, victim->GetLevel(), bonusPct);
     }
 
     void OnBeforeRollMeleeOutcomeAgainst(

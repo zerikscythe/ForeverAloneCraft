@@ -2285,6 +2285,8 @@ uint32 Unit::CalcArmorReducedDamage(Unit const* attacker, Unit const* victim, co
             // Got the value, apply it
             armor -= std::min(armorPen, maxArmorPen);
         }
+
+        sScriptMgr->OnCalculateArmorForDamageReduction(attacker, victim, spellInfo, armor);
     }
 
     if (armor < 0.0f)

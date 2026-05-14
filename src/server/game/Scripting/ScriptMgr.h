@@ -558,6 +558,7 @@ public: /* UnitScript */
     void OnCalculateSpellBaseDamageBonusDone(Unit const* attacker, SpellSchoolMask schoolMask, int32& doneAdvertisedBenefit);
     void OnCalculateSpellBaseHealingBonusDone(Unit const* attacker, SpellSchoolMask schoolMask, int32& advertisedBenefit);
     void OnCalculateShieldBlockValue(Unit const* unit, uint32& blockValue);
+    void OnCalculateArmorForDamageReduction(Unit const* attacker, Unit const* victim, SpellInfo const* spellInfo, float& armor);
     void OnCalculatePowerRegen(Unit* unit, Powers power, float& addValue);
     void OnAuraApply(Unit* /*unit*/, Aura* /*aura*/);
     void OnAuraRemove(Unit* unit, AuraApplication* aurApp, AuraRemoveMode mode);
