@@ -484,13 +484,20 @@ New helper / hook?
 
 ### 6.2 Spell Hit
 
-Status: `Missing`.
+Status: `Partial`.
 
 Checklist:
 
-- [ ] Model player-like spell hit contribution from ratings/auras
+- [x] Model player-like spell hit contribution from ratings/auras
 - [ ] Audit binary-spell resist / spell-pen / victim avoidance interactions
 - [ ] Keep ordinary creature spell-hit behavior unchanged for non-world-bots
+
+Notes:
+
+- A narrow core `UnitScript` hook now exposes magic spell hit chance before the
+  existing clamp and roll. The living-world script uses it only for world-bot
+  attackers and adds assigned spell-hit rating through the same combat-rating
+  DBC conversion used by player stats.
 
 Files to touch:
 
@@ -507,11 +514,10 @@ Files to touch:
 
 New helper / hook?
 
-- Likely new helper:
+- New helper:
   - `modules/mod-living-world/src/service/WorldBotSpellHitBaseline.h`
-- Likely new core hook:
+- New core hook:
   - `OnCalculateMagicSpellHitChance(...)`
-  - or `OnBeforeMagicSpellHitResult(...)`
 
 ### 6.3 Expertise
 

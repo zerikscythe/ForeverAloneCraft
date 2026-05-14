@@ -34,6 +34,7 @@ set_property(GLOBAL APPEND PROPERTY ACORE_MODULE_TEST_SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/test/WorldBotPlayerStatBaselineTest.cpp
   ${CMAKE_CURRENT_LIST_DIR}/test/WorldBotPreparationServiceTest.cpp
   ${CMAKE_CURRENT_LIST_DIR}/test/WorldBotSpellCriticalStrikeBaselineTest.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/test/WorldBotSpellHitBaselineTest.cpp
   ${CMAKE_CURRENT_LIST_DIR}/test/WorldBotTalentAllocationRulesTest.cpp
   ${CMAKE_CURRENT_LIST_DIR}/test/WorldBotMaterializationIdentityTest.cpp
   ${CMAKE_CURRENT_LIST_DIR}/test/CharacterItemSnapshotClassifierTest.cpp

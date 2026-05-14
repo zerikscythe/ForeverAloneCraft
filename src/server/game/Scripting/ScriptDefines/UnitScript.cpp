@@ -74,6 +74,11 @@ bool ScriptMgr::OnCalculateSpellDoneCritChance(Unit const* attacker, Unit const*
     CALL_ENABLED_BOOLEAN_HOOKS_WITH_DEFAULT_FALSE(UnitScript, UNITHOOK_ON_CALCULATE_SPELL_DONE_CRIT_CHANCE, script->OnCalculateSpellDoneCritChance(attacker, victim, spellInfo, schoolMask, attackType, skipEffectCheck, critChance));
 }
 
+void ScriptMgr::OnCalculateMagicSpellHitChance(Unit const* attacker, Unit const* victim, SpellInfo const* spellInfo, int32& hitChance)
+{
+    CALL_ENABLED_HOOKS(UnitScript, UNITHOOK_ON_CALCULATE_MAGIC_SPELL_HIT_CHANCE, script->OnCalculateMagicSpellHitChance(attacker, victim, spellInfo, hitChance));
+}
+
 void ScriptMgr::OnAuraApply(Unit* unit, Aura* aura)
 {
     CALL_ENABLED_HOOKS(UnitScript, UNITHOOK_ON_AURA_APPLY, script->OnAuraApply(unit, aura));

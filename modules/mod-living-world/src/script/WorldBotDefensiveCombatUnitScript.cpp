@@ -9,6 +9,7 @@
 #include "service/WorldBotExpertiseBaseline.h"
 #include "service/WorldBotMeleeHitBaseline.h"
 #include "service/WorldBotSpellCriticalStrikeBaseline.h"
+#include "service/WorldBotSpellHitBaseline.h"
 
 #include <algorithm>
 #include <cmath>
@@ -153,6 +154,22 @@ public:
             SPELL_AURA_MOD_SPELL_CRIT_CHANCE_SCHOOL,
             schoolMask));
         return true;
+    }
+
+    void OnCalculateMagicSpellHitChance(
+        Unit const* attacker,
+        Unit const* /*victim*/,
+        SpellInfo const* spellInfo,
+        int32& hitChance) override
+    {
+        ai::WorldBotCreatureAI const* worldBotAI = GetWorldBotCreatureAI(attacker);
+        if (!worldBotAI || !spellInfo)
+            return;
+
+        model::WorldBotAssignedGearSummary const& gearSummary = worldBotAI->GetAssignedGearSummary();
+        hitChance = service::AdjustWorldBotMagicSpellHitChance(
+            hitChance,
+            ResolveWorldBotCombatRatingBonus(attacker, CR_HIT_SPELL, gearSummary.bonusSpellHitRating));
     }
 
     void OnBeforeRollMeleeOutcomeAgainst(

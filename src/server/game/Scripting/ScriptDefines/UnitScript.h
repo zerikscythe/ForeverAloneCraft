@@ -31,6 +31,7 @@ enum UnitHook
     UNITHOOK_MODIFY_HEAL_RECEIVED,
     UNITHOOK_ON_BEFORE_ROLL_MELEE_OUTCOME_AGAINST,
     UNITHOOK_ON_CALCULATE_SPELL_DONE_CRIT_CHANCE,
+    UNITHOOK_ON_CALCULATE_MAGIC_SPELL_HIT_CHANCE,
     UNITHOOK_ON_AURA_APPLY,
     UNITHOOK_ON_AURA_REMOVE,
     UNITHOOK_IF_NORMAL_REACTION,
@@ -82,6 +83,8 @@ public:
     virtual void OnBeforeRollMeleeOutcomeAgainst(Unit const* /*attacker*/, Unit const* /*victim*/, WeaponAttackType /*attType*/, int32& /*attackerMaxSkillValueForLevel*/, int32& /*victimMaxSkillValueForLevel*/, int32& /*attackerWeaponSkill*/, int32& /*victimDefenseSkill*/, int32& /*crit_chance*/, int32& /*miss_chance*/, int32& /*dodge_chance*/, int32& /*parry_chance*/, int32& /*block_chance*/ ) {   };
 
     virtual bool OnCalculateSpellDoneCritChance(Unit const* /*attacker*/, Unit const* /*victim*/, SpellInfo const* /*spellProto*/, SpellSchoolMask /*schoolMask*/, WeaponAttackType /*attackType*/, bool /*skipEffectCheck*/, float& /*critChance*/) { return false; };
+
+    virtual void OnCalculateMagicSpellHitChance(Unit const* /*attacker*/, Unit const* /*victim*/, SpellInfo const* /*spellInfo*/, int32& /*hitChance*/) { }
 
     virtual void OnAuraApply(Unit* /*unit*/, Aura* /*aura*/) { }
 

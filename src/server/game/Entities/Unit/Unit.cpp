@@ -3575,6 +3575,8 @@ SpellMissInfo Unit::MagicSpellHitResult(Unit* victim, SpellInfo const* spellInfo
     else
         HitChance += int32(m_modSpellHitChance * 100.0f);
 
+    sScriptMgr->OnCalculateMagicSpellHitChance(this, victim, spellInfo, HitChance);
+
     if (HitChance < 100)
         HitChance = 100;
     else if (HitChance > 10000)
