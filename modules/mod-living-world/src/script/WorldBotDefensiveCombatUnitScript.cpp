@@ -3,11 +3,14 @@
 #include "DataStores/DBCStores.h"
 #include "Globals/ObjectMgr.h"
 #include "ScriptMgr.h"
+#include "SpellAuraEffects.h"
 #include "SpellInfo.h"
+#include "World.h"
 #include "service/WorldBotCombatRatingBaseline.h"
 #include "service/WorldBotCriticalStrikeBaseline.h"
 #include "service/WorldBotDefensiveCombatBaseline.h"
 #include "service/WorldBotExpertiseBaseline.h"
+#include "service/WorldBotManaRegenBaseline.h"
 #include "service/WorldBotMeleeHitBaseline.h"
 #include "service/WorldBotSpellCriticalStrikeBaseline.h"
 #include "service/WorldBotSpellHitBaseline.h"
@@ -181,6 +184,58 @@ public:
         service::ApplyWorldBotHealingPowerBonus(
             worldBotAI->GetAssignedGearSummary().bonusHealingPower,
             advertisedBenefit);
+    }
+
+    void OnCalculatePowerRegen(Unit* unit, Powers power, float& addValue) override
+    {
+        ai::WorldBotCreatureAI const* worldBotAI = GetWorldBotCreatureAI(unit);
+        if (!worldBotAI || !unit || power != POWER_MANA)
+            return;
+
+        if (unit->HasAuraTypeWithMiscvalue(SPELL_AURA_PREVENT_REGENERATE_POWER, POWER_MANA + 1))
+        {
+            addValue = 0.0f;
+            return;
+        }
+
+        std::uint8_t const classId = unit->getClass();
+        if (classId == 0 || classId > MAX_CLASSES)
+            return;
+
+        std::uint8_t const clampedLevel = std::clamp<std::uint8_t>(unit->GetLevel(), 1, GT_MAX_LEVEL);
+        GtRegenMPPerSptEntry const* regenRatio =
+            sGtRegenMPPerSptStore.LookupEntry((classId - 1) * GT_MAX_LEVEL + clampedLevel - 1);
+        if (!regenRatio)
+            return;
+
+        float const spiritRegen = service::BuildWorldBotSpiritManaRegenPerSecond(
+            unit->GetStat(STAT_INTELLECT),
+            unit->GetStat(STAT_SPIRIT),
+            regenRatio->ratio,
+            unit->GetTotalAuraMultiplierByMiscValue(SPELL_AURA_MOD_POWER_REGEN_PERCENT, POWER_MANA));
+
+        float mp5Regen = static_cast<float>(
+            unit->GetTotalAuraModifierByMiscValue(SPELL_AURA_MOD_POWER_REGEN, POWER_MANA)
+                + worldBotAI->GetAssignedGearSummary().bonusManaRegen) / 5.0f;
+
+        Unit::AuraEffectList const& regenAuras = unit->GetAuraEffectsByType(SPELL_AURA_MOD_MANA_REGEN_FROM_STAT);
+        for (AuraEffect const* auraEffect : regenAuras)
+        {
+            if (!auraEffect)
+                continue;
+
+            mp5Regen += unit->GetStat(Stats(auraEffect->GetMiscValue()))
+                * static_cast<float>(auraEffect->GetAmount())
+                / 500.0f;
+        }
+
+        addValue = service::BuildWorldBotManaRegenPerTick(
+            spiritRegen,
+            mp5Regen,
+            static_cast<float>(unit->GetTotalAuraModifier(SPELL_AURA_MOD_MANA_REGEN_INTERRUPT)),
+            unit->IsUnderLastManaUseEffect(),
+            sWorld->getRate(RATE_POWER_MANA),
+            CREATURE_REGEN_INTERVAL);
     }
 
     void OnBeforeRollMeleeOutcomeAgainst(

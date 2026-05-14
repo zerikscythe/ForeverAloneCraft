@@ -1026,6 +1026,8 @@ void Creature::Regenerate(Powers power)
 
     addvalue += GetTotalAuraModifierByMiscValue(SPELL_AURA_MOD_POWER_REGEN, power) * (power == POWER_FOCUS ? PET_FOCUS_REGEN_INTERVAL.count() : CREATURE_REGEN_INTERVAL) / (5 * IN_MILLISECONDS);
 
+    sScriptMgr->OnCalculatePowerRegen(this, power, addvalue);
+
     ModifyPower(power, int32(addvalue));
 }
 

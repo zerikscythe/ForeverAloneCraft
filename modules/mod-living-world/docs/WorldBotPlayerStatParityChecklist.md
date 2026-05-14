@@ -595,13 +595,21 @@ New helper / hook?
 
 ### 7.2 Mana Regen / MP5 / Spirit Regen
 
-Status: `Missing`.
+Status: `Partial`.
 
 Checklist:
 
-- [ ] Model player-like mana regen baseline
-- [ ] Add item/aura contributions such as MP5 and spirit-driven regen
-- [ ] Audit five-second-rule / casting-regen expectations if healer bots need it
+- [x] Model player-like mana regen baseline
+- [x] Add item/aura contributions such as MP5 and spirit-driven regen
+- [x] Audit five-second-rule / casting-regen expectations if healer bots need it
+
+Notes:
+
+- Creature mana regeneration now exposes a narrow power-regen hook. World bots
+  use it for mana only, replacing the generic creature mana tick with a
+  player-like spirit/intellect calculation plus assigned MP5, power-regen auras,
+  stat-to-mana-regen auras, and interrupted-regeneration percent while under
+  the last-mana-use effect.
 
 Files to touch:
 
@@ -614,9 +622,10 @@ Files to touch:
 
 New helper / hook?
 
-- Likely new helper:
+- New helper:
   - `modules/mod-living-world/src/service/WorldBotManaRegenBaseline.h`
-- May need a new update-time hook if spawn seeding alone is insufficient.
+- New runtime hook:
+  - `OnCalculatePowerRegen(...)`
 
 ## 8. Caster Throughput
 

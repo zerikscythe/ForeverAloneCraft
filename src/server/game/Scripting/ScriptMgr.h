@@ -557,6 +557,7 @@ public: /* UnitScript */
     void OnCalculateMagicSpellHitChance(Unit const* attacker, Unit const* victim, SpellInfo const* spellInfo, int32& hitChance);
     void OnCalculateSpellBaseDamageBonusDone(Unit const* attacker, SpellSchoolMask schoolMask, int32& doneAdvertisedBenefit);
     void OnCalculateSpellBaseHealingBonusDone(Unit const* attacker, SpellSchoolMask schoolMask, int32& advertisedBenefit);
+    void OnCalculatePowerRegen(Unit* unit, Powers power, float& addValue);
     void OnAuraApply(Unit* /*unit*/, Aura* /*aura*/);
     void OnAuraRemove(Unit* unit, AuraApplication* aurApp, AuraRemoveMode mode);
     bool IfNormalReaction(Unit const* unit, Unit const* target, ReputationRank& repRank);
