@@ -2,6 +2,8 @@
 
 #include "gtest/gtest.h"
 
+#include <array>
+
 namespace living_world
 {
 namespace service
@@ -88,6 +90,73 @@ TEST(WorldBotMovementExecutionTest, RetreatProducesLongerRangeMovePoint)
 
     EXPECT_EQ(plan.kind, WorldBotMovementPlanKind::MovePoint);
     EXPECT_GT(plan.pointX, 20.0f);
+}
+
+TEST(WorldBotMovementExecutionTest, RetreatAvoidsFreshHostilesWhenSaferLateralVectorExists)
+{
+    model::WorldBotCombatSituation situation;
+    situation.hasVictim = true;
+    situation.movementStyle = model::WorldBotMovementStyle::BacklineHealer;
+    situation.targetDistance = 10.0f;
+
+    model::WorldBotMovementDecision decision;
+    decision.posture = model::WorldBotCombatPosture::Retreat;
+
+    WorldBotNearbyHostileSnapshot freshHostile;
+    freshHostile.x = 28.0f;
+    freshHostile.y = 0.0f;
+    freshHostile.z = 0.0f;
+    freshHostile.engaged = false;
+
+    std::array<WorldBotNearbyHostileSnapshot, 1> hostiles = { freshHostile };
+
+    WorldBotMovementExecutionPlan const plan = BuildWorldBotMovementExecutionPlan(
+        situation,
+        decision,
+        10.0f,
+        0.0f,
+        0.0f,
+        0.0f,
+        0.0f,
+        0.0f,
+        hostiles);
+
+    EXPECT_EQ(plan.kind, WorldBotMovementPlanKind::MovePoint);
+    EXPECT_GT(std::fabs(plan.pointY), 0.1f);
+    EXPECT_EQ(plan.freshHostilesNearDestination, 0u);
+}
+
+TEST(WorldBotMovementExecutionTest, KiteKeepsStraightEscapeWhenNoFreshHostilesArePresent)
+{
+    model::WorldBotCombatSituation situation;
+    situation.hasVictim = true;
+    situation.movementStyle = model::WorldBotMovementStyle::TurretCaster;
+    situation.targetDistance = 6.0f;
+
+    model::WorldBotMovementDecision decision;
+    decision.posture = model::WorldBotCombatPosture::Kite;
+
+    WorldBotNearbyHostileSnapshot engagedHostile;
+    engagedHostile.x = -2.0f;
+    engagedHostile.y = 2.0f;
+    engagedHostile.z = 0.0f;
+    engagedHostile.engaged = true;
+
+    std::array<WorldBotNearbyHostileSnapshot, 1> hostiles = { engagedHostile };
+
+    WorldBotMovementExecutionPlan const plan = BuildWorldBotMovementExecutionPlan(
+        situation,
+        decision,
+        6.0f,
+        0.0f,
+        0.0f,
+        0.0f,
+        0.0f,
+        0.0f,
+        hostiles);
+
+    EXPECT_EQ(plan.kind, WorldBotMovementPlanKind::MovePoint);
+    EXPECT_GT(plan.pointX, 6.0f);
 }
 
 } // namespace service

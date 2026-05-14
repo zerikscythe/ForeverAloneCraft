@@ -205,6 +205,40 @@ std::uint32_t CountNearbyHostileUnits(Unit* subject, float radius)
     return static_cast<std::uint32_t>(targets.size());
 }
 
+std::vector<service::WorldBotNearbyHostileSnapshot> CollectNearbyHostileSnapshots(
+    Unit* subject,
+    Unit* currentTarget,
+    float radius)
+{
+    std::vector<service::WorldBotNearbyHostileSnapshot> snapshots;
+    if (!subject || radius <= 0.0f)
+        return snapshots;
+
+    std::vector<Unit*> targets;
+    Acore::AnyUnfriendlyUnitInObjectRangeCheck check(subject, subject, radius);
+    Acore::UnitListSearcher<Acore::AnyUnfriendlyUnitInObjectRangeCheck> searcher(subject, targets, check);
+    Cell::VisitObjects(subject, searcher, radius);
+
+    snapshots.reserve(targets.size());
+    for (Unit* hostile : targets)
+    {
+        if (!hostile || hostile == subject)
+            continue;
+
+        service::WorldBotNearbyHostileSnapshot snapshot;
+        snapshot.x = hostile->GetPositionX();
+        snapshot.y = hostile->GetPositionY();
+        snapshot.z = hostile->GetPositionZ();
+        snapshot.isCurrentTarget = hostile == currentTarget;
+        snapshot.engaged = snapshot.isCurrentTarget
+            || hostile->IsThreatenedBy(subject)
+            || subject->IsThreatenedBy(hostile);
+        snapshots.push_back(snapshot);
+    }
+
+    return snapshots;
+}
+
 std::string DescribeSpellForTrace(std::uint32_t spellId)
 {
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
@@ -1401,6 +1435,8 @@ void WorldBotCreatureAI::TickCombat(uint32 /*diff*/)
         return;
 
     model::WorldBotHazardSnapshot const hazard = BuildWorldBotHazardSnapshot(me, _hazardEvaluationState);
+    std::vector<service::WorldBotNearbyHostileSnapshot> const nearbyHostiles =
+        CollectNearbyHostileSnapshots(me, target, 30.0f);
     model::WorldBotCombatSituation const situation = service::BuildWorldBotCombatSituation(
         _preparedBuild,
         true,
@@ -1420,7 +1456,8 @@ void WorldBotCreatureAI::TickCombat(uint32 /*diff*/)
             me->GetPositionZ(),
             target->GetPositionX(),
             target->GetPositionY(),
-            target->GetPositionZ());
+            target->GetPositionZ(),
+            nearbyHostiles);
 
     auto const recordMovementDoctrineTrace =
         [&]()
@@ -1438,7 +1475,10 @@ void WorldBotCreatureAI::TickCombat(uint32 /*diff*/)
                 << " hazard_repeat=" << (situation.hazard.repeatedDamageTriggered ? 1 : 0)
                 << " hazard_commit=" << (situation.hazard.commitWindowActive ? 1 : 0)
                 << " hazard_spell=" << situation.hazard.hazardSpellId
-                << " hazard_consec=" << situation.hazard.consecutiveDamageTicks;
+                << " hazard_consec=" << situation.hazard.consecutiveDamageTicks
+                << " move_score=" << movementPlan.safetyScore
+                << " move_fresh_hostiles=" << movementPlan.freshHostilesNearDestination
+                << " move_engaged_hostiles=" << movementPlan.engagedHostilesNearDestination;
 
             switch (movementPlan.kind)
             {

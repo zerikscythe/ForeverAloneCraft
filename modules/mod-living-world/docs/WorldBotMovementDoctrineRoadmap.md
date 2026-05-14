@@ -22,7 +22,8 @@ commit, and build on without destabilizing the live world-bot runtime.
 4. World-bot combat integration
 5. Action gating by posture
 6. Shared hazard convergence
-7. Data-authoring / archetype expansion
+7. Local threat-aware escape steering
+8. Data-authoring / archetype expansion
 
 ## Slice 1 — Shared posture model and hazard-aware scaffolding
 
@@ -169,7 +170,34 @@ Current implementation note:
 - clean-anchor selection is still companion-only today because world bots do not
   yet expose equivalent party/owner context in their runtime adapter
 
-## Slice 6 — Data-authored movement archetypes
+## Slice 6 — Local threat-aware escape steering
+
+Goal:
+
+- prevent retreat / kite / hazard-escape movement from blindly steering bots into
+  fresh nearby hostile packs when a safer local vector exists
+
+Deliverables:
+
+- collect a lightweight local snapshot of nearby hostile units during world-bot
+  combat ticks
+- distinguish already-engaged hostiles from fresh non-engaged hostiles
+- score a small set of retreat / kite candidate points
+- prefer safer local escape vectors over the naive straight-away point
+- expose enough trace detail to see when a destination was rejected for local
+  threat reasons
+
+Definition of done:
+
+- retreat / kite / hazard-escape movement no longer relies only on geometric
+  distance from the current target
+- when a straight retreat vector runs toward fresh hostiles, bots can select a
+  safer lateral or alternate local vector instead
+- focused tests cover the fresh-hostile avoidance heuristic
+
+Status: `In Progress`
+
+## Slice 7 — Data-authored movement archetypes
 
 Goal:
 
@@ -198,3 +226,39 @@ Status: `Planned`
 - Keep `WorldBotCreatureAI` orchestration thin.
 - Keep `BotHazardSensor` as the detector; do not retire it.
 - Treat hazard escape as a safety override, not a playstyle.
+
+## Future validation backlog
+
+### Headless bot validation harness
+
+Intent:
+
+- add a later-purpose-built validation space for movement/combat doctrine checks
+  that bots can occupy without requiring any player-facing art pass or normal
+  gameplay access
+
+Scope constraints:
+
+- no player-visible room requirement
+- no textures or encounter dressing required
+- collision-safe floor + walls only is sufficient
+- command/script-driven bot placement and scenario execution
+
+Planned uses:
+
+- hazard avoidance drills with authored 5-10 yard circular hazards
+- commitment-window / anti-jitter validation
+- safe-zone and later anchor-behavior validation
+- 1v1 / 2v2 sparring for movement + rotation interplay
+- repeatable regression scenarios after doctrine changes
+
+Implementation preference:
+
+1. hidden collision-only arena / volume
+2. scenario controller + authored spawn / hazard coordinates
+3. structured trace capture for movement, hazard, and cast decisions
+
+Priority note:
+
+- useful future testing feature, but **not** the next doctrine slice; mainline
+  combat/movement maturation stays higher priority first
