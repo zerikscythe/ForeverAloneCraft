@@ -449,13 +449,19 @@ New helper / hook?
 
 ### 6.1 Melee Hit
 
-Status: `Missing`.
+Status: `Partial`.
 
 Checklist:
 
-- [ ] Model player-like melee hit contribution from ratings/auras
+- [x] Model player-like melee hit contribution from ratings/auras
 - [ ] Audit dual-wield / ranged / boss-level miss logic expectations
 - [ ] Keep world-bot-only changes narrow and avoid global creature side effects
+
+Notes:
+
+- Assigned melee/ranged hit rating now reduces world-bot attacker miss chance
+  through the existing melee-outcome hook. The adjustment is world-bot-only and
+  leaves ordinary creature miss behavior untouched.
 
 Files to touch:
 

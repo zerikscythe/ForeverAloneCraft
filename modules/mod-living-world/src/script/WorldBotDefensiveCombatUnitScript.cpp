@@ -6,6 +6,7 @@
 #include "SpellInfo.h"
 #include "service/WorldBotCriticalStrikeBaseline.h"
 #include "service/WorldBotDefensiveCombatBaseline.h"
+#include "service/WorldBotMeleeHitBaseline.h"
 #include "service/WorldBotSpellCriticalStrikeBaseline.h"
 
 #include <algorithm>
@@ -156,7 +157,7 @@ public:
     void OnBeforeRollMeleeOutcomeAgainst(
         Unit const* attacker,
         Unit const* victim,
-        WeaponAttackType /*attType*/,
+        WeaponAttackType attType,
         int32& /*attackerMaxSkillValueForLevel*/,
         int32& victimMaxSkillValueForLevel,
         int32& /*attackerWeaponSkill*/,
@@ -169,10 +170,21 @@ public:
     {
         if (ai::WorldBotCreatureAI const* attackerWorldBotAI = GetWorldBotCreatureAI(attacker))
         {
-            (void)attackerWorldBotAI;
             service::WorldBotCriticalStrikeBaseline const critBaseline =
                 ResolveWorldBotCriticalStrikeBaseline(attacker);
             crit_chance = service::AdjustWorldBotCriticalStrikeChance(crit_chance, critBaseline.critChance);
+
+            model::WorldBotAssignedGearSummary const& gearSummary =
+                attackerWorldBotAI->GetAssignedGearSummary();
+            CombatRating const hitRating = attType == RANGED_ATTACK
+                ? CR_HIT_RANGED
+                : CR_HIT_MELEE;
+            std::int32_t const assignedHitRating = attType == RANGED_ATTACK
+                ? gearSummary.bonusRangedHitRating
+                : gearSummary.bonusMeleeHitRating;
+            miss_chance = service::AdjustWorldBotMeleeMissChance(
+                miss_chance,
+                ResolveWorldBotCombatRatingBonus(attacker, hitRating, assignedHitRating));
         }
 
         ai::WorldBotCreatureAI const* worldBotAI = GetWorldBotCreatureAI(victim);
