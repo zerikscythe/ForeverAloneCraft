@@ -16,6 +16,7 @@ struct WorldBotHazardSnapshot
 
 struct WorldBotCombatSituation
 {
+    WorldBotMovementStyle movementStyle = WorldBotMovementStyle::Unknown;
     float targetDistance = 0.0f;
     float healthPct = 100.0f;
     float manaPct = 100.0f;
