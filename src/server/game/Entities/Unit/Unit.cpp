@@ -2322,6 +2322,8 @@ float Unit::GetEffectiveResistChance(Unit const* owner, SpellSchoolMask schoolMa
         }
         else
             victimResistance += static_cast<float>(owner->GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_TARGET_RESISTANCE, schoolMask));
+
+        sScriptMgr->OnCalculateEffectiveResistance(owner, schoolMask, victim, spellInfo, victimResistance);
     }
 
     victimResistance = std::max(victimResistance, 0.0f);

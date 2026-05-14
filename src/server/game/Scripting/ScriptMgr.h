@@ -557,6 +557,7 @@ public: /* UnitScript */
     void OnCalculateMagicSpellHitChance(Unit const* attacker, Unit const* victim, SpellInfo const* spellInfo, int32& hitChance);
     void OnCalculateSpellBaseDamageBonusDone(Unit const* attacker, SpellSchoolMask schoolMask, int32& doneAdvertisedBenefit);
     void OnCalculateSpellBaseHealingBonusDone(Unit const* attacker, SpellSchoolMask schoolMask, int32& advertisedBenefit);
+    void OnCalculateEffectiveResistance(Unit const* owner, SpellSchoolMask schoolMask, Unit const* victim, SpellInfo const* spellInfo, float& victimResistance);
     void OnCalculateShieldBlockValue(Unit const* unit, uint32& blockValue);
     void OnCalculateArmorForDamageReduction(Unit const* attacker, Unit const* victim, SpellInfo const* spellInfo, float& armor);
     void OnCalculatePowerRegen(Unit* unit, Powers power, float& addValue);

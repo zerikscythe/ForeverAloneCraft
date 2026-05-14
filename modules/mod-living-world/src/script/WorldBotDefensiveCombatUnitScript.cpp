@@ -16,6 +16,7 @@
 #include "service/WorldBotMeleeHitBaseline.h"
 #include "service/WorldBotSpellCriticalStrikeBaseline.h"
 #include "service/WorldBotSpellHitBaseline.h"
+#include "service/WorldBotSpellPenetrationBaseline.h"
 #include "service/WorldBotSpellPowerBaseline.h"
 
 #include <algorithm>
@@ -296,6 +297,23 @@ public:
             });
 
         armor = service::ApplyWorldBotArmorPenetration(armor, victim->GetLevel(), bonusPct);
+    }
+
+    void OnCalculateEffectiveResistance(
+        Unit const* owner,
+        SpellSchoolMask schoolMask,
+        Unit const* /*victim*/,
+        SpellInfo const* /*spellInfo*/,
+        float& victimResistance) override
+    {
+        ai::WorldBotCreatureAI const* worldBotAI = GetWorldBotCreatureAI(owner);
+        if (!worldBotAI)
+            return;
+
+        victimResistance = service::ApplyWorldBotSpellPenetration(
+            schoolMask,
+            victimResistance,
+            worldBotAI->GetAssignedGearSummary().bonusSpellPenetration);
     }
 
     void OnBeforeRollMeleeOutcomeAgainst(

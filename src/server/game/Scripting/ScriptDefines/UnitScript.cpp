@@ -89,6 +89,11 @@ void ScriptMgr::OnCalculateSpellBaseHealingBonusDone(Unit const* attacker, Spell
     CALL_ENABLED_HOOKS(UnitScript, UNITHOOK_ON_CALCULATE_SPELL_BASE_HEALING_BONUS_DONE, script->OnCalculateSpellBaseHealingBonusDone(attacker, schoolMask, advertisedBenefit));
 }
 
+void ScriptMgr::OnCalculateEffectiveResistance(Unit const* owner, SpellSchoolMask schoolMask, Unit const* victim, SpellInfo const* spellInfo, float& victimResistance)
+{
+    CALL_ENABLED_HOOKS(UnitScript, UNITHOOK_ON_CALCULATE_EFFECTIVE_RESISTANCE, script->OnCalculateEffectiveResistance(owner, schoolMask, victim, spellInfo, victimResistance));
+}
+
 void ScriptMgr::OnCalculateShieldBlockValue(Unit const* unit, uint32& blockValue)
 {
     CALL_ENABLED_HOOKS(UnitScript, UNITHOOK_ON_CALCULATE_SHIELD_BLOCK_VALUE, script->OnCalculateShieldBlockValue(unit, blockValue));

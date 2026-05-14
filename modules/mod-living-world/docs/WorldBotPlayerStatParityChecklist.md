@@ -684,12 +684,19 @@ New helper / hook?
 
 ### 8.2 Spell Penetration
 
-Status: `Missing`.
+Status: `Partial`.
 
 Checklist:
 
-- [ ] Decide whether spell penetration is needed for world-bot parity
-- [ ] If yes, model it against spell resist calculations, not just item scoring
+- [x] Decide whether spell penetration is needed for world-bot parity
+- [x] If yes, model it against spell resist calculations, not just item scoring
+
+Implementation notes:
+
+- Added a world-bot-only effective-resistance hook in `GetEffectiveResistChance`.
+- Assigned `ITEM_MOD_SPELL_PENETRATION` now reduces non-physical victim
+  resistance before the existing clamp and level-difference resistance are
+  applied. Physical armor remains handled by the armor penetration slice.
 
 Files to touch:
 
