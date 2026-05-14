@@ -9,6 +9,7 @@
 #include "service/WorldBotSpellCriticalStrikeBaseline.h"
 
 #include <algorithm>
+#include <cmath>
 
 namespace living_world
 {
@@ -40,6 +41,31 @@ float ResolveWorldBotDodgeRatio(std::uint8_t classId, std::uint8_t level)
     GtChanceToMeleeCritEntry const* dodgeRatio =
         sGtChanceToMeleeCritStore.LookupEntry((classId - 1) * GT_MAX_LEVEL + clampedLevel - 1);
     return dodgeRatio ? dodgeRatio->ratio : 0.0f;
+}
+
+float ResolveWorldBotCombatRatingBonus(Unit const* unit, CombatRating rating, std::int32_t ratingValue)
+{
+    if (!unit || ratingValue == 0)
+        return 0.0f;
+
+    std::uint8_t const classId = unit->getClass();
+    if (classId == 0 || classId > MAX_CLASSES)
+        return 0.0f;
+
+    std::uint8_t const clampedLevel = std::clamp<std::uint8_t>(unit->GetLevel(), 1, GT_MAX_LEVEL);
+    GtCombatRatingsEntry const* ratingEntry =
+        sGtCombatRatingsStore.LookupEntry(rating * GT_MAX_LEVEL + clampedLevel - 1);
+    GtOCTClassCombatRatingScalarEntry const* classRating =
+        sGtOCTClassCombatRatingScalarStore.LookupEntry((classId - 1) * GT_MAX_RATING + rating + 1);
+    if (!ratingEntry || !classRating)
+        return static_cast<float>(ratingValue);
+
+    return static_cast<float>(ratingValue) * classRating->ratio / ratingEntry->ratio;
+}
+
+std::int32_t ChancePctToBasisPoints(float chancePct)
+{
+    return static_cast<std::int32_t>(std::lround(chancePct * 100.0f));
 }
 
 service::WorldBotCriticalStrikeBaseline ResolveWorldBotCriticalStrikeBaseline(Unit const* attacker)
@@ -132,11 +158,11 @@ public:
         Unit const* victim,
         WeaponAttackType /*attType*/,
         int32& /*attackerMaxSkillValueForLevel*/,
-        int32& /*victimMaxSkillValueForLevel*/,
+        int32& victimMaxSkillValueForLevel,
         int32& /*attackerWeaponSkill*/,
-        int32& /*victimDefenseSkill*/,
+        int32& victimDefenseSkill,
         int32& crit_chance,
-        int32& /*miss_chance*/,
+        int32& miss_chance,
         int32& dodge_chance,
         int32& parry_chance,
         int32& block_chance) override
@@ -153,16 +179,40 @@ public:
         if (!worldBotAI || !victim)
             return;
 
+        model::WorldBotAssignedGearSummary const& gearSummary = worldBotAI->GetAssignedGearSummary();
+        float const defenseRatingBonus =
+            ResolveWorldBotCombatRatingBonus(victim, CR_DEFENSE_SKILL, gearSummary.bonusDefenseSkillRating);
+        float const dodgeRatingBonus =
+            ResolveWorldBotCombatRatingBonus(victim, CR_DODGE, gearSummary.bonusDodgeRating);
+        float const parryRatingBonus =
+            ResolveWorldBotCombatRatingBonus(victim, CR_PARRY, gearSummary.bonusParryRating);
+        float const blockRatingBonus =
+            ResolveWorldBotCombatRatingBonus(victim, CR_BLOCK, gearSummary.bonusBlockRating);
+
         service::WorldBotDefensiveCombatBaseline const baseline =
             service::BuildWorldBotDefensiveCombatBaseline(
                 victim->getClass(),
                 victim->GetStat(STAT_AGILITY),
                 ResolveWorldBotDodgeRatio(victim->getClass(), victim->GetLevel()),
-                worldBotAI->HasShieldBaseline());
+                worldBotAI->HasShieldBaseline(),
+                defenseRatingBonus,
+                dodgeRatingBonus,
+                parryRatingBonus,
+                blockRatingBonus);
 
         dodge_chance = service::AdjustWorldBotDefensiveChance(dodge_chance, baseline.dodgeChance);
         parry_chance = service::AdjustWorldBotDefensiveChance(parry_chance, baseline.parryChance);
         block_chance = service::AdjustWorldBotDefensiveChance(block_chance, baseline.blockChance);
+
+        std::int32_t const defenseSkillBonus = static_cast<std::int32_t>(defenseRatingBonus);
+        victimDefenseSkill = victimMaxSkillValueForLevel + defenseSkillBonus;
+
+        miss_chance += ChancePctToBasisPoints(
+            service::BuildWorldBotDefenseMissChanceBonusPct(victim->getClass(), defenseRatingBonus));
+        crit_chance = std::max(
+            0,
+            crit_chance - ChancePctToBasisPoints(
+                service::BuildWorldBotDefenseCritSuppressionPct(defenseRatingBonus)));
     }
 };
 } // namespace script

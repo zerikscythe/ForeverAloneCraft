@@ -62,6 +62,7 @@ public:
 
     bool BuildRuntimeSnapshot(RuntimeSnapshot& out) const;
     [[nodiscard]] bool HasShieldBaseline() const { return _hasShieldBaseline; }
+    [[nodiscard]] model::WorldBotAssignedGearSummary const& GetAssignedGearSummary() const { return _preparedBuild.assignedGearSummary; }
 
 private:
     GameObject* ResolveGatherTarget() const;

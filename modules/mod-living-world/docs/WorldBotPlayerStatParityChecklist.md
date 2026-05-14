@@ -253,8 +253,8 @@ Status: `Partial`.
 Checklist:
 
 - [x] Replace generic creature dodge baseline with class/level/agility baseline
-- [ ] Add defense-skill and defense-rating contributions
-- [ ] Add diminishing returns parity
+- [x] Add defense-skill and defense-rating contributions
+- [x] Add diminishing returns parity
 - [ ] Audit stance/form/weapon-state edge cases if needed
 
 Files to touch:
@@ -280,8 +280,8 @@ Status: `Partial`.
 Checklist:
 
 - [x] Replace generic creature parry behavior with class-eligibility baseline
-- [ ] Add defense-skill and defense-rating contributions
-- [ ] Add diminishing returns parity
+- [x] Add defense-skill and defense-rating contributions
+- [x] Add diminishing returns parity
 - [ ] Tighten true weapon/offhand/polymorph edge cases if needed
 
 Files to touch:
@@ -305,7 +305,7 @@ Status: `Partial`.
 Checklist:
 
 - [x] Replace generic creature block behavior with shield/class-eligibility logic
-- [ ] Add defense-skill and defense-rating contributions
+- [x] Add defense-skill and defense-rating contributions
 - [ ] Audit full player block caps/limits
 
 Files to touch:
@@ -353,14 +353,22 @@ New helper / hook?
 
 ### 4.5 Defense Skill / Defense Rating / Crit Suppression
 
-Status: `Missing`.
+Status: `Partial`.
 
 Checklist:
 
-- [ ] Model defense-skill-derived avoidance/miss/crit suppression
-- [ ] Model defense-rating contribution
-- [ ] Decide whether to keep this as pure runtime adjustment instead of true
+- [x] Model defense-skill-derived avoidance/miss/crit suppression
+- [x] Model defense-rating contribution
+- [x] Decide whether to keep this as pure runtime adjustment instead of true
   player stat-field emulation
+
+Notes:
+
+- Defense rating is now consumed from assigned gear at melee-outcome roll time.
+  It contributes to dodge/parry/block, miss chance, victim defense skill, and
+  incoming melee crit suppression through the existing world-bot UnitScript
+  hook. Dodge/parry/miss use the same class caps and diminishing constants as
+  the player formulas; block remains the player-style direct rating path.
 
 Files to touch:
 
