@@ -30,6 +30,9 @@
 #include "service/BotContextService.h"
 #include "service/SimpleBotCombatSpecRoleResolver.h"
 #include "service/WorldBotAssignedGearService.h"
+#include "service/WorldBotCombatSituationBuilder.h"
+#include "service/WorldBotMovementDoctrineEvaluator.h"
+#include "service/WorldBotMovementExecution.h"
 #include "service/WorldBotAttackPowerBaseline.h"
 #include "service/WorldBotCombatRatingBaseline.h"
 #include "service/WorldBotPassiveSpellRules.h"
@@ -227,6 +230,77 @@ char const* DescribeAoEMode(std::optional<model::BotCombatAoEMode> aoeMode)
     }
 
     return "unknown";
+}
+
+char const* DescribeMovementStyle(model::WorldBotMovementStyle style)
+{
+    switch (style)
+    {
+        case model::WorldBotMovementStyle::FrontlineTank:
+            return "frontline_tank";
+        case model::WorldBotMovementStyle::StickyMelee:
+            return "sticky_melee";
+        case model::WorldBotMovementStyle::TurretCaster:
+            return "turret_caster";
+        case model::WorldBotMovementStyle::MobileRanged:
+            return "mobile_ranged";
+        case model::WorldBotMovementStyle::BacklineHealer:
+            return "backline_healer";
+        case model::WorldBotMovementStyle::Unknown:
+        default:
+            return "unknown";
+    }
+}
+
+char const* DescribeCombatPosture(model::WorldBotCombatPosture posture)
+{
+    switch (posture)
+    {
+        case model::WorldBotCombatPosture::Hold:
+            return "hold";
+        case model::WorldBotCombatPosture::Close:
+            return "close";
+        case model::WorldBotCombatPosture::Reposition:
+            return "reposition";
+        case model::WorldBotCombatPosture::Kite:
+            return "kite";
+        case model::WorldBotCombatPosture::Retreat:
+            return "retreat";
+        case model::WorldBotCombatPosture::HazardEscape:
+            return "hazard_escape";
+        default:
+            return "unknown";
+    }
+}
+
+char const* DescribeMovementDecisionSource(model::WorldBotMovementDecisionSource source)
+{
+    switch (source)
+    {
+        case model::WorldBotMovementDecisionSource::PostureDoctrine:
+            return "posture_doctrine";
+        case model::WorldBotMovementDecisionSource::HazardOverride:
+            return "hazard_override";
+        case model::WorldBotMovementDecisionSource::EmergencyFallback:
+            return "emergency_fallback";
+        case model::WorldBotMovementDecisionSource::None:
+        default:
+            return "none";
+    }
+}
+
+char const* DescribeMovementPlanKind(service::WorldBotMovementPlanKind kind)
+{
+    switch (kind)
+    {
+        case service::WorldBotMovementPlanKind::Chase:
+            return "chase";
+        case service::WorldBotMovementPlanKind::MovePoint:
+            return "move_point";
+        case service::WorldBotMovementPlanKind::None:
+        default:
+            return "none";
+    }
 }
 
 float GetManaPct(Unit const* unit)
@@ -1352,8 +1426,52 @@ void WorldBotCreatureAI::TickCombat(uint32 /*diff*/)
 
     if (!acted && !me->IsWithinMeleeRange(target))
     {
-        RecordCombatTrace(BuildCombatMovementTraceDetail("move_chase", target));
-        me->GetMotionMaster()->MoveChase(target);
+        model::WorldBotCombatSituation const situation = service::BuildWorldBotCombatSituation(
+            _preparedBuild,
+            true,
+            me->GetDistance(target),
+            me->GetHealthPct(),
+            GetManaPct(me),
+            CountNearbyHostileUnits(me, 10.0f));
+        model::WorldBotMovementDecision const movementDecision =
+            service::EvaluateWorldBotMovementDoctrine(situation);
+        service::WorldBotMovementExecutionPlan const movementPlan =
+            service::BuildWorldBotMovementExecutionPlan(
+                situation,
+                movementDecision,
+                me->GetPositionX(),
+                me->GetPositionY(),
+                me->GetPositionZ(),
+                target->GetPositionX(),
+                target->GetPositionY(),
+                target->GetPositionZ());
+
+        std::ostringstream movementTrace;
+        movementTrace << BuildCombatMovementTraceDetail("movement_doctrine", target)
+            << " style='" << DescribeMovementStyle(situation.movementStyle) << "'"
+            << " posture='" << DescribeCombatPosture(movementDecision.posture) << "'"
+            << " source='" << DescribeMovementDecisionSource(movementDecision.source) << "'"
+            << " plan='" << DescribeMovementPlanKind(movementPlan.kind) << "'"
+            << " hard_casts=" << (movementDecision.allowHardCasts ? 1 : 0)
+            << " cast_safe=" << (situation.canCastSafely ? 1 : 0);
+
+        switch (movementPlan.kind)
+        {
+            case service::WorldBotMovementPlanKind::MovePoint:
+                movementTrace << " destination=(" << movementPlan.pointX << "," << movementPlan.pointY << "," << movementPlan.pointZ << ")";
+                RecordCombatTrace(movementTrace.str());
+                me->GetMotionMaster()->MovePoint(0, movementPlan.pointX, movementPlan.pointY, movementPlan.pointZ);
+                break;
+            case service::WorldBotMovementPlanKind::Chase:
+                movementTrace << " chase_distance=" << movementPlan.chaseDistance;
+                RecordCombatTrace(movementTrace.str());
+                me->GetMotionMaster()->MoveChase(target, movementPlan.chaseDistance);
+                break;
+            case service::WorldBotMovementPlanKind::None:
+            default:
+                RecordCombatTrace(movementTrace.str());
+                break;
+        }
     }
 
     DoMeleeAttackIfReady();
