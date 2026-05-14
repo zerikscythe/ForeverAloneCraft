@@ -6,6 +6,7 @@
 #include "SpellInfo.h"
 #include "service/WorldBotCriticalStrikeBaseline.h"
 #include "service/WorldBotDefensiveCombatBaseline.h"
+#include "service/WorldBotExpertiseBaseline.h"
 #include "service/WorldBotMeleeHitBaseline.h"
 #include "service/WorldBotSpellCriticalStrikeBaseline.h"
 
@@ -185,6 +186,20 @@ public:
             miss_chance = service::AdjustWorldBotMeleeMissChance(
                 miss_chance,
                 ResolveWorldBotCombatRatingBonus(attacker, hitRating, assignedHitRating));
+
+            if (attType != RANGED_ATTACK)
+            {
+                float const expertiseBonus = ResolveWorldBotCombatRatingBonus(
+                    attacker,
+                    CR_EXPERTISE,
+                    gearSummary.bonusExpertiseRating);
+                dodge_chance = service::AdjustWorldBotDodgeOrParryChanceForExpertise(
+                    dodge_chance,
+                    expertiseBonus);
+                parry_chance = service::AdjustWorldBotDodgeOrParryChanceForExpertise(
+                    parry_chance,
+                    expertiseBonus);
+            }
         }
 
         ai::WorldBotCreatureAI const* worldBotAI = GetWorldBotCreatureAI(victim);

@@ -515,14 +515,20 @@ New helper / hook?
 
 ### 6.3 Expertise
 
-Status: `Missing`.
+Status: `Partial`.
 
 Checklist:
 
-- [ ] Model expertise contribution against dodge/parry for world-bot attackers
-- [ ] Decide whether to express this as a direct runtime reduction instead of a
+- [x] Model expertise contribution against dodge/parry for world-bot attackers
+- [x] Decide whether to express this as a direct runtime reduction instead of a
   stored stat field
 - [ ] Audit one-hand / off-hand specialization edge cases only if needed
+
+Notes:
+
+- Assigned expertise rating now converts through the player combat-rating DBC
+  tables and directly reduces dodge/parry chances for world-bot melee attackers
+  in the melee-outcome hook. Ranged attacks intentionally skip expertise.
 
 Files to touch:
 
