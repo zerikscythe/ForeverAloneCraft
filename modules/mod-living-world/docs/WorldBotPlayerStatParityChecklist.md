@@ -409,9 +409,15 @@ Status: `Partial`.
 Checklist:
 
 - [x] Replace generic creature crit baseline with class/level/agility baseline
-- [ ] Add item/rating-driven crit contribution beyond current runtime modifiers
+- [x] Add item/rating-driven crit contribution beyond current runtime modifiers
 - [ ] Audit weapon-skill / defense interactions if we want closer player parity
 - [ ] Audit special per-weapon / per-spec edge cases
+
+Implementation notes:
+
+- Assigned melee and ranged crit rating now convert through the appropriate
+  combat-rating DBC bucket and add to the world-bot melee outcome crit chance
+  after the player-like agility/base crit replacement.
 
 Files to touch:
 
@@ -435,9 +441,15 @@ Checklist:
 
 - [x] Bypass ordinary creature no-spell-crit behavior for world bots only
 - [x] Replace generic creature spell-crit base with class/level/intellect base
-- [ ] Add item/rating-driven spell crit contribution beyond current runtime
+- [x] Add item/rating-driven spell crit contribution beyond current runtime
   modifiers
 - [ ] Audit full caster-sheet parity and spell-school edge cases
+
+Implementation notes:
+
+- Assigned spell crit rating now converts through `CR_CRIT_SPELL` and is added
+  in the world-bot spell crit hook after intellect/base crit and school crit
+  auras.
 
 Files to touch:
 

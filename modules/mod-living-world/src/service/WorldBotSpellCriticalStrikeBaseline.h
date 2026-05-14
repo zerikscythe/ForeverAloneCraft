@@ -34,5 +34,12 @@ inline float AdjustWorldBotSpellCriticalStrikeChance(
     float const adjustedChance = existingCreatureCritChancePct + (playerLikeCritChancePct - creatureBaseCritChancePct);
     return std::max(adjustedChance, 0.0f);
 }
+
+inline float AddWorldBotSpellCriticalStrikeRatingBonus(
+    float existingCritChancePct,
+    float ratingBonusPct)
+{
+    return std::max(existingCritChancePct + ratingBonusPct, 0.0f);
+}
 } // namespace service
 } // namespace living_world

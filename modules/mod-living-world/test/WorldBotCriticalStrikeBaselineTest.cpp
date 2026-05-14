@@ -27,5 +27,11 @@ TEST(WorldBotCriticalStrikeBaselineTest, AdjustsExistingCreatureCritByPlayerLike
     EXPECT_EQ(AdjustWorldBotCriticalStrikeChance(500, 7.25f), 725);
     EXPECT_EQ(AdjustWorldBotCriticalStrikeChance(500, 0.0f), 0);
 }
+
+TEST(WorldBotCriticalStrikeBaselineTest, AddsRatingBonusInBasisPoints)
+{
+    EXPECT_EQ(AddWorldBotCriticalStrikeRatingBonus(725, 2.5f), 975);
+    EXPECT_EQ(AddWorldBotCriticalStrikeRatingBonus(0, -2.5f), 0);
+}
 } // namespace service
 } // namespace living_world

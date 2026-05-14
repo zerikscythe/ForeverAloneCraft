@@ -137,7 +137,8 @@ public:
         bool /*skipEffectCheck*/,
         float& critChance) override
     {
-        if (!GetWorldBotCreatureAI(attacker) || !spellProto)
+        ai::WorldBotCreatureAI const* worldBotAI = GetWorldBotCreatureAI(attacker);
+        if (!worldBotAI || !spellProto)
             return false;
 
         if (spellProto->DmgClass != SPELL_DAMAGE_CLASS_MAGIC)
@@ -157,6 +158,12 @@ public:
         critChance += static_cast<float>(attacker->GetTotalAuraModifierByMiscMask(
             SPELL_AURA_MOD_SPELL_CRIT_CHANCE_SCHOOL,
             schoolMask));
+        critChance = service::AddWorldBotSpellCriticalStrikeRatingBonus(
+            critChance,
+            service::ResolveWorldBotCombatRatingBonus(
+                attacker,
+                CR_CRIT_SPELL,
+                worldBotAI->GetAssignedGearSummary().bonusSpellCritRating));
         return true;
     }
 
@@ -362,6 +369,16 @@ public:
 
             model::WorldBotAssignedGearSummary const& gearSummary =
                 attackerWorldBotAI->GetAssignedGearSummary();
+            CombatRating const critRating = attType == RANGED_ATTACK
+                ? CR_CRIT_RANGED
+                : CR_CRIT_MELEE;
+            std::int32_t const assignedCritRating = attType == RANGED_ATTACK
+                ? gearSummary.bonusRangedCritRating
+                : gearSummary.bonusMeleeCritRating;
+            crit_chance = service::AddWorldBotCriticalStrikeRatingBonus(
+                crit_chance,
+                service::ResolveWorldBotCombatRatingBonus(attacker, critRating, assignedCritRating));
+
             CombatRating const hitRating = attType == RANGED_ATTACK
                 ? CR_HIT_RANGED
                 : CR_HIT_MELEE;

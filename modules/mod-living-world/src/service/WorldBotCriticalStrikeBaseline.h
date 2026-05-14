@@ -35,5 +35,14 @@ inline std::int32_t AdjustWorldBotCriticalStrikeChance(
         + static_cast<std::int32_t>((playerLikeCritChancePct - creatureBaseCritChancePct) * 100.0f);
     return std::max(adjustedChance, 0);
 }
+
+inline std::int32_t AddWorldBotCriticalStrikeRatingBonus(
+    std::int32_t existingChanceBasisPoints,
+    float ratingBonusPct)
+{
+    return std::max(
+        existingChanceBasisPoints + static_cast<std::int32_t>(ratingBonusPct * 100.0f),
+        0);
+}
 } // namespace service
 } // namespace living_world

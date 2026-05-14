@@ -28,5 +28,11 @@ TEST(WorldBotSpellCriticalStrikeBaselineTest, AdjustsExistingCreatureCritByPlaye
     EXPECT_FLOAT_EQ(AdjustWorldBotSpellCriticalStrikeChance(7.0f, 7.25f), 9.25f);
     EXPECT_FLOAT_EQ(AdjustWorldBotSpellCriticalStrikeChance(0.0f, 0.0f), 0.0f);
 }
+
+TEST(WorldBotSpellCriticalStrikeBaselineTest, AddsRatingBonusAsPercent)
+{
+    EXPECT_FLOAT_EQ(AddWorldBotSpellCriticalStrikeRatingBonus(7.25f, 2.5f), 9.75f);
+    EXPECT_FLOAT_EQ(AddWorldBotSpellCriticalStrikeRatingBonus(0.0f, -2.5f), 0.0f);
+}
 } // namespace service
 } // namespace living_world
