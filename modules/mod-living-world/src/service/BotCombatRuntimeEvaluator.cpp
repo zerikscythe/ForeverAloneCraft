@@ -1,5 +1,7 @@
 #include "service/BotCombatRuntimeEvaluator.h"
 
+#include "service/BotCombatSimulatedItemUse.h"
+
 #include "CellImpl.h"
 #include "Creature.h"
 #include "DataStores/DBCStores.h"
@@ -14,11 +16,13 @@
 #include "SpellInfo.h"
 #include "SpellMgr.h"
 #include "Unit.h"
+#include "Player.h"
 
 #include <algorithm>
 #include <cctype>
 #include <charconv>
 #include <cmath>
+#include <limits>
 #include <optional>
 #include <vector>
 
@@ -28,6 +32,33 @@ namespace service
 {
 namespace
 {
+struct ResolvedAoEActionTargeting
+{
+    bool valid = true;
+    std::optional<model::BotCombatAoEMode> aoeMode;
+    std::optional<std::uint8_t> aoeMinTargets;
+    std::optional<float> aoeRadius;
+    bool useDestination = false;
+    float destinationX = 0.0f;
+    float destinationY = 0.0f;
+    float destinationZ = 0.0f;
+};
+
+struct AoECandidatePoint
+{
+    float x = 0.0f;
+    float y = 0.0f;
+};
+
+struct BestAoEPointResult
+{
+    bool valid = false;
+    float x = 0.0f;
+    float y = 0.0f;
+    float z = 0.0f;
+    std::size_t hits = 0;
+};
+
 // Returns the remaining cooldown in milliseconds for the given spell on any Unit.
 // Dispatches to Player::GetSpellCooldownDelay or Creature::GetSpellCooldown.
 std::uint32_t GetSpellCooldownRemainingMs(Unit* bot, std::uint32_t spellId)
@@ -282,6 +313,290 @@ std::uint32_t CountNearbyEnemies(
     return static_cast<std::uint32_t>(targets.size());
 }
 
+std::vector<Unit*> CollectNearbyEnemies(
+    BotCombatRuntimeContext const& context,
+    Unit* subject,
+    float radius)
+{
+    if (!subject || radius <= 0.0f)
+        return {};
+
+    Unit* hostilityReference = context.bot ? context.bot : subject;
+    std::vector<Unit*> targets;
+    Acore::AnyUnfriendlyUnitInObjectRangeCheck check(subject, hostilityReference, radius);
+    Acore::UnitListSearcher<Acore::AnyUnfriendlyUnitInObjectRangeCheck> searcher(subject, targets, check);
+    Cell::VisitObjects(subject, searcher, radius);
+    targets.erase(
+        std::remove_if(
+            targets.begin(),
+            targets.end(),
+            [](Unit* unit)
+            {
+                return !unit || !unit->IsAlive() || !unit->IsInWorld();
+            }),
+        targets.end());
+    return targets;
+}
+
+std::vector<Unit*> CollectEnemiesWithinRadius(
+    std::vector<Unit*> const& enemies,
+    float x,
+    float y,
+    float radius)
+{
+    std::vector<Unit*> hits;
+    float const radiusSq = radius * radius;
+    for (Unit* enemy : enemies)
+    {
+        if (!enemy)
+            continue;
+
+        float const dx = enemy->GetPositionX() - x;
+        float const dy = enemy->GetPositionY() - y;
+        float const distSq = dx * dx + dy * dy;
+        if (distSq <= radiusSq + 0.01f)
+            hits.push_back(enemy);
+    }
+
+    return hits;
+}
+
+AoECandidatePoint ComputeCentroid2d(std::vector<Unit*> const& enemies)
+{
+    AoECandidatePoint point;
+    if (enemies.empty())
+        return point;
+
+    for (Unit* enemy : enemies)
+    {
+        point.x += enemy->GetPositionX();
+        point.y += enemy->GetPositionY();
+    }
+
+    float const divisor = static_cast<float>(enemies.size());
+    point.x /= divisor;
+    point.y /= divisor;
+    return point;
+}
+
+float ComputeAverageZ(std::vector<Unit*> const& enemies)
+{
+    if (enemies.empty())
+        return 0.0f;
+
+    float z = 0.0f;
+    for (Unit* enemy : enemies)
+        z += enemy->GetPositionZ();
+
+    return z / static_cast<float>(enemies.size());
+}
+
+std::vector<AoECandidatePoint> BuildPairCircleCenters(
+    Unit* left,
+    Unit* right,
+    float radius)
+{
+    if (!left || !right || radius <= 0.0f)
+        return {};
+
+    float const x1 = left->GetPositionX();
+    float const y1 = left->GetPositionY();
+    float const x2 = right->GetPositionX();
+    float const y2 = right->GetPositionY();
+    float const dx = x2 - x1;
+    float const dy = y2 - y1;
+    float const distSq = dx * dx + dy * dy;
+    if (distSq <= 0.0001f)
+        return { { x1, y1 } };
+
+    float const dist = std::sqrt(distSq);
+    float const diameter = radius * 2.0f;
+    if (dist > diameter)
+        return {};
+
+    float const midX = (x1 + x2) * 0.5f;
+    float const midY = (y1 + y2) * 0.5f;
+    float const halfDist = dist * 0.5f;
+    float const heightSq = std::max(0.0f, radius * radius - halfDist * halfDist);
+    float const height = std::sqrt(heightSq);
+    float const invDist = 1.0f / dist;
+    float const perpX = -dy * invDist;
+    float const perpY = dx * invDist;
+
+    std::vector<AoECandidatePoint> candidates;
+    candidates.push_back({ midX + perpX * height, midY + perpY * height });
+    if (height > 0.0001f)
+        candidates.push_back({ midX - perpX * height, midY - perpY * height });
+    return candidates;
+}
+
+BestAoEPointResult FindBestAoECenter(
+    std::vector<Unit*> const& enemies,
+    float radius,
+    Unit* anchorTarget)
+{
+    BestAoEPointResult best;
+    if (enemies.empty() || radius <= 0.0f)
+        return best;
+
+    std::vector<AoECandidatePoint> candidates;
+    candidates.reserve(enemies.size() * enemies.size());
+    for (Unit* enemy : enemies)
+        candidates.push_back({ enemy->GetPositionX(), enemy->GetPositionY() });
+    candidates.push_back(ComputeCentroid2d(enemies));
+
+    for (std::size_t i = 0; i < enemies.size(); ++i)
+    {
+        for (std::size_t j = i + 1; j < enemies.size(); ++j)
+        {
+            std::vector<AoECandidatePoint> pairCandidates =
+                BuildPairCircleCenters(enemies[i], enemies[j], radius);
+            candidates.insert(candidates.end(), pairCandidates.begin(), pairCandidates.end());
+        }
+    }
+
+    float bestSpreadScore = std::numeric_limits<float>::max();
+    float bestAnchorScore = std::numeric_limits<float>::max();
+
+    for (AoECandidatePoint const& candidate : candidates)
+    {
+        std::vector<Unit*> hits = CollectEnemiesWithinRadius(enemies, candidate.x, candidate.y, radius);
+        if (hits.empty())
+            continue;
+
+        float spreadScore = 0.0f;
+        for (Unit* hit : hits)
+        {
+            float const dx = hit->GetPositionX() - candidate.x;
+            float const dy = hit->GetPositionY() - candidate.y;
+            spreadScore += dx * dx + dy * dy;
+        }
+
+        float anchorScore = 0.0f;
+        if (anchorTarget)
+        {
+            float const dx = anchorTarget->GetPositionX() - candidate.x;
+            float const dy = anchorTarget->GetPositionY() - candidate.y;
+            anchorScore = dx * dx + dy * dy;
+        }
+
+        bool const betterHits = hits.size() > best.hits;
+        bool const betterSpread = hits.size() == best.hits && spreadScore < bestSpreadScore;
+        bool const betterAnchor =
+            hits.size() == best.hits &&
+            std::fabs(spreadScore - bestSpreadScore) < 0.01f &&
+            anchorScore < bestAnchorScore;
+
+        if (!best.valid || betterHits || betterSpread || betterAnchor)
+        {
+            best.valid = true;
+            best.x = candidate.x;
+            best.y = candidate.y;
+            best.z = ComputeAverageZ(hits);
+            best.hits = hits.size();
+            bestSpreadScore = spreadScore;
+            bestAnchorScore = anchorScore;
+        }
+    }
+
+    if (!best.valid)
+        return best;
+
+    std::vector<Unit*> bestHits = CollectEnemiesWithinRadius(enemies, best.x, best.y, radius);
+    AoECandidatePoint const refinedCentroid = ComputeCentroid2d(bestHits);
+    std::vector<Unit*> refinedHits =
+        CollectEnemiesWithinRadius(enemies, refinedCentroid.x, refinedCentroid.y, radius);
+    if (refinedHits.size() >= best.hits)
+    {
+        best.x = refinedCentroid.x;
+        best.y = refinedCentroid.y;
+        best.z = ComputeAverageZ(refinedHits);
+        best.hits = refinedHits.size();
+    }
+
+    return best;
+}
+
+bool SpellUsesDestinationTarget(SpellInfo const* spellInfo)
+{
+    return spellInfo && (spellInfo->GetExplicitTargetMask() & TARGET_FLAG_DEST_LOCATION);
+}
+
+ResolvedAoEActionTargeting ResolveAoEActionTargeting(
+    model::BotCombatActionDefinition const& action,
+    BotCombatRuntimeContext const& context,
+    Unit* target,
+    SpellInfo const* spellInfo)
+{
+    ResolvedAoEActionTargeting resolved;
+    resolved.aoeMode = action.aoeMode;
+    if (!resolved.aoeMode && (action.aoeMinTargets || action.aoeRadius))
+        resolved.aoeMode = context.defaultAoEMode;
+
+    if (!resolved.aoeMode)
+        return resolved;
+
+    resolved.aoeMinTargets = action.aoeMinTargets.value_or(context.defaultAoEMinTargets);
+    resolved.aoeRadius = action.aoeRadius.value_or(context.defaultAoEScanRadius);
+
+    if (!target || !resolved.aoeRadius || *resolved.aoeRadius <= 0.0f)
+    {
+        resolved.valid = false;
+        return resolved;
+    }
+
+    std::vector<Unit*> const nearbyEnemies = CollectNearbyEnemies(
+        context,
+        target,
+        *resolved.aoeRadius);
+    std::uint8_t const minTargets = std::max<std::uint8_t>(1, *resolved.aoeMinTargets);
+    if (nearbyEnemies.size() < minTargets)
+    {
+        resolved.valid = false;
+        return resolved;
+    }
+
+    switch (*resolved.aoeMode)
+    {
+        case model::BotCombatAoEMode::Centroid:
+        {
+            BestAoEPointResult const bestPoint =
+                FindBestAoECenter(nearbyEnemies, *resolved.aoeRadius, target);
+            if (!bestPoint.valid || bestPoint.hits < minTargets)
+            {
+                resolved.valid = false;
+                return resolved;
+            }
+
+            resolved.destinationX = bestPoint.x;
+            resolved.destinationY = bestPoint.y;
+            resolved.destinationZ = bestPoint.z;
+            break;
+        }
+        case model::BotCombatAoEMode::Feet:
+            resolved.destinationX = target->GetPositionX();
+            resolved.destinationY = target->GetPositionY();
+            resolved.destinationZ = target->GetPositionZ();
+            break;
+    }
+
+    resolved.useDestination = SpellUsesDestinationTarget(spellInfo);
+    if (resolved.useDestination && context.bot)
+    {
+        float const maxRange = context.bot->GetSpellMaxRangeForTarget(target, spellInfo);
+        if (maxRange > 0.0f &&
+            context.bot->GetDistance(
+                resolved.destinationX,
+                resolved.destinationY,
+                resolved.destinationZ) > maxRange)
+        {
+            resolved.valid = false;
+        }
+    }
+
+    return resolved;
+}
+
 std::uint32_t CountPartyMembersBelowHealthPctImpl(
     Unit* bot,
     Player* owner,
@@ -379,6 +694,21 @@ Spell* GetCurrentNonMeleeSpell(Unit* unit)
 
     return nullptr;
 }
+
+Item* ResolveUsableCombatItem(Player* player, std::uint32_t itemId)
+{
+    if (!player || itemId == 0)
+        return nullptr;
+
+    Item* item = player->GetItemByEntry(itemId);
+    if (!item)
+        return nullptr;
+
+    if (player->CanUseItem(item) != EQUIP_ERR_OK)
+        return nullptr;
+
+    return item;
+}
 } // namespace
 
 std::uint32_t BotCombatRuntimeEvaluator::CountPartyMembersBelowHealthPct(
@@ -437,6 +767,11 @@ BotCombatEvaluationResult BotCombatRuntimeEvaluator::EvaluateEntries(
             BotCombatEvaluationResult result;
             result.disposition = BotCombatEvaluationDisposition::Wait;
             result.waitMs = currentCastPrimaryWaitMs;
+            result.traceEntryId = entry.entryId;
+            result.traceActionId = entry.primaryAction.actionId;
+            result.traceEntryLabel = entry.label;
+            result.traceTargetKey = entry.primaryAction.targetKey;
+            result.traceReason = "current_cast_hold";
             return result;
         }
 
@@ -448,6 +783,11 @@ BotCombatEvaluationResult BotCombatRuntimeEvaluator::EvaluateEntries(
             BotCombatEvaluationResult result;
             result.disposition = BotCombatEvaluationDisposition::Wait;
             result.waitMs = primaryWaitMs;
+            result.traceEntryId = entry.entryId;
+            result.traceActionId = entry.primaryAction.actionId;
+            result.traceEntryLabel = entry.label;
+            result.traceTargetKey = entry.primaryAction.targetKey;
+            result.traceReason = "cooldown_or_gcd";
             return result;
         }
 
@@ -468,6 +808,11 @@ BotCombatEvaluationResult BotCombatRuntimeEvaluator::EvaluateEntries(
                 BotCombatEvaluationResult result;
                 result.disposition = BotCombatEvaluationDisposition::Wait;
                 result.waitMs = currentCastSecondaryWaitMs;
+                result.traceEntryId = entry.entryId;
+                result.traceActionId = entry.secondaryAction->actionId;
+                result.traceEntryLabel = entry.label;
+                result.traceTargetKey = entry.secondaryAction->targetKey;
+                result.traceReason = "current_cast_hold";
                 return result;
             }
 
@@ -479,6 +824,11 @@ BotCombatEvaluationResult BotCombatRuntimeEvaluator::EvaluateEntries(
                 BotCombatEvaluationResult result;
                 result.disposition = BotCombatEvaluationDisposition::Wait;
                 result.waitMs = secondaryWaitMs;
+                result.traceEntryId = entry.entryId;
+                result.traceActionId = entry.secondaryAction->actionId;
+                result.traceEntryLabel = entry.label;
+                result.traceTargetKey = entry.secondaryAction->targetKey;
+                result.traceReason = "cooldown_or_gcd";
                 return result;
             }
         }
@@ -534,6 +884,12 @@ bool BotCombatRuntimeEvaluator::EvaluateCondition(
 
     if (condition.statKey == "hp_pct")
         return CompareNumeric(condition.comparison, subject->GetHealthPct(), condition.numericValue);
+
+    if (condition.statKey == "is_moving" || condition.statKey == "moving")
+        return CompareNumeric(
+            condition.comparison,
+            subject->isMoving() ? 1.0f : 0.0f,
+            condition.numericValue);
 
     if (condition.statKey == "mana_pct")
         return CompareNumeric(condition.comparison, GetManaPct(subject), condition.numericValue);
@@ -736,6 +1092,55 @@ std::optional<BotCombatEvaluatedAction> BotCombatRuntimeEvaluator::EvaluateActio
     if (!context.bot)
         return std::nullopt;
 
+    Unit* target = ResolveActionTarget(action.targetKey, context);
+    if (!target)
+        return std::nullopt;
+
+    if (action.actionType == model::BotCombatActionType::Item)
+    {
+        if (action.itemId == 0)
+            return std::nullopt;
+
+        // First pass scope: self-use item actions only.
+        if (target != context.bot)
+            return std::nullopt;
+
+        BotCombatEvaluatedAction evaluated;
+        evaluated.entryId = entry.entryId;
+        evaluated.actionId = action.actionId;
+        evaluated.actionType = action.actionType;
+        evaluated.itemId = action.itemId;
+        evaluated.target = target;
+        evaluated.targetKey = action.targetKey;
+        evaluated.entryLabel = entry.label;
+        evaluated.isInterrupt = entry.isInterrupt;
+        evaluated.actionSlot = action.slot;
+        evaluated.breaksCurrentCast = entry.breaksCurrentCast;
+
+        if (Player* player = context.bot->ToPlayer())
+        {
+            if (!ResolveUsableCombatItem(player, action.itemId))
+                return std::nullopt;
+        }
+        else
+        {
+            if (!CanUseSimulatedCombatItem(
+                    context.bot,
+                    target,
+                    action.itemId,
+                    context.usedSimulatedItemsThisCombat))
+            {
+                return std::nullopt;
+            }
+            evaluated.simulatedItemUse = true;
+        }
+
+        if (!CanBreakCurrentCast(context.bot, evaluated))
+            return std::nullopt;
+
+        return evaluated;
+    }
+
     if (action.actionType != model::BotCombatActionType::Spell)
         return std::nullopt;
 
@@ -746,8 +1151,13 @@ std::optional<BotCombatEvaluatedAction> BotCombatRuntimeEvaluator::EvaluateActio
     if (spellId == 0)
         return std::nullopt;
 
-    Unit* target = ResolveActionTarget(action.targetKey, context);
-    if (!target)
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    if (!spellInfo)
+        return std::nullopt;
+
+    ResolvedAoEActionTargeting const aoeTargeting =
+        ResolveAoEActionTargeting(action, context, target, spellInfo);
+    if (!aoeTargeting.valid)
         return std::nullopt;
 
     if (entry.isInterrupt && !HasInterruptibleEnemyCast(target))
@@ -759,9 +1169,20 @@ std::optional<BotCombatEvaluatedAction> BotCombatRuntimeEvaluator::EvaluateActio
     BotCombatEvaluatedAction evaluated;
     evaluated.entryId = entry.entryId;
     evaluated.actionId = action.actionId;
+    evaluated.actionType = action.actionType;
     evaluated.spellId = spellId;
     evaluated.target = target;
     evaluated.targetKey = action.targetKey;
+    evaluated.entryLabel = entry.label;
+    evaluated.isInterrupt = entry.isInterrupt;
+    evaluated.actionSlot = action.slot;
+    evaluated.aoeMode = aoeTargeting.aoeMode;
+    evaluated.aoeMinTargets = aoeTargeting.aoeMinTargets;
+    evaluated.aoeRadius = aoeTargeting.aoeRadius;
+    evaluated.useDestination = aoeTargeting.useDestination;
+    evaluated.destinationX = aoeTargeting.destinationX;
+    evaluated.destinationY = aoeTargeting.destinationY;
+    evaluated.destinationZ = aoeTargeting.destinationZ;
     evaluated.breaksCurrentCast = entry.breaksCurrentCast;
 
     if (!CanBreakCurrentCast(context.bot, evaluated))
@@ -777,6 +1198,9 @@ std::uint32_t BotCombatRuntimeEvaluator::GetActionWaitMs(
     if (!context.bot)
         return 0;
 
+    if (action.actionType == model::BotCombatActionType::Item)
+        return 0;
+
     if (action.actionType != model::BotCombatActionType::Spell)
         return 0;
 
@@ -789,6 +1213,15 @@ std::uint32_t BotCombatRuntimeEvaluator::GetActionWaitMs(
 
     Unit* target = ResolveActionTarget(action.targetKey, context);
     if (!target)
+        return 0;
+
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    if (!spellInfo)
+        return 0;
+
+    ResolvedAoEActionTargeting const aoeTargeting =
+        ResolveAoEActionTargeting(action, context, target, spellInfo);
+    if (!aoeTargeting.valid)
         return 0;
 
     std::uint32_t const waitMs = GetSpellWaitMs(context.bot, target, spellId);
@@ -805,6 +1238,9 @@ std::uint32_t BotCombatRuntimeEvaluator::GetCurrentCastHoldWaitMs(
 {
     if (!context.bot || !context.bot->IsNonMeleeSpellCast(false) || entry.breaksCurrentCast)
         return 0;
+
+    if (action.actionType == model::BotCombatActionType::Item)
+        return context.rotationWaitMs;
 
     if (action.actionType != model::BotCombatActionType::Spell)
         return 0;
@@ -825,6 +1261,11 @@ std::uint32_t BotCombatRuntimeEvaluator::GetCurrentCastHoldWaitMs(
 
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
     if (!spellInfo)
+        return 0;
+
+    ResolvedAoEActionTargeting const aoeTargeting =
+        ResolveAoEActionTargeting(action, context, target, spellInfo);
+    if (!aoeTargeting.valid)
         return 0;
 
     if (context.bot->HasSpellCooldown(spellId))

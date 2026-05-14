@@ -94,6 +94,7 @@ public:
     mutable std::string lastRoleKey;
     mutable std::string lastClassKey;
     mutable std::string lastContextKey;
+    mutable std::string lastVariantKey;
     mutable std::vector<std::string> requestedClassKeys;
     mutable std::vector<std::string> requestedContextKeys;
 
@@ -106,12 +107,14 @@ public:
         std::string const& specKey,
         std::string const& roleKey,
         std::string const& classKey,
-        std::string const& contextKey) const override
+        std::string const& contextKey,
+        std::string const& variantKey) const override
     {
         lastSpecKey = specKey;
         lastRoleKey = roleKey;
         lastClassKey = classKey;
         lastContextKey = contextKey;
+        lastVariantKey = variantKey;
         requestedClassKeys.push_back(classKey);
         requestedContextKeys.push_back(contextKey);
         return profile;

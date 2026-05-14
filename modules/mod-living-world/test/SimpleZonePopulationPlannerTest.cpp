@@ -57,8 +57,8 @@ TEST(SimpleZonePopulationPlannerTest, BuildsIntentOnlyPlanFromEligibleProfiles)
 
     std::vector<model::BotProfile> profiles =
     {
-        { 1, "Lowbie", 1, 1, model::BotFaction::Alliance, 20, "Explorers", model::BotPersonality::Indifferent, model::BotRole::Damage, { 12 } },
-        { 2, "Veteran", 1, 1, model::BotFaction::Alliance, 60, "Explorers", model::BotPersonality::Cautious, model::BotRole::Tank, { 12 } },
+        { 1, "Lowbie", 1, 1, model::BotFaction::Alliance, 20, "Explorers", model::BotPersonality::Uninterested, model::BotRole::Damage, { 12 } },
+        { 2, "Veteran", 1, 1, model::BotFaction::Alliance, 60, "Explorers", model::BotPersonality::Opportunistic, model::BotRole::Tank, { 12 } },
         { 3, "Scout", 1, 1, model::BotFaction::Alliance, 35, "Explorers", model::BotPersonality::Aggressive, model::BotRole::Support, { 12 } }
     };
 
@@ -95,11 +95,11 @@ TEST(SimpleZonePopulationPlannerTest, SuppressesProfilesBlockedByStateActivityAn
 
     std::vector<model::BotProfile> profiles =
     {
-        { 1, "EligibleCity", 1, 1, model::BotFaction::Alliance, 20, "Explorers", model::BotPersonality::Indifferent, model::BotRole::Damage, { 12 } },
-        { 2, "Spawned", 1, 1, model::BotFaction::Alliance, 20, "Explorers", model::BotPersonality::Indifferent, model::BotRole::Damage, { 12 } },
-        { 3, "Cooldown", 1, 1, model::BotFaction::Alliance, 20, "Explorers", model::BotPersonality::Indifferent, model::BotRole::Damage, { 12 } },
-        { 4, "LockedZone", 1, 1, model::BotFaction::Alliance, 20, "Explorers", model::BotPersonality::Indifferent, model::BotRole::Damage, { 571 } },
-        { 5, "OutdoorBlocked", 1, 1, model::BotFaction::Alliance, 20, "Explorers", model::BotPersonality::Indifferent, model::BotRole::Damage, { 12 } }
+        { 1, "EligibleCity", 1, 1, model::BotFaction::Alliance, 20, "Explorers", model::BotPersonality::Uninterested, model::BotRole::Damage, { 12 } },
+        { 2, "Spawned", 1, 1, model::BotFaction::Alliance, 20, "Explorers", model::BotPersonality::Uninterested, model::BotRole::Damage, { 12 } },
+        { 3, "Cooldown", 1, 1, model::BotFaction::Alliance, 20, "Explorers", model::BotPersonality::Uninterested, model::BotRole::Damage, { 12 } },
+        { 4, "LockedZone", 1, 1, model::BotFaction::Alliance, 20, "Explorers", model::BotPersonality::Uninterested, model::BotRole::Damage, { 571 } },
+        { 5, "OutdoorBlocked", 1, 1, model::BotFaction::Alliance, 20, "Explorers", model::BotPersonality::Uninterested, model::BotRole::Damage, { 12 } }
     };
 
     std::vector<model::BotAbstractState> states =
@@ -155,7 +155,7 @@ TEST(SimpleZonePopulationPlannerTest, ReordersSelectorOutputByPlannerScoreBefore
     std::vector<model::BotProfile> profiles =
     {
         { 10, "ExactMatch", 1, 1, model::BotFaction::Alliance, 20, "Explorers", model::BotPersonality::Aggressive, model::BotRole::Damage, { 12 } },
-        { 20, "NearbyOnly", 1, 1, model::BotFaction::Alliance, 20, "Explorers", model::BotPersonality::Indifferent, model::BotRole::Damage, { 13 } }
+        { 20, "NearbyOnly", 1, 1, model::BotFaction::Alliance, 20, "Explorers", model::BotPersonality::Uninterested, model::BotRole::Damage, { 13 } }
     };
 
     std::vector<model::BotAbstractState> states =
@@ -192,8 +192,8 @@ TEST(SimpleZonePopulationPlannerTest, SuppressesDeadBot)
 
     std::vector<model::BotProfile> profiles =
     {
-        { 1, "Alive",  1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Indifferent, model::BotRole::Damage, { 12 } },
-        { 2, "Dead",   1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Indifferent, model::BotRole::Damage, { 12 } }
+        { 1, "Alive",  1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Uninterested, model::BotRole::Damage, { 12 } },
+        { 2, "Dead",   1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Uninterested, model::BotRole::Damage, { 12 } }
     };
 
     std::vector<model::BotAbstractState> states =
@@ -226,8 +226,8 @@ TEST(SimpleZonePopulationPlannerTest, SuppressesAlreadySpawnedBot)
 
     std::vector<model::BotProfile> profiles =
     {
-        { 1, "Idle",    1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Indifferent, model::BotRole::Damage, { 12 } },
-        { 2, "Spawned", 1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Indifferent, model::BotRole::Damage, { 12 } }
+        { 1, "Idle",    1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Uninterested, model::BotRole::Damage, { 12 } },
+        { 2, "Spawned", 1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Uninterested, model::BotRole::Damage, { 12 } }
     };
 
     std::vector<model::BotAbstractState> states =
@@ -260,8 +260,8 @@ TEST(SimpleZonePopulationPlannerTest, SuppressesBotOnRespawnCooldown)
 
     std::vector<model::BotProfile> profiles =
     {
-        { 1, "Ready",    1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Indifferent, model::BotRole::Damage, { 12 } },
-        { 2, "Cooldown", 1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Indifferent, model::BotRole::Damage, { 12 } }
+        { 1, "Ready",    1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Uninterested, model::BotRole::Damage, { 12 } },
+        { 2, "Cooldown", 1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Uninterested, model::BotRole::Damage, { 12 } }
     };
 
     std::vector<model::BotAbstractState> states =
@@ -294,9 +294,9 @@ TEST(SimpleZonePopulationPlannerTest, BudgetLimitsOutputToLocalSpawnBudget)
 
     std::vector<model::BotProfile> profiles =
     {
-        { 1, "BotA", 1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Indifferent, model::BotRole::Damage, { 12 } },
-        { 2, "BotB", 1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Indifferent, model::BotRole::Damage, { 12 } },
-        { 3, "BotC", 1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Indifferent, model::BotRole::Damage, { 12 } }
+        { 1, "BotA", 1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Uninterested, model::BotRole::Damage, { 12 } },
+        { 2, "BotB", 1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Uninterested, model::BotRole::Damage, { 12 } },
+        { 3, "BotC", 1, 1, model::BotFaction::Alliance, 20, "Guild", model::BotPersonality::Uninterested, model::BotRole::Damage, { 12 } }
     };
 
     std::vector<model::BotAbstractState> states =
@@ -332,7 +332,7 @@ TEST(SimpleZonePopulationPlannerTest, ReturnsEmptyPlanWhenNoProfilesEligible)
     // All profiles exceed the level-40 gate
     std::vector<model::BotProfile> profiles =
     {
-        { 1, "HighLevel", 1, 1, model::BotFaction::Alliance, 50, "Guild", model::BotPersonality::Indifferent, model::BotRole::Damage, { 12 } }
+        { 1, "HighLevel", 1, 1, model::BotFaction::Alliance, 50, "Guild", model::BotPersonality::Uninterested, model::BotRole::Damage, { 12 } }
     };
 
     std::vector<model::BotAbstractState> states =

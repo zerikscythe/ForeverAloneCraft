@@ -9071,12 +9071,8 @@ int32 Unit::SpellBaseDamageBonusTaken(SpellSchoolMask schoolMask, bool isDoT)
     });
 }
 
-float Unit::SpellDoneCritChance(Unit const* /*victim*/, SpellInfo const* spellProto, SpellSchoolMask schoolMask, WeaponAttackType attackType, bool skipEffectCheck) const
+float Unit::SpellDoneCritChance(Unit const* victim, SpellInfo const* spellProto, SpellSchoolMask schoolMask, WeaponAttackType attackType, bool skipEffectCheck) const
 {
-    // Mobs can't crit with spells.
-    if (IsCreature() && !GetSpellModOwner())
-        return -100.0f;
-
     // not critting spell
     if (spellProto->HasAttribute(SPELL_ATTR2_CANT_CRIT))
         return 0.0f;
@@ -9086,70 +9082,77 @@ float Unit::SpellDoneCritChance(Unit const* /*victim*/, SpellInfo const* spellPr
         return 0.0f;
 
     float crit_chance = 0.0f;
-    switch (spellProto->DmgClass)
+    if (!sScriptMgr->OnCalculateSpellDoneCritChance(this, victim, spellProto, schoolMask, attackType, skipEffectCheck, crit_chance))
     {
-        case SPELL_DAMAGE_CLASS_MAGIC:
-            {
-                if (schoolMask & SPELL_SCHOOL_MASK_NORMAL)
-                    crit_chance = 0.0f;
-                // For other schools
-                else if (IsPlayer())
+        // Mobs can't crit with spells.
+        if (IsCreature() && !GetSpellModOwner())
+            return -100.0f;
+
+        switch (spellProto->DmgClass)
+        {
+            case SPELL_DAMAGE_CLASS_MAGIC:
                 {
-                    crit_chance = GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + GetFirstSchoolInMask(schoolMask));
-
-                    // register aura mod, this is needed for Arcane Potency
-                    if (Spell* spell = ToPlayer()->m_spellModTakingSpell)
+                    if (schoolMask & SPELL_SCHOOL_MASK_NORMAL)
+                        crit_chance = 0.0f;
+                    // For other schools
+                    else if (IsPlayer())
                     {
-                        Unit::AuraEffectList const& critAuras = GetAuraEffectsByType(SPELL_AURA_MOD_SPELL_CRIT_CHANCE);
-                        for (AuraEffect const* aurEff : critAuras)
-                            spell->m_appliedMods.insert(aurEff->GetBase());
+                        crit_chance = GetFloatValue(static_cast<uint16>(PLAYER_SPELL_CRIT_PERCENTAGE1) + GetFirstSchoolInMask(schoolMask));
 
-                        Unit::AuraEffectList const& critSchoolAuras = GetAuraEffectsByType(SPELL_AURA_MOD_SPELL_CRIT_CHANCE_SCHOOL);
-                        for (AuraEffect const* aurEff : critSchoolAuras)
-                            if (aurEff->GetMiscValue() & schoolMask)
+                        // register aura mod, this is needed for Arcane Potency
+                        if (Spell* spell = ToPlayer()->m_spellModTakingSpell)
+                        {
+                            Unit::AuraEffectList const& critAuras = GetAuraEffectsByType(SPELL_AURA_MOD_SPELL_CRIT_CHANCE);
+                            for (AuraEffect const* aurEff : critAuras)
                                 spell->m_appliedMods.insert(aurEff->GetBase());
+
+                            Unit::AuraEffectList const& critSchoolAuras = GetAuraEffectsByType(SPELL_AURA_MOD_SPELL_CRIT_CHANCE_SCHOOL);
+                            for (AuraEffect const* aurEff : critSchoolAuras)
+                                if (aurEff->GetMiscValue() & schoolMask)
+                                    spell->m_appliedMods.insert(aurEff->GetBase());
+                        }
                     }
-                }
-                else
-                {
-                    crit_chance = (float)m_baseSpellCritChance;
-                    crit_chance += GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_SPELL_CRIT_CHANCE_SCHOOL, schoolMask);
-                }
-                break;
-            }
-        case SPELL_DAMAGE_CLASS_MELEE:
-        case SPELL_DAMAGE_CLASS_RANGED:
-            {
-                if (IsPlayer())
-                {
-                    switch (attackType)
+                    else
                     {
-                        case BASE_ATTACK:
-                            crit_chance = GetFloatValue(PLAYER_CRIT_PERCENTAGE);
-                            break;
-                        case OFF_ATTACK:
-                            crit_chance = GetFloatValue(PLAYER_OFFHAND_CRIT_PERCENTAGE);
-                            break;
-                        case RANGED_ATTACK:
-                            crit_chance = GetFloatValue(PLAYER_RANGED_CRIT_PERCENTAGE);
-                            break;
-                        default:
-                            break;
+                        crit_chance = (float)m_baseSpellCritChance;
+                        crit_chance += GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_SPELL_CRIT_CHANCE_SCHOOL, schoolMask);
                     }
+                    break;
                 }
-                else
+            case SPELL_DAMAGE_CLASS_MELEE:
+            case SPELL_DAMAGE_CLASS_RANGED:
                 {
-                    crit_chance = 5.0f;
-                    crit_chance += GetTotalAuraModifier(SPELL_AURA_MOD_WEAPON_CRIT_PERCENT);
-                    crit_chance += GetTotalAuraModifier(SPELL_AURA_MOD_CRIT_PCT);
+                    if (IsPlayer())
+                    {
+                        switch (attackType)
+                        {
+                            case BASE_ATTACK:
+                                crit_chance = GetFloatValue(PLAYER_CRIT_PERCENTAGE);
+                                break;
+                            case OFF_ATTACK:
+                                crit_chance = GetFloatValue(PLAYER_OFFHAND_CRIT_PERCENTAGE);
+                                break;
+                            case RANGED_ATTACK:
+                                crit_chance = GetFloatValue(PLAYER_RANGED_CRIT_PERCENTAGE);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        crit_chance = 5.0f;
+                        crit_chance += GetTotalAuraModifier(SPELL_AURA_MOD_WEAPON_CRIT_PERCENT);
+                        crit_chance += GetTotalAuraModifier(SPELL_AURA_MOD_CRIT_PCT);
+                    }
+                    crit_chance += GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_SPELL_CRIT_CHANCE_SCHOOL, schoolMask);
+                    break;
                 }
-                crit_chance += GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_SPELL_CRIT_CHANCE_SCHOOL, schoolMask);
-                break;
-            }
-        // values overridden in spellmgr for lifebloom and earth shield
-        case SPELL_DAMAGE_CLASS_NONE:
-        default:
-            return 0.0f;
+            // values overridden in spellmgr for lifebloom and earth shield
+            case SPELL_DAMAGE_CLASS_NONE:
+            default:
+                return 0.0f;
+        }
     }
 
     // percent done

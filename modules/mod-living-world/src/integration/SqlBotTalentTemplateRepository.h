@@ -17,7 +17,8 @@ public:
 
     std::optional<model::BotTalentTemplateRecord> FindTemplateForSpec(
         std::string const& specKey,
-        std::uint8_t classId) const override;
+        std::uint8_t classId,
+        std::string const& variantKey = "") const override;
 
 private:
     static model::BotTalentTemplateRecord BuildTemplate(Field const* fields);

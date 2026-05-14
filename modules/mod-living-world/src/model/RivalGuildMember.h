@@ -12,7 +12,7 @@ struct RivalGuildMember
 {
     std::uint64_t botId = 0;
     BotRole role = BotRole::Unknown;
-    BotPersonality personality = BotPersonality::Indifferent;
+    BotPersonality personality = BotPersonality::Uninterested;
     std::uint8_t rankWeight = 0;
 };
 } // namespace model

@@ -250,7 +250,9 @@ model::BotCombatDefaultProfileRecord BuildDefaultProfile(Field const* fields)
     profile.displayName= fields[3].Get<std::string>();
     profile.classKey   = fields[4].IsNull() ? "" : fields[4].Get<std::string>();
     profile.contextKey = fields[5].IsNull() ? "PvE" : fields[5].Get<std::string>();
-    profile.settings   = BuildSettings(fields, 6);
+    profile.variantKey = fields[6].IsNull() ? "" : fields[6].Get<std::string>();
+    profile.description = fields[7].IsNull() ? "" : fields[7].Get<std::string>();
+    profile.settings   = BuildSettings(fields, 8);
     return profile;
 }
 } // namespace
@@ -261,7 +263,7 @@ SqlBotCombatDefaultProfileRepository::ListDefaultProfiles() const
     std::vector<model::BotCombatDefaultProfileRecord> profiles;
     QueryResult result = WorldDatabase.Query(
         "SELECT default_profile_id, spec_key, role_key, display_name, "
-        "class_key, context_key, conservation_mode, resource_low_water, resource_high_water, "
+        "class_key, context_key, variant_key, description, conservation_mode, resource_low_water, resource_high_water, "
         "enable_down_rank, down_rank_floor, default_aoe_mode, "
         "default_aoe_min_targets, default_aoe_scan_radius "
         "FROM living_world_bot_combat_default_profile "
@@ -285,56 +287,136 @@ SqlBotCombatDefaultProfileRepository::FindDefaultProfile(
     std::string const& specKey,
     std::string const& roleKey,
     std::string const& classKey,
-    std::string const& contextKey) const
+    std::string const& contextKey,
+    std::string const& variantKey) const
 {
     std::string escapedSpecKey  = specKey;  WorldDatabase.EscapeString(escapedSpecKey);
     std::string escapedRoleKey  = roleKey;  WorldDatabase.EscapeString(escapedRoleKey);
     std::string escapedClassKey = classKey; WorldDatabase.EscapeString(escapedClassKey);
     std::string escapedContextKey = contextKey; WorldDatabase.EscapeString(escapedContextKey);
+    std::string escapedVariantKey = variantKey; WorldDatabase.EscapeString(escapedVariantKey);
 
     QueryResult result;
     if (escapedClassKey.empty())
     {
-        result = WorldDatabase.Query(
-            "SELECT default_profile_id, spec_key, role_key, display_name, "
-            "class_key, context_key, conservation_mode, resource_low_water, resource_high_water, "
-            "enable_down_rank, down_rank_floor, default_aoe_mode, "
-            "default_aoe_min_targets, default_aoe_scan_radius "
-            "FROM living_world_bot_combat_default_profile "
-            "WHERE spec_key = '{}' AND role_key = '{}' "
-            "AND (context_key = '{}' OR context_key IS NULL OR context_key = '') "
-            "AND (class_key IS NULL OR class_key = '') "
-            "ORDER BY CASE "
-                "WHEN context_key = '{}' THEN 0 "
-                "WHEN context_key IS NULL OR context_key = '' THEN 1 "
-                "ELSE 2 END, "
-                "default_profile_id ASC "
-            "LIMIT 1",
-            escapedSpecKey, escapedRoleKey, escapedContextKey, escapedContextKey);
+        if (escapedVariantKey.empty())
+        {
+            result = WorldDatabase.Query(
+                "SELECT default_profile_id, spec_key, role_key, display_name, "
+                "class_key, context_key, variant_key, description, conservation_mode, resource_low_water, resource_high_water, "
+                "enable_down_rank, down_rank_floor, default_aoe_mode, "
+                "default_aoe_min_targets, default_aoe_scan_radius "
+                "FROM living_world_bot_combat_default_profile "
+                "WHERE spec_key = '{}' AND role_key = '{}' "
+                "AND (context_key = '{}' OR context_key IS NULL OR context_key = '') "
+                "AND (class_key IS NULL OR class_key = '') "
+                "AND (variant_key IS NULL OR variant_key = '') "
+                "ORDER BY CASE "
+                    "WHEN context_key = '{}' THEN 0 "
+                    "WHEN context_key IS NULL OR context_key = '' THEN 1 "
+                    "ELSE 2 END, "
+                    "default_profile_id ASC "
+                "LIMIT 1",
+                escapedSpecKey, escapedRoleKey, escapedContextKey, escapedContextKey);
+        }
+        else
+        {
+            result = WorldDatabase.Query(
+                "SELECT default_profile_id, spec_key, role_key, display_name, "
+                "class_key, context_key, variant_key, description, conservation_mode, resource_low_water, resource_high_water, "
+                "enable_down_rank, down_rank_floor, default_aoe_mode, "
+                "default_aoe_min_targets, default_aoe_scan_radius "
+                "FROM living_world_bot_combat_default_profile "
+                "WHERE spec_key = '{}' "
+                "AND (context_key = '{}' OR context_key IS NULL OR context_key = '') "
+                "AND (class_key IS NULL OR class_key = '') "
+                "AND (variant_key = '{}' OR variant_key IS NULL OR variant_key = '') "
+                "ORDER BY CASE "
+                    "WHEN variant_key = '{}' THEN 0 "
+                    "WHEN variant_key IS NULL OR variant_key = '' THEN 1 "
+                    "ELSE 2 END, "
+                    "CASE "
+                    "WHEN role_key = '{}' THEN 0 "
+                    "ELSE 1 END, "
+                    "CASE "
+                    "WHEN context_key = '{}' THEN 0 "
+                    "WHEN context_key IS NULL OR context_key = '' THEN 1 "
+                    "ELSE 2 END, "
+                    "default_profile_id ASC "
+                "LIMIT 1",
+                escapedSpecKey,
+                escapedContextKey,
+                escapedVariantKey,
+                escapedVariantKey,
+                escapedRoleKey,
+                escapedContextKey);
+        }
     }
     else
     {
-        result = WorldDatabase.Query(
-            "SELECT default_profile_id, spec_key, role_key, display_name, "
-            "class_key, context_key, conservation_mode, resource_low_water, resource_high_water, "
-            "enable_down_rank, down_rank_floor, default_aoe_mode, "
-            "default_aoe_min_targets, default_aoe_scan_radius "
-            "FROM living_world_bot_combat_default_profile "
-            "WHERE spec_key = '{}' AND role_key = '{}' "
-            "AND (context_key = '{}' OR context_key IS NULL OR context_key = '') "
-            "AND (class_key = '{}' OR class_key IS NULL OR class_key = '') "
-            "ORDER BY CASE "
-                "WHEN class_key = '{}' THEN 0 "
-                "WHEN class_key IS NULL OR class_key = '' THEN 1 "
-                "ELSE 2 END, "
-                "CASE "
-                "WHEN context_key = '{}' THEN 0 "
-                "WHEN context_key IS NULL OR context_key = '' THEN 1 "
-                "ELSE 2 END, "
-                "default_profile_id ASC "
-            "LIMIT 1",
-            escapedSpecKey, escapedRoleKey, escapedContextKey,
-            escapedClassKey, escapedClassKey, escapedContextKey);
+        if (escapedVariantKey.empty())
+        {
+            result = WorldDatabase.Query(
+                "SELECT default_profile_id, spec_key, role_key, display_name, "
+                "class_key, context_key, variant_key, description, conservation_mode, resource_low_water, resource_high_water, "
+                "enable_down_rank, down_rank_floor, default_aoe_mode, "
+                "default_aoe_min_targets, default_aoe_scan_radius "
+                "FROM living_world_bot_combat_default_profile "
+                "WHERE spec_key = '{}' AND role_key = '{}' "
+                "AND (context_key = '{}' OR context_key IS NULL OR context_key = '') "
+                "AND (class_key = '{}' OR class_key IS NULL OR class_key = '') "
+                "AND (variant_key IS NULL OR variant_key = '') "
+                "ORDER BY CASE "
+                    "WHEN class_key = '{}' THEN 0 "
+                    "WHEN class_key IS NULL OR class_key = '' THEN 1 "
+                    "ELSE 2 END, "
+                    "CASE "
+                    "WHEN context_key = '{}' THEN 0 "
+                    "WHEN context_key IS NULL OR context_key = '' THEN 1 "
+                    "ELSE 2 END, "
+                    "default_profile_id ASC "
+                "LIMIT 1",
+                escapedSpecKey, escapedRoleKey, escapedContextKey,
+                escapedClassKey, escapedClassKey, escapedContextKey);
+        }
+        else
+        {
+            result = WorldDatabase.Query(
+                "SELECT default_profile_id, spec_key, role_key, display_name, "
+                "class_key, context_key, variant_key, description, conservation_mode, resource_low_water, resource_high_water, "
+                "enable_down_rank, down_rank_floor, default_aoe_mode, "
+                "default_aoe_min_targets, default_aoe_scan_radius "
+                "FROM living_world_bot_combat_default_profile "
+                "WHERE spec_key = '{}' "
+                "AND (context_key = '{}' OR context_key IS NULL OR context_key = '') "
+                "AND (class_key = '{}' OR class_key IS NULL OR class_key = '') "
+                "AND (variant_key = '{}' OR variant_key IS NULL OR variant_key = '') "
+                "ORDER BY CASE "
+                    "WHEN variant_key = '{}' THEN 0 "
+                    "WHEN variant_key IS NULL OR variant_key = '' THEN 1 "
+                    "ELSE 2 END, "
+                    "CASE "
+                    "WHEN role_key = '{}' THEN 0 "
+                    "ELSE 1 END, "
+                    "CASE "
+                    "WHEN class_key = '{}' THEN 0 "
+                    "WHEN class_key IS NULL OR class_key = '' THEN 1 "
+                    "ELSE 2 END, "
+                    "CASE "
+                    "WHEN context_key = '{}' THEN 0 "
+                    "WHEN context_key IS NULL OR context_key = '' THEN 1 "
+                    "ELSE 2 END, "
+                    "default_profile_id ASC "
+                "LIMIT 1",
+                escapedSpecKey,
+                escapedContextKey,
+                escapedClassKey,
+                escapedVariantKey,
+                escapedVariantKey,
+                escapedRoleKey,
+                escapedClassKey,
+                escapedContextKey);
+        }
     }
     if (!result)
         return std::nullopt;

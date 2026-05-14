@@ -1,10 +1,16 @@
 #include "integration/SqlBotIdentityRepository.h"
+#include "integration/BotActivityLog.h"
 #include "model/BotSpecKey.h"
+#include "service/WorldBotGearBand.h"
 #include "DatabaseEnv.h"
 #include "Log.h"
 #include "QueryResult.h"
 
+#include <algorithm>
 #include <array>
+#include <cctype>
+#include <cmath>
+#include <limits>
 #include <random>
 
 namespace
@@ -13,6 +19,100 @@ std::string QuoteCharactersString(std::string value)
 {
     CharacterDatabase.EscapeString(value);
     return "'" + value + "'";
+}
+
+std::string CanonicalizeWorldBotPersonalityKey(std::string value)
+{
+    std::transform(value.begin(), value.end(), value.begin(),
+        [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+
+    if (value.empty() || value == "indifferent" || value == "uninterested")
+        return "uninterested";
+    if (value == "cautious" || value == "opportunistic")
+        return "opportunistic";
+    if (value == "aggressive")
+        return "aggressive";
+    if (value == "coward")
+        return "coward";
+    return "uninterested";
+}
+
+bool IsPvPLoadoutKey(std::string const& loadoutKey)
+{
+    if (loadoutKey.empty())
+        return false;
+
+    std::string normalized = loadoutKey;
+    std::transform(
+        normalized.begin(),
+        normalized.end(),
+        normalized.begin(),
+        [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+
+    return normalized.find("_PVP_") != std::string::npos
+        || normalized.ends_with("_PVP")
+        || normalized.starts_with("PVP_");
+}
+
+double GetLoadoutPersonalityWeight(living_world::integration::BotIdentityRecord const& rec)
+{
+    if (!IsPvPLoadoutKey(rec.loadoutKey))
+        return 1.0;
+
+    if (rec.personalityKey == "aggressive")
+        return 4.0;
+    if (rec.personalityKey == "opportunistic")
+        return 2.5;
+    if (rec.personalityKey == "uninterested")
+        return 0.75;
+    if (rec.personalityKey == "coward")
+        return 0.2;
+    return 1.0;
+}
+
+void ApplyLoadoutSelectionBias(
+    std::vector<living_world::integration::BotIdentityRecord>& results,
+    std::uint32_t limit)
+{
+    if (limit == 0 || results.size() <= limit)
+        return;
+
+    static thread_local std::mt19937 rng{ std::random_device{}() };
+    std::uniform_real_distribution<double> dist(0.0, 1.0);
+
+    struct WeightedCandidate
+    {
+        double key = 0.0;
+        living_world::integration::BotIdentityRecord record;
+    };
+
+    std::vector<WeightedCandidate> weighted;
+    weighted.reserve(results.size());
+    for (auto& rec : results)
+    {
+        double const weight = std::max(0.0001, GetLoadoutPersonalityWeight(rec));
+        double roll = dist(rng);
+        if (roll <= 0.0)
+            roll = std::numeric_limits<double>::min();
+
+        WeightedCandidate candidate;
+        candidate.key = std::pow(roll, 1.0 / weight);
+        candidate.record = std::move(rec);
+        weighted.push_back(std::move(candidate));
+    }
+
+    std::sort(
+        weighted.begin(),
+        weighted.end(),
+        [](WeightedCandidate const& left, WeightedCandidate const& right)
+        {
+            return left.key > right.key;
+        });
+
+    results.clear();
+    results.reserve(limit);
+    for (std::size_t i = 0; i < weighted.size() && i < limit; ++i)
+        results.push_back(std::move(weighted[i].record));
 }
 
 std::string MakeSuccessorName(std::uint8_t raceId, std::uint32_t parentIdentityId)
@@ -90,6 +190,8 @@ bool CreateLevelOneSuccessor(
     std::uint8_t raceId,
     std::uint8_t classId,
     std::string const& specKey,
+    std::string const& loadoutKey,
+    std::string const& personalityKey,
     std::uint8_t faction,
     std::uint32_t displayId,
     std::uint8_t gender,
@@ -110,32 +212,69 @@ bool CreateLevelOneSuccessor(
 
     CharacterDatabase.Execute(
         "INSERT INTO living_world_bot_identity "
-        "(name, race_id, class_id, spec_key, faction, display_id, gender, level, gear_tier, "
+        "(name, race_id, class_id, spec_key, loadout_key, faction, display_id, gender, level, gear_tier, personality_key, "
         "has_herbalism, has_mining, has_fishing, home_zone_id, home_anchor_point_key, home_bind_point_key, "
         "is_available, session_count, total_world_online_ms, "
         "world_online_ms_since_level, post_max_world_online_ms, active_world_session_ms, "
         "active_world_session_start, is_retired, successor_spawned, retired_at, last_seen_zone, last_seen_at) "
-        "VALUES ({}, {}, {}, {}, {}, {}, {}, 1, 1, 0, 0, 0, {}, {}, {}, 1, 0, 0, 0, 0, 0, NULL, 0, 0, NULL, NULL, NULL)",
+        "VALUES ({}, {}, {}, {}, {}, {}, {}, {}, 1, 1, {}, 0, 0, 0, {}, {}, {}, 1, 0, 0, 0, 0, 0, NULL, 0, 0, NULL, NULL, NULL)",
         QuoteCharactersString(successorName),
         raceId,
         successorClassId,
         QuoteCharactersString(successorSpecKey),
+        QuoteCharactersString(loadoutKey),
         faction,
         displayId,
         gender,
+        QuoteCharactersString(CanonicalizeWorldBotPersonalityKey(personalityKey)),
         homeZoneId == 0 ? std::string("NULL") : std::to_string(homeZoneId),
         homeAnchorPointKey.empty() ? std::string("NULL") : QuoteCharactersString(homeAnchorPointKey),
         homeBindPointKey.empty() ? std::string("NULL") : QuoteCharactersString(homeBindPointKey));
 
     LOG_INFO("server.worldserver",
-        "[LivingWorld] Spawned ledger successor for identity={} successor='{}' faction={} race={} class={} spec='{}' level=1",
+        "[LivingWorld] Spawned ledger successor for identity={} successor='{}' faction={} race={} class={} spec='{}' personality='{}' level=1",
         parentIdentityId,
         successorName,
         faction,
         raceId,
         successorClassId,
-        successorSpecKey);
+        successorSpecKey,
+        CanonicalizeWorldBotPersonalityKey(personalityKey));
     return true;
+}
+
+living_world::integration::BotIdentityRecord ReadBotIdentityRecord(Field const* f)
+{
+    living_world::integration::BotIdentityRecord rec;
+    rec.id           = f[0].Get<std::uint32_t>();
+    rec.name         = f[1].Get<std::string>();
+    rec.raceId       = f[2].Get<std::uint8_t>();
+    rec.classId      = f[3].Get<std::uint8_t>();
+    rec.specKey      = living_world::model::CanonicalizeBotSpecKey(f[4].Get<std::string>());
+    rec.loadoutKey   = f[5].IsNull() ? "" : f[5].Get<std::string>();
+    rec.faction      = f[6].Get<std::uint8_t>();
+    rec.displayId    = f[7].Get<std::uint32_t>();
+    rec.gender       = f[8].Get<std::uint8_t>();
+    rec.level        = f[9].Get<std::uint8_t>();
+    rec.gearTier     = f[10].Get<std::uint8_t>();
+    rec.personalityKey = f[11].IsNull() ? "uninterested" : CanonicalizeWorldBotPersonalityKey(f[11].Get<std::string>());
+    rec.hasHerbalism = f[12].Get<bool>();
+    rec.hasMining    = f[13].Get<bool>();
+    rec.hasFishing   = f[14].Get<bool>();
+    rec.homeZoneId   = f[15].IsNull() ? 0u : f[15].Get<std::uint32_t>();
+    rec.homeAnchorPointKey = f[16].IsNull() ? "" : f[16].Get<std::string>();
+    rec.homeBindPointKey   = f[17].IsNull() ? "" : f[17].Get<std::string>();
+    rec.sessionCount = f[18].Get<std::uint32_t>();
+    rec.totalWorldOnlineMs = f[19].Get<std::uint64_t>();
+    rec.worldOnlineMsSinceLevel = f[20].Get<std::uint64_t>();
+    rec.postMaxWorldOnlineMs = f[21].Get<std::uint64_t>();
+    rec.activeWorldSessionMs = f[22].Get<std::uint64_t>();
+    rec.gearRefreshPending = f[23].Get<bool>();
+    rec.lastGearRefreshBand = f[24].Get<std::uint8_t>();
+    rec.lastSeenZoneId = f[25].IsNull() ? 0u : f[25].Get<std::uint32_t>();
+    rec.isRetired    = f[26].Get<bool>();
+    rec.isAvailable  = f[27].Get<bool>();
+    return rec;
 }
 } // namespace
 
@@ -144,38 +283,84 @@ namespace living_world
 namespace integration
 {
 
+void SqlBotIdentityRepository::EnsureSchema() const
+{
+    if (!CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_identity LIKE 'gear_refresh_pending'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD COLUMN gear_refresh_pending TINYINT(1) NOT NULL DEFAULT 1 AFTER active_world_session_ms");
+    }
+
+    if (!CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_identity LIKE 'last_gear_refresh_band'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD COLUMN last_gear_refresh_band TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER gear_refresh_pending");
+    }
+}
+
+std::optional<BotIdentityRecord> SqlBotIdentityRepository::FindById(std::uint32_t id) const
+{
+    QueryResult result = CharacterDatabase.Query(
+        "SELECT id, name, race_id, class_id, spec_key, loadout_key, faction, display_id, "
+        "gender, level, gear_tier, personality_key, has_herbalism, has_mining, has_fishing, "
+        "home_zone_id, home_anchor_point_key, home_bind_point_key, "
+        "session_count, total_world_online_ms, world_online_ms_since_level, "
+        "post_max_world_online_ms, active_world_session_ms, gear_refresh_pending, last_gear_refresh_band, "
+        "last_seen_zone, is_retired, is_available "
+        "FROM living_world_bot_identity "
+        "WHERE id = {}",
+        id);
+
+    if (!result)
+        return std::nullopt;
+
+    return ReadBotIdentityRecord(result->Fetch());
+}
+
 std::vector<BotIdentityRecord> SqlBotIdentityRepository::LoadAvailable(
     std::uint8_t  faction,
     std::uint32_t limit) const
 {
     std::vector<BotIdentityRecord> results;
+    if (limit == 0)
+        return results;
+
+    std::uint32_t const candidateLimit = std::min<std::uint32_t>(
+        std::max<std::uint32_t>(limit, limit * 4),
+        256u);
 
     QueryResult result;
     if (faction == 0)
     {
         result = CharacterDatabase.Query(
-            "SELECT id, name, race_id, class_id, spec_key, faction, display_id, "
-            "gender, level, gear_tier, has_herbalism, has_mining, has_fishing, "
+            "SELECT id, name, race_id, class_id, spec_key, loadout_key, faction, display_id, "
+            "gender, level, gear_tier, personality_key, has_herbalism, has_mining, has_fishing, "
             "home_zone_id, home_anchor_point_key, home_bind_point_key, "
             "session_count, total_world_online_ms, world_online_ms_since_level, "
-            "post_max_world_online_ms, active_world_session_ms, last_seen_zone, is_retired "
+            "post_max_world_online_ms, active_world_session_ms, gear_refresh_pending, last_gear_refresh_band, "
+            "last_seen_zone, is_retired, is_available "
             "FROM living_world_bot_identity "
             "WHERE is_available = 1 AND is_retired = 0 "
             "ORDER BY RAND() LIMIT {}",
-            limit);
+            candidateLimit);
     }
     else
     {
         result = CharacterDatabase.Query(
-            "SELECT id, name, race_id, class_id, spec_key, faction, display_id, "
-            "gender, level, gear_tier, has_herbalism, has_mining, has_fishing, "
+            "SELECT id, name, race_id, class_id, spec_key, loadout_key, faction, display_id, "
+            "gender, level, gear_tier, personality_key, has_herbalism, has_mining, has_fishing, "
             "home_zone_id, home_anchor_point_key, home_bind_point_key, "
             "session_count, total_world_online_ms, world_online_ms_since_level, "
-            "post_max_world_online_ms, active_world_session_ms, last_seen_zone, is_retired "
+            "post_max_world_online_ms, active_world_session_ms, gear_refresh_pending, last_gear_refresh_band, "
+            "last_seen_zone, is_retired, is_available "
             "FROM living_world_bot_identity "
             "WHERE is_available = 1 AND is_retired = 0 AND faction = {} "
             "ORDER BY RAND() LIMIT {}",
-            faction, limit);
+            faction, candidateLimit);
     }
 
     if (!result)
@@ -183,33 +368,11 @@ std::vector<BotIdentityRecord> SqlBotIdentityRepository::LoadAvailable(
 
     do
     {
-        Field const* f = result->Fetch();
-        BotIdentityRecord rec;
-        rec.id           = f[0].Get<std::uint32_t>();
-        rec.name         = f[1].Get<std::string>();
-        rec.raceId       = f[2].Get<std::uint8_t>();
-        rec.classId      = f[3].Get<std::uint8_t>();
-        rec.specKey      = living_world::model::CanonicalizeBotSpecKey(f[4].Get<std::string>());
-        rec.faction      = f[5].Get<std::uint8_t>();
-        rec.displayId    = f[6].Get<std::uint32_t>();
-        rec.gender       = f[7].Get<std::uint8_t>();
-        rec.level        = f[8].Get<std::uint8_t>();
-        rec.gearTier     = f[9].Get<std::uint8_t>();
-        rec.hasHerbalism = f[10].Get<bool>();
-        rec.hasMining    = f[11].Get<bool>();
-        rec.hasFishing   = f[12].Get<bool>();
-        rec.homeZoneId   = f[13].IsNull() ? 0u : f[13].Get<std::uint32_t>();
-        rec.homeAnchorPointKey = f[14].IsNull() ? "" : f[14].Get<std::string>();
-        rec.homeBindPointKey   = f[15].IsNull() ? "" : f[15].Get<std::string>();
-        rec.sessionCount = f[16].Get<std::uint32_t>();
-        rec.totalWorldOnlineMs = f[17].Get<std::uint64_t>();
-        rec.worldOnlineMsSinceLevel = f[18].Get<std::uint64_t>();
-        rec.postMaxWorldOnlineMs = f[19].Get<std::uint64_t>();
-        rec.activeWorldSessionMs = f[20].Get<std::uint64_t>();
-        rec.lastSeenZoneId = f[21].IsNull() ? 0u : f[21].Get<std::uint32_t>();
-        rec.isRetired    = f[22].Get<bool>();
+        BotIdentityRecord rec = ReadBotIdentityRecord(result->Fetch());
         results.push_back(std::move(rec));
     } while (result->NextRow());
+
+    ApplyLoadoutSelectionBias(results, limit);
 
     return results;
 }
@@ -236,6 +399,20 @@ void SqlBotIdentityRepository::MarkAvailable(
         lastSeenZoneId, id);
 }
 
+void SqlBotIdentityRepository::UpdateGearRefreshState(
+    std::uint32_t id,
+    bool gearRefreshPending,
+    std::uint8_t lastGearRefreshBand) const
+{
+    CharacterDatabase.Execute(
+        "UPDATE living_world_bot_identity "
+        "SET gear_refresh_pending = {}, last_gear_refresh_band = {} "
+        "WHERE id = {}",
+        gearRefreshPending ? 1 : 0,
+        lastGearRefreshBand,
+        id);
+}
+
 void SqlBotIdentityRepository::CompleteWorldSession(
     std::uint32_t id,
     std::uint32_t lastSeenZoneId,
@@ -252,8 +429,8 @@ void SqlBotIdentityRepository::CompleteWorldSession(
     constexpr std::uint64_t RetirementGraceMs = 50ull * LevelHourMs;
 
     QueryResult result = CharacterDatabase.Query(
-        "SELECT level, total_world_online_ms, world_online_ms_since_level, "
-        "post_max_world_online_ms, is_retired, successor_spawned, race_id, class_id, spec_key, faction, display_id, gender, "
+        "SELECT name, level, total_world_online_ms, world_online_ms_since_level, "
+        "post_max_world_online_ms, is_retired, successor_spawned, race_id, class_id, spec_key, loadout_key, personality_key, faction, display_id, gender, gear_refresh_pending, "
         "home_zone_id, home_anchor_point_key, home_bind_point_key "
         "FROM living_world_bot_identity WHERE id = {}",
         id);
@@ -262,21 +439,25 @@ void SqlBotIdentityRepository::CompleteWorldSession(
         return;
 
     Field const* f = result->Fetch();
-    std::uint8_t level = f[0].Get<std::uint8_t>();
-    std::uint64_t totalWorldOnlineMs = f[1].Get<std::uint64_t>();
-    std::uint64_t worldOnlineMsSinceLevel = f[2].Get<std::uint64_t>();
-    std::uint64_t postMaxWorldOnlineMs = f[3].Get<std::uint64_t>();
-    bool isRetired = f[4].Get<bool>();
-    bool successorSpawned = f[5].Get<bool>();
-    std::uint8_t raceId = f[6].Get<std::uint8_t>();
-    std::uint8_t classId = f[7].Get<std::uint8_t>();
-    std::string specKey = living_world::model::CanonicalizeBotSpecKey(f[8].Get<std::string>());
-    std::uint8_t faction = f[9].Get<std::uint8_t>();
-    std::uint32_t displayId = f[10].Get<std::uint32_t>();
-    std::uint8_t gender = f[11].Get<std::uint8_t>();
-    std::uint32_t homeZoneId = f[12].IsNull() ? 0u : f[12].Get<std::uint32_t>();
-    std::string homeAnchorPointKey = f[13].IsNull() ? "" : f[13].Get<std::string>();
-    std::string homeBindPointKey = f[14].IsNull() ? "" : f[14].Get<std::string>();
+    std::string const name = f[0].Get<std::string>();
+    std::uint8_t level = f[1].Get<std::uint8_t>();
+    std::uint64_t totalWorldOnlineMs = f[2].Get<std::uint64_t>();
+    std::uint64_t worldOnlineMsSinceLevel = f[3].Get<std::uint64_t>();
+    std::uint64_t postMaxWorldOnlineMs = f[4].Get<std::uint64_t>();
+    bool isRetired = f[5].Get<bool>();
+    bool successorSpawned = f[6].Get<bool>();
+    std::uint8_t raceId = f[7].Get<std::uint8_t>();
+    std::uint8_t classId = f[8].Get<std::uint8_t>();
+    std::string specKey = living_world::model::CanonicalizeBotSpecKey(f[9].Get<std::string>());
+    std::string loadoutKey = f[10].IsNull() ? "" : f[10].Get<std::string>();
+    std::string personalityKey = f[11].IsNull() ? "uninterested" : CanonicalizeWorldBotPersonalityKey(f[11].Get<std::string>());
+    std::uint8_t faction = f[12].Get<std::uint8_t>();
+    std::uint32_t displayId = f[13].Get<std::uint32_t>();
+    std::uint8_t gender = f[14].Get<std::uint8_t>();
+    bool gearRefreshPending = f[15].Get<bool>();
+    std::uint32_t homeZoneId = f[16].IsNull() ? 0u : f[16].Get<std::uint32_t>();
+    std::string homeAnchorPointKey = f[17].IsNull() ? "" : f[17].Get<std::string>();
+    std::string homeBindPointKey = f[18].IsNull() ? "" : f[18].Get<std::string>();
 
     if (isRetired)
     {
@@ -317,6 +498,8 @@ void SqlBotIdentityRepository::CompleteWorldSession(
                     raceId,
                     classId,
                     specKey,
+                    loadoutKey,
+                    personalityKey,
                     faction,
                     displayId,
                     gender,
@@ -331,31 +514,93 @@ void SqlBotIdentityRepository::CompleteWorldSession(
         newPostMax += sessionWorldOnlineMs;
     }
 
+    std::uint8_t const oldGearBand = service::ComputeWorldBotGearRefreshBand(level);
+    std::uint8_t const newGearBand = service::ComputeWorldBotGearRefreshBand(newLevel);
+    bool const crossedGearBand = newGearBand != oldGearBand;
+    bool const newGearRefreshPending = gearRefreshPending || crossedGearBand;
     bool retireNow = newLevel >= MaxBotLevel && newPostMax >= RetirementGraceMs;
+
+    std::string const progressDetail =
+        "personality='" + personalityKey
+        + "' spec='" + specKey
+        + "' old_level=" + std::to_string(level)
+        + " new_level=" + std::to_string(newLevel)
+        + " session_world_online_ms=" + std::to_string(sessionWorldOnlineMs)
+        + " total_world_online_ms=" + std::to_string(newTotal)
+        + " world_online_ms_since_level=" + std::to_string(newSinceLevel)
+        + " post_max_world_online_ms=" + std::to_string(newPostMax)
+        + " gear_refresh_pending=" + std::to_string(newGearRefreshPending ? 1 : 0)
+        + " gear_refresh_band=" + std::to_string(newGearBand)
+        + " rebuild_on_next_spawn=" + std::to_string(newLevel != level ? 1 : 0)
+        + " retired=" + std::to_string(retireNow ? 1 : 0);
+
+    LOG_INFO("server.worldserver",
+        "[LivingWorld] WorldBotLedgerProgress identity={} name='{}' {}",
+        id,
+        name,
+        progressDetail);
+
+    if (newLevel != level)
+    {
+        living_world::integration::BotActivityLog::RecordAbstract(
+            name,
+            id,
+            "ledger_level_up",
+            progressDetail,
+            0,
+            lastSeenZoneId,
+            0.0f,
+            0.0f,
+            0.0f);
+    }
+
+    if (newSuccessorSpawned && !successorSpawned)
+    {
+        living_world::integration::BotActivityLog::RecordAbstract(
+            name,
+            id,
+            "ledger_successor_spawned",
+            "personality='" + personalityKey + "' spec='" + specKey + "' level=" + std::to_string(newLevel),
+            0,
+            lastSeenZoneId,
+            0.0f,
+            0.0f,
+            0.0f);
+    }
 
     if (retireNow)
     {
+        living_world::integration::BotActivityLog::RecordAbstract(
+            name,
+            id,
+            "ledger_retired",
+            progressDetail,
+            0,
+            lastSeenZoneId,
+            0.0f,
+            0.0f,
+            0.0f);
         CharacterDatabase.Execute(
             "UPDATE living_world_bot_identity "
             "SET level = {}, total_world_online_ms = {}, "
-            "world_online_ms_since_level = {}, post_max_world_online_ms = {}, successor_spawned = {}, "
+            "world_online_ms_since_level = {}, post_max_world_online_ms = {}, successor_spawned = {}, gear_refresh_pending = {}, "
             "is_available = 0, is_retired = 1, retired_at = NOW(), "
             "last_seen_zone = {}, last_seen_at = NOW(), "
             "active_world_session_ms = 0, active_world_session_start = NULL "
             "WHERE id = {}",
-            newLevel, newTotal, newSinceLevel, newPostMax, newSuccessorSpawned, lastSeenZoneId, id);
+            newLevel, newTotal, newSinceLevel, newPostMax, newSuccessorSpawned, newGearRefreshPending, lastSeenZoneId, id);
         return;
     }
 
     CharacterDatabase.Execute(
         "UPDATE living_world_bot_identity "
         "SET level = {}, total_world_online_ms = {}, "
-        "world_online_ms_since_level = {}, post_max_world_online_ms = {}, successor_spawned = {}, "
+        "world_online_ms_since_level = {}, post_max_world_online_ms = {}, successor_spawned = {}, gear_refresh_pending = {}, "
         "is_available = 1, is_retired = 0, retired_at = NULL, "
         "last_seen_zone = {}, last_seen_at = NOW(), "
         "active_world_session_ms = 0, active_world_session_start = NULL "
         "WHERE id = {}",
-        newLevel, newTotal, newSinceLevel, newPostMax, newSuccessorSpawned, lastSeenZoneId, id);
+        newLevel, newTotal, newSinceLevel, newPostMax, newSuccessorSpawned, newGearRefreshPending, lastSeenZoneId, id);
 }
 
 std::uint32_t SqlBotIdentityRepository::RecoverStaleActiveSessions() const

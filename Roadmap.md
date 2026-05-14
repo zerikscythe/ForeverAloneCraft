@@ -12,6 +12,8 @@
 > SQL compatibility rule: write and review all project SQL to remain compatible
 > with the deployed MySQL 8.0 target. Do not assume newer or variant-specific
 > DDL syntax is accepted without verification in the actual runtime environment.
+'rg' is not recognized as an internal or external command,
+operable program or batch file.
 
 ## Project Scope
 
@@ -36,6 +38,85 @@ details have been intentionally removed here rather than copied forward.
 
 The latest completed gameplay slice is ambient/world-bot runtime
 observability, live-validation support, and first-pass travel recovery.
+
+Newly started architecture slice:
+
+- world-bot virtual loadout stats v1 is now the active foundation for gear-like
+  world-bot scaling without real bags or equipped item instances
+- the agreed V1 boundary is deliberately narrow and Creature-safe:
+  - resolved from DB by `class_id` / `spec_key` / `loadout_key` / `gear_tier`
+  - applied as primary stat fields plus health/mana/armor/physical attack power
+  - explicit deferral of player-only item semantics such as resilience rating,
+    spell-power pipeline fidelity, trinket procs, gems, enchants, and set bonuses
+- the next live refinement on top of that foundation is **persistent invisible
+  assigned gear** for world bots:
+  - item IDs are assigned per slot from real `item_template` candidates
+  - the assignment is regenerated on **5-level gear refresh bands**
+  - refresh is deferred until the bot's **next spawn/materialization** rather
+    than mutating active bots in place
+  - assigned items are aggregated back into the same Creature-safe stat subset
+    already supported by the virtual loadout runtime
+- the next follow-up refinement after assigned-gear filtering is **player-like
+  stat baselines** for world bots:
+  - base health from player class+level data
+  - base mana from player class+level data for mana users
+  - primary stats from player race+class+level data
+  - armor baseline from agility like a fresh player baseline
+  - resistances reset away from arbitrary creature-template leftovers
+  - virtual loadout + assigned gear remain additive layers on top of that base
+- the next follow-up after player-like stat baselines is **prepared passive
+  spell application** for world bots:
+  - derive known spells exactly as preparation already does today
+  - auto-cast only the safe passive/self-aura subset at spawn
+  - primarily intended to make talent/class passive effects actually live on
+    the spawned creature-backed bot
+- the next follow-up after passive application is **player-valid talent
+  allocation** during world-bot preparation:
+  - spend template-authored talent points using player-like row/prerequisite/class
+    gating instead of raw template order alone
+  - fill talent ranks progressively across passes so prepared builds stay closer
+    to legal player trees
+  - include additional talent-learned spells in `knownSpellIds` when the learned
+    talent rank teaches them through AzerothCore's additional-talent-spell path
+- the next follow-up after legal talent allocation is **player-like attack power
+  baselines** for world bots:
+  - derive melee attack power from player-style class/level/stat formulas
+  - derive ranged attack power from player-style class/level/agility formulas
+  - keep virtual loadout and assigned-gear AP bonuses as additive layers above
+    that baseline
+- the next follow-up after attack power baselines is **player-like power-pool
+  spawn defaults**:
+  - mana and energy start full
+  - rage and runic power start at `0` instead of incorrectly spawning full
+- the next follow-up after power-pool spawn defaults is **player-like physical
+  damage baselines**:
+  - replace the leftover generic creature-template weapon damage seed with a
+    player-like baseline
+  - preserve the existing player-like attack power baseline through the normal
+    Creature damage recalculation path
+- the next follow-up after physical damage baselines is **player-like defensive
+  combat baselines**:
+  - replace generic creature dodge/parry/block chances for world bots with
+    player-like class/level/agility and shield-aware approximations
+  - inject those values at melee-outcome roll time so the implementation stays
+    Creature-backed and avoids player-only percentage fields
+- the next follow-up after defensive combat baselines is **player-like critical
+  strike baselines**:
+  - replace the leftover generic creature crit baseline for world-bot melee
+    attacks with player-like class/level/agility-derived values
+  - preserve victim-side resilience, defense-skill, and other runtime modifiers
+    already handled by AzerothCore
+- the next follow-up after melee critical strike baselines is **player-like spell
+  critical strike baselines**:
+  - bypass the default creature "no spell crit" behavior for world bots only
+  - replace the generic non-player spell-crit base with a player-like
+    class/level/intellect-derived caster baseline
+  - preserve downstream spell-taken crit suppression and existing aura-based
+    modifiers already handled by AzerothCore
+- this is also the first groundwork for eventual **cross-family PUG
+  survivability**, because account bots, guild bots, and world bots may all
+  eventually be used to fill dungeon/raid groups and therefore need a shared
+  higher-level loadout/build vocabulary even if their runtime item mechanics differ
 
 Completed recently:
 
@@ -296,13 +377,29 @@ directly, bypassing `AccountAltRuntimeCoordinator` entirely. Use the same
 as Tier 1. Primary use cases: rival guild members, supplemental party members,
 dungeon fillers.
 
-### Tier 3 — Ambient / Scripted World Bots
-Player-appearance creatures driven by server-side task scripts rather than a bot
-session. Use SmartAI or a custom task AI state machine (waypoints, emotes, object
-interactions). No combat class mechanics, no real player stats. Primary use cases:
-town ambient population, questers, harvesters, foragers, AH runners, crafters.
-See Phase 7 (Ambient World and Rival Guild Population) and the Guild Workforce
-System extension track.
+### Tier 3 — World Bots
+Manager-owned world actors that are not account-bound and are intended to scale
+as the broad living-world population layer.
+
+They should remain lightweight when offscreen and materialize only where real
+players can observe or interact with them, but they should still preserve as
+much player illusion as practical when spawned.
+
+Target traits:
+
+- persistent ledger-backed identity
+- class/spec identity with player-like combat doctrine direction
+- authored task/session runtime with abstract offscreen progression by default
+- simulated economy rather than real account inventory ownership
+- eventual reactive behavior based on personality, threat, and faction contact
+
+Primary use cases:
+
+- ambient town/world population
+- road traffic, gatherers, travelers, and patrols
+- manager-owned reassignment into support/service roles when needed
+
+See `bot_expansion.md` for the current long-form target model.
 
 **Key architectural rule:** the WoW server is fully authoritative. Once any bot
 character is loaded into the world — regardless of tier — it can move, cast,
@@ -344,6 +441,7 @@ What this means in practice:
 4. expand content/data surfaces once the runtime is stable
    - richer task points, routes, and playlist coverage
    - broader identity seeding and race/gender name pools
+   - move toward a large normalized world-bot ledger instead of tiny hand seeds
 
 Reason for priority:
 
@@ -370,6 +468,155 @@ Current agreed design workstream:
 - keep larger gameplay loops (gather -> fight -> resume, service roles,
   reassignment) as explicit next slices rather than assuming they are already
   complete
+- target a mature available world-bot ledger of roughly `6,000` identities with
+  a baseline `50/50` faction split (`~3,000 Alliance / ~3,000 Horde`)
+- distribute that ledger on a normalized level curve across `1-80` rather than
+  a flat uniform spread
+- once a world bot reaches `80`, continue advancing its **gear progression**
+  rather than its level progression: new 80s begin near pre-raid power and the
+  final `10 hours` before retirement should represent full endgame gear stats
+- evolve seeding toward plausible medium-pop realm class/spec mixes once the
+  baseline faction/level distribution is stable
+- treat world-bot identity as richer than name/race/class/spec alone; long-term
+  ledger traits should include professions, combat profile, talent build, and
+  personality policy
+- adopt personality-driven faction-contact behavior as a planned runtime axis:
+  `uninterested`, `opportunistic`, `aggressive`, `coward`
+
+### Required world-bot identity target (new clarified requirement)
+
+The current codebase still has a much smaller live identity pool, but the
+required target state is now:
+
+- maintain an available pool of roughly `6,000` world bots
+- keep that pool near a `50/50` Alliance/Horde split
+- seed level bands using a normalized population curve from `1-80`
+- assign each ledger bot a richer identity/build package including:
+  - name
+  - race
+  - class/spec
+  - professions
+  - combat profile + talent tree/build
+  - personality (`uninterested`, `opportunistic`, `aggressive`, `coward`)
+
+This should be treated as the design target for future seeding, replacement, and
+world-bot runtime work even where the current live implementation still lags.
+
+### Next concrete implementation slice: world-bot spawn/materialization preparation service
+
+To keep future implementation aligned, the next best concrete slice is to build
+the **world-bot spawn/materialization preparation service** before attempting
+the larger 6k-ledger expansion.
+
+Why this goes first:
+
+- it bridges the current abstract/materialized runtime to the intended richer
+  world-bot identity/build model
+- it ensures world bots materialize with a resolved build package instead of
+  only presentation fields
+- it de-risks later large-scale ledger generation by making sure the runtime
+  consumes identity/build data correctly first
+
+#### Goal
+
+When a world bot materializes, it should no longer be only:
+
+- name
+- race
+- class
+- spec
+- level
+
+It should materialize with a resolved:
+
+- canonical spec key
+- role key
+- default combat profile
+- talent template
+- current-level talent allocation
+- derived known spell set
+
+#### Planned deliverables
+
+1. **New preparation service**
+   - add `WorldBotPreparationService.h/.cpp`
+   - responsibility: assemble a deterministic prepared build package from a
+     `living_world_bot_identity` row
+
+2. **Prepared build model/value object**
+   - add a pure model/value type such as `WorldBotPreparedBuild`
+   - include canonical spec, resolved role, selected combat profile/template,
+     allocated talent state, and derived spell payload
+
+3. **AI integration at materialization time**
+   - wire the new service into `WorldBotCreatureAI::SetIdentityAndSession(...)`
+   - cache the prepared build on the AI instance instead of relying only on
+     lazy partial runtime derivation
+
+4. **Known-spell derivation from build state**
+   - replace the current partial world-bot known-spell approximation with a
+     build-derived spell payload used by `PrepareForWorldBot(...)`
+
+5. **Explicit failure/trace logging**
+   - log missing canonical spec resolution
+   - log missing default combat profile
+   - log missing talent template
+   - log allocated talent count and derived spell count
+
+#### Existing code and schema to reuse
+
+- `living_world_bot_identity`
+  - `modules/mod-living-world/data/sql/characters/living_world_bot_identity.sql`
+  - `modules/mod-living-world/src/integration/SqlBotIdentityRepository.*`
+- default combat profile repositories
+  - `modules/mod-living-world/src/integration/SqlBotCombatDefaultProfileRepository.*`
+- talent template repositories
+  - `modules/mod-living-world/src/integration/SqlBotTalentTemplateRepository.*`
+- existing combat prep/eval path
+  - `modules/mod-living-world/src/service/BotCombatProfilePreparationService.*`
+  - `modules/mod-living-world/src/service/BotCombatRuntimeEvaluator.*`
+  - `modules/mod-living-world/src/ai/WorldBotCreatureAI.*`
+
+#### Important scope boundary
+
+This slice should **not** also try to deliver:
+
+- the 6k ledger generator
+- profession/personality schema expansion
+- full faction-contact personality runtime
+- full exact-position persistence overhaul
+
+Those should follow only after the build-preparation path is correct.
+
+#### Definition of done
+
+This slice is complete when a materialized world bot:
+
+- canonicalizes its spec key
+- resolves a role key
+- resolves a matching default combat profile
+- resolves a matching talent template
+- computes a current-level build from that template
+- derives a believable spell payload from that build
+- hands that payload into the combat profile preparation/runtime evaluator path
+
+#### Suggested files for the slice
+
+New:
+
+- `modules/mod-living-world/src/model/WorldBotPreparedBuild.h`
+- `modules/mod-living-world/src/service/WorldBotPreparationService.h`
+- `modules/mod-living-world/src/service/WorldBotPreparationService.cpp`
+- `modules/mod-living-world/test/WorldBotPreparationServiceTest.cpp`
+
+Modify:
+
+- `modules/mod-living-world/src/ai/WorldBotCreatureAI.h`
+- `modules/mod-living-world/src/ai/WorldBotCreatureAI.cpp`
+- `modules/mod-living-world/mod-living-world.cmake`
+
+This section should serve as the handoff checklist if a later agent/thread
+needs to resume the world-bot expansion work.
 
 ### Combat Doctrine Direction: Data-Driven by Default
 

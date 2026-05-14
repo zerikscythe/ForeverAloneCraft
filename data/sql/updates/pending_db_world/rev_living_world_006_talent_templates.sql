@@ -43,7 +43,8 @@ INSERT INTO `living_world_bot_talent_template`
     (16, 'Affliction', 9, 'Affliction Warlock DPS'),
     (17, 'Balance', 11, 'Balance Druid DPS'),
     (18, 'Feral', 11, 'Feral Druid Tank'),
-    (19, 'Restoration', 11, 'Restoration Druid Healer')
+    (19, 'Restoration', 11, 'Restoration Druid Healer'),
+    (20, 'Arcane', 8, 'Arcane Mage DPS')
 ON DUPLICATE KEY UPDATE `display_name` = VALUES(`display_name`);
 
 INSERT INTO `living_world_bot_talent_template_entry`
@@ -555,7 +556,35 @@ INSERT INTO `living_world_bot_talent_template_entry`
     ( 19,  201,   762, 'Starlight Wrath', 5),
     ( 19,  210,   783, 'Moonglow', 3),
     ( 19,  221,   789, 'Nature\'s Grace', 3),
-    ( 19,  250,  1784, 'Dreamstate', 3)
+    ( 19,  250,  1784, 'Dreamstate', 3),
+    ( 20,    0,    74, 'Arcane Subtlety', 2),
+    ( 20,    1,    76, 'Arcane Focus', 3),
+    ( 20,   12,    75, 'Arcane Concentration', 5),
+    ( 20,   20,    82, 'Magic Attunement', 2),
+    ( 20,   21,    81, 'Spell Impact', 3),
+    ( 20,   22,  1845, 'Student of the Mind', 1),
+    ( 20,   23,  2211, 'Focus Magic', 1),
+    ( 20,   32,  1142, 'Arcane Meditation', 3),
+    ( 20,   33,  2222, 'Torment the Weak', 3),
+    ( 20,   41,    86, 'Presence of Mind', 1),
+    ( 20,   43,    77, 'Arcane Mind', 5),
+    ( 20,   51,   421, 'Arcane Instability', 3),
+    ( 20,   52,  1725, 'Arcane Potency', 2),
+    ( 20,   60,  1727, 'Arcane Empowerment', 3),
+    ( 20,   61,    87, 'Arcane Power', 1),
+    ( 20,   71,  1843, 'Arcane Flows', 2),
+    ( 20,   72,  1728, 'Mind Mastery', 5),
+    ( 20,   82,  2209, 'Missile Barrage', 5),
+    ( 20,   91,  1846, 'Netherwind Presence', 3),
+    ( 20,   92,  1826, 'Spell Power', 2),
+    ( 20,  101,  1847, 'Arcane Barrage', 1),
+    ( 20,  201,  1141, 'Incineration', 3),
+    ( 20,  301,    37, 'Improved Frostbolt', 2),
+    ( 20,  302,    62, 'Ice Floes', 3),
+    ( 20,  310,    73, 'Ice Shards', 3),
+    ( 20,  312,  1649, 'Precision', 3),
+    ( 20,  321,    69, 'Icy Veins', 1)
 ON DUPLICATE KEY UPDATE
     `desired_rank` = VALUES(`desired_rank`),
     `talent_name`  = VALUES(`talent_name`);
+

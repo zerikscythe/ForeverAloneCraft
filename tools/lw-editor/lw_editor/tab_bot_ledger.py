@@ -551,6 +551,7 @@ class BotLedgerTab(ttk.Frame):
             f"Race: {self._race_label(row, with_id=True)}",
             f"Class: {self._class_label(row, with_id=True)}",
             f"Spec: {_spec_label(row)}",
+            f"Personality: {_humanize_identifier(row.get('personality_key', 'uninterested'))}",
             f"Faction: {self._faction_label(row, with_id=True)}",
             f"Level: {row.get('level', '')}",
             f"Gear Tier: {row.get('gear_tier', '')}",

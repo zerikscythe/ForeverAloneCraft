@@ -26,6 +26,7 @@
 #include "service/BotOocConfigService.h"
 #include "integration/SqlBotOocConfigRepository.h"
 #include "service/BotCombatDoctrineResolver.h"
+#include "service/BotCombatActionExecution.h"
 #include "service/BotCombatProfilePreparationService.h"
 #include "service/BotCombatRuntimeEvaluator.h"
 #include "service/BotGlobalConfigService.h"
@@ -491,6 +492,9 @@ bool TryExecuteProfileRotation(Unit* bot, Player* owner, Unit* primaryTarget)
     context.owner = owner;
     context.primaryTarget = primaryTarget;
     context.rotationWaitMs = preparedProfile.resolution.profile.settings.rotationWaitMs;
+    context.defaultAoEMode = preparedProfile.resolution.profile.settings.defaultAoEMode;
+    context.defaultAoEMinTargets = preparedProfile.resolution.profile.settings.defaultAoEMinTargets;
+    context.defaultAoEScanRadius = preparedProfile.resolution.profile.settings.defaultAoEScanRadius;
     context.availableSpells = preparedProfile.availableSpells;
 
     auto const handleEvaluationResult =
@@ -532,19 +536,26 @@ bool TryExecuteProfileRotation(Unit* bot, Player* owner, Unit* primaryTarget)
 
             LOG_INFO(
                 "server.worldserver",
-                "[LivingWorldDebug] ProfileActionCast bot='{}' guid={} phase={} entryId={} actionId={} spellId={} targetKey='{}' targetGuid={} breaksCurrentCast={}",
+                "[LivingWorldDebug] ProfileActionCast bot='{}' guid={} phase={} entryId={} actionId={} actionType={} spellId={} itemId={} simulatedItemUse={} targetKey='{}' targetGuid={} aoeMode={} useDestination={} dest=({:.2f},{:.2f},{:.2f}) breaksCurrentCast={}",
                 bot->GetName(),
                 bot->GetGUID().GetCounter(),
                 phase,
                 evaluatedAction.entryId,
                 evaluatedAction.actionId,
+                static_cast<std::uint32_t>(evaluatedAction.actionType),
                 evaluatedAction.spellId,
+                evaluatedAction.itemId,
+                evaluatedAction.simulatedItemUse,
                 evaluatedAction.targetKey,
                 evaluatedAction.target ? evaluatedAction.target->GetGUID().GetCounter() : 0,
+                evaluatedAction.aoeMode ? static_cast<std::int32_t>(*evaluatedAction.aoeMode) : -1,
+                evaluatedAction.useDestination,
+                evaluatedAction.destinationX,
+                evaluatedAction.destinationY,
+                evaluatedAction.destinationZ,
                 evaluatedAction.breaksCurrentCast);
 
-            bot->CastSpell(evaluatedAction.target, evaluatedAction.spellId, false);
-            return true;
+            return service::CastEvaluatedAction(bot, evaluatedAction);
         };
 
     if (handleEvaluationResult(

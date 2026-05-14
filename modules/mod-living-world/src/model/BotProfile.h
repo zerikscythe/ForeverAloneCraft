@@ -19,7 +19,7 @@ struct BotProfile
     BotFaction faction = BotFaction::Neutral;
     std::uint8_t level = 1;
     std::string guildName;
-    BotPersonality personality = BotPersonality::Indifferent;
+    BotPersonality personality = BotPersonality::Uninterested;
     BotRole preferredRole = BotRole::Unknown;
     std::vector<std::uint32_t> preferredZoneIds;
 };

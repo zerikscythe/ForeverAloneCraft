@@ -727,6 +727,17 @@ class DBCtx:
          "  KEY idx_zone_content_subject (content_kind, subject_id, subject_key)"
          ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"),
 
+        ("2026_21_world_bot_identity_personality_key",
+         "chars",
+         "ALTER TABLE living_world_bot_identity "
+         "ADD COLUMN personality_key VARCHAR(32) NOT NULL DEFAULT 'uninterested' AFTER gear_tier"),
+
+        ("2026_22_world_bot_identity_personality_seed",
+         "chars",
+         "UPDATE living_world_bot_identity "
+         "SET personality_key='uninterested' "
+         "WHERE personality_key IS NULL OR personality_key = ''"),
+
     ]
 
     def _close_ssh_tunnel(self):
@@ -772,6 +783,12 @@ class DBCtx:
 
     def load_world_bot_statuses(self, active_only: bool = False) -> list[dict]:
         where = "WHERE i.is_available = 0 AND i.is_retired = 0" if active_only else ""
+        personality_select = "'uninterested' AS personality_key"
+        try:
+            if self.q(self.chars, "SHOW COLUMNS FROM living_world_bot_identity LIKE 'personality_key'"):
+                personality_select = "COALESCE(NULLIF(i.personality_key, ''), 'uninterested') AS personality_key"
+        except Exception:
+            pass
         return self.q(self.chars,
             f"""
             SELECT
@@ -782,10 +799,13 @@ class DBCtx:
                 i.spec_key,
                 i.faction,
                 i.level,
+                {personality_select},
                 i.is_available,
                 i.is_retired,
                 i.session_count,
                 i.total_world_online_ms,
+                i.world_online_ms_since_level,
+                i.post_max_world_online_ms,
                 i.active_world_session_ms,
                 i.active_world_session_start,
                 i.last_seen_zone,
@@ -1935,6 +1955,84 @@ class DBCtx:
             "REPLACE INTO character_inventory (guid, bag, slot, item) VALUES (%s,0,%s,%s)",
             (character_guid, slot_id, item_guid))
         return item_guid
+
+    # ── Default talent templates (acore_world) ───────────────────────────────
+
+    def load_default_talent_template(self, spec_key: str, class_id: int) -> dict | None:
+        rows = self.q(self.world,
+            "SELECT template_id, spec_key, class_id, display_name "
+            "FROM living_world_bot_talent_template "
+            "WHERE LOWER(spec_key)=LOWER(%s) AND class_id=%s "
+            "LIMIT 1",
+            ((spec_key or "").strip(), int(class_id or 0)))
+        if not rows:
+            return None
+        tmpl = dict(rows[0])
+        tmpl["entries"] = self.q(self.world,
+            "SELECT entry_id, priority, talent_id, talent_name, desired_rank "
+            "FROM living_world_bot_talent_template_entry "
+            "WHERE template_id=%s ORDER BY priority ASC, talent_id ASC",
+            (int(tmpl["template_id"]),))
+        return tmpl
+
+    def ensure_default_talent_template(self, spec_key: str, class_id: int, display_name: str) -> int:
+        return self.run(self.world,
+            "INSERT INTO living_world_bot_talent_template "
+            "(spec_key, class_id, display_name) VALUES (%s,%s,%s) "
+            "ON DUPLICATE KEY UPDATE "
+            "display_name=VALUES(display_name), "
+            "template_id=LAST_INSERT_ID(template_id)",
+            ((spec_key or "").strip(), int(class_id or 0), (display_name or "").strip()))
+
+    def upsert_default_talent_template_entry(self, spec_key: str, class_id: int,
+                                             display_name: str, talent_id: int,
+                                             talent_name: str, desired_rank: int,
+                                             priority: int):
+        tmpl_id = self.ensure_default_talent_template(spec_key, class_id, display_name)
+        desired_rank = int(desired_rank or 0)
+        if desired_rank <= 0:
+            self.run(self.world,
+                "DELETE FROM living_world_bot_talent_template_entry "
+                "WHERE template_id=%s AND talent_id=%s",
+                (int(tmpl_id), int(talent_id or 0)))
+            return
+        self.run(self.world,
+            "INSERT INTO living_world_bot_talent_template_entry "
+            "(template_id, priority, talent_id, talent_name, desired_rank) "
+            "VALUES (%s,%s,%s,%s,%s) "
+            "ON DUPLICATE KEY UPDATE "
+            "priority=VALUES(priority), "
+            "talent_name=VALUES(talent_name), "
+            "desired_rank=VALUES(desired_rank)",
+            (int(tmpl_id), int(priority or 0), int(talent_id or 0),
+             (talent_name or "").strip(), desired_rank))
+
+    def reset_default_talent_template(self, spec_key: str, class_id: int):
+        tmpl = self.load_default_talent_template(spec_key, class_id)
+        if not tmpl:
+            return
+        self.run(self.world,
+            "DELETE FROM living_world_bot_talent_template_entry WHERE template_id=%s",
+            (int(tmpl["template_id"]),))
+
+    def copy_default_talent_template(self, source_spec_key: str, source_class_id: int,
+                                     dest_spec_key: str, dest_class_id: int,
+                                     dest_display_name: str):
+        source = self.load_default_talent_template(source_spec_key, source_class_id)
+        self.reset_default_talent_template(dest_spec_key, dest_class_id)
+        if not source:
+            self.ensure_default_talent_template(dest_spec_key, dest_class_id, dest_display_name)
+            return
+        for row in source.get("entries", []):
+            self.upsert_default_talent_template_entry(
+                dest_spec_key,
+                dest_class_id,
+                dest_display_name,
+                int(row.get("talent_id") or 0),
+                row.get("talent_name", ""),
+                int(row.get("desired_rank") or 0),
+                int(row.get("priority") or 0),
+            )
 
     # ── Default profiles (acore_world) ──────────────────────────────────────
 

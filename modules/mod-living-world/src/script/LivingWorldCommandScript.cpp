@@ -965,7 +965,7 @@ model::RosterEntry BuildRosterEntry(
     entry.controllableProfile.profile.level = level;
     entry.controllableProfile.profile.guildName = "Account Alts";
     entry.controllableProfile.profile.personality =
-        model::BotPersonality::Indifferent;
+        model::BotPersonality::Uninterested;
     entry.controllableProfile.profile.preferredRole = ToDefaultRole(classId);
     entry.controllableProfile.canBePlayerControlled = false;
     entry.controllableProfile.canEarnProgression = true;

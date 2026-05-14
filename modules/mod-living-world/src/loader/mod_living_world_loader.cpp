@@ -2,6 +2,7 @@ void AddSC_LivingWorldCommandScript();
 void AddSC_LivingWorldPlayerScript();
 void AddSC_LivingWorldWorldScript();
 void AddSC_WorldBotCreatureAI();
+void AddSC_WorldBotDefensiveCombatUnitScript();
 
 void Addmod_living_worldScripts()
 {
@@ -9,4 +10,5 @@ void Addmod_living_worldScripts()
     AddSC_LivingWorldPlayerScript();
     AddSC_LivingWorldWorldScript();
     AddSC_WorldBotCreatureAI();
+    AddSC_WorldBotDefensiveCombatUnitScript();
 }

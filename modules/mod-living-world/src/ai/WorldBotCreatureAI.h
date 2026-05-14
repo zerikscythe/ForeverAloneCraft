@@ -4,10 +4,14 @@
 #include "ai/TravelWatchdog.h"
 #include "integration/BotActivityLog.h"
 #include "integration/SqlBotIdentityRepository.h"
+#include "model/WorldBotPreparedBuild.h"
 #include "service/BotActivitySessionComposer.h"
 #include "service/BotCombatProfilePreparationService.h"
+#include "service/BotCombatRuntimeEvaluator.h"
 
 #include "CreatureAI.h"
+
+#include <unordered_set>
 
 class GameObject;
 
@@ -57,6 +61,7 @@ public:
     void JustReachedHome() override;
 
     bool BuildRuntimeSnapshot(RuntimeSnapshot& out) const;
+    [[nodiscard]] bool HasShieldBaseline() const { return _hasShieldBaseline; }
 
 private:
     GameObject* ResolveGatherTarget() const;
@@ -66,14 +71,25 @@ private:
     void AdvanceStep();
     void CompletSession();
     void RecordPositionSnapshot(char const* eventType, std::string const& detail) const;
+    void RecordCombatTrace(std::string const& detail);
     void SuspendCurrentStepForCombat(Unit* target);
     void ResumeSuspendedStepAfterCombat();
     void EnsureCombatProfile();
     void InvalidateCombatProfile();
+    bool IsDebugCombatManaDrainIdentity() const;
+    bool ApplyDebugCombatManaTarget(Unit* target, char const* traceDecision, bool logAttempt = false);
+    void MaybeApplyDebugCombatManaDrain(Unit* target);
     void ResetGatherState();
     bool IsGatherNodeForStep(GameObject const* go, service::AmbientStep const& step) const;
     GameObject* FindNearestGatherNode(service::AmbientStep const& step) const;
     std::string DescribeCurrentStep() const;
+    std::string BuildCombatTraceDetail(
+        char const* phase,
+        service::BotCombatEvaluationResult const& result,
+        Unit* target) const;
+    std::string BuildCombatMovementTraceDetail(
+        char const* decision,
+        Unit* target) const;
 
     // Apply identity fields (level, display_id) to the creature.
     void ApplyIdentityToCreature();
@@ -87,13 +103,21 @@ private:
     bool          _sessionReady  = false;
     bool          _sessionDone   = false;
     bool          _combatSuspendedStep = false;
+    bool          _preparedBuildReady = false;
     bool          _combatProfilePrepared = false;
     bool          _gatherMovingToNode = false;
     std::uint8_t  _gatherCompletedCycles = 0;
     std::uint64_t _worldOnlineMs = 0;
     TravelWatchdogState _travelWatchdog;
+    model::WorldBotPreparedBuild _preparedBuild;
     service::BotCombatPreparedProfile _combatPreparedProfile;
     ObjectGuid     _gatherTargetGuid;
+    std::string    _lastCombatTraceDetail;
+    std::uint64_t  _lastCombatTraceWorldMs = 0;
+    std::uint64_t  _lastDebugCombatManaDrainWorldMs = 0;
+    bool           _debugCombatManaGemObserved = false;
+    bool           _hasShieldBaseline = false;
+    std::unordered_set<std::uint32_t> _usedSimulatedItemsThisCombat;
 
     // Accumulates UpdateAI diff for the 500ms tick gate.
     std::uint32_t _tickAccum     = 0;

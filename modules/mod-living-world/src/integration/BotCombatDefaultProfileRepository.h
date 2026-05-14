@@ -24,7 +24,8 @@ public:
         std::string const& specKey,
         std::string const& roleKey,
         std::string const& classKey = "",
-        std::string const& contextKey = "PvE") const = 0;
+        std::string const& contextKey = "PvE",
+        std::string const& variantKey = "") const = 0;
 };
 } // namespace integration
 } // namespace living_world

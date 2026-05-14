@@ -1,15 +1,18 @@
 #include "ai/WorldBotCreatureAI.h"
 
+#include "Config.h"
 #include "Creature.h"
 #include "CreatureAIImpl.h"
 #include "CellImpl.h"
 #include "DataStores/DBCStores.h"
+#include "Globals/ObjectMgr.h"
 #include "Log.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "GameObject.h"
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
+#include "ItemTemplate.h"
 #include "ScriptMgr.h"
 #include "SharedDefines.h"
 #include "SpellInfo.h"
@@ -18,13 +21,24 @@
 #include "integration/SqlBotCombatDefaultProfileRepository.h"
 #include "integration/SqlBotCombatProfileRepository.h"
 #include "integration/SqlBotCombatProfileSelectionRepository.h"
+#include "integration/SqlBotAssignedGearRepository.h"
+#include "integration/SqlBotTalentTemplateRepository.h"
+#include "integration/SqlBotVirtualLoadoutRepository.h"
 #include "service/BotCombatDoctrineResolver.h"
+#include "service/BotCombatActionExecution.h"
 #include "service/BotCombatRuntimeEvaluator.h"
 #include "service/BotContextService.h"
 #include "service/SimpleBotCombatSpecRoleResolver.h"
+#include "service/WorldBotAssignedGearService.h"
+#include "service/WorldBotAttackPowerBaseline.h"
+#include "service/WorldBotPassiveSpellRules.h"
+#include "service/WorldBotPhysicalDamageBaseline.h"
+#include "service/WorldBotPlayerStatBaseline.h"
+#include "service/WorldBotPreparationService.h"
 #include "model/BotSpecKey.h"
 
 #include <algorithm>
+#include <sstream>
 
 namespace living_world
 {
@@ -36,6 +50,7 @@ namespace
 constexpr float GatherSearchRadius = 200.0f;
 constexpr float GatherInteractRange = 6.0f;
 constexpr float GatherAnchorReturnDistance = 60.0f;
+constexpr std::uint32_t DebugManaGemItemId = 33312;
 
 integration::SqlBotIdentityRepository& GetIdentityRepo()
 {
@@ -64,6 +79,25 @@ service::BotCombatDoctrineResolver& GetDoctrineResolver()
         specRoleResolver,
         GetCombatContextService());
     return doctrineResolver;
+}
+
+service::WorldBotPreparationService& GetWorldBotPreparationService()
+{
+    static integration::SqlBotCombatDefaultProfileRepository defaultProfileRepository;
+    static integration::SqlBotTalentTemplateRepository talentTemplateRepository;
+    static integration::SqlBotVirtualLoadoutRepository virtualLoadoutRepository;
+    static service::WorldBotPreparationService preparationService(
+        defaultProfileRepository,
+        talentTemplateRepository,
+        virtualLoadoutRepository);
+    return preparationService;
+}
+
+service::WorldBotAssignedGearService& GetWorldBotAssignedGearService()
+{
+    static integration::SqlBotAssignedGearRepository assignedGearRepository;
+    static service::WorldBotAssignedGearService assignedGearService(assignedGearRepository);
+    return assignedGearService;
 }
 
 service::BotCombatProfilePreparationService& GetProfilePreparationService()
@@ -143,149 +177,102 @@ std::string DescribeTravelRecovery(
         + std::to_string(step.z) + ")";
 }
 
-std::string ResolveRoleKey(std::uint8_t classId, std::string const& specKey)
+std::uint32_t CountNearbyHostileUnits(Unit* subject, float radius)
 {
-    if (classId == CLASS_PRIEST)
-    {
-        if (specKey == "Holy" || specKey == "Discipline")
-            return "HEAL";
-        return "DPS";
-    }
+    if (!subject || radius <= 0.0f)
+        return 0;
 
-    if (classId == CLASS_PALADIN)
-    {
-        if (specKey == "Holy")
-            return "HEAL";
-        if (specKey == "Protection")
-            return "TANK";
-        return "DPS";
-    }
-
-    if (classId == CLASS_DRUID)
-    {
-        if (specKey == "Restoration")
-            return "HEAL";
-        if (specKey == "Feral")
-            return "TANK";
-        return "DPS";
-    }
-
-    if (classId == CLASS_SHAMAN)
-    {
-        if (specKey == "Restoration")
-            return "HEAL";
-        return "DPS";
-    }
-
-    if (classId == CLASS_WARRIOR)
-        return specKey == "Protection" ? "TANK" : "DPS";
-
-    if (classId == CLASS_DEATH_KNIGHT)
-        return specKey == "Blood" ? "TANK" : "DPS";
-
-    return "DPS";
+    std::vector<Unit*> targets;
+    Acore::AnyUnfriendlyUnitInObjectRangeCheck check(subject, subject, radius);
+    Acore::UnitListSearcher<Acore::AnyUnfriendlyUnitInObjectRangeCheck> searcher(subject, targets, check);
+    Cell::VisitObjects(subject, searcher, radius);
+    return static_cast<std::uint32_t>(targets.size());
 }
 
-bool IsSpellUsableForLevel(std::uint32_t spellId, std::uint8_t level)
+std::string DescribeSpellForTrace(std::uint32_t spellId)
 {
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
     if (!spellInfo)
-        return false;
+        return std::to_string(spellId);
 
-    std::uint32_t const requiredLevel = std::max(spellInfo->SpellLevel, spellInfo->BaseLevel);
-    return requiredLevel == 0 || requiredLevel <= level;
+    char const* name = spellInfo->SpellName[0];
+    if (!name || !*name)
+        return std::to_string(spellId);
+
+    return std::string(name) + "(" + std::to_string(spellId) + ")";
 }
 
-void AddKnownSpellForAction(
-    std::unordered_set<std::uint32_t>& knownSpells,
-    model::BotCombatActionDefinition const& action,
-    std::uint8_t level)
+std::string DescribeCombatActionForTrace(service::BotCombatEvaluatedAction const& action)
 {
-    if (action.actionType != model::BotCombatActionType::Spell || action.spellBaseId == 0)
-        return;
+    if (action.actionType == model::BotCombatActionType::Item)
+        return "Item(" + std::to_string(action.itemId) + ")";
 
-    switch (action.rankMode)
-    {
-        case model::BotCombatRankMode::ExactSpellId:
-            if (IsSpellUsableForLevel(action.spellBaseId, level))
-                knownSpells.insert(action.spellBaseId);
-            return;
-
-        case model::BotCombatRankMode::SpecificRank:
-        {
-            if (action.rankValue == 0)
-                return;
-
-            std::uint32_t candidate = sSpellMgr->GetFirstSpellInChain(action.spellBaseId);
-            if (!candidate)
-                candidate = action.spellBaseId;
-
-            for (std::uint8_t rank = 1; candidate; ++rank)
-            {
-                if (rank == action.rankValue)
-                {
-                    if (IsSpellUsableForLevel(candidate, level))
-                        knownSpells.insert(candidate);
-                    return;
-                }
-
-                candidate = sSpellMgr->GetNextSpellInChain(candidate);
-            }
-
-            return;
-        }
-
-        case model::BotCombatRankMode::BestKnown:
-        {
-            std::uint32_t candidate = sSpellMgr->GetLastSpellInChain(action.spellBaseId);
-            if (!candidate)
-                candidate = action.spellBaseId;
-
-            while (candidate)
-            {
-                if (IsSpellUsableForLevel(candidate, level))
-                {
-                    knownSpells.insert(candidate);
-                    return;
-                }
-
-                candidate = sSpellMgr->GetPrevSpellInChain(candidate);
-            }
-
-            return;
-        }
-    }
+    return DescribeSpellForTrace(action.spellId);
 }
 
-std::unordered_set<std::uint32_t> BuildWorldBotKnownSpells(
-    Creature* creature,
-    service::BotCombatDoctrineResolution const& resolution,
-    std::uint8_t level)
+char const* DescribeAoEMode(std::optional<model::BotCombatAoEMode> aoeMode)
 {
-    std::unordered_set<std::uint32_t> knownSpells;
-    if (!creature)
-        return knownSpells;
+    if (!aoeMode)
+        return "none";
 
-    for (std::uint8_t i = 0; i < MAX_CREATURE_SPELLS; ++i)
+    switch (*aoeMode)
     {
-        if (creature->m_spells[i] != 0 && IsSpellUsableForLevel(creature->m_spells[i], level))
-            knownSpells.insert(creature->m_spells[i]);
+        case model::BotCombatAoEMode::Centroid:
+            return "centroid";
+        case model::BotCombatAoEMode::Feet:
+            return "feet";
     }
 
-    auto addEntries =
-        [&](std::vector<model::BotCombatEntryDefinition> const& entries)
-        {
-            for (model::BotCombatEntryDefinition const& entry : entries)
-            {
-                AddKnownSpellForAction(knownSpells, entry.primaryAction, level);
-                if (entry.secondaryAction)
-                    AddKnownSpellForAction(knownSpells, *entry.secondaryAction, level);
-            }
-        };
+    return "unknown";
+}
 
-    addEntries(resolution.profile.interruptEntries);
-    addEntries(resolution.profile.rotationEntries);
-    return knownSpells;
+float GetManaPct(Unit const* unit)
+{
+    if (!unit)
+        return 0.0f;
+
+    std::uint32_t const maxMana = unit->GetMaxPower(POWER_MANA);
+    if (maxMana == 0)
+        return 0.0f;
+
+    return 100.0f * static_cast<float>(unit->GetPower(POWER_MANA))
+        / static_cast<float>(maxMana);
+}
+
+std::string DescribeVirtualLoadout(model::WorldBotVirtualLoadout const& loadout)
+{
+    std::ostringstream oss;
+    oss << "virtual_loadout='" << loadout.displayName << "' "
+        << "gear_tier=" << static_cast<std::uint32_t>(loadout.gearTier) << " "
+        << "stats={str:" << loadout.bonusStrength
+        << ",agi:" << loadout.bonusAgility
+        << ",sta:" << loadout.bonusStamina
+        << ",int:" << loadout.bonusIntellect
+        << ",spi:" << loadout.bonusSpirit
+        << ",hp:" << loadout.bonusHealth
+        << ",mana:" << loadout.bonusMana
+        << ",armor:" << loadout.bonusArmor
+        << ",ap:" << loadout.bonusAttackPower
+        << ",rap:" << loadout.bonusRangedAttackPower
+        << "}";
+    return oss.str();
+}
+
+std::string DescribeAssignedGearSummary(model::WorldBotAssignedGearSummary const& summary)
+{
+    std::ostringstream oss;
+    oss << "assigned_gear_stats={str:" << summary.bonusStrength
+        << ",agi:" << summary.bonusAgility
+        << ",sta:" << summary.bonusStamina
+        << ",int:" << summary.bonusIntellect
+        << ",spi:" << summary.bonusSpirit
+        << ",hp:" << summary.bonusHealth
+        << ",mana:" << summary.bonusMana
+        << ",armor:" << summary.bonusArmor
+        << ",ap:" << summary.bonusAttackPower
+        << ",rap:" << summary.bonusRangedAttackPower
+        << "}";
+    return oss.str();
 }
 
 class NearestGatherNodeCheck
@@ -375,7 +362,84 @@ void WorldBotCreatureAI::SetIdentityAndSession(
     _combatSuspendedStep = false;
     ResetGatherState();
     ResetTravelWatchdog(_travelWatchdog);
+    _preparedBuild = {};
+    _preparedBuildReady = false;
     InvalidateCombatProfile();
+    _lastDebugCombatManaDrainWorldMs = 0;
+    _debugCombatManaGemObserved = false;
+    _usedSimulatedItemsThisCombat.clear();
+
+    _preparedBuild = GetWorldBotPreparationService().Prepare(_identity, "PvE");
+    {
+        service::WorldBotAssignedGearResult assignedGear = GetWorldBotAssignedGearService().EnsureAssignedGear(
+            _identity,
+            _preparedBuild.canonicalSpecKey,
+            _preparedBuild.resolvedRoleKey);
+        bool const gearRefreshStateChanged = _identity.gearRefreshPending != identity.gearRefreshPending
+            || _identity.lastGearRefreshBand != identity.lastGearRefreshBand;
+        if (gearRefreshStateChanged)
+        {
+            GetIdentityRepo().UpdateGearRefreshState(
+                _identity.id,
+                _identity.gearRefreshPending,
+                _identity.lastGearRefreshBand);
+        }
+
+        _preparedBuild.assignedGear = std::move(assignedGear.entries);
+        _preparedBuild.assignedGearSummary = assignedGear.summary;
+        _preparedBuild.assignedGearRefreshBand = assignedGear.refreshBand;
+        _preparedBuild.assignedGearRefreshed = assignedGear.refreshed;
+
+        _hasShieldBaseline = false;
+        for (model::WorldBotAssignedGearEntry const& entry : _preparedBuild.assignedGear)
+        {
+            if (entry.slot != EQUIPMENT_SLOT_OFFHAND)
+                continue;
+
+            ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(entry.itemId);
+            if (itemTemplate && itemTemplate->InventoryType == INVTYPE_SHIELD)
+                _hasShieldBaseline = true;
+            break;
+        }
+    }
+    _preparedBuildReady = _preparedBuild.IsReady();
+
+    if (_preparedBuildReady)
+    {
+        integration::BotActivityLog::Record(
+            me,
+            _identity.name,
+            _identity.id,
+            "build_prepared",
+            "personality='" + _preparedBuild.personalityKey
+                + "' spec='" + _preparedBuild.canonicalSpecKey
+                + "' role='" + _preparedBuild.resolvedRoleKey
+                + "' gear_tier=" + std::to_string(_identity.gearTier)
+                + "' default_profile_id=" + std::to_string(_preparedBuild.defaultCombatProfileId)
+                + " talent_template_id=" + std::to_string(_preparedBuild.talentTemplateId)
+                + " allocated_points=" + std::to_string(_preparedBuild.allocatedTalentPoints)
+                + "/" + std::to_string(_preparedBuild.availableTalentPoints)
+                + " known_spells=" + std::to_string(_preparedBuild.knownSpellIds.size())
+                + " assigned_gear_slots=" + std::to_string(_preparedBuild.assignedGear.size())
+                + " assigned_gear_band=" + std::to_string(_preparedBuild.assignedGearRefreshBand)
+                + " assigned_gear_refreshed=" + std::to_string(_preparedBuild.assignedGearRefreshed ? 1 : 0)
+                + " " + DescribeAssignedGearSummary(_preparedBuild.assignedGearSummary)
+                + (_preparedBuild.virtualLoadout
+                    ? " " + DescribeVirtualLoadout(*_preparedBuild.virtualLoadout)
+                    : " virtual_loadout='none'"));
+    }
+    else
+    {
+        integration::BotActivityLog::Record(
+            me,
+            _identity.name,
+            _identity.id,
+            "build_prepare_failed",
+            "personality='" + _preparedBuild.personalityKey
+                + "' spec='" + _preparedBuild.canonicalSpecKey
+                + "' role='" + _preparedBuild.resolvedRoleKey
+                + "' reason='" + _preparedBuild.failureReason + "'");
+    }
 
     ApplyIdentityToCreature();
 
@@ -439,10 +503,195 @@ void WorldBotCreatureAI::ApplyIdentityToCreature()
     me->SetReactState(REACT_AGGRESSIVE);
     me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_IMMUNE_TO_NPC);
 
-    // Class-appropriate unit flags
-    me->SetByteValue(UNIT_FIELD_BYTES_0, 3, _identity.classId);
+    // Unit class lives in UNIT_FIELD_BYTES_0 byte 1. Byte 3 is the power type.
+    // World-bot combat doctrine resolution calls Unit::getClass(), so writing the
+    // class into byte 3 leaves runtime class at 0 and yields empty prepared
+    // doctrine entries even after successful build preparation.
+    me->SetByteValue(UNIT_FIELD_BYTES_0, 1, _identity.classId);
+
+    Powers powerType = POWER_MANA;
+    std::uint32_t baseMana = 0;
+    switch (_identity.classId)
+    {
+        case CLASS_WARRIOR:
+            powerType = POWER_RAGE;
+            break;
+        case CLASS_ROGUE:
+            powerType = POWER_ENERGY;
+            break;
+        case CLASS_DEATH_KNIGHT:
+            powerType = POWER_RUNIC_POWER;
+            break;
+        default:
+            powerType = POWER_MANA;
+            break;
+    }
+
+    me->SetByteValue(UNIT_FIELD_BYTES_0, 3, static_cast<std::uint8_t>(powerType));
+
+    PlayerClassLevelInfo classInfo;
+    sObjectMgr->GetPlayerClassLevelInfo(_identity.classId, _identity.level, &classInfo);
+
+    PlayerLevelInfo levelInfo;
+    sObjectMgr->GetPlayerLevelInfo(_identity.raceId, _identity.classId, _identity.level, &levelInfo);
+
+    service::WorldBotPlayerStatBaseline const baseline =
+        service::BuildWorldBotPlayerStatBaseline(classInfo, levelInfo);
+    service::WorldBotAttackPowerBaseline const attackPowerBaseline =
+        service::BuildWorldBotAttackPowerBaseline(
+            _identity.classId,
+            _identity.level,
+            static_cast<std::int32_t>(baseline.stats[STAT_STRENGTH]),
+            static_cast<std::int32_t>(baseline.stats[STAT_AGILITY]));
+    service::WorldBotPhysicalDamageBaseline const physicalDamageBaseline =
+        service::BuildWorldBotPhysicalDamageBaseline(
+            me->GetAttackTime(BASE_ATTACK),
+            me->GetAttackTime(OFF_ATTACK),
+            me->GetAttackTime(RANGED_ATTACK));
+
+    for (std::uint8_t i = STAT_STRENGTH; i < MAX_STATS; ++i)
+    {
+        me->SetCreateStat(Stats(i), static_cast<float>(baseline.stats[i]));
+        me->SetStat(Stats(i), static_cast<int32>(baseline.stats[i]));
+    }
+
+    me->SetCreateHealth(baseline.baseHealth);
+    me->SetMaxHealth(baseline.baseHealth);
+    me->SetArmor(static_cast<int32>(baseline.baseArmor));
+    me->SetFloatValue(UNIT_FIELD_RESISTANCEBUFFMODSPOSITIVE + AsUnderlyingType(SPELL_SCHOOL_NORMAL), 0.0f);
+    me->SetFloatValue(UNIT_FIELD_RESISTANCEBUFFMODSNEGATIVE + AsUnderlyingType(SPELL_SCHOOL_NORMAL), 0.0f);
+
+    for (std::uint8_t i = 1; i < MAX_SPELL_SCHOOL; ++i)
+    {
+        me->SetResistance(SpellSchools(i), 0);
+        me->SetFloatValue(UNIT_FIELD_RESISTANCEBUFFMODSPOSITIVE + i, 0.0f);
+        me->SetFloatValue(UNIT_FIELD_RESISTANCEBUFFMODSNEGATIVE + i, 0.0f);
+    }
+
+    me->SetStatFlatModifier(UNIT_MOD_ATTACK_POWER, BASE_VALUE, static_cast<float>(attackPowerBaseline.meleeAttackPower));
+    me->SetStatFlatModifier(UNIT_MOD_ATTACK_POWER_RANGED, BASE_VALUE, static_cast<float>(attackPowerBaseline.rangedAttackPower));
+    me->SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, physicalDamageBaseline.mainHandMinDamage);
+    me->SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, physicalDamageBaseline.mainHandMaxDamage);
+    me->SetBaseWeaponDamage(OFF_ATTACK, MINDAMAGE, physicalDamageBaseline.offHandMinDamage);
+    me->SetBaseWeaponDamage(OFF_ATTACK, MAXDAMAGE, physicalDamageBaseline.offHandMaxDamage);
+    me->SetBaseWeaponDamage(RANGED_ATTACK, MINDAMAGE, physicalDamageBaseline.rangedMinDamage);
+    me->SetBaseWeaponDamage(RANGED_ATTACK, MAXDAMAGE, physicalDamageBaseline.rangedMaxDamage);
+
+    if (powerType == POWER_MANA)
+    {
+        baseMana = baseline.baseMana;
+        if (baseMana > 0)
+        {
+            me->SetCreateMana(baseMana);
+            me->SetMaxPower(POWER_MANA, baseMana);
+            me->SetPower(POWER_MANA, baseMana);
+        }
+    }
+
+    if (_preparedBuild.virtualLoadout)
+    {
+        auto const applyStatBonus =
+            [&](Stats stat, std::int32_t bonus)
+            {
+                if (bonus == 0)
+                    return;
+
+                me->SetCreateStat(stat, me->GetCreateStat(stat) + static_cast<float>(bonus));
+                me->SetStat(stat, static_cast<int32>(me->GetStat(stat) + static_cast<float>(bonus)));
+            };
+
+        auto const applyUnitBonus =
+            [&](UnitMods unitMod, std::int32_t bonus)
+            {
+                if (bonus == 0)
+                    return;
+
+                float const currentBonus = me->GetFlatModifierValue(unitMod, TOTAL_VALUE);
+                me->SetStatFlatModifier(unitMod, TOTAL_VALUE, currentBonus + static_cast<float>(bonus));
+            };
+
+        model::WorldBotVirtualLoadout const& loadout = *_preparedBuild.virtualLoadout;
+        applyStatBonus(STAT_STRENGTH, loadout.bonusStrength);
+        applyStatBonus(STAT_AGILITY, loadout.bonusAgility);
+        applyStatBonus(STAT_STAMINA, loadout.bonusStamina);
+        applyStatBonus(STAT_INTELLECT, loadout.bonusIntellect);
+        applyStatBonus(STAT_SPIRIT, loadout.bonusSpirit);
+
+        applyUnitBonus(UNIT_MOD_HEALTH, loadout.bonusHealth);
+        applyUnitBonus(UNIT_MOD_MANA, loadout.bonusMana);
+        applyUnitBonus(UNIT_MOD_ARMOR, loadout.bonusArmor);
+        applyUnitBonus(UNIT_MOD_ATTACK_POWER, loadout.bonusAttackPower);
+        applyUnitBonus(UNIT_MOD_ATTACK_POWER_RANGED, loadout.bonusRangedAttackPower);
+    }
+
+    {
+        model::WorldBotAssignedGearSummary const& summary = _preparedBuild.assignedGearSummary;
+
+        auto const applyStatBonus =
+            [&](Stats stat, std::int32_t bonus)
+            {
+                if (bonus == 0)
+                    return;
+
+                me->SetCreateStat(stat, me->GetCreateStat(stat) + static_cast<float>(bonus));
+                me->SetStat(stat, static_cast<int32>(me->GetStat(stat) + static_cast<float>(bonus)));
+            };
+
+        auto const applyUnitBonus =
+            [&](UnitMods unitMod, std::int32_t bonus)
+            {
+                if (bonus == 0)
+                    return;
+
+                float const currentBonus = me->GetFlatModifierValue(unitMod, TOTAL_VALUE);
+                me->SetStatFlatModifier(unitMod, TOTAL_VALUE, currentBonus + static_cast<float>(bonus));
+            };
+
+        applyStatBonus(STAT_STRENGTH, summary.bonusStrength);
+        applyStatBonus(STAT_AGILITY, summary.bonusAgility);
+        applyStatBonus(STAT_STAMINA, summary.bonusStamina);
+        applyStatBonus(STAT_INTELLECT, summary.bonusIntellect);
+        applyStatBonus(STAT_SPIRIT, summary.bonusSpirit);
+
+        applyUnitBonus(UNIT_MOD_HEALTH, summary.bonusHealth);
+        applyUnitBonus(UNIT_MOD_MANA, summary.bonusMana);
+        applyUnitBonus(UNIT_MOD_ARMOR, summary.bonusArmor);
+        applyUnitBonus(UNIT_MOD_ATTACK_POWER, summary.bonusAttackPower);
+        applyUnitBonus(UNIT_MOD_ATTACK_POWER_RANGED, summary.bonusRangedAttackPower);
+    }
+
+    for (std::uint32_t spellId : _preparedBuild.knownSpellIds)
+    {
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+        if (!service::ShouldAutoCastWorldBotPassiveSpell(spellInfo))
+            continue;
+
+        if (me->HasAura(spellId))
+            continue;
+
+        me->CastSpell(me, spellId, true);
+    }
+
     me->UpdateAllStats();
     me->SetFullHealth();
+
+    if (me->GetMaxPower(powerType) > 0)
+    {
+        switch (powerType)
+        {
+            case POWER_MANA:
+            case POWER_ENERGY:
+                me->SetPower(powerType, me->GetMaxPower(powerType));
+                break;
+            case POWER_RAGE:
+            case POWER_RUNIC_POWER:
+                me->SetPower(powerType, 0);
+                break;
+            default:
+                me->SetPower(powerType, me->GetMaxPower(powerType));
+                break;
+        }
+    }
 }
 
 void WorldBotCreatureAI::UpdateAI(uint32 diff)
@@ -482,6 +731,101 @@ void WorldBotCreatureAI::RecordPositionSnapshot(char const* eventType, std::stri
         _identity.id,
         eventType,
         BuildPositionDetail(me, detail));
+}
+
+void WorldBotCreatureAI::RecordCombatTrace(std::string const& detail)
+{
+    if (!me || detail.empty())
+        return;
+
+    if (detail == _lastCombatTraceDetail && (_worldOnlineMs - _lastCombatTraceWorldMs) < 2000)
+        return;
+
+    integration::BotActivityLog::Record(
+        me,
+        _identity.name,
+        _identity.id,
+        "combat_trace",
+        detail);
+    _lastCombatTraceDetail = detail;
+    _lastCombatTraceWorldMs = _worldOnlineMs;
+}
+
+std::string WorldBotCreatureAI::BuildCombatTraceDetail(
+    char const* phase,
+    service::BotCombatEvaluationResult const& result,
+    Unit* target) const
+{
+    std::ostringstream oss;
+    float const distance = (me && target) ? me->GetDistance(target) : 0.0f;
+    std::uint32_t const hostiles10 = CountNearbyHostileUnits(me, 10.0f);
+    std::uint32_t const hostiles30 = CountNearbyHostileUnits(me, 30.0f);
+
+    oss << "phase='" << phase << "' "
+        << "decision='";
+
+    if (result.disposition == service::BotCombatEvaluationDisposition::Cast && result.action)
+    {
+        service::BotCombatEvaluatedAction const& action = *result.action;
+        oss << "cast' "
+            << "entry='" << action.entryLabel << "' "
+            << "entry_id=" << action.entryId << " "
+            << "action_id=" << action.actionId << " "
+            << "action_type=" << static_cast<std::uint32_t>(action.actionType) << " "
+            << "spell='" << DescribeCombatActionForTrace(action) << "' "
+            << "simulated_item_use=" << (action.simulatedItemUse ? 1 : 0) << " "
+            << "target_key='" << action.targetKey << "' "
+            << "target='" << (action.target ? action.target->GetName() : "none") << "' "
+            << "target_guid=" << (action.target ? action.target->GetGUID().GetCounter() : 0) << " "
+            << "aoe_mode='" << DescribeAoEMode(action.aoeMode) << "' "
+            << "delivery='" << (action.useDestination ? "destination" : "unit") << "' "
+            << "style='" << ((action.aoeMinTargets && *action.aoeMinTargets > 1) ? "aoe" : "single") << "' ";
+
+        if (action.aoeMinTargets)
+            oss << "aoe_min_targets=" << static_cast<std::uint32_t>(*action.aoeMinTargets) << " ";
+        if (action.aoeRadius)
+            oss << "aoe_radius=" << *action.aoeRadius << " ";
+        if (action.useDestination)
+            oss << "destination=(" << action.destinationX << "," << action.destinationY << "," << action.destinationZ << ") ";
+    }
+    else if (result.disposition == service::BotCombatEvaluationDisposition::Wait)
+    {
+        oss << "wait' "
+            << "entry='" << result.traceEntryLabel << "' "
+            << "entry_id=" << result.traceEntryId << " "
+            << "action_id=" << result.traceActionId << " "
+            << "reason='" << result.traceReason << "' "
+            << "wait_ms=" << result.waitMs << " "
+            << "target_key='" << result.traceTargetKey << "' ";
+    }
+    else
+    {
+        oss << "none' ";
+    }
+
+    oss << "target_hp_pct=" << (target ? target->GetHealthPct() : 0.0f) << " "
+        << "self_hp_pct=" << (me ? me->GetHealthPct() : 0.0f) << " "
+        << "distance=" << distance << " "
+        << "hostiles_10yd=" << hostiles10 << " "
+        << "hostiles_30yd=" << hostiles30;
+    return oss.str();
+}
+
+std::string WorldBotCreatureAI::BuildCombatMovementTraceDetail(
+    char const* decision,
+    Unit* target) const
+{
+    std::ostringstream oss;
+    float const distance = (me && target) ? me->GetDistance(target) : 0.0f;
+    oss << "phase='movement' decision='" << decision << "' "
+        << "target='" << (target ? target->GetName() : "none") << "' "
+        << "target_guid=" << (target ? target->GetGUID().GetCounter() : 0) << " "
+        << "target_hp_pct=" << (target ? target->GetHealthPct() : 0.0f) << " "
+        << "self_hp_pct=" << (me ? me->GetHealthPct() : 0.0f) << " "
+        << "distance=" << distance << " "
+        << "hostiles_10yd=" << CountNearbyHostileUnits(me, 10.0f) << " "
+        << "hostiles_30yd=" << CountNearbyHostileUnits(me, 30.0f);
+    return oss.str();
 }
 
 bool WorldBotCreatureAI::BuildRuntimeSnapshot(RuntimeSnapshot& out) const
@@ -546,25 +890,81 @@ void WorldBotCreatureAI::EnsureCombatProfile()
     if (_combatProfilePrepared || !_sessionReady || !me)
         return;
 
-    std::string const roleKey = ResolveRoleKey(_identity.classId, _identity.specKey);
-    service::BotCombatDoctrineResolution const resolution =
-        GetDoctrineResolver().ResolveForWorldBot(
-            me->GetGUID().GetCounter(),
-            _identity.classId,
-            _identity.specKey,
-            roleKey,
-            "PvE");
-
-    std::unordered_set<std::uint32_t> const knownSpells =
-        BuildWorldBotKnownSpells(me, resolution, _identity.level);
+    if (!_preparedBuildReady)
+        return;
 
     _combatPreparedProfile = GetProfilePreparationService().PrepareForWorldBot(
         me,
-        knownSpells,
-        resolution.effectiveSpecKey.empty() ? _identity.specKey : resolution.effectiveSpecKey,
-        resolution.effectiveRoleKey.empty() ? roleKey : resolution.effectiveRoleKey,
-        "PvE");
+        _preparedBuild.knownSpellIds,
+        _preparedBuild.canonicalSpecKey,
+        _preparedBuild.resolvedRoleKey,
+        _preparedBuild.contextKey);
     _combatProfilePrepared = true;
+}
+
+bool WorldBotCreatureAI::IsDebugCombatManaDrainIdentity() const
+{
+    if (_identity.id == 0)
+        return false;
+
+    std::uint32_t const drainIdentityId =
+        sConfigMgr->GetOption<std::uint32_t>("LivingWorld.DebugCombatManaDrainIdentityId", 0);
+    return drainIdentityId != 0 && drainIdentityId == _identity.id;
+}
+
+bool WorldBotCreatureAI::ApplyDebugCombatManaTarget(Unit* target, char const* traceDecision, bool logAttempt)
+{
+    if (!me || _debugCombatManaGemObserved || !IsDebugCombatManaDrainIdentity())
+        return false;
+
+    std::uint32_t const maxMana = me->GetMaxPower(POWER_MANA);
+    std::uint32_t const targetManaPct = std::clamp<std::uint32_t>(
+        sConfigMgr->GetOption<std::uint32_t>("LivingWorld.DebugCombatManaDrainTargetManaPct", 60),
+        0u,
+        99u);
+    std::uint32_t const currentMana = me->GetPower(POWER_MANA);
+
+    auto const recordAttemptTrace =
+        [&](char const* reason, bool applied, std::uint32_t targetMana)
+        {
+            if (!logAttempt || !traceDecision || !*traceDecision)
+                return;
+
+            std::ostringstream oss;
+            oss << "phase='movement' decision='" << traceDecision << "' "
+                << "reason='" << (reason ? reason : "none") << "' "
+                << "applied=" << (applied ? 1 : 0) << " "
+                << "current_mana=" << currentMana << " "
+                << "max_mana=" << maxMana << " "
+                << "target_mana_pct=" << targetManaPct << " "
+                << "target_mana=" << targetMana << " "
+                << "target='" << (target ? target->GetName() : "none") << "' "
+                << "target_guid=" << (target ? target->GetGUID().GetCounter() : 0);
+            RecordCombatTrace(oss.str());
+        };
+
+    if (maxMana == 0)
+    {
+        recordAttemptTrace("max_mana_zero", false, 0);
+        return false;
+    }
+
+    std::uint32_t const targetMana = (maxMana * targetManaPct) / 100u;
+    if (currentMana <= targetMana)
+    {
+        recordAttemptTrace("already_at_or_below_target", false, targetMana);
+        return false;
+    }
+
+    me->SetPower(POWER_MANA, targetMana);
+    _lastDebugCombatManaDrainWorldMs = _worldOnlineMs;
+
+    recordAttemptTrace("applied", true, targetMana);
+
+    if (!logAttempt && traceDecision && *traceDecision)
+        RecordCombatTrace(BuildCombatMovementTraceDetail(traceDecision, target));
+
+    return true;
 }
 
 void WorldBotCreatureAI::SuspendCurrentStepForCombat(Unit* target)
@@ -573,6 +973,9 @@ void WorldBotCreatureAI::SuspendCurrentStepForCombat(Unit* target)
         return;
 
     _combatSuspendedStep = true;
+    _lastDebugCombatManaDrainWorldMs = 0;
+    _debugCombatManaGemObserved = false;
+    _usedSimulatedItemsThisCombat.clear();
     if (_traveling || _gatherMovingToNode)
     {
         me->StopMoving();
@@ -589,6 +992,8 @@ void WorldBotCreatureAI::SuspendCurrentStepForCombat(Unit* target)
         "combat_enter",
         "step='" + DescribeCurrentStep()
             + "' target_guid=" + std::to_string(target ? target->GetGUID().GetCounter() : 0));
+
+    ApplyDebugCombatManaTarget(target, "debug_mana_force_combat_enter", true);
 }
 
 void WorldBotCreatureAI::ResumeSuspendedStepAfterCombat()
@@ -598,6 +1003,9 @@ void WorldBotCreatureAI::ResumeSuspendedStepAfterCombat()
 
     _combatSuspendedStep = false;
     _traveling = false;
+    _lastDebugCombatManaDrainWorldMs = 0;
+    _debugCombatManaGemObserved = false;
+    _usedSimulatedItemsThisCombat.clear();
     ResetTravelWatchdog(_travelWatchdog);
 
     integration::BotActivityLog::Record(
@@ -829,6 +1237,7 @@ void WorldBotCreatureAI::TickCombat(uint32 /*diff*/)
         return;
 
     EnsureCombatProfile();
+    MaybeApplyDebugCombatManaDrain(target);
 
     bool acted = false;
     if (!_combatPreparedProfile.interruptEntries.empty() || !_combatPreparedProfile.rotationEntries.empty())
@@ -837,7 +1246,11 @@ void WorldBotCreatureAI::TickCombat(uint32 /*diff*/)
         context.bot = me;
         context.owner = nullptr;
         context.primaryTarget = target;
+        context.usedSimulatedItemsThisCombat = &_usedSimulatedItemsThisCombat;
         context.rotationWaitMs = _combatPreparedProfile.resolution.profile.settings.rotationWaitMs;
+        context.defaultAoEMode = _combatPreparedProfile.resolution.profile.settings.defaultAoEMode;
+        context.defaultAoEMinTargets = _combatPreparedProfile.resolution.profile.settings.defaultAoEMinTargets;
+        context.defaultAoEScanRadius = _combatPreparedProfile.resolution.profile.settings.defaultAoEScanRadius;
         context.availableSpells = _combatPreparedProfile.availableSpells;
 
         auto const tryResult =
@@ -850,19 +1263,77 @@ void WorldBotCreatureAI::TickCombat(uint32 /*diff*/)
                 if (action.breaksCurrentCast && me->IsNonMeleeSpellCast(false))
                     me->InterruptNonMeleeSpells(false);
 
-                me->CastSpell(action.target, action.spellId, false);
-                return true;
+                bool casted = service::CastEvaluatedAction(me, action);
+
+                if (casted && action.actionType == model::BotCombatActionType::Spell)
+                {
+                    if (Creature* creature = me->ToCreature())
+                    {
+                        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(action.spellId))
+                        {
+                            std::uint32_t const cooldownMs = std::max<std::uint32_t>(
+                                spellInfo->RecoveryTime,
+                                spellInfo->CategoryRecoveryTime);
+                            if (cooldownMs > 0 && !creature->HasSpellCooldown(action.spellId))
+                                creature->AddSpellCooldown(action.spellId, 0, cooldownMs);
+                        }
+                    }
+                }
+
+                if (casted
+                    && action.actionType == model::BotCombatActionType::Item)
+                {
+                    if (action.simulatedItemUse)
+                        _usedSimulatedItemsThisCombat.insert(action.itemId);
+
+                    if (action.itemId == DebugManaGemItemId)
+                    {
+                        _debugCombatManaGemObserved = true;
+                        RecordCombatTrace(BuildCombatMovementTraceDetail("debug_mana_gem_observed", target));
+                    }
+                }
+
+                return casted;
             };
 
-        acted = tryResult(GetRuntimeEvaluator().EvaluateInterrupts(_combatPreparedProfile, context));
+        service::BotCombatEvaluationResult const interruptResult =
+            GetRuntimeEvaluator().EvaluateInterrupts(_combatPreparedProfile, context);
+        if (interruptResult.disposition != service::BotCombatEvaluationDisposition::None)
+            RecordCombatTrace(BuildCombatTraceDetail("interrupt", interruptResult, target));
+
+        acted = tryResult(interruptResult);
         if (!acted)
-            acted = tryResult(GetRuntimeEvaluator().EvaluateRotation(_combatPreparedProfile, context));
+        {
+            service::BotCombatEvaluationResult const rotationResult =
+                GetRuntimeEvaluator().EvaluateRotation(_combatPreparedProfile, context);
+            if (rotationResult.disposition != service::BotCombatEvaluationDisposition::None)
+                RecordCombatTrace(BuildCombatTraceDetail("rotation", rotationResult, target));
+            acted = tryResult(rotationResult);
+        }
+    }
+    else
+    {
+        RecordCombatTrace(BuildCombatMovementTraceDetail("no_prepared_entries", target));
     }
 
     if (!acted && !me->IsWithinMeleeRange(target))
+    {
+        RecordCombatTrace(BuildCombatMovementTraceDetail("move_chase", target));
         me->GetMotionMaster()->MoveChase(target);
+    }
 
     DoMeleeAttackIfReady();
+}
+
+void WorldBotCreatureAI::MaybeApplyDebugCombatManaDrain(Unit* target)
+{
+    std::uint32_t const intervalMs = std::max<std::uint32_t>(
+        250u,
+        sConfigMgr->GetOption<std::uint32_t>("LivingWorld.DebugCombatManaDrainIntervalMs", 1500));
+    if ((_worldOnlineMs - _lastDebugCombatManaDrainWorldMs) < intervalMs)
+        return;
+
+    ApplyDebugCombatManaTarget(target, "debug_mana_drain");
 }
 
 void WorldBotCreatureAI::TickStep(uint32 /*diff*/)

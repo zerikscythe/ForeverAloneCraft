@@ -78,6 +78,7 @@ public:
     mutable std::string lastClassKey;
     mutable std::string lastSpecKey;
     mutable std::string lastRoleKey;
+    mutable std::string lastVariantKey;
 
     std::vector<model::BotCombatDefaultProfileRecord> ListDefaultProfiles() const override
     {
@@ -90,11 +91,13 @@ public:
         std::string const& specKey,
         std::string const& roleKey,
         std::string const& classKey,
-        std::string const&) const override
+        std::string const&,
+        std::string const& variantKey) const override
     {
         lastSpecKey = specKey;
         lastRoleKey = roleKey;
         lastClassKey = classKey;
+        lastVariantKey = variantKey;
         return profile;
     }
 };

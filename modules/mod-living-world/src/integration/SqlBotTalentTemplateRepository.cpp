@@ -15,6 +15,8 @@ SqlBotTalentTemplateRepository::BuildTemplate(Field const* fields)
     tmpl.specKey     = fields[1].Get<std::string>();
     tmpl.classId     = fields[2].Get<std::uint8_t>();
     tmpl.displayName = fields[3].Get<std::string>();
+    tmpl.variantKey  = fields[4].IsNull() ? "" : fields[4].Get<std::string>();
+    tmpl.description = fields[5].IsNull() ? "" : fields[5].Get<std::string>();
     return tmpl;
 }
 
@@ -47,7 +49,7 @@ SqlBotTalentTemplateRepository::ListTemplates() const
 {
     std::vector<model::BotTalentTemplateRecord> templates;
     QueryResult result = WorldDatabase.Query(
-        "SELECT template_id, spec_key, class_id, display_name "
+        "SELECT template_id, spec_key, class_id, display_name, variant_key, description "
         "FROM living_world_bot_talent_template "
         "ORDER BY class_id, spec_key ASC");
     if (!result)
@@ -67,7 +69,7 @@ std::optional<model::BotTalentTemplateRecord>
 SqlBotTalentTemplateRepository::FindTemplate(std::uint64_t templateId) const
 {
     QueryResult result = WorldDatabase.Query(
-        "SELECT template_id, spec_key, class_id, display_name "
+        "SELECT template_id, spec_key, class_id, display_name, variant_key, description "
         "FROM living_world_bot_talent_template "
         "WHERE template_id = {} LIMIT 1",
         templateId);
@@ -82,16 +84,43 @@ SqlBotTalentTemplateRepository::FindTemplate(std::uint64_t templateId) const
 std::optional<model::BotTalentTemplateRecord>
 SqlBotTalentTemplateRepository::FindTemplateForSpec(
     std::string const& specKey,
-    std::uint8_t classId) const
+    std::uint8_t classId,
+    std::string const& variantKey) const
 {
     std::string escapedSpec = specKey;
     WorldDatabase.EscapeString(escapedSpec);
+    std::string escapedVariant = variantKey;
+    WorldDatabase.EscapeString(escapedVariant);
 
-    QueryResult result = WorldDatabase.Query(
-        "SELECT template_id, spec_key, class_id, display_name "
-        "FROM living_world_bot_talent_template "
-        "WHERE LOWER(spec_key) = LOWER('{}') AND class_id = {} LIMIT 1",
-        escapedSpec, static_cast<std::uint32_t>(classId));
+    QueryResult result;
+    if (escapedVariant.empty())
+    {
+        result = WorldDatabase.Query(
+            "SELECT template_id, spec_key, class_id, display_name, variant_key, description "
+            "FROM living_world_bot_talent_template "
+            "WHERE LOWER(spec_key) = LOWER('{}') AND class_id = {} "
+            "AND (variant_key IS NULL OR variant_key = '') "
+            "LIMIT 1",
+            escapedSpec, static_cast<std::uint32_t>(classId));
+    }
+    else
+    {
+        result = WorldDatabase.Query(
+            "SELECT template_id, spec_key, class_id, display_name, variant_key, description "
+            "FROM living_world_bot_talent_template "
+            "WHERE LOWER(spec_key) = LOWER('{}') AND class_id = {} "
+            "AND (LOWER(variant_key) = LOWER('{}') OR variant_key IS NULL OR variant_key = '') "
+            "ORDER BY CASE "
+            "WHEN LOWER(variant_key) = LOWER('{}') THEN 0 "
+            "WHEN variant_key IS NULL OR variant_key = '' THEN 1 "
+            "ELSE 2 END "
+            "LIMIT 1",
+            escapedSpec,
+            static_cast<std::uint32_t>(classId),
+            escapedVariant,
+            escapedVariant);
+    }
+
     if (!result)
         return std::nullopt;
 

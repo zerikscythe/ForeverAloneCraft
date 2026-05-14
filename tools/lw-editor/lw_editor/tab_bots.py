@@ -10,12 +10,407 @@ from .constants import (
     STAT_KEYS, SUBJECT_KEYS,
     _normalize_role,
     CANONICAL_DEFAULT_PROFILES, CANONICAL_SPEC_LOOKUP, PROFILE_CONTEXTS,
+    TALENT_DATA, CLASS_NAME_TO_ID,
 )
 from .db import db
 from .helpers import lbl, entry_w, combo_w, check_w, unix_text
 from .widgets import ProfileHeaderFrame, DefaultProfilePicker
 from .rotation import RotationEditor, _class_from_spec
 from .ooc_panel import OocProfilePanel
+
+# ═══════════════════════════════════════════════════════════════════════════
+
+class DefaultTalentTemplateEditor(ttk.Frame):
+
+    MAX_TALENT_POINTS = 71
+
+    def __init__(self, parent, **kw):
+        super().__init__(parent, **kw)
+        self._profile = None
+        self._template = None
+        self._class_id = 0
+        self._spec_key = ""
+        self._profiles_provider = None
+        self._build()
+        self.clear()
+
+    def set_profiles_provider(self, provider):
+        self._profiles_provider = provider
+
+    def _build(self):
+        top = ttk.Frame(self)
+        top.pack(fill=tk.X, padx=4, pady=4)
+
+        self.v_template_status = tk.StringVar()
+        self.v_talent_points = tk.StringVar()
+
+        ttk.Label(top, textvariable=self.v_template_status, foreground="#555").pack(
+            side=tk.LEFT, fill=tk.X, expand=True)
+        ttk.Button(top, text="⧉ Copy From Profile", command=self._copy_from_profile).pack(
+            side=tk.RIGHT, padx=2)
+        ttk.Button(top, text="➕ Add Talent Point", command=self._add_talent_point).pack(
+            side=tk.RIGHT, padx=2)
+        ttk.Button(top, text="🔄 Reset All Talents", command=self._reset_talents).pack(
+            side=tk.RIGHT, padx=2)
+        ttk.Label(top, textvariable=self.v_talent_points,
+                  font=("TkDefaultFont", 10, "bold")).pack(side=tk.RIGHT, padx=(8, 0))
+
+        trees_frame = ttk.Frame(self)
+        trees_frame.pack(fill=tk.BOTH, expand=True, padx=4, pady=(0, 4))
+        trees_frame.columnconfigure(0, weight=1)
+        trees_frame.columnconfigure(1, weight=1)
+        trees_frame.columnconfigure(2, weight=1)
+
+        self._tal_tree_frames = []
+        self._tal_tvs = []
+        for col in range(3):
+            lf = ttk.LabelFrame(trees_frame, text=f"Tree {col}", padding=4)
+            lf.grid(row=0, column=col, sticky="nsew", padx=4, pady=4)
+            lf.rowconfigure(0, weight=1)
+            lf.columnconfigure(0, weight=1)
+
+            tv = ttk.Treeview(
+                lf,
+                columns=("name", "rank", "row"),
+                show="headings",
+                height=22,
+                selectmode="browse",
+            )
+            tv.heading("name", text="Talent")
+            tv.heading("rank", text="Rank")
+            tv.heading("row", text="Row")
+            tv.column("name", width=170)
+            tv.column("rank", width=70, anchor="center")
+            tv.column("row", width=40, anchor="center")
+            scr = ttk.Scrollbar(lf, orient="vertical", command=tv.yview)
+            tv.configure(yscrollcommand=scr.set)
+            tv.grid(row=0, column=0, sticky="nsew")
+            scr.grid(row=0, column=1, sticky="ns")
+            tv.tag_configure("maxed", foreground="#00aa00")
+            tv.tag_configure("partial", foreground="#cc8800")
+            self._tal_tree_frames.append(lf)
+            self._tal_tvs.append(tv)
+
+    @staticmethod
+    def _normalize_talent_name(text: str) -> str:
+        return "".join(ch for ch in (text or "").lower() if ch.isalnum())
+
+    def _trees_for_current_class(self) -> dict:
+        return TALENT_DATA.get(str(self._class_id), {}) if self._class_id else {}
+
+    def _display_spec_name(self, trees: dict | None = None) -> str:
+        trees = trees or self._trees_for_current_class()
+        wanted = self._normalize_talent_name(self._spec_key)
+        for tree in trees.values():
+            tree_name = tree.get("tree_name", "")
+            if self._normalize_talent_name(tree_name) == wanted:
+                return tree_name
+        return self._spec_key or "Unknown"
+
+    def _template_display_name(self, trees: dict | None = None) -> str:
+        class_name = (self._profile or {}).get("class_key") or "Unknown"
+        return f"{self._display_spec_name(trees)} {class_name} Talent Template"
+
+    def _current_ranks(self) -> dict[int, int]:
+        entries = (self._template or {}).get("entries", [])
+        return {
+            int(row.get("talent_id") or 0): int(row.get("desired_rank") or 0)
+            for row in entries
+            if int(row.get("talent_id") or 0) > 0
+        }
+
+    def _primary_tree_index(self, trees: dict) -> int:
+        wanted = self._normalize_talent_name(self._spec_key)
+        for tree_idx in range(3):
+            tree_name = (trees.get(str(tree_idx), {}) or {}).get("tree_name", "")
+            if self._normalize_talent_name(tree_name) == wanted:
+                return tree_idx
+        return 0
+
+    def _priority_for_talent(self, talent: dict, tree_idx: int, trees: dict) -> int:
+        primary = self._primary_tree_index(trees)
+        if tree_idx == primary:
+            offset = 0
+        else:
+            others = [idx for idx in range(3) if idx != primary]
+            offset = 200 if tree_idx == others[0] else 300
+        return offset + (int(talent.get("row") or 0) * 10) + int(talent.get("col") or 0)
+
+    def clear(self):
+        self._profile = None
+        self._template = None
+        self._class_id = 0
+        self._spec_key = ""
+        self.v_template_status.set("")
+        self.v_talent_points.set("")
+        for tv in self._tal_tvs:
+            tv.delete(*tv.get_children())
+        for lf in self._tal_tree_frames:
+            lf.configure(text="—")
+
+    def load_profile(self, profile: dict | None):
+        self.clear()
+        if not profile:
+            return
+
+        self._profile = dict(profile)
+        class_name = (profile.get("class_key") or "").strip()
+        self._spec_key = (profile.get("spec_key") or "").strip()
+        self._class_id = CLASS_NAME_TO_ID.get(class_name, 0)
+
+        if not TALENT_DATA:
+            self.v_template_status.set("Run extract_dbc_data.py to enable talent template display")
+            return
+        if not self._class_id or not self._spec_key:
+            self.v_template_status.set("Choose a class/spec to view the talent template")
+            return
+
+        trees = self._trees_for_current_class()
+        if not trees:
+            self.v_template_status.set("No talent tree data for this class")
+            return
+
+        self._template = db.load_default_talent_template(self._spec_key, self._class_id)
+        template_name = (self._template or {}).get("display_name") or self._template_display_name(trees)
+        self.v_template_status.set(
+            f"{template_name} — shared across all {class_name} {self._display_spec_name(trees)} default profiles")
+
+        ranks = self._current_ranks()
+        total_spent = 0
+        for tree_idx in range(3):
+            tree = trees.get(str(tree_idx), {})
+            tree_name = tree.get("tree_name", f"Tree {tree_idx}")
+            talents = tree.get("talents", [])
+            tv = self._tal_tvs[tree_idx]
+            lf = self._tal_tree_frames[tree_idx]
+            lf.configure(text=tree_name)
+
+            for talent in talents:
+                talent_id = int(talent.get("talent_id") or 0)
+                current_rank = int(ranks.get(talent_id, 0))
+                max_rank = int(talent.get("max_rank") or len(talent.get("rank_spell_ids", [])) or 0)
+                total_spent += current_rank
+                tag = "maxed" if current_rank == max_rank and max_rank > 0 else (
+                    "partial" if current_rank > 0 else "")
+                tv.insert(
+                    "", "end",
+                    iid=f"tmpl_{self._class_id}_{self._spec_key}_{talent_id}",
+                    values=(talent.get("name", ""), f"{current_rank}/{max_rank}", talent.get("row", 0)),
+                    tags=(tag,),
+                )
+
+        available = max(0, self.MAX_TALENT_POINTS - total_spent)
+        self.v_talent_points.set(
+            f"{available} available  ({total_spent} spent / {self.MAX_TALENT_POINTS} total)")
+
+    def _add_talent_point(self):
+        if not self._profile:
+            return
+        if not TALENT_DATA:
+            messagebox.showinfo("No data", "Run extract_dbc_data.py first to load talent data.")
+            return
+
+        trees = self._trees_for_current_class()
+        if not trees:
+            messagebox.showinfo("No data", "No talent tree data for this class.")
+            return
+
+        current_ranks = self._current_ranks()
+        total_spent = sum(current_ranks.values())
+        available = self.MAX_TALENT_POINTS - total_spent
+        if available <= 0:
+            messagebox.showinfo("No points", "This template already spends all available talent points.")
+            return
+
+        choices = []
+        for tree_idx in range(3):
+            tree = trees.get(str(tree_idx), {})
+            tree_name = tree.get("tree_name", f"Tree {tree_idx}")
+            for talent in tree.get("talents", []):
+                talent_id = int(talent.get("talent_id") or 0)
+                current_rank = int(current_ranks.get(talent_id, 0))
+                max_rank = int(talent.get("max_rank") or len(talent.get("rank_spell_ids", [])) or 0)
+                if current_rank < max_rank:
+                    label = f"[{tree_name}] {talent.get('name', '')}  ({current_rank}/{max_rank})"
+                    choices.append((label, tree_idx, talent, current_rank))
+
+        if not choices:
+            messagebox.showinfo("Maxed", "All talents in this template are already at max rank.")
+            return
+
+        dlg = tk.Toplevel(self)
+        dlg.title("Add Talent Point")
+        dlg.resizable(False, False)
+        dlg.grab_set()
+
+        ttk.Label(dlg, text="Select talent:").pack(anchor="w", padx=8, pady=(8, 0))
+        choice_var = tk.StringVar()
+        combo = ttk.Combobox(dlg, textvariable=choice_var, state="readonly", width=52)
+        combo["values"] = [row[0] for row in choices]
+        combo.current(0)
+        combo.pack(fill=tk.X, padx=8, pady=4)
+
+        ttk.Label(dlg, text="Points to add:").pack(anchor="w", padx=8)
+        pts_var = tk.StringVar(value="1")
+        ttk.Entry(dlg, textvariable=pts_var, width=6).pack(anchor="w", padx=8, pady=4)
+
+        def _apply():
+            idx = combo.current()
+            if idx < 0:
+                return
+            _, tree_idx, talent, current_rank = choices[idx]
+            try:
+                pts = int(pts_var.get())
+            except ValueError:
+                messagebox.showerror("Invalid", "Points must be a number.", parent=dlg)
+                return
+            if pts < 1:
+                messagebox.showerror("Invalid", "Points must be at least 1.", parent=dlg)
+                return
+
+            max_rank = int(talent.get("max_rank") or len(talent.get("rank_spell_ids", [])) or 0)
+            can_add = min(pts, max_rank - current_rank, available)
+            if can_add <= 0:
+                messagebox.showerror("Invalid", "Cannot add any more points to this talent.", parent=dlg)
+                return
+
+            dep_id = talent.get("depends_on")
+            dep_rank = int(talent.get("depends_on_rank") or 0)
+            if dep_id:
+                dep_talent = next(
+                    (t for tree in trees.values()
+                     for t in tree.get("talents", [])
+                     if int(t.get("talent_id") or 0) == int(dep_id)),
+                    None,
+                )
+                if dep_talent:
+                    dep_known = int(current_ranks.get(int(dep_id), 0))
+                    if dep_known < dep_rank + 1:
+                        messagebox.showerror(
+                            "Prerequisite",
+                            f"Requires {dep_rank + 1} point(s) in '{dep_talent.get('name', '')}' first.",
+                            parent=dlg,
+                        )
+                        return
+
+            try:
+                db.upsert_default_talent_template_entry(
+                    self._spec_key,
+                    self._class_id,
+                    self._template_display_name(trees),
+                    int(talent.get("talent_id") or 0),
+                    talent.get("name", ""),
+                    current_rank + can_add,
+                    self._priority_for_talent(talent, tree_idx, trees),
+                )
+                dlg.destroy()
+                self.load_profile(self._profile)
+            except Exception as e:
+                messagebox.showerror("DB error", str(e), parent=dlg)
+
+        btns = ttk.Frame(dlg)
+        btns.pack(fill=tk.X, padx=8, pady=8)
+        ttk.Button(btns, text="Apply", command=_apply).pack(side=tk.LEFT, padx=4)
+        ttk.Button(btns, text="Cancel", command=dlg.destroy).pack(side=tk.LEFT, padx=4)
+
+    def _reset_talents(self):
+        if not self._profile or not self._class_id or not self._spec_key:
+            return
+        label = f"{self._profile.get('class_key', '')} {self._display_spec_name()}"
+        if not messagebox.askyesno(
+            "Reset Talent Template",
+            f"Remove all saved talent points from the shared {label} template?\n\n"
+            "This affects all default profiles for this class/spec regardless of PvE/PvP context."):
+            return
+        try:
+            db.reset_default_talent_template(self._spec_key, self._class_id)
+            self.load_profile(self._profile)
+            messagebox.showinfo("Done", f"Talent template reset for {label}.")
+        except Exception as e:
+            messagebox.showerror("DB error", str(e))
+
+    def _copy_from_profile(self):
+        if not self._profile or not self._class_id or not self._spec_key:
+            return
+
+        profiles = self._profiles_provider() if callable(self._profiles_provider) else []
+        same_class = []
+        current_id = self._profile.get("default_profile_id")
+        current_class = (self._profile.get("class_key") or "").strip()
+        current_ctx = (self._profile.get("context_key") or "PvE").strip()
+
+        for profile in profiles:
+            if profile.get("default_profile_id") == current_id:
+                continue
+            if (profile.get("class_key") or "").strip() != current_class:
+                continue
+            src_ctx = (profile.get("context_key") or "PvE").strip()
+            src_spec = (profile.get("spec_key") or "").strip()
+            label = f"{profile.get('display_name') or f'{current_class} — {src_spec}'} [{src_ctx}]"
+            same_class.append((label, profile))
+
+        if not same_class:
+            messagebox.showinfo(
+                "No source profiles",
+                "There are no other default profiles for this class to copy talents from.")
+            return
+
+        dlg = tk.Toplevel(self)
+        dlg.title("Copy Talent Template From Profile")
+        dlg.resizable(False, False)
+        dlg.grab_set()
+
+        ttk.Label(
+            dlg,
+            text=(
+                f"Copy the talent layout into {current_class} {self._display_spec_name()} [{current_ctx}]\n"
+                "from another default profile of the same class:"
+            ),
+            justify="left",
+        ).pack(anchor="w", padx=10, pady=(10, 6))
+
+        choice_var = tk.StringVar(value=same_class[0][0])
+        combo = ttk.Combobox(dlg, textvariable=choice_var, state="readonly", width=52)
+        combo["values"] = [label for label, _profile in same_class]
+        combo.current(0)
+        combo.pack(fill=tk.X, padx=10, pady=(0, 8))
+
+        def _apply_copy():
+            idx = combo.current()
+            if idx < 0:
+                return
+            source = same_class[idx][1]
+            src_spec = (source.get("spec_key") or "").strip()
+            src_class_id = CLASS_NAME_TO_ID.get((source.get("class_key") or "").strip(), 0)
+            src_label = source.get("display_name") or src_spec
+            if not messagebox.askyesno(
+                "Confirm Copy",
+                f"Replace the current talent layout with the template from '{src_label}'?\n\n"
+                "This will overwrite the current shared class/spec talent entries.",
+                parent=dlg,
+            ):
+                return
+            try:
+                db.copy_default_talent_template(
+                    src_spec,
+                    src_class_id,
+                    self._spec_key,
+                    self._class_id,
+                    self._template_display_name(),
+                )
+                dlg.destroy()
+                self.load_profile(self._profile)
+                messagebox.showinfo(
+                    "Copied",
+                    f"Copied talent entries from '{src_label}' into {current_class} {self._display_spec_name()}.")
+            except Exception as e:
+                messagebox.showerror("DB error", str(e), parent=dlg)
+
+        btns = ttk.Frame(dlg)
+        btns.pack(fill=tk.X, padx=10, pady=(0, 10))
+        ttk.Button(btns, text="Copy", command=_apply_copy).pack(side=tk.LEFT, padx=4)
+        ttk.Button(btns, text="Cancel", command=dlg.destroy).pack(side=tk.LEFT, padx=4)
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -75,6 +470,14 @@ class DefaultProfilesTab(ttk.Frame):
 
         ttk.Separator(right, orient="horizontal").pack(fill=tk.X, pady=4)
 
+        profile_nb = ttk.Notebook(right)
+        profile_nb.pack(fill=tk.BOTH, expand=True, padx=4, pady=4)
+
+        combat_tab = ttk.Frame(profile_nb)
+        talent_tab = ttk.Frame(profile_nb)
+        profile_nb.add(combat_tab, text="  Combat Rotations  ")
+        profile_nb.add(talent_tab, text="  Talent Point Layout  ")
+
         cbs = dict(
             load_entries    = db.load_default_entries,
             upsert_entry    = db.upsert_default_entry,
@@ -85,9 +488,15 @@ class DefaultProfilesTab(ttk.Frame):
             upsert_condition= db.upsert_default_condition,
             delete_condition= db.delete_default_condition,
         )
-        self._rot = RotationEditor(right, cbs)
-        self._hdr._on_class_change_cb = self._rot.set_class
-        self._rot.pack(fill=tk.BOTH, expand=True, padx=4, pady=4)
+        self._rot = RotationEditor(combat_tab, cbs)
+        self._rot.pack(fill=tk.BOTH, expand=True)
+
+        self._talent = DefaultTalentTemplateEditor(talent_tab)
+        self._talent.set_profiles_provider(lambda: self._profiles)
+        self._talent.pack(fill=tk.BOTH, expand=True)
+
+        self._hdr._on_class_change_cb = lambda _class_id: self._on_header_identity_changed()
+        self._hdr._spec_cb.bind("<<ComboboxSelected>>", self._on_header_identity_changed)
 
     def refresh(self):
         if not db.ok():
@@ -98,8 +507,36 @@ class DefaultProfilesTab(ttk.Frame):
             self._sel = None
             self._hdr.clear()
             self._rot.clear()
+            self._talent.clear()
         except MySQLError as e:
             messagebox.showerror("DB error", str(e))
+
+    def _on_header_identity_changed(self, _=None):
+        class_id = CLASS_NAME_TO_ID.get(self._hdr.v_class.get())
+        self._rot.set_class(class_id)
+        if not self._sel:
+            self._talent.clear()
+            return
+        preview = dict(self._sel)
+        preview["class_key"] = self._hdr.v_class.get().strip() or preview.get("class_key")
+        preview["spec_key"] = self._hdr.v_spec.get().strip() or preview.get("spec_key")
+        preview["display_name"] = self._hdr.v_display.get().strip() or preview.get("display_name")
+        self._talent.load_profile(preview)
+
+    def _select_profile_id(self, profile_id: int | None):
+        if not profile_id:
+            return
+        idx = next((i for i, row in enumerate(self._profiles)
+                    if row.get("default_profile_id") == profile_id), None)
+        if idx is None:
+            return
+        lb_pos = next((j for j, row_idx in enumerate(self._lb_idx) if row_idx == idx), None)
+        if lb_pos is None:
+            return
+        self._lb.selection_clear(0, tk.END)
+        self._lb.selection_set(lb_pos)
+        self._lb.see(lb_pos)
+        self._on_select()
 
     def _refresh_listbox(self):
         ctx = self._ctx_filter.get()
@@ -131,14 +568,16 @@ class DefaultProfilesTab(ttk.Frame):
         self._sel = self._profiles[self._lb_idx[sel[0]]]
         self._hdr.load(self._sel)
         self._rot.load_profile(self._sel["default_profile_id"])
+        self._talent.load_profile(self._sel)
 
     def _save_header(self):
         if not self._sel:
             return
         self._hdr.collect(self._sel)
         try:
-            db.upsert_default_profile(self._sel)
+            profile_id = db.upsert_default_profile(self._sel)
             self.refresh()
+            self._select_profile_id(profile_id)
         except MySQLError as e:
             messagebox.showerror("DB error", str(e))
 
@@ -226,13 +665,7 @@ class DefaultProfilesTab(ttk.Frame):
             pid = db.upsert_default_profile(p)
             p["default_profile_id"] = pid
             self.refresh()
-            idx = next((i for i, x in enumerate(self._profiles)
-                        if x["default_profile_id"] == pid), None)
-            if idx is not None:
-                lb_pos = next((j for j, k in enumerate(self._lb_idx) if k == idx), None)
-                if lb_pos is not None:
-                    self._lb.selection_set(lb_pos)
-                    self._on_select()
+            self._select_profile_id(pid)
         except MySQLError as e:
             messagebox.showerror("DB error", str(e))
 
@@ -602,6 +1035,9 @@ class BotProfilesTab(ttk.Frame):
             self._rot.clear()
         except MySQLError as e:
             messagebox.showerror("DB error", str(e))
+
+
+
 
 
 

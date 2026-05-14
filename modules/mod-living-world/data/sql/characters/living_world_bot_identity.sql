@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS living_world_bot_identity (
     race_id         TINYINT UNSIGNED NOT NULL,           -- WoW race ID (1=Human, 2=Orc, etc.)
     class_id        TINYINT UNSIGNED NOT NULL,           -- WoW class ID (1=Warrior, 4=Rogue, etc.)
     spec_key        VARCHAR(32)      NOT NULL,           -- e.g. 'Arms', 'Frost', 'Retribution'
+    loadout_key     VARCHAR(64)      NOT NULL DEFAULT '', -- variant/loadout key, e.g. 'Druid_Feral_PVE_01'
     faction         TINYINT UNSIGNED NOT NULL,           -- 1=Alliance  2=Horde
     display_id      INT UNSIGNED     NOT NULL,           -- creature_template displayid for visual
     gender          TINYINT UNSIGNED NOT NULL DEFAULT 0, -- 0=male 1=female
@@ -25,6 +26,7 @@ CREATE TABLE IF NOT EXISTS living_world_bot_identity (
     -- Capability
     level           TINYINT UNSIGNED NOT NULL,
     gear_tier       TINYINT UNSIGNED NOT NULL DEFAULT 1, -- 1=questing 2=dungeon 3=raid
+    personality_key VARCHAR(32)      NOT NULL DEFAULT 'uninterested', -- uninterested|opportunistic|aggressive|coward
     has_herbalism   TINYINT(1)       NOT NULL DEFAULT 0,
     has_mining      TINYINT(1)       NOT NULL DEFAULT 0,
     has_fishing     TINYINT(1)       NOT NULL DEFAULT 0,

@@ -22,6 +22,8 @@ struct BotTalentTemplateRecord
     std::string   specKey;
     std::uint8_t  classId    = 0;
     std::string   displayName;
+    std::string   variantKey;
+    std::string   description;
     std::vector<BotTalentTemplateEntry> entries; // sorted by priority ASC
 };
 

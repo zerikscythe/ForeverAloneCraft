@@ -186,13 +186,16 @@ float ComputePlannerScore(
 
     switch (profile.personality)
     {
-        case model::BotPersonality::Indifferent:
+        case model::BotPersonality::Uninterested:
             break;
-        case model::BotPersonality::Cautious:
+        case model::BotPersonality::Opportunistic:
             score += 2.0f;
             break;
         case model::BotPersonality::Aggressive:
             score += 4.0f;
+            break;
+        case model::BotPersonality::Coward:
+            score += 1.0f;
             break;
     }
 

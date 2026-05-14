@@ -10,11 +10,14 @@
 #include "ai/AbstractWorldBotProgressor.h"
 #include "ai/WorldBotCreatureAI.h"
 #include "script/AmbientSpawnOverride.h"
+#include "script/WorldBotMaterializationIdentity.h"
 #include "script/WorldBotHotZoneTracker.h"
 #include "integration/BotActivityLog.h"
+#include "integration/SqlActivityLibraryRepository.h"
 #include "integration/SqlBotIdentityRepository.h"
 #include "integration/SqlBotGlobalConfigRepository.h"
 #include "integration/SqlBotHazardConfigRepository.h"
+#include "integration/SqlBotAssignedGearRepository.h"
 #include "integration/SqlBotOocConfigRepository.h"
 #include "integration/SqlBotTalentPreferenceRepository.h"
 #include "integration/SqlZoneIndexRepository.h"
@@ -25,6 +28,7 @@
 #include <optional>
 #include <shared_mutex>
 #include <sstream>
+#include <unordered_set>
 #include <unordered_map>
 #include <vector>
 
@@ -58,6 +62,165 @@ void ApplyEconomyScale(float scale, bool isReload)
             : "");
 }
 } // namespace living_world
+
+namespace
+{
+std::vector<std::uint32_t> ParseDebugIdentityIdList(std::string const& value)
+{
+    std::vector<std::uint32_t> ids;
+    std::unordered_set<std::uint32_t> seen;
+    std::istringstream stream(value);
+    std::string token;
+    while (std::getline(stream, token, ','))
+    {
+        auto const begin = token.find_first_not_of(" \t\r\n");
+        if (begin == std::string::npos)
+            continue;
+
+        auto const end = token.find_last_not_of(" \t\r\n");
+        std::string const trimmed = token.substr(begin, end - begin + 1);
+
+        try
+        {
+            std::uint32_t const id = static_cast<std::uint32_t>(std::stoul(trimmed));
+            if (id != 0 && seen.insert(id).second)
+                ids.push_back(id);
+        }
+        catch (...)
+        {
+        }
+    }
+
+    return ids;
+}
+
+bool SessionStartsInZone(
+    living_world::service::AmbientSession const& session,
+    std::uint32_t zoneId)
+{
+    return zoneId == 0
+        || (!session.tasks.empty() && session.tasks.front().targetZoneId == zoneId);
+}
+
+living_world::service::AmbientStepType ActivityTypeToSandboxStepType(std::string const& activityType)
+{
+    if (activityType == "gather_herb")
+        return living_world::service::AmbientStepType::GatherHerb;
+    if (activityType == "gather_ore")
+        return living_world::service::AmbientStepType::GatherOre;
+    if (activityType == "fish")
+        return living_world::service::AmbientStepType::Fish;
+    if (activityType == "patrol")
+        return living_world::service::AmbientStepType::Patrol;
+    return living_world::service::AmbientStepType::Idle;
+}
+
+std::optional<living_world::service::AmbientSession> BuildForcedZoneSandboxSession(
+    living_world::integration::SqlActivityLibraryRepository& activityRepo,
+    living_world::integration::SqlZoneIndexRepository& zoneRepo,
+    living_world::integration::BotIdentityRecord const& identity,
+    std::uint32_t targetZoneId)
+{
+    if (targetZoneId == 0)
+        return std::nullopt;
+
+    auto const zone = zoneRepo.Find(targetZoneId);
+    if (!zone)
+        return std::nullopt;
+
+    std::vector<living_world::model::ActivityEntry> eligible = activityRepo.LoadEligible(
+        identity.faction,
+        identity.level,
+        identity.hasHerbalism,
+        identity.hasMining,
+        identity.hasFishing);
+
+    eligible.erase(
+        std::remove_if(
+            eligible.begin(),
+            eligible.end(),
+            [&](living_world::model::ActivityEntry const& entry)
+            {
+                return entry.targetZoneId != targetZoneId;
+            }),
+        eligible.end());
+
+    if (eligible.empty())
+        return std::nullopt;
+
+    auto const picked = std::min_element(
+        eligible.begin(),
+        eligible.end(),
+        [](living_world::model::ActivityEntry const& left,
+           living_world::model::ActivityEntry const& right)
+        {
+            auto score = [](living_world::model::ActivityEntry const& entry)
+            {
+                if (entry.activityType == "patrol")
+                    return 0;
+                if (entry.activityType == "idle_city" || entry.activityType == "idle_inn")
+                    return 1;
+                if (entry.activityType == "gather_ore")
+                    return 2;
+                if (entry.activityType == "gather_herb")
+                    return 3;
+                if (entry.activityType == "fish")
+                    return 4;
+                return 5;
+            };
+
+            int const leftScore = score(left);
+            int const rightScore = score(right);
+            if (leftScore != rightScore)
+                return leftScore < rightScore;
+            if (left.weight != right.weight)
+                return left.weight > right.weight;
+            return left.activityId < right.activityId;
+        });
+
+    if (picked == eligible.end())
+        return std::nullopt;
+
+    living_world::service::AmbientSession session;
+    living_world::service::AmbientSessionTask task;
+    task.activityId = picked->activityId;
+    task.activityKey = picked->activityKey;
+    task.displayName = picked->displayName;
+    task.activityType = picked->activityType;
+    task.taskFamily = picked->taskFamily;
+    task.targetZoneId = picked->targetZoneId;
+    session.tasks.push_back(std::move(task));
+
+    living_world::service::AmbientStep travelStep;
+    travelStep.type = living_world::service::AmbientStepType::Travel;
+    travelStep.mapId = zone->mapId;
+    travelStep.x = zone->anchorX;
+    travelStep.y = zone->anchorY;
+    travelStep.z = zone->anchorZ;
+    travelStep.durationSec = 0;
+    travelStep.taskIndex = 0;
+    travelStep.label = "Travel to " + zone->zoneName;
+    session.steps.push_back(std::move(travelStep));
+
+    living_world::service::AmbientStep activityStep;
+    activityStep.type = ActivityTypeToSandboxStepType(picked->activityType);
+    activityStep.mapId = zone->mapId;
+    activityStep.x = zone->anchorX;
+    activityStep.y = zone->anchorY;
+    activityStep.z = zone->anchorZ;
+    activityStep.durationSec = std::max<std::uint32_t>(picked->durationMinSec, 600u);
+    activityStep.taskIndex = 0;
+    activityStep.label = picked->displayName;
+    session.steps.push_back(std::move(activityStep));
+
+    session.activityId = picked->activityId;
+    session.activityKey = picked->activityKey;
+    session.displayName = picked->displayName;
+    session.sourceKind = "debug_zone_forced";
+    session.sourceKey = "zone_" + std::to_string(targetZoneId) + ":activity_" + picked->activityKey;
+    return session;
+}
+} // namespace
 
 class LivingWorldWorldScript final : public WorldScript
 {
@@ -102,6 +265,12 @@ public:
         _debugSyntheticInterestElapsedMs = 0;
         _debugSyntheticInterestSwitched = false;
         _debugSyntheticInterestCleared = false;
+        _debugForcedIdentityIds = ParseDebugIdentityIdList(
+            sConfigMgr->GetOption<std::string>("LivingWorld.DebugForceIdentityIds", ""));
+        _debugForcedSessionZoneId = sConfigMgr->GetOption<std::uint32_t>(
+            "LivingWorld.DebugForceSessionZoneId", 0);
+        _debugForcedSessionComposeAttempts = sConfigMgr->GetOption<std::uint32_t>(
+            "LivingWorld.DebugForceSessionComposeAttempts", 24);
 
         std::uint32_t const debugHotZoneCooldownMs = sConfigMgr->GetOption<std::uint32_t>(
             "LivingWorld.DebugHotZoneCooldownMs", 0);
@@ -127,6 +296,23 @@ public:
             living_world::script::ClearSyntheticWorldBotInterest();
         }
 
+        if (!_debugForcedIdentityIds.empty() || _debugForcedSessionZoneId != 0)
+        {
+            std::ostringstream oss;
+            for (std::size_t i = 0; i < _debugForcedIdentityIds.size(); ++i)
+            {
+                if (i != 0)
+                    oss << ',';
+                oss << _debugForcedIdentityIds[i];
+            }
+
+            LOG_INFO("server.worldserver",
+                "[LivingWorldDebug] ForcedSandbox identities='{}' forced_session_zone={} compose_attempts={}",
+                oss.str(),
+                _debugForcedSessionZoneId,
+                _debugForcedSessionComposeAttempts);
+        }
+
         // Force the first population check on the first world update after
         // startup/reload instead of waiting a full tick interval. This makes
         // autonomous world-bot activity visible immediately while preserving
@@ -141,8 +327,10 @@ public:
         living_world::integration::SqlBotGlobalConfigRepository().EnsureSchema();
         living_world::integration::SqlBotOocConfigRepository().EnsureSchema();
         living_world::integration::SqlBotTalentPreferenceRepository().EnsureSchema();
+        living_world::integration::SqlBotAssignedGearRepository().EnsureSchema();
 
         living_world::integration::SqlBotIdentityRepository identityRepo;
+        identityRepo.EnsureSchema();
         std::uint32_t const recovered = identityRepo.RecoverStaleActiveSessions();
         if (recovered > 0)
         {
@@ -209,6 +397,9 @@ private:
     std::uint32_t _debugSyntheticInterestSwitchMs = 0;
     std::uint32_t _debugSyntheticInterestClearMs = 0;
     std::uint32_t _debugSyntheticInterestElapsedMs = 0;
+    std::vector<std::uint32_t> _debugForcedIdentityIds;
+    std::uint32_t _debugForcedSessionZoneId = 0;
+    std::uint32_t _debugForcedSessionComposeAttempts = 24;
     SpawnPoint _forcedSpawnPoint { 0u, 0.0f, 0.0f, 0.0f };
     std::unordered_map<std::uint32_t, AbstractWorldBotRuntime> _abstractWorldBots;
     std::unordered_map<std::uint32_t, MaterializedWorldBotHandle> _materializedWorldBots;
@@ -463,6 +654,18 @@ private:
         return "fresh_spawn session_count=" + std::to_string(identity.sessionCount);
     }
 
+    static std::string DescribeMaterializationIdentityRefresh(
+        living_world::integration::BotIdentityRecord const& cachedIdentity,
+        living_world::integration::BotIdentityRecord const& selectedIdentity)
+    {
+        return "cached_level=" + std::to_string(cachedIdentity.level)
+            + " refreshed_level=" + std::to_string(selectedIdentity.level)
+            + " cached_spec='" + cachedIdentity.specKey
+            + "' refreshed_spec='" + selectedIdentity.specKey
+            + "' cached_personality='" + cachedIdentity.personalityKey
+            + "' refreshed_personality='" + selectedIdentity.personalityKey + "'";
+    }
+
     bool MaterializeAbstractWorldBot(AbstractWorldBotRuntime const& runtime)
     {
         if (runtime.progress.currentStep >= runtime.session.steps.size())
@@ -470,6 +673,11 @@ private:
 
         living_world::ai::AbstractWorldBotInterpolatedPosition const pos =
             living_world::ai::ComputeAbstractWorldBotInterpolatedPosition(runtime.session, runtime.progress);
+
+        living_world::integration::SqlBotIdentityRepository identityRepository;
+        auto const refreshedIdentity = identityRepository.FindById(runtime.identity.id);
+        living_world::integration::BotIdentityRecord const identity =
+            living_world::script::SelectWorldBotMaterializationIdentity(runtime.identity, refreshedIdentity);
 
         Map* map = sMapMgr->FindMap(pos.mapId, 0);
         if (!map)
@@ -482,8 +690,8 @@ private:
             return false;
 
         living_world::integration::BotActivityLog::RecordAbstract(
-            runtime.identity.name,
-            runtime.identity.id,
+            identity.name,
+            identity.id,
             "status_change",
             "materializing_from_abstract -> " + DescribeAbstractRuntime(runtime),
             pos.mapId,
@@ -492,17 +700,33 @@ private:
             pos.y,
             pos.z);
 
+        if (identity.level != runtime.identity.level
+            || identity.specKey != runtime.identity.specKey
+            || identity.personalityKey != runtime.identity.personalityKey)
+        {
+            living_world::integration::BotActivityLog::RecordAbstract(
+                identity.name,
+                identity.id,
+                "status_change",
+                "materialization_identity_refresh " + DescribeMaterializationIdentityRefresh(runtime.identity, identity),
+                pos.mapId,
+                ResolveStepZoneId(runtime.session, runtime.progress.currentStep),
+                pos.x,
+                pos.y,
+                pos.z);
+        }
+
         if (auto* ai = dynamic_cast<living_world::ai::WorldBotCreatureAI*>(bot->AI()))
         {
             ai->SetIdentityAndSession(
-                runtime.identity,
+                identity,
                 runtime.session,
                 runtime.progress.currentStep,
                 runtime.progress.stepElapsedMs,
                 runtime.worldOnlineMs,
                 true,
                 true);
-            _materializedWorldBots[runtime.identity.id] = MaterializedWorldBotHandle{
+            _materializedWorldBots[identity.id] = MaterializedWorldBotHandle{
                 pos.mapId,
                 bot->GetGUID()
             };
@@ -683,8 +907,25 @@ private:
 
         // Load available identities — mix of factions.
         living_world::integration::SqlBotIdentityRepository identityRepo;
-        std::vector<living_world::integration::BotIdentityRecord> identities =
-            identityRepo.LoadAvailable(0, toSpawn);
+        std::vector<living_world::integration::BotIdentityRecord> identities;
+        if (!_debugForcedIdentityIds.empty())
+        {
+            identities.reserve(std::min<std::size_t>(_debugForcedIdentityIds.size(), toSpawn));
+            for (std::uint32_t id : _debugForcedIdentityIds)
+            {
+                auto const identity = identityRepo.FindById(id);
+                if (!identity || identity->isRetired || !identity->isAvailable)
+                    continue;
+
+                identities.push_back(*identity);
+                if (identities.size() >= toSpawn)
+                    break;
+            }
+        }
+        else
+        {
+            identities = identityRepo.LoadAvailable(0, toSpawn);
+        }
 
         if (identities.empty())
         {
@@ -705,23 +946,60 @@ private:
             bool usedForcedSpawn = false;
 
             // Compose a session for this identity.
-            auto session = composer.Compose(
-                identity.faction,
-                identity.level,
-                identity.hasHerbalism,
-                identity.hasMining,
-                identity.hasFishing,
-                identity.lastSeenZoneId != 0 ? identity.lastSeenZoneId : GetHubZoneIdForIdentity(identity),
-                identity.homeZoneId,
-                identity.homeAnchorPointKey,
-                identity.homeBindPointKey);
+            std::optional<living_world::service::AmbientSession> session;
+            std::uint32_t const composeStartZoneId = _debugForcedSessionZoneId != 0
+                ? _debugForcedSessionZoneId
+                : (identity.lastSeenZoneId != 0 ? identity.lastSeenZoneId : GetHubZoneIdForIdentity(identity));
+            std::uint32_t const composeHomeZoneId = _debugForcedSessionZoneId != 0
+                ? _debugForcedSessionZoneId
+                : identity.homeZoneId;
+            std::string const composeHomeAnchorPointKey = _debugForcedSessionZoneId != 0
+                ? std::string{}
+                : identity.homeAnchorPointKey;
+            std::string const composeHomeBindPointKey = _debugForcedSessionZoneId != 0
+                ? std::string{}
+                : identity.homeBindPointKey;
+
+            std::uint32_t const composeAttempts = std::max<std::uint32_t>(1u, _debugForcedSessionComposeAttempts);
+            for (std::uint32_t attempt = 0; attempt < composeAttempts; ++attempt)
+            {
+                auto candidate = composer.Compose(
+                    identity.faction,
+                    identity.level,
+                    identity.hasHerbalism,
+                    identity.hasMining,
+                    identity.hasFishing,
+                    composeStartZoneId,
+                    composeHomeZoneId,
+                    composeHomeAnchorPointKey,
+                    composeHomeBindPointKey);
+                if (!candidate)
+                    continue;
+
+                if (!SessionStartsInZone(*candidate, _debugForcedSessionZoneId))
+                    continue;
+
+                session = std::move(candidate);
+                break;
+            }
+
+            if (!session && _debugForcedSessionZoneId != 0)
+            {
+                living_world::integration::SqlActivityLibraryRepository activityRepo;
+                living_world::integration::SqlZoneIndexRepository zoneRepo;
+                session = BuildForcedZoneSandboxSession(
+                    activityRepo,
+                    zoneRepo,
+                    identity,
+                    _debugForcedSessionZoneId);
+            }
 
             if (!session)
             {
                 LOG_WARN("server.worldserver",
                     "[LivingWorld] AmbientPopulationTick: no session for "
-                    "identity='{}' level={} faction={}",
-                    identity.name, identity.level, identity.faction);
+                    "identity='{}' level={} faction={} forced_zone={}",
+                    identity.name, identity.level, identity.faction, _debugForcedSessionZoneId);
                 continue;
             }
 

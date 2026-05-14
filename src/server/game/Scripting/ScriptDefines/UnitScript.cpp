@@ -69,6 +69,11 @@ void ScriptMgr::OnBeforeRollMeleeOutcomeAgainst(Unit const* attacker, Unit const
     CALL_ENABLED_HOOKS(UnitScript, UNITHOOK_ON_BEFORE_ROLL_MELEE_OUTCOME_AGAINST, script->OnBeforeRollMeleeOutcomeAgainst(attacker, victim, attType, attackerMaxSkillValueForLevel, victimMaxSkillValueForLevel, attackerWeaponSkill, victimDefenseSkill, crit_chance, miss_chance, dodge_chance, parry_chance, block_chance));
 }
 
+bool ScriptMgr::OnCalculateSpellDoneCritChance(Unit const* attacker, Unit const* victim, SpellInfo const* spellInfo, SpellSchoolMask schoolMask, WeaponAttackType attackType, bool skipEffectCheck, float& critChance)
+{
+    CALL_ENABLED_BOOLEAN_HOOKS_WITH_DEFAULT_FALSE(UnitScript, UNITHOOK_ON_CALCULATE_SPELL_DONE_CRIT_CHANCE, script->OnCalculateSpellDoneCritChance(attacker, victim, spellInfo, schoolMask, attackType, skipEffectCheck, critChance));
+}
+
 void ScriptMgr::OnAuraApply(Unit* unit, Aura* aura)
 {
     CALL_ENABLED_HOOKS(UnitScript, UNITHOOK_ON_AURA_APPLY, script->OnAuraApply(unit, aura));

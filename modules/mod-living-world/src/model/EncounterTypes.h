@@ -15,9 +15,10 @@ enum class BotFaction : std::uint8_t
 
 enum class BotPersonality : std::uint8_t
 {
-    Indifferent,
-    Cautious,
-    Aggressive
+    Uninterested,
+    Opportunistic,
+    Aggressive,
+    Coward
 };
 
 enum class BotRole : std::uint8_t

@@ -23,7 +23,8 @@ public:
 
     virtual std::optional<model::BotTalentTemplateRecord> FindTemplateForSpec(
         std::string const& specKey,
-        std::uint8_t classId) const = 0;
+        std::uint8_t classId,
+        std::string const& variantKey = "") const = 0;
 };
 } // namespace integration
 } // namespace living_world

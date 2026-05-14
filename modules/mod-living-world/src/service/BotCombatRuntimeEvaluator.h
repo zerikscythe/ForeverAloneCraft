@@ -18,7 +18,11 @@ struct BotCombatRuntimeContext
     Unit* bot = nullptr;      // Player* for session bots, Creature* for world bots
     Player* owner = nullptr;  // Always a real player or nullptr
     Unit* primaryTarget = nullptr;
+    std::unordered_set<std::uint32_t> const* usedSimulatedItemsThisCombat = nullptr;
     std::uint32_t rotationWaitMs = 500;
+    model::BotCombatAoEMode defaultAoEMode = model::BotCombatAoEMode::Centroid;
+    std::uint8_t defaultAoEMinTargets = 2;
+    float defaultAoEScanRadius = 10.0f;
     // Spells available to this bot. For Player session bots this is built from
     // GetSpellMap() during PrepareForPlayer. For creature bots it is loaded from
     // living_world_bot_spell_list. Must not be empty when bot is a Creature.
@@ -36,9 +40,22 @@ struct BotCombatEvaluatedAction
 {
     std::uint64_t entryId = 0;
     std::uint64_t actionId = 0;
+    model::BotCombatActionType actionType = model::BotCombatActionType::Spell;
     std::uint32_t spellId = 0;
+    std::uint32_t itemId = 0;
+    bool simulatedItemUse = false;
     Unit* target = nullptr;
     std::string targetKey;
+    std::string entryLabel;
+    bool isInterrupt = false;
+    std::uint8_t actionSlot = 0;
+    std::optional<model::BotCombatAoEMode> aoeMode;
+    std::optional<std::uint8_t> aoeMinTargets;
+    std::optional<float> aoeRadius;
+    bool useDestination = false;
+    float destinationX = 0.0f;
+    float destinationY = 0.0f;
+    float destinationZ = 0.0f;
     bool breaksCurrentCast = false;
 };
 
@@ -48,6 +65,12 @@ struct BotCombatEvaluationResult
         BotCombatEvaluationDisposition::None;
     std::optional<BotCombatEvaluatedAction> action;
     std::uint32_t waitMs = 0;
+    std::uint64_t traceEntryId = 0;
+    std::uint64_t traceActionId = 0;
+    std::uint32_t traceSpellId = 0;
+    std::string traceEntryLabel;
+    std::string traceTargetKey;
+    std::string traceReason;
 };
 
 class BotCombatRuntimeEvaluator

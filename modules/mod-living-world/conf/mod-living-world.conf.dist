@@ -84,6 +84,42 @@ LivingWorld.AmbientForceSpawnZ = 0.0
 #        Optional test-only override for the world-bot hot-zone cooldown.
 #        Set to 0 to keep the normal 10-minute cooldown. Use a short value like
 #        10000 for fast server-only validation of dematerialization behavior.
+#
+#    LivingWorld.DebugForceIdentityIds
+#        Optional comma-separated list of specific world-bot identity ids to use
+#        for the ambient population tick instead of a random available pool.
+#        This is intended for deterministic headless sandboxing.
+#        Example: 33,17,18,61,26
+#
+#    LivingWorld.DebugForceSessionZoneId
+#        Optional zone id that the debug sandbox should force as the opening
+#        target zone when composing sessions. The population tick will retry
+#        session composition until the first task lands in this zone, or until
+#        DebugForceSessionComposeAttempts is exhausted.
+#        Default: 0 (disabled)
+#
+#    LivingWorld.DebugForceSessionComposeAttempts
+#        Maximum number of composition retries when DebugForceSessionZoneId is
+#        enabled.
+#        Default: 24
+#
+#    LivingWorld.DebugCombatManaDrainIdentityId
+#        Optional world-bot identity id that should have its mana forcibly
+#        reduced during combat for debug sandbox validation. This is intended to
+#        pair with DebugForceIdentityIds and the combat sandbox harness so a
+#        forced Arcane Mage can be driven into the Mana Sapphire branch.
+#        Default: 0 (disabled)
+#
+#    LivingWorld.DebugCombatManaDrainTargetManaPct
+#        When DebugCombatManaDrainIdentityId is enabled, the chosen bot's mana is
+#        periodically clamped down to this percentage during combat until a Mana
+#        Sapphire use is observed.
+#        Default: 60
+#
+#    LivingWorld.DebugCombatManaDrainIntervalMs
+#        Minimum interval between debug mana-drain applications for the chosen
+#        combat sandbox identity.
+#        Default: 1500
 ###################################################################################################
 
 LivingWorld.DebugSyntheticInterestEnabled = 0
@@ -94,6 +130,12 @@ LivingWorld.DebugSyntheticInterestSwitchZoneId = 0
 LivingWorld.DebugSyntheticInterestSwitchMs = 0
 LivingWorld.DebugSyntheticInterestClearMs = 0
 LivingWorld.DebugHotZoneCooldownMs = 0
+LivingWorld.DebugForceIdentityIds = ""
+LivingWorld.DebugForceSessionZoneId = 0
+LivingWorld.DebugForceSessionComposeAttempts = 24
+LivingWorld.DebugCombatManaDrainIdentityId = 0
+LivingWorld.DebugCombatManaDrainTargetManaPct = 60
+LivingWorld.DebugCombatManaDrainIntervalMs = 1500
 
 ###################################################################################################
 # ACCOUNT-ALT ITEM RECOVERY POLICY

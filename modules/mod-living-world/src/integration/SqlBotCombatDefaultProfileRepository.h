@@ -16,7 +16,8 @@ public:
         std::string const& specKey,
         std::string const& roleKey,
         std::string const& classKey = "",
-        std::string const& contextKey = "PvE") const override;
+        std::string const& contextKey = "PvE",
+        std::string const& variantKey = "") const override;
 };
 } // namespace integration
 } // namespace living_world
