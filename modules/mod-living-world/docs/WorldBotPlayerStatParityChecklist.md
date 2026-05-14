@@ -172,10 +172,19 @@ Current state:
 Checklist:
 
 - [x] Reset non-physical resistances to clean player baseline
-- [ ] Add optional stat/loadout/gear-driven resistance bonuses if the design
+- [x] Add optional stat/loadout/gear-driven resistance bonuses if the design
   wants true resistance-bearing world bots
-- [ ] Audit spell resist behavior against `GetEffectiveResistChance(...)`
-- [ ] Decide whether spell penetration parity belongs in the same slice
+- [x] Audit spell resist behavior against `GetEffectiveResistChance(...)`
+- [x] Decide whether spell penetration parity belongs in the same slice
+
+Implementation notes:
+
+- Assigned gear now carries item-template non-physical resistance fields for
+  holy, fire, nature, frost, shadow, and arcane.
+- Materialization applies those resistance bonuses after the clean player-like
+  zero baseline reset, so resistance-bearing gear now affects spell resistance.
+- Spell penetration is implemented separately in `GetEffectiveResistChance`,
+  where it reduces the final non-physical resistance before the existing clamp.
 
 Files to touch:
 

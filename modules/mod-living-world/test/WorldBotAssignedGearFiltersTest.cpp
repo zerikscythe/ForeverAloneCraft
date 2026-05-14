@@ -190,5 +190,24 @@ TEST(WorldBotAssignedGearSummaryTest, SecondaryRatingsAreCarriedForRuntimeSlices
     EXPECT_EQ(summary.bonusManaRegen, 17);
     EXPECT_EQ(summary.bonusSpellPenetration, 18);
 }
+
+TEST(WorldBotAssignedGearSummaryTest, ResistancesAreCarriedForRuntimeSlices)
+{
+    model::WorldBotAssignedGearSummary summary;
+
+    AccumulateWorldBotAssignedGearResistance(summary, SPELL_SCHOOL_HOLY, 1);
+    AccumulateWorldBotAssignedGearResistance(summary, SPELL_SCHOOL_FIRE, 2);
+    AccumulateWorldBotAssignedGearResistance(summary, SPELL_SCHOOL_NATURE, 3);
+    AccumulateWorldBotAssignedGearResistance(summary, SPELL_SCHOOL_FROST, 4);
+    AccumulateWorldBotAssignedGearResistance(summary, SPELL_SCHOOL_SHADOW, 5);
+    AccumulateWorldBotAssignedGearResistance(summary, SPELL_SCHOOL_ARCANE, 6);
+
+    EXPECT_EQ(summary.bonusHolyResistance, 1);
+    EXPECT_EQ(summary.bonusFireResistance, 2);
+    EXPECT_EQ(summary.bonusNatureResistance, 3);
+    EXPECT_EQ(summary.bonusFrostResistance, 4);
+    EXPECT_EQ(summary.bonusShadowResistance, 5);
+    EXPECT_EQ(summary.bonusArcaneResistance, 6);
+}
 } // namespace service
 } // namespace living_world

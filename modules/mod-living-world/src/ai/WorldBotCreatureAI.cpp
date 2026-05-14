@@ -272,6 +272,12 @@ std::string DescribeAssignedGearSummary(model::WorldBotAssignedGearSummary const
         << ",hp:" << summary.bonusHealth
         << ",mana:" << summary.bonusMana
         << ",armor:" << summary.bonusArmor
+        << ",res_holy:" << summary.bonusHolyResistance
+        << ",res_fire:" << summary.bonusFireResistance
+        << ",res_nature:" << summary.bonusNatureResistance
+        << ",res_frost:" << summary.bonusFrostResistance
+        << ",res_shadow:" << summary.bonusShadowResistance
+        << ",res_arcane:" << summary.bonusArcaneResistance
         << ",ap:" << summary.bonusAttackPower
         << ",rap:" << summary.bonusRangedAttackPower
         << ",def:" << summary.bonusDefenseSkillRating
@@ -663,6 +669,15 @@ void WorldBotCreatureAI::ApplyIdentityToCreature()
                 me->SetStatFlatModifier(unitMod, TOTAL_VALUE, currentBonus + static_cast<float>(bonus));
             };
 
+        auto const applyResistanceBonus =
+            [&](SpellSchools school, std::int32_t bonus)
+            {
+                if (bonus == 0)
+                    return;
+
+                me->SetResistance(school, std::max<int32>(0, me->GetResistance(school) + bonus));
+            };
+
         applyStatBonus(STAT_STRENGTH, summary.bonusStrength);
         applyStatBonus(STAT_AGILITY, summary.bonusAgility);
         applyStatBonus(STAT_STAMINA, summary.bonusStamina);
@@ -674,6 +689,13 @@ void WorldBotCreatureAI::ApplyIdentityToCreature()
         applyUnitBonus(UNIT_MOD_ARMOR, summary.bonusArmor);
         applyUnitBonus(UNIT_MOD_ATTACK_POWER, summary.bonusAttackPower);
         applyUnitBonus(UNIT_MOD_ATTACK_POWER_RANGED, summary.bonusRangedAttackPower);
+
+        applyResistanceBonus(SPELL_SCHOOL_HOLY, summary.bonusHolyResistance);
+        applyResistanceBonus(SPELL_SCHOOL_FIRE, summary.bonusFireResistance);
+        applyResistanceBonus(SPELL_SCHOOL_NATURE, summary.bonusNatureResistance);
+        applyResistanceBonus(SPELL_SCHOOL_FROST, summary.bonusFrostResistance);
+        applyResistanceBonus(SPELL_SCHOOL_SHADOW, summary.bonusShadowResistance);
+        applyResistanceBonus(SPELL_SCHOOL_ARCANE, summary.bonusArcaneResistance);
     }
 
     for (std::uint32_t spellId : _preparedBuild.knownSpellIds)

@@ -24,6 +24,12 @@ struct WorldBotAssignedGearSummary
     std::int32_t bonusHealth = 0;
     std::int32_t bonusMana = 0;
     std::int32_t bonusArmor = 0;
+    std::int32_t bonusHolyResistance = 0;
+    std::int32_t bonusFireResistance = 0;
+    std::int32_t bonusNatureResistance = 0;
+    std::int32_t bonusFrostResistance = 0;
+    std::int32_t bonusShadowResistance = 0;
+    std::int32_t bonusArcaneResistance = 0;
     std::int32_t bonusAttackPower = 0;
     std::int32_t bonusRangedAttackPower = 0;
 

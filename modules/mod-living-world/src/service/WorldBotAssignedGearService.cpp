@@ -757,6 +757,12 @@ model::WorldBotAssignedGearSummary WorldBotAssignedGearService::SummarizeAssigne
 
         summary.bonusArmor += static_cast<std::int32_t>(itemTemplate->Armor);
         summary.bonusBlockValue += static_cast<std::int32_t>(itemTemplate->Block);
+        AccumulateWorldBotAssignedGearResistance(summary, SPELL_SCHOOL_HOLY, itemTemplate->HolyRes);
+        AccumulateWorldBotAssignedGearResistance(summary, SPELL_SCHOOL_FIRE, itemTemplate->FireRes);
+        AccumulateWorldBotAssignedGearResistance(summary, SPELL_SCHOOL_NATURE, itemTemplate->NatureRes);
+        AccumulateWorldBotAssignedGearResistance(summary, SPELL_SCHOOL_FROST, itemTemplate->FrostRes);
+        AccumulateWorldBotAssignedGearResistance(summary, SPELL_SCHOOL_SHADOW, itemTemplate->ShadowRes);
+        AccumulateWorldBotAssignedGearResistance(summary, SPELL_SCHOOL_ARCANE, itemTemplate->ArcaneRes);
 
         for (std::uint32_t i = 0; i < itemTemplate->StatsCount && i < MAX_ITEM_PROTO_STATS; ++i)
         {

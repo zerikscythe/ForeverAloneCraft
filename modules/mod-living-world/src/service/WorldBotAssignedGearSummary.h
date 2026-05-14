@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ItemTemplate.h"
+#include "SharedDefines.h"
 #include "model/WorldBotAssignedGear.h"
 
 #include <cstdint>
@@ -9,6 +10,39 @@ namespace living_world
 {
 namespace service
 {
+inline void AccumulateWorldBotAssignedGearResistance(
+    model::WorldBotAssignedGearSummary& summary,
+    SpellSchools school,
+    std::int32_t resistance)
+{
+    if (resistance == 0)
+        return;
+
+    switch (school)
+    {
+        case SPELL_SCHOOL_HOLY:
+            summary.bonusHolyResistance += resistance;
+            break;
+        case SPELL_SCHOOL_FIRE:
+            summary.bonusFireResistance += resistance;
+            break;
+        case SPELL_SCHOOL_NATURE:
+            summary.bonusNatureResistance += resistance;
+            break;
+        case SPELL_SCHOOL_FROST:
+            summary.bonusFrostResistance += resistance;
+            break;
+        case SPELL_SCHOOL_SHADOW:
+            summary.bonusShadowResistance += resistance;
+            break;
+        case SPELL_SCHOOL_ARCANE:
+            summary.bonusArcaneResistance += resistance;
+            break;
+        default:
+            break;
+    }
+}
+
 inline void AccumulateWorldBotAssignedGearStat(
     model::WorldBotAssignedGearSummary& summary,
     std::uint32_t statType,
