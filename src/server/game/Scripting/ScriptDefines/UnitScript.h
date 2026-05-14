@@ -32,6 +32,8 @@ enum UnitHook
     UNITHOOK_ON_BEFORE_ROLL_MELEE_OUTCOME_AGAINST,
     UNITHOOK_ON_CALCULATE_SPELL_DONE_CRIT_CHANCE,
     UNITHOOK_ON_CALCULATE_MAGIC_SPELL_HIT_CHANCE,
+    UNITHOOK_ON_CALCULATE_SPELL_BASE_DAMAGE_BONUS_DONE,
+    UNITHOOK_ON_CALCULATE_SPELL_BASE_HEALING_BONUS_DONE,
     UNITHOOK_ON_AURA_APPLY,
     UNITHOOK_ON_AURA_REMOVE,
     UNITHOOK_IF_NORMAL_REACTION,
@@ -85,6 +87,10 @@ public:
     virtual bool OnCalculateSpellDoneCritChance(Unit const* /*attacker*/, Unit const* /*victim*/, SpellInfo const* /*spellProto*/, SpellSchoolMask /*schoolMask*/, WeaponAttackType /*attackType*/, bool /*skipEffectCheck*/, float& /*critChance*/) { return false; };
 
     virtual void OnCalculateMagicSpellHitChance(Unit const* /*attacker*/, Unit const* /*victim*/, SpellInfo const* /*spellInfo*/, int32& /*hitChance*/) { }
+
+    virtual void OnCalculateSpellBaseDamageBonusDone(Unit const* /*attacker*/, SpellSchoolMask /*schoolMask*/, int32& /*doneAdvertisedBenefit*/) { }
+
+    virtual void OnCalculateSpellBaseHealingBonusDone(Unit const* /*attacker*/, SpellSchoolMask /*schoolMask*/, int32& /*advertisedBenefit*/) { }
 
     virtual void OnAuraApply(Unit* /*unit*/, Aura* /*aura*/) { }
 

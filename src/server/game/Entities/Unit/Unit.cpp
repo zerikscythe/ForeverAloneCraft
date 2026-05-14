@@ -9059,6 +9059,8 @@ int32 Unit::SpellBaseDamageBonusDone(SpellSchoolMask schoolMask)
         // ... and attack power
         DoneAdvertisedBenefit += int32(CalculatePct(GetTotalAttackPowerValue(BASE_ATTACK), GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_SPELL_DAMAGE_OF_ATTACK_POWER, schoolMask)));
     }
+
+    sScriptMgr->OnCalculateSpellBaseDamageBonusDone(this, schoolMask, DoneAdvertisedBenefit);
     return DoneAdvertisedBenefit;
 }
 
@@ -9817,6 +9819,8 @@ int32 Unit::SpellBaseHealingBonusDone(SpellSchoolMask schoolMask)
         // ... and attack power
         AdvertisedBenefit += int32(CalculatePct(GetTotalAttackPowerValue(BASE_ATTACK), GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_SPELL_HEALING_OF_ATTACK_POWER, schoolMask)));
     }
+
+    sScriptMgr->OnCalculateSpellBaseHealingBonusDone(this, schoolMask, AdvertisedBenefit);
     return AdvertisedBenefit;
 }
 

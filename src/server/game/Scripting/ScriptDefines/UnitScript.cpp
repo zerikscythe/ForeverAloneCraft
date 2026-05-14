@@ -79,6 +79,16 @@ void ScriptMgr::OnCalculateMagicSpellHitChance(Unit const* attacker, Unit const*
     CALL_ENABLED_HOOKS(UnitScript, UNITHOOK_ON_CALCULATE_MAGIC_SPELL_HIT_CHANCE, script->OnCalculateMagicSpellHitChance(attacker, victim, spellInfo, hitChance));
 }
 
+void ScriptMgr::OnCalculateSpellBaseDamageBonusDone(Unit const* attacker, SpellSchoolMask schoolMask, int32& doneAdvertisedBenefit)
+{
+    CALL_ENABLED_HOOKS(UnitScript, UNITHOOK_ON_CALCULATE_SPELL_BASE_DAMAGE_BONUS_DONE, script->OnCalculateSpellBaseDamageBonusDone(attacker, schoolMask, doneAdvertisedBenefit));
+}
+
+void ScriptMgr::OnCalculateSpellBaseHealingBonusDone(Unit const* attacker, SpellSchoolMask schoolMask, int32& advertisedBenefit)
+{
+    CALL_ENABLED_HOOKS(UnitScript, UNITHOOK_ON_CALCULATE_SPELL_BASE_HEALING_BONUS_DONE, script->OnCalculateSpellBaseHealingBonusDone(attacker, schoolMask, advertisedBenefit));
+}
+
 void ScriptMgr::OnAuraApply(Unit* unit, Aura* aura)
 {
     CALL_ENABLED_HOOKS(UnitScript, UNITHOOK_ON_AURA_APPLY, script->OnAuraApply(unit, aura));

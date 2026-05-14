@@ -10,6 +10,7 @@
 #include "service/WorldBotMeleeHitBaseline.h"
 #include "service/WorldBotSpellCriticalStrikeBaseline.h"
 #include "service/WorldBotSpellHitBaseline.h"
+#include "service/WorldBotSpellPowerBaseline.h"
 
 #include <algorithm>
 #include <cmath>
@@ -170,6 +171,35 @@ public:
         hitChance = service::AdjustWorldBotMagicSpellHitChance(
             hitChance,
             ResolveWorldBotCombatRatingBonus(attacker, CR_HIT_SPELL, gearSummary.bonusSpellHitRating));
+    }
+
+    void OnCalculateSpellBaseDamageBonusDone(
+        Unit const* attacker,
+        SpellSchoolMask schoolMask,
+        int32& doneAdvertisedBenefit) override
+    {
+        ai::WorldBotCreatureAI const* worldBotAI = GetWorldBotCreatureAI(attacker);
+        if (!worldBotAI)
+            return;
+
+        service::ApplyWorldBotSpellPowerBonus(
+            schoolMask,
+            worldBotAI->GetAssignedGearSummary().bonusSpellPower,
+            doneAdvertisedBenefit);
+    }
+
+    void OnCalculateSpellBaseHealingBonusDone(
+        Unit const* attacker,
+        SpellSchoolMask /*schoolMask*/,
+        int32& advertisedBenefit) override
+    {
+        ai::WorldBotCreatureAI const* worldBotAI = GetWorldBotCreatureAI(attacker);
+        if (!worldBotAI)
+            return;
+
+        service::ApplyWorldBotHealingPowerBonus(
+            worldBotAI->GetAssignedGearSummary().bonusHealingPower,
+            advertisedBenefit);
     }
 
     void OnBeforeRollMeleeOutcomeAgainst(

@@ -616,15 +616,22 @@ New helper / hook?
 
 ### 8.1 Spell Power / Healing Done
 
-Status: `Missing`.
+Status: `Partial`.
 
 Checklist:
 
-- [ ] Model player-like spell power contribution
-- [ ] Model healing-done contribution
-- [ ] Decide whether these are stored as aggregate prepared values or computed
+- [x] Model player-like spell power contribution
+- [x] Model healing-done contribution
+- [x] Decide whether these are stored as aggregate prepared values or computed
   purely at read time
 - [ ] Keep the implementation Creature-safe and avoid fake player inventory
+
+Notes:
+
+- Assigned gear summary now feeds spell power and healing power through
+  read-time UnitScript hooks in `SpellBaseDamageBonusDone(...)` and
+  `SpellBaseHealingBonusDone(...)`. These use aggregate prepared values and stay
+  Creature-safe; no player inventory fields are faked.
 
 Files to touch:
 
@@ -641,13 +648,13 @@ Files to touch:
 
 New helper / hook?
 
-- Likely new helper:
+- New helper:
   - `modules/mod-living-world/src/service/WorldBotSpellPowerBaseline.h`
-- Likely new core hook(s):
+- New core hooks:
   - `OnCalculateSpellBaseDamageBonusDone(...)`
-  - `OnCalculateSpellHealingBonusDone(...)`
-  - or equivalent narrow read-time seams around `SpellBaseDamageBonusDone(...)`
-    and `SpellHealingBonusDone(...)`
+  - `OnCalculateSpellBaseHealingBonusDone(...)`
+  - implemented as narrow read-time seams around `SpellBaseDamageBonusDone(...)`
+    and `SpellBaseHealingBonusDone(...)`
 
 ### 8.2 Spell Penetration
 
