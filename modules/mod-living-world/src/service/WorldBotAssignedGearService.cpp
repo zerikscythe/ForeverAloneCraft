@@ -8,6 +8,7 @@
 #include "model/BotSpecKey.h"
 #include "service/WorldBotAssignedGearFilters.h"
 #include "service/WorldBotGearBand.h"
+#include "service/WorldBotAssignedGearSummary.h"
 #include "service/WorldBotPreparationService.h"
 
 #include <algorithm>
@@ -759,38 +760,7 @@ model::WorldBotAssignedGearSummary WorldBotAssignedGearService::SummarizeAssigne
         for (std::uint32_t i = 0; i < itemTemplate->StatsCount && i < MAX_ITEM_PROTO_STATS; ++i)
         {
             _ItemStat const& stat = itemTemplate->ItemStat[i];
-            switch (stat.ItemStatType)
-            {
-                case ITEM_MOD_STRENGTH:
-                    summary.bonusStrength += stat.ItemStatValue;
-                    break;
-                case ITEM_MOD_AGILITY:
-                    summary.bonusAgility += stat.ItemStatValue;
-                    break;
-                case ITEM_MOD_STAMINA:
-                    summary.bonusStamina += stat.ItemStatValue;
-                    break;
-                case ITEM_MOD_INTELLECT:
-                    summary.bonusIntellect += stat.ItemStatValue;
-                    break;
-                case ITEM_MOD_SPIRIT:
-                    summary.bonusSpirit += stat.ItemStatValue;
-                    break;
-                case ITEM_MOD_HEALTH:
-                    summary.bonusHealth += stat.ItemStatValue;
-                    break;
-                case ITEM_MOD_MANA:
-                    summary.bonusMana += stat.ItemStatValue;
-                    break;
-                case ITEM_MOD_ATTACK_POWER:
-                    summary.bonusAttackPower += stat.ItemStatValue;
-                    break;
-                case ITEM_MOD_RANGED_ATTACK_POWER:
-                    summary.bonusRangedAttackPower += stat.ItemStatValue;
-                    break;
-                default:
-                    break;
-            }
+            AccumulateWorldBotAssignedGearStat(summary, stat.ItemStatType, stat.ItemStatValue);
         }
     }
 

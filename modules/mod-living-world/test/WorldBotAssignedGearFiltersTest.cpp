@@ -1,4 +1,5 @@
 #include "service/WorldBotAssignedGearFilters.h"
+#include "service/WorldBotAssignedGearSummary.h"
 
 #include "gtest/gtest.h"
 
@@ -139,6 +140,55 @@ TEST(WorldBotAssignedGearFiltersTest, ArcaneMageCannotUseWeaponOffhand)
         CLASS_MAGE,
         "Arcane",
         "DPS"));
+}
+
+TEST(WorldBotAssignedGearSummaryTest, GenericRatingsExpandToAllRelevantBuckets)
+{
+    model::WorldBotAssignedGearSummary summary;
+
+    AccumulateWorldBotAssignedGearStat(summary, ITEM_MOD_HIT_RATING, 12);
+    AccumulateWorldBotAssignedGearStat(summary, ITEM_MOD_CRIT_RATING, 18);
+    AccumulateWorldBotAssignedGearStat(summary, ITEM_MOD_HASTE_RATING, 24);
+    AccumulateWorldBotAssignedGearStat(summary, ITEM_MOD_SPELL_POWER, 42);
+
+    EXPECT_EQ(summary.bonusMeleeHitRating, 12);
+    EXPECT_EQ(summary.bonusRangedHitRating, 12);
+    EXPECT_EQ(summary.bonusSpellHitRating, 12);
+    EXPECT_EQ(summary.bonusMeleeCritRating, 18);
+    EXPECT_EQ(summary.bonusRangedCritRating, 18);
+    EXPECT_EQ(summary.bonusSpellCritRating, 18);
+    EXPECT_EQ(summary.bonusMeleeHasteRating, 24);
+    EXPECT_EQ(summary.bonusRangedHasteRating, 24);
+    EXPECT_EQ(summary.bonusSpellHasteRating, 24);
+    EXPECT_EQ(summary.bonusSpellPower, 42);
+    EXPECT_EQ(summary.bonusHealingPower, 42);
+}
+
+TEST(WorldBotAssignedGearSummaryTest, SecondaryRatingsAreCarriedForRuntimeSlices)
+{
+    model::WorldBotAssignedGearSummary summary;
+
+    AccumulateWorldBotAssignedGearStat(summary, ITEM_MOD_DEFENSE_SKILL_RATING, 9);
+    AccumulateWorldBotAssignedGearStat(summary, ITEM_MOD_DODGE_RATING, 10);
+    AccumulateWorldBotAssignedGearStat(summary, ITEM_MOD_PARRY_RATING, 11);
+    AccumulateWorldBotAssignedGearStat(summary, ITEM_MOD_BLOCK_RATING, 12);
+    AccumulateWorldBotAssignedGearStat(summary, ITEM_MOD_BLOCK_VALUE, 35);
+    AccumulateWorldBotAssignedGearStat(summary, ITEM_MOD_EXPERTISE_RATING, 14);
+    AccumulateWorldBotAssignedGearStat(summary, ITEM_MOD_ARMOR_PENETRATION_RATING, 15);
+    AccumulateWorldBotAssignedGearStat(summary, ITEM_MOD_RESILIENCE_RATING, 16);
+    AccumulateWorldBotAssignedGearStat(summary, ITEM_MOD_MANA_REGENERATION, 17);
+    AccumulateWorldBotAssignedGearStat(summary, ITEM_MOD_SPELL_PENETRATION, 18);
+
+    EXPECT_EQ(summary.bonusDefenseSkillRating, 9);
+    EXPECT_EQ(summary.bonusDodgeRating, 10);
+    EXPECT_EQ(summary.bonusParryRating, 11);
+    EXPECT_EQ(summary.bonusBlockRating, 12);
+    EXPECT_EQ(summary.bonusBlockValue, 35);
+    EXPECT_EQ(summary.bonusExpertiseRating, 14);
+    EXPECT_EQ(summary.bonusArmorPenetrationRating, 15);
+    EXPECT_EQ(summary.bonusResilienceRating, 16);
+    EXPECT_EQ(summary.bonusManaRegen, 17);
+    EXPECT_EQ(summary.bonusSpellPenetration, 18);
 }
 } // namespace service
 } // namespace living_world

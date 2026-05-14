@@ -271,6 +271,30 @@ std::string DescribeAssignedGearSummary(model::WorldBotAssignedGearSummary const
         << ",armor:" << summary.bonusArmor
         << ",ap:" << summary.bonusAttackPower
         << ",rap:" << summary.bonusRangedAttackPower
+        << ",def:" << summary.bonusDefenseSkillRating
+        << ",dodge:" << summary.bonusDodgeRating
+        << ",parry:" << summary.bonusParryRating
+        << ",block:" << summary.bonusBlockRating
+        << ",block_value:" << summary.bonusBlockValue
+        << ",hit_melee:" << summary.bonusMeleeHitRating
+        << ",hit_ranged:" << summary.bonusRangedHitRating
+        << ",hit_spell:" << summary.bonusSpellHitRating
+        << ",crit_melee:" << summary.bonusMeleeCritRating
+        << ",crit_ranged:" << summary.bonusRangedCritRating
+        << ",crit_spell:" << summary.bonusSpellCritRating
+        << ",haste_melee:" << summary.bonusMeleeHasteRating
+        << ",haste_ranged:" << summary.bonusRangedHasteRating
+        << ",haste_spell:" << summary.bonusSpellHasteRating
+        << ",expertise:" << summary.bonusExpertiseRating
+        << ",armor_pen:" << summary.bonusArmorPenetrationRating
+        << ",hit_taken:" << summary.bonusHitTakenRating
+        << ",crit_taken:" << summary.bonusCritTakenRating
+        << ",resilience:" << summary.bonusResilienceRating
+        << ",spell_power:" << summary.bonusSpellPower
+        << ",healing:" << summary.bonusHealingPower
+        << ",mp5:" << summary.bonusManaRegen
+        << ",hp5:" << summary.bonusHealthRegen
+        << ",spell_pen:" << summary.bonusSpellPenetration
         << "}";
     return oss.str();
 }
