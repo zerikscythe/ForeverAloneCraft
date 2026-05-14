@@ -29,6 +29,7 @@ enum UnitHook
     UNITHOOK_MODIFY_MELEE_DAMAGE,
     UNITHOOK_MODIFY_SPELL_DAMAGE_TAKEN,
     UNITHOOK_MODIFY_HEAL_RECEIVED,
+    UNITHOOK_ON_APPLY_RESILIENCE,
     UNITHOOK_ON_BEFORE_ROLL_MELEE_OUTCOME_AGAINST,
     UNITHOOK_ON_CALCULATE_SPELL_DONE_CRIT_CHANCE,
     UNITHOOK_ON_CALCULATE_MAGIC_SPELL_HIT_CHANCE,
@@ -82,6 +83,8 @@ public:
 
     // Called when Heal is Recieved
     virtual void ModifyHealReceived(Unit* /*target*/, Unit* /*healer*/, uint32& /*heal*/, SpellInfo const* /*spellInfo*/) { }
+
+    virtual void OnApplyResilience(Unit const* /*victim*/, float* /*crit*/, int32* /*damage*/, bool /*isCrit*/, CombatRating /*type*/) { }
 
     //Called when Damage is Dealt
     virtual uint32 DealDamage(Unit* /*AttackerUnit*/, Unit* /*pVictim*/, uint32 damage, DamageEffectType /*damagetype*/) { return damage; }

@@ -756,13 +756,24 @@ New helper / hook?
 
 ### 10.1 Resilience
 
-Status: `Missing`.
+Status: `Partial`.
 
 Checklist:
 
-- [ ] Decide whether world bots should have PvP resilience at all
-- [ ] If yes, model crit suppression and damage reduction explicitly
-- [ ] Audit melee, ranged, spell, and mana-drain resilience paths
+- [x] Decide whether world bots should have PvP resilience at all
+- [x] If yes, model crit suppression and damage reduction explicitly
+- [x] Audit melee, ranged, spell, and mana-drain resilience paths
+
+Implementation notes:
+
+- Added a world-bot-only resilience hook beside the existing player/pet
+  resilience application path.
+- Assigned resilience and crit-taken ratings now convert through the matching
+  `CR_CRIT_TAKEN_*` combat-rating bucket for melee, ranged, and spell paths.
+- The runtime adjustment mirrors player ordering: crit chance reduction first,
+  then crit damage reduction for critical hits, then generic damage reduction.
+- Existing mana-drain resilience calls route through `CR_CRIT_TAKEN_SPELL`, so
+  the world-bot hook applies there as well.
 
 Files to touch:
 

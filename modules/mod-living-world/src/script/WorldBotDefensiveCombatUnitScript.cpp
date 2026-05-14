@@ -14,6 +14,7 @@
 #include "service/WorldBotExpertiseBaseline.h"
 #include "service/WorldBotManaRegenBaseline.h"
 #include "service/WorldBotMeleeHitBaseline.h"
+#include "service/WorldBotResilienceBaseline.h"
 #include "service/WorldBotSpellCriticalStrikeBaseline.h"
 #include "service/WorldBotSpellHitBaseline.h"
 #include "service/WorldBotSpellPenetrationBaseline.h"
@@ -314,6 +315,29 @@ public:
             schoolMask,
             victimResistance,
             worldBotAI->GetAssignedGearSummary().bonusSpellPenetration);
+    }
+
+    void OnApplyResilience(
+        Unit const* victim,
+        float* crit,
+        int32* damage,
+        bool isCrit,
+        CombatRating type) override
+    {
+        ai::WorldBotCreatureAI const* worldBotAI = GetWorldBotCreatureAI(victim);
+        if (!worldBotAI || !victim)
+            return;
+
+        if (type != CR_CRIT_TAKEN_MELEE && type != CR_CRIT_TAKEN_RANGED && type != CR_CRIT_TAKEN_SPELL)
+            return;
+
+        model::WorldBotAssignedGearSummary const& gearSummary = worldBotAI->GetAssignedGearSummary();
+        float const resiliencePct = service::ResolveWorldBotCombatRatingBonus(
+            victim,
+            type,
+            gearSummary.bonusResilienceRating + gearSummary.bonusCritTakenRating);
+
+        service::ApplyWorldBotResilience(resiliencePct, crit, damage, isCrit);
     }
 
     void OnBeforeRollMeleeOutcomeAgainst(

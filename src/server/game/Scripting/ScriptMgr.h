@@ -551,6 +551,7 @@ public: /* UnitScript */
     void ModifyMeleeDamage(Unit* target, Unit* attacker, uint32& damage);
     void ModifySpellDamageTaken(Unit* target, Unit* attacker, int32& damage, SpellInfo const* spellInfo);
     void ModifyHealReceived(Unit* target, Unit* healer, uint32& addHealth, SpellInfo const* spellInfo);
+    void OnApplyResilience(Unit const* victim, float* crit, int32* damage, bool isCrit, CombatRating type);
     uint32 DealDamage(Unit* AttackerUnit, Unit* pVictim, uint32 damage, DamageEffectType damagetype);
     void OnBeforeRollMeleeOutcomeAgainst(Unit const* attacker, Unit const* victim, WeaponAttackType attType, int32& attackerMaxSkillValueForLevel, int32& victimMaxSkillValueForLevel, int32& attackerWeaponSkill, int32& victimDefenseSkill, int32& crit_chance, int32& miss_chance, int32& dodge_chance, int32& parry_chance, int32& block_chance);
     bool OnCalculateSpellDoneCritChance(Unit const* attacker, Unit const* victim, SpellInfo const* spellInfo, SpellSchoolMask schoolMask, WeaponAttackType attackType, bool skipEffectCheck, float& critChance);
