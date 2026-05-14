@@ -45,7 +45,7 @@ Definition of done:
 - tests prove hazard decisions outrank posture decisions
 - no live AI behavior change yet
 
-Status: `Planned`
+Status: `Complete`
 
 ## Slice 2 — Combat-situation evaluator and posture selection
 
@@ -73,7 +73,7 @@ Definition of done:
 - evaluator is pure and unit-tested
 - no pathing or MotionMaster work inside evaluator
 
-Status: `Planned`
+Status: `Complete`
 
 ## Slice 3 — World-bot combat movement integration
 
@@ -99,7 +99,7 @@ Definition of done:
 - world bots no longer default to unconditional chase when they fail to act
 - combat movement traces include posture / decision source
 
-Status: `Planned`
+Status: `Complete`
 
 ## Slice 4 — Hazard precedence and action gating
 
@@ -120,7 +120,15 @@ Definition of done:
 - hazards remain separate detectors but are woven into movement arbitration
 - posture affects action legality
 
-Status: `Planned`
+Status: `Complete` (first-pass)
+
+Current implementation note:
+
+- world bots now use posture-derived hard-cast gating in the combat runtime
+- world bots now treat configured explicit hazard auras as a first-pass hazard
+  override input during combat movement arbitration
+- companion-style damage-pattern hazard sensing is **not** yet unified into the
+  world-bot doctrine path; that remains a later refinement
 
 ## Slice 5 — Data-authored movement archetypes
 

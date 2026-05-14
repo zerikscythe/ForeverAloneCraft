@@ -1163,7 +1163,7 @@ std::optional<BotCombatEvaluatedAction> BotCombatRuntimeEvaluator::EvaluateActio
     if (entry.isInterrupt && !HasInterruptibleEnemyCast(target))
         return std::nullopt;
 
-    if (!CanExecuteSpell(context.bot, target, spellId))
+    if (!CanExecuteSpell(context.bot, target, spellId, context.allowHardCasts))
         return std::nullopt;
 
     BotCombatEvaluatedAction evaluated;
@@ -1321,13 +1321,17 @@ Unit* BotCombatRuntimeEvaluator::ResolveActionTarget(
 bool BotCombatRuntimeEvaluator::CanExecuteSpell(
     Unit* bot,
     Unit* target,
-    std::uint32_t spellId)
+    std::uint32_t spellId,
+    bool allowHardCasts)
 {
     if (!bot || !target || spellId == 0)
         return false;
 
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
     if (!spellInfo)
+        return false;
+
+    if (!allowHardCasts && spellInfo->CalcCastTime(bot) > 0)
         return false;
 
     if (bot->isMoving() &&
