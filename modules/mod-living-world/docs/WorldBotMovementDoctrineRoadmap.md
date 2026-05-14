@@ -21,7 +21,8 @@ commit, and build on without destabilizing the live world-bot runtime.
 3. Combat-situation evaluation
 4. World-bot combat integration
 5. Action gating by posture
-6. Data-authoring / archetype expansion
+6. Shared hazard convergence
+7. Data-authoring / archetype expansion
 
 ## Slice 1 — Shared posture model and hazard-aware scaffolding
 
@@ -130,7 +131,45 @@ Current implementation note:
 - companion-style damage-pattern hazard sensing is **not** yet unified into the
   world-bot doctrine path; that remains a later refinement
 
-## Slice 5 — Data-authored movement archetypes
+## Slice 5 — Shared hazard convergence
+
+Goal:
+
+- Reuse more of the companion-style hazard runtime semantics inside world-bot
+  combat doctrine without pretending the two runtimes already share identical
+  party/owner adapters.
+
+Deliverables:
+
+- extract a shared repeated-damage / commitment-window helper
+- reuse that helper from `BotHazardSensor`
+- feed world-bot hazard snapshots with:
+  - explicit hazard aura detection
+  - repeated-damage detection while stationary
+  - commitment-window persistence to reduce posture jitter
+- enrich movement traces / hazard snapshot fields so later anchor-aware work can
+  layer on top cleanly
+
+Definition of done:
+
+- world bots can enter hazard override from repeated-damage sensing, not just
+  explicit auras
+- world bots keep hazard override stable through the configured commitment window
+- account/companion bots and world bots share the same repeated-damage hazard
+  evaluator and tuning path
+
+Status: `Complete` (first-pass)
+
+Current implementation note:
+
+- world bots now share the explicit-aura + repeated-damage hazard evaluation core
+  with companion/account bots
+- world-bot hazard snapshots now persist through the configured commitment window
+  instead of dropping immediately when a single tick clears
+- clean-anchor selection is still companion-only today because world bots do not
+  yet expose equivalent party/owner context in their runtime adapter
+
+## Slice 6 — Data-authored movement archetypes
 
 Goal:
 

@@ -11,6 +11,11 @@ namespace model
 struct WorldBotHazardSnapshot
 {
     bool active = false;
+    bool explicitAuraTriggered = false;
+    bool repeatedDamageTriggered = false;
+    bool commitWindowActive = false;
+    std::uint32_t hazardSpellId = 0;
+    std::uint32_t consecutiveDamageTicks = 0;
     float severity = 0.0f;
 };
 

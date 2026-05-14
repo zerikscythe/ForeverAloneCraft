@@ -8,6 +8,7 @@
 #include "service/BotActivitySessionComposer.h"
 #include "service/BotCombatProfilePreparationService.h"
 #include "service/BotCombatRuntimeEvaluator.h"
+#include "service/SharedHazardEvaluation.h"
 
 #include "CreatureAI.h"
 
@@ -119,6 +120,7 @@ private:
     bool           _debugCombatManaGemObserved = false;
     bool           _hasShieldBaseline = false;
     std::unordered_set<std::uint32_t> _usedSimulatedItemsThisCombat;
+    service::SharedHazardEvaluationState _hazardEvaluationState;
 
     // Accumulates UpdateAI diff for the 500ms tick gate.
     std::uint32_t _tickAccum     = 0;

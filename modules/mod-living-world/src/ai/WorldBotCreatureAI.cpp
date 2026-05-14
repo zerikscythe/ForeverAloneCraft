@@ -46,6 +46,7 @@
 #include "model/BotSpecKey.h"
 
 #include <algorithm>
+#include <chrono>
 #include <sstream>
 
 namespace living_world
@@ -312,22 +313,46 @@ char const* DescribeMovementPlanKind(service::WorldBotMovementPlanKind kind)
     }
 }
 
-model::WorldBotHazardSnapshot BuildWorldBotHazardSnapshot(Unit* bot)
+model::WorldBotHazardSnapshot BuildWorldBotHazardSnapshot(
+    Unit* bot,
+    service::SharedHazardEvaluationState& hazardState)
 {
     model::WorldBotHazardSnapshot snapshot;
     if (!bot)
         return snapshot;
 
+    bool hasKnownAura = false;
+    std::uint32_t hazardSpellId = 0;
     std::unordered_set<uint32_t> const auraIds = GetHazardConfigService().GetHazardAuraIds();
     for (uint32_t spellId : auraIds)
     {
         if (bot->HasAura(spellId))
         {
-            snapshot.active = true;
-            snapshot.severity = 1.0f;
-            return snapshot;
+            hasKnownAura = true;
+            hazardSpellId = spellId;
+            break;
         }
     }
+
+    Position const currentPosition = bot->GetPosition();
+    service::SharedHazardEvaluationResult const evaluation =
+        service::EvaluateSharedHazard(
+            hazardState,
+            std::chrono::steady_clock::now(),
+            bot->GetHealthPct(),
+            currentPosition,
+            hasKnownAura,
+            hazardSpellId,
+            hasKnownAura ? 1.0f : 0.0f,
+            GetHazardConfigService().GetTuning());
+
+    snapshot.active = evaluation.dangerDetectedNow || evaluation.commitWindowActive;
+    snapshot.explicitAuraTriggered = evaluation.explicitAuraTriggered;
+    snapshot.repeatedDamageTriggered = evaluation.repeatedDamageTriggered;
+    snapshot.commitWindowActive = evaluation.commitWindowActive;
+    snapshot.hazardSpellId = evaluation.hazardSpellId;
+    snapshot.consecutiveDamageTicks = static_cast<std::uint32_t>(std::max(evaluation.consecutiveDamageTicks, 0));
+    snapshot.severity = evaluation.severity;
 
     return snapshot;
 }
@@ -1110,6 +1135,7 @@ void WorldBotCreatureAI::SuspendCurrentStepForCombat(Unit* target)
         return;
 
     _combatSuspendedStep = true;
+    service::ResetSharedHazardEvaluationState(_hazardEvaluationState);
     _lastDebugCombatManaDrainWorldMs = 0;
     _debugCombatManaGemObserved = false;
     _usedSimulatedItemsThisCombat.clear();
@@ -1140,6 +1166,7 @@ void WorldBotCreatureAI::ResumeSuspendedStepAfterCombat()
 
     _combatSuspendedStep = false;
     _traveling = false;
+    service::ResetSharedHazardEvaluationState(_hazardEvaluationState);
     _lastDebugCombatManaDrainWorldMs = 0;
     _debugCombatManaGemObserved = false;
     _usedSimulatedItemsThisCombat.clear();
@@ -1373,7 +1400,7 @@ void WorldBotCreatureAI::TickCombat(uint32 /*diff*/)
     if (!target)
         return;
 
-    model::WorldBotHazardSnapshot const hazard = BuildWorldBotHazardSnapshot(me);
+    model::WorldBotHazardSnapshot const hazard = BuildWorldBotHazardSnapshot(me, _hazardEvaluationState);
     model::WorldBotCombatSituation const situation = service::BuildWorldBotCombatSituation(
         _preparedBuild,
         true,
@@ -1381,8 +1408,7 @@ void WorldBotCreatureAI::TickCombat(uint32 /*diff*/)
         me->GetHealthPct(),
         GetManaPct(me),
         CountNearbyHostileUnits(me, 10.0f),
-        hazard.active,
-        hazard.severity);
+        hazard);
     model::WorldBotMovementDecision const movementDecision =
         service::EvaluateWorldBotMovementDoctrine(situation);
     service::WorldBotMovementExecutionPlan const movementPlan =
@@ -1407,7 +1433,12 @@ void WorldBotCreatureAI::TickCombat(uint32 /*diff*/)
                 << " plan='" << DescribeMovementPlanKind(movementPlan.kind) << "'"
                 << " hard_casts=" << (movementDecision.allowHardCasts ? 1 : 0)
                 << " cast_safe=" << (situation.canCastSafely ? 1 : 0)
-                << " hazard_active=" << (situation.hazard.active ? 1 : 0);
+                << " hazard_active=" << (situation.hazard.active ? 1 : 0)
+                << " hazard_aura=" << (situation.hazard.explicitAuraTriggered ? 1 : 0)
+                << " hazard_repeat=" << (situation.hazard.repeatedDamageTriggered ? 1 : 0)
+                << " hazard_commit=" << (situation.hazard.commitWindowActive ? 1 : 0)
+                << " hazard_spell=" << situation.hazard.hazardSpellId
+                << " hazard_consec=" << situation.hazard.consecutiveDamageTicks;
 
             switch (movementPlan.kind)
             {
@@ -1759,6 +1790,8 @@ void WorldBotCreatureAI::CompletSession()
 
 void WorldBotCreatureAI::JustDied(Unit* /*killer*/)
 {
+    service::ResetSharedHazardEvaluationState(_hazardEvaluationState);
+
     integration::BotActivityLog::Record(
         me, _identity.name, _identity.id,
         "status_change",

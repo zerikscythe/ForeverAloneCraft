@@ -58,8 +58,7 @@ inline model::WorldBotCombatSituation BuildWorldBotCombatSituation(
     float healthPct,
     float manaPct,
     std::uint32_t nearbyHostiles,
-    bool hazardActive = false,
-    float hazardSeverity = 0.0f)
+    model::WorldBotHazardSnapshot const& hazard = {})
 {
     model::WorldBotCombatSituation situation;
     situation.movementStyle = ResolveWorldBotMovementStyle(build);
@@ -68,8 +67,7 @@ inline model::WorldBotCombatSituation BuildWorldBotCombatSituation(
     situation.healthPct = healthPct;
     situation.manaPct = manaPct;
     situation.nearbyHostiles = nearbyHostiles;
-    situation.hazard.active = hazardActive;
-    situation.hazard.severity = hazardSeverity;
+    situation.hazard = hazard;
 
     situation.isTankStyle = situation.movementStyle == model::WorldBotMovementStyle::FrontlineTank;
     situation.isHealerStyle = situation.movementStyle == model::WorldBotMovementStyle::BacklineHealer;

@@ -9,6 +9,7 @@
 #include "Unit.h"
 #include "integration/SqlBotHazardConfigRepository.h"
 #include "service/BotHazardConfigService.h"
+#include "service/SharedHazardEvaluation.h"
 
 #include <chrono>
 #include <cmath>
@@ -43,10 +44,7 @@ service::BotHazardConfigService& GetHazardConfigService()
 struct BotHazardTracking
 {
     BotHazardMovementState moveState;
-    float    lastHealthPct          = 100.0f;
-    Position lastPosition;                  // zero-initialised: first-tick guard works
-    int      consecutiveDamageTicks = 0;    // because initial distance to (0,0,0) >> 2y
-    std::chrono::steady_clock::time_point lastDamageTick = {};
+    service::SharedHazardEvaluationState hazardState;
 };
 
 static std::mutex                                       s_hazardMutex;
@@ -237,39 +235,19 @@ bool ProcessHazardTick(Player* bot, Player* owner)
     // -----------------------------------------------------------
     // Layer 2: repeated damage at the same position
     // -----------------------------------------------------------
-    bool layer2Triggered = false;
-    float const hpDrop = tracking.lastHealthPct - currentHpPct;
-    float const moved  = tracking.lastPosition.GetExactDist2d(currentPos);
+    service::SharedHazardEvaluationResult const hazardResult =
+        service::EvaluateSharedHazard(
+            tracking.hazardState,
+            now,
+            currentHpPct,
+            currentPos,
+            hasKnownAura,
+            hazardSpellId,
+            hasKnownAura ? 1.0f : 0.0f,
+            tuning);
 
-    if (hpDrop > tuning.damageThresholdPct && moved < tuning.maxMovementYards)
-    {
-        // Took significant damage while barely moving.
-        // Only count as a consecutive tick if it arrived within ~750ms
-        // of the previous one (1.5× the 500ms tick period).
-        auto const msSinceLast = std::chrono::duration_cast<std::chrono::milliseconds>(
-            now - tracking.lastDamageTick).count();
-
-        if (msSinceLast < 750 && tracking.consecutiveDamageTicks > 0)
-            ++tracking.consecutiveDamageTicks;
-        else
-            tracking.consecutiveDamageTicks = 1;
-
-        tracking.lastDamageTick = now;
-
-        if (tracking.consecutiveDamageTicks >= tuning.consecutiveDamageTicks)
-            layer2Triggered = true;
-    }
-    else if (hpDrop <= 0.0f)
-    {
-        // HP not dropping: reset consecutive counter.
-        tracking.consecutiveDamageTicks = 0;
-    }
-
-    // Update baseline for next tick.
-    tracking.lastHealthPct = currentHpPct;
-    tracking.lastPosition  = currentPos;
-
-    bool const inDanger = hasKnownAura || layer2Triggered;
+    bool const layer2Triggered = hazardResult.repeatedDamageTriggered;
+    bool const inDanger = hazardResult.dangerDetectedNow;
 
     // -----------------------------------------------------------
     // Not in danger: stop escaping if we were
@@ -303,7 +281,7 @@ bool ProcessHazardTick(Player* bot, Player* owner)
         hasKnownAura,
         hazardSpellId,
         layer2Triggered,
-        tracking.consecutiveDamageTicks);
+        hazardResult.consecutiveDamageTicks);
 
     // Check whether we are still within the commitment window for
     // an existing anchor — avoids changing direction every tick.

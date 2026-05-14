@@ -85,6 +85,13 @@ TEST(WorldBotCombatSituationBuilderTest, BuildsUnsafeCastWindowWhenRangedTargetT
 TEST(WorldBotCombatSituationBuilderTest, CarriesHazardSnapshotIntoSituation)
 {
     model::WorldBotPreparedBuild const build = MakeBuild(CLASS_PRIEST, "Holy", "HEAL");
+    model::WorldBotHazardSnapshot hazard;
+    hazard.active = true;
+    hazard.repeatedDamageTriggered = true;
+    hazard.commitWindowActive = true;
+    hazard.consecutiveDamageTicks = 2u;
+    hazard.severity = 0.75f;
+
     model::WorldBotCombatSituation const situation = BuildWorldBotCombatSituation(
         build,
         true,
@@ -92,10 +99,12 @@ TEST(WorldBotCombatSituationBuilderTest, CarriesHazardSnapshotIntoSituation)
         70.0f,
         100.0f,
         1u,
-        true,
-        0.75f);
+        hazard);
 
     EXPECT_TRUE(situation.hazard.active);
+    EXPECT_TRUE(situation.hazard.repeatedDamageTriggered);
+    EXPECT_TRUE(situation.hazard.commitWindowActive);
+    EXPECT_EQ(situation.hazard.consecutiveDamageTicks, 2u);
     EXPECT_FLOAT_EQ(situation.hazard.severity, 0.75f);
     EXPECT_EQ(situation.movementStyle, model::WorldBotMovementStyle::BacklineHealer);
 }
