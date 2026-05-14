@@ -4,6 +4,7 @@
 #include "Globals/ObjectMgr.h"
 #include "ScriptMgr.h"
 #include "SpellInfo.h"
+#include "service/WorldBotCombatRatingBaseline.h"
 #include "service/WorldBotCriticalStrikeBaseline.h"
 #include "service/WorldBotDefensiveCombatBaseline.h"
 #include "service/WorldBotExpertiseBaseline.h"
@@ -45,26 +46,6 @@ float ResolveWorldBotDodgeRatio(std::uint8_t classId, std::uint8_t level)
     GtChanceToMeleeCritEntry const* dodgeRatio =
         sGtChanceToMeleeCritStore.LookupEntry((classId - 1) * GT_MAX_LEVEL + clampedLevel - 1);
     return dodgeRatio ? dodgeRatio->ratio : 0.0f;
-}
-
-float ResolveWorldBotCombatRatingBonus(Unit const* unit, CombatRating rating, std::int32_t ratingValue)
-{
-    if (!unit || ratingValue == 0)
-        return 0.0f;
-
-    std::uint8_t const classId = unit->getClass();
-    if (classId == 0 || classId > MAX_CLASSES)
-        return 0.0f;
-
-    std::uint8_t const clampedLevel = std::clamp<std::uint8_t>(unit->GetLevel(), 1, GT_MAX_LEVEL);
-    GtCombatRatingsEntry const* ratingEntry =
-        sGtCombatRatingsStore.LookupEntry(rating * GT_MAX_LEVEL + clampedLevel - 1);
-    GtOCTClassCombatRatingScalarEntry const* classRating =
-        sGtOCTClassCombatRatingScalarStore.LookupEntry((classId - 1) * GT_MAX_RATING + rating + 1);
-    if (!ratingEntry || !classRating)
-        return static_cast<float>(ratingValue);
-
-    return static_cast<float>(ratingValue) * classRating->ratio / ratingEntry->ratio;
 }
 
 std::int32_t ChancePctToBasisPoints(float chancePct)
@@ -170,7 +151,7 @@ public:
         model::WorldBotAssignedGearSummary const& gearSummary = worldBotAI->GetAssignedGearSummary();
         hitChance = service::AdjustWorldBotMagicSpellHitChance(
             hitChance,
-            ResolveWorldBotCombatRatingBonus(attacker, CR_HIT_SPELL, gearSummary.bonusSpellHitRating));
+            service::ResolveWorldBotCombatRatingBonus(attacker, CR_HIT_SPELL, gearSummary.bonusSpellHitRating));
     }
 
     void OnCalculateSpellBaseDamageBonusDone(
@@ -232,11 +213,11 @@ public:
                 : gearSummary.bonusMeleeHitRating;
             miss_chance = service::AdjustWorldBotMeleeMissChance(
                 miss_chance,
-                ResolveWorldBotCombatRatingBonus(attacker, hitRating, assignedHitRating));
+                service::ResolveWorldBotCombatRatingBonus(attacker, hitRating, assignedHitRating));
 
             if (attType != RANGED_ATTACK)
             {
-                float const expertiseBonus = ResolveWorldBotCombatRatingBonus(
+                float const expertiseBonus = service::ResolveWorldBotCombatRatingBonus(
                     attacker,
                     CR_EXPERTISE,
                     gearSummary.bonusExpertiseRating);
@@ -255,13 +236,13 @@ public:
 
         model::WorldBotAssignedGearSummary const& gearSummary = worldBotAI->GetAssignedGearSummary();
         float const defenseRatingBonus =
-            ResolveWorldBotCombatRatingBonus(victim, CR_DEFENSE_SKILL, gearSummary.bonusDefenseSkillRating);
+            service::ResolveWorldBotCombatRatingBonus(victim, CR_DEFENSE_SKILL, gearSummary.bonusDefenseSkillRating);
         float const dodgeRatingBonus =
-            ResolveWorldBotCombatRatingBonus(victim, CR_DODGE, gearSummary.bonusDodgeRating);
+            service::ResolveWorldBotCombatRatingBonus(victim, CR_DODGE, gearSummary.bonusDodgeRating);
         float const parryRatingBonus =
-            ResolveWorldBotCombatRatingBonus(victim, CR_PARRY, gearSummary.bonusParryRating);
+            service::ResolveWorldBotCombatRatingBonus(victim, CR_PARRY, gearSummary.bonusParryRating);
         float const blockRatingBonus =
-            ResolveWorldBotCombatRatingBonus(victim, CR_BLOCK, gearSummary.bonusBlockRating);
+            service::ResolveWorldBotCombatRatingBonus(victim, CR_BLOCK, gearSummary.bonusBlockRating);
 
         service::WorldBotDefensiveCombatBaseline const baseline =
             service::BuildWorldBotDefensiveCombatBaseline(

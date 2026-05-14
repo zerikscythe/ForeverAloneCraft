@@ -31,7 +31,9 @@
 #include "service/SimpleBotCombatSpecRoleResolver.h"
 #include "service/WorldBotAssignedGearService.h"
 #include "service/WorldBotAttackPowerBaseline.h"
+#include "service/WorldBotCombatRatingBaseline.h"
 #include "service/WorldBotPassiveSpellRules.h"
+#include "service/WorldBotHasteBaseline.h"
 #include "service/WorldBotPhysicalDamageBaseline.h"
 #include "service/WorldBotPlayerStatBaseline.h"
 #include "service/WorldBotPreparationService.h"
@@ -697,6 +699,14 @@ void WorldBotCreatureAI::ApplyIdentityToCreature()
     }
 
     me->UpdateAllStats();
+    {
+        model::WorldBotAssignedGearSummary const& summary = _preparedBuild.assignedGearSummary;
+        service::ApplyWorldBotHasteBonus(
+            *me,
+            service::ResolveWorldBotCombatRatingBonus(me, CR_HASTE_MELEE, summary.bonusMeleeHasteRating),
+            service::ResolveWorldBotCombatRatingBonus(me, CR_HASTE_RANGED, summary.bonusRangedHasteRating),
+            service::ResolveWorldBotCombatRatingBonus(me, CR_HASTE_SPELL, summary.bonusSpellHasteRating));
+    }
     me->SetFullHealth();
 
     if (me->GetMaxPower(powerType) > 0)

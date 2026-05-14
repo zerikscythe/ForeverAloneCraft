@@ -557,13 +557,21 @@ New helper / hook?
 
 ### 7.1 Haste
 
-Status: `Missing`.
+Status: `Partial`.
 
 Checklist:
 
-- [ ] Model melee haste into swing timers / attack speed
-- [ ] Model spell haste into cast time and possibly GCD behavior
-- [ ] Audit aura-based haste vs item/rating-derived haste
+- [x] Model melee haste into swing timers / attack speed
+- [x] Model spell haste into cast time and possibly GCD behavior
+- [x] Audit aura-based haste vs item/rating-derived haste
+
+Notes:
+
+- Assigned melee/ranged/spell haste ratings now convert through the shared
+  player combat-rating DBC helper and apply through existing Unit haste methods
+  after world-bot stat recalculation. This keeps assigned item haste separate
+  from aura haste while using the same attack-time and cast-speed mechanics.
+  GCD-specific behavior is left to the existing cast system.
 
 Files to touch:
 
@@ -580,12 +588,10 @@ Files to touch:
 
 New helper / hook?
 
-- Likely new helper:
+- New helper:
   - `modules/mod-living-world/src/service/WorldBotHasteBaseline.h`
-- Likely new core hook for spell cast-time parity:
-  - `OnModifySpellCastTime(...)`
-- Melee haste may be implementable without a new hook if attack timers are seeded
-  in a narrow world-bot path.
+- No new core hook was needed; existing `Unit::ApplyAttackTimePercentMod(...)`
+  and `Unit::ApplyCastTimePercentMod(...)` are used at world-bot spawn time.
 
 ### 7.2 Mana Regen / MP5 / Spirit Regen
 
