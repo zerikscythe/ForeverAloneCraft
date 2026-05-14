@@ -712,6 +712,9 @@ Notes:
   player-like spirit/intellect calculation plus assigned MP5, power-regen auras,
   stat-to-mana-regen auras, and interrupted-regeneration percent while under
   the last-mana-use effect.
+- Assigned `ITEM_MOD_HEALTH_REGEN` is now also consumed for world bots through a
+  dedicated creature health-regen hook, using the same per-5-second to regen-tick
+  conversion shape as player item health regen.
 
 Files to touch:
 
@@ -728,6 +731,8 @@ New helper / hook?
   - `modules/mod-living-world/src/service/WorldBotManaRegenBaseline.h`
 - New runtime hook:
   - `OnCalculatePowerRegen(...)`
+- Additional runtime hook for health regen:
+  - `OnCalculateHealthRegen(...)`
 
 ## 8. Caster Throughput
 
@@ -912,6 +917,9 @@ Notes:
   healing power, mana/health regen, spell penetration, block value, and
   non-physical resistances. Each runtime-applied stat is wired through a
   dedicated slice above.
+- `bonusHitTakenRating` now feeds incoming melee/ranged miss chance and incoming
+  spell hit chance for world-bot victims through the existing world-bot combat
+  hooks, instead of remaining a summary-only field.
 - Virtual loadout remains intentionally narrow because it is an abstract build
   bonus shape, not a replacement for true player inventory. Additional fields
   should be added only when a runtime hook exists for that exact stat.
@@ -926,7 +934,8 @@ Files to touch:
 
 New helper / hook?
 
-- No new core hook by itself.
+- Added a narrow core hook for creature health regen:
+  - `OnCalculateHealthRegen(...)`
 - This is the prerequisite data-model work for many unchecked slices above.
 
 ## Recommended Order From Here

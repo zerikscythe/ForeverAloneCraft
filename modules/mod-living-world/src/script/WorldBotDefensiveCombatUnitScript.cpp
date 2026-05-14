@@ -12,6 +12,7 @@
 #include "service/WorldBotCriticalStrikeBaseline.h"
 #include "service/WorldBotDefensiveCombatBaseline.h"
 #include "service/WorldBotExpertiseBaseline.h"
+#include "service/WorldBotHealthRegenBaseline.h"
 #include "service/WorldBotManaRegenBaseline.h"
 #include "service/WorldBotMeleeHitBaseline.h"
 #include "service/WorldBotResilienceBaseline.h"
@@ -169,18 +170,41 @@ public:
 
     void OnCalculateMagicSpellHitChance(
         Unit const* attacker,
-        Unit const* /*victim*/,
+        Unit const* victim,
         SpellInfo const* spellInfo,
         int32& hitChance) override
     {
         ai::WorldBotCreatureAI const* worldBotAI = GetWorldBotCreatureAI(attacker);
         if (!worldBotAI || !spellInfo)
+        {
+            ai::WorldBotCreatureAI const* victimWorldBotAI = GetWorldBotCreatureAI(victim);
+            if (!victimWorldBotAI || !victim)
+                return;
+
+            hitChance = service::AdjustWorldBotMagicSpellHitChance(
+                hitChance,
+                -service::ResolveWorldBotCombatRatingBonus(
+                    victim,
+                    CR_HIT_TAKEN_SPELL,
+                    victimWorldBotAI->GetAssignedGearSummary().bonusHitTakenRating));
             return;
+        }
 
         model::WorldBotAssignedGearSummary const& gearSummary = worldBotAI->GetAssignedGearSummary();
         hitChance = service::AdjustWorldBotMagicSpellHitChance(
             hitChance,
             service::ResolveWorldBotCombatRatingBonus(attacker, CR_HIT_SPELL, gearSummary.bonusSpellHitRating));
+
+        ai::WorldBotCreatureAI const* victimWorldBotAI = GetWorldBotCreatureAI(victim);
+        if (!victimWorldBotAI || !victim)
+            return;
+
+        hitChance = service::AdjustWorldBotMagicSpellHitChance(
+            hitChance,
+            -service::ResolveWorldBotCombatRatingBonus(
+                victim,
+                CR_HIT_TAKEN_SPELL,
+                victimWorldBotAI->GetAssignedGearSummary().bonusHitTakenRating));
     }
 
     void OnCalculateSpellBaseDamageBonusDone(
@@ -261,6 +285,17 @@ public:
             static_cast<float>(unit->GetTotalAuraModifier(SPELL_AURA_MOD_MANA_REGEN_INTERRUPT)),
             unit->IsUnderLastManaUseEffect(),
             sWorld->getRate(RATE_POWER_MANA),
+            CREATURE_REGEN_INTERVAL);
+    }
+
+    void OnCalculateHealthRegen(Unit* unit, float& addValue) override
+    {
+        ai::WorldBotCreatureAI const* worldBotAI = GetWorldBotCreatureAI(unit);
+        if (!worldBotAI)
+            return;
+
+        addValue += service::BuildWorldBotHealthRegenPerTick(
+            static_cast<float>(worldBotAI->GetAssignedGearSummary().bonusHealthRegen),
             CREATURE_REGEN_INTERVAL);
     }
 
@@ -435,6 +470,16 @@ public:
 
         std::int32_t const defenseSkillBonus = static_cast<std::int32_t>(defenseRatingBonus);
         victimDefenseSkill = victimMaxSkillValueForLevel + defenseSkillBonus;
+
+        CombatRating const hitTakenRating = attType == RANGED_ATTACK
+            ? CR_HIT_TAKEN_RANGED
+            : CR_HIT_TAKEN_MELEE;
+        miss_chance = service::AdjustWorldBotMeleeMissChance(
+            miss_chance,
+            -service::ResolveWorldBotCombatRatingBonus(
+                victim,
+                hitTakenRating,
+                gearSummary.bonusHitTakenRating));
 
         miss_chance += ChancePctToBasisPoints(
             service::BuildWorldBotDefenseMissChanceBonusPct(victim->getClass(), defenseRatingBonus));

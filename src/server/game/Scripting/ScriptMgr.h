@@ -562,6 +562,7 @@ public: /* UnitScript */
     void OnCalculateShieldBlockValue(Unit const* unit, uint32& blockValue);
     void OnCalculateArmorForDamageReduction(Unit const* attacker, Unit const* victim, SpellInfo const* spellInfo, float& armor);
     void OnCalculatePowerRegen(Unit* unit, Powers power, float& addValue);
+    void OnCalculateHealthRegen(Unit* unit, float& addValue);
     void OnAuraApply(Unit* /*unit*/, Aura* /*aura*/);
     void OnAuraRemove(Unit* unit, AuraApplication* aurApp, AuraRemoveMode mode);
     bool IfNormalReaction(Unit const* unit, Unit const* target, ReputationRank& repRank);

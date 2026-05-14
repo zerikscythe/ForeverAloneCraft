@@ -39,6 +39,7 @@ enum UnitHook
     UNITHOOK_ON_CALCULATE_SHIELD_BLOCK_VALUE,
     UNITHOOK_ON_CALCULATE_ARMOR_FOR_DAMAGE_REDUCTION,
     UNITHOOK_ON_CALCULATE_POWER_REGEN,
+    UNITHOOK_ON_CALCULATE_HEALTH_REGEN,
     UNITHOOK_ON_AURA_APPLY,
     UNITHOOK_ON_AURA_REMOVE,
     UNITHOOK_IF_NORMAL_REACTION,
@@ -106,6 +107,8 @@ public:
     virtual void OnCalculateArmorForDamageReduction(Unit const* /*attacker*/, Unit const* /*victim*/, SpellInfo const* /*spellInfo*/, float& /*armor*/) { }
 
     virtual void OnCalculatePowerRegen(Unit* /*unit*/, Powers /*power*/, float& /*addValue*/) { }
+
+    virtual void OnCalculateHealthRegen(Unit* /*unit*/, float& /*addValue*/) { }
 
     virtual void OnAuraApply(Unit* /*unit*/, Aura* /*aura*/) { }
 

@@ -114,6 +114,11 @@ void ScriptMgr::OnCalculatePowerRegen(Unit* unit, Powers power, float& addValue)
     CALL_ENABLED_HOOKS(UnitScript, UNITHOOK_ON_CALCULATE_POWER_REGEN, script->OnCalculatePowerRegen(unit, power, addValue));
 }
 
+void ScriptMgr::OnCalculateHealthRegen(Unit* unit, float& addValue)
+{
+    CALL_ENABLED_HOOKS(UnitScript, UNITHOOK_ON_CALCULATE_HEALTH_REGEN, script->OnCalculateHealthRegen(unit, addValue));
+}
+
 void ScriptMgr::OnAuraApply(Unit* unit, Aura* aura)
 {
     CALL_ENABLED_HOOKS(UnitScript, UNITHOOK_ON_AURA_APPLY, script->OnAuraApply(unit, aura));

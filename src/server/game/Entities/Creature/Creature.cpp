@@ -1042,7 +1042,7 @@ void Creature::RegenerateHealth()
     if (curValue >= maxValue)
         return;
 
-    uint32 addvalue = 0;
+    float addvalue = 0.0f;
 
     // Not only pet, but any controlled creature
     // Xinef: fix polymorph rapid regen
@@ -1064,7 +1064,12 @@ void Creature::RegenerateHealth()
 
     addvalue += GetTotalAuraModifier(SPELL_AURA_MOD_REGEN) * CREATURE_REGEN_INTERVAL  / (5 * IN_MILLISECONDS);
 
-    ModifyHealth(addvalue);
+    sScriptMgr->OnCalculateHealthRegen(this, addvalue);
+
+    if (addvalue < 0.0f)
+        addvalue = 0.0f;
+
+    ModifyHealth(int32(addvalue));
 }
 
 void Creature::DoFleeToGetAssistance()
