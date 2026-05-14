@@ -1,4 +1,4 @@
-#include "SharedDefines.h"
+#include "service/WorldBotPowerBaseline.h"
 
 #include "gtest/gtest.h"
 
@@ -6,29 +6,6 @@ namespace living_world
 {
 namespace service
 {
-namespace
-{
-std::uint32_t ResolveWorldBotSpawnPower(
-    Powers powerType,
-    std::uint32_t maxPower)
-{
-    if (maxPower == 0)
-        return 0;
-
-    switch (powerType)
-    {
-        case POWER_MANA:
-        case POWER_ENERGY:
-            return maxPower;
-        case POWER_RAGE:
-        case POWER_RUNIC_POWER:
-            return 0;
-        default:
-            return maxPower;
-    }
-}
-} // namespace
-
 TEST(WorldBotPowerDefaultsTest, StartsManaAndEnergyAtFull)
 {
     EXPECT_EQ(ResolveWorldBotSpawnPower(POWER_MANA, 1200), 1200u);
@@ -45,6 +22,22 @@ TEST(WorldBotPowerDefaultsTest, LeavesZeroMaxPowerAtZero)
 {
     EXPECT_EQ(ResolveWorldBotSpawnPower(POWER_MANA, 0), 0u);
     EXPECT_EQ(ResolveWorldBotSpawnPower(POWER_RAGE, 0), 0u);
+}
+
+TEST(WorldBotPowerDefaultsTest, ResolvesPlayerLikePowerTypeByClass)
+{
+    EXPECT_EQ(ResolveWorldBotPowerType(CLASS_WARRIOR), POWER_RAGE);
+    EXPECT_EQ(ResolveWorldBotPowerType(CLASS_ROGUE), POWER_ENERGY);
+    EXPECT_EQ(ResolveWorldBotPowerType(CLASS_DEATH_KNIGHT), POWER_RUNIC_POWER);
+    EXPECT_EQ(ResolveWorldBotPowerType(CLASS_MAGE), POWER_MANA);
+}
+
+TEST(WorldBotPowerDefaultsTest, UsesPlayerLikeNonManaCaps)
+{
+    EXPECT_EQ(ResolveWorldBotMaxPower(POWER_ENERGY, 0), 100u);
+    EXPECT_EQ(ResolveWorldBotMaxPower(POWER_RAGE, 0), 1000u);
+    EXPECT_EQ(ResolveWorldBotMaxPower(POWER_RUNIC_POWER, 0), 1000u);
+    EXPECT_EQ(ResolveWorldBotMaxPower(POWER_MANA, 2400), 2400u);
 }
 } // namespace service
 } // namespace living_world

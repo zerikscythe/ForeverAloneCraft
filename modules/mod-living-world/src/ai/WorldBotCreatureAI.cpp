@@ -36,6 +36,7 @@
 #include "service/WorldBotHasteBaseline.h"
 #include "service/WorldBotPhysicalDamageBaseline.h"
 #include "service/WorldBotPlayerStatBaseline.h"
+#include "service/WorldBotPowerBaseline.h"
 #include "service/WorldBotPreparationService.h"
 #include "model/BotSpecKey.h"
 
@@ -535,23 +536,7 @@ void WorldBotCreatureAI::ApplyIdentityToCreature()
     // doctrine entries even after successful build preparation.
     me->SetByteValue(UNIT_FIELD_BYTES_0, 1, _identity.classId);
 
-    Powers powerType = POWER_MANA;
-    std::uint32_t baseMana = 0;
-    switch (_identity.classId)
-    {
-        case CLASS_WARRIOR:
-            powerType = POWER_RAGE;
-            break;
-        case CLASS_ROGUE:
-            powerType = POWER_ENERGY;
-            break;
-        case CLASS_DEATH_KNIGHT:
-            powerType = POWER_RUNIC_POWER;
-            break;
-        default:
-            powerType = POWER_MANA;
-            break;
-    }
+    Powers const powerType = service::ResolveWorldBotPowerType(_identity.classId);
 
     me->SetByteValue(UNIT_FIELD_BYTES_0, 3, static_cast<std::uint8_t>(powerType));
 
@@ -605,13 +590,18 @@ void WorldBotCreatureAI::ApplyIdentityToCreature()
 
     if (powerType == POWER_MANA)
     {
-        baseMana = baseline.baseMana;
-        if (baseMana > 0)
+        if (baseline.baseMana > 0)
         {
-            me->SetCreateMana(baseMana);
-            me->SetMaxPower(POWER_MANA, baseMana);
-            me->SetPower(POWER_MANA, baseMana);
+            me->SetCreateMana(baseline.baseMana);
+            me->SetMaxPower(POWER_MANA, baseline.baseMana);
+            me->SetPower(POWER_MANA, baseline.baseMana);
         }
+    }
+    else
+    {
+        std::uint32_t const maxPower = service::ResolveWorldBotMaxPower(powerType, 0);
+        me->SetMaxPower(powerType, maxPower);
+        me->SetPower(powerType, service::ResolveWorldBotSpawnPower(powerType, maxPower));
     }
 
     if (_preparedBuild.virtualLoadout)
@@ -709,23 +699,11 @@ void WorldBotCreatureAI::ApplyIdentityToCreature()
     }
     me->SetFullHealth();
 
+    if (powerType != POWER_MANA)
+        me->SetMaxPower(powerType, service::ResolveWorldBotMaxPower(powerType, 0));
+
     if (me->GetMaxPower(powerType) > 0)
-    {
-        switch (powerType)
-        {
-            case POWER_MANA:
-            case POWER_ENERGY:
-                me->SetPower(powerType, me->GetMaxPower(powerType));
-                break;
-            case POWER_RAGE:
-            case POWER_RUNIC_POWER:
-                me->SetPower(powerType, 0);
-                break;
-            default:
-                me->SetPower(powerType, me->GetMaxPower(powerType));
-                break;
-        }
-    }
+        me->SetPower(powerType, service::ResolveWorldBotSpawnPower(powerType, me->GetMaxPower(powerType)));
 }
 
 void WorldBotCreatureAI::UpdateAI(uint32 diff)

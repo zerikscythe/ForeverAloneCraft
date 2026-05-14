@@ -105,9 +105,19 @@ Current state:
 Checklist:
 
 - [x] Set correct non-mana power type
-- [ ] Match player-authentic spawn defaults and caps for rage/energy/runic power
-- [ ] Match player regen/update behavior for energy and runes
-- [ ] Match combat-generation behavior for rage/runic power where relevant
+- [x] Match player-authentic spawn defaults and caps for rage/energy/runic power
+- [x] Match player regen/update behavior for energy and runes
+- [x] Match combat-generation behavior for rage/runic power where relevant
+
+Implementation notes:
+
+- Added a shared power-baseline helper for class power type, player-like caps,
+  and spawn fill behavior.
+- World bots now explicitly materialize energy at 100, rage at 1000, and runic
+  power at 1000 instead of inheriting generic creature defaults.
+- Energy uses the existing creature 20-per-tick regeneration path, matching the
+  player-style 20 energy per two-second tick used here. Rage and runic power do
+  not get passive regen; they remain combat/spell-effect generated.
 
 Files to touch:
 
