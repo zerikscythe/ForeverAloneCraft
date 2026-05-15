@@ -1,11 +1,13 @@
 #pragma once
 
 #include "service/BotActivitySessionComposer.h"
+#include "service/WorldBotRoutePlanning.h"
 
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 
 namespace living_world
 {
@@ -27,6 +29,7 @@ struct AbstractWorldBotProgressConfig
     float         travelYardsPerSecond   = 4.5f;
     std::uint32_t minStepDurationMs      = 1000;
     std::uint32_t crossMapTravelMs       = 30000;
+    service::WorldBotRoutePlanResolver routePlanResolver;
 };
 
 struct AbstractWorldBotInterpolatedPosition
@@ -56,6 +59,24 @@ inline std::uint32_t ComputeAbstractWorldBotStepDurationMs(
     {
         if (state.stepStartMapId == 0 || state.stepStartMapId != step.mapId)
             return std::max(config.minStepDurationMs, config.crossMapTravelMs);
+
+        if (config.routePlanResolver)
+        {
+            if (auto const plan = config.routePlanResolver(
+                step,
+                state.stepStartMapId,
+                state.stepStartX,
+                state.stepStartY,
+                state.stepStartZ))
+            {
+                if (plan->totalDistanceYards > 0.0f && plan->speedYardsPerSecond > 0.0f)
+                {
+                    std::uint32_t const ms = static_cast<std::uint32_t>(
+                        (plan->totalDistanceYards / plan->speedYardsPerSecond) * 1000.0f);
+                    return std::max(config.minStepDurationMs, ms);
+                }
+            }
+        }
 
         float const dx = step.x - state.stepStartX;
         float const dy = step.y - state.stepStartY;
@@ -99,6 +120,32 @@ inline AbstractWorldBotInterpolatedPosition ComputeAbstractWorldBotInterpolatedP
     float const progress = durationMs == 0
         ? 1.0f
         : std::clamp(static_cast<float>(state.stepElapsedMs) / static_cast<float>(durationMs), 0.0f, 1.0f);
+
+    if (config.routePlanResolver)
+    {
+        if (auto const plan = config.routePlanResolver(
+            step,
+            state.stepStartMapId,
+            state.stepStartX,
+            state.stepStartY,
+            state.stepStartZ))
+        {
+            if (!plan->empty() && plan->totalDistanceYards > 0.0f)
+            {
+                auto const sample = service::SampleWorldBotTravelPlanPosition(
+                    *plan,
+                    state.stepStartX,
+                    state.stepStartY,
+                    state.stepStartZ,
+                    plan->totalDistanceYards * progress);
+                pos.mapId = sample.mapId;
+                pos.x = sample.x;
+                pos.y = sample.y;
+                pos.z = sample.z;
+                return pos;
+            }
+        }
+    }
 
     pos.x = state.stepStartX + ((step.x - state.stepStartX) * progress);
     pos.y = state.stepStartY + ((step.y - state.stepStartY) * progress);

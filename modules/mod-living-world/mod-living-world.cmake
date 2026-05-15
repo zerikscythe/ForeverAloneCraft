@@ -4,6 +4,7 @@ set_property(GLOBAL APPEND PROPERTY ACORE_MODULE_TEST_SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/test/AmbientSpawnOverrideTest.cpp
   ${CMAKE_CURRENT_LIST_DIR}/test/CompanionFollowFormationTest.cpp
   ${CMAKE_CURRENT_LIST_DIR}/test/TravelWatchdogTest.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/test/WorldBotRoutePlanningTest.cpp
   ${CMAKE_CURRENT_LIST_DIR}/test/WorldBotHotZoneTrackerTest.cpp
   ${CMAKE_CURRENT_LIST_DIR}/test/WorldBotMeleeHitBaselineTest.cpp
   ${CMAKE_CURRENT_LIST_DIR}/test/SimpleZonePopulationPlannerTest.cpp

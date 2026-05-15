@@ -13,6 +13,10 @@ commit, and build on without destabilizing the live world-bot runtime.
 - Keep **playstyle doctrine** separate from **moment-to-moment posture**.
 - Reuse a **shared movement/posture engine** with data-authored archetypes later.
 - Land the first slices as **pure helpers/value models** before changing live AI.
+- Keep **strategic route travel / ETA / abstract travel progress** in the
+  travel-network roadmap; this doctrine roadmap owns local tactical movement
+  once combat, hazard response, or short-range posture control becomes
+  authoritative.
 
 ## Priority order
 

@@ -9,6 +9,7 @@
 #include "service/BotCombatProfilePreparationService.h"
 #include "service/BotCombatRuntimeEvaluator.h"
 #include "service/SharedHazardEvaluation.h"
+#include "service/WorldBotRoutePlanning.h"
 
 #include "CreatureAI.h"
 
@@ -92,6 +93,14 @@ private:
     std::string BuildCombatMovementTraceDetail(
         char const* decision,
         Unit* target) const;
+    bool TryBuildRouteTravelPlan(
+        service::AmbientStep const& step,
+        service::WorldBotResolvedTravelPlan& outPlan) const;
+    void ClearActiveRouteTravelPlan();
+    void MoveToActiveTravelTarget(service::AmbientStep const& step);
+    float GetActiveTravelTargetDistance(service::AmbientStep const& step) const;
+    bool AdvanceAlongActiveRouteTravelPlan();
+    std::string DescribeActiveTravelTarget(service::AmbientStep const& step) const;
 
     // Apply identity fields (level, display_id) to the creature.
     void ApplyIdentityToCreature();
@@ -119,8 +128,11 @@ private:
     std::uint64_t  _lastDebugCombatManaDrainWorldMs = 0;
     bool           _debugCombatManaGemObserved = false;
     bool           _hasShieldBaseline = false;
+    bool           _routeTravelPlanActive = false;
+    std::size_t    _routeTravelWaypointIndex = 0;
     std::unordered_set<std::uint32_t> _usedSimulatedItemsThisCombat;
     service::SharedHazardEvaluationState _hazardEvaluationState;
+    service::WorldBotResolvedTravelPlan _routeTravelPlan;
 
     // Accumulates UpdateAI diff for the 500ms tick gate.
     std::uint32_t _tickAccum     = 0;

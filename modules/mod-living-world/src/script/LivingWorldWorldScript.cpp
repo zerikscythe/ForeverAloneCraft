@@ -24,7 +24,9 @@
 #include "QueryResult.h"
 #include "service/BotActivitySessionComposer.h"
 #include "service/BotQuestRewardService.h"
+#include "service/WorldBotRoutePlanning.h"
 
+#include <filesystem>
 #include <optional>
 #include <shared_mutex>
 #include <sstream>
@@ -65,6 +67,36 @@ void ApplyEconomyScale(float scale, bool isReload)
 
 namespace
 {
+std::filesystem::path ResolveWorldBotRouteExportRoot()
+{
+    std::string configured = sConfigMgr->GetOption<std::string>(
+        "LivingWorld.RouteExportDir",
+        "tools/lw-zone-editor/data/exported_routes");
+
+    std::vector<std::filesystem::path> candidates;
+    candidates.emplace_back(configured);
+    if (std::filesystem::path(configured).is_relative())
+    {
+        candidates.emplace_back(std::filesystem::path("..") / configured);
+        candidates.emplace_back(std::filesystem::path("..") / ".." / configured);
+    }
+
+    for (std::filesystem::path const& candidate : candidates)
+    {
+        std::error_code ec;
+        if (std::filesystem::exists(candidate, ec) && std::filesystem::is_directory(candidate, ec))
+            return candidate;
+    }
+
+    return std::filesystem::path(configured);
+}
+
+living_world::service::WorldBotRoutePlanner& GetWorldBotRoutePlanner()
+{
+    static living_world::service::WorldBotRoutePlanner planner(ResolveWorldBotRouteExportRoot());
+    return planner;
+}
+
 std::vector<std::uint32_t> ParseDebugIdentityIdList(std::string const& value)
 {
     std::vector<std::uint32_t> ids;
@@ -541,6 +573,47 @@ private:
         return session.tasks[taskIndex].targetZoneId;
     }
 
+    static living_world::ai::AbstractWorldBotProgressConfig BuildAbstractProgressConfig(
+        living_world::service::AmbientSession const& session)
+    {
+        living_world::ai::AbstractWorldBotProgressConfig config;
+        config.routePlanResolver = [&session](
+            living_world::service::AmbientStep const& step,
+            std::uint16_t startMapId,
+            float startX,
+            float startY,
+            float startZ) -> std::optional<living_world::service::WorldBotResolvedTravelPlan>
+        {
+            if (step.type != living_world::service::AmbientStepType::Travel)
+                return std::nullopt;
+            if (startMapId == 0 || startMapId != step.mapId)
+                return std::nullopt;
+
+            std::uint32_t zoneId = 0;
+            if (step.taskIndex >= 0)
+            {
+                std::size_t const taskIndex = static_cast<std::size_t>(step.taskIndex);
+                if (taskIndex < session.tasks.size())
+                    zoneId = session.tasks[taskIndex].targetZoneId;
+            }
+
+            if (zoneId == 0)
+                return std::nullopt;
+
+            return GetWorldBotRoutePlanner().ResolveSameZoneTravelPlan(
+                step.mapId,
+                zoneId,
+                startX,
+                startY,
+                startZ,
+                step.x,
+                step.y,
+                step.z,
+                living_world::service::WorldBotTravelCapabilityTier::Foot);
+        };
+        return config;
+    }
+
     static bool HasInterestedPlayerForMapAndZone(std::uint32_t mapId, std::uint32_t zoneId)
     {
         if (living_world::script::HasSyntheticWorldBotInterest(mapId, zoneId))
@@ -671,8 +744,13 @@ private:
         if (runtime.progress.currentStep >= runtime.session.steps.size())
             return false;
 
+        living_world::ai::AbstractWorldBotProgressConfig const progressConfig =
+            BuildAbstractProgressConfig(runtime.session);
         living_world::ai::AbstractWorldBotInterpolatedPosition const pos =
-            living_world::ai::ComputeAbstractWorldBotInterpolatedPosition(runtime.session, runtime.progress);
+            living_world::ai::ComputeAbstractWorldBotInterpolatedPosition(
+                runtime.session,
+                runtime.progress,
+                progressConfig);
 
         living_world::integration::SqlBotIdentityRepository identityRepository;
         auto const refreshedIdentity = identityRepository.FindById(runtime.identity.id);
@@ -825,10 +903,13 @@ private:
             }
 
             runtime.worldOnlineMs += diff;
+            living_world::ai::AbstractWorldBotProgressConfig const progressConfig =
+                BuildAbstractProgressConfig(runtime.session);
             auto const outcome = living_world::ai::AdvanceAbstractWorldBotProgress(
                 runtime.session,
                 runtime.progress,
-                diff);
+                diff,
+                progressConfig);
 
             if (outcome.advancedStep)
             {

@@ -47,6 +47,8 @@
 
 #include <algorithm>
 #include <chrono>
+#include <filesystem>
+#include <limits>
 #include <sstream>
 
 namespace living_world
@@ -56,6 +58,36 @@ namespace ai
 
 namespace
 {
+std::filesystem::path ResolveWorldBotRouteExportRoot()
+{
+    std::string configured = sConfigMgr->GetOption<std::string>(
+        "LivingWorld.RouteExportDir",
+        "tools/lw-zone-editor/data/exported_routes");
+
+    std::vector<std::filesystem::path> candidates;
+    candidates.emplace_back(configured);
+    if (std::filesystem::path(configured).is_relative())
+    {
+        candidates.emplace_back(std::filesystem::path("..") / configured);
+        candidates.emplace_back(std::filesystem::path("..") / ".." / configured);
+    }
+
+    for (std::filesystem::path const& candidate : candidates)
+    {
+        std::error_code ec;
+        if (std::filesystem::exists(candidate, ec) && std::filesystem::is_directory(candidate, ec))
+            return candidate;
+    }
+
+    return std::filesystem::path(configured);
+}
+
+service::WorldBotRoutePlanner& GetWorldBotRoutePlanner()
+{
+    static service::WorldBotRoutePlanner planner(ResolveWorldBotRouteExportRoot());
+    return planner;
+}
+
 constexpr float GatherSearchRadius = 200.0f;
 constexpr float GatherInteractRange = 6.0f;
 constexpr float GatherAnchorReturnDistance = 60.0f;
@@ -191,6 +223,20 @@ std::string DescribeTravelRecovery(
         + std::to_string(step.x) + ","
         + std::to_string(step.y) + ","
         + std::to_string(step.z) + ")";
+}
+
+std::uint32_t ResolveStepZoneId(
+    service::AmbientSession const& session,
+    service::AmbientStep const& step)
+{
+    if (step.taskIndex < 0)
+        return 0;
+
+    std::size_t const taskIndex = static_cast<std::size_t>(step.taskIndex);
+    if (taskIndex >= session.tasks.size())
+        return 0;
+
+    return session.tasks[taskIndex].targetZoneId;
 }
 
 std::uint32_t CountNearbyHostileUnits(Unit* subject, float radius)
@@ -1049,6 +1095,111 @@ bool WorldBotCreatureAI::BuildRuntimeSnapshot(RuntimeSnapshot& out) const
     return true;
 }
 
+bool WorldBotCreatureAI::TryBuildRouteTravelPlan(
+    service::AmbientStep const& step,
+    service::WorldBotResolvedTravelPlan& outPlan) const
+{
+    if (!me || step.type != service::AmbientStepType::Travel)
+        return false;
+    if (step.mapId != me->GetMapId())
+        return false;
+
+    std::uint32_t const zoneId = ResolveStepZoneId(_session, step);
+    if (zoneId == 0)
+        return false;
+
+    auto const plan = GetWorldBotRoutePlanner().ResolveSameZoneTravelPlan(
+        step.mapId,
+        zoneId,
+        me->GetPositionX(),
+        me->GetPositionY(),
+        me->GetPositionZ(),
+        step.x,
+        step.y,
+        step.z,
+        service::WorldBotTravelCapabilityTier::Foot);
+
+    if (!plan || plan->empty())
+        return false;
+
+    outPlan = *plan;
+    return true;
+}
+
+void WorldBotCreatureAI::ClearActiveRouteTravelPlan()
+{
+    _routeTravelPlanActive = false;
+    _routeTravelWaypointIndex = 0;
+    _routeTravelPlan = {};
+}
+
+void WorldBotCreatureAI::MoveToActiveTravelTarget(service::AmbientStep const& step)
+{
+    float targetX = step.x;
+    float targetY = step.y;
+    float targetZ = step.z;
+
+    if (_routeTravelPlanActive && _routeTravelWaypointIndex < _routeTravelPlan.waypoints.size())
+    {
+        service::WorldBotRouteWaypoint const& waypoint =
+            _routeTravelPlan.waypoints[_routeTravelWaypointIndex];
+        targetX = waypoint.x;
+        targetY = waypoint.y;
+        targetZ = waypoint.z;
+    }
+
+    me->GetMotionMaster()->MovePoint(
+        static_cast<uint32>(_currentStep),
+        targetX,
+        targetY,
+        targetZ);
+}
+
+float WorldBotCreatureAI::GetActiveTravelTargetDistance(service::AmbientStep const& step) const
+{
+    if (!me)
+        return std::numeric_limits<float>::max();
+
+    if (_routeTravelPlanActive && _routeTravelWaypointIndex < _routeTravelPlan.waypoints.size())
+    {
+        service::WorldBotRouteWaypoint const& waypoint =
+            _routeTravelPlan.waypoints[_routeTravelWaypointIndex];
+        return me->GetDistance(waypoint.x, waypoint.y, waypoint.z);
+    }
+
+    return me->GetDistance(step.x, step.y, step.z);
+}
+
+bool WorldBotCreatureAI::AdvanceAlongActiveRouteTravelPlan()
+{
+    if (!_routeTravelPlanActive)
+        return false;
+
+    if ((_routeTravelWaypointIndex + 1u) >= _routeTravelPlan.waypoints.size())
+        return false;
+
+    ++_routeTravelWaypointIndex;
+    return true;
+}
+
+std::string WorldBotCreatureAI::DescribeActiveTravelTarget(service::AmbientStep const& step) const
+{
+    std::ostringstream oss;
+    if (_routeTravelPlanActive && _routeTravelWaypointIndex < _routeTravelPlan.waypoints.size())
+    {
+        service::WorldBotRouteWaypoint const& waypoint =
+            _routeTravelPlan.waypoints[_routeTravelWaypointIndex];
+        oss << "route_target=(" << waypoint.x << "," << waypoint.y << "," << waypoint.z
+            << ") waypoint=" << (_routeTravelWaypointIndex + 1u) << "/" << _routeTravelPlan.waypoints.size()
+            << " total_distance=" << _routeTravelPlan.totalDistanceYards
+            << " eta_ms=" << _routeTravelPlan.etaMs;
+        return oss.str();
+    }
+
+    oss << "direct_target=(" << step.x << "," << step.y << "," << step.z << ")";
+    return oss.str();
+}
+
 void WorldBotCreatureAI::JustEngagedWith(Unit* who)
 {
     SuspendCurrentStepForCombat(who);
@@ -1178,6 +1329,7 @@ void WorldBotCreatureAI::SuspendCurrentStepForCombat(Unit* target)
         me->StopMoving();
         me->GetMotionMaster()->Clear();
         _traveling = false;
+        ClearActiveRouteTravelPlan();
         _gatherMovingToNode = false;
         ResetTravelWatchdog(_travelWatchdog);
     }
@@ -1200,6 +1352,7 @@ void WorldBotCreatureAI::ResumeSuspendedStepAfterCombat()
 
     _combatSuspendedStep = false;
     _traveling = false;
+    ClearActiveRouteTravelPlan();
     service::ResetSharedHazardEvaluationState(_hazardEvaluationState);
     _lastDebugCombatManaDrainWorldMs = 0;
     _debugCombatManaGemObserved = false;
@@ -1650,6 +1803,7 @@ void WorldBotCreatureAI::TickStep(uint32 /*diff*/)
     {
         if (!_traveling)
         {
+            ClearActiveRouteTravelPlan();
             // Same-map only for now — skip cross-map travel steps.
             if (step.mapId != me->GetMapId())
             {
@@ -1662,9 +1816,15 @@ void WorldBotCreatureAI::TickStep(uint32 /*diff*/)
                 return;
             }
 
-            me->GetMotionMaster()->MovePoint(
-                static_cast<uint32>(_currentStep),
-                step.x, step.y, step.z);
+            service::WorldBotResolvedTravelPlan routePlan;
+            if (TryBuildRouteTravelPlan(step, routePlan))
+            {
+                _routeTravelPlan = std::move(routePlan);
+                _routeTravelPlanActive = true;
+                _routeTravelWaypointIndex = 0;
+            }
+
+            MoveToActiveTravelTarget(step);
             _traveling = true;
 
             integration::BotActivityLog::Record(
@@ -1674,15 +1834,27 @@ void WorldBotCreatureAI::TickStep(uint32 /*diff*/)
             integration::BotActivityLog::Record(
                 me, _identity.name, _identity.id,
                 "status_change",
-                "Travel started -> " + step.label);
+                "Travel started -> " + step.label + " | " + DescribeActiveTravelTarget(step));
         }
         else
         {
             // Check arrival
-            float const dist = me->GetDistance(step.x, step.y, step.z);
+            float const dist = GetActiveTravelTargetDistance(step);
             if (dist <= ArrivalThreshold)
             {
+                if (_routeTravelPlanActive && AdvanceAlongActiveRouteTravelPlan())
+                {
+                    MoveToActiveTravelTarget(step);
+                    ResetTravelWatchdog(_travelWatchdog);
+                    integration::BotActivityLog::Record(
+                        me, _identity.name, _identity.id,
+                        "travel_waypoint",
+                        step.label + " | " + DescribeActiveTravelTarget(step));
+                    return;
+                }
+
                 _traveling = false;
+                ClearActiveRouteTravelPlan();
                 integration::BotActivityLog::Record(
                     me, _identity.name, _identity.id,
                     "travel_arrive", step.label);
@@ -1713,8 +1885,20 @@ void WorldBotCreatureAI::TickStep(uint32 /*diff*/)
                     me, _identity.name, _identity.id,
                     eventType,
                     DescribeTravelRecovery(step, eventType));
-                me->NearTeleportTo(step.x, step.y, step.z, me->GetOrientation());
+                float targetX = step.x;
+                float targetY = step.y;
+                float targetZ = step.z;
+                if (_routeTravelPlanActive && _routeTravelWaypointIndex < _routeTravelPlan.waypoints.size())
+                {
+                    service::WorldBotRouteWaypoint const& waypoint =
+                        _routeTravelPlan.waypoints[_routeTravelWaypointIndex];
+                    targetX = waypoint.x;
+                    targetY = waypoint.y;
+                    targetZ = waypoint.z;
+                }
+                me->NearTeleportTo(targetX, targetY, targetZ, me->GetOrientation());
                 _traveling = false;
+                ClearActiveRouteTravelPlan();
                 ResetTravelWatchdog(_travelWatchdog);
                 AdvanceStep();
             }
@@ -1802,6 +1986,7 @@ void WorldBotCreatureAI::AdvanceStep()
     ++_currentStep;
     _traveling     = false;
     _activityTimer = 0;
+    ClearActiveRouteTravelPlan();
     ResetGatherState();
     ResetTravelWatchdog(_travelWatchdog);
 
