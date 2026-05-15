@@ -41,6 +41,15 @@ CMakeUserPresets.json
 
 # LivingWorld bot editor — local DB credentials, never commit
 tools/lw-editor/config.ini
+# LivingWorld zone editor - local environment config, never commit
+tools/lw-zone-editor/config.ini
+
+# LivingWorld zone editor - extracted/generated client imagery, never commit
+tools/lw-zone-editor/data/extracted_maps/png/
+tools/lw-zone-editor/data/extracted_icons/png/
+tools/lw-zone-editor/data/extracted_maps/composite/
+tools/lw-zone-editor/data/extracted_maps/raw_blp/
+tools/lw-zone-editor/data/extracted_icons/raw_blp/
 
 # Deploy binary tool — local server path, never commit
 tools/deploy-binary/deploy.ini
@@ -234,3 +243,4 @@ combat-trace-headless-20260511-141426.stderr.log
 combat-trace-headless-20260511-141426.stdout.log
 combat-trace-headless.stderr.log
 combat-trace-headless.stdout.log
+/tools/third_party/MPQExtractor

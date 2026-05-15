@@ -1,0 +1,704 @@
+{
+  "format": "lw_zone_editor_route",
+  "version": 1,
+  "route_group_key": "ElwynnForest",
+  "zone_name": "Elwynn Forest",
+  "zone_id": 12,
+  "map_id": 0,
+  "world_map_area_id": 30,
+  "sample_spacing_yards": 25.0,
+  "path_count": 5,
+  "paths": [
+    {
+      "path_index": 0,
+      "path_key": "ElwynnForest_01",
+      "finalized": true,
+      "start_connection": null,
+      "end_connection": null,
+      "anchors": [
+        {
+          "image_x": 311.94,
+          "image_y": 318.04,
+          "zone_x": 31.1317,
+          "zone_y": 47.6108,
+          "world_x": -9041.574,
+          "world_y": 454.886,
+          "handle_in": null,
+          "handle_out": {
+            "image_x": 342.12,
+            "image_y": 369.52,
+            "zone_x": 34.1437,
+            "zone_y": 55.3174,
+            "world_x": -9219.9493,
+            "world_y": 350.3453
+          }
+        },
+        {
+          "image_x": 380.48,
+          "image_y": 365.33,
+          "zone_x": 37.9721,
+          "zone_y": 54.6901,
+          "world_x": -9205.4312,
+          "world_y": 217.4699,
+          "handle_in": {
+            "image_x": 366.55,
+            "image_y": 355.06,
+            "zone_x": 36.5818,
+            "zone_y": 53.1527,
+            "world_x": -9169.8462,
+            "world_y": 265.7221
+          },
+          "handle_out": {
+            "image_x": 412.79,
+            "image_y": 390.09,
+            "zone_x": 41.1966,
+            "zone_y": 58.3967,
+            "world_x": -9291.2233,
+            "world_y": 105.5511
+          }
+        },
+        {
+          "image_x": 425.0,
+          "image_y": 434.49,
+          "zone_x": 42.4152,
+          "zone_y": 65.0434,
+          "world_x": -9445.0668,
+          "world_y": 63.2568,
+          "handle_in": {
+            "image_x": 408.71,
+            "image_y": 418.61,
+            "zone_x": 40.7894,
+            "zone_y": 62.6662,
+            "world_x": -9390.0435,
+            "world_y": 119.6838
+          },
+          "handle_out": {
+            "image_x": 427.67,
+            "image_y": 439.77,
+            "zone_x": 42.6816,
+            "zone_y": 65.8338,
+            "world_x": -9463.3617,
+            "world_y": 54.0082
+          }
+        },
+        {
+          "image_x": 425.84,
+          "image_y": 447.4,
+          "zone_x": 42.499,
+          "zone_y": 66.976,
+          "world_x": -9489.7992,
+          "world_y": 60.3471,
+          "handle_in": {
+            "image_x": 423.17,
+            "image_y": 442.12,
+            "zone_x": 42.2325,
+            "zone_y": 66.1856,
+            "world_x": -9471.5043,
+            "world_y": 69.5958
+          },
+          "handle_out": {
+            "image_x": 492.54,
+            "image_y": 469.92,
+            "zone_x": 49.1557,
+            "zone_y": 70.3473,
+            "world_x": -9567.8298,
+            "world_y": -170.6954
+          }
+        },
+        {
+          "image_x": 579.89,
+          "image_y": 475.5,
+          "zone_x": 57.8733,
+          "zone_y": 71.1826,
+          "world_x": -9587.1642,
+          "world_y": -473.2675,
+          "handle_in": {
+            "image_x": 553.28,
+            "image_y": 507.81,
+            "zone_x": 55.2176,
+            "zone_y": 76.0195,
+            "world_x": -9699.1165,
+            "world_y": -381.093
+          },
+          "handle_out": {
+            "image_x": 597.47,
+            "image_y": 484.53,
+            "zone_x": 59.6277,
+            "zone_y": 72.5344,
+            "world_x": -9618.4526,
+            "world_y": -534.163
+          }
+        },
+        {
+          "image_x": 666.42,
+          "image_y": 494.2,
+          "zone_x": 66.509,
+          "zone_y": 73.982,
+          "world_x": -9651.9586,
+          "world_y": -772.9992,
+          "handle_in": {
+            "image_x": 634.52,
+            "image_y": 491.44,
+            "zone_x": 63.3253,
+            "zone_y": 73.5689,
+            "world_x": -9642.3954,
+            "world_y": -662.5007
+          },
+          "handle_out": {
+            "image_x": 674.91,
+            "image_y": 498.78,
+            "zone_x": 67.3563,
+            "zone_y": 74.6677,
+            "world_x": -9667.8281,
+            "world_y": -802.4078
+          }
+        },
+        {
+          "image_x": 704.85,
+          "image_y": 473.12,
+          "zone_x": 70.3443,
+          "zone_y": 70.8263,
+          "world_x": -9578.9176,
+          "world_y": -906.1171,
+          "handle_in": {
+            "image_x": 695.82,
+            "image_y": 468.37,
+            "zone_x": 69.4431,
+            "zone_y": 70.1153,
+            "world_x": -9562.4591,
+            "world_y": -874.8381
+          },
+          "handle_out": {
+            "image_x": 728.46,
+            "image_y": 486.82,
+            "zone_x": 72.7006,
+            "zone_y": 72.8772,
+            "world_x": -9626.3873,
+            "world_y": -987.8999
+          }
+        },
+        {
+          "image_x": 791.67,
+          "image_y": 488.29,
+          "zone_x": 79.009,
+          "zone_y": 73.0973,
+          "world_x": -9631.4808,
+          "world_y": -1206.8534,
+          "handle_in": {
+            "image_x": 764.49,
+            "image_y": 480.09,
+            "zone_x": 76.2964,
+            "zone_y": 71.8698,
+            "world_x": -9603.0683,
+            "world_y": -1112.7044
+          },
+          "handle_out": {
+            "image_x": 832.93,
+            "image_y": 501.47,
+            "zone_x": 83.1267,
+            "zone_y": 75.0704,
+            "world_x": -9677.1488,
+            "world_y": -1349.7741
+          }
+        },
+        {
+          "image_x": 938.25,
+          "image_y": 482.47,
+          "zone_x": 93.6377,
+          "zone_y": 72.226,
+          "world_x": -9611.3148,
+          "world_y": -1714.5927,
+          "handle_in": {
+            "image_x": 886.78,
+            "image_y": 498.31,
+            "zone_x": 88.501,
+            "zone_y": 74.5973,
+            "world_x": -9666.1996,
+            "world_y": -1536.3054
+          },
+          "handle_out": null
+        }
+      ]
+    },
+    {
+      "path_index": 1,
+      "path_key": "ElwynnForest_02",
+      "finalized": true,
+      "start_connection": null,
+      "end_connection": null,
+      "anchors": [
+        {
+          "image_x": 486.87,
+          "image_y": 280.99,
+          "zone_x": 48.5898,
+          "zone_y": 42.0644,
+          "world_x": -8913.1978,
+          "world_y": -151.055,
+          "handle_in": null,
+          "handle_out": {
+            "image_x": 478.66,
+            "image_y": 289.43,
+            "zone_x": 47.7705,
+            "zone_y": 43.3278,
+            "world_x": -8942.4419,
+            "world_y": -122.6164
+          }
+        },
+        {
+          "image_x": 462.24,
+          "image_y": 306.31,
+          "zone_x": 46.1317,
+          "zone_y": 45.8548,
+          "world_x": -9000.9302,
+          "world_y": -65.739,
+          "handle_in": {
+            "image_x": 470.45,
+            "image_y": 297.87,
+            "zone_x": 46.9511,
+            "zone_y": 44.5913,
+            "world_x": -8971.6861,
+            "world_y": -94.1777
+          },
+          "handle_out": {
+            "image_x": 455.85,
+            "image_y": 307.91,
+            "zone_x": 45.494,
+            "zone_y": 46.0943,
+            "world_x": -9006.4741,
+            "world_y": -43.6047
+          }
+        },
+        {
+          "image_x": 443.08,
+          "image_y": 311.1,
+          "zone_x": 44.2196,
+          "zone_y": 46.5719,
+          "world_x": -9017.5273,
+          "world_y": 0.6294,
+          "handle_in": {
+            "image_x": 449.47,
+            "image_y": 309.5,
+            "zone_x": 44.8573,
+            "zone_y": 46.3323,
+            "world_x": -9011.9834,
+            "world_y": -21.505
+          },
+          "handle_out": {
+            "image_x": 447.87,
+            "image_y": 314.29,
+            "zone_x": 44.6976,
+            "zone_y": 47.0494,
+            "world_x": -9028.5805,
+            "world_y": -15.9627
+          }
+        },
+        {
+          "image_x": 457.45,
+          "image_y": 320.68,
+          "zone_x": 45.6537,
+          "zone_y": 48.006,
+          "world_x": -9050.7214,
+          "world_y": -49.1469,
+          "handle_in": {
+            "image_x": 452.66,
+            "image_y": 317.49,
+            "zone_x": 45.1756,
+            "zone_y": 47.5284,
+            "world_x": -9039.6683,
+            "world_y": -32.5548
+          },
+          "handle_out": {
+            "image_x": 464.07,
+            "image_y": 332.54,
+            "zone_x": 46.3144,
+            "zone_y": 49.7814,
+            "world_x": -9091.8157,
+            "world_y": -72.078
+          }
+        },
+        {
+          "image_x": 477.29,
+          "image_y": 356.26,
+          "zone_x": 47.6337,
+          "zone_y": 53.3323,
+          "world_x": -9174.0042,
+          "world_y": -117.8708,
+          "handle_in": {
+            "image_x": 470.68,
+            "image_y": 344.4,
+            "zone_x": 46.9741,
+            "zone_y": 51.5569,
+            "world_x": -9132.9099,
+            "world_y": -94.9744
+          },
+          "handle_out": {
+            "image_x": 473.19,
+            "image_y": 366.29,
+            "zone_x": 47.2246,
+            "zone_y": 54.8338,
+            "world_x": -9208.7576,
+            "world_y": -103.6688
+          }
+        },
+        {
+          "image_x": 464.98,
+          "image_y": 386.36,
+          "zone_x": 46.4052,
+          "zone_y": 57.8383,
+          "world_x": -9278.299,
+          "world_y": -75.2301,
+          "handle_in": {
+            "image_x": 469.08,
+            "image_y": 376.33,
+            "zone_x": 46.8144,
+            "zone_y": 56.3368,
+            "world_x": -9243.5456,
+            "world_y": -89.4321
+          },
+          "handle_out": {
+            "image_x": 460.24,
+            "image_y": 392.54,
+            "zone_x": 45.9321,
+            "zone_y": 58.7635,
+            "world_x": -9299.7124,
+            "world_y": -58.8112
+          }
+        },
+        {
+          "image_x": 457.59,
+          "image_y": 403.13,
+          "zone_x": 45.6677,
+          "zone_y": 60.3488,
+          "world_x": -9336.4061,
+          "world_y": -49.6319,
+          "handle_in": {
+            "image_x": 459.64,
+            "image_y": 396.06,
+            "zone_x": 45.8723,
+            "zone_y": 59.2904,
+            "world_x": -9311.909,
+            "world_y": -56.7329
+          },
+          "handle_out": {
+            "image_x": 452.91,
+            "image_y": 411.88,
+            "zone_x": 45.2006,
+            "zone_y": 61.6587,
+            "world_x": -9366.7244,
+            "world_y": -33.4208
+          }
+        },
+        {
+          "image_x": 438.45,
+          "image_y": 420.44,
+          "zone_x": 43.7575,
+          "zone_y": 62.9401,
+          "world_x": -9396.3843,
+          "world_y": 16.6673,
+          "handle_in": {
+            "image_x": 450.77,
+            "image_y": 412.91,
+            "zone_x": 44.987,
+            "zone_y": 61.8129,
+            "world_x": -9370.2933,
+            "world_y": -26.008
+          },
+          "handle_out": null
+        }
+      ]
+    },
+    {
+      "path_index": 2,
+      "path_key": "ElwynnForest_03",
+      "finalized": true,
+      "start_connection": {
+        "path_index": 0,
+        "path_key": "ElwynnForest_01",
+        "anchor_index": 3,
+        "anchor_label": "P1-A4"
+      },
+      "end_connection": null,
+      "anchors": [
+        {
+          "image_x": 425.84,
+          "image_y": 447.4,
+          "zone_x": 42.499,
+          "zone_y": 66.976,
+          "world_x": -9489.7992,
+          "world_y": 60.3471,
+          "handle_in": null,
+          "handle_out": {
+            "image_x": 417.4,
+            "image_y": 445.98,
+            "zone_x": 41.6567,
+            "zone_y": 66.7635,
+            "world_x": -9484.879,
+            "world_y": 89.5825
+          }
+        },
+        {
+          "image_x": 404.77,
+          "image_y": 443.83,
+          "zone_x": 40.3962,
+          "zone_y": 66.4416,
+          "world_x": -9477.4294,
+          "world_y": 133.3316,
+          "handle_in": {
+            "image_x": 413.21,
+            "image_y": 445.25,
+            "zone_x": 41.2385,
+            "zone_y": 66.6542,
+            "world_x": -9482.3496,
+            "world_y": 104.0963
+          },
+          "handle_out": {
+            "image_x": 390.89,
+            "image_y": 446.18,
+            "zone_x": 39.011,
+            "zone_y": 66.7934,
+            "world_x": -9485.572,
+            "world_y": 181.4106
+          }
+        },
+        {
+          "image_x": 371.83,
+          "image_y": 458.4,
+          "zone_x": 37.1088,
+          "zone_y": 68.6228,
+          "world_x": -9527.9136,
+          "world_y": 247.4327,
+          "handle_in": {
+            "image_x": 382.83,
+            "image_y": 445.69,
+            "zone_x": 38.2066,
+            "zone_y": 66.7201,
+            "world_x": -9483.8742,
+            "world_y": 209.3297
+          },
+          "handle_out": {
+            "image_x": 370.61,
+            "image_y": 474.04,
+            "zone_x": 36.987,
+            "zone_y": 70.9641,
+            "world_x": -9582.1054,
+            "world_y": 251.6586
+          }
+        },
+        {
+          "image_x": 366.45,
+          "image_y": 499.21,
+          "zone_x": 36.5719,
+          "zone_y": 74.732,
+          "world_x": -9669.318,
+          "world_y": 266.0685,
+          "handle_in": {
+            "image_x": 374.03,
+            "image_y": 489.19,
+            "zone_x": 37.3283,
+            "zone_y": 73.232,
+            "world_x": -9634.5993,
+            "world_y": 239.8121
+          },
+          "handle_out": {
+            "image_x": 357.8,
+            "image_y": 510.55,
+            "zone_x": 35.7086,
+            "zone_y": 76.4296,
+            "world_x": -9708.6105,
+            "world_y": 296.0313
+          }
+        },
+        {
+          "image_x": 332.93,
+          "image_y": 521.83,
+          "zone_x": 33.2265,
+          "zone_y": 78.1183,
+          "world_x": -9747.6951,
+          "world_y": 382.1786,
+          "handle_in": {
+            "image_x": 350.32,
+            "image_y": 515.58,
+            "zone_x": 34.9621,
+            "zone_y": 77.1826,
+            "world_x": -9726.0392,
+            "world_y": 321.9413
+          },
+          "handle_out": {
+            "image_x": 320.38,
+            "image_y": 522.97,
+            "zone_x": 31.9741,
+            "zone_y": 78.2889,
+            "world_x": -9751.6451,
+            "world_y": 425.6506
+          }
+        },
+        {
+          "image_x": 301.33,
+          "image_y": 521.43,
+          "zone_x": 30.0729,
+          "zone_y": 78.0584,
+          "world_x": -9746.3091,
+          "world_y": 491.638,
+          "handle_in": {
+            "image_x": 309.58,
+            "image_y": 526.38,
+            "zone_x": 30.8962,
+            "zone_y": 78.7994,
+            "world_x": -9763.4606,
+            "world_y": 463.0608
+          },
+          "handle_out": {
+            "image_x": 290.05,
+            "image_y": 521.15,
+            "zone_x": 28.9471,
+            "zone_y": 78.0165,
+            "world_x": -9745.3389,
+            "world_y": 530.7109
+          }
+        },
+        {
+          "image_x": 246.03,
+          "image_y": 525.94,
+          "zone_x": 24.5539,
+          "zone_y": 78.7335,
+          "world_x": -9761.936,
+          "world_y": 683.192,
+          "handle_in": {
+            "image_x": 269.43,
+            "image_y": 514.28,
+            "zone_x": 26.8892,
+            "zone_y": 76.988,
+            "world_x": -9721.5347,
+            "world_y": 602.1366
+          },
+          "handle_out": {
+            "image_x": 211.96,
+            "image_y": 515.38,
+            "zone_x": 21.1537,
+            "zone_y": 77.1527,
+            "world_x": -9725.3462,
+            "world_y": 801.2072
+          }
+        },
+        {
+          "image_x": 190.21,
+          "image_y": 546.9,
+          "zone_x": 18.983,
+          "zone_y": 81.8713,
+          "world_x": -9834.5612,
+          "world_y": 876.5472,
+          "handle_in": {
+            "image_x": 208.11,
+            "image_y": 539.57,
+            "zone_x": 20.7695,
+            "zone_y": 80.774,
+            "world_x": -9809.1632,
+            "world_y": 814.5433
+          },
+          "handle_out": null
+        }
+      ]
+    },
+    {
+      "path_index": 3,
+      "path_key": "ElwynnForest_04",
+      "finalized": true,
+      "start_connection": {
+        "path_index": 2,
+        "path_key": "ElwynnForest_03",
+        "anchor_index": 6,
+        "anchor_label": "P3-A7"
+      },
+      "end_connection": null,
+      "anchors": [
+        {
+          "image_x": 246.03,
+          "image_y": 525.94,
+          "zone_x": 24.5539,
+          "zone_y": 78.7335,
+          "world_x": -9761.936,
+          "world_y": 683.192,
+          "handle_in": null,
+          "handle_out": {
+            "image_x": 249.91,
+            "image_y": 518.13,
+            "zone_x": 24.9411,
+            "zone_y": 77.5644,
+            "world_x": -9734.8748,
+            "world_y": 669.752
+          }
+        },
+        {
+          "image_x": 245.23,
+          "image_y": 498.05,
+          "zone_x": 24.4741,
+          "zone_y": 74.5584,
+          "world_x": -9665.2987,
+          "world_y": 685.9631,
+          "handle_in": {
+            "image_x": 239.46,
+            "image_y": 509.6,
+            "zone_x": 23.8982,
+            "zone_y": 76.2874,
+            "world_x": -9705.3188,
+            "world_y": 705.9498
+          },
+          "handle_out": null
+        }
+      ]
+    },
+    {
+      "path_index": 4,
+      "path_key": "ElwynnForest_05",
+      "finalized": true,
+      "start_connection": {
+        "path_index": 1,
+        "path_key": "ElwynnForest_02",
+        "anchor_index": 7,
+        "anchor_label": "P2-A8"
+      },
+      "end_connection": {
+        "path_index": 0,
+        "path_key": "ElwynnForest_01",
+        "anchor_index": 2,
+        "anchor_label": "P1-A3"
+      },
+      "anchors": [
+        {
+          "image_x": 438.45,
+          "image_y": 420.44,
+          "zone_x": 43.7575,
+          "zone_y": 62.9401,
+          "world_x": -9396.3843,
+          "world_y": 16.6673,
+          "handle_in": null,
+          "handle_out": {
+            "image_x": 435.8,
+            "image_y": 423.09,
+            "zone_x": 43.493,
+            "zone_y": 63.3368,
+            "world_x": -9405.5664,
+            "world_y": 25.8466
+          }
+        },
+        {
+          "image_x": 425.0,
+          "image_y": 434.49,
+          "zone_x": 42.4152,
+          "zone_y": 65.0434,
+          "world_x": -9445.0668,
+          "world_y": 63.2568,
+          "handle_in": {
+            "image_x": 427.65,
+            "image_y": 431.84,
+            "zone_x": 42.6796,
+            "zone_y": 64.6467,
+            "world_x": -9435.8847,
+            "world_y": 54.0775
+          },
+          "handle_out": null
+        }
+      ]
+    }
+  ]
+}

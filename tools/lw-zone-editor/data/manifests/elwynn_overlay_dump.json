@@ -1,0 +1,318 @@
+[
+  {
+    "id": 121,
+    "worldMapAreaId": 30,
+    "areaIDs": [
+      1519,
+      0,
+      0,
+      0
+    ],
+    "areaNames": [
+      "Stormwind City"
+    ],
+    "unk6": 0,
+    "unk7": 0,
+    "internal_name": "STORMWIND",
+    "tail": [
+      485,
+      405,
+      0,
+      0,
+      120,
+      115,
+      355,
+      370
+    ]
+  },
+  {
+    "id": 122,
+    "worldMapAreaId": 30,
+    "areaIDs": [
+      87,
+      0,
+      0,
+      0
+    ],
+    "areaNames": [
+      "Goldshire"
+    ],
+    "unk6": 0,
+    "unk7": 0,
+    "internal_name": "GOLDSHIRE",
+    "tail": [
+      240,
+      220,
+      250,
+      270,
+      400,
+      370,
+      465,
+      455
+    ]
+  },
+  {
+    "id": 123,
+    "worldMapAreaId": 30,
+    "areaIDs": [
+      60,
+      120,
+      0,
+      0
+    ],
+    "areaNames": [
+      "Forest's Edge",
+      "Westbrook Garrison"
+    ],
+    "unk6": 0,
+    "unk7": 0,
+    "internal_name": "FORESTSEDGE",
+    "tail": [
+      256,
+      341,
+      124,
+      327,
+      445,
+      200,
+      645,
+      300
+    ]
+  },
+  {
+    "id": 124,
+    "worldMapAreaId": 30,
+    "areaIDs": [
+      57,
+      63,
+      64,
+      0
+    ],
+    "areaNames": [
+      "Fargodeep Mine",
+      "The Stonefield Farm",
+      "The Maclure Vineyards"
+    ],
+    "unk6": 0,
+    "unk7": 0,
+    "internal_name": "FARGODEEPMINE",
+    "tail": [
+      256,
+      240,
+      238,
+      428,
+      510,
+      300,
+      615,
+      470
+    ]
+  },
+  {
+    "id": 125,
+    "worldMapAreaId": 30,
+    "areaIDs": [
+      9,
+      0,
+      0,
+      0
+    ],
+    "areaNames": [
+      "Northshire Valley"
+    ],
+    "unk6": 0,
+    "unk7": 0,
+    "internal_name": "NORTHSHIREVALLEY",
+    "tail": [
+      256,
+      256,
+      381,
+      147,
+      190,
+      425,
+      375,
+      600
+    ]
+  },
+  {
+    "id": 126,
+    "worldMapAreaId": 30,
+    "areaIDs": [
+      797,
+      0,
+      0,
+      0
+    ],
+    "areaNames": [
+      "Jerod's Landing"
+    ],
+    "unk6": 0,
+    "unk7": 0,
+    "internal_name": "JERODSLANDING",
+    "tail": [
+      256,
+      237,
+      425,
+      431,
+      495,
+      460,
+      615,
+      615
+    ]
+  },
+  {
+    "id": 127,
+    "worldMapAreaId": 30,
+    "areaIDs": [
+      91,
+      54,
+      0,
+      0
+    ],
+    "areaNames": [
+      "Tower of Azora",
+      "Jasperlode Mine"
+    ],
+    "unk6": 0,
+    "unk7": 0,
+    "internal_name": "TOWEROFAZORA",
+    "tail": [
+      255,
+      250,
+      551,
+      292,
+      400,
+      610,
+      490,
+      745
+    ]
+  },
+  {
+    "id": 128,
+    "worldMapAreaId": 30,
+    "areaIDs": [
+      62,
+      0,
+      0,
+      0
+    ],
+    "areaNames": [
+      "Brackwell Pumpkin Patch"
+    ],
+    "unk6": 0,
+    "unk7": 0,
+    "internal_name": "BRACKWELLPUMPKINPATCH",
+    "tail": [
+      256,
+      249,
+      577,
+      419,
+      495,
+      615,
+      565,
+      735
+    ]
+  },
+  {
+    "id": 129,
+    "worldMapAreaId": 30,
+    "areaIDs": [
+      88,
+      0,
+      0,
+      0
+    ],
+    "areaNames": [
+      "Eastvale Logging Camp"
+    ],
+    "unk6": 0,
+    "unk7": 0,
+    "internal_name": "EASTVALELOGGINGCAMP",
+    "tail": [
+      256,
+      210,
+      704,
+      330,
+      400,
+      775,
+      485,
+      900
+    ]
+  },
+  {
+    "id": 130,
+    "worldMapAreaId": 30,
+    "areaIDs": [
+      798,
+      0,
+      0,
+      0
+    ],
+    "areaNames": [
+      "Ridgepoint Tower"
+    ],
+    "unk6": 0,
+    "unk7": 0,
+    "internal_name": "RIDGEPOINTTOWER",
+    "tail": [
+      306,
+      233,
+      696,
+      435,
+      505,
+      790,
+      570,
+      915
+    ]
+  },
+  {
+    "id": 131,
+    "worldMapAreaId": 30,
+    "areaIDs": [
+      18,
+      0,
+      0,
+      0
+    ],
+    "areaNames": [
+      "Crystal Lake"
+    ],
+    "unk6": 0,
+    "unk7": 0,
+    "internal_name": "CRYSTALLAKE",
+    "tail": [
+      225,
+      220,
+      422,
+      332,
+      380,
+      450,
+      475,
+      605
+    ]
+  },
+  {
+    "id": 132,
+    "worldMapAreaId": 30,
+    "areaIDs": [
+      86,
+      0,
+      0,
+      0
+    ],
+    "areaNames": [
+      "Stone Cairn Lake"
+    ],
+    "unk6": 0,
+    "unk7": 0,
+    "internal_name": "STONECAIRNLAKE",
+    "tail": [
+      310,
+      256,
+      587,
+      190,
+      250,
+      675,
+      415,
+      830
+    ]
+  }
+]

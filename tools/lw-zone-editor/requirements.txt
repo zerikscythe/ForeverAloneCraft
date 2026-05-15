@@ -1,0 +1,3 @@
+# Slice 1 intentionally uses only the Python standard library.
+# Pillow is used to convert extracted BLP textures to PNG.
+Pillow>=10.0

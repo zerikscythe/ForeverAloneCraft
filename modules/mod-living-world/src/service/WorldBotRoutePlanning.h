@@ -36,9 +36,25 @@ struct WorldBotTravelCapabilityConfig
     float taxiYardsPerSecond = 32.0f;
 };
 
+struct WorldBotTravelCapabilityPolicy
+{
+    std::uint8_t groundBasicMinLevel = 20;
+    std::uint8_t groundFastMinLevel = 40;
+    std::uint8_t flightBasicMinLevel = 60;
+    std::uint8_t flightFastMinLevel = 70;
+};
+
 float ResolveWorldBotTravelSpeedYardsPerSecond(
     WorldBotTravelCapabilityTier tier,
     WorldBotTravelCapabilityConfig const& config = {});
+
+WorldBotTravelCapabilityConfig LoadWorldBotTravelCapabilityConfig();
+WorldBotTravelCapabilityPolicy LoadWorldBotTravelCapabilityPolicy();
+
+WorldBotTravelCapabilityTier ResolveWorldBotTravelCapabilityTierForLevel(
+    std::uint8_t level,
+    bool allowFlightNetwork = false,
+    WorldBotTravelCapabilityPolicy const& policy = {});
 
 struct WorldBotRouteWaypoint
 {
@@ -67,6 +83,18 @@ struct WorldBotResolvedTravelPlan
     [[nodiscard]] bool empty() const { return waypoints.empty(); }
 };
 
+struct WorldBotZoneTransitionCandidate
+{
+    std::string connectorKey;
+    bool explicitConnector = false;
+    WorldBotRouteWaypoint fromWaypoint;
+    WorldBotRouteWaypoint toWaypoint;
+    float seamDistanceYards = 0.0f;
+    float sourceHeadingAlignment = 0.0f;
+    float targetHeadingAlignment = 0.0f;
+    float score = 0.0f;
+};
+
 struct WorldBotTravelPositionSample
 {
     std::uint16_t mapId = 0;
@@ -87,6 +115,19 @@ class WorldBotRoutePlanner
 public:
     explicit WorldBotRoutePlanner(std::filesystem::path routeExportRoot);
 
+    [[nodiscard]] std::optional<WorldBotResolvedTravelPlan> ResolveTravelPlan(
+        std::uint16_t mapId,
+        std::uint32_t startZoneIdHint,
+        std::uint32_t destZoneId,
+        float startX,
+        float startY,
+        float startZ,
+        float destX,
+        float destY,
+        float destZ,
+        WorldBotTravelCapabilityTier tier,
+        WorldBotTravelCapabilityConfig const& capabilityConfig = {}) const;
+
     [[nodiscard]] std::optional<WorldBotResolvedTravelPlan> ResolveSameZoneTravelPlan(
         std::uint16_t mapId,
         std::uint32_t zoneId,
@@ -98,6 +139,18 @@ public:
         float destZ,
         WorldBotTravelCapabilityTier tier,
         WorldBotTravelCapabilityConfig const& capabilityConfig = {}) const;
+
+    [[nodiscard]] std::optional<WorldBotZoneTransitionCandidate> ResolveAutomaticZoneTransition(
+        std::uint16_t mapId,
+        std::uint32_t fromZoneId,
+        std::uint32_t toZoneId,
+        float maxSeamDistanceYards = 400.0f) const;
+
+    [[nodiscard]] std::optional<WorldBotZoneTransitionCandidate> ResolveExplicitZoneTransition(
+        std::uint16_t mapId,
+        std::uint32_t fromZoneId,
+        std::uint32_t toZoneId,
+        float maxAttachDistanceYards = 250.0f) const;
 
     struct RouteConnectionRef
     {
@@ -146,17 +199,49 @@ public:
         std::vector<std::vector<std::size_t>> pathNodeIds;
     };
 
+    struct ZoneConnector
+    {
+        std::string connectorKey;
+        std::uint16_t mapId = 0;
+        std::uint32_t fromZoneId = 0;
+        std::uint32_t toZoneId = 0;
+        float fromX = 0.0f;
+        float fromY = 0.0f;
+        float fromZ = 0.0f;
+        float toX = 0.0f;
+        float toY = 0.0f;
+        float toZ = 0.0f;
+        bool bidirectional = true;
+    };
+
 private:
     [[nodiscard]] std::optional<ZoneRouteGraph> LoadZoneGraph(
         std::uint16_t mapId,
         std::uint32_t zoneId) const;
 
+    [[nodiscard]] std::vector<std::uint32_t> DiscoverZoneIdsForMap(
+        std::uint16_t mapId) const;
+
+    [[nodiscard]] std::optional<std::uint32_t> ResolveNearestZoneIdForMapPosition(
+        std::uint16_t mapId,
+        float x,
+        float y,
+        float z,
+        float maxDistanceYards = 250.0f) const;
+
     [[nodiscard]] std::optional<std::filesystem::path> FindRouteExportPath(
         std::uint16_t mapId,
         std::uint32_t zoneId) const;
 
+    [[nodiscard]] std::optional<std::filesystem::path> FindConnectorManifestPath(
+        std::uint16_t mapId) const;
+
+    [[nodiscard]] std::vector<ZoneConnector> LoadConnectorsForMap(
+        std::uint16_t mapId) const;
+
     std::filesystem::path _routeExportRoot;
     mutable std::unordered_map<std::string, std::optional<ZoneRouteGraph>> _graphCache;
+    mutable std::unordered_map<std::string, std::vector<ZoneConnector>> _connectorCache;
 };
 
 using WorldBotRoutePlanResolver = std::function<std::optional<WorldBotResolvedTravelPlan>(

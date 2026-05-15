@@ -1647,6 +1647,8 @@ that loads specific characters by ID with no materialization overhead.
   - overlay existing LivingWorld task points, transit/taxi links, and mined NPC
     patrol/waypoint routes
   - allow brush/polyline route drawing on a layer above the map
+- detailed cross-agent plan now tracked separately in:
+  `modules/mod-living-world/docs/WorldBotTravelNetworkRoadmap.md`
   - optionally use an AI-assisted tracing pass as a first draft, then review
     and edit the strokes manually
   - convert approved strokes into calibrated world-coordinate route points and

@@ -1,0 +1,968 @@
+{
+  "format": "lw_zone_editor_route",
+  "version": 1,
+  "route_group_key": "Duskwood",
+  "zone_name": "Duskwood",
+  "zone_id": 10,
+  "map_id": 0,
+  "world_map_area_id": 34,
+  "sample_spacing_yards": 25.0,
+  "path_count": 8,
+  "paths": [
+    {
+      "path_index": 0,
+      "path_key": "Duskwood_01",
+      "finalized": true,
+      "start_connection": null,
+      "end_connection": null,
+      "anchors": [
+        {
+          "image_x": 51.84,
+          "image_y": 428.94,
+          "zone_x": 5.1732,
+          "zone_y": 64.2122,
+          "world_x": -10872.4864,
+          "world_y": 693.6564,
+          "handle_in": null,
+          "handle_out": {
+            "image_x": 82.57,
+            "image_y": 422.94,
+            "zone_x": 8.2408,
+            "zone_y": 63.3137,
+            "world_x": -10856.3133,
+            "world_y": 610.8304
+          }
+        },
+        {
+          "image_x": 136.97,
+          "image_y": 411.59,
+          "zone_x": 13.6694,
+          "zone_y": 61.6147,
+          "world_x": -10825.73,
+          "world_y": 464.2604,
+          "handle_in": {
+            "image_x": 99.95,
+            "image_y": 428.91,
+            "zone_x": 9.9752,
+            "zone_y": 64.2085,
+            "world_x": -10872.4183,
+            "world_y": 564.0038
+          },
+          "handle_out": {
+            "image_x": 158.11,
+            "image_y": 406.95,
+            "zone_x": 15.7795,
+            "zone_y": 60.9205,
+            "world_x": -10813.2359,
+            "world_y": 407.2873
+          }
+        },
+        {
+          "image_x": 208.2,
+          "image_y": 403.25,
+          "zone_x": 20.7788,
+          "zone_y": 60.3667,
+          "world_x": -10803.2673,
+          "world_y": 272.3067,
+          "handle_in": {
+            "image_x": 187.06,
+            "image_y": 407.89,
+            "zone_x": 18.6687,
+            "zone_y": 61.0609,
+            "world_x": -10815.7614,
+            "world_y": 329.2797
+          },
+          "handle_out": {
+            "image_x": 228.53,
+            "image_y": 398.79,
+            "zone_x": 22.8072,
+            "zone_y": 59.6995,
+            "world_x": -10791.2567,
+            "world_y": 217.5382
+          }
+        },
+        {
+          "image_x": 269.59,
+          "image_y": 382.41,
+          "zone_x": 26.9049,
+          "zone_y": 57.2469,
+          "world_x": -10747.1107,
+          "world_y": 106.8998,
+          "handle_in": {
+            "image_x": 242.31,
+            "image_y": 394.53,
+            "zone_x": 24.1822,
+            "zone_y": 59.0621,
+            "world_x": -10779.7836,
+            "world_y": 180.4139
+          },
+          "handle_out": {
+            "image_x": 298.76,
+            "image_y": 385.06,
+            "zone_x": 29.8168,
+            "zone_y": 57.644,
+            "world_x": -10754.2579,
+            "world_y": 28.2804
+          }
+        },
+        {
+          "image_x": 337.75,
+          "image_y": 404.38,
+          "zone_x": 33.7076,
+          "zone_y": 60.5365,
+          "world_x": -10806.3237,
+          "world_y": -76.7723,
+          "handle_in": {
+            "image_x": 314.65,
+            "image_y": 397.47,
+            "zone_x": 31.4024,
+            "zone_y": 59.5019,
+            "world_x": -10787.7001,
+            "world_y": -14.5303
+          },
+          "handle_out": {
+            "image_x": 374.31,
+            "image_y": 416.39,
+            "zone_x": 37.3561,
+            "zone_y": 62.3335,
+            "world_x": -10838.6699,
+            "world_y": -175.2814
+          }
+        },
+        {
+          "image_x": 447.42,
+          "image_y": 440.4,
+          "zone_x": 44.6531,
+          "zone_y": 65.9276,
+          "world_x": -10903.3624,
+          "world_y": -372.2994,
+          "handle_in": {
+            "image_x": 416.23,
+            "image_y": 421.82,
+            "zone_x": 41.5397,
+            "zone_y": 63.1462,
+            "world_x": -10853.2978,
+            "world_y": -288.239
+          },
+          "handle_out": {
+            "image_x": 471.61,
+            "image_y": 442.4,
+            "zone_x": 47.0672,
+            "zone_y": 66.2271,
+            "world_x": -10908.7534,
+            "world_y": -437.482
+          }
+        },
+        {
+          "image_x": 519.99,
+          "image_y": 446.4,
+          "zone_x": 51.8956,
+          "zone_y": 66.8261,
+          "world_x": -10919.5355,
+          "world_y": -567.8471,
+          "handle_in": {
+            "image_x": 495.04,
+            "image_y": 441.9,
+            "zone_x": 49.4054,
+            "zone_y": 66.1526,
+            "world_x": -10907.4124,
+            "world_y": -500.6133
+          },
+          "handle_out": {
+            "image_x": 527.63,
+            "image_y": 454.78,
+            "zone_x": 52.6576,
+            "zone_y": 68.0812,
+            "world_x": -10942.1275,
+            "world_y": -588.4219
+          }
+        },
+        {
+          "image_x": 546.18,
+          "image_y": 461.13,
+          "zone_x": 54.5094,
+          "zone_y": 69.0315,
+          "world_x": -10959.2332,
+          "world_y": -638.4207,
+          "handle_in": {
+            "image_x": 534.07,
+            "image_y": 462.36,
+            "zone_x": 53.3005,
+            "zone_y": 69.2157,
+            "world_x": -10962.5481,
+            "world_y": -605.7795
+          },
+          "handle_out": {
+            "image_x": 578.02,
+            "image_y": 447.58,
+            "zone_x": 57.6871,
+            "zone_y": 67.0034,
+            "world_x": -10922.7279,
+            "world_y": -724.219
+          }
+        },
+        {
+          "image_x": 623.12,
+          "image_y": 408.2,
+          "zone_x": 62.1876,
+          "zone_y": 61.1083,
+          "world_x": -10816.6156,
+          "world_y": -845.7307,
+          "handle_in": {
+            "image_x": 591.67,
+            "image_y": 423.33,
+            "zone_x": 59.0485,
+            "zone_y": 63.3731,
+            "world_x": -10857.3819,
+            "world_y": -760.9761
+          },
+          "handle_out": {
+            "image_x": 642.44,
+            "image_y": 401.36,
+            "zone_x": 64.1158,
+            "zone_y": 60.0831,
+            "world_x": -10798.1622,
+            "world_y": -897.7942
+          }
+        },
+        {
+          "image_x": 672.23,
+          "image_y": 402.75,
+          "zone_x": 67.0885,
+          "zone_y": 60.2915,
+          "world_x": -10801.9128,
+          "world_y": -978.0563,
+          "handle_in": {
+            "image_x": 653.43,
+            "image_y": 398.7,
+            "zone_x": 65.2125,
+            "zone_y": 59.6861,
+            "world_x": -10791.015,
+            "world_y": -927.404
+          },
+          "handle_out": {
+            "image_x": 700.41,
+            "image_y": 407.04,
+            "zone_x": 69.9017,
+            "zone_y": 60.934,
+            "world_x": -10813.4776,
+            "world_y": -1054.0118
+          }
+        },
+        {
+          "image_x": 733.88,
+          "image_y": 386.92,
+          "zone_x": 73.2419,
+          "zone_y": 57.9227,
+          "world_x": -10759.2746,
+          "world_y": -1144.1984,
+          "handle_in": {
+            "image_x": 727.7,
+            "image_y": 394.53,
+            "zone_x": 72.6244,
+            "zone_y": 59.0621,
+            "world_x": -10779.7836,
+            "world_y": -1127.526
+          },
+          "handle_out": {
+            "image_x": 737.35,
+            "image_y": 381.96,
+            "zone_x": 73.588,
+            "zone_y": 57.1791,
+            "world_x": -10745.8898,
+            "world_y": -1153.5424
+          }
+        },
+        {
+          "image_x": 744.29,
+          "image_y": 372.02,
+          "zone_x": 74.2801,
+          "zone_y": 55.6919,
+          "world_x": -10719.1202,
+          "world_y": -1172.2306,
+          "handle_in": {
+            "image_x": 740.82,
+            "image_y": 376.99,
+            "zone_x": 73.9341,
+            "zone_y": 56.4355,
+            "world_x": -10732.505,
+            "world_y": -1162.8865
+          },
+          "handle_out": {
+            "image_x": 747.55,
+            "image_y": 367.35,
+            "zone_x": 74.6057,
+            "zone_y": 54.9924,
+            "world_x": -10706.53,
+            "world_y": -1181.02
+          }
+        },
+        {
+          "image_x": 752.16,
+          "image_y": 356.58,
+          "zone_x": 75.0655,
+          "zone_y": 53.3801,
+          "world_x": -10677.5082,
+          "world_y": -1193.4348,
+          "handle_in": {
+            "image_x": 750.73,
+            "image_y": 361.87,
+            "zone_x": 74.9232,
+            "zone_y": 54.1728,
+            "world_x": -10691.7765,
+            "world_y": -1189.5933
+          },
+          "handle_out": {
+            "image_x": 752.36,
+            "image_y": 342.73,
+            "zone_x": 75.0858,
+            "zone_y": 51.3069,
+            "world_x": -10640.1911,
+            "world_y": -1193.9836
+          }
+        },
+        {
+          "image_x": 748.07,
+          "image_y": 315.44,
+          "zone_x": 74.6577,
+          "zone_y": 47.2223,
+          "world_x": -10566.6674,
+          "world_y": -1182.4257,
+          "handle_in": {
+            "image_x": 747.06,
+            "image_y": 330.51,
+            "zone_x": 74.5574,
+            "zone_y": 49.4777,
+            "world_x": -10607.2643,
+            "world_y": -1179.7153
+          },
+          "handle_out": {
+            "image_x": 756.79,
+            "image_y": 299.16,
+            "zone_x": 75.5281,
+            "zone_y": 44.785,
+            "world_x": -10522.796,
+            "world_y": -1205.9251
+          }
+        },
+        {
+          "image_x": 741.11,
+          "image_y": 264.13,
+          "zone_x": 73.963,
+          "zone_y": 39.5411,
+          "world_x": -10428.4057,
+          "world_y": -1163.669,
+          "handle_in": {
+            "image_x": 748.03,
+            "image_y": 273.1,
+            "zone_x": 74.6541,
+            "zone_y": 40.8826,
+            "world_x": -10452.5521,
+            "world_y": -1182.3275
+          },
+          "handle_out": {
+            "image_x": 706.08,
+            "image_y": 247.03,
+            "zone_x": 70.4671,
+            "zone_y": 36.9801,
+            "world_x": -10382.3082,
+            "world_y": -1069.2787
+          }
+        },
+        {
+          "image_x": 737.16,
+          "image_y": 213.96,
+          "zone_x": 73.5686,
+          "zone_y": 32.0294,
+          "world_x": -10293.1946,
+          "world_y": -1153.0201,
+          "handle_in": {
+            "image_x": 732.35,
+            "image_y": 217.29,
+            "zone_x": 73.0891,
+            "zone_y": 32.5289,
+            "world_x": -10302.1862,
+            "world_y": -1140.0714
+          },
+          "handle_out": {
+            "image_x": 744.78,
+            "image_y": 182.64,
+            "zone_x": 74.3289,
+            "zone_y": 27.3411,
+            "world_x": -10208.8057,
+            "world_y": -1173.547
+          }
+        },
+        {
+          "image_x": 748.62,
+          "image_y": 149.57,
+          "zone_x": 74.7122,
+          "zone_y": 22.3908,
+          "world_x": -10119.7011,
+          "world_y": -1183.896,
+          "handle_in": {
+            "image_x": 722.37,
+            "image_y": 180.6,
+            "zone_x": 72.0931,
+            "zone_y": 27.0362,
+            "world_x": -10203.3179,
+            "world_y": -1113.1812
+          },
+          "handle_out": {
+            "image_x": 771.45,
+            "image_y": 140.07,
+            "zone_x": 76.9915,
+            "zone_y": 20.9691,
+            "world_x": -10094.1106,
+            "world_y": -1245.4373
+          }
+        },
+        {
+          "image_x": 815.45,
+          "image_y": 133.76,
+          "zone_x": 81.3817,
+          "zone_y": 20.024,
+          "world_x": -10077.0984,
+          "world_y": -1363.9738,
+          "handle_in": {
+            "image_x": 789.99,
+            "image_y": 134.17,
+            "zone_x": 78.8411,
+            "zone_y": 20.085,
+            "world_x": -10078.196,
+            "world_y": -1295.3763
+          },
+          "handle_out": {
+            "image_x": 836.22,
+            "image_y": 138.04,
+            "zone_x": 83.4549,
+            "zone_y": 20.6643,
+            "world_x": -10088.6228,
+            "world_y": -1419.9494
+          }
+        },
+        {
+          "image_x": 868.11,
+          "image_y": 133.14,
+          "zone_x": 86.6378,
+          "zone_y": 19.9305,
+          "world_x": -10075.4153,
+          "world_y": -1505.8882,
+          "handle_in": {
+            "image_x": 848.44,
+            "image_y": 137.22,
+            "zone_x": 84.6744,
+            "zone_y": 20.5423,
+            "world_x": -10086.4277,
+            "world_y": -1452.8763
+          },
+          "handle_out": {
+            "image_x": 904.44,
+            "image_y": 89.57,
+            "zone_x": 90.2639,
+            "zone_y": 13.4082,
+            "world_x": -9958.013,
+            "world_y": -1603.7909
+          }
+        },
+        {
+          "image_x": 949.96,
+          "image_y": 55.11,
+          "zone_x": 94.8061,
+          "zone_y": 8.2499,
+          "world_x": -9865.1647,
+          "world_y": -1726.4307,
+          "handle_in": {
+            "image_x": 941.92,
+            "image_y": 93.44,
+            "zone_x": 94.0037,
+            "zone_y": 13.9874,
+            "world_x": -9968.4399,
+            "world_y": -1704.7665
+          },
+          "handle_out": null
+        }
+      ]
+    },
+    {
+      "path_index": 1,
+      "path_key": "Duskwood_02",
+      "finalized": true,
+      "start_connection": {
+        "path_index": 0,
+        "path_key": "Duskwood_01",
+        "anchor_index": 13,
+        "anchor_label": "P1-A14"
+      },
+      "end_connection": null,
+      "anchors": [
+        {
+          "image_x": 748.07,
+          "image_y": 315.44,
+          "zone_x": 74.6577,
+          "zone_y": 47.2223,
+          "world_x": -10566.6674,
+          "world_y": -1182.4257,
+          "handle_in": null,
+          "handle_out": {
+            "image_x": 763.97,
+            "image_y": 304.04,
+            "zone_x": 76.2443,
+            "zone_y": 45.5143,
+            "world_x": -10535.9228,
+            "world_y": -1225.2641
+          }
+        },
+        {
+          "image_x": 785.52,
+          "image_y": 301.57,
+          "zone_x": 78.3949,
+          "zone_y": 45.1458,
+          "world_x": -10529.2898,
+          "world_y": -1283.3286,
+          "handle_in": {
+            "image_x": 776.19,
+            "image_y": 319.11,
+            "zone_x": 77.4639,
+            "zone_y": 47.7704,
+            "world_x": -10576.5326,
+            "world_y": -1258.1909
+          },
+          "handle_out": {
+            "image_x": 795.74,
+            "image_y": 302.2,
+            "zone_x": 79.4151,
+            "zone_y": 45.2399,
+            "world_x": -10530.9838,
+            "world_y": -1310.8738
+          }
+        },
+        {
+          "image_x": 813.71,
+          "image_y": 307.03,
+          "zone_x": 81.2084,
+          "zone_y": 45.9626,
+          "world_x": -10543.9927,
+          "world_y": -1359.2933,
+          "handle_in": {
+            "image_x": 804.31,
+            "image_y": 305.21,
+            "zone_x": 80.2706,
+            "zone_y": 45.6903,
+            "world_x": -10539.0917,
+            "world_y": -1333.9717
+          },
+          "handle_out": {
+            "image_x": 834.84,
+            "image_y": 304.24,
+            "zone_x": 83.3175,
+            "zone_y": 45.5448,
+            "world_x": -10536.4716,
+            "world_y": -1416.2397
+          }
+        },
+        {
+          "image_x": 865.39,
+          "image_y": 268.19,
+          "zone_x": 86.3663,
+          "zone_y": 40.1484,
+          "world_x": -10439.3374,
+          "world_y": -1498.5568,
+          "handle_in": {
+            "image_x": 839.32,
+            "image_y": 269.82,
+            "zone_x": 83.7647,
+            "zone_y": 40.3923,
+            "world_x": -10443.7277,
+            "world_y": -1428.3129
+          },
+          "handle_out": null
+        }
+      ]
+    },
+    {
+      "path_index": 2,
+      "path_key": "Duskwood_03",
+      "finalized": true,
+      "start_connection": {
+        "path_index": 0,
+        "path_key": "Duskwood_01",
+        "anchor_index": 11,
+        "anchor_label": "P1-A12"
+      },
+      "end_connection": null,
+      "anchors": [
+        {
+          "image_x": 744.29,
+          "image_y": 372.02,
+          "zone_x": 74.2801,
+          "zone_y": 55.6919,
+          "world_x": -10719.1202,
+          "world_y": -1172.2306,
+          "handle_in": null,
+          "handle_out": {
+            "image_x": 750.44,
+            "image_y": 377.01,
+            "zone_x": 74.8941,
+            "zone_y": 56.4386,
+            "world_x": -10732.561,
+            "world_y": -1188.8068
+          }
+        },
+        {
+          "image_x": 762.74,
+          "image_y": 386.99,
+          "zone_x": 76.1219,
+          "zone_y": 57.932,
+          "world_x": -10759.4425,
+          "world_y": -1221.9593,
+          "handle_in": {
+            "image_x": 756.59,
+            "image_y": 382.0,
+            "zone_x": 75.508,
+            "zone_y": 57.1853,
+            "world_x": -10746.0017,
+            "world_y": -1205.3831
+          },
+          "handle_out": {
+            "image_x": 778.59,
+            "image_y": 402.34,
+            "zone_x": 77.7032,
+            "zone_y": 60.2306,
+            "world_x": -10800.8169,
+            "world_y": -1264.6533
+          }
+        },
+        {
+          "image_x": 769.18,
+          "image_y": 423.36,
+          "zone_x": 76.7648,
+          "zone_y": 63.3775,
+          "world_x": -10857.4614,
+          "world_y": -1239.3168,
+          "handle_in": {
+            "image_x": 767.79,
+            "image_y": 402.54,
+            "zone_x": 76.626,
+            "zone_y": 60.2611,
+            "world_x": -10801.3657,
+            "world_y": -1235.568
+          },
+          "handle_out": {
+            "image_x": 768.61,
+            "image_y": 440.63,
+            "zone_x": 76.7073,
+            "zone_y": 65.9623,
+            "world_x": -10903.9877,
+            "world_y": -1237.7631
+          }
+        },
+        {
+          "image_x": 786.61,
+          "image_y": 466.56,
+          "zone_x": 78.5044,
+          "zone_y": 69.844,
+          "world_x": -10973.8589,
+          "world_y": -1286.2842,
+          "handle_in": {
+            "image_x": 774.92,
+            "image_y": 457.12,
+            "zone_x": 77.3374,
+            "zone_y": 68.4318,
+            "world_x": -10948.4389,
+            "world_y": -1254.7753
+          },
+          "handle_out": null
+        }
+      ]
+    },
+    {
+      "path_index": 3,
+      "path_key": "Duskwood_04",
+      "finalized": true,
+      "start_connection": {
+        "path_index": 0,
+        "path_key": "Duskwood_01",
+        "anchor_index": 8,
+        "anchor_label": "P1-A9"
+      },
+      "end_connection": null,
+      "anchors": [
+        {
+          "image_x": 623.12,
+          "image_y": 408.2,
+          "zone_x": 62.1876,
+          "zone_y": 61.1083,
+          "world_x": -10816.6156,
+          "world_y": -845.7307,
+          "handle_in": null,
+          "handle_out": {
+            "image_x": 621.81,
+            "image_y": 419.35,
+            "zone_x": 62.0569,
+            "zone_y": 62.7777,
+            "world_x": -10846.6638,
+            "world_y": -842.204
+          }
+        },
+        {
+          "image_x": 619.19,
+          "image_y": 441.66,
+          "zone_x": 61.7957,
+          "zone_y": 66.1163,
+          "world_x": -10906.76,
+          "world_y": -835.1505,
+          "handle_in": {
+            "image_x": 620.5,
+            "image_y": 430.51,
+            "zone_x": 61.9263,
+            "zone_y": 64.447,
+            "world_x": -10876.7119,
+            "world_y": -838.6772
+          },
+          "handle_out": {
+            "image_x": 629.5,
+            "image_y": 446.36,
+            "zone_x": 62.8243,
+            "zone_y": 66.8197,
+            "world_x": -10919.4208,
+            "world_y": -862.9225
+          }
+        },
+        {
+          "image_x": 650.11,
+          "image_y": 455.75,
+          "zone_x": 64.8815,
+          "zone_y": 68.2265,
+          "world_x": -10944.7424,
+          "world_y": -918.4666,
+          "handle_in": {
+            "image_x": 639.81,
+            "image_y": 451.05,
+            "zone_x": 63.8529,
+            "zone_y": 67.5231,
+            "world_x": -10932.0816,
+            "world_y": -890.6945
+          },
+          "handle_out": null
+        }
+      ]
+    },
+    {
+      "path_index": 4,
+      "path_key": "Duskwood_05",
+      "finalized": true,
+      "start_connection": {
+        "path_index": 0,
+        "path_key": "Duskwood_01",
+        "anchor_index": 5,
+        "anchor_label": "P1-A6"
+      },
+      "end_connection": null,
+      "anchors": [
+        {
+          "image_x": 447.42,
+          "image_y": 440.4,
+          "zone_x": 44.6531,
+          "zone_y": 65.9276,
+          "world_x": -10903.3624,
+          "world_y": -372.2994,
+          "handle_in": null,
+          "handle_out": {
+            "image_x": 436.31,
+            "image_y": 491.54,
+            "zone_x": 43.544,
+            "zone_y": 73.5834,
+            "world_x": -11041.1674,
+            "world_y": -342.3536
+          }
+        },
+        {
+          "image_x": 446.92,
+          "image_y": 577.55,
+          "zone_x": 44.6028,
+          "zone_y": 86.4597,
+          "world_x": -11272.9413,
+          "world_y": -370.9425,
+          "handle_in": {
+            "image_x": 458.58,
+            "image_y": 527.19,
+            "zone_x": 45.7661,
+            "zone_y": 78.9213,
+            "world_x": -11137.2498,
+            "world_y": -402.3508
+          },
+          "handle_out": null
+        }
+      ]
+    },
+    {
+      "path_index": 5,
+      "path_key": "Duskwood_06",
+      "finalized": true,
+      "start_connection": {
+        "path_index": 4,
+        "path_key": "Duskwood_05",
+        "anchor_index": 0,
+        "anchor_label": "P5-A1"
+      },
+      "end_connection": null,
+      "anchors": [
+        {
+          "image_x": 447.42,
+          "image_y": 440.4,
+          "zone_x": 44.6531,
+          "zone_y": 65.9276,
+          "world_x": -10903.3624,
+          "world_y": -372.2994,
+          "handle_in": null,
+          "handle_out": {
+            "image_x": 432.14,
+            "image_y": 455.16,
+            "zone_x": 43.128,
+            "zone_y": 68.1379,
+            "world_x": -10943.1485,
+            "world_y": -331.1223
+          }
+        },
+        {
+          "image_x": 392.39,
+          "image_y": 474.84,
+          "zone_x": 39.1606,
+          "zone_y": 71.0844,
+          "world_x": -10996.1856,
+          "world_y": -224.0025,
+          "handle_in": {
+            "image_x": 410.73,
+            "image_y": 463.36,
+            "zone_x": 40.9914,
+            "zone_y": 69.3655,
+            "world_x": -10965.2445,
+            "world_y": -273.4348
+          },
+          "handle_out": {
+            "image_x": 358.25,
+            "image_y": 487.37,
+            "zone_x": 35.7539,
+            "zone_y": 72.9594,
+            "world_x": -11029.9361,
+            "world_y": -132.0214
+          }
+        },
+        {
+          "image_x": 335.42,
+          "image_y": 468.95,
+          "zone_x": 33.4755,
+          "zone_y": 70.2022,
+          "world_x": -10980.3065,
+          "world_y": -70.5049,
+          "handle_in": {
+            "image_x": 354.09,
+            "image_y": 474.49,
+            "zone_x": 35.3379,
+            "zone_y": 71.0308,
+            "world_x": -10995.221,
+            "world_y": -120.79
+          },
+          "handle_out": null
+        }
+      ]
+    },
+    {
+      "path_index": 6,
+      "path_key": "Duskwood_07",
+      "finalized": true,
+      "start_connection": {
+        "path_index": 0,
+        "path_key": "Duskwood_01",
+        "anchor_index": 2,
+        "anchor_label": "P1-A3"
+      },
+      "end_connection": null,
+      "anchors": [
+        {
+          "image_x": 208.2,
+          "image_y": 403.25,
+          "zone_x": 20.7788,
+          "zone_y": 60.3667,
+          "world_x": -10803.2673,
+          "world_y": 272.3067,
+          "handle_in": null,
+          "handle_out": {
+            "image_x": 215.49,
+            "image_y": 418.5,
+            "zone_x": 21.5064,
+            "zone_y": 62.6491,
+            "world_x": -10844.35,
+            "world_y": 252.6597
+          }
+        },
+        {
+          "image_x": 229.35,
+          "image_y": 442.76,
+          "zone_x": 22.8894,
+          "zone_y": 66.2815,
+          "world_x": -10909.7329,
+          "world_y": 215.3182,
+          "handle_in": {
+            "image_x": 214.27,
+            "image_y": 429.4,
+            "zone_x": 21.3838,
+            "zone_y": 64.2807,
+            "world_x": -10873.7184,
+            "world_y": 255.9702
+          },
+          "handle_out": null
+        }
+      ]
+    },
+    {
+      "path_index": 7,
+      "path_key": "Duskwood_08",
+      "finalized": true,
+      "start_connection": {
+        "path_index": 6,
+        "path_key": "Duskwood_07",
+        "anchor_index": 0,
+        "anchor_label": "P7-A1"
+      },
+      "end_connection": null,
+      "anchors": [
+        {
+          "image_x": 208.2,
+          "image_y": 403.25,
+          "zone_x": 20.7788,
+          "zone_y": 60.3667,
+          "world_x": -10803.2673,
+          "world_y": 272.3067,
+          "handle_in": null,
+          "handle_out": {
+            "image_x": 176.0,
+            "image_y": 395.29,
+            "zone_x": 17.5644,
+            "zone_y": 59.1755,
+            "world_x": -10781.8257,
+            "world_y": 359.0943
+          }
+        },
+        {
+          "image_x": 199.23,
+          "image_y": 293.47,
+          "zone_x": 19.8835,
+          "zone_y": 43.9332,
+          "world_x": -10507.4632,
+          "world_y": 296.4779,
+          "handle_in": {
+            "image_x": 223.74,
+            "image_y": 362.33,
+            "zone_x": 22.3292,
+            "zone_y": 54.2406,
+            "world_x": -10692.996,
+            "world_y": 230.4444
+          },
+          "handle_out": null
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,685 @@
+{
+  "format": "lw_zone_editor_route",
+  "version": 1,
+  "route_group_key": "Westfall",
+  "zone_name": "Westfall",
+  "zone_id": 40,
+  "map_id": 0,
+  "world_map_area_id": 39,
+  "sample_spacing_yards": 25.0,
+  "path_count": 3,
+  "paths": [
+    {
+      "path_index": 0,
+      "path_key": "Westfall_01",
+      "finalized": true,
+      "start_connection": null,
+      "end_connection": null,
+      "anchors": [
+        {
+          "image_x": 620.63,
+          "image_y": 118.64,
+          "zone_x": 61.9392,
+          "zone_y": 17.761,
+          "world_x": -9814.4239,
+          "world_y": 848.7962,
+          "handle_in": null,
+          "handle_out": {
+            "image_x": 609.6,
+            "image_y": 127.04,
+            "zone_x": 60.8379,
+            "zone_y": 19.0184,
+            "world_x": -9843.7628,
+            "world_y": 887.3393
+          }
+        },
+        {
+          "image_x": 583.07,
+          "image_y": 138.41,
+          "zone_x": 58.1908,
+          "zone_y": 20.7201,
+          "world_x": -9883.4695,
+          "world_y": 979.9883,
+          "handle_in": {
+            "image_x": 596.43,
+            "image_y": 133.17,
+            "zone_x": 59.5239,
+            "zone_y": 19.936,
+            "world_x": -9865.1727,
+            "world_y": 933.3313
+          },
+          "handle_out": {
+            "image_x": 580.19,
+            "image_y": 148.62,
+            "zone_x": 57.9033,
+            "zone_y": 22.2492,
+            "world_x": -9919.1484,
+            "world_y": 990.0516
+          }
+        },
+        {
+          "image_x": 574.55,
+          "image_y": 163.99,
+          "zone_x": 57.3399,
+          "zone_y": 24.549,
+          "world_x": -9972.8097,
+          "world_y": 1009.7684,
+          "handle_in": {
+            "image_x": 577.43,
+            "image_y": 153.77,
+            "zone_x": 57.6275,
+            "zone_y": 23.0199,
+            "world_x": -9937.1308,
+            "world_y": 999.7051
+          },
+          "handle_out": {
+            "image_x": 555.72,
+            "image_y": 177.6,
+            "zone_x": 55.4614,
+            "zone_y": 26.5868,
+            "world_x": -10020.3597,
+            "world_y": 1075.5174
+          }
+        },
+        {
+          "image_x": 520.84,
+          "image_y": 180.72,
+          "zone_x": 51.9804,
+          "zone_y": 27.0532,
+          "world_x": -10031.2418,
+          "world_y": 1197.3515,
+          "handle_in": {
+            "image_x": 544.76,
+            "image_y": 179.57,
+            "zone_x": 54.3672,
+            "zone_y": 26.8823,
+            "world_x": -10027.2532,
+            "world_y": 1113.8147
+          },
+          "handle_out": {
+            "image_x": 492.35,
+            "image_y": 198.21,
+            "zone_x": 49.1369,
+            "zone_y": 29.6725,
+            "world_x": -10092.3588,
+            "world_y": 1296.8763
+          }
+        },
+        {
+          "image_x": 446.99,
+          "image_y": 187.0,
+          "zone_x": 44.6094,
+          "zone_y": 27.9942,
+          "world_x": -10053.198,
+          "world_y": 1455.3373,
+          "handle_in": {
+            "image_x": 478.32,
+            "image_y": 195.36,
+            "zone_x": 47.7363,
+            "zone_y": 29.2458,
+            "world_x": -10082.4015,
+            "world_y": 1345.8969
+          },
+          "handle_out": {
+            "image_x": 429.64,
+            "image_y": 197.34,
+            "zone_x": 42.878,
+            "zone_y": 29.5412,
+            "world_x": -10089.295,
+            "world_y": 1515.9374
+          }
+        },
+        {
+          "image_x": 407.7,
+          "image_y": 225.5,
+          "zone_x": 40.6887,
+          "zone_y": 33.7577,
+          "world_x": -10187.6799,
+          "world_y": 1592.5638,
+          "handle_in": {
+            "image_x": 422.4,
+            "image_y": 195.14,
+            "zone_x": 42.1558,
+            "zone_y": 29.213,
+            "world_x": -10081.6355,
+            "world_y": 1541.2136
+          },
+          "handle_out": {
+            "image_x": 388.85,
+            "image_y": 237.24,
+            "zone_x": 38.8075,
+            "zone_y": 35.5156,
+            "world_x": -10228.6975,
+            "world_y": 1658.4037
+          }
+        },
+        {
+          "image_x": 370.43,
+          "image_y": 264.44,
+          "zone_x": 36.9692,
+          "zone_y": 39.5861,
+          "world_x": -10323.675,
+          "world_y": 1722.7433,
+          "handle_in": {
+            "image_x": 375.04,
+            "image_y": 244.26,
+            "zone_x": 37.4288,
+            "zone_y": 36.5661,
+            "world_x": -10253.2078,
+            "world_y": 1706.6584
+          },
+          "handle_out": {
+            "image_x": 370.21,
+            "image_y": 276.5,
+            "zone_x": 36.9474,
+            "zone_y": 41.3915,
+            "world_x": -10365.8022,
+            "world_y": 1723.5092
+          }
+        },
+        {
+          "image_x": 384.25,
+          "image_y": 301.49,
+          "zone_x": 38.3479,
+          "zone_y": 45.1337,
+          "world_x": -10453.1202,
+          "world_y": 1674.4886,
+          "handle_in": {
+            "image_x": 362.1,
+            "image_y": 290.09,
+            "zone_x": 36.1376,
+            "zone_y": 43.4268,
+            "world_x": -10413.2909,
+            "world_y": 1751.8493
+          },
+          "handle_out": {
+            "image_x": 396.29,
+            "image_y": 316.68,
+            "zone_x": 39.5503,
+            "zone_y": 47.4078,
+            "world_x": -10506.1811,
+            "world_y": 1632.4058
+          }
+        },
+        {
+          "image_x": 419.49,
+          "image_y": 349.65,
+          "zone_x": 41.8649,
+          "zone_y": 52.3421,
+          "world_x": -10621.3156,
+          "world_y": 1551.3958,
+          "handle_in": {
+            "image_x": 421.74,
+            "image_y": 324.3,
+            "zone_x": 42.0901,
+            "zone_y": 48.5477,
+            "world_x": -10532.7788,
+            "world_y": 1543.5115
+          },
+          "handle_out": {
+            "image_x": 424.46,
+            "image_y": 363.79,
+            "zone_x": 42.3615,
+            "zone_y": 54.4593,
+            "world_x": -10670.7171,
+            "world_y": 1534.0138
+          }
+        },
+        {
+          "image_x": 434.41,
+          "image_y": 392.07,
+          "zone_x": 43.3548,
+          "zone_y": 58.6937,
+          "world_x": -10769.5202,
+          "world_y": 1499.2497,
+          "handle_in": {
+            "image_x": 434.46,
+            "image_y": 342.72,
+            "zone_x": 43.3594,
+            "zone_y": 51.3051,
+            "world_x": -10597.1184,
+            "world_y": 1499.0865
+          },
+          "handle_out": {
+            "image_x": 440.96,
+            "image_y": 406.48,
+            "zone_x": 44.0082,
+            "zone_y": 60.8501,
+            "world_x": -10819.8365,
+            "world_y": 1476.3787
+          }
+        },
+        {
+          "image_x": 454.06,
+          "image_y": 435.29,
+          "zone_x": 45.3151,
+          "zone_y": 65.163,
+          "world_x": -10920.4693,
+          "world_y": 1430.6365,
+          "handle_in": {
+            "image_x": 440.82,
+            "image_y": 421.22,
+            "zone_x": 43.9941,
+            "zone_y": 63.0569,
+            "world_x": -10871.3277,
+            "world_y": 1476.874
+          },
+          "handle_out": {
+            "image_x": 482.26,
+            "image_y": 429.33,
+            "zone_x": 48.1302,
+            "zone_y": 64.2715,
+            "world_x": -10899.6678,
+            "world_y": 1332.1099
+          }
+        },
+        {
+          "image_x": 515.53,
+          "image_y": 430.01,
+          "zone_x": 51.4501,
+          "zone_y": 64.3735,
+          "world_x": -10902.0475,
+          "world_y": 1215.9131,
+          "handle_in": {
+            "image_x": 490.6,
+            "image_y": 422.97,
+            "zone_x": 48.9618,
+            "zone_y": 63.3195,
+            "world_x": -10877.4553,
+            "world_y": 1303.0039
+          },
+          "handle_out": {
+            "image_x": 536.87,
+            "image_y": 451.26,
+            "zone_x": 53.5794,
+            "zone_y": 67.5541,
+            "world_x": -10976.2625,
+            "world_y": 1141.3889
+          }
+        },
+        {
+          "image_x": 578.39,
+          "image_y": 435.25,
+          "zone_x": 57.7233,
+          "zone_y": 65.1576,
+          "world_x": -10920.3443,
+          "world_y": 996.3507,
+          "handle_in": {
+            "image_x": 568.17,
+            "image_y": 441.01,
+            "zone_x": 56.7039,
+            "zone_y": 66.0202,
+            "world_x": -10940.4709,
+            "world_y": 1032.0296
+          },
+          "handle_out": {
+            "image_x": 583.63,
+            "image_y": 440.75,
+            "zone_x": 58.2461,
+            "zone_y": 65.981,
+            "world_x": -10939.556,
+            "world_y": 978.0538
+          }
+        },
+        {
+          "image_x": 592.34,
+          "image_y": 443.93,
+          "zone_x": 59.1162,
+          "zone_y": 66.4568,
+          "world_x": -10950.6591,
+          "world_y": 947.5993,
+          "handle_in": {
+            "image_x": 588.62,
+            "image_y": 438.98,
+            "zone_x": 58.744,
+            "zone_y": 65.7158,
+            "world_x": -10933.3695,
+            "world_y": 960.6252
+          },
+          "handle_out": {
+            "image_x": 604.64,
+            "image_y": 437.93,
+            "zone_x": 60.3429,
+            "zone_y": 65.5588,
+            "world_x": -10929.7055,
+            "world_y": 904.6657
+          }
+        },
+        {
+          "image_x": 626.99,
+          "image_y": 437.45,
+          "zone_x": 62.5738,
+          "zone_y": 65.4861,
+          "world_x": -10928.0078,
+          "world_y": 826.5843,
+          "handle_in": {
+            "image_x": 602.43,
+            "image_y": 424.51,
+            "zone_x": 60.1227,
+            "zone_y": 63.5493,
+            "world_x": -10882.8169,
+            "world_y": 912.3705
+          },
+          "handle_out": {
+            "image_x": 642.34,
+            "image_y": 440.08,
+            "zone_x": 64.1057,
+            "zone_y": 65.88,
+            "world_x": -10937.1992,
+            "world_y": 772.968
+          }
+        },
+        {
+          "image_x": 665.58,
+          "image_y": 419.69,
+          "zone_x": 66.4254,
+          "zone_y": 62.8271,
+          "world_x": -10865.9661,
+          "world_y": 691.7775,
+          "handle_in": {
+            "image_x": 628.18,
+            "image_y": 423.21,
+            "zone_x": 62.6925,
+            "zone_y": 63.3553,
+            "world_x": -10878.2894,
+            "world_y": 822.4289
+          },
+          "handle_out": {
+            "image_x": 675.53,
+            "image_y": 419.42,
+            "zone_x": 67.4187,
+            "zone_y": 62.7879,
+            "world_x": -10865.0512,
+            "world_y": 657.0134
+          }
+        },
+        {
+          "image_x": 698.42,
+          "image_y": 418.0,
+          "zone_x": 69.7023,
+          "zone_y": 62.5753,
+          "world_x": -10860.0896,
+          "world_y": 577.0878,
+          "handle_in": {
+            "image_x": 688.46,
+            "image_y": 418.26,
+            "zone_x": 68.709,
+            "zone_y": 62.6145,
+            "world_x": -10861.0045,
+            "world_y": 611.8518
+          },
+          "handle_out": null
+        }
+      ]
+    },
+    {
+      "path_index": 1,
+      "path_key": "Westfall_02",
+      "finalized": true,
+      "start_connection": {
+        "path_index": 0,
+        "path_key": "Westfall_01",
+        "anchor_index": 12,
+        "anchor_label": "P1-A13"
+      },
+      "end_connection": {
+        "path_index": 0,
+        "path_key": "Westfall_01",
+        "anchor_index": 2,
+        "anchor_label": "P1-A3"
+      },
+      "anchors": [
+        {
+          "image_x": 578.39,
+          "image_y": 435.25,
+          "zone_x": 57.7233,
+          "zone_y": 65.1576,
+          "world_x": -10920.3443,
+          "world_y": 996.3507,
+          "handle_in": null,
+          "handle_out": {
+            "image_x": 575.13,
+            "image_y": 414.01,
+            "zone_x": 57.398,
+            "zone_y": 61.9775,
+            "world_x": -10846.1404,
+            "world_y": 1007.7354
+          }
+        },
+        {
+          "image_x": 566.85,
+          "image_y": 363.7,
+          "zone_x": 56.5721,
+          "zone_y": 54.4462,
+          "world_x": -10670.4122,
+          "world_y": 1036.644,
+          "handle_in": {
+            "image_x": 570.11,
+            "image_y": 384.94,
+            "zone_x": 56.8974,
+            "zone_y": 57.6264,
+            "world_x": -10744.6161,
+            "world_y": 1025.2593
+          },
+          "handle_out": {
+            "image_x": 574.55,
+            "image_y": 352.5,
+            "zone_x": 57.3399,
+            "zone_y": 52.7691,
+            "world_x": -10631.2797,
+            "world_y": 1009.7684
+          }
+        },
+        {
+          "image_x": 591.91,
+          "image_y": 310.19,
+          "zone_x": 59.0732,
+          "zone_y": 46.435,
+          "world_x": -10483.4824,
+          "world_y": 949.1053,
+          "handle_in": {
+            "image_x": 585.65,
+            "image_y": 331.76,
+            "zone_x": 58.4477,
+            "zone_y": 49.6645,
+            "world_x": -10558.8376,
+            "world_y": 970.9984
+          },
+          "handle_out": {
+            "image_x": 587.91,
+            "image_y": 304.0,
+            "zone_x": 58.6738,
+            "zone_y": 45.5092,
+            "world_x": -10461.8819,
+            "world_y": 963.0821
+          }
+        },
+        {
+          "image_x": 578.34,
+          "image_y": 288.08,
+          "zone_x": 57.7181,
+          "zone_y": 43.1261,
+          "world_x": -10406.2748,
+          "world_y": 996.5328,
+          "handle_in": {
+            "image_x": 586.23,
+            "image_y": 299.45,
+            "zone_x": 58.5059,
+            "zone_y": 44.8278,
+            "world_x": -10445.9816,
+            "world_y": 968.9587
+          },
+          "handle_out": {
+            "image_x": 585.91,
+            "image_y": 273.87,
+            "zone_x": 58.4744,
+            "zone_y": 40.9989,
+            "world_x": -10356.6414,
+            "world_y": 970.0617
+          }
+        },
+        {
+          "image_x": 587.18,
+          "image_y": 261.56,
+          "zone_x": 58.6005,
+          "zone_y": 39.1554,
+          "world_x": -10313.6258,
+          "world_y": 965.6498,
+          "handle_in": {
+            "image_x": 579.6,
+            "image_y": 267.56,
+            "zone_x": 57.8442,
+            "zone_y": 40.0535,
+            "world_x": -10334.5821,
+            "world_y": 992.121
+          },
+          "handle_out": {
+            "image_x": 587.81,
+            "image_y": 249.56,
+            "zone_x": 58.6635,
+            "zone_y": 37.3591,
+            "world_x": -10271.7131,
+            "world_y": 963.4439
+          }
+        },
+        {
+          "image_x": 579.28,
+          "image_y": 239.45,
+          "zone_x": 57.8126,
+          "zone_y": 35.8465,
+          "world_x": -10236.4183,
+          "world_y": 993.2239,
+          "handle_in": {
+            "image_x": 578.65,
+            "image_y": 246.09,
+            "zone_x": 57.7496,
+            "zone_y": 36.8392,
+            "world_x": -10259.5805,
+            "world_y": 995.4299
+          },
+          "handle_out": {
+            "image_x": 584.39,
+            "image_y": 220.52,
+            "zone_x": 58.3221,
+            "zone_y": 33.0126,
+            "world_x": -10170.294,
+            "world_y": 975.3926
+          }
+        },
+        {
+          "image_x": 575.81,
+          "image_y": 192.41,
+          "zone_x": 57.466,
+          "zone_y": 28.8033,
+          "world_x": -10072.0765,
+          "world_y": 1005.3565,
+          "handle_in": {
+            "image_x": 581.18,
+            "image_y": 209.46,
+            "zone_x": 58.0017,
+            "zone_y": 31.3559,
+            "world_x": -10131.6366,
+            "world_y": 986.6061
+          },
+          "handle_out": {
+            "image_x": 589.07,
+            "image_y": 180.41,
+            "zone_x": 58.7896,
+            "zone_y": 27.007,
+            "world_x": -10030.1639,
+            "world_y": 959.032
+          }
+        },
+        {
+          "image_x": 574.55,
+          "image_y": 163.99,
+          "zone_x": 57.3399,
+          "zone_y": 24.549,
+          "world_x": -9972.8097,
+          "world_y": 1009.7684,
+          "handle_in": {
+            "image_x": 579.59,
+            "image_y": 170.02,
+            "zone_x": 57.8431,
+            "zone_y": 25.4519,
+            "world_x": -9993.8765,
+            "world_y": 992.1577
+          },
+          "handle_out": null
+        }
+      ]
+    },
+    {
+      "path_index": 2,
+      "path_key": "Westfall_03",
+      "finalized": true,
+      "start_connection": {
+        "path_index": 0,
+        "path_key": "Westfall_01",
+        "anchor_index": 10,
+        "anchor_label": "P1-A11"
+      },
+      "end_connection": null,
+      "anchors": [
+        {
+          "image_x": 454.06,
+          "image_y": 435.29,
+          "zone_x": 45.3151,
+          "zone_y": 65.163,
+          "world_x": -10920.4693,
+          "world_y": 1430.6365,
+          "handle_in": null,
+          "handle_out": {
+            "image_x": 455.13,
+            "image_y": 442.81,
+            "zone_x": 45.4219,
+            "zone_y": 66.2883,
+            "world_x": -10946.7265,
+            "world_y": 1426.9003
+          }
+        },
+        {
+          "image_x": 457.05,
+          "image_y": 456.74,
+          "zone_x": 45.6135,
+          "zone_y": 68.3748,
+          "world_x": -10995.4112,
+          "world_y": 1420.1939,
+          "handle_in": {
+            "image_x": 458.8,
+            "image_y": 450.17,
+            "zone_x": 45.7886,
+            "zone_y": 67.39,
+            "world_x": -10972.4328,
+            "world_y": 1414.0663
+          },
+          "handle_out": {
+            "image_x": 451.57,
+            "image_y": 465.95,
+            "zone_x": 45.0664,
+            "zone_y": 69.7535,
+            "world_x": -11027.581,
+            "world_y": 1439.3426
+          }
+        },
+        {
+          "image_x": 432.27,
+          "image_y": 465.51,
+          "zone_x": 43.1406,
+          "zone_y": 69.6878,
+          "world_x": -11026.0492,
+          "world_y": 1506.746,
+          "handle_in": {
+            "image_x": 440.6,
+            "image_y": 462.96,
+            "zone_x": 43.9722,
+            "zone_y": 69.3049,
+            "world_x": -11017.1131,
+            "world_y": 1477.64
+          },
+          "handle_out": null
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,2490 @@
+{
+  "route_group_key": "Duskwood",
+  "zone_name": "Duskwood",
+  "zone_id": 10,
+  "map_id": 0,
+  "world_map_area_id": 34,
+  "sample_spacing_yards": 25.0,
+  "path_count": 8,
+  "movement_point_count": 137,
+  "paths": [
+    {
+      "path_index": 0,
+      "path_key": "Duskwood_01",
+      "finalized": true,
+      "start_connection": null,
+      "end_connection": null,
+      "anchors": [
+        {
+          "image_x": 51.84,
+          "image_y": 428.94,
+          "zone_x": 5.1732,
+          "zone_y": 64.2122,
+          "world_x": -10872.4864,
+          "world_y": 693.6564,
+          "handle_in": null,
+          "handle_out": {
+            "image_x": 82.57,
+            "image_y": 422.94,
+            "zone_x": 8.2408,
+            "zone_y": 63.3137,
+            "world_x": -10856.3133,
+            "world_y": 610.8304
+          }
+        },
+        {
+          "image_x": 136.97,
+          "image_y": 411.59,
+          "zone_x": 13.6694,
+          "zone_y": 61.6147,
+          "world_x": -10825.73,
+          "world_y": 464.2604,
+          "handle_in": {
+            "image_x": 99.95,
+            "image_y": 428.91,
+            "zone_x": 9.9752,
+            "zone_y": 64.2085,
+            "world_x": -10872.4183,
+            "world_y": 564.0038
+          },
+          "handle_out": {
+            "image_x": 158.11,
+            "image_y": 406.95,
+            "zone_x": 15.7795,
+            "zone_y": 60.9205,
+            "world_x": -10813.2359,
+            "world_y": 407.2873
+          }
+        },
+        {
+          "image_x": 208.2,
+          "image_y": 403.25,
+          "zone_x": 20.7788,
+          "zone_y": 60.3667,
+          "world_x": -10803.2673,
+          "world_y": 272.3067,
+          "handle_in": {
+            "image_x": 187.06,
+            "image_y": 407.89,
+            "zone_x": 18.6687,
+            "zone_y": 61.0609,
+            "world_x": -10815.7614,
+            "world_y": 329.2797
+          },
+          "handle_out": {
+            "image_x": 228.53,
+            "image_y": 398.79,
+            "zone_x": 22.8072,
+            "zone_y": 59.6995,
+            "world_x": -10791.2567,
+            "world_y": 217.5382
+          }
+        },
+        {
+          "image_x": 269.59,
+          "image_y": 382.41,
+          "zone_x": 26.9049,
+          "zone_y": 57.2469,
+          "world_x": -10747.1107,
+          "world_y": 106.8998,
+          "handle_in": {
+            "image_x": 242.31,
+            "image_y": 394.53,
+            "zone_x": 24.1822,
+            "zone_y": 59.0621,
+            "world_x": -10779.7836,
+            "world_y": 180.4139
+          },
+          "handle_out": {
+            "image_x": 298.76,
+            "image_y": 385.06,
+            "zone_x": 29.8168,
+            "zone_y": 57.644,
+            "world_x": -10754.2579,
+            "world_y": 28.2804
+          }
+        },
+        {
+          "image_x": 337.75,
+          "image_y": 404.38,
+          "zone_x": 33.7076,
+          "zone_y": 60.5365,
+          "world_x": -10806.3237,
+          "world_y": -76.7723,
+          "handle_in": {
+            "image_x": 314.65,
+            "image_y": 397.47,
+            "zone_x": 31.4024,
+            "zone_y": 59.5019,
+            "world_x": -10787.7001,
+            "world_y": -14.5303
+          },
+          "handle_out": {
+            "image_x": 374.31,
+            "image_y": 416.39,
+            "zone_x": 37.3561,
+            "zone_y": 62.3335,
+            "world_x": -10838.6699,
+            "world_y": -175.2814
+          }
+        },
+        {
+          "image_x": 447.42,
+          "image_y": 440.4,
+          "zone_x": 44.6531,
+          "zone_y": 65.9276,
+          "world_x": -10903.3624,
+          "world_y": -372.2994,
+          "handle_in": {
+            "image_x": 416.23,
+            "image_y": 421.82,
+            "zone_x": 41.5397,
+            "zone_y": 63.1462,
+            "world_x": -10853.2978,
+            "world_y": -288.239
+          },
+          "handle_out": {
+            "image_x": 471.61,
+            "image_y": 442.4,
+            "zone_x": 47.0672,
+            "zone_y": 66.2271,
+            "world_x": -10908.7534,
+            "world_y": -437.482
+          }
+        },
+        {
+          "image_x": 519.99,
+          "image_y": 446.4,
+          "zone_x": 51.8956,
+          "zone_y": 66.8261,
+          "world_x": -10919.5355,
+          "world_y": -567.8471,
+          "handle_in": {
+            "image_x": 495.04,
+            "image_y": 441.9,
+            "zone_x": 49.4054,
+            "zone_y": 66.1526,
+            "world_x": -10907.4124,
+            "world_y": -500.6133
+          },
+          "handle_out": {
+            "image_x": 527.63,
+            "image_y": 454.78,
+            "zone_x": 52.6576,
+            "zone_y": 68.0812,
+            "world_x": -10942.1275,
+            "world_y": -588.4219
+          }
+        },
+        {
+          "image_x": 546.18,
+          "image_y": 461.13,
+          "zone_x": 54.5094,
+          "zone_y": 69.0315,
+          "world_x": -10959.2332,
+          "world_y": -638.4207,
+          "handle_in": {
+            "image_x": 534.07,
+            "image_y": 462.36,
+            "zone_x": 53.3005,
+            "zone_y": 69.2157,
+            "world_x": -10962.5481,
+            "world_y": -605.7795
+          },
+          "handle_out": {
+            "image_x": 578.02,
+            "image_y": 447.58,
+            "zone_x": 57.6871,
+            "zone_y": 67.0034,
+            "world_x": -10922.7279,
+            "world_y": -724.219
+          }
+        },
+        {
+          "image_x": 623.12,
+          "image_y": 408.2,
+          "zone_x": 62.1876,
+          "zone_y": 61.1083,
+          "world_x": -10816.6156,
+          "world_y": -845.7307,
+          "handle_in": {
+            "image_x": 591.67,
+            "image_y": 423.33,
+            "zone_x": 59.0485,
+            "zone_y": 63.3731,
+            "world_x": -10857.3819,
+            "world_y": -760.9761
+          },
+          "handle_out": {
+            "image_x": 642.44,
+            "image_y": 401.36,
+            "zone_x": 64.1158,
+            "zone_y": 60.0831,
+            "world_x": -10798.1622,
+            "world_y": -897.7942
+          }
+        },
+        {
+          "image_x": 672.23,
+          "image_y": 402.75,
+          "zone_x": 67.0885,
+          "zone_y": 60.2915,
+          "world_x": -10801.9128,
+          "world_y": -978.0563,
+          "handle_in": {
+            "image_x": 653.43,
+            "image_y": 398.7,
+            "zone_x": 65.2125,
+            "zone_y": 59.6861,
+            "world_x": -10791.015,
+            "world_y": -927.404
+          },
+          "handle_out": {
+            "image_x": 700.41,
+            "image_y": 407.04,
+            "zone_x": 69.9017,
+            "zone_y": 60.934,
+            "world_x": -10813.4776,
+            "world_y": -1054.0118
+          }
+        },
+        {
+          "image_x": 733.88,
+          "image_y": 386.92,
+          "zone_x": 73.2419,
+          "zone_y": 57.9227,
+          "world_x": -10759.2746,
+          "world_y": -1144.1984,
+          "handle_in": {
+            "image_x": 727.7,
+            "image_y": 394.53,
+            "zone_x": 72.6244,
+            "zone_y": 59.0621,
+            "world_x": -10779.7836,
+            "world_y": -1127.526
+          },
+          "handle_out": {
+            "image_x": 737.35,
+            "image_y": 381.96,
+            "zone_x": 73.588,
+            "zone_y": 57.1791,
+            "world_x": -10745.8898,
+            "world_y": -1153.5424
+          }
+        },
+        {
+          "image_x": 744.29,
+          "image_y": 372.02,
+          "zone_x": 74.2801,
+          "zone_y": 55.6919,
+          "world_x": -10719.1202,
+          "world_y": -1172.2306,
+          "handle_in": {
+            "image_x": 740.82,
+            "image_y": 376.99,
+            "zone_x": 73.9341,
+            "zone_y": 56.4355,
+            "world_x": -10732.505,
+            "world_y": -1162.8865
+          },
+          "handle_out": {
+            "image_x": 747.55,
+            "image_y": 367.35,
+            "zone_x": 74.6057,
+            "zone_y": 54.9924,
+            "world_x": -10706.53,
+            "world_y": -1181.02
+          }
+        },
+        {
+          "image_x": 752.16,
+          "image_y": 356.58,
+          "zone_x": 75.0655,
+          "zone_y": 53.3801,
+          "world_x": -10677.5082,
+          "world_y": -1193.4348,
+          "handle_in": {
+            "image_x": 750.73,
+            "image_y": 361.87,
+            "zone_x": 74.9232,
+            "zone_y": 54.1728,
+            "world_x": -10691.7765,
+            "world_y": -1189.5933
+          },
+          "handle_out": {
+            "image_x": 752.36,
+            "image_y": 342.73,
+            "zone_x": 75.0858,
+            "zone_y": 51.3069,
+            "world_x": -10640.1911,
+            "world_y": -1193.9836
+          }
+        },
+        {
+          "image_x": 748.07,
+          "image_y": 315.44,
+          "zone_x": 74.6577,
+          "zone_y": 47.2223,
+          "world_x": -10566.6674,
+          "world_y": -1182.4257,
+          "handle_in": {
+            "image_x": 747.06,
+            "image_y": 330.51,
+            "zone_x": 74.5574,
+            "zone_y": 49.4777,
+            "world_x": -10607.2643,
+            "world_y": -1179.7153
+          },
+          "handle_out": {
+            "image_x": 756.79,
+            "image_y": 299.16,
+            "zone_x": 75.5281,
+            "zone_y": 44.785,
+            "world_x": -10522.796,
+            "world_y": -1205.9251
+          }
+        },
+        {
+          "image_x": 741.11,
+          "image_y": 264.13,
+          "zone_x": 73.963,
+          "zone_y": 39.5411,
+          "world_x": -10428.4057,
+          "world_y": -1163.669,
+          "handle_in": {
+            "image_x": 748.03,
+            "image_y": 273.1,
+            "zone_x": 74.6541,
+            "zone_y": 40.8826,
+            "world_x": -10452.5521,
+            "world_y": -1182.3275
+          },
+          "handle_out": {
+            "image_x": 706.08,
+            "image_y": 247.03,
+            "zone_x": 70.4671,
+            "zone_y": 36.9801,
+            "world_x": -10382.3082,
+            "world_y": -1069.2787
+          }
+        },
+        {
+          "image_x": 737.16,
+          "image_y": 213.96,
+          "zone_x": 73.5686,
+          "zone_y": 32.0294,
+          "world_x": -10293.1946,
+          "world_y": -1153.0201,
+          "handle_in": {
+            "image_x": 732.35,
+            "image_y": 217.29,
+            "zone_x": 73.0891,
+            "zone_y": 32.5289,
+            "world_x": -10302.1862,
+            "world_y": -1140.0714
+          },
+          "handle_out": {
+            "image_x": 744.78,
+            "image_y": 182.64,
+            "zone_x": 74.3289,
+            "zone_y": 27.3411,
+            "world_x": -10208.8057,
+            "world_y": -1173.547
+          }
+        },
+        {
+          "image_x": 748.62,
+          "image_y": 149.57,
+          "zone_x": 74.7122,
+          "zone_y": 22.3908,
+          "world_x": -10119.7011,
+          "world_y": -1183.896,
+          "handle_in": {
+            "image_x": 722.37,
+            "image_y": 180.6,
+            "zone_x": 72.0931,
+            "zone_y": 27.0362,
+            "world_x": -10203.3179,
+            "world_y": -1113.1812
+          },
+          "handle_out": {
+            "image_x": 771.45,
+            "image_y": 140.07,
+            "zone_x": 76.9915,
+            "zone_y": 20.9691,
+            "world_x": -10094.1106,
+            "world_y": -1245.4373
+          }
+        },
+        {
+          "image_x": 815.45,
+          "image_y": 133.76,
+          "zone_x": 81.3817,
+          "zone_y": 20.024,
+          "world_x": -10077.0984,
+          "world_y": -1363.9738,
+          "handle_in": {
+            "image_x": 789.99,
+            "image_y": 134.17,
+            "zone_x": 78.8411,
+            "zone_y": 20.085,
+            "world_x": -10078.196,
+            "world_y": -1295.3763
+          },
+          "handle_out": {
+            "image_x": 836.22,
+            "image_y": 138.04,
+            "zone_x": 83.4549,
+            "zone_y": 20.6643,
+            "world_x": -10088.6228,
+            "world_y": -1419.9494
+          }
+        },
+        {
+          "image_x": 868.11,
+          "image_y": 133.14,
+          "zone_x": 86.6378,
+          "zone_y": 19.9305,
+          "world_x": -10075.4153,
+          "world_y": -1505.8882,
+          "handle_in": {
+            "image_x": 848.44,
+            "image_y": 137.22,
+            "zone_x": 84.6744,
+            "zone_y": 20.5423,
+            "world_x": -10086.4277,
+            "world_y": -1452.8763
+          },
+          "handle_out": {
+            "image_x": 904.44,
+            "image_y": 89.57,
+            "zone_x": 90.2639,
+            "zone_y": 13.4082,
+            "world_x": -9958.013,
+            "world_y": -1603.7909
+          }
+        },
+        {
+          "image_x": 949.96,
+          "image_y": 55.11,
+          "zone_x": 94.8061,
+          "zone_y": 8.2499,
+          "world_x": -9865.1647,
+          "world_y": -1726.4307,
+          "handle_in": {
+            "image_x": 941.92,
+            "image_y": 93.44,
+            "zone_x": 94.0037,
+            "zone_y": 13.9874,
+            "world_x": -9968.4399,
+            "world_y": -1704.7665
+          },
+          "handle_out": null
+        }
+      ],
+      "movement_points": [
+        {
+          "point_index": 0,
+          "map_id": 0,
+          "image_x": 51.84,
+          "image_y": 428.94,
+          "zone_x": 5.1732,
+          "zone_y": 64.2122,
+          "world_x": -10872.4864,
+          "world_y": 693.6564,
+          "distance_from_start_yards": 0.0
+        },
+        {
+          "point_index": 1,
+          "map_id": 0,
+          "image_x": 70.21,
+          "image_y": 426.37,
+          "zone_x": 7.0065,
+          "zone_y": 63.8283,
+          "world_x": -10865.5761,
+          "world_y": 644.1575,
+          "distance_from_start_yards": 50.0
+        },
+        {
+          "point_index": 2,
+          "map_id": 0,
+          "image_x": 88.7,
+          "image_y": 424.85,
+          "zone_x": 8.8521,
+          "zone_y": 63.6005,
+          "world_x": -10861.4753,
+          "world_y": 594.3267,
+          "distance_from_start_yards": 100.0
+        },
+        {
+          "point_index": 3,
+          "map_id": 0,
+          "image_x": 107.03,
+          "image_y": 422.06,
+          "zone_x": 10.6816,
+          "zone_y": 63.1829,
+          "world_x": -10853.9582,
+          "world_y": 544.9301,
+          "distance_from_start_yards": 150.0
+        },
+        {
+          "point_index": 4,
+          "map_id": 0,
+          "image_x": 124.79,
+          "image_y": 416.73,
+          "zone_x": 12.4537,
+          "zone_y": 62.3853,
+          "world_x": -10839.6015,
+          "world_y": 497.0825,
+          "distance_from_start_yards": 200.0
+        },
+        {
+          "point_index": 5,
+          "map_id": 0,
+          "image_x": 142.2,
+          "image_y": 410.57,
+          "zone_x": 14.1914,
+          "zone_y": 61.4632,
+          "world_x": -10823.0034,
+          "world_y": 450.1645,
+          "distance_from_start_yards": 250.0
+        },
+        {
+          "point_index": 6,
+          "map_id": 0,
+          "image_x": 160.62,
+          "image_y": 408.35,
+          "zone_x": 16.0294,
+          "zone_y": 61.1308,
+          "world_x": -10817.0204,
+          "world_y": 400.5382,
+          "distance_from_start_yards": 300.0
+        },
+        {
+          "point_index": 7,
+          "map_id": 0,
+          "image_x": 179.12,
+          "image_y": 406.93,
+          "zone_x": 17.8758,
+          "zone_y": 60.9172,
+          "world_x": -10813.1758,
+          "world_y": 350.6865,
+          "distance_from_start_yards": 350.0
+        },
+        {
+          "point_index": 8,
+          "map_id": 0,
+          "image_x": 197.58,
+          "image_y": 405.08,
+          "zone_x": 19.7182,
+          "zone_y": 60.641,
+          "world_x": -10808.2033,
+          "world_y": 300.9414,
+          "distance_from_start_yards": 400.0
+        },
+        {
+          "point_index": 9,
+          "map_id": 0,
+          "image_x": 215.78,
+          "image_y": 401.52,
+          "zone_x": 21.5346,
+          "zone_y": 60.1076,
+          "world_x": -10798.6025,
+          "world_y": 251.8981,
+          "distance_from_start_yards": 450.0
+        },
+        {
+          "point_index": 10,
+          "map_id": 0,
+          "image_x": 233.65,
+          "image_y": 396.56,
+          "zone_x": 23.3188,
+          "zone_y": 59.366,
+          "world_x": -10785.2541,
+          "world_y": 203.7255,
+          "distance_from_start_yards": 500.0
+        },
+        {
+          "point_index": 11,
+          "map_id": 0,
+          "image_x": 251.1,
+          "image_y": 390.25,
+          "zone_x": 25.0598,
+          "zone_y": 58.4209,
+          "world_x": -10768.2415,
+          "world_y": 156.7195,
+          "distance_from_start_yards": 550.0
+        },
+        {
+          "point_index": 12,
+          "map_id": 0,
+          "image_x": 259.7,
+          "image_y": 386.77,
+          "zone_x": 25.9183,
+          "zone_y": 57.9003,
+          "world_x": -10758.872,
+          "world_y": 133.5381,
+          "distance_from_start_yards": 575.0
+        },
+        {
+          "point_index": 13,
+          "map_id": 0,
+          "image_x": 268.19,
+          "image_y": 383.03,
+          "zone_x": 26.7654,
+          "zone_y": 57.3394,
+          "world_x": -10748.7744,
+          "world_y": 110.668,
+          "distance_from_start_yards": 600.0
+        },
+        {
+          "point_index": 14,
+          "map_id": 0,
+          "image_x": 286.36,
+          "image_y": 385.22,
+          "zone_x": 28.5793,
+          "zone_y": 57.668,
+          "world_x": -10754.6905,
+          "world_y": 61.6933,
+          "distance_from_start_yards": 650.0
+        },
+        {
+          "point_index": 15,
+          "map_id": 0,
+          "image_x": 303.98,
+          "image_y": 391.01,
+          "zone_x": 30.3372,
+          "zone_y": 58.5342,
+          "world_x": -10770.2816,
+          "world_y": 14.2279,
+          "distance_from_start_yards": 700.0
+        },
+        {
+          "point_index": 16,
+          "map_id": 0,
+          "image_x": 321.07,
+          "image_y": 398.24,
+          "zone_x": 32.0425,
+          "zone_y": 59.617,
+          "world_x": -10789.7725,
+          "world_y": -31.815,
+          "distance_from_start_yards": 750.0
+        },
+        {
+          "point_index": 17,
+          "map_id": 0,
+          "image_x": 338.48,
+          "image_y": 404.62,
+          "zone_x": 33.7806,
+          "zone_y": 60.5715,
+          "world_x": -10806.9531,
+          "world_y": -78.7436,
+          "distance_from_start_yards": 800.0
+        },
+        {
+          "point_index": 18,
+          "map_id": 0,
+          "image_x": 356.27,
+          "image_y": 409.89,
+          "zone_x": 35.5559,
+          "zone_y": 61.3612,
+          "world_x": -10821.1677,
+          "world_y": -126.6755,
+          "distance_from_start_yards": 850.0
+        },
+        {
+          "point_index": 19,
+          "map_id": 0,
+          "image_x": 374.22,
+          "image_y": 414.6,
+          "zone_x": 37.3472,
+          "zone_y": 62.0657,
+          "world_x": -10833.8479,
+          "world_y": -175.0403,
+          "distance_from_start_yards": 900.0
+        },
+        {
+          "point_index": 20,
+          "map_id": 0,
+          "image_x": 392.18,
+          "image_y": 419.27,
+          "zone_x": 39.1393,
+          "zone_y": 62.7653,
+          "world_x": -10846.441,
+          "world_y": -223.4281,
+          "distance_from_start_yards": 950.0
+        },
+        {
+          "point_index": 21,
+          "map_id": 0,
+          "image_x": 410.0,
+          "image_y": 424.43,
+          "zone_x": 40.918,
+          "zone_y": 63.5377,
+          "world_x": -10860.3441,
+          "world_y": -271.4517,
+          "distance_from_start_yards": 1000.0
+        },
+        {
+          "point_index": 22,
+          "map_id": 0,
+          "image_x": 427.48,
+          "image_y": 430.65,
+          "zone_x": 42.6622,
+          "zone_y": 64.4684,
+          "world_x": -10877.0979,
+          "world_y": -318.5465,
+          "distance_from_start_yards": 1050.0
+        },
+        {
+          "point_index": 23,
+          "map_id": 0,
+          "image_x": 436.18,
+          "image_y": 433.98,
+          "zone_x": 43.5308,
+          "zone_y": 64.9674,
+          "world_x": -10886.0792,
+          "world_y": -341.9981,
+          "distance_from_start_yards": 1075.0
+        },
+        {
+          "point_index": 24,
+          "map_id": 0,
+          "image_x": 444.24,
+          "image_y": 438.58,
+          "zone_x": 44.3351,
+          "zone_y": 65.6555,
+          "world_x": -10898.4655,
+          "world_y": -363.714,
+          "distance_from_start_yards": 1100.0
+        },
+        {
+          "point_index": 25,
+          "map_id": 0,
+          "image_x": 462.28,
+          "image_y": 441.38,
+          "zone_x": 46.1356,
+          "zone_y": 66.0747,
+          "world_x": -10906.0101,
+          "world_y": -412.3268,
+          "distance_from_start_yards": 1150.0
+        },
+        {
+          "point_index": 26,
+          "map_id": 0,
+          "image_x": 480.81,
+          "image_y": 442.32,
+          "zone_x": 47.985,
+          "zone_y": 66.2149,
+          "world_x": -10908.5345,
+          "world_y": -462.263,
+          "distance_from_start_yards": 1200.0
+        },
+        {
+          "point_index": 27,
+          "map_id": 0,
+          "image_x": 499.32,
+          "image_y": 443.63,
+          "zone_x": 49.8321,
+          "zone_y": 66.4117,
+          "world_x": -10912.0772,
+          "world_y": -512.1338,
+          "distance_from_start_yards": 1250.0
+        },
+        {
+          "point_index": 28,
+          "map_id": 0,
+          "image_x": 508.57,
+          "image_y": 444.43,
+          "zone_x": 50.7559,
+          "zone_y": 66.5311,
+          "world_x": -10914.2251,
+          "world_y": -537.0748,
+          "distance_from_start_yards": 1275.0
+        },
+        {
+          "point_index": 29,
+          "map_id": 0,
+          "image_x": 517.72,
+          "image_y": 446.01,
+          "zone_x": 51.6683,
+          "zone_y": 66.7673,
+          "world_x": -10918.4765,
+          "world_y": -561.7107,
+          "distance_from_start_yards": 1300.0
+        },
+        {
+          "point_index": 30,
+          "map_id": 0,
+          "image_x": 531.72,
+          "image_y": 457.57,
+          "zone_x": 53.0662,
+          "zone_y": 68.4991,
+          "world_x": -10949.6494,
+          "world_y": -599.4541,
+          "distance_from_start_yards": 1350.0
+        },
+        {
+          "point_index": 31,
+          "map_id": 0,
+          "image_x": 540.26,
+          "image_y": 461.56,
+          "zone_x": 53.9185,
+          "zone_y": 69.0962,
+          "world_x": -10960.3984,
+          "world_y": -622.4674,
+          "distance_from_start_yards": 1375.0
+        },
+        {
+          "point_index": 32,
+          "map_id": 0,
+          "image_x": 557.47,
+          "image_y": 455.51,
+          "zone_x": 55.6362,
+          "zone_y": 68.1899,
+          "world_x": -10944.0834,
+          "world_y": -668.8433,
+          "distance_from_start_yards": 1425.0
+        },
+        {
+          "point_index": 33,
+          "map_id": 0,
+          "image_x": 572.82,
+          "image_y": 445.11,
+          "zone_x": 57.168,
+          "zone_y": 66.6328,
+          "world_x": -10916.0573,
+          "world_y": -710.2016,
+          "distance_from_start_yards": 1475.0
+        },
+        {
+          "point_index": 34,
+          "map_id": 0,
+          "image_x": 587.12,
+          "image_y": 433.28,
+          "zone_x": 58.5947,
+          "zone_y": 64.8624,
+          "world_x": -10884.189,
+          "world_y": -748.7228,
+          "distance_from_start_yards": 1525.0
+        },
+        {
+          "point_index": 35,
+          "map_id": 0,
+          "image_x": 601.5,
+          "image_y": 421.56,
+          "zone_x": 60.0302,
+          "zone_y": 63.1082,
+          "world_x": -10852.6141,
+          "world_y": -787.4808,
+          "distance_from_start_yards": 1575.0
+        },
+        {
+          "point_index": 36,
+          "map_id": 0,
+          "image_x": 617.0,
+          "image_y": 411.39,
+          "zone_x": 61.5772,
+          "zone_y": 61.5859,
+          "world_x": -10825.2127,
+          "world_y": -829.252,
+          "distance_from_start_yards": 1625.0
+        },
+        {
+          "point_index": 37,
+          "map_id": 0,
+          "image_x": 634.18,
+          "image_y": 404.52,
+          "zone_x": 63.2911,
+          "zone_y": 60.5564,
+          "world_x": -10806.6815,
+          "world_y": -875.5261,
+          "distance_from_start_yards": 1675.0
+        },
+        {
+          "point_index": 38,
+          "map_id": 0,
+          "image_x": 652.34,
+          "image_y": 400.96,
+          "zone_x": 65.1041,
+          "zone_y": 60.0236,
+          "world_x": -10797.0917,
+          "world_y": -924.4775,
+          "distance_from_start_yards": 1725.0
+        },
+        {
+          "point_index": 39,
+          "map_id": 0,
+          "image_x": 670.78,
+          "image_y": 402.45,
+          "zone_x": 66.9445,
+          "zone_y": 60.2475,
+          "world_x": -10801.1202,
+          "world_y": -974.1674,
+          "distance_from_start_yards": 1775.0
+        },
+        {
+          "point_index": 40,
+          "map_id": 0,
+          "image_x": 689.26,
+          "image_y": 403.45,
+          "zone_x": 68.7888,
+          "zone_y": 60.3969,
+          "world_x": -10803.8107,
+          "world_y": -1023.9634,
+          "distance_from_start_yards": 1825.0
+        },
+        {
+          "point_index": 41,
+          "map_id": 0,
+          "image_x": 707.53,
+          "image_y": 400.4,
+          "zone_x": 70.6121,
+          "zone_y": 59.9402,
+          "world_x": -10795.5896,
+          "world_y": -1073.1944,
+          "distance_from_start_yards": 1875.0
+        },
+        {
+          "point_index": 42,
+          "map_id": 0,
+          "image_x": 724.78,
+          "image_y": 393.66,
+          "zone_x": 72.3329,
+          "zone_y": 58.9305,
+          "world_x": -10777.4145,
+          "world_y": -1119.6547,
+          "distance_from_start_yards": 1925.0
+        },
+        {
+          "point_index": 43,
+          "map_id": 0,
+          "image_x": 737.99,
+          "image_y": 381.05,
+          "zone_x": 73.6514,
+          "zone_y": 57.043,
+          "world_x": -10743.4392,
+          "world_y": -1155.2532,
+          "distance_from_start_yards": 1975.0
+        },
+        {
+          "point_index": 44,
+          "map_id": 0,
+          "image_x": 748.31,
+          "image_y": 365.64,
+          "zone_x": 74.6816,
+          "zone_y": 54.7363,
+          "world_x": -10701.9185,
+          "world_y": -1183.0708,
+          "distance_from_start_yards": 2025.0
+        },
+        {
+          "point_index": 45,
+          "map_id": 0,
+          "image_x": 751.65,
+          "image_y": 347.91,
+          "zone_x": 75.015,
+          "zone_y": 52.0824,
+          "world_x": -10654.1497,
+          "world_y": -1192.0727,
+          "distance_from_start_yards": 2075.0
+        },
+        {
+          "point_index": 46,
+          "map_id": 0,
+          "image_x": 748.71,
+          "image_y": 329.59,
+          "zone_x": 74.7216,
+          "zone_y": 49.3401,
+          "world_x": -10604.7871,
+          "world_y": -1184.1497,
+          "distance_from_start_yards": 2125.0
+        },
+        {
+          "point_index": 47,
+          "map_id": 0,
+          "image_x": 747.82,
+          "image_y": 320.35,
+          "zone_x": 74.6332,
+          "zone_y": 47.9561,
+          "world_x": -10579.8758,
+          "world_y": -1181.763,
+          "distance_from_start_yards": 2150.0
+        },
+        {
+          "point_index": 48,
+          "map_id": 0,
+          "image_x": 751.59,
+          "image_y": 302.36,
+          "zone_x": 75.0087,
+          "zone_y": 45.2635,
+          "world_x": -10531.4092,
+          "world_y": -1191.9025,
+          "distance_from_start_yards": 2200.0
+        },
+        {
+          "point_index": 49,
+          "map_id": 0,
+          "image_x": 749.75,
+          "image_y": 283.97,
+          "zone_x": 74.8257,
+          "zone_y": 42.5111,
+          "world_x": -10481.8659,
+          "world_y": -1186.9603,
+          "distance_from_start_yards": 2250.0
+        },
+        {
+          "point_index": 50,
+          "map_id": 0,
+          "image_x": 742.91,
+          "image_y": 266.79,
+          "zone_x": 74.1431,
+          "zone_y": 39.9393,
+          "world_x": -10435.5742,
+          "world_y": -1168.5302,
+          "distance_from_start_yards": 2300.0
+        },
+        {
+          "point_index": 51,
+          "map_id": 0,
+          "image_x": 728.77,
+          "image_y": 255.19,
+          "zone_x": 72.7317,
+          "zone_y": 38.2014,
+          "world_x": -10404.2921,
+          "world_y": -1130.4238,
+          "distance_from_start_yards": 2350.0
+        },
+        {
+          "point_index": 52,
+          "map_id": 0,
+          "image_x": 723.39,
+          "image_y": 238.05,
+          "zone_x": 72.1946,
+          "zone_y": 35.6357,
+          "world_x": -10358.109,
+          "world_y": -1115.9217,
+          "distance_from_start_yards": 2400.0
+        },
+        {
+          "point_index": 53,
+          "map_id": 0,
+          "image_x": 730.57,
+          "image_y": 221.15,
+          "zone_x": 72.9116,
+          "zone_y": 33.1067,
+          "world_x": -10312.5868,
+          "world_y": -1135.2786,
+          "distance_from_start_yards": 2450.0
+        },
+        {
+          "point_index": 54,
+          "map_id": 0,
+          "image_x": 736.76,
+          "image_y": 214.27,
+          "zone_x": 73.5286,
+          "zone_y": 32.0762,
+          "world_x": -10294.0381,
+          "world_y": -1151.94,
+          "distance_from_start_yards": 2475.0
+        },
+        {
+          "point_index": 55,
+          "map_id": 0,
+          "image_x": 738.57,
+          "image_y": 196.05,
+          "zone_x": 73.7093,
+          "zone_y": 29.3495,
+          "world_x": -10244.9571,
+          "world_y": -1156.8187,
+          "distance_from_start_yards": 2525.0
+        },
+        {
+          "point_index": 56,
+          "map_id": 0,
+          "image_x": 735.48,
+          "image_y": 177.78,
+          "zone_x": 73.4013,
+          "zone_y": 26.6133,
+          "world_x": -10195.7059,
+          "world_y": -1148.5008,
+          "distance_from_start_yards": 2575.0
+        },
+        {
+          "point_index": 57,
+          "map_id": 0,
+          "image_x": 740.72,
+          "image_y": 160.28,
+          "zone_x": 73.9238,
+          "zone_y": 23.9945,
+          "world_x": -10148.5677,
+          "world_y": -1162.609,
+          "distance_from_start_yards": 2625.0
+        },
+        {
+          "point_index": 58,
+          "map_id": 0,
+          "image_x": 746.07,
+          "image_y": 152.71,
+          "zone_x": 74.4576,
+          "zone_y": 22.8608,
+          "world_x": -10128.1607,
+          "world_y": -1177.0217,
+          "distance_from_start_yards": 2650.0
+        },
+        {
+          "point_index": 59,
+          "map_id": 0,
+          "image_x": 762.11,
+          "image_y": 144.24,
+          "zone_x": 76.059,
+          "zone_y": 21.5928,
+          "world_x": -10105.3364,
+          "world_y": -1220.2584,
+          "distance_from_start_yards": 2700.0
+        },
+        {
+          "point_index": 60,
+          "map_id": 0,
+          "image_x": 779.78,
+          "image_y": 138.59,
+          "zone_x": 77.8222,
+          "zone_y": 20.7473,
+          "world_x": -10090.1181,
+          "world_y": -1267.8651,
+          "distance_from_start_yards": 2750.0
+        },
+        {
+          "point_index": 61,
+          "map_id": 0,
+          "image_x": 797.97,
+          "image_y": 135.01,
+          "zone_x": 79.6378,
+          "zone_y": 20.2105,
+          "world_x": -10080.4545,
+          "world_y": -1316.8861,
+          "distance_from_start_yards": 2800.0
+        },
+        {
+          "point_index": 62,
+          "map_id": 0,
+          "image_x": 816.45,
+          "image_y": 133.96,
+          "zone_x": 81.4823,
+          "zone_y": 20.054,
+          "world_x": -10077.6387,
+          "world_y": -1366.688,
+          "distance_from_start_yards": 2850.0
+        },
+        {
+          "point_index": 63,
+          "map_id": 0,
+          "image_x": 834.82,
+          "image_y": 136.45,
+          "zone_x": 83.3157,
+          "zone_y": 20.4272,
+          "world_x": -10084.3562,
+          "world_y": -1416.1905,
+          "distance_from_start_yards": 2900.0
+        },
+        {
+          "point_index": 64,
+          "map_id": 0,
+          "image_x": 853.34,
+          "image_y": 135.71,
+          "zone_x": 85.1633,
+          "zone_y": 20.3159,
+          "world_x": -10082.3528,
+          "world_y": -1466.0755,
+          "distance_from_start_yards": 2950.0
+        },
+        {
+          "point_index": 65,
+          "map_id": 0,
+          "image_x": 862.5,
+          "image_y": 134.28,
+          "zone_x": 86.0781,
+          "zone_y": 20.1017,
+          "world_x": -10078.4962,
+          "world_y": -1490.7763,
+          "distance_from_start_yards": 2975.0
+        },
+        {
+          "point_index": 66,
+          "map_id": 0,
+          "image_x": 876.75,
+          "image_y": 123.65,
+          "zone_x": 87.4999,
+          "zone_y": 18.5107,
+          "world_x": -10049.8583,
+          "world_y": -1529.1651,
+          "distance_from_start_yards": 3025.0
+        },
+        {
+          "point_index": 67,
+          "map_id": 0,
+          "image_x": 890.61,
+          "image_y": 111.34,
+          "zone_x": 88.8835,
+          "zone_y": 16.667,
+          "world_x": -10016.6719,
+          "world_y": -1566.5198,
+          "distance_from_start_yards": 3075.0
+        },
+        {
+          "point_index": 68,
+          "map_id": 0,
+          "image_x": 905.81,
+          "image_y": 100.71,
+          "zone_x": 90.4005,
+          "zone_y": 15.076,
+          "world_x": -9988.0333,
+          "world_y": -1607.4814,
+          "distance_from_start_yards": 3125.0
+        },
+        {
+          "point_index": 69,
+          "map_id": 0,
+          "image_x": 921.58,
+          "image_y": 90.93,
+          "zone_x": 91.9744,
+          "zone_y": 13.6123,
+          "world_x": -9961.6867,
+          "world_y": -1649.9755,
+          "distance_from_start_yards": 3175.0
+        },
+        {
+          "point_index": 70,
+          "map_id": 0,
+          "image_x": 936.42,
+          "image_y": 79.84,
+          "zone_x": 93.4554,
+          "zone_y": 11.9525,
+          "world_x": -9931.8115,
+          "world_y": -1689.9617,
+          "distance_from_start_yards": 3225.0
+        },
+        {
+          "point_index": 71,
+          "map_id": 0,
+          "image_x": 946.96,
+          "image_y": 64.73,
+          "zone_x": 94.5067,
+          "zone_y": 9.6906,
+          "world_x": -9891.0968,
+          "world_y": -1718.3482,
+          "distance_from_start_yards": 3275.0
+        },
+        {
+          "point_index": 72,
+          "map_id": 0,
+          "image_x": 949.76,
+          "image_y": 55.9,
+          "zone_x": 94.7861,
+          "zone_y": 8.3688,
+          "world_x": -9867.3047,
+          "world_y": -1725.8903,
+          "distance_from_start_yards": 3300.0
+        },
+        {
+          "point_index": 73,
+          "map_id": 0,
+          "image_x": 949.96,
+          "image_y": 55.11,
+          "zone_x": 94.8061,
+          "zone_y": 8.2499,
+          "world_x": -9865.1647,
+          "world_y": -1726.4307,
+          "distance_from_start_yards": 3302.21
+        }
+      ]
+    },
+    {
+      "path_index": 1,
+      "path_key": "Duskwood_02",
+      "finalized": true,
+      "start_connection": {
+        "path_index": 0,
+        "path_key": "Duskwood_01",
+        "anchor_index": 13,
+        "anchor_label": "P1-A14"
+      },
+      "end_connection": null,
+      "anchors": [
+        {
+          "image_x": 748.07,
+          "image_y": 315.44,
+          "zone_x": 74.6577,
+          "zone_y": 47.2223,
+          "world_x": -10566.6674,
+          "world_y": -1182.4257,
+          "handle_in": null,
+          "handle_out": {
+            "image_x": 763.97,
+            "image_y": 304.04,
+            "zone_x": 76.2443,
+            "zone_y": 45.5143,
+            "world_x": -10535.9228,
+            "world_y": -1225.2641
+          }
+        },
+        {
+          "image_x": 785.52,
+          "image_y": 301.57,
+          "zone_x": 78.3949,
+          "zone_y": 45.1458,
+          "world_x": -10529.2898,
+          "world_y": -1283.3286,
+          "handle_in": {
+            "image_x": 776.19,
+            "image_y": 319.11,
+            "zone_x": 77.4639,
+            "zone_y": 47.7704,
+            "world_x": -10576.5326,
+            "world_y": -1258.1909
+          },
+          "handle_out": {
+            "image_x": 795.74,
+            "image_y": 302.2,
+            "zone_x": 79.4151,
+            "zone_y": 45.2399,
+            "world_x": -10530.9838,
+            "world_y": -1310.8738
+          }
+        },
+        {
+          "image_x": 813.71,
+          "image_y": 307.03,
+          "zone_x": 81.2084,
+          "zone_y": 45.9626,
+          "world_x": -10543.9927,
+          "world_y": -1359.2933,
+          "handle_in": {
+            "image_x": 804.31,
+            "image_y": 305.21,
+            "zone_x": 80.2706,
+            "zone_y": 45.6903,
+            "world_x": -10539.0917,
+            "world_y": -1333.9717
+          },
+          "handle_out": {
+            "image_x": 834.84,
+            "image_y": 304.24,
+            "zone_x": 83.3175,
+            "zone_y": 45.5448,
+            "world_x": -10536.4716,
+            "world_y": -1416.2397
+          }
+        },
+        {
+          "image_x": 865.39,
+          "image_y": 268.19,
+          "zone_x": 86.3663,
+          "zone_y": 40.1484,
+          "world_x": -10439.3374,
+          "world_y": -1498.5568,
+          "handle_in": {
+            "image_x": 839.32,
+            "image_y": 269.82,
+            "zone_x": 83.7647,
+            "zone_y": 40.3923,
+            "world_x": -10443.7277,
+            "world_y": -1428.3129
+          },
+          "handle_out": null
+        }
+      ],
+      "movement_points": [
+        {
+          "point_index": 0,
+          "map_id": 0,
+          "image_x": 748.07,
+          "image_y": 315.44,
+          "zone_x": 74.6577,
+          "zone_y": 47.2223,
+          "world_x": -10566.6674,
+          "world_y": -1182.4257,
+          "distance_from_start_yards": 0.0
+        },
+        {
+          "point_index": 1,
+          "map_id": 0,
+          "image_x": 765.62,
+          "image_y": 310.69,
+          "zone_x": 76.4089,
+          "zone_y": 46.5106,
+          "world_x": -10553.856,
+          "world_y": -1229.7063,
+          "distance_from_start_yards": 50.0
+        },
+        {
+          "point_index": 2,
+          "map_id": 0,
+          "image_x": 782.67,
+          "image_y": 305.83,
+          "zone_x": 78.1107,
+          "zone_y": 45.7834,
+          "world_x": -10540.7668,
+          "world_y": -1275.6551,
+          "distance_from_start_yards": 100.0
+        },
+        {
+          "point_index": 3,
+          "map_id": 0,
+          "image_x": 798.77,
+          "image_y": 303.59,
+          "zone_x": 79.7176,
+          "zone_y": 45.4483,
+          "world_x": -10534.7346,
+          "world_y": -1319.0419,
+          "distance_from_start_yards": 150.0
+        },
+        {
+          "point_index": 4,
+          "map_id": 0,
+          "image_x": 807.77,
+          "image_y": 305.85,
+          "zone_x": 80.6161,
+          "zone_y": 45.7855,
+          "world_x": -10540.8056,
+          "world_y": -1343.3023,
+          "distance_from_start_yards": 175.0
+        },
+        {
+          "point_index": 5,
+          "map_id": 0,
+          "image_x": 824.92,
+          "image_y": 301.88,
+          "zone_x": 82.3278,
+          "zone_y": 45.1915,
+          "world_x": -10530.1134,
+          "world_y": -1389.5163,
+          "distance_from_start_yards": 225.0
+        },
+        {
+          "point_index": 6,
+          "map_id": 0,
+          "image_x": 837.11,
+          "image_y": 287.94,
+          "zone_x": 83.5441,
+          "zone_y": 43.1055,
+          "world_x": -10492.5651,
+          "world_y": -1422.3563,
+          "distance_from_start_yards": 275.0
+        },
+        {
+          "point_index": 7,
+          "map_id": 0,
+          "image_x": 849.62,
+          "image_y": 274.31,
+          "zone_x": 84.7924,
+          "zone_y": 41.0649,
+          "world_x": -10455.8349,
+          "world_y": -1456.0612,
+          "distance_from_start_yards": 325.0
+        },
+        {
+          "point_index": 8,
+          "map_id": 0,
+          "image_x": 857.54,
+          "image_y": 269.11,
+          "zone_x": 85.583,
+          "zone_y": 40.2864,
+          "world_x": -10441.8211,
+          "world_y": -1477.4066,
+          "distance_from_start_yards": 350.0
+        },
+        {
+          "point_index": 9,
+          "map_id": 0,
+          "image_x": 865.39,
+          "image_y": 268.19,
+          "zone_x": 86.3663,
+          "zone_y": 40.1484,
+          "world_x": -10439.3374,
+          "world_y": -1498.5568,
+          "distance_from_start_yards": 371.3
+        }
+      ]
+    },
+    {
+      "path_index": 2,
+      "path_key": "Duskwood_03",
+      "finalized": true,
+      "start_connection": {
+        "path_index": 0,
+        "path_key": "Duskwood_01",
+        "anchor_index": 11,
+        "anchor_label": "P1-A12"
+      },
+      "end_connection": null,
+      "anchors": [
+        {
+          "image_x": 744.29,
+          "image_y": 372.02,
+          "zone_x": 74.2801,
+          "zone_y": 55.6919,
+          "world_x": -10719.1202,
+          "world_y": -1172.2306,
+          "handle_in": null,
+          "handle_out": {
+            "image_x": 750.44,
+            "image_y": 377.01,
+            "zone_x": 74.8941,
+            "zone_y": 56.4386,
+            "world_x": -10732.561,
+            "world_y": -1188.8068
+          }
+        },
+        {
+          "image_x": 762.74,
+          "image_y": 386.99,
+          "zone_x": 76.1219,
+          "zone_y": 57.932,
+          "world_x": -10759.4425,
+          "world_y": -1221.9593,
+          "handle_in": {
+            "image_x": 756.59,
+            "image_y": 382.0,
+            "zone_x": 75.508,
+            "zone_y": 57.1853,
+            "world_x": -10746.0017,
+            "world_y": -1205.3831
+          },
+          "handle_out": {
+            "image_x": 778.59,
+            "image_y": 402.34,
+            "zone_x": 77.7032,
+            "zone_y": 60.2306,
+            "world_x": -10800.8169,
+            "world_y": -1264.6533
+          }
+        },
+        {
+          "image_x": 769.18,
+          "image_y": 423.36,
+          "zone_x": 76.7648,
+          "zone_y": 63.3775,
+          "world_x": -10857.4614,
+          "world_y": -1239.3168,
+          "handle_in": {
+            "image_x": 767.79,
+            "image_y": 402.54,
+            "zone_x": 76.626,
+            "zone_y": 60.2611,
+            "world_x": -10801.3657,
+            "world_y": -1235.568
+          },
+          "handle_out": {
+            "image_x": 768.61,
+            "image_y": 440.63,
+            "zone_x": 76.7073,
+            "zone_y": 65.9623,
+            "world_x": -10903.9877,
+            "world_y": -1237.7631
+          }
+        },
+        {
+          "image_x": 786.61,
+          "image_y": 466.56,
+          "zone_x": 78.5044,
+          "zone_y": 69.844,
+          "world_x": -10973.8589,
+          "world_y": -1286.2842,
+          "handle_in": {
+            "image_x": 774.92,
+            "image_y": 457.12,
+            "zone_x": 77.3374,
+            "zone_y": 68.4318,
+            "world_x": -10948.4389,
+            "world_y": -1254.7753
+          },
+          "handle_out": null
+        }
+      ],
+      "movement_points": [
+        {
+          "point_index": 0,
+          "map_id": 0,
+          "image_x": 744.29,
+          "image_y": 372.02,
+          "zone_x": 74.2801,
+          "zone_y": 55.6919,
+          "world_x": -10719.1202,
+          "world_y": -1172.2306,
+          "distance_from_start_yards": 0.0
+        },
+        {
+          "point_index": 1,
+          "map_id": 0,
+          "image_x": 758.7,
+          "image_y": 383.71,
+          "zone_x": 75.7186,
+          "zone_y": 57.4414,
+          "world_x": -10750.6112,
+          "world_y": -1211.0678,
+          "distance_from_start_yards": 50.0
+        },
+        {
+          "point_index": 2,
+          "map_id": 0,
+          "image_x": 770.79,
+          "image_y": 397.51,
+          "zone_x": 76.9254,
+          "zone_y": 59.5078,
+          "world_x": -10787.8059,
+          "world_y": -1243.6537,
+          "distance_from_start_yards": 100.0
+        },
+        {
+          "point_index": 3,
+          "map_id": 0,
+          "image_x": 769.21,
+          "image_y": 415.79,
+          "zone_x": 76.7679,
+          "zone_y": 62.2433,
+          "world_x": -10837.0449,
+          "world_y": -1239.3994,
+          "distance_from_start_yards": 150.0
+        },
+        {
+          "point_index": 4,
+          "map_id": 0,
+          "image_x": 769.75,
+          "image_y": 434.31,
+          "zone_x": 76.8217,
+          "zone_y": 65.0158,
+          "world_x": -10886.9505,
+          "world_y": -1240.8522,
+          "distance_from_start_yards": 200.0
+        },
+        {
+          "point_index": 5,
+          "map_id": 0,
+          "image_x": 775.13,
+          "image_y": 451.98,
+          "zone_x": 77.3584,
+          "zone_y": 67.6614,
+          "world_x": -10934.5719,
+          "world_y": -1255.3445,
+          "distance_from_start_yards": 250.0
+        },
+        {
+          "point_index": 6,
+          "map_id": 0,
+          "image_x": 779.43,
+          "image_y": 460.46,
+          "zone_x": 77.7871,
+          "zone_y": 68.9318,
+          "world_x": -10957.4377,
+          "world_y": -1266.918,
+          "distance_from_start_yards": 275.0
+        },
+        {
+          "point_index": 7,
+          "map_id": 0,
+          "image_x": 786.5,
+          "image_y": 466.46,
+          "zone_x": 78.4933,
+          "zone_y": 69.83,
+          "world_x": -10973.606,
+          "world_y": -1285.986,
+          "distance_from_start_yards": 300.0
+        },
+        {
+          "point_index": 8,
+          "map_id": 0,
+          "image_x": 786.61,
+          "image_y": 466.56,
+          "zone_x": 78.5044,
+          "zone_y": 69.844,
+          "world_x": -10973.8589,
+          "world_y": -1286.2842,
+          "distance_from_start_yards": 300.39
+        }
+      ]
+    },
+    {
+      "path_index": 3,
+      "path_key": "Duskwood_04",
+      "finalized": true,
+      "start_connection": {
+        "path_index": 0,
+        "path_key": "Duskwood_01",
+        "anchor_index": 8,
+        "anchor_label": "P1-A9"
+      },
+      "end_connection": null,
+      "anchors": [
+        {
+          "image_x": 623.12,
+          "image_y": 408.2,
+          "zone_x": 62.1876,
+          "zone_y": 61.1083,
+          "world_x": -10816.6156,
+          "world_y": -845.7307,
+          "handle_in": null,
+          "handle_out": {
+            "image_x": 621.81,
+            "image_y": 419.35,
+            "zone_x": 62.0569,
+            "zone_y": 62.7777,
+            "world_x": -10846.6638,
+            "world_y": -842.204
+          }
+        },
+        {
+          "image_x": 619.19,
+          "image_y": 441.66,
+          "zone_x": 61.7957,
+          "zone_y": 66.1163,
+          "world_x": -10906.76,
+          "world_y": -835.1505,
+          "handle_in": {
+            "image_x": 620.5,
+            "image_y": 430.51,
+            "zone_x": 61.9263,
+            "zone_y": 64.447,
+            "world_x": -10876.7119,
+            "world_y": -838.6772
+          },
+          "handle_out": {
+            "image_x": 629.5,
+            "image_y": 446.36,
+            "zone_x": 62.8243,
+            "zone_y": 66.8197,
+            "world_x": -10919.4208,
+            "world_y": -862.9225
+          }
+        },
+        {
+          "image_x": 650.11,
+          "image_y": 455.75,
+          "zone_x": 64.8815,
+          "zone_y": 68.2265,
+          "world_x": -10944.7424,
+          "world_y": -918.4666,
+          "handle_in": {
+            "image_x": 639.81,
+            "image_y": 451.05,
+            "zone_x": 63.8529,
+            "zone_y": 67.5231,
+            "world_x": -10932.0816,
+            "world_y": -890.6945
+          },
+          "handle_out": null
+        }
+      ],
+      "movement_points": [
+        {
+          "point_index": 0,
+          "map_id": 0,
+          "image_x": 623.12,
+          "image_y": 408.2,
+          "zone_x": 62.1876,
+          "zone_y": 61.1083,
+          "world_x": -10816.6156,
+          "world_y": -845.7307,
+          "distance_from_start_yards": 0.0
+        },
+        {
+          "point_index": 1,
+          "map_id": 0,
+          "image_x": 620.96,
+          "image_y": 426.63,
+          "zone_x": 61.9717,
+          "zone_y": 63.8672,
+          "world_x": -10866.2748,
+          "world_y": -839.9023,
+          "distance_from_start_yards": 50.0
+        },
+        {
+          "point_index": 2,
+          "map_id": 0,
+          "image_x": 620.74,
+          "image_y": 428.48,
+          "zone_x": 61.9501,
+          "zone_y": 64.143,
+          "world_x": -10871.2407,
+          "world_y": -839.3194,
+          "distance_from_start_yards": 55.0
+        },
+        {
+          "point_index": 3,
+          "map_id": 0,
+          "image_x": 620.52,
+          "image_y": 430.32,
+          "zone_x": 61.9285,
+          "zone_y": 64.4189,
+          "world_x": -10876.2066,
+          "world_y": -838.7366,
+          "distance_from_start_yards": 60.0
+        },
+        {
+          "point_index": 4,
+          "map_id": 0,
+          "image_x": 620.31,
+          "image_y": 432.16,
+          "zone_x": 61.9069,
+          "zone_y": 64.6948,
+          "world_x": -10881.1725,
+          "world_y": -838.1537,
+          "distance_from_start_yards": 65.0
+        },
+        {
+          "point_index": 5,
+          "map_id": 0,
+          "image_x": 620.09,
+          "image_y": 434.0,
+          "zone_x": 61.8853,
+          "zone_y": 64.9707,
+          "world_x": -10886.1384,
+          "world_y": -837.5709,
+          "distance_from_start_yards": 70.0
+        },
+        {
+          "point_index": 6,
+          "map_id": 0,
+          "image_x": 619.87,
+          "image_y": 435.85,
+          "zone_x": 61.8638,
+          "zone_y": 65.2466,
+          "world_x": -10891.1043,
+          "world_y": -836.988,
+          "distance_from_start_yards": 75.0
+        },
+        {
+          "point_index": 7,
+          "map_id": 0,
+          "image_x": 619.66,
+          "image_y": 437.69,
+          "zone_x": 61.8422,
+          "zone_y": 65.5225,
+          "world_x": -10896.0702,
+          "world_y": -836.4052,
+          "distance_from_start_yards": 80.0
+        },
+        {
+          "point_index": 8,
+          "map_id": 0,
+          "image_x": 619.44,
+          "image_y": 439.53,
+          "zone_x": 61.8206,
+          "zone_y": 65.7983,
+          "world_x": -10901.0362,
+          "world_y": -835.8223,
+          "distance_from_start_yards": 85.0
+        },
+        {
+          "point_index": 9,
+          "map_id": 0,
+          "image_x": 619.23,
+          "image_y": 441.38,
+          "zone_x": 61.799,
+          "zone_y": 66.0742,
+          "world_x": -10906.0021,
+          "world_y": -835.2395,
+          "distance_from_start_yards": 90.0
+        },
+        {
+          "point_index": 10,
+          "map_id": 0,
+          "image_x": 635.82,
+          "image_y": 449.24,
+          "zone_x": 63.455,
+          "zone_y": 67.251,
+          "world_x": -10927.184,
+          "world_y": -879.9515,
+          "distance_from_start_yards": 140.0
+        },
+        {
+          "point_index": 11,
+          "map_id": 0,
+          "image_x": 644.26,
+          "image_y": 453.09,
+          "zone_x": 64.2975,
+          "zone_y": 67.8271,
+          "world_x": -10937.5543,
+          "world_y": -902.6991,
+          "distance_from_start_yards": 165.0
+        },
+        {
+          "point_index": 12,
+          "map_id": 0,
+          "image_x": 650.11,
+          "image_y": 455.75,
+          "zone_x": 64.8815,
+          "zone_y": 68.2265,
+          "world_x": -10944.7424,
+          "world_y": -918.4666,
+          "distance_from_start_yards": 182.33
+        }
+      ]
+    },
+    {
+      "path_index": 4,
+      "path_key": "Duskwood_05",
+      "finalized": true,
+      "start_connection": {
+        "path_index": 0,
+        "path_key": "Duskwood_01",
+        "anchor_index": 5,
+        "anchor_label": "P1-A6"
+      },
+      "end_connection": null,
+      "anchors": [
+        {
+          "image_x": 447.42,
+          "image_y": 440.4,
+          "zone_x": 44.6531,
+          "zone_y": 65.9276,
+          "world_x": -10903.3624,
+          "world_y": -372.2994,
+          "handle_in": null,
+          "handle_out": {
+            "image_x": 436.31,
+            "image_y": 491.54,
+            "zone_x": 43.544,
+            "zone_y": 73.5834,
+            "world_x": -11041.1674,
+            "world_y": -342.3536
+          }
+        },
+        {
+          "image_x": 446.92,
+          "image_y": 577.55,
+          "zone_x": 44.6028,
+          "zone_y": 86.4597,
+          "world_x": -11272.9413,
+          "world_y": -370.9425,
+          "handle_in": {
+            "image_x": 458.58,
+            "image_y": 527.19,
+            "zone_x": 45.7661,
+            "zone_y": 78.9213,
+            "world_x": -11137.2498,
+            "world_y": -402.3508
+          },
+          "handle_out": null
+        }
+      ],
+      "movement_points": [
+        {
+          "point_index": 0,
+          "map_id": 0,
+          "image_x": 447.42,
+          "image_y": 440.4,
+          "zone_x": 44.6531,
+          "zone_y": 65.9276,
+          "world_x": -10903.3624,
+          "world_y": -372.2994,
+          "distance_from_start_yards": 0.0
+        },
+        {
+          "point_index": 1,
+          "map_id": 0,
+          "image_x": 444.71,
+          "image_y": 458.74,
+          "zone_x": 44.3819,
+          "zone_y": 68.6735,
+          "world_x": -10952.7897,
+          "world_y": -364.9776,
+          "distance_from_start_yards": 50.0
+        },
+        {
+          "point_index": 2,
+          "map_id": 0,
+          "image_x": 444.34,
+          "image_y": 477.28,
+          "zone_x": 44.3452,
+          "zone_y": 71.4492,
+          "world_x": -11002.7515,
+          "world_y": -363.987,
+          "distance_from_start_yards": 100.0
+        },
+        {
+          "point_index": 3,
+          "map_id": 0,
+          "image_x": 445.76,
+          "image_y": 495.78,
+          "zone_x": 44.4868,
+          "zone_y": 74.2181,
+          "world_x": -11052.5927,
+          "world_y": -367.8111,
+          "distance_from_start_yards": 150.0
+        },
+        {
+          "point_index": 4,
+          "map_id": 0,
+          "image_x": 447.99,
+          "image_y": 514.2,
+          "zone_x": 44.7096,
+          "zone_y": 76.9757,
+          "world_x": -11102.2288,
+          "world_y": -373.8268,
+          "distance_from_start_yards": 200.0
+        },
+        {
+          "point_index": 5,
+          "map_id": 0,
+          "image_x": 449.87,
+          "image_y": 532.66,
+          "zone_x": 44.8976,
+          "zone_y": 79.7388,
+          "world_x": -11151.9641,
+          "world_y": -378.9027,
+          "distance_from_start_yards": 250.0
+        },
+        {
+          "point_index": 6,
+          "map_id": 0,
+          "image_x": 450.3,
+          "image_y": 551.2,
+          "zone_x": 44.9399,
+          "zone_y": 82.5144,
+          "world_x": -11201.9247,
+          "world_y": -380.0431,
+          "distance_from_start_yards": 300.0
+        },
+        {
+          "point_index": 7,
+          "map_id": 0,
+          "image_x": 448.47,
+          "image_y": 569.65,
+          "zone_x": 44.7577,
+          "zone_y": 85.2762,
+          "world_x": -11251.6382,
+          "world_y": -375.1235,
+          "distance_from_start_yards": 350.0
+        },
+        {
+          "point_index": 8,
+          "map_id": 0,
+          "image_x": 446.92,
+          "image_y": 577.55,
+          "zone_x": 44.6028,
+          "zone_y": 86.4597,
+          "world_x": -11272.9413,
+          "world_y": -370.9425,
+          "distance_from_start_yards": 371.71
+        }
+      ]
+    },
+    {
+      "path_index": 5,
+      "path_key": "Duskwood_06",
+      "finalized": true,
+      "start_connection": {
+        "path_index": 4,
+        "path_key": "Duskwood_05",
+        "anchor_index": 0,
+        "anchor_label": "P5-A1"
+      },
+      "end_connection": null,
+      "anchors": [
+        {
+          "image_x": 447.42,
+          "image_y": 440.4,
+          "zone_x": 44.6531,
+          "zone_y": 65.9276,
+          "world_x": -10903.3624,
+          "world_y": -372.2994,
+          "handle_in": null,
+          "handle_out": {
+            "image_x": 432.14,
+            "image_y": 455.16,
+            "zone_x": 43.128,
+            "zone_y": 68.1379,
+            "world_x": -10943.1485,
+            "world_y": -331.1223
+          }
+        },
+        {
+          "image_x": 392.39,
+          "image_y": 474.84,
+          "zone_x": 39.1606,
+          "zone_y": 71.0844,
+          "world_x": -10996.1856,
+          "world_y": -224.0025,
+          "handle_in": {
+            "image_x": 410.73,
+            "image_y": 463.36,
+            "zone_x": 40.9914,
+            "zone_y": 69.3655,
+            "world_x": -10965.2445,
+            "world_y": -273.4348
+          },
+          "handle_out": {
+            "image_x": 358.25,
+            "image_y": 487.37,
+            "zone_x": 35.7539,
+            "zone_y": 72.9594,
+            "world_x": -11029.9361,
+            "world_y": -132.0214
+          }
+        },
+        {
+          "image_x": 335.42,
+          "image_y": 468.95,
+          "zone_x": 33.4755,
+          "zone_y": 70.2022,
+          "world_x": -10980.3065,
+          "world_y": -70.5049,
+          "handle_in": {
+            "image_x": 354.09,
+            "image_y": 474.49,
+            "zone_x": 35.3379,
+            "zone_y": 71.0308,
+            "world_x": -10995.221,
+            "world_y": -120.79
+          },
+          "handle_out": null
+        }
+      ],
+      "movement_points": [
+        {
+          "point_index": 0,
+          "map_id": 0,
+          "image_x": 447.42,
+          "image_y": 440.4,
+          "zone_x": 44.6531,
+          "zone_y": 65.9276,
+          "world_x": -10903.3624,
+          "world_y": -372.2994,
+          "distance_from_start_yards": 0.0
+        },
+        {
+          "point_index": 1,
+          "map_id": 0,
+          "image_x": 432.83,
+          "image_y": 451.81,
+          "zone_x": 43.1965,
+          "zone_y": 67.6362,
+          "world_x": -10934.1182,
+          "world_y": -332.9718,
+          "distance_from_start_yards": 50.0
+        },
+        {
+          "point_index": 2,
+          "map_id": 0,
+          "image_x": 416.82,
+          "image_y": 461.18,
+          "zone_x": 41.5986,
+          "zone_y": 69.0388,
+          "world_x": -10959.3638,
+          "world_y": -289.8293,
+          "distance_from_start_yards": 100.0
+        },
+        {
+          "point_index": 3,
+          "map_id": 0,
+          "image_x": 400.52,
+          "image_y": 470.04,
+          "zone_x": 39.9716,
+          "zone_y": 70.3653,
+          "world_x": -10983.2416,
+          "world_y": -245.9003,
+          "distance_from_start_yards": 150.0
+        },
+        {
+          "point_index": 4,
+          "map_id": 0,
+          "image_x": 383.72,
+          "image_y": 477.66,
+          "zone_x": 38.2957,
+          "zone_y": 71.506,
+          "world_x": -11003.7747,
+          "world_y": -200.6509,
+          "distance_from_start_yards": 200.0
+        },
+        {
+          "point_index": 5,
+          "map_id": 0,
+          "image_x": 365.42,
+          "image_y": 480.03,
+          "zone_x": 36.4686,
+          "zone_y": 71.8602,
+          "world_x": -11010.1495,
+          "world_y": -151.319,
+          "distance_from_start_yards": 250.0
+        },
+        {
+          "point_index": 6,
+          "map_id": 0,
+          "image_x": 347.94,
+          "image_y": 474.24,
+          "zone_x": 34.7244,
+          "zone_y": 70.9942,
+          "world_x": -10994.5614,
+          "world_y": -104.2251,
+          "distance_from_start_yards": 300.0
+        },
+        {
+          "point_index": 7,
+          "map_id": 0,
+          "image_x": 339.54,
+          "image_y": 470.28,
+          "zone_x": 33.8867,
+          "zone_y": 70.4008,
+          "world_x": -10983.8812,
+          "world_y": -81.6076,
+          "distance_from_start_yards": 325.0
+        },
+        {
+          "point_index": 8,
+          "map_id": 0,
+          "image_x": 335.42,
+          "image_y": 468.95,
+          "zone_x": 33.4755,
+          "zone_y": 70.2022,
+          "world_x": -10980.3065,
+          "world_y": -70.5049,
+          "distance_from_start_yards": 336.66
+        }
+      ]
+    },
+    {
+      "path_index": 6,
+      "path_key": "Duskwood_07",
+      "finalized": true,
+      "start_connection": {
+        "path_index": 0,
+        "path_key": "Duskwood_01",
+        "anchor_index": 2,
+        "anchor_label": "P1-A3"
+      },
+      "end_connection": null,
+      "anchors": [
+        {
+          "image_x": 208.2,
+          "image_y": 403.25,
+          "zone_x": 20.7788,
+          "zone_y": 60.3667,
+          "world_x": -10803.2673,
+          "world_y": 272.3067,
+          "handle_in": null,
+          "handle_out": {
+            "image_x": 215.49,
+            "image_y": 418.5,
+            "zone_x": 21.5064,
+            "zone_y": 62.6491,
+            "world_x": -10844.35,
+            "world_y": 252.6597
+          }
+        },
+        {
+          "image_x": 229.35,
+          "image_y": 442.76,
+          "zone_x": 22.8894,
+          "zone_y": 66.2815,
+          "world_x": -10909.7329,
+          "world_y": 215.3182,
+          "handle_in": {
+            "image_x": 214.27,
+            "image_y": 429.4,
+            "zone_x": 21.3838,
+            "zone_y": 64.2807,
+            "world_x": -10873.7184,
+            "world_y": 255.9702
+          },
+          "handle_out": null
+        }
+      ],
+      "movement_points": [
+        {
+          "point_index": 0,
+          "map_id": 0,
+          "image_x": 208.2,
+          "image_y": 403.25,
+          "zone_x": 20.7788,
+          "zone_y": 60.3667,
+          "world_x": -10803.2673,
+          "world_y": 272.3067,
+          "distance_from_start_yards": 0.0
+        },
+        {
+          "point_index": 1,
+          "map_id": 0,
+          "image_x": 214.7,
+          "image_y": 420.62,
+          "zone_x": 21.4276,
+          "zone_y": 62.9663,
+          "world_x": -10850.0602,
+          "world_y": 254.7875,
+          "distance_from_start_yards": 50.0
+        },
+        {
+          "point_index": 2,
+          "map_id": 0,
+          "image_x": 223.53,
+          "image_y": 436.81,
+          "zone_x": 22.3082,
+          "zone_y": 65.3909,
+          "world_x": -10893.7014,
+          "world_y": 231.0112,
+          "distance_from_start_yards": 100.0
+        },
+        {
+          "point_index": 3,
+          "map_id": 0,
+          "image_x": 229.35,
+          "image_y": 442.76,
+          "zone_x": 22.8894,
+          "zone_y": 66.2815,
+          "world_x": -10909.7329,
+          "world_y": 215.3182,
+          "distance_from_start_yards": 122.45
+        }
+      ]
+    },
+    {
+      "path_index": 7,
+      "path_key": "Duskwood_08",
+      "finalized": true,
+      "start_connection": {
+        "path_index": 6,
+        "path_key": "Duskwood_07",
+        "anchor_index": 0,
+        "anchor_label": "P7-A1"
+      },
+      "end_connection": null,
+      "anchors": [
+        {
+          "image_x": 208.2,
+          "image_y": 403.25,
+          "zone_x": 20.7788,
+          "zone_y": 60.3667,
+          "world_x": -10803.2673,
+          "world_y": 272.3067,
+          "handle_in": null,
+          "handle_out": {
+            "image_x": 176.0,
+            "image_y": 395.29,
+            "zone_x": 17.5644,
+            "zone_y": 59.1755,
+            "world_x": -10781.8257,
+            "world_y": 359.0943
+          }
+        },
+        {
+          "image_x": 199.23,
+          "image_y": 293.47,
+          "zone_x": 19.8835,
+          "zone_y": 43.9332,
+          "world_x": -10507.4632,
+          "world_y": 296.4779,
+          "handle_in": {
+            "image_x": 223.74,
+            "image_y": 362.33,
+            "zone_x": 22.3292,
+            "zone_y": 54.2406,
+            "world_x": -10692.996,
+            "world_y": 230.4444
+          },
+          "handle_out": null
+        }
+      ],
+      "movement_points": [
+        {
+          "point_index": 0,
+          "map_id": 0,
+          "image_x": 208.2,
+          "image_y": 403.25,
+          "zone_x": 20.7788,
+          "zone_y": 60.3667,
+          "world_x": -10803.2673,
+          "world_y": 272.3067,
+          "distance_from_start_yards": 0.0
+        },
+        {
+          "point_index": 1,
+          "map_id": 0,
+          "image_x": 196.65,
+          "image_y": 390.96,
+          "zone_x": 19.6262,
+          "zone_y": 58.5272,
+          "world_x": -10770.1555,
+          "world_y": 303.4263,
+          "distance_from_start_yards": 50.0
+        },
+        {
+          "point_index": 2,
+          "map_id": 0,
+          "image_x": 200.38,
+          "image_y": 372.84,
+          "zone_x": 19.9979,
+          "zone_y": 55.8145,
+          "world_x": -10721.3272,
+          "world_y": 293.3899,
+          "distance_from_start_yards": 100.0
+        },
+        {
+          "point_index": 3,
+          "map_id": 0,
+          "image_x": 204.62,
+          "image_y": 354.78,
+          "zone_x": 20.4207,
+          "zone_y": 53.1113,
+          "world_x": -10672.6696,
+          "world_y": 281.9749,
+          "distance_from_start_yards": 150.0
+        },
+        {
+          "point_index": 4,
+          "map_id": 0,
+          "image_x": 206.47,
+          "image_y": 336.34,
+          "zone_x": 20.6056,
+          "zone_y": 50.3508,
+          "world_x": -10622.98,
+          "world_y": 276.9811,
+          "distance_from_start_yards": 200.0
+        },
+        {
+          "point_index": 5,
+          "map_id": 0,
+          "image_x": 205.36,
+          "image_y": 317.84,
+          "zone_x": 20.4947,
+          "zone_y": 47.5813,
+          "world_x": -10573.1288,
+          "world_y": 279.9755,
+          "distance_from_start_yards": 250.0
+        },
+        {
+          "point_index": 6,
+          "map_id": 0,
+          "image_x": 204.08,
+          "image_y": 308.6,
+          "zone_x": 20.3673,
+          "zone_y": 46.198,
+          "world_x": -10548.2304,
+          "world_y": 283.4162,
+          "distance_from_start_yards": 275.0
+        },
+        {
+          "point_index": 7,
+          "map_id": 0,
+          "image_x": 201.25,
+          "image_y": 299.77,
+          "zone_x": 20.0848,
+          "zone_y": 44.8754,
+          "world_x": -10524.4225,
+          "world_y": 291.0442,
+          "distance_from_start_yards": 300.0
+        },
+        {
+          "point_index": 8,
+          "map_id": 0,
+          "image_x": 199.23,
+          "image_y": 293.47,
+          "zone_x": 19.8835,
+          "zone_y": 43.9332,
+          "world_x": -10507.4632,
+          "world_y": 296.4779,
+          "distance_from_start_yards": 317.81
+        }
+      ]
+    }
+  ]
+}

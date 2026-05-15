@@ -1089,6 +1089,9 @@ Current implementation note:
 - zone editor save/load now supports a zone-level editor/source artifact and a
   derived runtime/export artifact
 - sampled traversal points are generated at export time
+- deployed worldservers should consume a copied server-local route bundle such
+  as `data/worldbot_routes`, not assume the editor workspace exists beside the
+  runtime
 - DB importer, dedicated validation tooling, and broader schema finalization are
   still pending
 

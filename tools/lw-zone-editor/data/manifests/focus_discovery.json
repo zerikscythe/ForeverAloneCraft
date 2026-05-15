@@ -1,0 +1,69 @@
+{
+  "matched": [
+    {
+      "zone_dir": "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\png\\interface\\worldmap\\ulduar",
+      "folder_name": "ulduar",
+      "tile_prefix": "ulduar",
+      "tile_count": 12,
+      "world_map_area_id": 529,
+      "map_id": 603,
+      "zone_id": 4273,
+      "zone_name": "Ulduar",
+      "internal_name": "Ulduar",
+      "output_name": "Ulduar - 4273.png"
+    }
+  ],
+  "unmatched": [
+    {
+      "zone_dir": "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\png\\interface\\worldmap\\blackrock",
+      "folder_name": "blackrock",
+      "tile_prefixes": [
+        "blackrock"
+      ]
+    },
+    {
+      "zone_dir": "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\png\\interface\\worldmap\\hallsoflightning",
+      "folder_name": "hallsoflightning",
+      "tile_prefixes": [
+        "hallsoflightning1",
+        "hallsoflightning2"
+      ]
+    },
+    {
+      "zone_dir": "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\png\\interface\\worldmap\\hallsofstone",
+      "folder_name": "hallsofstone",
+      "tile_prefixes": [
+        "hallsofstone1"
+      ]
+    },
+    {
+      "zone_dir": "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\png\\interface\\worldmap\\naxxramas",
+      "folder_name": "naxxramas",
+      "tile_prefixes": [
+        "naxxramas1",
+        "naxxramas2",
+        "naxxramas3",
+        "naxxramas4",
+        "naxxramas5",
+        "naxxramas6"
+      ]
+    },
+    {
+      "zone_dir": "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\png\\interface\\worldmap\\utgardekeep",
+      "folder_name": "utgardekeep",
+      "tile_prefixes": [
+        "utgardekeep1",
+        "utgardekeep2",
+        "utgardekeep3"
+      ]
+    },
+    {
+      "zone_dir": "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\png\\interface\\worldmap\\utgardepinnacle",
+      "folder_name": "utgardepinnacle",
+      "tile_prefixes": [
+        "utgardepinnacle1",
+        "utgardepinnacle2"
+      ]
+    }
+  ]
+}

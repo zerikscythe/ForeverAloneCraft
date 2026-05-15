@@ -1,5 +1,7 @@
 #include "service/WorldBotRoutePlanning.h"
 
+#include "Config.h"
+
 #include <algorithm>
 #include <cmath>
 #include <cctype>
@@ -306,6 +308,14 @@ std::string GetStringOrDefault(JsonValue const& object, std::string const& key)
     return value->stringValue;
 }
 
+bool GetBoolOrDefault(JsonValue const& object, std::string const& key, bool fallback = false)
+{
+    JsonValue const* value = TryGetObjectMember(object, key);
+    if (!value || value->type != JsonValue::Type::Boolean)
+        return fallback;
+    return value->boolValue;
+}
+
 std::optional<WorldBotRoutePlanner::RouteConnectionRef> ParseConnection(JsonValue const* connectionValue)
 {
     if (!connectionValue || connectionValue->IsNull())
@@ -326,6 +336,36 @@ float Distance3D(float ax, float ay, float az, float bx, float by, float bz)
     float const dy = ay - by;
     float const dz = az - bz;
     return std::sqrt((dx * dx) + (dy * dy) + (dz * dz));
+}
+
+struct Vector3f
+{
+    float x = 0.0f;
+    float y = 0.0f;
+    float z = 0.0f;
+};
+
+Vector3f MakeVector(float fromX, float fromY, float fromZ, float toX, float toY, float toZ)
+{
+    return {toX - fromX, toY - fromY, toZ - fromZ};
+}
+
+float VectorLength(Vector3f const& v)
+{
+    return std::sqrt((v.x * v.x) + (v.y * v.y) + (v.z * v.z));
+}
+
+std::optional<Vector3f> Normalize(Vector3f const& v)
+{
+    float const length = VectorLength(v);
+    if (length <= 0.001f)
+        return std::nullopt;
+    return Vector3f{v.x / length, v.y / length, v.z / length};
+}
+
+float Dot(Vector3f const& a, Vector3f const& b)
+{
+    return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
 }
 
 void AddNeighbor(
@@ -555,9 +595,131 @@ std::optional<WorldBotRoutePlanner::ZoneRouteGraph> ParseZoneRouteGraph(
     return graph;
 }
 
+std::vector<WorldBotRoutePlanner::ZoneConnector> ParseZoneConnectors(
+    std::string const& payload)
+{
+    JsonValue const root = JsonParser(payload).Parse();
+    std::vector<WorldBotRoutePlanner::ZoneConnector> connectors;
+    if (!root.IsObject())
+        return connectors;
+
+    JsonValue const* connectorsValue = TryGetObjectMember(root, "connectors");
+    if (!connectorsValue || !connectorsValue->IsArray())
+        return connectors;
+
+    std::uint16_t const defaultMapId =
+        static_cast<std::uint16_t>(GetNumberOrDefault(root, "map_id"));
+
+    for (JsonValue const& connectorValue : connectorsValue->arrayValue)
+    {
+        if (!connectorValue.IsObject())
+            continue;
+
+        JsonValue const* fromValue = TryGetObjectMember(connectorValue, "from");
+        JsonValue const* toValue = TryGetObjectMember(connectorValue, "to");
+        if (!fromValue || !toValue || !fromValue->IsObject() || !toValue->IsObject())
+            continue;
+
+        WorldBotRoutePlanner::ZoneConnector connector;
+        connector.connectorKey = GetStringOrDefault(connectorValue, "connector_key");
+        connector.mapId = static_cast<std::uint16_t>(GetNumberOrDefault(
+            connectorValue,
+            "map_id",
+            defaultMapId));
+        connector.fromZoneId = static_cast<std::uint32_t>(GetNumberOrDefault(connectorValue, "from_zone_id"));
+        connector.toZoneId = static_cast<std::uint32_t>(GetNumberOrDefault(connectorValue, "to_zone_id"));
+        connector.fromX = static_cast<float>(GetNumberOrDefault(*fromValue, "world_x"));
+        connector.fromY = static_cast<float>(GetNumberOrDefault(*fromValue, "world_y"));
+        connector.fromZ = static_cast<float>(GetNumberOrDefault(*fromValue, "world_z"));
+        connector.toX = static_cast<float>(GetNumberOrDefault(*toValue, "world_x"));
+        connector.toY = static_cast<float>(GetNumberOrDefault(*toValue, "world_y"));
+        connector.toZ = static_cast<float>(GetNumberOrDefault(*toValue, "world_z"));
+        connector.bidirectional = GetBoolOrDefault(connectorValue, "bidirectional", true);
+
+        if (connector.mapId == 0 || connector.fromZoneId == 0 || connector.toZoneId == 0)
+            continue;
+
+        connectors.push_back(std::move(connector));
+    }
+
+    return connectors;
+}
+
 std::string BuildCacheKey(std::uint16_t mapId, std::uint32_t zoneId)
 {
     return std::to_string(mapId) + ":" + std::to_string(zoneId);
+}
+
+std::optional<std::uint32_t> TryParseZoneIdFromRouteFilename(
+    std::uint16_t mapId,
+    std::string const& filename)
+{
+    std::ostringstream mapPrefix;
+    mapPrefix << "map_";
+    mapPrefix.width(3);
+    mapPrefix.fill('0');
+    mapPrefix << mapId;
+    std::string const prefix = mapPrefix.str() + "__zone_";
+    if (filename.rfind(prefix, 0) != 0)
+        return std::nullopt;
+
+    std::size_t const zoneStart = prefix.size();
+    std::size_t const zoneEnd = filename.find("__", zoneStart);
+    if (zoneEnd == std::string::npos || zoneEnd <= zoneStart)
+        return std::nullopt;
+
+    try
+    {
+        return static_cast<std::uint32_t>(std::stoul(filename.substr(zoneStart, zoneEnd - zoneStart)));
+    }
+    catch (...)
+    {
+        return std::nullopt;
+    }
+}
+
+struct TerminalNodeCandidate
+{
+    std::size_t nodeId = 0;
+    Vector3f outwardHeading {};
+};
+
+std::vector<TerminalNodeCandidate> CollectTerminalNodeCandidates(
+    WorldBotRoutePlanner::ZoneRouteGraph const& graph)
+{
+    std::vector<TerminalNodeCandidate> terminals;
+    for (std::size_t pathIndex = 0; pathIndex < graph.pathNodeIds.size(); ++pathIndex)
+    {
+        auto const& nodeIds = graph.pathNodeIds[pathIndex];
+        if (nodeIds.size() < 2)
+            continue;
+
+        std::size_t const firstNodeId = nodeIds.front();
+        std::size_t const secondNodeId = nodeIds[1];
+        std::size_t const lastNodeId = nodeIds.back();
+        std::size_t const beforeLastNodeId = nodeIds[nodeIds.size() - 2];
+
+        auto const& first = graph.nodes[firstNodeId].waypoint;
+        auto const& second = graph.nodes[secondNodeId].waypoint;
+        auto const& last = graph.nodes[lastNodeId].waypoint;
+        auto const& beforeLast = graph.nodes[beforeLastNodeId].waypoint;
+
+        if (auto heading = Normalize(MakeVector(
+            first.x, first.y, first.z,
+            second.x, second.y, second.z)))
+        {
+            terminals.push_back({ firstNodeId, *heading });
+        }
+
+        if (auto heading = Normalize(MakeVector(
+            beforeLast.x, beforeLast.y, beforeLast.z,
+            last.x, last.y, last.z)))
+        {
+            terminals.push_back({ lastNodeId, *heading });
+        }
+    }
+
+    return terminals;
 }
 
 } // namespace
@@ -583,6 +745,69 @@ float ResolveWorldBotTravelSpeedYardsPerSecond(
         default:
             return footSpeed;
     }
+}
+
+WorldBotTravelCapabilityConfig LoadWorldBotTravelCapabilityConfig()
+{
+    WorldBotTravelCapabilityConfig config;
+    config.footYardsPerSecond = sConfigMgr->GetOption<float>(
+        "LivingWorld.RouteTravel.FootYardsPerSecond",
+        config.footYardsPerSecond);
+    config.groundBasicMultiplier = sConfigMgr->GetOption<float>(
+        "LivingWorld.RouteTravel.GroundBasicMultiplier",
+        config.groundBasicMultiplier);
+    config.groundFastMultiplier = sConfigMgr->GetOption<float>(
+        "LivingWorld.RouteTravel.GroundFastMultiplier",
+        config.groundFastMultiplier);
+    config.flightBasicMultiplier = sConfigMgr->GetOption<float>(
+        "LivingWorld.RouteTravel.FlightBasicMultiplier",
+        config.flightBasicMultiplier);
+    config.flightFastMultiplier = sConfigMgr->GetOption<float>(
+        "LivingWorld.RouteTravel.FlightFastMultiplier",
+        config.flightFastMultiplier);
+    config.taxiYardsPerSecond = sConfigMgr->GetOption<float>(
+        "LivingWorld.RouteTravel.TaxiYardsPerSecond",
+        config.taxiYardsPerSecond);
+    return config;
+}
+
+WorldBotTravelCapabilityPolicy LoadWorldBotTravelCapabilityPolicy()
+{
+    WorldBotTravelCapabilityPolicy policy;
+    policy.groundBasicMinLevel = static_cast<std::uint8_t>(sConfigMgr->GetOption<std::uint32_t>(
+        "LivingWorld.RouteTravel.GroundBasicMinLevel",
+        policy.groundBasicMinLevel));
+    policy.groundFastMinLevel = static_cast<std::uint8_t>(sConfigMgr->GetOption<std::uint32_t>(
+        "LivingWorld.RouteTravel.GroundFastMinLevel",
+        policy.groundFastMinLevel));
+    policy.flightBasicMinLevel = static_cast<std::uint8_t>(sConfigMgr->GetOption<std::uint32_t>(
+        "LivingWorld.RouteTravel.FlightBasicMinLevel",
+        policy.flightBasicMinLevel));
+    policy.flightFastMinLevel = static_cast<std::uint8_t>(sConfigMgr->GetOption<std::uint32_t>(
+        "LivingWorld.RouteTravel.FlightFastMinLevel",
+        policy.flightFastMinLevel));
+    return policy;
+}
+
+WorldBotTravelCapabilityTier ResolveWorldBotTravelCapabilityTierForLevel(
+    std::uint8_t level,
+    bool allowFlightNetwork,
+    WorldBotTravelCapabilityPolicy const& policy)
+{
+    if (allowFlightNetwork)
+    {
+        if (level >= policy.flightFastMinLevel)
+            return WorldBotTravelCapabilityTier::FlightFast;
+        if (level >= policy.flightBasicMinLevel)
+            return WorldBotTravelCapabilityTier::FlightBasic;
+    }
+
+    if (level >= policy.groundFastMinLevel)
+        return WorldBotTravelCapabilityTier::GroundFast;
+    if (level >= policy.groundBasicMinLevel)
+        return WorldBotTravelCapabilityTier::GroundBasic;
+
+    return WorldBotTravelCapabilityTier::Foot;
 }
 
 WorldBotTravelPositionSample SampleWorldBotTravelPlanPosition(
@@ -647,6 +872,66 @@ WorldBotRoutePlanner::WorldBotRoutePlanner(std::filesystem::path routeExportRoot
 {
 }
 
+std::vector<std::uint32_t> WorldBotRoutePlanner::DiscoverZoneIdsForMap(
+    std::uint16_t mapId) const
+{
+    std::vector<std::uint32_t> zoneIds;
+    if (_routeExportRoot.empty() || !std::filesystem::exists(_routeExportRoot))
+        return zoneIds;
+
+    for (auto const& entry : std::filesystem::directory_iterator(_routeExportRoot))
+    {
+        if (!entry.is_regular_file())
+            continue;
+
+        if (auto const zoneId = TryParseZoneIdFromRouteFilename(
+            mapId,
+            entry.path().filename().string()))
+        {
+            zoneIds.push_back(*zoneId);
+        }
+    }
+
+    std::sort(zoneIds.begin(), zoneIds.end());
+    zoneIds.erase(std::unique(zoneIds.begin(), zoneIds.end()), zoneIds.end());
+    return zoneIds;
+}
+
+std::optional<std::uint32_t> WorldBotRoutePlanner::ResolveNearestZoneIdForMapPosition(
+    std::uint16_t mapId,
+    float x,
+    float y,
+    float z,
+    float maxDistanceYards) const
+{
+    std::optional<std::uint32_t> bestZoneId;
+    float bestDistance = std::numeric_limits<float>::max();
+
+    for (std::uint32_t zoneId : DiscoverZoneIdsForMap(mapId))
+    {
+        auto const graph = LoadZoneGraph(mapId, zoneId);
+        if (!graph || graph->nodes.empty())
+            continue;
+
+        for (auto const& node : graph->nodes)
+        {
+            float const distance = Distance3D(
+                x, y, z,
+                node.waypoint.x, node.waypoint.y, node.waypoint.z);
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                bestZoneId = zoneId;
+            }
+        }
+    }
+
+    if (!bestZoneId || bestDistance > maxDistanceYards)
+        return std::nullopt;
+
+    return bestZoneId;
+}
+
 std::optional<std::filesystem::path> WorldBotRoutePlanner::FindRouteExportPath(
     std::uint16_t mapId,
     std::uint32_t zoneId) const
@@ -676,6 +961,55 @@ std::optional<std::filesystem::path> WorldBotRoutePlanner::FindRouteExportPath(
     }
 
     return std::nullopt;
+}
+
+std::optional<std::filesystem::path> WorldBotRoutePlanner::FindConnectorManifestPath(
+    std::uint16_t mapId) const
+{
+    if (_routeExportRoot.empty() || !std::filesystem::exists(_routeExportRoot))
+        return std::nullopt;
+
+    std::ostringstream mapPrefix;
+    mapPrefix << "map_";
+    mapPrefix.width(3);
+    mapPrefix.fill('0');
+    mapPrefix << mapId;
+    std::string const filename = mapPrefix.str() + "__connectors.json";
+    std::filesystem::path const candidate = _routeExportRoot / filename;
+    if (std::filesystem::exists(candidate) && std::filesystem::is_regular_file(candidate))
+        return candidate;
+
+    return std::nullopt;
+}
+
+std::vector<WorldBotRoutePlanner::ZoneConnector> WorldBotRoutePlanner::LoadConnectorsForMap(
+    std::uint16_t mapId) const
+{
+    std::string const cacheKey = std::to_string(mapId);
+    auto const cached = _connectorCache.find(cacheKey);
+    if (cached != _connectorCache.end())
+        return cached->second;
+
+    std::vector<ZoneConnector> connectors;
+    auto const manifestPath = FindConnectorManifestPath(mapId);
+    if (!manifestPath)
+    {
+        _connectorCache.emplace(cacheKey, connectors);
+        return connectors;
+    }
+
+    std::ifstream input(*manifestPath, std::ios::in | std::ios::binary);
+    if (!input.is_open())
+    {
+        _connectorCache.emplace(cacheKey, connectors);
+        return connectors;
+    }
+
+    std::ostringstream buffer;
+    buffer << input.rdbuf();
+    connectors = ParseZoneConnectors(buffer.str());
+    _connectorCache.emplace(cacheKey, connectors);
+    return connectors;
 }
 
 std::optional<WorldBotRoutePlanner::ZoneRouteGraph> WorldBotRoutePlanner::LoadZoneGraph(
@@ -845,6 +1179,300 @@ std::optional<WorldBotResolvedTravelPlan> WorldBotRoutePlanner::ResolveSameZoneT
     }
 
     return plan;
+}
+
+std::optional<WorldBotResolvedTravelPlan> WorldBotRoutePlanner::ResolveTravelPlan(
+    std::uint16_t mapId,
+    std::uint32_t startZoneIdHint,
+    std::uint32_t destZoneId,
+    float startX,
+    float startY,
+    float startZ,
+    float destX,
+    float destY,
+    float destZ,
+    WorldBotTravelCapabilityTier tier,
+    WorldBotTravelCapabilityConfig const& capabilityConfig) const
+{
+    if (destZoneId == 0)
+        return std::nullopt;
+
+    auto resolveSameZone =
+        [&](std::uint32_t zoneId) -> std::optional<WorldBotResolvedTravelPlan>
+        {
+            return ResolveSameZoneTravelPlan(
+                mapId,
+                zoneId,
+                startX,
+                startY,
+                startZ,
+                destX,
+                destY,
+                destZ,
+                tier,
+                capabilityConfig);
+        };
+
+    if (startZoneIdHint != 0 && startZoneIdHint == destZoneId)
+    {
+        if (auto plan = resolveSameZone(destZoneId))
+            return plan;
+    }
+
+    std::optional<std::uint32_t> sourceZoneId;
+    if (startZoneIdHint != 0 && LoadZoneGraph(mapId, startZoneIdHint))
+        sourceZoneId = startZoneIdHint;
+
+    if (!sourceZoneId)
+        sourceZoneId = ResolveNearestZoneIdForMapPosition(mapId, startX, startY, startZ);
+
+    if (!sourceZoneId)
+        return resolveSameZone(destZoneId);
+
+    if (*sourceZoneId == destZoneId)
+        return resolveSameZone(destZoneId);
+
+    auto seam = ResolveExplicitZoneTransition(mapId, *sourceZoneId, destZoneId);
+    if (!seam)
+        seam = ResolveAutomaticZoneTransition(mapId, *sourceZoneId, destZoneId);
+    if (!seam)
+        return std::nullopt;
+
+    auto const sourcePlan = ResolveSameZoneTravelPlan(
+        mapId,
+        *sourceZoneId,
+        startX,
+        startY,
+        startZ,
+        seam->fromWaypoint.x,
+        seam->fromWaypoint.y,
+        seam->fromWaypoint.z,
+        tier,
+        capabilityConfig);
+    if (!sourcePlan)
+        return std::nullopt;
+
+    auto const destPlan = ResolveSameZoneTravelPlan(
+        mapId,
+        destZoneId,
+        seam->toWaypoint.x,
+        seam->toWaypoint.y,
+        seam->toWaypoint.z,
+        destX,
+        destY,
+        destZ,
+        tier,
+        capabilityConfig);
+    if (!destPlan)
+        return std::nullopt;
+
+    WorldBotResolvedTravelPlan merged;
+    merged.mapId = mapId;
+    merged.zoneId = destZoneId;
+    merged.attachDistanceYards = sourcePlan->attachDistanceYards;
+    merged.detachDistanceYards = destPlan->detachDistanceYards;
+    merged.speedYardsPerSecond = ResolveWorldBotTravelSpeedYardsPerSecond(tier, capabilityConfig);
+
+    merged.waypoints = sourcePlan->waypoints;
+    merged.waypoints.push_back(seam->toWaypoint);
+
+    auto samePoint = [](WorldBotRouteWaypoint const& a, WorldBotRouteWaypoint const& b)
+    {
+        return Distance3D(a.x, a.y, a.z, b.x, b.y, b.z) <= 0.01f;
+    };
+
+    for (std::size_t index = 0; index < destPlan->waypoints.size(); ++index)
+    {
+        if (!merged.waypoints.empty() && samePoint(merged.waypoints.back(), destPlan->waypoints[index]))
+            continue;
+        merged.waypoints.push_back(destPlan->waypoints[index]);
+    }
+
+    float cumulativeDistance = 0.0f;
+    float prevX = startX;
+    float prevY = startY;
+    float prevZ = startZ;
+    for (WorldBotRouteWaypoint& waypoint : merged.waypoints)
+    {
+        cumulativeDistance += Distance3D(prevX, prevY, prevZ, waypoint.x, waypoint.y, waypoint.z);
+        waypoint.cumulativeDistanceYards = cumulativeDistance;
+        prevX = waypoint.x;
+        prevY = waypoint.y;
+        prevZ = waypoint.z;
+    }
+
+    merged.totalDistanceYards = cumulativeDistance;
+    merged.routeDistanceYards = std::max(
+        0.0f,
+        merged.totalDistanceYards - merged.attachDistanceYards - merged.detachDistanceYards);
+    merged.etaMs = static_cast<std::uint32_t>(
+        std::max(1.0f, (merged.totalDistanceYards / std::max(0.1f, merged.speedYardsPerSecond)) * 1000.0f));
+
+    return merged;
+}
+
+std::optional<WorldBotZoneTransitionCandidate> WorldBotRoutePlanner::ResolveExplicitZoneTransition(
+    std::uint16_t mapId,
+    std::uint32_t fromZoneId,
+    std::uint32_t toZoneId,
+    float maxAttachDistanceYards) const
+{
+    auto const fromGraph = LoadZoneGraph(mapId, fromZoneId);
+    auto const toGraph = LoadZoneGraph(mapId, toZoneId);
+    if (!fromGraph || !toGraph)
+        return std::nullopt;
+
+    auto const connectors = LoadConnectorsForMap(mapId);
+    if (connectors.empty())
+        return std::nullopt;
+
+    auto nearestNodeDistance =
+        [](WorldBotRoutePlanner::ZoneRouteGraph const& graph, float x, float y, float z)
+            -> std::optional<WorldBotRouteWaypoint>
+        {
+            if (graph.nodes.empty())
+                return std::nullopt;
+
+            float bestDistance = std::numeric_limits<float>::max();
+            std::optional<WorldBotRouteWaypoint> best;
+            for (auto const& node : graph.nodes)
+            {
+                float const distance = Distance3D(
+                    x, y, z,
+                    node.waypoint.x, node.waypoint.y, node.waypoint.z);
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    best = node.waypoint;
+                }
+            }
+
+            if (!best)
+                return std::nullopt;
+
+            best->cumulativeDistanceYards = bestDistance;
+            return best;
+        };
+
+    for (ZoneConnector const& connector : connectors)
+    {
+        bool reversed = false;
+        if (connector.fromZoneId == fromZoneId && connector.toZoneId == toZoneId)
+        {
+            reversed = false;
+        }
+        else if (connector.bidirectional && connector.fromZoneId == toZoneId && connector.toZoneId == fromZoneId)
+        {
+            reversed = true;
+        }
+        else
+        {
+            continue;
+        }
+
+        float const fromX = reversed ? connector.toX : connector.fromX;
+        float const fromY = reversed ? connector.toY : connector.fromY;
+        float const fromZ = reversed ? connector.toZ : connector.fromZ;
+        float const toX = reversed ? connector.fromX : connector.toX;
+        float const toY = reversed ? connector.fromY : connector.toY;
+        float const toZ = reversed ? connector.fromZ : connector.toZ;
+
+        auto const fromNearest = nearestNodeDistance(*fromGraph, fromX, fromY, fromZ);
+        auto const toNearest = nearestNodeDistance(*toGraph, toX, toY, toZ);
+        if (!fromNearest || !toNearest)
+            continue;
+        if (fromNearest->cumulativeDistanceYards > maxAttachDistanceYards
+            || toNearest->cumulativeDistanceYards > maxAttachDistanceYards)
+        {
+            continue;
+        }
+
+        WorldBotZoneTransitionCandidate candidate;
+        candidate.connectorKey = connector.connectorKey;
+        candidate.explicitConnector = true;
+        candidate.fromWaypoint.mapId = mapId;
+        candidate.fromWaypoint.x = fromX;
+        candidate.fromWaypoint.y = fromY;
+        candidate.fromWaypoint.z = fromZ;
+        candidate.fromWaypoint.routeKey = connector.connectorKey;
+        candidate.toWaypoint.mapId = mapId;
+        candidate.toWaypoint.x = toX;
+        candidate.toWaypoint.y = toY;
+        candidate.toWaypoint.z = toZ;
+        candidate.toWaypoint.routeKey = connector.connectorKey;
+        candidate.seamDistanceYards = Distance3D(fromX, fromY, fromZ, toX, toY, toZ);
+        candidate.sourceHeadingAlignment = 1.0f;
+        candidate.targetHeadingAlignment = 1.0f;
+        candidate.score = 1000.0f - candidate.seamDistanceYards;
+        return candidate;
+    }
+
+    return std::nullopt;
+}
+
+std::optional<WorldBotZoneTransitionCandidate> WorldBotRoutePlanner::ResolveAutomaticZoneTransition(
+    std::uint16_t mapId,
+    std::uint32_t fromZoneId,
+    std::uint32_t toZoneId,
+    float maxSeamDistanceYards) const
+{
+    auto const fromGraph = LoadZoneGraph(mapId, fromZoneId);
+    auto const toGraph = LoadZoneGraph(mapId, toZoneId);
+    if (!fromGraph || !toGraph)
+        return std::nullopt;
+
+    auto const fromTerminals = CollectTerminalNodeCandidates(*fromGraph);
+    auto const toTerminals = CollectTerminalNodeCandidates(*toGraph);
+    if (fromTerminals.empty() || toTerminals.empty())
+        return std::nullopt;
+
+    constexpr float MinDirectionalAlignment = 0.15f;
+
+    std::optional<WorldBotZoneTransitionCandidate> best;
+    for (TerminalNodeCandidate const& fromTerminal : fromTerminals)
+    {
+        auto const& fromWaypoint = fromGraph->nodes[fromTerminal.nodeId].waypoint;
+
+        for (TerminalNodeCandidate const& toTerminal : toTerminals)
+        {
+            auto const& toWaypoint = toGraph->nodes[toTerminal.nodeId].waypoint;
+            float const seamDistance = Distance3D(
+                fromWaypoint.x, fromWaypoint.y, fromWaypoint.z,
+                toWaypoint.x, toWaypoint.y, toWaypoint.z);
+            if (seamDistance > maxSeamDistanceYards)
+                continue;
+
+            auto seamHeading = Normalize(MakeVector(
+                fromWaypoint.x, fromWaypoint.y, fromWaypoint.z,
+                toWaypoint.x, toWaypoint.y, toWaypoint.z));
+            if (!seamHeading)
+                continue;
+
+            float const sourceAlignment = Dot(fromTerminal.outwardHeading, *seamHeading);
+            float const targetAlignment = Dot(*seamHeading, toTerminal.outwardHeading);
+            if (sourceAlignment < MinDirectionalAlignment || targetAlignment < MinDirectionalAlignment)
+                continue;
+
+            float const score = (sourceAlignment * 2.0f) + targetAlignment
+                - (seamDistance / std::max(1.0f, maxSeamDistanceYards));
+
+            if (!best || score > best->score)
+            {
+                best = WorldBotZoneTransitionCandidate{
+                    "",
+                    false,
+                    fromWaypoint,
+                    toWaypoint,
+                    seamDistance,
+                    sourceAlignment,
+                    targetAlignment,
+                    score
+                };
+            }
+        }
+    }
+
+    return best;
 }
 
 } // namespace service

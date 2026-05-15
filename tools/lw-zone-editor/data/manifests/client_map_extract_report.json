@@ -1,0 +1,431 @@
+{
+  "client_dir": "D:\\Wow Private\\WotLK\\Client",
+  "data_dir": "D:\\Wow Private\\WotLK\\Client\\Data",
+  "locale": "enGB",
+  "extractor_path": "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+  "extraction": {
+    "archives": [
+      "D:\\Wow Private\\WotLK\\Client\\Data\\common.MPQ",
+      "D:\\Wow Private\\WotLK\\Client\\Data\\common-2.MPQ",
+      "D:\\Wow Private\\WotLK\\Client\\Data\\expansion.MPQ",
+      "D:\\Wow Private\\WotLK\\Client\\Data\\lichking.MPQ",
+      "D:\\Wow Private\\WotLK\\Client\\Data\\patch-2.MPQ",
+      "D:\\Wow Private\\WotLK\\Client\\Data\\patch-3.MPQ",
+      "D:\\Wow Private\\WotLK\\Client\\Data\\patch.MPQ",
+      "D:\\Wow Private\\WotLK\\Client\\Data\\enGB\\locale-enGB.MPQ",
+      "D:\\Wow Private\\WotLK\\Client\\Data\\enGB\\expansion-locale-enGB.MPQ",
+      "D:\\Wow Private\\WotLK\\Client\\Data\\enGB\\lichking-locale-enGB.MPQ",
+      "D:\\Wow Private\\WotLK\\Client\\Data\\enGB\\patch-enGB-2.MPQ",
+      "D:\\Wow Private\\WotLK\\Client\\Data\\enGB\\patch-enGB-3.MPQ",
+      "D:\\Wow Private\\WotLK\\Client\\Data\\enGB\\patch-enGB.MPQ"
+    ],
+    "patterns": [
+      "Interface\\WorldMap\\*",
+      "World\\Minimaps\\*",
+      "Interface\\Minimap\\*"
+    ],
+    "command_count": 39,
+    "executed_command_count": 39,
+    "commands": [
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "Interface\\WorldMap\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\common.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "World\\Minimaps\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\common.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "Interface\\Minimap\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\common.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "Interface\\WorldMap\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\common-2.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "World\\Minimaps\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\common-2.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "Interface\\Minimap\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\common-2.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "Interface\\WorldMap\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\expansion.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "World\\Minimaps\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\expansion.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "Interface\\Minimap\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\expansion.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "Interface\\WorldMap\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\lichking.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "World\\Minimaps\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\lichking.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "Interface\\Minimap\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\lichking.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "Interface\\WorldMap\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\patch-2.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "World\\Minimaps\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\patch-2.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "Interface\\Minimap\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\patch-2.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "Interface\\WorldMap\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\patch-3.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "World\\Minimaps\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\patch-3.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "Interface\\Minimap\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\patch-3.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "Interface\\WorldMap\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\patch.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "World\\Minimaps\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\patch.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "Interface\\Minimap\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\patch.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "Interface\\WorldMap\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\enGB\\locale-enGB.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "World\\Minimaps\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\enGB\\locale-enGB.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "Interface\\Minimap\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\enGB\\locale-enGB.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "Interface\\WorldMap\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\enGB\\expansion-locale-enGB.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "World\\Minimaps\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\enGB\\expansion-locale-enGB.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "Interface\\Minimap\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\enGB\\expansion-locale-enGB.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "Interface\\WorldMap\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\enGB\\lichking-locale-enGB.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "World\\Minimaps\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\enGB\\lichking-locale-enGB.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "Interface\\Minimap\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\enGB\\lichking-locale-enGB.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "Interface\\WorldMap\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\enGB\\patch-enGB-2.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "World\\Minimaps\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\enGB\\patch-enGB-2.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "Interface\\Minimap\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\enGB\\patch-enGB-2.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "Interface\\WorldMap\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\enGB\\patch-enGB-3.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "World\\Minimaps\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\enGB\\patch-enGB-3.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "Interface\\Minimap\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\enGB\\patch-enGB-3.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "Interface\\WorldMap\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\enGB\\patch-enGB.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "World\\Minimaps\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\enGB\\patch-enGB.MPQ"
+      ],
+      [
+        "D:\\src\\MPQExtractor\\build\\bin\\Release\\MPQExtractor.exe",
+        "-e",
+        "Interface\\Minimap\\*",
+        "-f",
+        "-c",
+        "-o",
+        "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+        "D:\\Wow Private\\WotLK\\Client\\Data\\enGB\\patch-enGB.MPQ"
+      ]
+    ],
+    "raw_output_dir": "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+    "dry_run": false
+  },
+  "conversion": {
+    "raw_input_dir": "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\raw_blp",
+    "png_output_dir": "D:\\src\\azerothcore-wotlk\\tools\\lw-zone-editor\\data\\extracted_maps\\png",
+    "converted_count": 4246,
+    "failed_files": []
+  },
+  "composites": null
+}

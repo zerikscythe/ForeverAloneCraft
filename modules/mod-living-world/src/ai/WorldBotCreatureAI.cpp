@@ -62,7 +62,7 @@ std::filesystem::path ResolveWorldBotRouteExportRoot()
 {
     std::string configured = sConfigMgr->GetOption<std::string>(
         "LivingWorld.RouteExportDir",
-        "tools/lw-zone-editor/data/exported_routes");
+        "data/worldbot_routes");
 
     std::vector<std::filesystem::path> candidates;
     candidates.emplace_back(configured);
@@ -71,6 +71,15 @@ std::filesystem::path ResolveWorldBotRouteExportRoot()
         candidates.emplace_back(std::filesystem::path("..") / configured);
         candidates.emplace_back(std::filesystem::path("..") / ".." / configured);
     }
+
+    // Deployment-first fallbacks: prefer a server-local route bundle placed
+    // alongside the worldserver environment before falling back to editor paths.
+    candidates.emplace_back("data/worldbot_routes");
+    candidates.emplace_back(std::filesystem::path("..") / "data" / "worldbot_routes");
+    candidates.emplace_back(std::filesystem::path("..") / ".." / "data" / "worldbot_routes");
+    candidates.emplace_back("tools/lw-zone-editor/data/exported_routes");
+    candidates.emplace_back(std::filesystem::path("..") / "tools" / "lw-zone-editor" / "data" / "exported_routes");
+    candidates.emplace_back(std::filesystem::path("..") / ".." / "tools" / "lw-zone-editor" / "data" / "exported_routes");
 
     for (std::filesystem::path const& candidate : candidates)
     {
@@ -1108,8 +1117,14 @@ bool WorldBotCreatureAI::TryBuildRouteTravelPlan(
     if (zoneId == 0)
         return false;
 
-    auto const plan = GetWorldBotRoutePlanner().ResolveSameZoneTravelPlan(
+    service::WorldBotTravelCapabilityConfig const capabilityConfig =
+        service::LoadWorldBotTravelCapabilityConfig();
+    service::WorldBotTravelCapabilityPolicy const capabilityPolicy =
+        service::LoadWorldBotTravelCapabilityPolicy();
+
+    auto const plan = GetWorldBotRoutePlanner().ResolveTravelPlan(
         step.mapId,
+        me->GetZoneId(),
         zoneId,
         me->GetPositionX(),
         me->GetPositionY(),
@@ -1117,7 +1132,11 @@ bool WorldBotCreatureAI::TryBuildRouteTravelPlan(
         step.x,
         step.y,
         step.z,
-        service::WorldBotTravelCapabilityTier::Foot);
+        service::ResolveWorldBotTravelCapabilityTierForLevel(
+            static_cast<std::uint8_t>(_identity.level),
+            false,
+            capabilityPolicy),
+        capabilityConfig);
 
     if (!plan || plan->empty())
         return false;
@@ -1192,6 +1211,7 @@ std::string WorldBotCreatureAI::DescribeActiveTravelTarget(service::AmbientStep 
         oss << "route_target=(" << waypoint.x << "," << waypoint.y << "," << waypoint.z
             << ") waypoint=" << (_routeTravelWaypointIndex + 1u) << "/" << _routeTravelPlan.waypoints.size()
             << " total_distance=" << _routeTravelPlan.totalDistanceYards
+            << " speed_yps=" << _routeTravelPlan.speedYardsPerSecond
             << " eta_ms=" << _routeTravelPlan.etaMs;
         return oss.str();
     }

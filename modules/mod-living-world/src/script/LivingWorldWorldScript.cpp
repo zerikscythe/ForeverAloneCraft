@@ -71,7 +71,7 @@ std::filesystem::path ResolveWorldBotRouteExportRoot()
 {
     std::string configured = sConfigMgr->GetOption<std::string>(
         "LivingWorld.RouteExportDir",
-        "tools/lw-zone-editor/data/exported_routes");
+        "data/worldbot_routes");
 
     std::vector<std::filesystem::path> candidates;
     candidates.emplace_back(configured);
@@ -80,6 +80,15 @@ std::filesystem::path ResolveWorldBotRouteExportRoot()
         candidates.emplace_back(std::filesystem::path("..") / configured);
         candidates.emplace_back(std::filesystem::path("..") / ".." / configured);
     }
+
+    // Deployment-first fallbacks: prefer a server-local route bundle placed
+    // alongside the worldserver environment before falling back to editor paths.
+    candidates.emplace_back("data/worldbot_routes");
+    candidates.emplace_back(std::filesystem::path("..") / "data" / "worldbot_routes");
+    candidates.emplace_back(std::filesystem::path("..") / ".." / "data" / "worldbot_routes");
+    candidates.emplace_back("tools/lw-zone-editor/data/exported_routes");
+    candidates.emplace_back(std::filesystem::path("..") / "tools" / "lw-zone-editor" / "data" / "exported_routes");
+    candidates.emplace_back(std::filesystem::path("..") / ".." / "tools" / "lw-zone-editor" / "data" / "exported_routes");
 
     for (std::filesystem::path const& candidate : candidates)
     {
@@ -574,10 +583,16 @@ private:
     }
 
     static living_world::ai::AbstractWorldBotProgressConfig BuildAbstractProgressConfig(
-        living_world::service::AmbientSession const& session)
+        living_world::service::AmbientSession const& session,
+        std::uint8_t botLevel)
     {
         living_world::ai::AbstractWorldBotProgressConfig config;
-        config.routePlanResolver = [&session](
+        living_world::service::WorldBotTravelCapabilityConfig const capabilityConfig =
+            living_world::service::LoadWorldBotTravelCapabilityConfig();
+        living_world::service::WorldBotTravelCapabilityPolicy const capabilityPolicy =
+            living_world::service::LoadWorldBotTravelCapabilityPolicy();
+        config.travelYardsPerSecond = capabilityConfig.footYardsPerSecond;
+        config.routePlanResolver = [&session, botLevel, capabilityConfig, capabilityPolicy](
             living_world::service::AmbientStep const& step,
             std::uint16_t startMapId,
             float startX,
@@ -600,8 +615,9 @@ private:
             if (zoneId == 0)
                 return std::nullopt;
 
-            return GetWorldBotRoutePlanner().ResolveSameZoneTravelPlan(
+            return GetWorldBotRoutePlanner().ResolveTravelPlan(
                 step.mapId,
+                0,
                 zoneId,
                 startX,
                 startY,
@@ -609,7 +625,11 @@ private:
                 step.x,
                 step.y,
                 step.z,
-                living_world::service::WorldBotTravelCapabilityTier::Foot);
+                living_world::service::ResolveWorldBotTravelCapabilityTierForLevel(
+                    botLevel,
+                    false,
+                    capabilityPolicy),
+                capabilityConfig);
         };
         return config;
     }
@@ -745,7 +765,7 @@ private:
             return false;
 
         living_world::ai::AbstractWorldBotProgressConfig const progressConfig =
-            BuildAbstractProgressConfig(runtime.session);
+            BuildAbstractProgressConfig(runtime.session, static_cast<std::uint8_t>(runtime.identity.level));
         living_world::ai::AbstractWorldBotInterpolatedPosition const pos =
             living_world::ai::ComputeAbstractWorldBotInterpolatedPosition(
                 runtime.session,
@@ -904,7 +924,7 @@ private:
 
             runtime.worldOnlineMs += diff;
             living_world::ai::AbstractWorldBotProgressConfig const progressConfig =
-                BuildAbstractProgressConfig(runtime.session);
+                BuildAbstractProgressConfig(runtime.session, static_cast<std::uint8_t>(runtime.identity.level));
             auto const outcome = living_world::ai::AdvanceAbstractWorldBotProgress(
                 runtime.session,
                 runtime.progress,

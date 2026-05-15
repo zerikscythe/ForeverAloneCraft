@@ -1,0 +1,51 @@
+{
+  "catalog_key": "pilot_alliance_eastern_kingdoms_v1",
+  "description": "Slice 1 canonical map asset pilot for the separate LivingWorld zone editor app.",
+  "assets": [
+    {
+      "asset_key": "stormwind_city",
+      "display_name": "Stormwind City",
+      "map_id": 0,
+      "zone_id": 1519,
+      "source_kind": "zone_map",
+      "source_candidates": [
+        "stormwind_city.png",
+        "StormwindCity.png",
+        "stormwind_city.jpg",
+        "1519.png"
+      ],
+      "tags": ["pilot", "capital", "hub"],
+      "validation_notes": "Hub/capital pilot asset for city circulation and service-route overlays later."
+    },
+    {
+      "asset_key": "elwynn_forest",
+      "display_name": "Elwynn Forest",
+      "map_id": 0,
+      "zone_id": 12,
+      "source_kind": "zone_map",
+      "source_candidates": [
+        "elwynn_forest.png",
+        "ElwynnForest.png",
+        "elwynn_forest.jpg",
+        "12.png"
+      ],
+      "tags": ["pilot", "leveling_zone"],
+      "validation_notes": "Starter-zone pilot asset for early route/anchor comparison against task points later."
+    },
+    {
+      "asset_key": "westfall",
+      "display_name": "Westfall",
+      "map_id": 0,
+      "zone_id": 40,
+      "source_kind": "zone_map",
+      "source_candidates": [
+        "westfall.png",
+        "Westfall.png",
+        "westfall.jpg",
+        "40.png"
+      ],
+      "tags": ["pilot", "travel_heavy", "roads"],
+      "validation_notes": "Road-heavy travel pilot asset for future route-corridor authoring."
+    }
+  ]
+}

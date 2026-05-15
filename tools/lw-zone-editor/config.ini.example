@@ -1,0 +1,17 @@
+[route_sampling]
+base_spacing_yards = 25.0
+min_spacing_yards = 5.0
+max_spacing_yards = 50.0
+
+[route_storage]
+route_data_root = data
+editor_routes_subdir = editor_routes
+exported_routes_subdir = exported_routes
+
+[database]
+host =
+port = 3306
+user =
+password =
+database = acore_world
+mysql_binary = mysql
