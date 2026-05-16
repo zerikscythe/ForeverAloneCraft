@@ -1,0 +1,4598 @@
+{
+  "markers": [
+    {
+      "uid": "creature:95345:repair",
+      "kind": "repair",
+      "label": "Weapons Vendor",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": 10342.0,
+      "world_y": -6401.89,
+      "world_z": 42.2989,
+      "entry": 26309,
+      "guid": 95345,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:95360:repair",
+      "kind": "repair",
+      "label": "Weapons Vendor",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": 10346.3,
+      "world_y": -6395.76,
+      "world_z": 42.2989,
+      "entry": 26309,
+      "guid": 95360,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:95363:repair",
+      "kind": "repair",
+      "label": "Weapons Vendor",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": 10344.0,
+      "world_y": -6398.57,
+      "world_z": 42.2989,
+      "entry": 26309,
+      "guid": 95363,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:96263:repair",
+      "kind": "repair",
+      "label": "Weapons Vendor",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": -3935.95,
+      "world_y": -11947.2,
+      "world_z": 1.37436,
+      "entry": 26309,
+      "guid": 96263,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:96266:repair",
+      "kind": "repair",
+      "label": "Weapons Vendor",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": -3926.76,
+      "world_y": -11946.0,
+      "world_z": 1.09044,
+      "entry": 26309,
+      "guid": 96266,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:96271:repair",
+      "kind": "repair",
+      "label": "Weapons Vendor",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": -3931.4,
+      "world_y": -11946.8,
+      "world_z": 1.25584,
+      "entry": 26309,
+      "guid": 96271,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:96291:repair",
+      "kind": "repair",
+      "label": "Weapons Vendor",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": -4181.76,
+      "world_y": -12471.6,
+      "world_z": 48.4961,
+      "entry": 26309,
+      "guid": 96291,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:96296:repair",
+      "kind": "repair",
+      "label": "Weapons Vendor",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": -4186.1,
+      "world_y": -12472.7,
+      "world_z": 49.1084,
+      "entry": 26309,
+      "guid": 96296,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:96310:repair",
+      "kind": "repair",
+      "label": "Weapons Vendor",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": -4177.66,
+      "world_y": -12470.9,
+      "world_z": 47.9964,
+      "entry": 26309,
+      "guid": 96310,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:96377:repair",
+      "kind": "repair",
+      "label": "Weapons Vendor",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": -4126.28,
+      "world_y": -13730.6,
+      "world_z": 78.4293,
+      "entry": 26309,
+      "guid": 96377,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:96379:repair",
+      "kind": "repair",
+      "label": "Weapons Vendor",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": -4131.41,
+      "world_y": -13731.5,
+      "world_z": 78.403,
+      "entry": 26309,
+      "guid": 96379,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:96380:repair",
+      "kind": "repair",
+      "label": "Weapons Vendor",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": -4121.41,
+      "world_y": -13729.8,
+      "world_z": 78.4289,
+      "entry": 26309,
+      "guid": 96380,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:57631:repair",
+      "kind": "repair",
+      "label": "Welethelon",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": 9662.24,
+      "world_y": -7078.38,
+      "world_z": 14.4367,
+      "entry": 16637,
+      "guid": 57631,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:9601:repair",
+      "kind": "repair",
+      "label": "Wenna Silkbeard",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": -2859.09,
+      "world_y": -1448.46,
+      "world_z": 8.68912,
+      "entry": 2679,
+      "guid": 9601,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:79772:repair",
+      "kind": "repair",
+      "label": "Wilhelm Strang",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": -8705.86,
+      "world_y": 376.13,
+      "world_z": 103.809,
+      "entry": 1341,
+      "guid": 79772,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4225,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4225,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:48881:repair",
+      "kind": "repair",
+      "label": "William MacGregor",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": -10658.5,
+      "world_y": 996.851,
+      "world_z": 32.9575,
+      "entry": 1668,
+      "guid": 48881,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4480,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4480,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:117866:repair",
+      "kind": "repair",
+      "label": "Willis Wobblewheel",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 4135.78,
+      "world_y": 5282.23,
+      "world_z": 25.1142,
+      "entry": 26599,
+      "guid": 117866,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:71613:repair",
+      "kind": "repair",
+      "label": "Wind Trader Tuluman",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": 4045.84,
+      "world_y": 3553.27,
+      "world_z": 121.416,
+      "entry": 20112,
+      "guid": 71613,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4227,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4227,
+        "quest_count": 2,
+        "quests": [
+          {
+            "quest_id": 10276,
+            "title": "Full Triangle",
+            "quest_level": 70,
+            "min_level": 67,
+            "faction": "Alliance & Horde",
+            "log_description": "Recover the Ata'mal Crystal and deliver it to the Image of Nexus-Prince Haramad at the Stormspire in the Netherstorm.",
+            "quest_description": "With the data from both the first and second points, I'm now certain that the crystal is at the top of the Ruins of Farahlon to the northeast.$B$BUnfortunately, the data indicates that the crystal is moving, which means that it has already been discovered, probably by the Burning Legion!$B$BJust in case, I recommend that you take some friends along.$B$BSlay the demon that has the crystal and return it to Nexus-Prince Haramad.",
+            "area_description": "",
+            "completion_log": "Return to Image of Nexus-Prince Haramad at The Stormspire in Netherstorm.",
+            "objective_texts": [],
+            "target_requirements": [],
+            "item_requirements": [
+              {
+                "item_id": 29026,
+                "quantity": 1,
+                "name": "Ata'mal Crystal",
+                "objective_overlay_id": "item_source:29026",
+                "objective_overlay_available": true,
+                "objective_spawn_count": 1,
+                "objective_area_count": 1,
+                "objective_map_ids": [
+                  530
+                ],
+                "source_creatures": [
+                  {
+                    "entry": 20138,
+                    "name": "Culuthas"
+                  }
+                ]
+              }
+            ],
+            "requirement_lines": [
+              "0/1 Ata'mal Crystal"
+            ],
+            "reward_money": 44000,
+            "fixed_rewards": [],
+            "choice_rewards": [],
+            "reward_lines": [
+              "4g 40s"
+            ],
+            "prerequisite_quests": [
+              {
+                "quest_id": 10275,
+                "title": "Triangulation Point Two",
+                "relation": "prerequisite",
+                "raw_quest_id": 10275
+              }
+            ],
+            "followup_quests": [],
+            "breadcrumb_for_quests": [],
+            "quest_sort_id": 3523,
+            "quest_type": 2,
+            "quest_flags": 136,
+            "special_flags": 0,
+            "is_daily_quest": false,
+            "is_weekly_quest": false,
+            "is_monthly_quest": false,
+            "is_event_quest": false,
+            "classification_tags": [],
+            "objective_overlay_ids": [
+              "item_source:29026"
+            ],
+            "branch_candidates": [
+              {
+                "branch_kind": "item_source",
+                "branch_id": "item_source:29026",
+                "label": "Ata'mal Crystal",
+                "weight": 1.0,
+                "giver_entry": 20112
+              }
+            ],
+            "branch_metadata": {
+              "branch_mode": "linear",
+              "branch_count": 1,
+              "return_to_giver_assumed": true
+            }
+          },
+          {
+            "quest_id": 10317,
+            "title": "Dealing with the Foreman",
+            "quest_level": 70,
+            "min_level": 68,
+            "faction": "Alliance & Horde",
+            "log_description": "Deal with Foreman Sundown inside the Trelleum Mine, which is underneath Manaforge Ara in the Netherstorm.",
+            "quest_description": "The blood elves call the mine underneath Manaforge Ara the Trelleum Mine.  Ever since they lost the one underneath Manaforge Ultris, this is where their sole supply of material for running the forges is coming from.$B$BNeedless to say, it would be a boon for us to cripple their mining operation.  Perhaps we'd even be able to move in and take it over for ourselves?$B$BWhatever the case, I want you to go in there and deal with Foreman Sundown.  The mine is around the back of the island to the left.",
+            "area_description": "",
+            "completion_log": "",
+            "objective_texts": [],
+            "target_requirements": [],
+            "item_requirements": [],
+            "requirement_lines": [],
+            "reward_money": 0,
+            "fixed_rewards": [],
+            "choice_rewards": [],
+            "reward_lines": [],
+            "prerequisite_quests": [],
+            "followup_quests": [
+              {
+                "quest_id": 10318,
+                "title": "Dealing with the Overmaster",
+                "relation": "reward_next",
+                "raw_quest_id": 10318
+              }
+            ],
+            "breadcrumb_for_quests": [],
+            "quest_sort_id": 3523,
+            "quest_type": 2,
+            "quest_flags": 136,
+            "special_flags": 0,
+            "is_daily_quest": false,
+            "is_weekly_quest": false,
+            "is_monthly_quest": false,
+            "is_event_quest": false,
+            "classification_tags": [],
+            "objective_overlay_ids": [],
+            "branch_candidates": [
+              {
+                "branch_kind": "followup_quest",
+                "branch_id": 10318,
+                "label": "Dealing with the Overmaster",
+                "weight": 1.0,
+                "relation": "reward_next"
+              }
+            ],
+            "branch_metadata": {
+              "branch_mode": "linear",
+              "branch_count": 1,
+              "return_to_giver_assumed": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "uid": "creature:57682:repair",
+      "kind": "repair",
+      "label": "Winthren",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": 9453.0,
+      "world_y": -7126.1,
+      "world_z": 16.1476,
+      "entry": 16693,
+      "guid": 57682,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:42271:repair",
+      "kind": "repair",
+      "label": "Wixxrak",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": 6733.39,
+      "world_y": -4699.04,
+      "world_z": 721.453,
+      "entry": 11184,
+      "guid": 42271,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4480,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4480,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:51677:repair",
+      "kind": "repair",
+      "label": "Worb Strongstitch",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": -4339.65,
+      "world_y": 249.374,
+      "world_z": 26.4007,
+      "entry": 8159,
+      "guid": 51677,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4226,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4226,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:23416:repair",
+      "kind": "repair",
+      "label": "Wrinkle Goodsteel",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": -7149.83,
+      "world_y": -3723.66,
+      "world_z": 8.57805,
+      "entry": 8129,
+      "guid": 23416,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4226,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4226,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:7289:repair",
+      "kind": "repair",
+      "label": "Wuark",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": 358.128,
+      "world_y": -4706.73,
+      "world_z": 14.4772,
+      "entry": 3167,
+      "guid": 7289,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:52922:repair",
+      "kind": "repair",
+      "label": "Wynne Larson",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": -8963.0,
+      "world_y": 822.517,
+      "world_z": 109.447,
+      "entry": 1309,
+      "guid": 52922,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4227,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4227,
+        "quest_count": 2,
+        "quests": [
+          {
+            "quest_id": 1941,
+            "title": "Manaweave Robe",
+            "quest_level": 15,
+            "min_level": 15,
+            "faction": "Alliance",
+            "log_description": "",
+            "quest_description": "",
+            "area_description": "",
+            "completion_log": "",
+            "objective_texts": [],
+            "target_requirements": [],
+            "item_requirements": [],
+            "requirement_lines": [],
+            "reward_money": 0,
+            "fixed_rewards": [
+              {
+                "item_id": 7509,
+                "quantity": 1,
+                "name": "Manaweave Robe"
+              }
+            ],
+            "choice_rewards": [],
+            "reward_lines": [
+              "1x Manaweave Robe"
+            ],
+            "prerequisite_quests": [
+              {
+                "quest_id": 1921,
+                "title": "Gathering Materials",
+                "relation": "prerequisite",
+                "raw_quest_id": 1921
+              }
+            ],
+            "followup_quests": [],
+            "breadcrumb_for_quests": [],
+            "quest_sort_id": 161,
+            "quest_type": 0,
+            "quest_flags": 8,
+            "special_flags": 0,
+            "is_daily_quest": false,
+            "is_weekly_quest": false,
+            "is_monthly_quest": false,
+            "is_event_quest": false,
+            "classification_tags": [],
+            "objective_overlay_ids": [],
+            "branch_candidates": [],
+            "branch_metadata": {
+              "branch_mode": "linear",
+              "branch_count": 0,
+              "return_to_giver_assumed": true
+            }
+          },
+          {
+            "quest_id": 1942,
+            "title": "Astral Knot Garment",
+            "quest_level": 26,
+            "min_level": 26,
+            "faction": "Alliance",
+            "log_description": "",
+            "quest_description": "",
+            "area_description": "",
+            "completion_log": "",
+            "objective_texts": [],
+            "target_requirements": [],
+            "item_requirements": [],
+            "requirement_lines": [],
+            "reward_money": 0,
+            "fixed_rewards": [],
+            "choice_rewards": [
+              {
+                "item_id": 7511,
+                "quantity": 1,
+                "name": "Astral Knot Robe"
+              },
+              {
+                "item_id": 9516,
+                "quantity": 1,
+                "name": "Astral Knot Blouse"
+              }
+            ],
+            "reward_lines": [
+              "1x Astral Knot Robe",
+              "1x Astral Knot Blouse"
+            ],
+            "prerequisite_quests": [
+              {
+                "quest_id": 1940,
+                "title": "Pristine Spider Silk",
+                "relation": "prerequisite",
+                "raw_quest_id": 1940
+              }
+            ],
+            "followup_quests": [],
+            "breadcrumb_for_quests": [],
+            "quest_sort_id": 161,
+            "quest_type": 0,
+            "quest_flags": 8,
+            "special_flags": 0,
+            "is_daily_quest": false,
+            "is_weekly_quest": false,
+            "is_monthly_quest": false,
+            "is_event_quest": false,
+            "classification_tags": [],
+            "objective_overlay_ids": [],
+            "branch_candidates": [],
+            "branch_metadata": {
+              "branch_mode": "linear",
+              "branch_count": 0,
+              "return_to_giver_assumed": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "uid": "creature:77581:repair",
+      "kind": "repair",
+      "label": "Wyrmcult Provisioner",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": 3165.79,
+      "world_y": 7004.0,
+      "world_z": 161.833,
+      "entry": 22099,
+      "guid": 77581,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4225,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4225,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:77582:repair",
+      "kind": "repair",
+      "label": "Wyrmcult Provisioner",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": 3164.5,
+      "world_y": 7017.97,
+      "world_z": 161.942,
+      "entry": 22099,
+      "guid": 77582,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4225,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4225,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:32750:repair",
+      "kind": "repair",
+      "label": "Xai'ander",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": 2672.31,
+      "world_y": -363.604,
+      "world_z": 110.811,
+      "entry": 11137,
+      "guid": 32750,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:115842:repair",
+      "kind": "repair",
+      "label": "Xark Bolthammer",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 6097.56,
+      "world_y": -1071.26,
+      "world_z": 404.496,
+      "entry": 29907,
+      "guid": 115842,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:85209:repair",
+      "kind": "repair",
+      "label": "Xazi Smolderpipe",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 5751.54,
+      "world_y": 584.66,
+      "world_z": 615.052,
+      "entry": 33937,
+      "guid": 85209,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:152024:repair",
+      "kind": "repair",
+      "label": "Xazi Smolderpipe",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 5751.54,
+      "world_y": 584.66,
+      "world_z": 615.052,
+      "entry": 31864,
+      "guid": 152024,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:208493:repair",
+      "kind": "repair",
+      "label": "Xazi Smolderpipe",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 5751.54,
+      "world_y": 584.66,
+      "world_z": 615.052,
+      "entry": 33926,
+      "guid": 208493,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:208505:repair",
+      "kind": "repair",
+      "label": "Xazi Smolderpipe",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 5751.54,
+      "world_y": 584.66,
+      "world_z": 615.052,
+      "entry": 33922,
+      "guid": 208505,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:23258:repair",
+      "kind": "repair",
+      "label": "Yarley",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": -8479.39,
+      "world_y": -4627.54,
+      "world_z": -205.021,
+      "entry": 20082,
+      "guid": 23258,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4225,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4225,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:57743:repair",
+      "kind": "repair",
+      "label": "Yil",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": -4280.97,
+      "world_y": -11778.2,
+      "world_z": -93.9534,
+      "entry": 16750,
+      "guid": 57743,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:135682:repair",
+      "kind": "repair",
+      "label": "Ythyar",
+      "object_type": "creature",
+      "map_id": 532,
+      "world_x": -11154.2,
+      "world_y": -1849.03,
+      "world_z": 238.25,
+      "entry": 17518,
+      "guid": 135682,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 6273,
+        "spawn_npcflag": 0,
+        "template_npcflag": 6273,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:4595:repair",
+      "kind": "repair",
+      "label": "Yuka Screwspigot",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": -7459.77,
+      "world_y": -2201.64,
+      "world_z": 165.37,
+      "entry": 9544,
+      "guid": 4595,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4227,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4227,
+        "quest_count": 1,
+        "quests": [
+          {
+            "quest_id": 4136,
+            "title": "Ribbly Screwspigot",
+            "quest_level": 53,
+            "min_level": 48,
+            "faction": "Alliance & Horde",
+            "log_description": "Bring Ribbly's Head to Yuka Screwspigot in the Burning Steppes.",
+            "quest_description": "My brother Ribbly has always been a drain to his family, taking our money and wasting it on one scheme after another.$B$BWell, his last scheme must have been his worst, because Baron Revilgaz of Booty Bay just put a price on poor Ribbly's head.  I can't tell you how happy this makes the Screwspigots!  Our little Ribbly's finally worth something!$B$BBut now he's hiding out, deep in Blackrock Depths.  Please, find him and bring him to me!$B$BOr, if he won't come, then that's ok... just bring me his head.",
+            "area_description": "",
+            "completion_log": "Return to Yuka Screwspigot in the Burning Steppes.",
+            "objective_texts": [],
+            "target_requirements": [],
+            "item_requirements": [
+              {
+                "item_id": 11313,
+                "quantity": 1,
+                "name": "Ribbly's Head",
+                "objective_overlay_id": "item_source:11313",
+                "objective_overlay_available": true,
+                "objective_spawn_count": 1,
+                "objective_area_count": 1,
+                "objective_map_ids": [
+                  230
+                ],
+                "source_creatures": [
+                  {
+                    "entry": 9543,
+                    "name": "Ribbly Screwspigot"
+                  }
+                ]
+              }
+            ],
+            "requirement_lines": [
+              "0/1 Ribbly's Head"
+            ],
+            "reward_money": 6000,
+            "fixed_rewards": [],
+            "choice_rewards": [
+              {
+                "item_id": 11865,
+                "quantity": 1,
+                "name": "Rancor Boots"
+              },
+              {
+                "item_id": 11963,
+                "quantity": 1,
+                "name": "Penance Spaulders"
+              },
+              {
+                "item_id": 12049,
+                "quantity": 1,
+                "name": "Splintsteel Armor"
+              }
+            ],
+            "reward_lines": [
+              "60s",
+              "1x Rancor Boots",
+              "1x Penance Spaulders",
+              "1x Splintsteel Armor"
+            ],
+            "prerequisite_quests": [
+              {
+                "quest_id": 4324,
+                "title": "Yuka Screwspigot",
+                "relation": "prerequisite",
+                "raw_quest_id": 4324
+              }
+            ],
+            "followup_quests": [],
+            "breadcrumb_for_quests": [],
+            "quest_sort_id": 1584,
+            "quest_type": 2,
+            "quest_flags": 8,
+            "special_flags": 0,
+            "is_daily_quest": false,
+            "is_weekly_quest": false,
+            "is_monthly_quest": false,
+            "is_event_quest": false,
+            "classification_tags": [],
+            "objective_overlay_ids": [
+              "item_source:11313"
+            ],
+            "branch_candidates": [
+              {
+                "branch_kind": "item_source",
+                "branch_id": "item_source:11313",
+                "label": "Ribbly's Head",
+                "weight": 1.0,
+                "giver_entry": 9544
+              }
+            ],
+            "branch_metadata": {
+              "branch_mode": "linear",
+              "branch_count": 1,
+              "return_to_giver_assumed": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "uid": "creature:8477:repair",
+      "kind": "repair",
+      "label": "Zanara",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": -3086.6,
+      "world_y": -2838.95,
+      "world_z": 34.5123,
+      "entry": 9552,
+      "guid": 8477,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4482,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4482,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:31862:repair",
+      "kind": "repair",
+      "label": "Zane Bradford",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": 1705.5,
+      "world_y": 205.857,
+      "world_z": -62.0755,
+      "entry": 5754,
+      "guid": 31862,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4226,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4226,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:7:repair",
+      "kind": "repair",
+      "label": "Zarena Cromwind",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": -14379.1,
+      "world_y": 412.672,
+      "world_z": 6.8203,
+      "entry": 2482,
+      "guid": 7,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:57630:repair",
+      "kind": "repair",
+      "label": "Zathanna",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": 9629.07,
+      "world_y": -7240.86,
+      "world_z": 15.3287,
+      "entry": 16636,
+      "guid": 57630,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:7453:repair",
+      "kind": "repair",
+      "label": "Zendo'jian",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": 2099.23,
+      "world_y": -4818.85,
+      "world_z": 24.4023,
+      "entry": 3409,
+      "guid": 7453,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4482,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4482,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:73660:repair",
+      "kind": "repair",
+      "label": "Zinyen Swiftstrider",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": 3023.43,
+      "world_y": 5504.72,
+      "world_z": 145.829,
+      "entry": 20917,
+      "guid": 73660,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:15424:repair",
+      "kind": "repair",
+      "label": "Zixil",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": -339.084,
+      "world_y": -708.558,
+      "world_z": 57.732,
+      "entry": 3537,
+      "guid": 15424,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4226,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4226,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:85208:repair",
+      "kind": "repair",
+      "label": "Zom Bocom",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 5751.73,
+      "world_y": 582.943,
+      "world_z": 615.052,
+      "entry": 33938,
+      "guid": 85208,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:152025:repair",
+      "kind": "repair",
+      "label": "Zom Bocom",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 5751.73,
+      "world_y": 582.943,
+      "world_z": 615.052,
+      "entry": 31865,
+      "guid": 152025,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:208495:repair",
+      "kind": "repair",
+      "label": "Zom Bocom",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 5751.73,
+      "world_y": 582.943,
+      "world_z": 615.052,
+      "entry": 33925,
+      "guid": 208495,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:208507:repair",
+      "kind": "repair",
+      "label": "Zom Bocom",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 5751.73,
+      "world_y": 582.943,
+      "world_z": 615.052,
+      "entry": 33923,
+      "guid": 208507,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:8472:repair",
+      "kind": "repair",
+      "label": "Zulrg",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": -3146.33,
+      "world_y": -2873.78,
+      "world_z": 34.3575,
+      "entry": 4884,
+      "guid": 8472,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:89112:repair",
+      "kind": "repair",
+      "label": "Zungam",
+      "object_type": "creature",
+      "map_id": 568,
+      "world_x": 250.141,
+      "world_y": 996.782,
+      "world_z": 10.9915,
+      "entry": 23897,
+      "guid": 89112,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4226,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4226,
+        "quest_count": 1,
+        "quests": [
+          {
+            "quest_id": 11195,
+            "title": "Playin' With Dolls",
+            "quest_level": 70,
+            "min_level": 70,
+            "faction": "Alliance & Horde",
+            "log_description": "Take the Tattered Voodoo Doll to Griftah in Shattrath City.",
+            "quest_description": "I'm touched, $n, an' dat be da truth. I'm not rememberin' the last time a $r helped Zungam outta trouble.$b$bI snatched this from one of them savages when he was busy chainin' me up. It don't look like much, but if anyone can determine its worth, it be my good friend, Griftah!$b$bIf ya be makin' it outta here alive, it might be worth takin' this to him out in Shattrath City.",
+            "area_description": "",
+            "completion_log": "Return to Griftah in Shattrath City.",
+            "objective_texts": [],
+            "target_requirements": [],
+            "item_requirements": [
+              {
+                "item_id": 33107,
+                "quantity": 1,
+                "name": "Tattered Voodoo Doll",
+                "objective_overlay_id": "item_source:33107",
+                "objective_overlay_available": false
+              }
+            ],
+            "requirement_lines": [
+              "0/1 Tattered Voodoo Doll"
+            ],
+            "reward_money": 0,
+            "fixed_rewards": [
+              {
+                "item_id": 34256,
+                "quantity": 1,
+                "name": "Charmed Amani Jewel"
+              }
+            ],
+            "choice_rewards": [],
+            "reward_lines": [
+              "1x Charmed Amani Jewel"
+            ],
+            "prerequisite_quests": [
+              {
+                "quest_id": 11165,
+                "title": "A Troll Among Trolls",
+                "relation": "prerequisite",
+                "raw_quest_id": 11165
+              }
+            ],
+            "followup_quests": [],
+            "breadcrumb_for_quests": [],
+            "quest_sort_id": 3805,
+            "quest_type": 2,
+            "quest_flags": 128,
+            "special_flags": 0,
+            "is_daily_quest": false,
+            "is_weekly_quest": false,
+            "is_monthly_quest": false,
+            "is_event_quest": false,
+            "classification_tags": [],
+            "objective_overlay_ids": [],
+            "branch_candidates": [],
+            "branch_metadata": {
+              "branch_mode": "linear",
+              "branch_count": 0,
+              "return_to_giver_assumed": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "uid": "creature:63713:repair",
+      "kind": "repair",
+      "label": "Zurai",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": 99.9843,
+      "world_y": 5188.04,
+      "world_z": 21.1605,
+      "entry": 18011,
+      "guid": 63713,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4483,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4483,
+        "quest_count": 4,
+        "quests": [
+          {
+            "quest_id": 9771,
+            "title": "Searching for Scout Jyoba",
+            "quest_level": 62,
+            "min_level": 59,
+            "faction": "Alliance & Horde",
+            "log_description": "Search for Scout Jyoba at the Dead Mire in Zangarmarsh.",
+            "quest_description": "Now that you're familiar with the terrain, I'd like to ask your help with something else. The Dead Mire, we've taken to calling the area to the northwest, is an eerie place. No one has ever reported seeing anything alive there, but they didn't stay for very long, either.$B$BScout Jyoba volunteered to investigate the area and report on his findings. He left the post three days ago and hasn't returned. It's not like him to be gone that long without sending some kind of report. Will you search for him, $N?",
+            "area_description": "",
+            "completion_log": "",
+            "objective_texts": [],
+            "target_requirements": [],
+            "item_requirements": [],
+            "requirement_lines": [],
+            "reward_money": 0,
+            "fixed_rewards": [],
+            "choice_rewards": [],
+            "reward_lines": [],
+            "prerequisite_quests": [
+              {
+                "quest_id": 9774,
+                "title": "Thick Hydra Scales",
+                "relation": "prerequisite",
+                "raw_quest_id": 9774
+              }
+            ],
+            "followup_quests": [
+              {
+                "quest_id": 9772,
+                "title": "Jyoba's Report",
+                "relation": "reward_next",
+                "raw_quest_id": 9772
+              }
+            ],
+            "breadcrumb_for_quests": [],
+            "quest_sort_id": 3521,
+            "quest_type": 2,
+            "quest_flags": 136,
+            "special_flags": 0,
+            "is_daily_quest": false,
+            "is_weekly_quest": false,
+            "is_monthly_quest": false,
+            "is_event_quest": false,
+            "classification_tags": [],
+            "objective_overlay_ids": [],
+            "branch_candidates": [
+              {
+                "branch_kind": "followup_quest",
+                "branch_id": 9772,
+                "label": "Jyoba's Report",
+                "weight": 1.0,
+                "relation": "reward_next"
+              }
+            ],
+            "branch_metadata": {
+              "branch_mode": "linear",
+              "branch_count": 1,
+              "return_to_giver_assumed": true
+            }
+          },
+          {
+            "quest_id": 9774,
+            "title": "Thick Hydra Scales",
+            "quest_level": 62,
+            "min_level": 59,
+            "faction": "Alliance & Horde",
+            "log_description": "Zurai at Swamprat Post wants you to bring him 12 Thick Hydra Scales.",
+            "quest_description": "Reavij was wise to bring leather armor. This swamp will render my mail useless before long.$B$BI've been replacing the scales bit by bit as I'm able. The hydra in the marsh have thick, protective scales that stand up well to the dampness of their home.$B$BFinding suitable ones is a tedious process, though. All too often, the best scales are torn or worn too thin for use in armor. Bring me any good ones that you might get from the hydra in the larger lakes.",
+            "area_description": "",
+            "completion_log": "Return to Zurai at Swamprat Post in Zangarmarsh.",
+            "objective_texts": [],
+            "target_requirements": [],
+            "item_requirements": [
+              {
+                "item_id": 24375,
+                "quantity": 12,
+                "name": "Thick Hydra Scale",
+                "objective_overlay_id": "item_source:24375",
+                "objective_overlay_available": true,
+                "objective_spawn_count": 78,
+                "objective_area_count": 12,
+                "objective_map_ids": [
+                  530
+                ],
+                "source_creatures": [
+                  {
+                    "entry": 18213,
+                    "name": "Mire Hydra"
+                  },
+                  {
+                    "entry": 18214,
+                    "name": "Fenclaw Thrasher"
+                  },
+                  {
+                    "entry": 20324,
+                    "name": "Parched Hydra"
+                  }
+                ]
+              }
+            ],
+            "requirement_lines": [
+              "0/12 Thick Hydra Scale"
+            ],
+            "reward_money": 27000,
+            "fixed_rewards": [],
+            "choice_rewards": [],
+            "reward_lines": [
+              "2g 70s"
+            ],
+            "prerequisite_quests": [],
+            "followup_quests": [
+              {
+                "quest_id": 9771,
+                "title": "Searching for Scout Jyoba",
+                "relation": "next",
+                "raw_quest_id": 9771
+              },
+              {
+                "quest_id": 9771,
+                "title": "Searching for Scout Jyoba",
+                "relation": "reward_next",
+                "raw_quest_id": 9771
+              }
+            ],
+            "breadcrumb_for_quests": [],
+            "quest_sort_id": 3521,
+            "quest_type": 2,
+            "quest_flags": 128,
+            "special_flags": 0,
+            "is_daily_quest": false,
+            "is_weekly_quest": false,
+            "is_monthly_quest": false,
+            "is_event_quest": false,
+            "classification_tags": [],
+            "objective_overlay_ids": [
+              "item_source:24375"
+            ],
+            "branch_candidates": [
+              {
+                "branch_kind": "item_source",
+                "branch_id": "item_source:24375",
+                "label": "Thick Hydra Scale",
+                "weight": 1.0,
+                "giver_entry": 18011
+              },
+              {
+                "branch_kind": "followup_quest",
+                "branch_id": 9771,
+                "label": "Searching for Scout Jyoba",
+                "weight": 1.0,
+                "relation": "next"
+              },
+              {
+                "branch_kind": "followup_quest",
+                "branch_id": 9771,
+                "label": "Searching for Scout Jyoba",
+                "weight": 1.0,
+                "relation": "reward_next"
+              }
+            ],
+            "branch_metadata": {
+              "branch_mode": "branching",
+              "branch_count": 3,
+              "return_to_giver_assumed": true
+            }
+          },
+          {
+            "quest_id": 9775,
+            "title": "Report to Shadow Hunter Denjai",
+            "quest_level": 62,
+            "min_level": 62,
+            "faction": "Alliance & Horde",
+            "log_description": "Bring Zurai's Report to Shadow Hunter Denjai at Zabra'jin in Zangarmarsh.",
+            "quest_description": "Shadow Hunter Denjai will no doubt expect to receive a report about my progress in establishing our outpost. I've prepared a short summary of what we've accomplished here already, but with the loss of Scout Jyoba, I can't spare a runner to take the report to Denjai's base of Zabra'jin to the west.$B$BIf you're headed that way, would you mind bringing this to him? Shadow Hunter Denjai can be a little intimidating at first, but once you get used to him, he's not so bad.",
+            "area_description": "",
+            "completion_log": "",
+            "objective_texts": [],
+            "target_requirements": [],
+            "item_requirements": [
+              {
+                "item_id": 24382,
+                "quantity": 1,
+                "name": "Zurai's Report",
+                "objective_overlay_id": "item_source:24382",
+                "objective_overlay_available": false
+              }
+            ],
+            "requirement_lines": [
+              "0/1 Zurai's Report"
+            ],
+            "reward_money": 0,
+            "fixed_rewards": [],
+            "choice_rewards": [],
+            "reward_lines": [],
+            "prerequisite_quests": [],
+            "followup_quests": [],
+            "breadcrumb_for_quests": [],
+            "quest_sort_id": 3521,
+            "quest_type": 2,
+            "quest_flags": 128,
+            "special_flags": 0,
+            "is_daily_quest": false,
+            "is_weekly_quest": false,
+            "is_monthly_quest": false,
+            "is_event_quest": false,
+            "classification_tags": [],
+            "objective_overlay_ids": [],
+            "branch_candidates": [],
+            "branch_metadata": {
+              "branch_mode": "linear",
+              "branch_count": 0,
+              "return_to_giver_assumed": true
+            }
+          },
+          {
+            "quest_id": 9796,
+            "title": "News from Zangarmarsh",
+            "quest_level": 62,
+            "min_level": 62,
+            "faction": "Horde",
+            "log_description": "Speak with Mokasa at Stonebreaker Hold in Terokkar Forest.",
+            "quest_description": "Shadow Hunter Denjai isn't the only one expecting a report from me. Mokasa at Stonebreaker Hold in Terokkar is eager to hear of our progress, especially since most of her messengers travel through here.$B$BShe asked me to send word once Swamprat Post was completed. If you wouldn't mind delivering the news, I'd be very grateful. We may be up and running, but there is still much to be done.$B$BTo get to Stonebreaker Hold, follow the road south out of Zangarmarsh, into Terokkar Forest and beyond Tuurem.",
+            "area_description": "",
+            "completion_log": "",
+            "objective_texts": [],
+            "target_requirements": [],
+            "item_requirements": [],
+            "requirement_lines": [],
+            "reward_money": 0,
+            "fixed_rewards": [],
+            "choice_rewards": [],
+            "reward_lines": [],
+            "prerequisite_quests": [],
+            "followup_quests": [],
+            "breadcrumb_for_quests": [],
+            "quest_sort_id": 3521,
+            "quest_type": 2,
+            "quest_flags": 136,
+            "special_flags": 0,
+            "is_daily_quest": false,
+            "is_weekly_quest": false,
+            "is_monthly_quest": false,
+            "is_event_quest": false,
+            "classification_tags": [],
+            "objective_overlay_ids": [],
+            "branch_candidates": [],
+            "branch_metadata": {
+              "branch_mode": "linear",
+              "branch_count": 0,
+              "return_to_giver_assumed": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "uid": "creature:57618:repair",
+      "kind": "repair",
+      "label": "Zyandrel",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": 9768.83,
+      "world_y": -7183.23,
+      "world_z": 16.6016,
+      "entry": 16623,
+      "guid": 57618,
+      "icon_relpath": "interface/minimap/tracking/repair.png",
+      "metadata": {
+        "npcflag": 4224,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4224,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:28312:stablemaster",
+      "kind": "stablemaster",
+      "label": "Aboda",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": -1606.46,
+      "world_y": 3113.82,
+      "world_z": 44.6941,
+      "entry": 11105,
+      "guid": 28312,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:46331:stablemaster",
+      "kind": "stablemaster",
+      "label": "Alassin",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": 10167.4,
+      "world_y": 2522.79,
+      "world_z": 1342.57,
+      "entry": 10056,
+      "guid": 46331,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:56863:stablemaster",
+      "kind": "stablemaster",
+      "label": "Anathos",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": 9487.6,
+      "world_y": -6830.59,
+      "world_z": 16.7051,
+      "entry": 16185,
+      "guid": 56863,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:97186:stablemaster",
+      "kind": "stablemaster",
+      "label": "Andurg Slatechest",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 8449.52,
+      "world_y": -336.456,
+      "world_z": 906.691,
+      "entry": 29959,
+      "guid": 97186,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:50075:stablemaster",
+      "kind": "stablemaster",
+      "label": "Antarius",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": -4365.72,
+      "world_y": 3254.8,
+      "world_z": 12.6801,
+      "entry": 10059,
+      "guid": 50075,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:38410:stablemaster",
+      "kind": "stablemaster",
+      "label": "Anya Maulray",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": 1637.35,
+      "world_y": 226.357,
+      "world_z": -43.02,
+      "entry": 10053,
+      "guid": 38410,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:57750:stablemaster",
+      "kind": "stablemaster",
+      "label": "Arthaid",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": -3787.01,
+      "world_y": -11702.7,
+      "world_z": -105.135,
+      "entry": 16764,
+      "guid": 57750,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:203245:stablemaster",
+      "kind": "stablemaster",
+      "label": "Artie Grizzlehand",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 2469.19,
+      "world_y": -5064.75,
+      "world_z": 283.269,
+      "entry": 24066,
+      "guid": 203245,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:103713:stablemaster",
+      "kind": "stablemaster",
+      "label": "Asgari",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 5746.13,
+      "world_y": -3546.94,
+      "world_z": 388.316,
+      "entry": 30039,
+      "guid": 103713,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:63388:stablemaster",
+      "kind": "stablemaster",
+      "label": "Astur",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": -2063.81,
+      "world_y": -11870.2,
+      "world_z": 48.7808,
+      "entry": 17666,
+      "guid": 63388,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:21576:stablemaster",
+      "kind": "stablemaster",
+      "label": "Awenasa",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": -5464.6,
+      "world_y": -2447.39,
+      "world_z": 89.4338,
+      "entry": 11117,
+      "guid": 21576,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:42182:stablemaster",
+      "kind": "stablemaster",
+      "label": "Azzleby",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": 6738.57,
+      "world_y": -4604.24,
+      "world_z": 720.539,
+      "entry": 11119,
+      "guid": 42182,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:9466:stablemaster",
+      "kind": "stablemaster",
+      "label": "Bethaine Flinthammer",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": -3794.34,
+      "world_y": -824.898,
+      "world_z": 9.84759,
+      "entry": 10046,
+      "guid": 9466,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:120108:stablemaster",
+      "kind": "stablemaster",
+      "label": "Boarmaster Bragh",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 6670.74,
+      "world_y": -197.184,
+      "world_z": 952.146,
+      "entry": 29948,
+      "guid": 120108,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:70005:stablemaster",
+      "kind": "stablemaster",
+      "label": "Bognar Ironfoot",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 8503.91,
+      "world_y": 1073.75,
+      "world_z": 552.269,
+      "entry": 35344,
+      "guid": 70005,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:113420:stablemaster",
+      "kind": "stablemaster",
+      "label": "Breka Wolfsister",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 4495.48,
+      "world_y": 5695.72,
+      "world_z": 81.4125,
+      "entry": 27065,
+      "guid": 113420,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:24769:stablemaster",
+      "kind": "stablemaster",
+      "label": "Bulrug",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": -1269.08,
+      "world_y": 46.0596,
+      "world_z": 128.584,
+      "entry": 10054,
+      "guid": 24769,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:107742:stablemaster",
+      "kind": "stablemaster",
+      "label": "Celidh Aletracker",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 2263.63,
+      "world_y": 5203.92,
+      "world_z": 11.8411,
+      "entry": 27010,
+      "guid": 107742,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:116771:stablemaster",
+      "kind": "stablemaster",
+      "label": "Chelsea Reese",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 1449.52,
+      "world_y": -3308.64,
+      "world_z": 168.919,
+      "entry": 29658,
+      "guid": 116771,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:100065:stablemaster",
+      "kind": "stablemaster",
+      "label": "Craga Ironsting",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 3273.75,
+      "world_y": -2246.84,
+      "world_z": 114.818,
+      "entry": 29740,
+      "guid": 100065,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:69099:stablemaster",
+      "kind": "stablemaster",
+      "label": "Crinn Pathfinder",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": -4002.55,
+      "world_y": 2161.89,
+      "world_z": 104.934,
+      "entry": 19368,
+      "guid": 69099,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:609:stablemaster",
+      "kind": "stablemaster",
+      "label": "Durik",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": -12423.7,
+      "world_y": 187.072,
+      "world_z": 1.16645,
+      "entry": 16094,
+      "guid": 609,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:125566:stablemaster",
+      "kind": "stablemaster",
+      "label": "Durkot Wolfbrother",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 2783.69,
+      "world_y": 6248.38,
+      "world_z": 84.3158,
+      "entry": 26044,
+      "guid": 125566,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:80340:stablemaster",
+      "kind": "stablemaster",
+      "label": "Erma",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": -9465.95,
+      "world_y": 48.1419,
+      "world_z": 56.9676,
+      "entry": 6749,
+      "guid": 80340,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:84583:stablemaster",
+      "kind": "stablemaster",
+      "label": "Esbina",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": -4146.42,
+      "world_y": -12492.7,
+      "world_z": 44.6167,
+      "entry": 17485,
+      "guid": 84583,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:106886:stablemaster",
+      "kind": "stablemaster",
+      "label": "Fala Softhoof",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 5494.73,
+      "world_y": -2611.75,
+      "world_z": 304.037,
+      "entry": 28790,
+      "guid": 106886,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:78880:stablemaster",
+      "kind": "stablemaster",
+      "label": "Fiskal Shadowsong",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": 2074.93,
+      "world_y": 6888.71,
+      "world_z": 180.966,
+      "entry": 22469,
+      "guid": 78880,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:110316:stablemaster",
+      "kind": "stablemaster",
+      "label": "Garmin Herzog",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 3228.8,
+      "world_y": -680.03,
+      "world_z": 167.718,
+      "entry": 28057,
+      "guid": 110316,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:74708:stablemaster",
+      "kind": "stablemaster",
+      "label": "Gedrah",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": -3023.0,
+      "world_y": 2618.0,
+      "world_z": 76.804,
+      "entry": 21336,
+      "guid": 74708,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:29236:stablemaster",
+      "kind": "stablemaster",
+      "label": "Gereck",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": 917.614,
+      "world_y": 905.439,
+      "world_z": 105.418,
+      "entry": 10048,
+      "guid": 29236,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:6870:stablemaster",
+      "kind": "stablemaster",
+      "label": "Greth",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": -6678.65,
+      "world_y": -2170.2,
+      "world_z": 244.245,
+      "entry": 10058,
+      "guid": 6870,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:536:stablemaster",
+      "kind": "stablemaster",
+      "label": "Grimestack",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": -14454.0,
+      "world_y": 479.107,
+      "world_z": 15.1179,
+      "entry": 10060,
+      "guid": 536,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:109010:stablemaster",
+      "kind": "stablemaster",
+      "label": "Hadrius Harlowe",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 5562.35,
+      "world_y": 5737.39,
+      "world_z": -74.5769,
+      "entry": 28047,
+      "guid": 109010,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:104532:stablemaster",
+      "kind": "stablemaster",
+      "label": "Halona Stormwhisper",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 3467.02,
+      "world_y": 4130.35,
+      "world_z": 15.6472,
+      "entry": 26721,
+      "guid": 104532,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:34150:stablemaster",
+      "kind": "stablemaster",
+      "label": "Hekkru",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": -10464.2,
+      "world_y": -3267.98,
+      "world_z": 20.411,
+      "entry": 10049,
+      "guid": 34150,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:115707:stablemaster",
+      "kind": "stablemaster",
+      "label": "Heksi",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 6116.4,
+      "world_y": -1071.45,
+      "world_z": 402.981,
+      "entry": 29906,
+      "guid": 115707,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:112967:stablemaster",
+      "kind": "stablemaster",
+      "label": "Horatio the Stable Boy",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 573.76,
+      "world_y": -4947.57,
+      "world_z": 18.0469,
+      "entry": 23733,
+      "guid": 112967,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194307,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194307,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:92914:stablemaster",
+      "kind": "stablemaster",
+      "label": "Huntsman Markhor",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": -574.573,
+      "world_y": -4622.76,
+      "world_z": 9.69658,
+      "entry": 14741,
+      "guid": 92914,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194307,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194307,
+        "quest_count": 4,
+        "quests": [
+          {
+            "quest_id": 7828,
+            "title": "Stalking the Stalkers",
+            "quest_level": 48,
+            "min_level": 44,
+            "faction": "Horde",
+            "log_description": "Huntsman Markhor at Revantusk Village in the Hinterlands wants you to kill 5 Silvermane Stalkers and 5 Silvermane Howlers. Return to him once the task is complete.$B$BMarkhor mentioned that the wolves hide in the wilds of the Hinterlands.",
+            "quest_description": "Many brave trolls have been lost to the harsh wilds of the Hinterlands, $r. The Silvermane wolves are one of the biggest threats to our hunters. They lay in wait, hiding amongst the bushes and landscape, then strike out when the opportunity presents itself.$B$BThis type of ferocity will not go unchecked!$B$BYou must think like the Silvermane. Stalk the stalkers! Slay them all!",
+            "area_description": "",
+            "completion_log": "Return to Huntsman Markhor at Revantusk Village in The Hinterlands.",
+            "objective_texts": [],
+            "target_requirements": [
+              {
+                "target_id": 2926,
+                "quantity": 5,
+                "name": "Silvermane Stalker",
+                "target_kind": "creature",
+                "objective_overlay_id": "creature:2926",
+                "objective_overlay_available": true,
+                "objective_spawn_count": 61,
+                "objective_area_count": 11,
+                "objective_map_ids": [
+                  0
+                ]
+              },
+              {
+                "target_id": 2925,
+                "quantity": 5,
+                "name": "Silvermane Howler",
+                "target_kind": "creature",
+                "objective_overlay_id": "creature:2925",
+                "objective_overlay_available": true,
+                "objective_spawn_count": 20,
+                "objective_area_count": 7,
+                "objective_map_ids": [
+                  0
+                ]
+              }
+            ],
+            "item_requirements": [],
+            "requirement_lines": [
+              "0/5 Silvermane Stalker",
+              "0/5 Silvermane Howler"
+            ],
+            "reward_money": 14000,
+            "fixed_rewards": [],
+            "choice_rewards": [],
+            "reward_lines": [
+              "1g 40s"
+            ],
+            "prerequisite_quests": [],
+            "followup_quests": [],
+            "breadcrumb_for_quests": [],
+            "quest_sort_id": 47,
+            "quest_type": 2,
+            "quest_flags": 8,
+            "special_flags": 0,
+            "is_daily_quest": false,
+            "is_weekly_quest": false,
+            "is_monthly_quest": false,
+            "is_event_quest": false,
+            "classification_tags": [],
+            "objective_overlay_ids": [
+              "creature:2926",
+              "creature:2925"
+            ],
+            "branch_candidates": [
+              {
+                "branch_kind": "objective_area",
+                "branch_id": "creature:2926",
+                "label": "Silvermane Stalker",
+                "weight": 1.0,
+                "giver_entry": 14741
+              },
+              {
+                "branch_kind": "objective_area",
+                "branch_id": "creature:2925",
+                "label": "Silvermane Howler",
+                "weight": 1.0,
+                "giver_entry": 14741
+              }
+            ],
+            "branch_metadata": {
+              "branch_mode": "branching",
+              "branch_count": 2,
+              "return_to_giver_assumed": true
+            }
+          },
+          {
+            "quest_id": 7829,
+            "title": "Hunt the Savages",
+            "quest_level": 48,
+            "min_level": 44,
+            "faction": "Horde",
+            "log_description": "Huntsman Markhor at Revantusk Village in the Hinterlands wants you to kill 10 Savage Owlbeasts. Return to him once the task is complete.$B$BMarkhor mentioned that the Savage Owlbeasts occupy the wilds of the Hinterlands.",
+            "quest_description": "Among the more ornery of the wildlife of the Hinterlands are the savage owlbeasts. Many a good Revantusk warrior has been lost to the ferocious claws and beak of the beasts.$B$BKill every savage owlbeast you see, $r. Return to me when you can stand no more bloodshed. Your contribution will then be weighed, measured, and judged.",
+            "area_description": "",
+            "completion_log": "Return to Huntsman Markhor at Revantusk Village in The Hinterlands.",
+            "objective_texts": [],
+            "target_requirements": [
+              {
+                "target_id": 2929,
+                "quantity": 10,
+                "name": "Savage Owlbeast",
+                "target_kind": "creature",
+                "objective_overlay_id": "creature:2929",
+                "objective_overlay_available": true,
+                "objective_spawn_count": 11,
+                "objective_area_count": 4,
+                "objective_map_ids": [
+                  0
+                ]
+              }
+            ],
+            "item_requirements": [],
+            "requirement_lines": [
+              "0/10 Savage Owlbeast"
+            ],
+            "reward_money": 14000,
+            "fixed_rewards": [],
+            "choice_rewards": [],
+            "reward_lines": [
+              "1g 40s"
+            ],
+            "prerequisite_quests": [],
+            "followup_quests": [],
+            "breadcrumb_for_quests": [],
+            "quest_sort_id": 47,
+            "quest_type": 2,
+            "quest_flags": 8,
+            "special_flags": 0,
+            "is_daily_quest": false,
+            "is_weekly_quest": false,
+            "is_monthly_quest": false,
+            "is_event_quest": false,
+            "classification_tags": [],
+            "objective_overlay_ids": [
+              "creature:2929"
+            ],
+            "branch_candidates": [
+              {
+                "branch_kind": "objective_area",
+                "branch_id": "creature:2929",
+                "label": "Savage Owlbeast",
+                "weight": 1.0,
+                "giver_entry": 14741
+              }
+            ],
+            "branch_metadata": {
+              "branch_mode": "linear",
+              "branch_count": 1,
+              "return_to_giver_assumed": true
+            }
+          },
+          {
+            "quest_id": 7830,
+            "title": "Avenging the Fallen",
+            "quest_level": 48,
+            "min_level": 44,
+            "faction": "Horde",
+            "log_description": "Huntsman Markhor at Revantusk Village in the Hinterlands wants you to kill a Razorbeak Skylord and retrieve its Skylord Plume. Return to him once the task is complete.$B$BMarkhor mentioned that the Razorbeak Skylord are a rare breed that tend to occupy the wilds of the Hinterlands.",
+            "quest_description": "The filth that calls itself Wildhammer trains gryphon to slay troll. Horrible, I know, but worry not, justice will soon be meted out.$B$BFor now, I want you to focus on eradicating the elder gryphons of the region. They are known as Skylords.$B$BSlay one and return to me with its plume.",
+            "area_description": "",
+            "completion_log": "Return to Huntsman Markhor at Revantusk Village in The Hinterlands.",
+            "objective_texts": [],
+            "target_requirements": [],
+            "item_requirements": [
+              {
+                "item_id": 19025,
+                "quantity": 1,
+                "name": "Skylord Plume",
+                "objective_overlay_id": "item_source:19025",
+                "objective_overlay_available": true,
+                "objective_spawn_count": 2,
+                "objective_area_count": 2,
+                "objective_map_ids": [
+                  0
+                ],
+                "source_creatures": [
+                  {
+                    "entry": 2659,
+                    "name": "Razorbeak Skylord"
+                  }
+                ]
+              }
+            ],
+            "requirement_lines": [
+              "0/1 Skylord Plume"
+            ],
+            "reward_money": 14000,
+            "fixed_rewards": [],
+            "choice_rewards": [],
+            "reward_lines": [
+              "1g 40s"
+            ],
+            "prerequisite_quests": [],
+            "followup_quests": [],
+            "breadcrumb_for_quests": [],
+            "quest_sort_id": 47,
+            "quest_type": 2,
+            "quest_flags": 8,
+            "special_flags": 0,
+            "is_daily_quest": false,
+            "is_weekly_quest": false,
+            "is_monthly_quest": false,
+            "is_event_quest": false,
+            "classification_tags": [],
+            "objective_overlay_ids": [
+              "item_source:19025"
+            ],
+            "branch_candidates": [
+              {
+                "branch_kind": "item_source",
+                "branch_id": "item_source:19025",
+                "label": "Skylord Plume",
+                "weight": 1.0,
+                "giver_entry": 14741
+              }
+            ],
+            "branch_metadata": {
+              "branch_mode": "linear",
+              "branch_count": 1,
+              "return_to_giver_assumed": true
+            }
+          },
+          {
+            "quest_id": 7849,
+            "title": "Separation Anxiety",
+            "quest_level": 50,
+            "min_level": 46,
+            "faction": "Horde",
+            "log_description": "Huntsman Markhor at Revantusk Village in the Hinterlands wants you to recover his twin brother's remains. Find and return Huntsman Malkhor's Skull and Huntsman Malkhor's Bones to Huntsman Markhor.$B$BMarkhor mentioned that his brother's remains were fed to the oozes and wolves of the Vilebranch. He also mentioned that there is a refuse pit filled with oozes in Jintha'alor as well as a wolf den. Both of these places are near the top of the temple.",
+            "quest_description": "Like many in our village, I too have lost a loved one to the wilds. Alas, it was my twin brother Malkhor - taken in the same raid as Torntusk's mate by the Vilebranch.$B$BSadly, he was not fated to live and was given a swift, brutal execution; his remains fed to the oozes and wolves of the Vilebranch.$B$BIt is too late to save his life but not too late to save his soul. Recover his remains, $N.",
+            "area_description": "",
+            "completion_log": "Return to Huntsman Markhor at Revantusk Village in The Hinterlands.",
+            "objective_texts": [],
+            "target_requirements": [],
+            "item_requirements": [
+              {
+                "item_id": 19069,
+                "quantity": 1,
+                "name": "Huntsman Malkhor's Skull",
+                "objective_overlay_id": "item_source:19069",
+                "objective_overlay_available": false
+              },
+              {
+                "item_id": 19070,
+                "quantity": 1,
+                "name": "Huntsman Malkhor's Bones",
+                "objective_overlay_id": "item_source:19070",
+                "objective_overlay_available": false
+              }
+            ],
+            "requirement_lines": [
+              "0/1 Huntsman Malkhor's Skull",
+              "0/1 Huntsman Malkhor's Bones"
+            ],
+            "reward_money": 7500,
+            "fixed_rewards": [],
+            "choice_rewards": [
+              {
+                "item_id": 19117,
+                "quantity": 1,
+                "name": "Laquered Wooden Plate Legguards"
+              },
+              {
+                "item_id": 19116,
+                "quantity": 1,
+                "name": "Greenleaf Handwraps"
+              }
+            ],
+            "reward_lines": [
+              "75s",
+              "1x Laquered Wooden Plate Legguards",
+              "1x Greenleaf Handwraps"
+            ],
+            "prerequisite_quests": [],
+            "followup_quests": [],
+            "breadcrumb_for_quests": [],
+            "quest_sort_id": 47,
+            "quest_type": 2,
+            "quest_flags": 8,
+            "special_flags": 0,
+            "is_daily_quest": false,
+            "is_weekly_quest": false,
+            "is_monthly_quest": false,
+            "is_event_quest": false,
+            "classification_tags": [],
+            "objective_overlay_ids": [],
+            "branch_candidates": [],
+            "branch_metadata": {
+              "branch_mode": "linear",
+              "branch_count": 0,
+              "return_to_giver_assumed": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "uid": "creature:57559:stablemaster",
+      "kind": "stablemaster",
+      "label": "Huntsman Torf Angerhoof",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": 68.5132,
+      "world_y": 2731.53,
+      "world_z": 85.3428,
+      "entry": 16586,
+      "guid": 57559,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:75429:stablemaster",
+      "kind": "stablemaster",
+      "label": "Ilthuril",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": -2170.73,
+      "world_y": 5404.01,
+      "world_z": 50.3112,
+      "entry": 21517,
+      "guid": 75429,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:122425:stablemaster",
+      "kind": "stablemaster",
+      "label": "Imhadria",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 8492.74,
+      "world_y": 2668.82,
+      "world_z": 652.437,
+      "entry": 30304,
+      "guid": 122425,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:37086:stablemaster",
+      "kind": "stablemaster",
+      "label": "Jaelysia",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": 6399.89,
+      "world_y": 491.802,
+      "world_z": 8.12578,
+      "entry": 10085,
+      "guid": 37086,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:48424:stablemaster",
+      "kind": "stablemaster",
+      "label": "Jenova Stoneshield",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": -8433.0,
+      "world_y": 554.681,
+      "world_z": 95.35,
+      "entry": 11069,
+      "guid": 48424,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:65519:stablemaster",
+      "kind": "stablemaster",
+      "label": "Joraal",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": 269.429,
+      "world_y": 6075.64,
+      "world_z": 130.352,
+      "entry": 18250,
+      "guid": 65519,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:63612:stablemaster",
+      "kind": "stablemaster",
+      "label": "Kameel Longstride",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": -221.63,
+      "world_y": 5517.05,
+      "world_z": 25.1817,
+      "entry": 17896,
+      "guid": 63612,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:100945:stablemaster",
+      "kind": "stablemaster",
+      "label": "Kari the Beastmaster",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 7069.82,
+      "world_y": -1701.44,
+      "world_z": 821.584,
+      "entry": 30008,
+      "guid": 100945,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:20969:stablemaster",
+      "kind": "stablemaster",
+      "label": "Kelsuwa",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": -2350.4,
+      "world_y": -1967.8,
+      "world_z": 96.2094,
+      "entry": 9983,
+      "guid": 20969,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:65513:stablemaster",
+      "kind": "stablemaster",
+      "label": "Khalan",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": 266.542,
+      "world_y": 7879.21,
+      "world_z": 23.7895,
+      "entry": 18244,
+      "guid": 65513,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:92921:stablemaster",
+      "kind": "stablemaster",
+      "label": "Killium Bouldertoe",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": 305.911,
+      "world_y": -2129.69,
+      "world_z": 121.92,
+      "entry": 10061,
+      "guid": 92921,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:66976:stablemaster",
+      "kind": "stablemaster",
+      "label": "Kirk Maxwell",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": -10638.3,
+      "world_y": 1163.87,
+      "world_z": 33.5578,
+      "entry": 10045,
+      "guid": 66976,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:85484:stablemaster",
+      "kind": "stablemaster",
+      "label": "Kor",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 2551.26,
+      "world_y": -1837.19,
+      "world_z": 10.6369,
+      "entry": 29251,
+      "guid": 85484,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:21772:stablemaster",
+      "kind": "stablemaster",
+      "label": "Laziphus",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": -7163.0,
+      "world_y": -3824.13,
+      "world_z": 8.66409,
+      "entry": 9985,
+      "guid": 21772,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:39631:stablemaster",
+      "kind": "stablemaster",
+      "label": "Leassian",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": -2938.38,
+      "world_y": 4042.91,
+      "world_z": 0.913948,
+      "entry": 24905,
+      "guid": 39631,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:8743:stablemaster",
+      "kind": "stablemaster",
+      "label": "Lina Hearthstove",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": -5372.23,
+      "world_y": -2949.25,
+      "world_z": 324.02,
+      "entry": 9989,
+      "guid": 8743,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:39629:stablemaster",
+      "kind": "stablemaster",
+      "label": "Liza Cutlerflix",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": 3047.87,
+      "world_y": 3698.7,
+      "world_z": 143.42,
+      "entry": 24974,
+      "guid": 39629,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:69737:stablemaster",
+      "kind": "stablemaster",
+      "label": "Lor",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": 2483.92,
+      "world_y": 5941.54,
+      "world_z": 155.926,
+      "entry": 19476,
+      "guid": 69737,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:68329:stablemaster",
+      "kind": "stablemaster",
+      "label": "Luftasia",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": -2702.88,
+      "world_y": 7212.7,
+      "world_z": 23.7733,
+      "entry": 19019,
+      "guid": 68329,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:96494:stablemaster",
+      "kind": "stablemaster",
+      "label": "Mahana Frosthoof",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 2670.24,
+      "world_y": -4388.17,
+      "world_z": 284.031,
+      "entry": 24067,
+      "guid": 96494,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:32386:stablemaster",
+      "kind": "stablemaster",
+      "label": "Maluressian",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": 2737.16,
+      "world_y": -405.191,
+      "world_z": 109.184,
+      "entry": 10052,
+      "guid": 32386,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:104105:stablemaster",
+      "kind": "stablemaster",
+      "label": "Mary Darrow",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 437.354,
+      "world_y": -4544.09,
+      "world_z": 245.725,
+      "entry": 24154,
+      "guid": 104105,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:57882:stablemaster",
+      "kind": "stablemaster",
+      "label": "Master Sergeant Lorin Thalmerok",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": -677.376,
+      "world_y": 2727.67,
+      "world_z": 94.0169,
+      "entry": 16824,
+      "guid": 57882,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:113676:stablemaster",
+      "kind": "stablemaster",
+      "label": "Matthew Ackerman",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 3433.78,
+      "world_y": -2817.87,
+      "world_z": 201.183,
+      "entry": 27068,
+      "guid": 113676,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:30671:stablemaster",
+      "kind": "stablemaster",
+      "label": "Michael",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": -3625.85,
+      "world_y": -4440.28,
+      "world_z": 14.498,
+      "entry": 10047,
+      "guid": 30671,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:85106:stablemaster",
+      "kind": "stablemaster",
+      "label": "Moonbell",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 8581.72,
+      "world_y": 681.682,
+      "world_z": 547.551,
+      "entry": 35291,
+      "guid": 85106,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:28478:stablemaster",
+      "kind": "stablemaster",
+      "label": "Morganus",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": 2266.06,
+      "world_y": 320.66,
+      "world_z": 34.4421,
+      "entry": 10055,
+      "guid": 28478,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:78879:stablemaster",
+      "kind": "stablemaster",
+      "label": "Ogrin",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": 2228.66,
+      "world_y": 4748.84,
+      "world_z": 159.435,
+      "entry": 22468,
+      "guid": 78879,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:75430:stablemaster",
+      "kind": "stablemaster",
+      "label": "Oruhe",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": -1889.86,
+      "world_y": 5761.67,
+      "world_z": 129.641,
+      "entry": 21518,
+      "guid": 75430,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:81714:stablemaster",
+      "kind": "stablemaster",
+      "label": "Paniar",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": 7576.91,
+      "world_y": -6883.63,
+      "world_z": 95.1072,
+      "entry": 16665,
+      "guid": 81714,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:6261:stablemaster",
+      "kind": "stablemaster",
+      "label": "Penny",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": -9249.09,
+      "world_y": -2152.7,
+      "world_z": 64.1825,
+      "entry": 9982,
+      "guid": 6261,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:32334:stablemaster",
+      "kind": "stablemaster",
+      "label": "Qeeju",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": 2327.36,
+      "world_y": -2531.44,
+      "world_z": 101.348,
+      "entry": 15131,
+      "guid": 32334,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:14059:stablemaster",
+      "kind": "stablemaster",
+      "label": "Reggifuz",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": -1036.32,
+      "world_y": -3678.48,
+      "world_z": 23.109,
+      "entry": 10063,
+      "guid": 14059,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:130986:stablemaster",
+      "kind": "stablemaster",
+      "label": "Risera",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 3579.79,
+      "world_y": 179.753,
+      "world_z": 52.3397,
+      "entry": 27948,
+      "guid": 130986,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:98819:stablemaster",
+      "kind": "stablemaster",
+      "label": "Robert Clarke",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 1875.3,
+      "world_y": -6177.57,
+      "world_z": 24.2259,
+      "entry": 24350,
+      "guid": 98819,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:119547:stablemaster",
+      "kind": "stablemaster",
+      "label": "Ronald Anderson",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 2089.12,
+      "world_y": 5307.19,
+      "world_z": 19.5343,
+      "entry": 27385,
+      "guid": 119547,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:17645:stablemaster",
+      "kind": "stablemaster",
+      "label": "Sarah Goode",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": 513.679,
+      "world_y": 1625.1,
+      "world_z": 125.41,
+      "entry": 9979,
+      "guid": 17645,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:24765:stablemaster",
+      "kind": "stablemaster",
+      "label": "Seikwa",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": -2340.11,
+      "world_y": -354.59,
+      "world_z": -8.78192,
+      "entry": 10050,
+      "guid": 24765,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:112610:stablemaster",
+      "kind": "stablemaster",
+      "label": "Sentinel Sweetspring",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 3481.32,
+      "world_y": 2008.06,
+      "world_z": 64.9457,
+      "entry": 27056,
+      "guid": 112610,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:94380:stablemaster",
+      "kind": "stablemaster",
+      "label": "Seraphina Bloodheart",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": 12782.5,
+      "world_y": -6975.85,
+      "world_z": 15.7443,
+      "entry": 25037,
+      "guid": 94380,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:46313:stablemaster",
+      "kind": "stablemaster",
+      "label": "Seriadne",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": 9807.78,
+      "world_y": 931.309,
+      "world_z": 1307.67,
+      "entry": 10051,
+      "guid": 46313,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:57649:stablemaster",
+      "kind": "stablemaster",
+      "label": "Shalenn",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": 9905.46,
+      "world_y": -7402.82,
+      "world_z": 13.7118,
+      "entry": 16656,
+      "guid": 57649,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:198:stablemaster",
+      "kind": "stablemaster",
+      "label": "Shelby Stoneflint",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": -5606.07,
+      "world_y": -513.113,
+      "world_z": 402.286,
+      "entry": 9980,
+      "guid": 198,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:28305:stablemaster",
+      "kind": "stablemaster",
+      "label": "Shelgrayn",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": 217.084,
+      "world_y": 1283.48,
+      "world_z": 190.378,
+      "entry": 11104,
+      "guid": 28305,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:7665:stablemaster",
+      "kind": "stablemaster",
+      "label": "Shoja'my",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": 333.313,
+      "world_y": -4711.64,
+      "world_z": 14.614,
+      "entry": 9987,
+      "guid": 7665,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:49957:stablemaster",
+      "kind": "stablemaster",
+      "label": "Shyrka Wolfrunner",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": -4371.6,
+      "world_y": 264.516,
+      "world_z": 25.7434,
+      "entry": 9986,
+      "guid": 49957,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:20967:stablemaster",
+      "kind": "stablemaster",
+      "label": "Sikwa",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": -391.671,
+      "world_y": -2620.18,
+      "world_z": 95.7458,
+      "entry": 9981,
+      "guid": 20967,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:44254:stablemaster",
+      "kind": "stablemaster",
+      "label": "Skyguard Stable Master",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": 2511.01,
+      "world_y": 7350.59,
+      "world_z": 380.734,
+      "entry": 23392,
+      "guid": 44254,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:108098:stablemaster",
+      "kind": "stablemaster",
+      "label": "Soar Hawkfury",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 3759.47,
+      "world_y": 1547.64,
+      "world_z": 87.1148,
+      "entry": 26504,
+      "guid": 108098,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194307,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194307,
+        "quest_count": 3,
+        "quests": [
+          {
+            "quest_id": 12100,
+            "title": "Containing the Rot",
+            "quest_level": 72,
+            "min_level": 71,
+            "faction": "Horde",
+            "log_description": "Soar Hawkfury at Agmar's Hammer in the Dragonblight wants you to kill 15 Infected Wildlife and recover a Rot Resistant Organ.",
+            "quest_description": "With Scourge comes death and disease. We often overlook that the wildlife of a Scourge infested area is ravaged and ultimately destroyed by rot and contagion.$B$BFor most of the indigenous beasts of the Dragonblight it is too late. The festering disease that the Scourge brings has already infected the beasts and they are now rabid and rotting.$B$BYou must venture west, towards the Pit of Narjun, and cull the infected wildlife. Check their corpses for a preserved organ as we need one to devise a vaccine.",
+            "area_description": "",
+            "completion_log": "Return to Soar Hawkfury at Agmar's Hammer in Dragonblight.",
+            "objective_texts": [],
+            "target_requirements": [
+              {
+                "target_id": 26874,
+                "quantity": 15,
+                "name": "Infected Wildlife",
+                "target_kind": "creature",
+                "objective_overlay_id": "creature:26874",
+                "objective_overlay_available": false
+              }
+            ],
+            "item_requirements": [
+              {
+                "item_id": 36800,
+                "quantity": 1,
+                "name": "Rot Resistant Organ",
+                "objective_overlay_id": "item_source:36800",
+                "objective_overlay_available": true,
+                "objective_spawn_count": 68,
+                "objective_area_count": 9,
+                "objective_map_ids": [
+                  571
+                ],
+                "source_creatures": [
+                  {
+                    "entry": 26616,
+                    "name": "Blighted Elk"
+                  },
+                  {
+                    "entry": 26643,
+                    "name": "Rabid Grizzly"
+                  }
+                ]
+              }
+            ],
+            "requirement_lines": [
+              "0/15 Infected Wildlife",
+              "0/1 Rot Resistant Organ"
+            ],
+            "reward_money": 0,
+            "fixed_rewards": [],
+            "choice_rewards": [],
+            "reward_lines": [],
+            "prerequisite_quests": [],
+            "followup_quests": [
+              {
+                "quest_id": 12101,
+                "title": "The Good Doctor...",
+                "relation": "reward_next",
+                "raw_quest_id": 12101
+              }
+            ],
+            "breadcrumb_for_quests": [],
+            "quest_sort_id": 65,
+            "quest_type": 2,
+            "quest_flags": 136,
+            "special_flags": 0,
+            "is_daily_quest": false,
+            "is_weekly_quest": false,
+            "is_monthly_quest": false,
+            "is_event_quest": false,
+            "classification_tags": [],
+            "objective_overlay_ids": [
+              "item_source:36800"
+            ],
+            "branch_candidates": [
+              {
+                "branch_kind": "item_source",
+                "branch_id": "item_source:36800",
+                "label": "Rot Resistant Organ",
+                "weight": 1.0,
+                "giver_entry": 26504
+              },
+              {
+                "branch_kind": "followup_quest",
+                "branch_id": 12101,
+                "label": "The Good Doctor...",
+                "weight": 1.0,
+                "relation": "reward_next"
+              }
+            ],
+            "branch_metadata": {
+              "branch_mode": "branching",
+              "branch_count": 2,
+              "return_to_giver_assumed": true
+            }
+          },
+          {
+            "quest_id": 12101,
+            "title": "The Good Doctor...",
+            "quest_level": 72,
+            "min_level": 71,
+            "faction": "Horde",
+            "log_description": "Deliver the Rot Resistant Organ to Doctor Sintar Malefious at Agmar's Hammer.$B",
+            "quest_description": "Our Forsaken allies have sent their apothecary core here to assist us in destroying the Scourge at the Wrathgate. One among them, Doctor Sintar Malefious, is well versed in the Scourge rot and methods of containing the spread. I had previously worked out a deal with him in regards to devising a vaccine for wildlife. He's since been waiting on the organ.$B$BDeliver this rot resistant organ to Dr. Malefious and let him know it's from me. He'll direct you on your next task.",
+            "area_description": "",
+            "completion_log": "Return to Doctor Sintar Malefious at Agmar's Hammer in Dragonblight.",
+            "objective_texts": [],
+            "target_requirements": [],
+            "item_requirements": [
+              {
+                "item_id": 36800,
+                "quantity": 1,
+                "name": "Rot Resistant Organ",
+                "objective_overlay_id": "item_source:36800",
+                "objective_overlay_available": true,
+                "objective_spawn_count": 68,
+                "objective_area_count": 9,
+                "objective_map_ids": [
+                  571
+                ],
+                "source_creatures": [
+                  {
+                    "entry": 26616,
+                    "name": "Blighted Elk"
+                  },
+                  {
+                    "entry": 26643,
+                    "name": "Rabid Grizzly"
+                  }
+                ]
+              }
+            ],
+            "requirement_lines": [
+              "0/1 Rot Resistant Organ"
+            ],
+            "reward_money": 0,
+            "fixed_rewards": [],
+            "choice_rewards": [],
+            "reward_lines": [],
+            "prerequisite_quests": [
+              {
+                "quest_id": 12100,
+                "title": "Containing the Rot",
+                "relation": "prerequisite",
+                "raw_quest_id": 12100
+              }
+            ],
+            "followup_quests": [
+              {
+                "quest_id": 12102,
+                "title": "In Search of the Ruby Lilac",
+                "relation": "reward_next",
+                "raw_quest_id": 12102
+              }
+            ],
+            "breadcrumb_for_quests": [],
+            "quest_sort_id": 65,
+            "quest_type": 2,
+            "quest_flags": 128,
+            "special_flags": 0,
+            "is_daily_quest": false,
+            "is_weekly_quest": false,
+            "is_monthly_quest": false,
+            "is_event_quest": false,
+            "classification_tags": [],
+            "objective_overlay_ids": [
+              "item_source:36800"
+            ],
+            "branch_candidates": [
+              {
+                "branch_kind": "item_source",
+                "branch_id": "item_source:36800",
+                "label": "Rot Resistant Organ",
+                "weight": 1.0,
+                "giver_entry": 26504
+              },
+              {
+                "branch_kind": "followup_quest",
+                "branch_id": 12102,
+                "label": "In Search of the Ruby Lilac",
+                "weight": 1.0,
+                "relation": "reward_next"
+              }
+            ],
+            "branch_metadata": {
+              "branch_mode": "branching",
+              "branch_count": 2,
+              "return_to_giver_assumed": true
+            }
+          },
+          {
+            "quest_id": 12111,
+            "title": "Where the Wild Things Roam",
+            "quest_level": 73,
+            "min_level": 71,
+            "faction": "Horde",
+            "log_description": "Soar Hawkfury at Agmar's Hammer in the Dragonblight wants you to use the Pack of Vaccine to vaccinate 5 Snowfall Elk and 5 Arctic Grizzlies.",
+            "quest_description": "Inside this pack are several vials containing the vaccine that Sintar created. I now want you to search the nearby woods for Snowfall elk and arctic grizzlies. When you locate the animals, find a safe distance and throw a vial in their general direction. The vial will shatter and release a fine gas that will act as the inoculating agent. The beasts merely have to step inside the gas and they will be vaccinated - ultimately saved.$B$BInoculate as many of the beasts as you can and return to me.$B",
+            "area_description": "",
+            "completion_log": "Return to Soar Hawkfury at Agmar's Hammer in Dragonblight.",
+            "objective_texts": [
+              "Snowfall Elk Inoculated",
+              "Arctic Grizzly Inoculated"
+            ],
+            "target_requirements": [
+              {
+                "target_id": 26895,
+                "quantity": 5,
+                "name": "Snowfall Elk Credit",
+                "target_kind": "creature",
+                "objective_overlay_id": "creature:26895",
+                "objective_overlay_available": false
+              },
+              {
+                "target_id": 26882,
+                "quantity": 5,
+                "name": "Arctic Grizzly Credit",
+                "target_kind": "creature",
+                "objective_overlay_id": "creature:26882",
+                "objective_overlay_available": false
+              }
+            ],
+            "item_requirements": [],
+            "requirement_lines": [
+              "0/5 Snowfall Elk Credit",
+              "0/5 Arctic Grizzly Credit"
+            ],
+            "reward_money": 53000,
+            "fixed_rewards": [],
+            "choice_rewards": [
+              {
+                "item_id": 38171,
+                "quantity": 1,
+                "name": "Battleworn Magnataur Crusher"
+              },
+              {
+                "item_id": 38172,
+                "quantity": 1,
+                "name": "Crossbow of the Hardened Ranger"
+              },
+              {
+                "item_id": 38132,
+                "quantity": 1,
+                "name": "Moonrest Garden Stave"
+              },
+              {
+                "item_id": 38169,
+                "quantity": 1,
+                "name": "Keen Woodland Shank"
+              },
+              {
+                "item_id": 38170,
+                "quantity": 1,
+                "name": "Spiked Coldwind Club"
+              },
+              {
+                "item_id": 38131,
+                "quantity": 1,
+                "name": "Staff of Ruby Wood"
+              }
+            ],
+            "reward_lines": [
+              "5g 30s",
+              "1x Battleworn Magnataur Crusher",
+              "1x Crossbow of the Hardened Ranger",
+              "1x Moonrest Garden Stave",
+              "1x Keen Woodland Shank",
+              "1x Spiked Coldwind Club",
+              "1x Staff of Ruby Wood"
+            ],
+            "prerequisite_quests": [
+              {
+                "quest_id": 12104,
+                "title": "Return to Soar",
+                "relation": "prerequisite",
+                "raw_quest_id": 12104
+              }
+            ],
+            "followup_quests": [],
+            "breadcrumb_for_quests": [],
+            "quest_sort_id": 65,
+            "quest_type": 2,
+            "quest_flags": 128,
+            "special_flags": 0,
+            "is_daily_quest": false,
+            "is_weekly_quest": false,
+            "is_monthly_quest": false,
+            "is_event_quest": false,
+            "classification_tags": [],
+            "objective_overlay_ids": [],
+            "branch_candidates": [],
+            "branch_metadata": {
+              "branch_mode": "linear",
+              "branch_count": 0,
+              "return_to_giver_assumed": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "uid": "creature:101962:stablemaster",
+      "kind": "stablemaster",
+      "label": "Soulok Stormfury",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 3840.65,
+      "world_y": -4523.31,
+      "world_z": 210.699,
+      "entry": 26944,
+      "guid": 101962,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194307,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194307,
+        "quest_count": 1,
+        "quests": [
+          {
+            "quest_id": 12415,
+            "title": "The Horse Hollerer",
+            "quest_level": 75,
+            "min_level": 73,
+            "faction": "Horde",
+            "log_description": "Scare 15 Highland Mustangs and return to Soulok Stormfury at Camp Oneqwah.",
+            "quest_description": "The Alliance's 'Westfall Brigade' is camped far to the north, near Thor Modan. They have foolishly divided their forces to contest our control of Venture Bay, and they have been left without cavalry.$B$BThey're now trying to capture and tame the wild highland mustangs that roam the area around the Westfall Brigade Encampment and Boulder Hills. We must stop them before they're able to replace their lost mounts. Take this and throw it near the horses to drive them away.",
+            "area_description": "",
+            "completion_log": "Return to Soulok Stormfury at Camp Oneqwah in Grizzly Hills.",
+            "objective_texts": [
+              "Highland Mustangs Frightened"
+            ],
+            "target_requirements": [
+              {
+                "target_id": 27221,
+                "quantity": 15,
+                "name": "Tormak the Scarred",
+                "target_kind": "creature",
+                "objective_overlay_id": "creature:27221",
+                "objective_overlay_available": true,
+                "objective_spawn_count": 1,
+                "objective_area_count": 1,
+                "objective_map_ids": [
+                  571
+                ]
+              }
+            ],
+            "item_requirements": [],
+            "requirement_lines": [
+              "0/15 Tormak the Scarred"
+            ],
+            "reward_money": 59000,
+            "fixed_rewards": [],
+            "choice_rewards": [],
+            "reward_lines": [
+              "5g 90s"
+            ],
+            "prerequisite_quests": [],
+            "followup_quests": [],
+            "breadcrumb_for_quests": [],
+            "quest_sort_id": 394,
+            "quest_type": 2,
+            "quest_flags": 128,
+            "special_flags": 0,
+            "is_daily_quest": false,
+            "is_weekly_quest": false,
+            "is_monthly_quest": false,
+            "is_event_quest": false,
+            "classification_tags": [],
+            "objective_overlay_ids": [
+              "creature:27221"
+            ],
+            "branch_candidates": [
+              {
+                "branch_kind": "objective_area",
+                "branch_id": "creature:27221",
+                "label": "Tormak the Scarred",
+                "weight": 1.0,
+                "giver_entry": 26944
+              }
+            ],
+            "branch_metadata": {
+              "branch_mode": "linear",
+              "branch_count": 1,
+              "return_to_giver_assumed": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "uid": "creature:43044:stablemaster",
+      "kind": "stablemaster",
+      "label": "Squire Leoren Mal'derath",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": -6804.93,
+      "world_y": 820.366,
+      "world_z": 51.306,
+      "entry": 15722,
+      "guid": 43044,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:97240:stablemaster",
+      "kind": "stablemaster",
+      "label": "Squire Percy",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 4585.34,
+      "world_y": -4212.35,
+      "world_z": 178.598,
+      "entry": 26377,
+      "guid": 97240,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194307,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194307,
+        "quest_count": 1,
+        "quests": [
+          {
+            "quest_id": 12414,
+            "title": "Mounting Up",
+            "quest_level": 75,
+            "min_level": 73,
+            "faction": "Alliance",
+            "log_description": "Ride 5 Highland Mustangs back to Squire Percy at the Westfall Brigade Encampment.",
+            "quest_description": "Cap'n Stoutmantle left most of our calvary... cavlary... uh, horsemen at the fight for Venture Bay.$B$BWe chose a good place to put the camp 'cause there are tons of highland mustangs running around near here and in the Boulder Hills to the northeast. The Cap'n put me in charge of capturing some of 'em.$B$BWill you help? I've got a stick and some string, and there are loads of wild carrots growing near the camp. Pick the carrots and use them with the stick to lure in the mustang, then ride it back here.",
+            "area_description": "",
+            "completion_log": "Return to Squire Percy at the Westfall Brigade Encampment in Grizzly Hills.",
+            "objective_texts": [
+              "Highland Mustangs Returned"
+            ],
+            "target_requirements": [
+              {
+                "target_id": 26212,
+                "quantity": 5,
+                "name": "Captain Gryan Stoutmantle",
+                "target_kind": "creature",
+                "objective_overlay_id": "creature:26212",
+                "objective_overlay_available": true,
+                "objective_spawn_count": 1,
+                "objective_area_count": 1,
+                "objective_map_ids": [
+                  571
+                ]
+              }
+            ],
+            "item_requirements": [],
+            "requirement_lines": [
+              "0/5 Captain Gryan Stoutmantle"
+            ],
+            "reward_money": 59000,
+            "fixed_rewards": [],
+            "choice_rewards": [],
+            "reward_lines": [
+              "5g 90s"
+            ],
+            "prerequisite_quests": [],
+            "followup_quests": [],
+            "breadcrumb_for_quests": [],
+            "quest_sort_id": 394,
+            "quest_type": 2,
+            "quest_flags": 128,
+            "special_flags": 0,
+            "is_daily_quest": false,
+            "is_weekly_quest": false,
+            "is_monthly_quest": false,
+            "is_event_quest": false,
+            "classification_tags": [],
+            "objective_overlay_ids": [
+              "creature:26212"
+            ],
+            "branch_candidates": [
+              {
+                "branch_kind": "objective_area",
+                "branch_id": "creature:26212",
+                "label": "Captain Gryan Stoutmantle",
+                "weight": 1.0,
+                "giver_entry": 26377
+              }
+            ],
+            "branch_metadata": {
+              "branch_mode": "linear",
+              "branch_count": 1,
+              "return_to_giver_assumed": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "uid": "creature:85101:stablemaster",
+      "kind": "stablemaster",
+      "label": "Steen Horngrass",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 8438.87,
+      "world_y": 695.196,
+      "world_z": 547.876,
+      "entry": 35290,
+      "guid": 85101,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:4087:stablemaster",
+      "kind": "stablemaster",
+      "label": "Steven Black",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": -10546.6,
+      "world_y": -1165.08,
+      "world_z": 27.9454,
+      "entry": 10062,
+      "guid": 4087,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:90479:stablemaster",
+      "kind": "stablemaster",
+      "label": "Sylista",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": -8738.0,
+      "world_y": 983.207,
+      "world_z": 97.586,
+      "entry": 9977,
+      "guid": 90479,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:97904:stablemaster",
+      "kind": "stablemaster",
+      "label": "Tassia Whisperglen",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 5859.68,
+      "world_y": 557.571,
+      "world_z": 652.739,
+      "entry": 28690,
+      "guid": 97904,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:11299:stablemaster",
+      "kind": "stablemaster",
+      "label": "Tharlidun",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": -928.382,
+      "world_y": -3528.02,
+      "world_z": 71.0294,
+      "entry": 9976,
+      "guid": 11299,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:15539:stablemaster",
+      "kind": "stablemaster",
+      "label": "Theodore Mont Claire",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": -20.3258,
+      "world_y": -927.211,
+      "world_z": 55.5851,
+      "entry": 10057,
+      "guid": 15539,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:76735:stablemaster",
+      "kind": "stablemaster",
+      "label": "Thomas Partridge",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 8480.21,
+      "world_y": 937.883,
+      "world_z": 547.293,
+      "entry": 33854,
+      "guid": 76735,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:102110:stablemaster",
+      "kind": "stablemaster",
+      "label": "Tim Street",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 2551.9,
+      "world_y": -1836.04,
+      "world_z": 10.637,
+      "entry": 29250,
+      "guid": 102110,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:117786:stablemaster",
+      "kind": "stablemaster",
+      "label": "Toby \"Mother Goose\" Ironbolt",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 4165.02,
+      "world_y": 5276.74,
+      "world_z": 26.4601,
+      "entry": 26597,
+      "guid": 117786,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:68261:stablemaster",
+      "kind": "stablemaster",
+      "label": "Trag",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": -2609.28,
+      "world_y": 4420.52,
+      "world_z": 36.3579,
+      "entry": 18984,
+      "guid": 68261,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:101170:stablemaster",
+      "kind": "stablemaster",
+      "label": "Trapper Saghani",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 3012.58,
+      "world_y": 4065.28,
+      "world_z": 26.9833,
+      "entry": 27194,
+      "guid": 101170,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:97657:stablemaster",
+      "kind": "stablemaster",
+      "label": "Trapper Shesh",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 736.227,
+      "world_y": -2934.89,
+      "world_z": 7.3809,
+      "entry": 27150,
+      "guid": 97657,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:100387:stablemaster",
+      "kind": "stablemaster",
+      "label": "Trapper Tikaani",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 2781.3,
+      "world_y": 911.879,
+      "world_z": 22.4635,
+      "entry": 27183,
+      "guid": 100387,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:97716:stablemaster",
+      "kind": "stablemaster",
+      "label": "Udoho Icerunner",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 7813.13,
+      "world_y": -2960.96,
+      "world_z": 1257.56,
+      "entry": 29967,
+      "guid": 97716,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:85:stablemaster",
+      "kind": "stablemaster",
+      "label": "Ulbrek Firehand",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": -5010.22,
+      "world_y": -1261.46,
+      "world_z": 507.839,
+      "entry": 9984,
+      "guid": 85,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:15936:stablemaster",
+      "kind": "stablemaster",
+      "label": "Wesley",
+      "object_type": "creature",
+      "map_id": 0,
+      "world_x": -854.463,
+      "world_y": -546.697,
+      "world_z": 11.1855,
+      "entry": 9978,
+      "guid": 15936,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:68328:stablemaster",
+      "kind": "stablemaster",
+      "label": "Wilda Bearmane",
+      "object_type": "creature",
+      "map_id": 530,
+      "world_x": -1462.11,
+      "world_y": 7160.69,
+      "world_z": 44.0928,
+      "entry": 19018,
+      "guid": 68328,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:6608:stablemaster",
+      "kind": "stablemaster",
+      "label": "Xon'cha",
+      "object_type": "creature",
+      "map_id": 1,
+      "world_x": 2133.44,
+      "world_y": -4667.45,
+      "world_z": 46.7546,
+      "entry": 9988,
+      "guid": 6608,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    },
+    {
+      "uid": "creature:133605:stablemaster",
+      "kind": "stablemaster",
+      "label": "Zybarus of Darnassus",
+      "object_type": "creature",
+      "map_id": 571,
+      "world_x": 3669.24,
+      "world_y": -711.861,
+      "world_z": 213.725,
+      "entry": 27040,
+      "guid": 133605,
+      "icon_relpath": "interface/minimap/tracking/stablemaster.png",
+      "metadata": {
+        "npcflag": 4194305,
+        "spawn_npcflag": 0,
+        "template_npcflag": 4194305,
+        "quest_count": 0,
+        "quests": []
+      }
+    }
+  ]
+}
