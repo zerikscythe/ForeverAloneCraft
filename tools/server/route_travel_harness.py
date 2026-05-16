@@ -45,6 +45,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dest-x", type=float, default=-10053.198)
     parser.add_argument("--dest-y", type=float, default=1455.3373)
     parser.add_argument("--dest-z", type=float, default=44.6324)
+    parser.add_argument("--interest-zone-id", type=int, default=0, help="Optional synthetic-interest zone override; defaults to destination zone")
     parser.add_argument("--explored-zone-ids", default="", help="Comma-separated explored zones to seed onto each harness bot")
     parser.add_argument("--bake-zone-ids", default="", help="Comma-separated zone ids to terrain-bake before harness spawn")
     parser.add_argument("--idle-seconds", type=int, default=30)
@@ -168,6 +169,142 @@ def wait_for_spawn_rows(
     return False
 
 
+def file_contains_any(path: pathlib.Path, patterns: list[str]) -> bool:
+    if not path.exists():
+        return False
+
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return False
+
+    return any(pattern in text for pattern in patterns)
+
+
+def read_tail(path: pathlib.Path, max_chars: int = 4000) -> str:
+    if not path.exists():
+        return ""
+
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return ""
+
+    if len(text) <= max_chars:
+        return text
+    return text[-max_chars:]
+
+
+def wait_for_server_ready(
+    process: subprocess.Popen[str],
+    stdout_path: pathlib.Path,
+    stderr_path: pathlib.Path,
+    settings: dict[str, str | int],
+    names: list[str],
+    timeout_seconds: int,
+) -> None:
+    deadline = time.time() + timeout_seconds
+    ready_markers = [
+        "WORLD: World Initialized",
+        "AzerothCore 3.3.5a is ready.",
+    ]
+    name_list = ",".join(f"'{name}'" for name in names)
+
+    while time.time() < deadline:
+        if file_contains_any(stdout_path, ready_markers):
+            return
+
+        rows = run_mysql_query(
+            settings,
+            str(settings["characters_db"]),
+            "SELECT bot_name, COUNT(*) "
+            "FROM living_world_bot_activity_log "
+            f"WHERE bot_name IN ({name_list}) "
+            "GROUP BY bot_name",
+        )
+        found = {row[0] for row in rows if int(row[1]) > 0}
+        if found:
+            return
+
+        if process.poll() is not None:
+            raise RuntimeError(
+                f"worldserver exited before readiness markers appeared (exit={process.returncode}).\n"
+                f"stdout tail:\n{read_tail(stdout_path)}\n"
+                f"stderr tail:\n{read_tail(stderr_path)}"
+            )
+
+        time.sleep(1.0)
+
+    raise RuntimeError(
+        "worldserver did not reach ready state before timeout.\n"
+        f"stdout tail:\n{read_tail(stdout_path)}\n"
+        f"stderr tail:\n{read_tail(stderr_path)}"
+    )
+
+
+def wait_for_any_activity_rows(
+    settings: dict[str, str | int],
+    names: list[str],
+    timeout_seconds: int,
+) -> bool:
+    deadline = time.time() + timeout_seconds
+    name_list = ",".join(f"'{name}'" for name in names)
+    while time.time() < deadline:
+        rows = run_mysql_query(
+            settings,
+            str(settings["characters_db"]),
+            "SELECT bot_name, COUNT(*) "
+            "FROM living_world_bot_activity_log "
+            f"WHERE bot_name IN ({name_list}) "
+            "GROUP BY bot_name",
+        )
+        found = {row[0] for row in rows if int(row[1]) > 0}
+        if all(name in found for name in names):
+            return True
+        time.sleep(1.0)
+    return False
+
+
+def wait_for_progress_rows(
+    settings: dict[str, str | int],
+    names: list[str],
+    timeout_seconds: int,
+) -> bool:
+    deadline = time.time() + timeout_seconds
+    name_list = ",".join(f"'{name}'" for name in names)
+    interesting_events = [
+        "travel_option",
+        "travel_plan",
+        "travel_start",
+        "travel_waypoint",
+        "travel_taxi_start",
+        "travel_taxi_board",
+        "travel_taxi_arrive",
+        "travel_arrive",
+        "activity_complete",
+        "session_complete",
+        "travel_stuck",
+        "travel_timeout",
+        "session_abort",
+    ]
+    event_list = ",".join(f"'{event_name}'" for event_name in interesting_events)
+    while time.time() < deadline:
+        rows = run_mysql_query(
+            settings,
+            str(settings["characters_db"]),
+            "SELECT bot_name, COUNT(*) "
+            "FROM living_world_bot_activity_log "
+            f"WHERE bot_name IN ({name_list}) "
+            f"AND event_type IN ({event_list}) "
+            "GROUP BY bot_name",
+        )
+        found = {row[0] for row in rows if int(row[1]) > 0}
+        if all(name in found for name in names):
+            return True
+        time.sleep(1.0)
+    return False
+
+
 def fetch_activity_rows(
     settings: dict[str, str | int],
     names: list[str],
@@ -183,6 +320,21 @@ def fetch_activity_rows(
     )
 
 
+def fetch_identity_rows(
+    settings: dict[str, str | int],
+    names: list[str],
+) -> list[tuple[str, ...]]:
+    name_list = ",".join(f"'{name}'" for name in names)
+    return run_mysql_query(
+        settings,
+        str(settings["characters_db"]),
+        "SELECT name, level, is_available, session_count, active_world_session_ms, last_seen_zone "
+        "FROM living_world_bot_identity "
+        f"WHERE name IN ({name_list}) "
+        "ORDER BY name ASC",
+    )
+
+
 def clear_prior_rows(settings: dict[str, str | int], names: list[str]) -> None:
     name_list = ",".join(f"'{name}'" for name in names)
     run_mysql_query(
@@ -194,6 +346,7 @@ def clear_prior_rows(settings: dict[str, str | int], names: list[str]) -> None:
 
 
 def build_report(
+    identity_rows: list[tuple[str, ...]],
     rows: list[tuple[str, ...]],
     stdout_path: pathlib.Path,
     stderr_path: pathlib.Path,
@@ -209,12 +362,30 @@ def build_report(
     lines.append(f"stderr: {stderr_path}")
     lines.append("")
 
+    if identity_rows:
+        lines.append("[identities]")
+        for row in identity_rows:
+            lines.append(
+                "  "
+                f"name={row[0]} level={row[1]} is_available={row[2]} "
+                f"session_count={row[3]} active_world_session_ms={row[4]} last_seen_zone={row[5]}"
+            )
+        lines.append("")
+
     for bot_name, bot_rows in grouped.items():
         lines.append(f"[{bot_name}]")
         for event_type in (
+            "session_start",
+            "session_blueprint",
+            "build_prepared",
+            "travel_option",
             "travel_start",
             "travel_plan",
             "travel_waypoint",
+            "travel_taxi_start",
+            "travel_taxi_board",
+            "travel_taxi_arrive",
+            "travel_taxi_resume_ground",
             "travel_arrive",
             "travel_timeout",
             "travel_stuck",
@@ -258,7 +429,19 @@ def main() -> int:
     MODULE_CONF_BACKUP.write_text(original_conf, encoding="utf-8")
     updates = {
         "LivingWorld.AmbientPopulation": "0",
-        "LivingWorld.DebugSyntheticInterestEnabled": "0",
+        "LivingWorld.AmbientForceSpawnCount": "0",
+        "LivingWorld.DebugSyntheticInterestEnabled": "1",
+        "LivingWorld.DebugSyntheticInterestMapId": str(args.map_id),
+        "LivingWorld.DebugSyntheticInterestZoneId": str(args.interest_zone_id or args.dest_zone_id),
+        "LivingWorld.DebugSyntheticInterestSwitchMapId": "0",
+        "LivingWorld.DebugSyntheticInterestSwitchZoneId": "0",
+        "LivingWorld.DebugSyntheticInterestSwitchMs": "0",
+        "LivingWorld.DebugSyntheticInterestClearMs": "0",
+        "LivingWorld.DebugHotZoneCooldownMs": "0",
+        "LivingWorld.DebugForceIdentityIds": "\"\"",
+        "LivingWorld.DebugForceSessionZoneId": "0",
+        "LivingWorld.DebugForceSessionComposeAttempts": "24",
+        "LivingWorld.DebugCombatManaDrainIdentityId": "0",
         "LivingWorld.DebugRouteHarnessEnabled": "1",
         "LivingWorld.DebugRouteHarnessLevels": f"\"{','.join(str(level) for level in levels)}\"",
         "LivingWorld.DebugRouteHarnessRaceId": str(args.race_id),
@@ -277,6 +460,7 @@ def main() -> int:
         "LivingWorld.DebugRouteHarnessBakeZoneIds": f"\"{args.bake_zone_ids}\"",
         "LivingWorld.DebugRouteHarnessIdleDurationSec": str(args.idle_seconds),
         "LivingWorld.RouteExportDir": f"\"{(REPO_ROOT / 'tools' / 'lw-zone-editor' / 'data' / 'exported_routes').as_posix()}\"",
+        "LivingWorld.RouteExportBakeZOnStartup": "0",
         "LivingWorld.RouteTravel.FootYardsPerSecond": "4.5",
         "LivingWorld.RouteTravel.GroundBasicMultiplier": "1.6",
         "LivingWorld.RouteTravel.GroundFastMultiplier": "2.0",
@@ -328,13 +512,39 @@ def main() -> int:
             text=True,
         )
 
-        ready = wait_for_spawn_rows(settings, names, args.startup_timeout)
-        if not ready:
-            raise RuntimeError("Harness bots did not emit travel_start rows before timeout")
+        wait_for_server_ready(
+            process,
+            stdout_path,
+            stderr_path,
+            settings,
+            names,
+            args.startup_timeout,
+        )
+
+        any_activity = wait_for_any_activity_rows(settings, names, max(30, args.startup_timeout // 2))
+        if not any_activity:
+            identity_rows = fetch_identity_rows(settings, names)
+            rows = fetch_activity_rows(settings, names)
+            build_report(identity_rows, rows, stdout_path, stderr_path, report_path)
+            raise RuntimeError(
+                "Harness bots did not emit any activity rows before timeout. "
+                f"Report: {report_path}"
+            )
+
+        progressed = wait_for_progress_rows(settings, names, max(45, args.startup_timeout // 2))
+        if not progressed:
+            identity_rows = fetch_identity_rows(settings, names)
+            rows = fetch_activity_rows(settings, names)
+            build_report(identity_rows, rows, stdout_path, stderr_path, report_path)
+            raise RuntimeError(
+                "Harness bots spawned but did not reach travel/taxi/session progress rows before timeout. "
+                f"Report: {report_path}"
+            )
 
         time.sleep(args.seconds)
+        identity_rows = fetch_identity_rows(settings, names)
         rows = fetch_activity_rows(settings, names)
-        build_report(rows, stdout_path, stderr_path, report_path)
+        build_report(identity_rows, rows, stdout_path, stderr_path, report_path)
         print(report_path)
         return 0
     finally:

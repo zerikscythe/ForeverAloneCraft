@@ -2452,6 +2452,8 @@ private:
             if (!bot)
                 continue;
 
+            bot->setActive(true);
+
             if (auto* ai = dynamic_cast<living_world::ai::WorldBotCreatureAI*>(bot->AI()))
             {
                 ai->SetIdentityAndSession(*identity, session, 0, 0, 0, false, false);
