@@ -134,6 +134,35 @@ void AddRacialGroundMountSpell(
     }
 }
 
+std::uint32_t ResolveRacialGroundMountSpell(std::uint8_t raceId, std::uint8_t level)
+{
+    switch (raceId)
+    {
+        case RACE_HUMAN:
+            return IsSpellUsableForLevel(SPELL_BROWN_HORSE, level) ? SPELL_BROWN_HORSE : 0u;
+        case RACE_ORC:
+            return IsSpellUsableForLevel(SPELL_BROWN_WOLF, level) ? SPELL_BROWN_WOLF : 0u;
+        case RACE_DWARF:
+            return IsSpellUsableForLevel(SPELL_BROWN_RAM, level) ? SPELL_BROWN_RAM : 0u;
+        case RACE_NIGHTELF:
+            return IsSpellUsableForLevel(SPELL_STRIPED_NIGHTSABER, level) ? SPELL_STRIPED_NIGHTSABER : 0u;
+        case RACE_UNDEAD_PLAYER:
+            return IsSpellUsableForLevel(SPELL_BROWN_SKELETAL_HORSE, level) ? SPELL_BROWN_SKELETAL_HORSE : 0u;
+        case RACE_TAUREN:
+            return IsSpellUsableForLevel(SPELL_BROWN_KODO, level) ? SPELL_BROWN_KODO : 0u;
+        case RACE_GNOME:
+            return IsSpellUsableForLevel(SPELL_BLUE_MECHANOSTRIDER, level) ? SPELL_BLUE_MECHANOSTRIDER : 0u;
+        case RACE_TROLL:
+            return IsSpellUsableForLevel(SPELL_TURQUOISE_RAPTOR, level) ? SPELL_TURQUOISE_RAPTOR : 0u;
+        case RACE_BLOODELF:
+            return IsSpellUsableForLevel(SPELL_RED_HAWKSTRIDER, level) ? SPELL_RED_HAWKSTRIDER : 0u;
+        case RACE_DRAENEI:
+            return IsSpellUsableForLevel(SPELL_BROWN_ELEKK, level) ? SPELL_BROWN_ELEKK : 0u;
+        default:
+            return 0u;
+    }
+}
+
 void AddTravelMobilitySpells(
     std::unordered_set<std::uint32_t>& knownSpells,
     integration::BotIdentityRecord const& identity)
@@ -169,6 +198,68 @@ void AddTravelMobilitySpells(
         default:
             AddRacialGroundMountSpell(knownSpells, identity.raceId, identity.level);
             return;
+    }
+}
+
+std::uint32_t ResolvePreferredGroundMobilitySpell(
+    integration::BotIdentityRecord const& identity,
+    WorldBotTravelCapabilityTier tier)
+{
+    if (tier != WorldBotTravelCapabilityTier::GroundBasic
+        && tier != WorldBotTravelCapabilityTier::GroundFast)
+    {
+        return 0u;
+    }
+
+    switch (identity.classId)
+    {
+        case CLASS_DRUID:
+            return IsSpellUsableForLevel(SPELL_TRAVEL_FORM, identity.level)
+                ? SPELL_TRAVEL_FORM
+                : 0u;
+
+        case CLASS_PALADIN:
+            if (identity.raceId == RACE_BLOODELF)
+            {
+                if (tier == WorldBotTravelCapabilityTier::GroundFast
+                    && IsSpellUsableForLevel(SPELL_SUMMON_THALASSIAN_CHARGER, identity.level))
+                {
+                    return SPELL_SUMMON_THALASSIAN_CHARGER;
+                }
+
+                return IsSpellUsableForLevel(SPELL_SUMMON_THALASSIAN_WARHORSE, identity.level)
+                    ? SPELL_SUMMON_THALASSIAN_WARHORSE
+                    : 0u;
+            }
+
+            if (tier == WorldBotTravelCapabilityTier::GroundFast
+                && IsSpellUsableForLevel(SPELL_SUMMON_CHARGER, identity.level))
+            {
+                return SPELL_SUMMON_CHARGER;
+            }
+
+            return IsSpellUsableForLevel(SPELL_SUMMON_WARHORSE, identity.level)
+                ? SPELL_SUMMON_WARHORSE
+                : 0u;
+
+        case CLASS_WARLOCK:
+            if (tier == WorldBotTravelCapabilityTier::GroundFast
+                && IsSpellUsableForLevel(SPELL_SUMMON_DREADSTEED, identity.level))
+            {
+                return SPELL_SUMMON_DREADSTEED;
+            }
+
+            return IsSpellUsableForLevel(SPELL_SUMMON_FELSTEED, identity.level)
+                ? SPELL_SUMMON_FELSTEED
+                : 0u;
+
+        case CLASS_DEATH_KNIGHT:
+            return IsSpellUsableForLevel(SPELL_ACHERUS_DEATHCHARGER, identity.level)
+                ? SPELL_ACHERUS_DEATHCHARGER
+                : 0u;
+
+        default:
+            return ResolveRacialGroundMountSpell(identity.raceId, identity.level);
     }
 }
 
@@ -608,6 +699,18 @@ std::unordered_set<std::uint32_t> WorldBotPreparationService::CollectTravelMobil
     std::unordered_set<std::uint32_t> knownSpells;
     AddTravelMobilitySpells(knownSpells, identity);
     return knownSpells;
+}
+
+std::uint32_t WorldBotPreparationService::ResolvePreferredTravelMobilitySpellId(
+    integration::BotIdentityRecord const& identity,
+    WorldBotTravelCapabilityTier tier)
+{
+    return ResolvePreferredGroundMobilitySpell(identity, tier);
+}
+
+bool WorldBotPreparationService::IsTravelFormMobilitySpell(std::uint32_t spellId)
+{
+    return spellId == SPELL_TRAVEL_FORM;
 }
 } // namespace service
 } // namespace living_world

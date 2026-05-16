@@ -2,6 +2,7 @@
 
 #include "integration/SqlBotIdentityRepository.h"
 #include "model/WorldBotPreparedBuild.h"
+#include "service/WorldBotRoutePlanning.h"
 
 #include <cstdint>
 #include <string>
@@ -38,6 +39,12 @@ public:
 
     [[nodiscard]] static std::unordered_set<std::uint32_t> CollectTravelMobilitySpellIds(
         integration::BotIdentityRecord const& identity);
+
+    [[nodiscard]] static std::uint32_t ResolvePreferredTravelMobilitySpellId(
+        integration::BotIdentityRecord const& identity,
+        WorldBotTravelCapabilityTier tier);
+
+    [[nodiscard]] static bool IsTravelFormMobilitySpell(std::uint32_t spellId);
 
 private:
     integration::BotCombatDefaultProfileRepository const& _defaultProfileRepository;

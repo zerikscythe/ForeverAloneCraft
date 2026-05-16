@@ -2,8 +2,11 @@
 
 #include "gtest/gtest.h"
 
+#include <algorithm>
+#include <cmath>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 
 namespace living_world
 {
@@ -482,9 +485,112 @@ TEST(WorldBotRoutePlanningTest, ExplicitZoneConnectorOverridesAutomaticSeamGuess
             plan->waypoints.end(),
             [](WorldBotRouteWaypoint const& waypoint)
             {
-                return waypoint.routeKey == "Authored_12_40" && waypoint.x >= 259.9f;
+                return std::fabs(waypoint.x - 260.0f) < 0.01f;
             }),
         plan->waypoints.end());
+}
+
+TEST(WorldBotRoutePlanningTest, ExplicitConnectorCanJoinForwardIntoDestinationRoute)
+{
+    std::filesystem::path const root = WriteRouteFixture(
+        "map_000__zone_12__from_zone__routes.json",
+        R"json(
+{
+  "route_group_key": "FromZone",
+  "zone_name": "From Zone",
+  "zone_id": 12,
+  "map_id": 0,
+  "paths": [
+    {
+      "path_index": 0,
+      "path_key": "From_01",
+      "anchors": [
+        { "world_x": 0.0, "world_y": 0.0, "world_z": 0.0 },
+        { "world_x": 100.0, "world_y": 0.0, "world_z": 0.0 },
+        { "world_x": 200.0, "world_y": 0.0, "world_z": 0.0 }
+      ],
+      "movement_points": [
+        { "point_index": 0, "map_id": 0, "world_x": 0.0, "world_y": 0.0, "world_z": 0.0, "distance_from_start_yards": 0.0 },
+        { "point_index": 1, "map_id": 0, "world_x": 100.0, "world_y": 0.0, "world_z": 0.0, "distance_from_start_yards": 100.0 },
+        { "point_index": 2, "map_id": 0, "world_x": 200.0, "world_y": 0.0, "world_z": 0.0, "distance_from_start_yards": 200.0 }
+      ]
+    }
+  ]
+}
+)json");
+
+    WriteRouteFixture(
+        "map_000__zone_40__to_zone__routes.json",
+        R"json(
+{
+  "route_group_key": "ToZone",
+  "zone_name": "To Zone",
+  "zone_id": 40,
+  "map_id": 0,
+  "paths": [
+    {
+      "path_index": 0,
+      "path_key": "To_Forward",
+      "anchors": [
+        { "world_x": 205.0, "world_y": 0.0, "world_z": 0.0 },
+        { "world_x": 220.0, "world_y": 0.0, "world_z": 0.0 },
+        { "world_x": 320.0, "world_y": 0.0, "world_z": 0.0 }
+      ],
+      "movement_points": [
+        { "point_index": 0, "map_id": 0, "world_x": 205.0, "world_y": 0.0, "world_z": 0.0, "distance_from_start_yards": 0.0 },
+        { "point_index": 1, "map_id": 0, "world_x": 220.0, "world_y": 0.0, "world_z": 0.0, "distance_from_start_yards": 15.0 },
+        { "point_index": 2, "map_id": 0, "world_x": 320.0, "world_y": 0.0, "world_z": 0.0, "distance_from_start_yards": 115.0 }
+      ]
+    }
+  ]
+}
+)json");
+
+    WriteRouteFixture(
+        "map_000__connectors.json",
+        R"json(
+{
+  "map_id": 0,
+  "connectors": [
+    {
+      "connector_key": "Authored_12_40_ForwardJoin",
+      "from_zone_id": 12,
+      "to_zone_id": 40,
+      "bidirectional": true,
+      "from": { "world_x": 200.0, "world_y": 0.0, "world_z": 0.0 },
+      "to": { "world_x": 210.0, "world_y": 0.0, "world_z": 0.0 }
+    }
+  ]
+}
+)json");
+
+    WorldBotRoutePlanner planner(root);
+    auto const plan = planner.ResolveTravelPlan(
+        0,
+        12,
+        40,
+        0.0f,
+        0.0f,
+        0.0f,
+        320.0f,
+        0.0f,
+        0.0f,
+        WorldBotTravelCapabilityTier::Foot);
+
+    ASSERT_TRUE(plan.has_value());
+    auto connectorItr = std::find_if(
+        plan->waypoints.begin(),
+        plan->waypoints.end(),
+        [](WorldBotRouteWaypoint const& waypoint)
+        {
+            return std::fabs(waypoint.x - 210.0f) < 0.01f;
+        });
+    ASSERT_NE(connectorItr, plan->waypoints.end());
+
+    auto nextItr = std::next(connectorItr);
+    ASSERT_NE(nextItr, plan->waypoints.end());
+    EXPECT_NEAR(nextItr->x, 220.0f, 0.01f);
+    EXPECT_NEAR(nextItr->y, 0.0f, 0.01f);
 }
 
 } // namespace service

@@ -19,6 +19,7 @@
 #include "Player.h"
 #include "SharedDefines.h"
 #include "Common.h"
+#include "MapMgr.h"
 #include "Random.h"
 #include "SpellMgr.h"
 #include "DataStores/DBCStores.h"
@@ -68,7 +69,10 @@
 #include <cmath>
 #include <cstdint>
 #include <filesystem>
+#include <fstream>
 #include <optional>
+#include <iomanip>
+#include <regex>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -280,12 +284,17 @@ std::string_view ToParseErrorText(CommandParseErrorKind kind)
     return "parse error";
 }
 
+std::filesystem::path ResolveWorldBotRouteExportRoot();
+bool TryParseUnsigned(std::string_view token, std::uint32_t& out);
+std::vector<std::string_view> TokenizeWhitespace(std::string_view text);
+
 void RenderUsage(ChatHandler* handler)
 {
     handler->PSendSysMessage("LivingWorld usage:");
     handler->PSendSysMessage("  .lw loglevel <1-4>");
     handler->PSendSysMessage("  .lw routeplan <destZoneId> <destX> <destY> <destZ> [level] [auto|foot|ground_basic|ground_fast|flight_basic|flight_fast|taxi]");
     handler->PSendSysMessage("  .lw routecompare <destZoneId> <destX> <destY> <destZ> <levelA> <levelB> [tierA] [tierB]");
+    handler->PSendSysMessage("  .lw routebakez [mapId] [zoneId]");
     handler->PSendSysMessage("  .lwbot list");
     handler->PSendSysMessage("  .lwbot request <rosterEntryId>");
     handler->PSendSysMessage("  .lwbot dismiss <rosterEntryId>");
@@ -309,6 +318,394 @@ void RenderUsage(ChatHandler* handler)
     handler->PSendSysMessage("  .lwbot questmode <smart|manual>");
     handler->PSendSysMessage("  .lwbot <#|name> reward <questId> <choiceNumber>");
     handler->PSendSysMessage("  .lwbot <#|name> mode assist|passive|hold|guard");
+}
+
+std::optional<std::uint32_t> TryParseMapIdFromRouteFilename(std::string const& filename)
+{
+    static std::regex const pattern(R"(^map_(\d{3})__)");
+    std::smatch match;
+    if (!std::regex_search(filename, match, pattern))
+        return std::nullopt;
+
+    try
+    {
+        return static_cast<std::uint32_t>(std::stoul(match[1].str()));
+    }
+    catch (...)
+    {
+        return std::nullopt;
+    }
+}
+
+std::optional<std::uint32_t> TryParseZoneIdFromRouteFilename(std::string const& filename)
+{
+    static std::regex const pattern(R"(^map_\d{3}__zone_(\d+)__)");
+    std::smatch match;
+    if (!std::regex_search(filename, match, pattern))
+        return std::nullopt;
+
+    try
+    {
+        return static_cast<std::uint32_t>(std::stoul(match[1].str()));
+    }
+    catch (...)
+    {
+        return std::nullopt;
+    }
+}
+
+std::optional<double> TryExtractJsonNumber(std::string const& line, char const* key)
+{
+    std::regex const pattern(
+        std::string(R"(")") + key + R"("\s*:\s*(-?\d+(?:\.\d+)?))");
+    std::smatch match;
+    if (!std::regex_search(line, match, pattern))
+        return std::nullopt;
+
+    try
+    {
+        return std::stod(match[1].str());
+    }
+    catch (...)
+    {
+        return std::nullopt;
+    }
+}
+
+std::string ReplaceJsonNumber(std::string const& line, char const* key, double value)
+{
+    std::regex const pattern(
+        std::string(R"((^\s*")") + key + R"("\s*:\s*)(-?\d+(?:\.\d+)?)(\s*,?\s*$))");
+    std::smatch match;
+    if (!std::regex_match(line, match, pattern))
+        return line;
+
+    std::ostringstream valueStream;
+    valueStream << std::fixed << std::setprecision(4) << value;
+    return match[1].str() + valueStream.str() + match[3].str();
+}
+
+std::string BuildJsonNumberLine(std::string const& referenceLine, char const* key, double value)
+{
+    std::size_t const indentLength = referenceLine.find_first_not_of(" \t");
+    std::string const indent = indentLength == std::string::npos
+        ? std::string()
+        : referenceLine.substr(0, indentLength);
+
+    std::ostringstream valueStream;
+    valueStream << std::fixed << std::setprecision(4) << value;
+    return indent + "\"" + key + "\": " + valueStream.str() + ",";
+}
+
+std::string ReplaceJsonBoolean(std::string const& line, char const* key, bool value)
+{
+    std::regex const pattern(
+        std::string(R"((^\s*")") + key + R"("\s*:\s*)(true|false)(\s*,?\s*$))");
+    std::smatch match;
+    if (!std::regex_match(line, match, pattern))
+        return line;
+
+    return match[1].str() + (value ? "true" : "false") + match[3].str();
+}
+
+std::string BuildJsonBooleanLine(std::string const& referenceLine, char const* key, bool value)
+{
+    std::size_t const indentLength = referenceLine.find_first_not_of(" \t");
+    std::string const indent = indentLength == std::string::npos
+        ? std::string()
+        : referenceLine.substr(0, indentLength);
+
+    return indent + "\"" + key + "\": " + (value ? "true" : "false") + ",";
+}
+
+std::optional<bool> TryExtractJsonBoolean(std::string const& line, char const* key)
+{
+    std::regex const pattern(
+        std::string(R"(^\s*")") + key + R"("\s*:\s*(true|false)(?:\s*,\s*)?$)");
+    std::smatch match;
+    if (!std::regex_match(line, match, pattern))
+        return std::nullopt;
+
+    return match[1].str() == "true";
+}
+
+double ResolveGroundedRouteZ(Map* map, float x, float y, float fallbackZ)
+{
+    if (!map)
+        return fallbackZ;
+
+    float resolved = fallbackZ;
+    float hintedGround = INVALID_HEIGHT;
+    if (std::fabs(fallbackZ) > 0.01f)
+        hintedGround = map->GetHeight(x, y, fallbackZ, true, 50.0f);
+
+    if (hintedGround > INVALID_HEIGHT)
+        resolved = hintedGround;
+    else
+    {
+        float const skyGround = map->GetHeight(x, y, MAX_HEIGHT);
+        if (skyGround > INVALID_HEIGHT)
+            resolved = skyGround;
+    }
+
+    if (resolved <= INVALID_HEIGHT)
+    {
+        float const water = map->GetWaterLevel(x, y);
+        if (water > INVALID_HEIGHT)
+            resolved = water;
+    }
+
+    return resolved;
+}
+
+struct RouteBakeResult
+{
+    std::uint32_t filesTouched = 0;
+    std::uint32_t coordinatesUpdated = 0;
+    std::vector<std::string> touchedFiles;
+};
+
+bool BakeRouteFileZHeights(
+    std::filesystem::path const& path,
+    std::uint32_t mapId,
+    RouteBakeResult& result)
+{
+    Map* map = sMapMgr->CreateBaseMap(mapId);
+    if (!map)
+        return false;
+
+    std::ifstream input(path, std::ios::in | std::ios::binary);
+    if (!input.is_open())
+        return false;
+
+    std::vector<std::string> lines;
+    std::string line;
+    while (std::getline(input, line))
+        lines.push_back(line);
+    input.close();
+
+    std::optional<double> pendingX;
+    std::optional<double> pendingY;
+    std::uint32_t updatedHere = 0;
+    std::vector<std::string> rebuiltLines;
+    rebuiltLines.reserve(lines.size() + 128u);
+    bool sawBakedFlag = false;
+    bool alreadyBaked = false;
+
+    for (std::string& currentLine : lines)
+    {
+        if (auto const baked = TryExtractJsonBoolean(currentLine, "z_baked"))
+        {
+            sawBakedFlag = true;
+            alreadyBaked = *baked;
+            rebuiltLines.push_back(currentLine);
+            continue;
+        }
+
+        if (auto const x = TryExtractJsonNumber(currentLine, "world_x"))
+            pendingX = *x;
+        if (auto const y = TryExtractJsonNumber(currentLine, "world_y"))
+            pendingY = *y;
+
+        if (pendingX && pendingY &&
+            currentLine.find("\"distance_from_start_yards\"") != std::string::npos)
+        {
+            double const bakedZ = ResolveGroundedRouteZ(
+                map,
+                static_cast<float>(*pendingX),
+                static_cast<float>(*pendingY),
+                0.0f);
+            rebuiltLines.push_back(BuildJsonNumberLine(currentLine, "world_z", bakedZ));
+            ++updatedHere;
+            pendingX.reset();
+            pendingY.reset();
+        }
+
+        auto const currentZ = TryExtractJsonNumber(currentLine, "world_z");
+        if (!currentZ)
+        {
+            rebuiltLines.push_back(currentLine);
+            continue;
+        }
+
+        if (pendingX && pendingY)
+        {
+            double const bakedZ = ResolveGroundedRouteZ(
+                map,
+                static_cast<float>(*pendingX),
+                static_cast<float>(*pendingY),
+                static_cast<float>(*currentZ));
+            if (std::fabs(bakedZ - *currentZ) > 0.01)
+            {
+                currentLine = ReplaceJsonNumber(currentLine, "world_z", bakedZ);
+                ++updatedHere;
+            }
+        }
+
+        pendingX.reset();
+        pendingY.reset();
+        rebuiltLines.push_back(currentLine);
+    }
+
+    if (updatedHere == 0 && alreadyBaked)
+        return true;
+
+    if (sawBakedFlag)
+    {
+        for (std::string& rebuiltLine : rebuiltLines)
+        {
+            if (TryExtractJsonBoolean(rebuiltLine, "z_baked").has_value())
+            {
+                rebuiltLine = ReplaceJsonBoolean(rebuiltLine, "z_baked", true);
+                break;
+            }
+        }
+    }
+    else
+    {
+        std::size_t insertIndex = 0;
+        for (std::size_t index = 0; index < rebuiltLines.size(); ++index)
+        {
+            if (rebuiltLines[index].find("\"map_id\"") != std::string::npos)
+            {
+                insertIndex = index + 1u;
+                break;
+            }
+        }
+
+        std::string const referenceLine =
+            (insertIndex > 0u && insertIndex <= rebuiltLines.size())
+                ? rebuiltLines[insertIndex - 1u]
+                : std::string("  ");
+        rebuiltLines.insert(
+            rebuiltLines.begin() + static_cast<std::ptrdiff_t>(insertIndex),
+            BuildJsonBooleanLine(referenceLine, "z_baked", true));
+    }
+
+    std::ofstream output(path, std::ios::out | std::ios::binary | std::ios::trunc);
+    if (!output.is_open())
+        return false;
+
+    for (std::size_t index = 0; index < rebuiltLines.size(); ++index)
+    {
+        output << rebuiltLines[index];
+        if ((index + 1u) < rebuiltLines.size())
+            output << '\n';
+    }
+
+    result.filesTouched += 1;
+    result.coordinatesUpdated += updatedHere;
+    result.touchedFiles.push_back(path.filename().string());
+    return true;
+}
+
+bool HandleRouteBakeZCommand(ChatHandler* handler, std::string_view arguments)
+{
+    if (!handler)
+        return true;
+
+    auto const tokens = TokenizeWhitespace(arguments);
+    if (tokens.size() > 2)
+    {
+        handler->SendErrorMessage("Usage: .lw routebakez [mapId] [zoneId]");
+        return true;
+    }
+
+    std::optional<std::uint32_t> mapFilter;
+    std::optional<std::uint32_t> zoneFilter;
+    if (!tokens.empty())
+    {
+        std::uint32_t parsedMapId = 0;
+        if (!TryParseUnsigned(tokens[0], parsedMapId))
+        {
+            handler->SendErrorMessage("LivingWorld routebakez: invalid mapId.");
+            return true;
+        }
+        mapFilter = parsedMapId;
+    }
+
+    if (tokens.size() >= 2)
+    {
+        std::uint32_t parsedZoneId = 0;
+        if (!TryParseUnsigned(tokens[1], parsedZoneId) || parsedZoneId == 0)
+        {
+            handler->SendErrorMessage("LivingWorld routebakez: invalid zoneId.");
+            return true;
+        }
+        zoneFilter = parsedZoneId;
+    }
+
+    std::filesystem::path const routeRoot = ResolveWorldBotRouteExportRoot();
+    std::error_code ec;
+    if (!std::filesystem::exists(routeRoot, ec) || !std::filesystem::is_directory(routeRoot, ec))
+    {
+        handler->PSendSysMessage(
+            "LivingWorld routebakez: route root not found: {}",
+            routeRoot.string());
+        return true;
+    }
+
+    RouteBakeResult result;
+    std::uint32_t candidateFiles = 0;
+
+    for (auto const& entry : std::filesystem::directory_iterator(routeRoot))
+    {
+        if (!entry.is_regular_file())
+            continue;
+
+        std::string const filename = entry.path().filename().string();
+        bool const isRouteFile = filename.ends_with("__routes.json");
+        bool const isConnectorFile = filename.ends_with("__connectors.json");
+        if (!isRouteFile && !isConnectorFile)
+            continue;
+
+        std::ifstream input(entry.path(), std::ios::in | std::ios::binary);
+        std::string fileText;
+        if (input.is_open())
+        {
+            std::ostringstream stream;
+            stream << input.rdbuf();
+            fileText = stream.str();
+        }
+        if (fileText.find("\"z_baked\": true") != std::string::npos)
+            continue;
+
+        auto const fileMapId = TryParseMapIdFromRouteFilename(filename);
+        if (!fileMapId)
+            continue;
+        if (mapFilter && *fileMapId != *mapFilter)
+            continue;
+
+        if (zoneFilter)
+        {
+            auto const fileZoneId = TryParseZoneIdFromRouteFilename(filename);
+            if (!fileZoneId || *fileZoneId != *zoneFilter)
+                continue;
+        }
+
+        ++candidateFiles;
+        if (!BakeRouteFileZHeights(entry.path(), *fileMapId, result))
+        {
+            handler->PSendSysMessage(
+                "LivingWorld routebakez: failed to bake {}",
+                entry.path().filename().string());
+            return true;
+        }
+    }
+
+    handler->PSendSysMessage(
+        "LivingWorld routebakez: scanned {} file(s), updated {} coordinate(s) across {} file(s).",
+        candidateFiles,
+        result.coordinatesUpdated,
+        result.filesTouched);
+
+    for (std::string const& touched : result.touchedFiles)
+        handler->PSendSysMessage("  baked {}", touched);
+
+    if (candidateFiles == 0)
+        handler->PSendSysMessage("  no matching route files were found under {}", routeRoot.string());
+
+    return true;
 }
 
 std::string_view TrimRootWhitespace(std::string_view input)
@@ -4989,6 +5386,7 @@ private:
         constexpr std::string_view economyToken = "economy";
         constexpr std::string_view routePlanToken = "routeplan";
         constexpr std::string_view routeCompareToken = "routecompare";
+        constexpr std::string_view routeBakeZToken = "routebakez";
 
         if (arguments.starts_with(economyToken))
         {
@@ -5049,6 +5447,20 @@ private:
             arguments.remove_prefix(routeCompareToken.size());
             arguments = living_world::script::TrimRootWhitespace(arguments);
             return living_world::script::HandleRouteCompareDebugCommand(handler, arguments);
+        }
+
+        if (arguments.starts_with(routeBakeZToken))
+        {
+            if (handler->GetSession() &&
+                handler->GetSession()->GetSecurity() < SEC_GAMEMASTER)
+            {
+                handler->SendErrorMessage("LivingWorld routebakez requires GM access.");
+                return true;
+            }
+
+            arguments.remove_prefix(routeBakeZToken.size());
+            arguments = living_world::script::TrimRootWhitespace(arguments);
+            return living_world::script::HandleRouteBakeZCommand(handler, arguments);
         }
 
         if (!arguments.starts_with(loglevelToken))

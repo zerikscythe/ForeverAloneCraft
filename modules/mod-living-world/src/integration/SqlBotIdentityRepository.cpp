@@ -321,6 +321,25 @@ std::optional<BotIdentityRecord> SqlBotIdentityRepository::FindById(std::uint32_
     return ReadBotIdentityRecord(result->Fetch());
 }
 
+std::optional<BotIdentityRecord> SqlBotIdentityRepository::FindByName(std::string const& name) const
+{
+    QueryResult result = CharacterDatabase.Query(
+        "SELECT id, name, race_id, class_id, spec_key, loadout_key, faction, display_id, "
+        "gender, level, gear_tier, personality_key, has_herbalism, has_mining, has_fishing, "
+        "home_zone_id, home_anchor_point_key, home_bind_point_key, "
+        "session_count, total_world_online_ms, world_online_ms_since_level, "
+        "post_max_world_online_ms, active_world_session_ms, gear_refresh_pending, last_gear_refresh_band, "
+        "last_seen_zone, is_retired, is_available "
+        "FROM living_world_bot_identity "
+        "WHERE name = {}",
+        QuoteCharactersString(name));
+
+    if (!result)
+        return std::nullopt;
+
+    return ReadBotIdentityRecord(result->Fetch());
+}
+
 std::vector<BotIdentityRecord> SqlBotIdentityRepository::LoadAvailable(
     std::uint8_t  faction,
     std::uint32_t limit) const
@@ -410,6 +429,20 @@ void SqlBotIdentityRepository::UpdateGearRefreshState(
         "WHERE id = {}",
         gearRefreshPending ? 1 : 0,
         lastGearRefreshBand,
+        id);
+}
+
+void SqlBotIdentityRepository::UpdateActiveRuntimeState(
+    std::uint32_t id,
+    std::uint32_t zoneId,
+    std::uint64_t activeWorldSessionMs) const
+{
+    CharacterDatabase.Execute(
+        "UPDATE living_world_bot_identity "
+        "SET active_world_session_ms = {}, last_seen_zone = {} "
+        "WHERE id = {} AND is_available = 0",
+        activeWorldSessionMs,
+        zoneId == 0 ? std::string("NULL") : std::to_string(zoneId),
         id);
 }
 

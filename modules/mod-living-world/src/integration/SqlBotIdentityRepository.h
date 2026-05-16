@@ -50,6 +50,9 @@ public:
     // Loads one world-bot identity row by ledger id.
     std::optional<BotIdentityRecord> FindById(std::uint32_t id) const;
 
+    // Loads one world-bot identity row by unique display name.
+    std::optional<BotIdentityRecord> FindByName(std::string const& name) const;
+
     // Returns up to `limit` available identities for the given faction.
     // faction=0 returns any faction.
     std::vector<BotIdentityRecord> LoadAvailable(
@@ -70,6 +73,13 @@ public:
         std::uint32_t id,
         bool gearRefreshPending,
         std::uint8_t lastGearRefreshBand) const;
+
+    // Updates a currently active world bot's lightweight runtime ledger fields
+    // so external tools can observe session duration and last active zone.
+    void UpdateActiveRuntimeState(
+        std::uint32_t id,
+        std::uint32_t zoneId,
+        std::uint64_t activeWorldSessionMs) const;
 
     // Finalizes one counted world session, applying online-time progression and
     // retirement rules before returning the identity to the available pool.

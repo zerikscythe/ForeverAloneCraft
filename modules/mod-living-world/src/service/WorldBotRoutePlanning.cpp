@@ -1,6 +1,7 @@
 #include "service/WorldBotRoutePlanning.h"
 
 #include "Config.h"
+#include "Log.h"
 
 #include <algorithm>
 #include <cmath>
@@ -636,7 +637,7 @@ std::vector<WorldBotRoutePlanner::ZoneConnector> ParseZoneConnectors(
         connector.toZ = static_cast<float>(GetNumberOrDefault(*toValue, "world_z"));
         connector.bidirectional = GetBoolOrDefault(connectorValue, "bidirectional", true);
 
-        if (connector.mapId == 0 || connector.fromZoneId == 0 || connector.toZoneId == 0)
+        if (connector.fromZoneId == 0 || connector.toZoneId == 0)
             continue;
 
         connectors.push_back(std::move(connector));
@@ -684,6 +685,12 @@ struct TerminalNodeCandidate
     Vector3f outwardHeading {};
 };
 
+struct PlannedEntryNode
+{
+    std::size_t nodeId = 0;
+    float attachDistanceYards = 0.0f;
+};
+
 std::vector<TerminalNodeCandidate> CollectTerminalNodeCandidates(
     WorldBotRoutePlanner::ZoneRouteGraph const& graph)
 {
@@ -720,6 +727,207 @@ std::vector<TerminalNodeCandidate> CollectTerminalNodeCandidates(
     }
 
     return terminals;
+}
+
+std::pair<std::size_t, float> FindNearestNode(
+    WorldBotRoutePlanner::ZoneRouteGraph const& graph,
+    float x,
+    float y,
+    float z)
+{
+    float bestDistance = std::numeric_limits<float>::max();
+    std::size_t bestNode = 0;
+    for (std::size_t nodeId = 0; nodeId < graph.nodes.size(); ++nodeId)
+    {
+        auto const& waypoint = graph.nodes[nodeId].waypoint;
+        float const distance = Distance3D(x, y, z, waypoint.x, waypoint.y, waypoint.z);
+        if (distance < bestDistance)
+        {
+            bestDistance = distance;
+            bestNode = nodeId;
+        }
+    }
+
+    return { bestNode, bestDistance };
+}
+
+std::optional<PlannedEntryNode> SelectForwardEntryNode(
+    WorldBotRoutePlanner::ZoneRouteGraph const& graph,
+    float startX,
+    float startY,
+    float startZ,
+    Vector3f const& seamHeading,
+    std::optional<std::int32_t> preferredPathIndex,
+    float maxAttachDistanceYards)
+{
+    auto const scoreCandidate =
+        [&](std::size_t nodeId, bool preferredPath) -> std::optional<std::pair<float, float>>
+        {
+            auto const& waypoint = graph.nodes[nodeId].waypoint;
+            float const distance = Distance3D(startX, startY, startZ, waypoint.x, waypoint.y, waypoint.z);
+            if (distance > maxAttachDistanceYards)
+                return std::nullopt;
+
+            float directionalAlignment = 1.0f;
+            if (auto heading = Normalize(MakeVector(
+                    startX, startY, startZ,
+                    waypoint.x, waypoint.y, waypoint.z)))
+            {
+                directionalAlignment = Dot(seamHeading, *heading);
+            }
+
+            if (directionalAlignment < 0.15f)
+                return std::nullopt;
+
+            float const preferredBonus = preferredPath ? 10.0f : 0.0f;
+            float const score = preferredBonus + (directionalAlignment * 5.0f)
+                - (distance / std::max(1.0f, maxAttachDistanceYards));
+            return std::make_pair(score, distance);
+        };
+
+    std::optional<PlannedEntryNode> best;
+    float bestScore = -std::numeric_limits<float>::max();
+
+    auto considerNode = [&](std::size_t nodeId, bool preferredPath)
+    {
+        auto const scored = scoreCandidate(nodeId, preferredPath);
+        if (!scored)
+            return;
+
+        if (!best || scored->first > bestScore)
+        {
+            bestScore = scored->first;
+            best = PlannedEntryNode{ nodeId, scored->second };
+        }
+    };
+
+    if (preferredPathIndex && *preferredPathIndex >= 0)
+    {
+        std::size_t const pathIndex = static_cast<std::size_t>(*preferredPathIndex);
+        if (pathIndex < graph.pathNodeIds.size())
+        {
+            for (std::size_t nodeId : graph.pathNodeIds[pathIndex])
+                considerNode(nodeId, true);
+        }
+    }
+
+    if (best)
+        return best;
+
+    for (std::size_t nodeId = 0; nodeId < graph.nodes.size(); ++nodeId)
+        considerNode(nodeId, false);
+
+    return best;
+}
+
+std::optional<WorldBotResolvedTravelPlan> BuildResolvedTravelPlan(
+    WorldBotRoutePlanner::ZoneRouteGraph const& graph,
+    std::uint16_t mapId,
+    std::uint32_t zoneId,
+    float startX,
+    float startY,
+    float startZ,
+    float destX,
+    float destY,
+    float destZ,
+    std::size_t entryNodeId,
+    float attachDistance,
+    std::size_t exitNodeId,
+    float detachDistance,
+    WorldBotTravelCapabilityTier tier,
+    WorldBotTravelCapabilityConfig const& capabilityConfig)
+{
+    constexpr float MinMeaningfulRouteDistanceYards = 15.0f;
+
+    std::vector<float> distances(graph.nodes.size(), std::numeric_limits<float>::max());
+    std::vector<std::size_t> previous(graph.nodes.size(), std::numeric_limits<std::size_t>::max());
+
+    using QueueEntry = std::pair<float, std::size_t>;
+    std::priority_queue<QueueEntry, std::vector<QueueEntry>, std::greater<QueueEntry>> queue;
+    distances[entryNodeId] = 0.0f;
+    queue.push({0.0f, entryNodeId});
+
+    while (!queue.empty())
+    {
+        auto const [cost, nodeId] = queue.top();
+        queue.pop();
+        if (cost > distances[nodeId])
+            continue;
+        if (nodeId == exitNodeId)
+            break;
+
+        for (auto const& [neighborId, edgeCost] : graph.nodes[nodeId].neighbors)
+        {
+            float const nextCost = cost + edgeCost;
+            if (nextCost >= distances[neighborId])
+                continue;
+            distances[neighborId] = nextCost;
+            previous[neighborId] = nodeId;
+            queue.push({nextCost, neighborId});
+        }
+    }
+
+    if (!std::isfinite(distances[exitNodeId]))
+        return std::nullopt;
+
+    float const routeDistance = distances[exitNodeId];
+    if ((attachDistance + routeDistance + detachDistance) < MinMeaningfulRouteDistanceYards)
+        return std::nullopt;
+
+    std::vector<std::size_t> nodePath;
+    for (std::size_t nodeId = exitNodeId;
+         nodeId != std::numeric_limits<std::size_t>::max();
+         nodeId = previous[nodeId])
+    {
+        nodePath.push_back(nodeId);
+        if (nodeId == entryNodeId)
+            break;
+    }
+
+    if (nodePath.empty() || nodePath.back() != entryNodeId)
+        return std::nullopt;
+
+    std::reverse(nodePath.begin(), nodePath.end());
+
+    WorldBotResolvedTravelPlan plan;
+    plan.mapId = mapId;
+    plan.zoneId = zoneId;
+    plan.attachDistanceYards = attachDistance;
+    plan.routeDistanceYards = routeDistance;
+    plan.detachDistanceYards = detachDistance;
+    plan.totalDistanceYards = attachDistance + routeDistance + detachDistance;
+    plan.speedYardsPerSecond = ResolveWorldBotTravelSpeedYardsPerSecond(tier, capabilityConfig);
+    plan.etaMs = static_cast<std::uint32_t>(
+        std::max(1.0f, (plan.totalDistanceYards / std::max(0.1f, plan.speedYardsPerSecond)) * 1000.0f));
+
+    plan.waypoints.reserve(nodePath.size() + 1u);
+    float cumulativeDistance = attachDistance;
+    for (std::size_t index = 0; index < nodePath.size(); ++index)
+    {
+        WorldBotRouteWaypoint waypoint = graph.nodes[nodePath[index]].waypoint;
+        if (index > 0)
+        {
+            WorldBotRouteWaypoint const& prev = plan.waypoints.back();
+            cumulativeDistance += Distance3D(
+                prev.x, prev.y, prev.z,
+                waypoint.x, waypoint.y, waypoint.z);
+        }
+        waypoint.cumulativeDistanceYards = cumulativeDistance;
+        plan.waypoints.push_back(std::move(waypoint));
+    }
+
+    if (detachDistance > 1.0f)
+    {
+        WorldBotRouteWaypoint finalWaypoint;
+        finalWaypoint.mapId = mapId;
+        finalWaypoint.x = destX;
+        finalWaypoint.y = destY;
+        finalWaypoint.z = destZ;
+        finalWaypoint.cumulativeDistanceYards = plan.totalDistanceYards;
+        plan.waypoints.push_back(std::move(finalWaypoint));
+    }
+
+    return plan;
 }
 
 } // namespace
@@ -1058,127 +1266,35 @@ std::optional<WorldBotResolvedTravelPlan> WorldBotRoutePlanner::ResolveSameZoneT
     float destY,
     float destZ,
     WorldBotTravelCapabilityTier tier,
-    WorldBotTravelCapabilityConfig const& capabilityConfig) const
+    WorldBotTravelCapabilityConfig const& capabilityConfig,
+    float maxAttachDistanceYards,
+    float maxDetachDistanceYards) const
 {
     auto const graph = LoadZoneGraph(mapId, zoneId);
     if (!graph || graph->nodes.empty())
         return std::nullopt;
 
-    constexpr float MaxAttachDistanceYards = 250.0f;
-    constexpr float MaxDetachDistanceYards = 250.0f;
-    constexpr float MinMeaningfulRouteDistanceYards = 15.0f;
-
-    auto const nearestNode = [&graph](float x, float y, float z) -> std::pair<std::size_t, float>
-    {
-        float bestDistance = std::numeric_limits<float>::max();
-        std::size_t bestNode = 0;
-        for (std::size_t nodeId = 0; nodeId < graph->nodes.size(); ++nodeId)
-        {
-            auto const& waypoint = graph->nodes[nodeId].waypoint;
-            float const distance = Distance3D(x, y, z, waypoint.x, waypoint.y, waypoint.z);
-            if (distance < bestDistance)
-            {
-                bestDistance = distance;
-                bestNode = nodeId;
-            }
-        }
-        return { bestNode, bestDistance };
-    };
-
-    auto const [entryNodeId, attachDistance] = nearestNode(startX, startY, startZ);
-    auto const [exitNodeId, detachDistance] = nearestNode(destX, destY, destZ);
-    if (attachDistance > MaxAttachDistanceYards || detachDistance > MaxDetachDistanceYards)
+    auto const [entryNodeId, attachDistance] = FindNearestNode(*graph, startX, startY, startZ);
+    auto const [exitNodeId, detachDistance] = FindNearestNode(*graph, destX, destY, destZ);
+    if (attachDistance > maxAttachDistanceYards || detachDistance > maxDetachDistanceYards)
         return std::nullopt;
 
-    std::vector<float> distances(graph->nodes.size(), std::numeric_limits<float>::max());
-    std::vector<std::size_t> previous(graph->nodes.size(), std::numeric_limits<std::size_t>::max());
-
-    using QueueEntry = std::pair<float, std::size_t>;
-    std::priority_queue<QueueEntry, std::vector<QueueEntry>, std::greater<QueueEntry>> queue;
-    distances[entryNodeId] = 0.0f;
-    queue.push({0.0f, entryNodeId});
-
-    while (!queue.empty())
-    {
-        auto const [cost, nodeId] = queue.top();
-        queue.pop();
-        if (cost > distances[nodeId])
-            continue;
-        if (nodeId == exitNodeId)
-            break;
-
-        for (auto const& [neighborId, edgeCost] : graph->nodes[nodeId].neighbors)
-        {
-            float const nextCost = cost + edgeCost;
-            if (nextCost >= distances[neighborId])
-                continue;
-            distances[neighborId] = nextCost;
-            previous[neighborId] = nodeId;
-            queue.push({nextCost, neighborId});
-        }
-    }
-
-    if (!std::isfinite(distances[exitNodeId]))
-        return std::nullopt;
-
-    float const routeDistance = distances[exitNodeId];
-    if ((attachDistance + routeDistance + detachDistance) < MinMeaningfulRouteDistanceYards)
-        return std::nullopt;
-
-    std::vector<std::size_t> nodePath;
-    for (std::size_t nodeId = exitNodeId;
-         nodeId != std::numeric_limits<std::size_t>::max();
-         nodeId = previous[nodeId])
-    {
-        nodePath.push_back(nodeId);
-        if (nodeId == entryNodeId)
-            break;
-    }
-
-    if (nodePath.empty() || nodePath.back() != entryNodeId)
-        return std::nullopt;
-
-    std::reverse(nodePath.begin(), nodePath.end());
-
-    WorldBotResolvedTravelPlan plan;
-    plan.mapId = mapId;
-    plan.zoneId = zoneId;
-    plan.attachDistanceYards = attachDistance;
-    plan.routeDistanceYards = routeDistance;
-    plan.detachDistanceYards = detachDistance;
-    plan.totalDistanceYards = attachDistance + routeDistance + detachDistance;
-    plan.speedYardsPerSecond = ResolveWorldBotTravelSpeedYardsPerSecond(tier, capabilityConfig);
-    plan.etaMs = static_cast<std::uint32_t>(
-        std::max(1.0f, (plan.totalDistanceYards / std::max(0.1f, plan.speedYardsPerSecond)) * 1000.0f));
-
-    plan.waypoints.reserve(nodePath.size() + 1u);
-    float cumulativeDistance = attachDistance;
-    for (std::size_t index = 0; index < nodePath.size(); ++index)
-    {
-        WorldBotRouteWaypoint waypoint = graph->nodes[nodePath[index]].waypoint;
-        if (index > 0)
-        {
-            WorldBotRouteWaypoint const& prev = plan.waypoints.back();
-            cumulativeDistance += Distance3D(
-                prev.x, prev.y, prev.z,
-                waypoint.x, waypoint.y, waypoint.z);
-        }
-        waypoint.cumulativeDistanceYards = cumulativeDistance;
-        plan.waypoints.push_back(std::move(waypoint));
-    }
-
-    if (detachDistance > 1.0f)
-    {
-        WorldBotRouteWaypoint finalWaypoint;
-        finalWaypoint.mapId = mapId;
-        finalWaypoint.x = destX;
-        finalWaypoint.y = destY;
-        finalWaypoint.z = destZ;
-        finalWaypoint.cumulativeDistanceYards = plan.totalDistanceYards;
-        plan.waypoints.push_back(std::move(finalWaypoint));
-    }
-
-    return plan;
+    return BuildResolvedTravelPlan(
+        *graph,
+        mapId,
+        zoneId,
+        startX,
+        startY,
+        startZ,
+        destX,
+        destY,
+        destZ,
+        entryNodeId,
+        attachDistance,
+        exitNodeId,
+        detachDistance,
+        tier,
+        capabilityConfig);
 }
 
 std::optional<WorldBotResolvedTravelPlan> WorldBotRoutePlanner::ResolveTravelPlan(
@@ -1194,11 +1310,20 @@ std::optional<WorldBotResolvedTravelPlan> WorldBotRoutePlanner::ResolveTravelPla
     WorldBotTravelCapabilityTier tier,
     WorldBotTravelCapabilityConfig const& capabilityConfig) const
 {
+    bool const debugTrace = sConfigMgr->GetOption<bool>("LivingWorld.DebugRouteHarnessEnabled", false);
     if (destZoneId == 0)
+    {
+        if (debugTrace)
+        {
+            LOG_INFO("server.worldserver",
+                "[LivingWorldRoutePlanner] resolve failed: missing dest zone map={} start_zone_hint={} start=({}, {}, {}) dest=({}, {}, {})",
+                mapId, startZoneIdHint, startX, startY, startZ, destX, destY, destZ);
+        }
         return std::nullopt;
+    }
 
     auto resolveSameZone =
-        [&](std::uint32_t zoneId) -> std::optional<WorldBotResolvedTravelPlan>
+        [&](std::uint32_t zoneId, float maxAttachDistanceYards = 250.0f) -> std::optional<WorldBotResolvedTravelPlan>
         {
             return ResolveSameZoneTravelPlan(
                 mapId,
@@ -1210,33 +1335,78 @@ std::optional<WorldBotResolvedTravelPlan> WorldBotRoutePlanner::ResolveTravelPla
                 destY,
                 destZ,
                 tier,
-                capabilityConfig);
+                capabilityConfig,
+                maxAttachDistanceYards,
+                250.0f);
         };
+
+    bool const startZoneIsRouted =
+        startZoneIdHint != 0
+        && static_cast<bool>(LoadZoneGraph(mapId, startZoneIdHint));
+    float const offNetworkAttachLimit = startZoneIsRouted ? 250.0f : 1200.0f;
 
     if (startZoneIdHint != 0 && startZoneIdHint == destZoneId)
     {
-        if (auto plan = resolveSameZone(destZoneId))
+        if (auto plan = resolveSameZone(destZoneId, offNetworkAttachLimit))
+        {
+            if (debugTrace)
+            {
+                LOG_INFO("server.worldserver",
+                    "[LivingWorldRoutePlanner] resolve same-zone success map={} zone={} attach_limit={} total_yd={} eta_ms={}",
+                    mapId, destZoneId, offNetworkAttachLimit, plan->totalDistanceYards, plan->etaMs);
+            }
             return plan;
+        }
     }
 
     std::optional<std::uint32_t> sourceZoneId;
-    if (startZoneIdHint != 0 && LoadZoneGraph(mapId, startZoneIdHint))
+    if (startZoneIsRouted)
         sourceZoneId = startZoneIdHint;
 
     if (!sourceZoneId)
-        sourceZoneId = ResolveNearestZoneIdForMapPosition(mapId, startX, startY, startZ);
+        sourceZoneId = ResolveNearestZoneIdForMapPosition(
+            mapId,
+            startX,
+            startY,
+            startZ,
+            offNetworkAttachLimit);
 
     if (!sourceZoneId)
-        return resolveSameZone(destZoneId);
+    {
+        if (debugTrace)
+        {
+            LOG_INFO("server.worldserver",
+                "[LivingWorldRoutePlanner] resolve failed: no source zone map={} start_zone_hint={} off_network_attach_limit={} start=({}, {}, {}) dest_zone={}",
+                mapId, startZoneIdHint, offNetworkAttachLimit, startX, startY, startZ, destZoneId);
+        }
+        return resolveSameZone(destZoneId, offNetworkAttachLimit);
+    }
 
     if (*sourceZoneId == destZoneId)
-        return resolveSameZone(destZoneId);
+    {
+        auto plan = resolveSameZone(destZoneId, offNetworkAttachLimit);
+        if (debugTrace)
+        {
+            LOG_INFO("server.worldserver",
+                "[LivingWorldRoutePlanner] resolve source==dest map={} zone={} attach_limit={} success={}",
+                mapId, destZoneId, offNetworkAttachLimit, plan.has_value());
+        }
+        return plan;
+    }
 
     auto seam = ResolveExplicitZoneTransition(mapId, *sourceZoneId, destZoneId);
     if (!seam)
         seam = ResolveAutomaticZoneTransition(mapId, *sourceZoneId, destZoneId);
     if (!seam)
+    {
+        if (debugTrace)
+        {
+            LOG_INFO("server.worldserver",
+                "[LivingWorldRoutePlanner] resolve failed: no seam map={} source_zone={} dest_zone={}",
+                mapId, *sourceZoneId, destZoneId);
+        }
         return std::nullopt;
+    }
 
     auto const sourcePlan = ResolveSameZoneTravelPlan(
         mapId,
@@ -1248,11 +1418,76 @@ std::optional<WorldBotResolvedTravelPlan> WorldBotRoutePlanner::ResolveTravelPla
         seam->fromWaypoint.y,
         seam->fromWaypoint.z,
         tier,
-        capabilityConfig);
+        capabilityConfig,
+        offNetworkAttachLimit,
+        250.0f);
     if (!sourcePlan)
+    {
+        if (debugTrace)
+        {
+            LOG_INFO("server.worldserver",
+                "[LivingWorldRoutePlanner] resolve failed: source leg map={} source_zone={} attach_limit={} seam_from=({}, {}, {}) start=({}, {}, {})",
+                mapId, *sourceZoneId, offNetworkAttachLimit,
+                seam->fromWaypoint.x, seam->fromWaypoint.y, seam->fromWaypoint.z,
+                startX, startY, startZ);
+        }
+        return std::nullopt;
+    }
+
+    auto const destGraph = LoadZoneGraph(mapId, destZoneId);
+    if (!destGraph || destGraph->nodes.empty())
         return std::nullopt;
 
-    auto const destPlan = ResolveSameZoneTravelPlan(
+    auto const [defaultExitNodeId, detachDistance] = FindNearestNode(*destGraph, destX, destY, destZ);
+    if (detachDistance > 250.0f)
+    {
+        if (debugTrace)
+        {
+            LOG_INFO("server.worldserver",
+                "[LivingWorldRoutePlanner] resolve failed: dest detach too far map={} dest_zone={} dest=({}, {}, {}) detach_yd={}",
+                mapId, destZoneId, destX, destY, destZ, detachDistance);
+        }
+        return std::nullopt;
+    }
+
+    auto seamHeading = Normalize(MakeVector(
+        seam->fromWaypoint.x, seam->fromWaypoint.y, seam->fromWaypoint.z,
+        seam->toWaypoint.x, seam->toWaypoint.y, seam->toWaypoint.z));
+
+    std::optional<PlannedEntryNode> entryNode;
+    if (seamHeading)
+    {
+        entryNode = SelectForwardEntryNode(
+            *destGraph,
+            seam->toWaypoint.x,
+            seam->toWaypoint.y,
+            seam->toWaypoint.z,
+            *seamHeading,
+            seam->toPathIndex >= 0 ? std::optional<std::int32_t>(seam->toPathIndex) : std::nullopt,
+            250.0f);
+    }
+
+    if (!entryNode)
+    {
+        auto const [fallbackEntryNodeId, fallbackAttachDistance] =
+            FindNearestNode(*destGraph, seam->toWaypoint.x, seam->toWaypoint.y, seam->toWaypoint.z);
+        if (fallbackAttachDistance > 250.0f)
+        {
+            if (debugTrace)
+            {
+                LOG_INFO("server.worldserver",
+                    "[LivingWorldRoutePlanner] resolve failed: dest entry too far map={} dest_zone={} seam_to=({}, {}, {}) attach_yd={}",
+                    mapId, destZoneId,
+                    seam->toWaypoint.x, seam->toWaypoint.y, seam->toWaypoint.z,
+                    fallbackAttachDistance);
+            }
+            return std::nullopt;
+        }
+        entryNode = PlannedEntryNode{ fallbackEntryNodeId, fallbackAttachDistance };
+    }
+
+    auto const destPlan = BuildResolvedTravelPlan(
+        *destGraph,
         mapId,
         destZoneId,
         seam->toWaypoint.x,
@@ -1261,10 +1496,25 @@ std::optional<WorldBotResolvedTravelPlan> WorldBotRoutePlanner::ResolveTravelPla
         destX,
         destY,
         destZ,
+        entryNode->nodeId,
+        entryNode->attachDistanceYards,
+        defaultExitNodeId,
+        detachDistance,
         tier,
         capabilityConfig);
     if (!destPlan)
+    {
+        if (debugTrace)
+        {
+            LOG_INFO("server.worldserver",
+                "[LivingWorldRoutePlanner] resolve failed: dest leg map={} dest_zone={} dest=({}, {}, {}) seam_to=({}, {}, {}) entry_path={} entry_point={}",
+                mapId, destZoneId,
+                destX, destY, destZ,
+                seam->toWaypoint.x, seam->toWaypoint.y, seam->toWaypoint.z,
+                seam->toPathIndex, seam->toPointIndex);
+        }
         return std::nullopt;
+    }
 
     WorldBotResolvedTravelPlan merged;
     merged.mapId = mapId;
@@ -1307,6 +1557,20 @@ std::optional<WorldBotResolvedTravelPlan> WorldBotRoutePlanner::ResolveTravelPla
         merged.totalDistanceYards - merged.attachDistanceYards - merged.detachDistanceYards);
     merged.etaMs = static_cast<std::uint32_t>(
         std::max(1.0f, (merged.totalDistanceYards / std::max(0.1f, merged.speedYardsPerSecond)) * 1000.0f));
+
+    if (debugTrace)
+    {
+        LOG_INFO("server.worldserver",
+            "[LivingWorldRoutePlanner] resolve success map={} source_zone={} dest_zone={} connector='{}' explicit={} total_yd={} eta_ms={} waypoints={}",
+            mapId,
+            *sourceZoneId,
+            destZoneId,
+            seam->connectorKey,
+            seam->explicitConnector,
+            merged.totalDistanceYards,
+            merged.etaMs,
+            merged.waypoints.size());
+    }
 
     return merged;
 }
@@ -1390,16 +1654,20 @@ std::optional<WorldBotZoneTransitionCandidate> WorldBotRoutePlanner::ResolveExpl
         WorldBotZoneTransitionCandidate candidate;
         candidate.connectorKey = connector.connectorKey;
         candidate.explicitConnector = true;
+        candidate.fromPathIndex = fromNearest->pathIndex;
+        candidate.fromPointIndex = fromNearest->pointIndex;
+        candidate.toPathIndex = toNearest->pathIndex;
+        candidate.toPointIndex = toNearest->pointIndex;
+        candidate.fromWaypoint = *fromNearest;
         candidate.fromWaypoint.mapId = mapId;
         candidate.fromWaypoint.x = fromX;
         candidate.fromWaypoint.y = fromY;
         candidate.fromWaypoint.z = fromZ;
-        candidate.fromWaypoint.routeKey = connector.connectorKey;
+        candidate.toWaypoint = *toNearest;
         candidate.toWaypoint.mapId = mapId;
         candidate.toWaypoint.x = toX;
         candidate.toWaypoint.y = toY;
         candidate.toWaypoint.z = toZ;
-        candidate.toWaypoint.routeKey = connector.connectorKey;
         candidate.seamDistanceYards = Distance3D(fromX, fromY, fromZ, toX, toY, toZ);
         candidate.sourceHeadingAlignment = 1.0f;
         candidate.targetHeadingAlignment = 1.0f;
@@ -1461,6 +1729,10 @@ std::optional<WorldBotZoneTransitionCandidate> WorldBotRoutePlanner::ResolveAuto
                 best = WorldBotZoneTransitionCandidate{
                     "",
                     false,
+                    fromWaypoint.pathIndex,
+                    fromWaypoint.pointIndex,
+                    toWaypoint.pathIndex,
+                    toWaypoint.pointIndex,
                     fromWaypoint,
                     toWaypoint,
                     seamDistance,

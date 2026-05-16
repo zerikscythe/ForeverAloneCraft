@@ -271,6 +271,52 @@ TEST(WorldBotPreparationServiceTest, GrantsClassMountsForPaladinsWarlocksAndDeat
     EXPECT_FALSE(HasSpell(deathKnightSpells, 458u));
 }
 
+TEST(WorldBotPreparationServiceTest, ResolvesPreferredVisibleTravelSpellFromTierAndClass)
+{
+    integration::BotIdentityRecord druid;
+    druid.raceId = RACE_NIGHTELF;
+    druid.classId = CLASS_DRUID;
+    druid.level = 40;
+    EXPECT_EQ(
+        WorldBotPreparationService::ResolvePreferredTravelMobilitySpellId(
+            druid,
+            WorldBotTravelCapabilityTier::GroundBasic),
+        783u);
+
+    integration::BotIdentityRecord paladin;
+    paladin.raceId = RACE_HUMAN;
+    paladin.classId = CLASS_PALADIN;
+    paladin.level = 60;
+    EXPECT_EQ(
+        WorldBotPreparationService::ResolvePreferredTravelMobilitySpellId(
+            paladin,
+            WorldBotTravelCapabilityTier::GroundFast),
+        23214u);
+
+    integration::BotIdentityRecord warlock;
+    warlock.raceId = RACE_ORC;
+    warlock.classId = CLASS_WARLOCK;
+    warlock.level = 40;
+    EXPECT_EQ(
+        WorldBotPreparationService::ResolvePreferredTravelMobilitySpellId(
+            warlock,
+            WorldBotTravelCapabilityTier::GroundFast),
+        23161u);
+
+    integration::BotIdentityRecord warrior;
+    warrior.raceId = RACE_TROLL;
+    warrior.classId = CLASS_WARRIOR;
+    warrior.level = 40;
+    EXPECT_EQ(
+        WorldBotPreparationService::ResolvePreferredTravelMobilitySpellId(
+            warrior,
+            WorldBotTravelCapabilityTier::GroundFast),
+        10796u);
+
+    EXPECT_TRUE(WorldBotPreparationService::IsTravelFormMobilitySpell(783u));
+    EXPECT_FALSE(WorldBotPreparationService::IsTravelFormMobilitySpell(10796u));
+}
+
 TEST(WorldBotPreparationServiceTest, FailsCleanlyWhenNoDefaultCombatProfileExists)
 {
     FakeDefaultProfileRepository defaultProfileRepository;

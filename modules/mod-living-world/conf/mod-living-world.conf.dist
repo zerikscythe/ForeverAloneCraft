@@ -120,6 +120,40 @@ LivingWorld.AmbientForceSpawnZ = 0.0
 #        Minimum interval between debug mana-drain applications for the chosen
 #        combat sandbox identity.
 #        Default: 1500
+#
+#    LivingWorld.DebugRouteHarnessEnabled
+#        Test-only deterministic materialized route harness. When enabled, the
+#        world script spawns synthetic world-bot creatures at the configured
+#        start position with a handcrafted travel session to the configured
+#        destination. This is intended for headless route validation.
+#
+#    LivingWorld.DebugRouteHarnessLevels
+#        Comma-separated level list for the synthetic harness bots.
+#        Example: "10,60"
+#
+#    LivingWorld.DebugRouteHarnessRaceId
+#    LivingWorld.DebugRouteHarnessClassId
+#    LivingWorld.DebugRouteHarnessGender
+#        Shared identity parameters for the synthetic harness bots. The harness
+#        uses these to build player-like display ids and known mobility spells.
+#
+#    LivingWorld.DebugRouteHarnessMapId
+#    LivingWorld.DebugRouteHarnessStartX
+#    LivingWorld.DebugRouteHarnessStartY
+#    LivingWorld.DebugRouteHarnessStartZ
+#        Spawn map and coordinates for the harness bots. Use a city-adjacent or
+#        unrouted start point to validate nearest-network attach behavior.
+#
+#    LivingWorld.DebugRouteHarnessDestZoneId
+#    LivingWorld.DebugRouteHarnessDestX
+#    LivingWorld.DebugRouteHarnessDestY
+#    LivingWorld.DebugRouteHarnessDestZ
+#        Destination zone hint and coordinates for the travel step.
+#
+#    LivingWorld.DebugRouteHarnessIdleDurationSec
+#        How long the harness bot should remain alive in an idle hold step after
+#        arriving at the destination so traces can be observed before despawn.
+#        Default: 30
 ###################################################################################################
 
 LivingWorld.DebugSyntheticInterestEnabled = 0
@@ -136,6 +170,20 @@ LivingWorld.DebugForceSessionComposeAttempts = 24
 LivingWorld.DebugCombatManaDrainIdentityId = 0
 LivingWorld.DebugCombatManaDrainTargetManaPct = 60
 LivingWorld.DebugCombatManaDrainIntervalMs = 1500
+LivingWorld.DebugRouteHarnessEnabled = 0
+LivingWorld.DebugRouteHarnessLevels = "10,60"
+LivingWorld.DebugRouteHarnessRaceId = 1
+LivingWorld.DebugRouteHarnessClassId = 1
+LivingWorld.DebugRouteHarnessGender = 0
+LivingWorld.DebugRouteHarnessMapId = 0
+LivingWorld.DebugRouteHarnessStartX = -8833.0
+LivingWorld.DebugRouteHarnessStartY = 628.0
+LivingWorld.DebugRouteHarnessStartZ = 95.0
+LivingWorld.DebugRouteHarnessDestZoneId = 40
+LivingWorld.DebugRouteHarnessDestX = -10053.198
+LivingWorld.DebugRouteHarnessDestY = 1455.3373
+LivingWorld.DebugRouteHarnessDestZ = 44.6324
+LivingWorld.DebugRouteHarnessIdleDurationSec = 30
 
 ###################################################################################################
 # ACCOUNT-ALT ITEM RECOVERY POLICY
@@ -206,9 +254,19 @@ LivingWorld.AccountAlt.EnableBankSync = 1
 #          GroundFastMinLevel  = 40
 #          FlightBasicMinLevel = 60
 #          FlightFastMinLevel  = 70
+#
+#    LivingWorld.RouteExportBakeZOnStartup
+#        When enabled, worldserver scans the exported route bundle on startup,
+#        fills missing/placeholder `world_z` values from live terrain data, and
+#        marks successfully processed files with `"z_baked": true`.
+#        Files already marked baked are skipped on later startups until the
+#        editor re-saves them with `"z_baked": false`.
+#
+#        Default: 1 (enabled)
 ###################################################################################################
 
 LivingWorld.RouteExportDir = "data/worldbot_routes"
+LivingWorld.RouteExportBakeZOnStartup = 1
 LivingWorld.RouteTravel.FootYardsPerSecond = 4.5
 LivingWorld.RouteTravel.GroundBasicMultiplier = 1.6
 LivingWorld.RouteTravel.GroundFastMultiplier = 2.0

@@ -100,7 +100,15 @@ private:
     void MoveToActiveTravelTarget(service::AmbientStep const& step);
     float GetActiveTravelTargetDistance(service::AmbientStep const& step) const;
     bool AdvanceAlongActiveRouteTravelPlan();
+    bool TryReanchorActiveRouteTravelPlan(service::AmbientStep const& step, char const* reason);
+    ai::TravelWatchdogConfig BuildActiveTravelWatchdogConfig(
+        service::AmbientStep const& step,
+        service::WorldBotTravelCapabilityTier tier) const;
     std::string DescribeActiveTravelTarget(service::AmbientStep const& step) const;
+    service::WorldBotTravelCapabilityTier ResolveTravelCapabilityTier() const;
+    void ApplyVisibleTravelMode(service::WorldBotTravelCapabilityTier tier);
+    void ClearVisibleTravelMode();
+    void ObserveCurrentZoneExploration();
 
     // Apply identity fields (level, display_id) to the creature.
     void ApplyIdentityToCreature();
@@ -120,6 +128,7 @@ private:
     std::uint8_t  _gatherCompletedCycles = 0;
     std::uint64_t _worldOnlineMs = 0;
     TravelWatchdogState _travelWatchdog;
+    TravelWatchdogConfig _travelWatchdogConfig;
     model::WorldBotPreparedBuild _preparedBuild;
     service::BotCombatPreparedProfile _combatPreparedProfile;
     ObjectGuid     _gatherTargetGuid;
@@ -130,7 +139,14 @@ private:
     bool           _hasShieldBaseline = false;
     bool           _routeTravelPlanActive = false;
     std::size_t    _routeTravelWaypointIndex = 0;
+    std::uint32_t  _routeTravelLastZoneId = 0;
+    std::uint64_t  _routeTravelLastReanchorWorldMs = 0;
+    bool           _visibleTravelModeActive = false;
+    std::uint32_t  _visibleTravelModeSpellId = 0;
+    service::WorldBotTravelCapabilityTier _visibleTravelCapabilityTier = service::WorldBotTravelCapabilityTier::Foot;
+    float          _visibleTravelSpeedRate = 1.0f;
     std::unordered_set<std::uint32_t> _usedSimulatedItemsThisCombat;
+    std::unordered_set<std::uint32_t> _knownExploredZoneIds;
     service::SharedHazardEvaluationState _hazardEvaluationState;
     service::WorldBotResolvedTravelPlan _routeTravelPlan;
 

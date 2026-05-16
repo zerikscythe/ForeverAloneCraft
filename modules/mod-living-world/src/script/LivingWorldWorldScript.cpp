@@ -27,10 +27,18 @@
 #include "service/BotQuestRewardService.h"
 #include "service/WorldBotRoutePlanning.h"
 
+#include <fstream>
 #include <filesystem>
+#include <algorithm>
+#include <cmath>
+#include <cctype>
+#include <iomanip>
+#include <map>
 #include <optional>
+#include <regex>
 #include <shared_mutex>
 #include <sstream>
+#include <string_view>
 #include <unordered_set>
 #include <unordered_map>
 #include <vector>
@@ -107,6 +115,1166 @@ living_world::service::WorldBotRoutePlanner& GetWorldBotRoutePlanner()
     return planner;
 }
 
+std::vector<std::uint32_t> ParseDebugIdentityIdList(std::string const& value);
+
+struct SimpleJsonValue
+{
+    enum class Type : std::uint8_t
+    {
+        Null,
+        Boolean,
+        Number,
+        String,
+        Array,
+        Object,
+    };
+
+    using Array = std::vector<SimpleJsonValue>;
+    using Object = std::map<std::string, SimpleJsonValue>;
+
+    Type type = Type::Null;
+    bool boolValue = false;
+    double numberValue = 0.0;
+    std::string stringValue;
+    Array arrayValue;
+    Object objectValue;
+
+    [[nodiscard]] bool IsNull() const { return type == Type::Null; }
+    [[nodiscard]] bool IsNumber() const { return type == Type::Number; }
+    [[nodiscard]] bool IsString() const { return type == Type::String; }
+    [[nodiscard]] bool IsArray() const { return type == Type::Array; }
+    [[nodiscard]] bool IsObject() const { return type == Type::Object; }
+};
+
+class SimpleJsonParser
+{
+public:
+    explicit SimpleJsonParser(std::string_view input)
+        : _input(input)
+    {
+    }
+
+    SimpleJsonValue Parse()
+    {
+        SimpleJsonValue value = ParseValue();
+        SkipWhitespace();
+        if (!AtEnd())
+            throw std::runtime_error("Unexpected trailing JSON content");
+        return value;
+    }
+
+private:
+    SimpleJsonValue ParseValue()
+    {
+        SkipWhitespace();
+        if (AtEnd())
+            throw std::runtime_error("Unexpected end of JSON input");
+
+        char const ch = Peek();
+        if (ch == '{')
+            return ParseObject();
+        if (ch == '[')
+            return ParseArray();
+        if (ch == '"')
+            return ParseString();
+        if (ch == '-' || std::isdigit(static_cast<unsigned char>(ch)))
+            return ParseNumber();
+        if (StartsWith("true"))
+            return ParseBoolean(true);
+        if (StartsWith("false"))
+            return ParseBoolean(false);
+        if (StartsWith("null"))
+            return ParseNull();
+
+        throw std::runtime_error("Unsupported JSON token");
+    }
+
+    SimpleJsonValue ParseObject()
+    {
+        Consume('{');
+        SimpleJsonValue value;
+        value.type = SimpleJsonValue::Type::Object;
+
+        SkipWhitespace();
+        if (TryConsume('}'))
+            return value;
+
+        while (true)
+        {
+            SimpleJsonValue key = ParseString();
+            SkipWhitespace();
+            Consume(':');
+            value.objectValue.emplace(std::move(key.stringValue), ParseValue());
+            SkipWhitespace();
+            if (TryConsume('}'))
+                return value;
+            Consume(',');
+        }
+    }
+
+    SimpleJsonValue ParseArray()
+    {
+        Consume('[');
+        SimpleJsonValue value;
+        value.type = SimpleJsonValue::Type::Array;
+
+        SkipWhitespace();
+        if (TryConsume(']'))
+            return value;
+
+        while (true)
+        {
+            value.arrayValue.push_back(ParseValue());
+            SkipWhitespace();
+            if (TryConsume(']'))
+                return value;
+            Consume(',');
+        }
+    }
+
+    SimpleJsonValue ParseString()
+    {
+        Consume('"');
+        SimpleJsonValue value;
+        value.type = SimpleJsonValue::Type::String;
+
+        while (!AtEnd())
+        {
+            char const ch = Get();
+            if (ch == '"')
+                return value;
+
+            if (ch == '\\')
+            {
+                if (AtEnd())
+                    throw std::runtime_error("Unterminated JSON escape");
+
+                char const escaped = Get();
+                switch (escaped)
+                {
+                    case '"':
+                    case '\\':
+                    case '/':
+                        value.stringValue.push_back(escaped);
+                        break;
+                    case 'b':
+                        value.stringValue.push_back('\b');
+                        break;
+                    case 'f':
+                        value.stringValue.push_back('\f');
+                        break;
+                    case 'n':
+                        value.stringValue.push_back('\n');
+                        break;
+                    case 'r':
+                        value.stringValue.push_back('\r');
+                        break;
+                    case 't':
+                        value.stringValue.push_back('\t');
+                        break;
+                    default:
+                        throw std::runtime_error("Unsupported JSON escape");
+                }
+                continue;
+            }
+
+            value.stringValue.push_back(ch);
+        }
+
+        throw std::runtime_error("Unterminated JSON string");
+    }
+
+    SimpleJsonValue ParseNumber()
+    {
+        std::size_t const start = _offset;
+        if (Peek() == '-')
+            ++_offset;
+
+        while (!AtEnd() && std::isdigit(static_cast<unsigned char>(Peek())))
+            ++_offset;
+
+        if (!AtEnd() && Peek() == '.')
+        {
+            ++_offset;
+            while (!AtEnd() && std::isdigit(static_cast<unsigned char>(Peek())))
+                ++_offset;
+        }
+
+        if (!AtEnd() && (Peek() == 'e' || Peek() == 'E'))
+        {
+            ++_offset;
+            if (!AtEnd() && (Peek() == '+' || Peek() == '-'))
+                ++_offset;
+            while (!AtEnd() && std::isdigit(static_cast<unsigned char>(Peek())))
+                ++_offset;
+        }
+
+        SimpleJsonValue value;
+        value.type = SimpleJsonValue::Type::Number;
+        value.numberValue = std::stod(std::string(_input.substr(start, _offset - start)));
+        return value;
+    }
+
+    SimpleJsonValue ParseBoolean(bool boolValue)
+    {
+        _offset += boolValue ? 4u : 5u;
+        SimpleJsonValue value;
+        value.type = SimpleJsonValue::Type::Boolean;
+        value.boolValue = boolValue;
+        return value;
+    }
+
+    SimpleJsonValue ParseNull()
+    {
+        _offset += 4u;
+        return {};
+    }
+
+    void SkipWhitespace()
+    {
+        while (!AtEnd() && std::isspace(static_cast<unsigned char>(_input[_offset])))
+            ++_offset;
+    }
+
+    [[nodiscard]] bool StartsWith(char const* text) const
+    {
+        std::size_t const length = std::char_traits<char>::length(text);
+        return _input.substr(_offset, length) == text;
+    }
+
+    void Consume(char expected)
+    {
+        SkipWhitespace();
+        if (AtEnd() || _input[_offset] != expected)
+            throw std::runtime_error("Unexpected JSON token");
+        ++_offset;
+    }
+
+    [[nodiscard]] bool TryConsume(char expected)
+    {
+        SkipWhitespace();
+        if (AtEnd() || _input[_offset] != expected)
+            return false;
+        ++_offset;
+        return true;
+    }
+
+    [[nodiscard]] char Peek() const
+    {
+        return _input[_offset];
+    }
+
+    [[nodiscard]] char Get()
+    {
+        return _input[_offset++];
+    }
+
+    [[nodiscard]] bool AtEnd() const
+    {
+        return _offset >= _input.size();
+    }
+
+    std::string_view _input;
+    std::size_t _offset = 0;
+};
+
+SimpleJsonValue const* TryGetJsonObjectMember(SimpleJsonValue const& object, std::string const& key)
+{
+    if (!object.IsObject())
+        return nullptr;
+
+    auto const itr = object.objectValue.find(key);
+    if (itr == object.objectValue.end())
+        return nullptr;
+    return &itr->second;
+}
+
+double GetJsonNumberOrDefault(SimpleJsonValue const& object, std::string const& key, double fallback = 0.0)
+{
+    SimpleJsonValue const* value = TryGetJsonObjectMember(object, key);
+    if (!value || !value->IsNumber())
+        return fallback;
+    return value->numberValue;
+}
+
+std::string GetJsonStringOrDefault(SimpleJsonValue const& object, std::string const& key)
+{
+    SimpleJsonValue const* value = TryGetJsonObjectMember(object, key);
+    if (!value || !value->IsString())
+        return {};
+    return value->stringValue;
+}
+
+struct TransitionNodeRecord
+{
+    std::uint16_t mapId = 0;
+    std::uint32_t zoneId = 0;
+    std::string zoneName;
+    std::string pathKey;
+    std::int32_t pathIndex = -1;
+    std::int32_t anchorIndex = -1;
+    float x = 0.0f;
+    float y = 0.0f;
+    float z = 0.0f;
+    std::uint32_t targetZoneId = 0;
+};
+
+struct GeneratedConnectorRecord
+{
+    std::uint16_t mapId = 0;
+    std::string connectorKey;
+    std::uint32_t fromZoneId = 0;
+    std::uint32_t toZoneId = 0;
+    std::string fromZoneName;
+    std::string toZoneName;
+    std::string fromPathKey;
+    std::string toPathKey;
+    std::int32_t fromAnchorIndex = -1;
+    std::int32_t toAnchorIndex = -1;
+    float fromX = 0.0f;
+    float fromY = 0.0f;
+    float fromZ = 0.0f;
+    float toX = 0.0f;
+    float toY = 0.0f;
+    float toZ = 0.0f;
+};
+
+std::vector<GeneratedConnectorRecord> ParseExistingConnectorRecords(std::string const& payload)
+{
+    std::vector<GeneratedConnectorRecord> connectors;
+
+    SimpleJsonValue const root = SimpleJsonParser(payload).Parse();
+    if (!root.IsObject())
+        return connectors;
+
+    std::uint16_t const mapId = static_cast<std::uint16_t>(GetJsonNumberOrDefault(root, "map_id"));
+    SimpleJsonValue const* connectorsValue = TryGetJsonObjectMember(root, "connectors");
+    if (!connectorsValue || !connectorsValue->IsArray())
+        return connectors;
+
+    for (SimpleJsonValue const& connectorValue : connectorsValue->arrayValue)
+    {
+        if (!connectorValue.IsObject())
+            continue;
+
+        SimpleJsonValue const* fromValue = TryGetJsonObjectMember(connectorValue, "from");
+        SimpleJsonValue const* toValue = TryGetJsonObjectMember(connectorValue, "to");
+        if (!fromValue || !fromValue->IsObject() || !toValue || !toValue->IsObject())
+            continue;
+
+        GeneratedConnectorRecord connector;
+        connector.mapId = mapId;
+        connector.connectorKey = GetJsonStringOrDefault(connectorValue, "connector_key");
+        connector.fromZoneId = static_cast<std::uint32_t>(GetJsonNumberOrDefault(connectorValue, "from_zone_id"));
+        connector.toZoneId = static_cast<std::uint32_t>(GetJsonNumberOrDefault(connectorValue, "to_zone_id"));
+        connector.fromPathKey = GetJsonStringOrDefault(connectorValue, "from_path_key");
+        connector.toPathKey = GetJsonStringOrDefault(connectorValue, "to_path_key");
+        connector.fromAnchorIndex = static_cast<std::int32_t>(GetJsonNumberOrDefault(connectorValue, "from_anchor_index", -1.0));
+        connector.toAnchorIndex = static_cast<std::int32_t>(GetJsonNumberOrDefault(connectorValue, "to_anchor_index", -1.0));
+        connector.fromX = static_cast<float>(GetJsonNumberOrDefault(*fromValue, "world_x"));
+        connector.fromY = static_cast<float>(GetJsonNumberOrDefault(*fromValue, "world_y"));
+        connector.fromZ = static_cast<float>(GetJsonNumberOrDefault(*fromValue, "world_z"));
+        connector.toX = static_cast<float>(GetJsonNumberOrDefault(*toValue, "world_x"));
+        connector.toY = static_cast<float>(GetJsonNumberOrDefault(*toValue, "world_y"));
+        connector.toZ = static_cast<float>(GetJsonNumberOrDefault(*toValue, "world_z"));
+        if (connector.fromZoneId == 0 || connector.toZoneId == 0 || connector.connectorKey.empty())
+            continue;
+        connectors.push_back(std::move(connector));
+    }
+
+    return connectors;
+}
+
+float Distance2D(float ax, float ay, float bx, float by)
+{
+    float const dx = ax - bx;
+    float const dy = ay - by;
+    return std::sqrt((dx * dx) + (dy * dy));
+}
+
+std::string SlugifyTransitionLabel(std::string value)
+{
+    for (char& ch : value)
+    {
+        if (std::isalnum(static_cast<unsigned char>(ch)))
+            continue;
+        ch = '_';
+    }
+
+    std::string normalized;
+    normalized.reserve(value.size());
+    bool lastUnderscore = false;
+    for (char ch : value)
+    {
+        if (ch == '_')
+        {
+            if (!lastUnderscore)
+                normalized.push_back(ch);
+            lastUnderscore = true;
+            continue;
+        }
+
+        normalized.push_back(ch);
+        lastUnderscore = false;
+    }
+
+    while (!normalized.empty() && normalized.front() == '_')
+        normalized.erase(normalized.begin());
+    while (!normalized.empty() && normalized.back() == '_')
+        normalized.pop_back();
+    return normalized.empty() ? "Zone" : normalized;
+}
+
+std::vector<TransitionNodeRecord> ParseTransitionNodesFromRoutePayload(std::string const& payload)
+{
+    std::vector<TransitionNodeRecord> nodes;
+
+    SimpleJsonValue const root = SimpleJsonParser(payload).Parse();
+    if (!root.IsObject())
+        return nodes;
+
+    std::uint16_t const mapId = static_cast<std::uint16_t>(GetJsonNumberOrDefault(root, "map_id"));
+    std::uint32_t const zoneId = static_cast<std::uint32_t>(GetJsonNumberOrDefault(root, "zone_id"));
+    std::string const zoneName = GetJsonStringOrDefault(root, "zone_name");
+
+    SimpleJsonValue const* pathsValue = TryGetJsonObjectMember(root, "paths");
+    if (!pathsValue || !pathsValue->IsArray())
+        return nodes;
+
+    for (SimpleJsonValue const& pathValue : pathsValue->arrayValue)
+    {
+        if (!pathValue.IsObject())
+            continue;
+
+        std::int32_t const pathIndex = static_cast<std::int32_t>(GetJsonNumberOrDefault(pathValue, "path_index", -1.0));
+        std::string const pathKey = GetJsonStringOrDefault(pathValue, "path_key");
+        SimpleJsonValue const* anchorsValue = TryGetJsonObjectMember(pathValue, "anchors");
+        if (!anchorsValue || !anchorsValue->IsArray())
+            continue;
+
+        for (std::size_t anchorIndex = 0; anchorIndex < anchorsValue->arrayValue.size(); ++anchorIndex)
+        {
+            SimpleJsonValue const& anchorValue = anchorsValue->arrayValue[anchorIndex];
+            if (!anchorValue.IsObject())
+                continue;
+
+            SimpleJsonValue const* transitionValue = TryGetJsonObjectMember(anchorValue, "transition_node");
+            if (!transitionValue || !transitionValue->IsObject())
+                continue;
+
+            std::uint32_t const targetZoneId = static_cast<std::uint32_t>(
+                GetJsonNumberOrDefault(*transitionValue, "target_zone_id"));
+            if (targetZoneId == 0)
+                continue;
+
+            TransitionNodeRecord node;
+            node.mapId = mapId;
+            node.zoneId = zoneId;
+            node.zoneName = zoneName;
+            node.pathKey = pathKey;
+            node.pathIndex = pathIndex;
+            node.anchorIndex = static_cast<std::int32_t>(anchorIndex);
+            node.x = static_cast<float>(GetJsonNumberOrDefault(anchorValue, "world_x"));
+            node.y = static_cast<float>(GetJsonNumberOrDefault(anchorValue, "world_y"));
+            node.z = static_cast<float>(GetJsonNumberOrDefault(anchorValue, "world_z"));
+            node.targetZoneId = targetZoneId;
+            nodes.push_back(std::move(node));
+        }
+    }
+
+    return nodes;
+}
+
+std::optional<GeneratedConnectorRecord> BuildGeneratedConnectorRecord(
+    TransitionNodeRecord const& first,
+    TransitionNodeRecord const& second,
+    std::uint32_t ordinal)
+{
+    if (first.mapId != second.mapId)
+        return std::nullopt;
+
+    constexpr float MaxTransitionPairDistanceYards = 300.0f;
+    constexpr float GlueTargetGapYards = 8.0f;
+    constexpr float GlueMaxDistanceYards = 80.0f;
+
+    float const seamDistance = Distance2D(first.x, first.y, second.x, second.y);
+    if (seamDistance > MaxTransitionPairDistanceYards)
+        return std::nullopt;
+
+    TransitionNodeRecord const* fromNode = &first;
+    TransitionNodeRecord const* toNode = &second;
+    if (std::tie(first.zoneId, first.pathIndex, first.anchorIndex) > std::tie(second.zoneId, second.pathIndex, second.anchorIndex))
+    {
+        fromNode = &second;
+        toNode = &first;
+    }
+
+    float fromX = fromNode->x;
+    float fromY = fromNode->y;
+    float toX = toNode->x;
+    float toY = toNode->y;
+
+    if (seamDistance > GlueTargetGapYards && seamDistance <= GlueMaxDistanceYards)
+    {
+        float const dx = toX - fromX;
+        float const dy = toY - fromY;
+        float const length = std::max(0.001f, std::sqrt((dx * dx) + (dy * dy)));
+        float const midX = (fromX + toX) * 0.5f;
+        float const midY = (fromY + toY) * 0.5f;
+        float const halfGap = GlueTargetGapYards * 0.5f;
+        float const ux = dx / length;
+        float const uy = dy / length;
+        fromX = midX - (ux * halfGap);
+        fromY = midY - (uy * halfGap);
+        toX = midX + (ux * halfGap);
+        toY = midY + (uy * halfGap);
+    }
+
+    GeneratedConnectorRecord connector;
+    connector.mapId = fromNode->mapId;
+    connector.fromZoneId = fromNode->zoneId;
+    connector.toZoneId = toNode->zoneId;
+    connector.fromZoneName = fromNode->zoneName;
+    connector.toZoneName = toNode->zoneName;
+    connector.fromPathKey = fromNode->pathKey;
+    connector.toPathKey = toNode->pathKey;
+    connector.fromAnchorIndex = fromNode->anchorIndex;
+    connector.toAnchorIndex = toNode->anchorIndex;
+    connector.fromX = fromX;
+    connector.fromY = fromY;
+    connector.fromZ = fromNode->z;
+    connector.toX = toX;
+    connector.toY = toY;
+    connector.toZ = toNode->z;
+
+    std::ostringstream key;
+    key << SlugifyTransitionLabel(connector.fromZoneName)
+        << "_"
+        << SlugifyTransitionLabel(connector.toZoneName)
+        << "_Border_"
+        << std::setw(2) << std::setfill('0') << ordinal;
+    connector.connectorKey = key.str();
+    return connector;
+}
+
+bool WriteGeneratedConnectorManifest(
+    std::filesystem::path const& path,
+    std::uint16_t mapId,
+    std::vector<GeneratedConnectorRecord> const& connectors)
+{
+    std::ofstream output(path, std::ios::out | std::ios::binary | std::ios::trunc);
+    if (!output.is_open())
+        return false;
+
+    output << "{\n";
+    output << "  \"map_id\": " << mapId << ",\n";
+    output << "  \"z_baked\": false,\n";
+    output << "  \"generated_from_transition_nodes\": true,\n";
+    output << "  \"connectors\": [\n";
+    for (std::size_t index = 0; index < connectors.size(); ++index)
+    {
+        auto const& connector = connectors[index];
+        output << "    {\n";
+        output << "      \"connector_key\": \"" << connector.connectorKey << "\",\n";
+        output << "      \"from_zone_id\": " << connector.fromZoneId << ",\n";
+        output << "      \"to_zone_id\": " << connector.toZoneId << ",\n";
+        output << "      \"bidirectional\": true,\n";
+        output << "      \"from_path_key\": \"" << connector.fromPathKey << "\",\n";
+        output << "      \"from_anchor_index\": " << connector.fromAnchorIndex << ",\n";
+        output << "      \"to_path_key\": \"" << connector.toPathKey << "\",\n";
+        output << "      \"to_anchor_index\": " << connector.toAnchorIndex << ",\n";
+        output << "      \"from\": {\n";
+        output << "        \"world_x\": " << std::fixed << std::setprecision(4) << connector.fromX << ",\n";
+        output << "        \"world_y\": " << std::fixed << std::setprecision(4) << connector.fromY << ",\n";
+        output << "        \"world_z\": " << std::fixed << std::setprecision(4) << connector.fromZ << "\n";
+        output << "      },\n";
+        output << "      \"to\": {\n";
+        output << "        \"world_x\": " << std::fixed << std::setprecision(4) << connector.toX << ",\n";
+        output << "        \"world_y\": " << std::fixed << std::setprecision(4) << connector.toY << ",\n";
+        output << "        \"world_z\": " << std::fixed << std::setprecision(4) << connector.toZ << "\n";
+        output << "      }\n";
+        output << "    }";
+        if ((index + 1u) < connectors.size())
+            output << ",";
+        output << "\n";
+    }
+    output << "  ]\n";
+    output << "}\n";
+    return true;
+}
+
+std::vector<GeneratedConnectorRecord> MergeGeneratedConnectorsWithExisting(
+    std::filesystem::path const& manifestPath,
+    std::vector<GeneratedConnectorRecord> generated)
+{
+    std::ifstream input(manifestPath, std::ios::in | std::ios::binary);
+    if (!input.is_open())
+        return generated;
+
+    std::ostringstream stream;
+    stream << input.rdbuf();
+    input.close();
+
+    try
+    {
+        std::vector<GeneratedConnectorRecord> existing = ParseExistingConnectorRecords(stream.str());
+        for (GeneratedConnectorRecord& generatedConnector : generated)
+        {
+            auto existingItr = std::find_if(
+                existing.begin(),
+                existing.end(),
+                [&generatedConnector](GeneratedConnectorRecord const& existingConnector)
+                {
+                    return existingConnector.connectorKey == generatedConnector.connectorKey;
+                });
+            if (existingItr != existing.end())
+                *existingItr = generatedConnector;
+            else
+                existing.push_back(std::move(generatedConnector));
+        }
+        return existing;
+    }
+    catch (std::exception const&)
+    {
+        return generated;
+    }
+}
+
+std::uint32_t GenerateConnectorManifestsFromTransitionNodes(std::filesystem::path const& routeRoot)
+{
+    std::error_code ec;
+    if (!std::filesystem::exists(routeRoot, ec) || !std::filesystem::is_directory(routeRoot, ec))
+        return 0;
+
+    std::unordered_map<std::uint16_t, std::vector<TransitionNodeRecord>> nodesByMap;
+    for (std::filesystem::directory_entry const& entry : std::filesystem::directory_iterator(routeRoot, ec))
+    {
+        if (ec || !entry.is_regular_file())
+            continue;
+
+        std::string const filename = entry.path().filename().string();
+        if (filename.find("__routes.json") == std::string::npos)
+            continue;
+
+        std::ifstream input(entry.path(), std::ios::in | std::ios::binary);
+        if (!input.is_open())
+            continue;
+
+        std::ostringstream stream;
+        stream << input.rdbuf();
+        try
+        {
+            for (TransitionNodeRecord& node : ParseTransitionNodesFromRoutePayload(stream.str()))
+                nodesByMap[node.mapId].push_back(std::move(node));
+        }
+        catch (std::exception const& ex)
+        {
+            LOG_ERROR("server.worldserver",
+                "[LivingWorld] Could not parse transition nodes from {}: {}",
+                entry.path().string(),
+                ex.what());
+        }
+    }
+
+    std::uint32_t generatedManifestCount = 0;
+    for (auto& [mapId, nodes] : nodesByMap)
+    {
+        struct PairCandidate
+        {
+            std::size_t firstIndex = 0;
+            std::size_t secondIndex = 0;
+            float distance = 0.0f;
+        };
+
+        std::vector<PairCandidate> candidates;
+        for (std::size_t i = 0; i < nodes.size(); ++i)
+        {
+            for (std::size_t j = i + 1u; j < nodes.size(); ++j)
+            {
+                if (nodes[i].zoneId == nodes[j].zoneId)
+                    continue;
+                if (nodes[i].targetZoneId != nodes[j].zoneId || nodes[j].targetZoneId != nodes[i].zoneId)
+                    continue;
+
+                candidates.push_back(PairCandidate{
+                    i,
+                    j,
+                    Distance2D(nodes[i].x, nodes[i].y, nodes[j].x, nodes[j].y)
+                });
+            }
+        }
+
+        if (candidates.empty())
+            continue;
+
+        std::sort(candidates.begin(), candidates.end(), [](PairCandidate const& left, PairCandidate const& right)
+        {
+            return left.distance < right.distance;
+        });
+
+        std::vector<bool> used(nodes.size(), false);
+        std::vector<GeneratedConnectorRecord> connectors;
+        std::uint32_t ordinal = 1;
+        for (PairCandidate const& candidate : candidates)
+        {
+            if (used[candidate.firstIndex] || used[candidate.secondIndex])
+                continue;
+
+            auto connector = BuildGeneratedConnectorRecord(
+                nodes[candidate.firstIndex],
+                nodes[candidate.secondIndex],
+                ordinal);
+            if (!connector)
+                continue;
+
+            used[candidate.firstIndex] = true;
+            used[candidate.secondIndex] = true;
+            connectors.push_back(std::move(*connector));
+            ++ordinal;
+        }
+
+        if (connectors.empty())
+            continue;
+
+        std::ostringstream filename;
+        filename << "map_" << std::setw(3) << std::setfill('0') << mapId << "__connectors.json";
+        std::filesystem::path const manifestPath = routeRoot / filename.str();
+        std::vector<GeneratedConnectorRecord> mergedConnectors =
+            MergeGeneratedConnectorsWithExisting(manifestPath, std::move(connectors));
+        if (!WriteGeneratedConnectorManifest(manifestPath, mapId, mergedConnectors))
+        {
+            LOG_ERROR("server.worldserver",
+                "[LivingWorld] Failed to write generated connector manifest {}.",
+                manifestPath.string());
+            continue;
+        }
+
+        ++generatedManifestCount;
+        LOG_INFO("server.worldserver",
+            "[LivingWorld] Generated {} connector(s) from transition nodes into {}.",
+            mergedConnectors.size(),
+            manifestPath.string());
+    }
+
+    return generatedManifestCount;
+}
+
+void MaybeGenerateConnectorManifestsOnStartup()
+{
+    std::filesystem::path const routeRoot = ResolveWorldBotRouteExportRoot();
+    std::uint32_t const generatedCount = GenerateConnectorManifestsFromTransitionNodes(routeRoot);
+    if (generatedCount > 0)
+    {
+        LOG_INFO("server.worldserver",
+            "[LivingWorld] Generated {} connector manifest(s) from transition-node markup under {}.",
+            generatedCount,
+            routeRoot.string());
+    }
+}
+
+std::optional<std::uint32_t> TryParseNumericSuffix(
+    std::string const& filename,
+    std::string const& prefix,
+    std::string const& suffix)
+{
+    if (!filename.starts_with(prefix) || !filename.ends_with(suffix))
+        return std::nullopt;
+
+    std::string const numeric = filename.substr(
+        prefix.size(),
+        filename.size() - prefix.size() - suffix.size());
+    if (numeric.empty())
+        return std::nullopt;
+
+    try
+    {
+        return static_cast<std::uint32_t>(std::stoul(numeric));
+    }
+    catch (...)
+    {
+        return std::nullopt;
+    }
+}
+
+std::optional<std::uint32_t> TryParseMapIdFromRouteFilename(std::string const& filename)
+{
+    if (!filename.starts_with("map_"))
+        return std::nullopt;
+
+    std::size_t const numericStart = 4u;
+    std::size_t const numericEnd = filename.find("__", numericStart);
+    if (numericEnd == std::string::npos || numericEnd <= numericStart)
+        return std::nullopt;
+
+    try
+    {
+        return static_cast<std::uint32_t>(
+            std::stoul(filename.substr(numericStart, numericEnd - numericStart)));
+    }
+    catch (...)
+    {
+        return std::nullopt;
+    }
+}
+
+std::optional<std::uint32_t> TryParseZoneIdFromRouteFilename(std::string const& filename)
+{
+    std::size_t const marker = filename.find("__zone_");
+    if (marker == std::string::npos)
+        return std::nullopt;
+
+    std::size_t const numericStart = marker + 7u;
+    std::size_t const numericEnd = filename.find("__", numericStart);
+    if (numericEnd == std::string::npos || numericEnd <= numericStart)
+        return std::nullopt;
+
+    try
+    {
+        return static_cast<std::uint32_t>(
+            std::stoul(filename.substr(numericStart, numericEnd - numericStart)));
+    }
+    catch (...)
+    {
+        return std::nullopt;
+    }
+}
+
+std::optional<double> TryExtractJsonNumber(std::string const& line, char const* key)
+{
+    std::regex const pattern(
+        std::string(R"(^\s*")") + key + R"("\s*:\s*(-?\d+(?:\.\d+)?)(?:\s*,\s*)?$)");
+    std::smatch match;
+    if (!std::regex_match(line, match, pattern))
+        return std::nullopt;
+
+    try
+    {
+        return std::stod(match[1].str());
+    }
+    catch (...)
+    {
+        return std::nullopt;
+    }
+}
+
+std::string ReplaceJsonNumber(std::string const& line, char const* key, double value)
+{
+    std::regex const pattern(
+        std::string(R"((^\s*")") + key + R"("\s*:\s*)(-?\d+(?:\.\d+)?)(\s*,?\s*$))");
+    std::smatch match;
+    if (!std::regex_match(line, match, pattern))
+        return line;
+
+    std::ostringstream valueStream;
+    valueStream << std::fixed << std::setprecision(4) << value;
+    return match[1].str() + valueStream.str() + match[3].str();
+}
+
+std::string BuildJsonNumberLine(std::string const& referenceLine, char const* key, double value)
+{
+    std::size_t const indentLength = referenceLine.find_first_not_of(" \t");
+    std::string const indent = indentLength == std::string::npos
+        ? std::string()
+        : referenceLine.substr(0, indentLength);
+
+    std::ostringstream valueStream;
+    valueStream << std::fixed << std::setprecision(4) << value;
+    return indent + "\"" + key + "\": " + valueStream.str() + ",";
+}
+
+std::string ReplaceJsonBoolean(std::string const& line, char const* key, bool value)
+{
+    std::regex const pattern(
+        std::string(R"((^\s*")") + key + R"("\s*:\s*)(true|false)(\s*,?\s*$))");
+    std::smatch match;
+    if (!std::regex_match(line, match, pattern))
+        return line;
+
+    return match[1].str() + (value ? "true" : "false") + match[3].str();
+}
+
+std::string BuildJsonBooleanLine(std::string const& referenceLine, char const* key, bool value)
+{
+    std::size_t const indentLength = referenceLine.find_first_not_of(" \t");
+    std::string const indent = indentLength == std::string::npos
+        ? std::string()
+        : referenceLine.substr(0, indentLength);
+
+    return indent + "\"" + key + "\": " + (value ? "true" : "false") + ",";
+}
+
+std::optional<bool> TryExtractJsonBoolean(std::string const& line, char const* key)
+{
+    std::regex const pattern(
+        std::string(R"(^\s*")") + key + R"("\s*:\s*(true|false)(?:\s*,\s*)?$)");
+    std::smatch match;
+    if (!std::regex_match(line, match, pattern))
+        return std::nullopt;
+
+    return match[1].str() == "true";
+}
+
+double ResolveGroundedRouteZ(Map* map, float x, float y, float fallbackZ)
+{
+    if (!map)
+        return fallbackZ;
+
+    float resolved = fallbackZ;
+    float hintedGround = INVALID_HEIGHT;
+    if (std::fabs(fallbackZ) > 0.01f)
+        hintedGround = map->GetHeight(x, y, fallbackZ, true, 50.0f);
+
+    if (hintedGround > INVALID_HEIGHT)
+        resolved = hintedGround;
+    else
+    {
+        float const skyGround = map->GetHeight(x, y, MAX_HEIGHT);
+        if (skyGround > INVALID_HEIGHT)
+            resolved = skyGround;
+    }
+
+    if (resolved <= INVALID_HEIGHT)
+    {
+        float const water = map->GetWaterLevel(x, y);
+        if (water > INVALID_HEIGHT)
+            resolved = water;
+    }
+
+    return resolved;
+}
+
+bool BakeRouteFileZHeights(std::filesystem::path const& path, std::uint32_t mapId)
+{
+    Map* map = sMapMgr->CreateBaseMap(mapId);
+    if (!map)
+        return false;
+
+    std::ifstream input(path, std::ios::in | std::ios::binary);
+    if (!input.is_open())
+        return false;
+
+    std::vector<std::string> lines;
+    std::string line;
+    while (std::getline(input, line))
+        lines.push_back(line);
+    input.close();
+
+    std::optional<double> pendingX;
+    std::optional<double> pendingY;
+    bool touched = false;
+    std::vector<std::string> rebuiltLines;
+    rebuiltLines.reserve(lines.size() + 128u);
+    bool sawBakedFlag = false;
+    bool alreadyBaked = false;
+
+    for (std::string& currentLine : lines)
+    {
+        if (auto const baked = TryExtractJsonBoolean(currentLine, "z_baked"))
+        {
+            sawBakedFlag = true;
+            alreadyBaked = *baked;
+            rebuiltLines.push_back(currentLine);
+            continue;
+        }
+
+        if (auto const x = TryExtractJsonNumber(currentLine, "world_x"))
+            pendingX = *x;
+        if (auto const y = TryExtractJsonNumber(currentLine, "world_y"))
+            pendingY = *y;
+
+        if (pendingX && pendingY &&
+            currentLine.find("\"distance_from_start_yards\"") != std::string::npos)
+        {
+            double const bakedZ = ResolveGroundedRouteZ(
+                map,
+                static_cast<float>(*pendingX),
+                static_cast<float>(*pendingY),
+                0.0f);
+            rebuiltLines.push_back(BuildJsonNumberLine(currentLine, "world_z", bakedZ));
+            touched = true;
+            pendingX.reset();
+            pendingY.reset();
+        }
+
+        auto const currentZ = TryExtractJsonNumber(currentLine, "world_z");
+        if (!currentZ)
+        {
+            rebuiltLines.push_back(currentLine);
+            continue;
+        }
+
+        if (pendingX && pendingY)
+        {
+            double const bakedZ = ResolveGroundedRouteZ(
+                map,
+                static_cast<float>(*pendingX),
+                static_cast<float>(*pendingY),
+                static_cast<float>(*currentZ));
+            if (std::fabs(bakedZ - *currentZ) > 0.01)
+            {
+                currentLine = ReplaceJsonNumber(currentLine, "world_z", bakedZ);
+                touched = true;
+            }
+        }
+
+        pendingX.reset();
+        pendingY.reset();
+        rebuiltLines.push_back(currentLine);
+    }
+
+    if (!touched && alreadyBaked)
+        return true;
+
+    if (sawBakedFlag)
+    {
+        for (std::string& rebuiltLine : rebuiltLines)
+        {
+            if (TryExtractJsonBoolean(rebuiltLine, "z_baked").has_value())
+            {
+                rebuiltLine = ReplaceJsonBoolean(rebuiltLine, "z_baked", true);
+                break;
+            }
+        }
+    }
+    else
+    {
+        std::size_t insertIndex = 0;
+        for (std::size_t index = 0; index < rebuiltLines.size(); ++index)
+        {
+            if (rebuiltLines[index].find("\"map_id\"") != std::string::npos)
+            {
+                insertIndex = index + 1u;
+                break;
+            }
+        }
+
+        std::string const referenceLine =
+            (insertIndex > 0u && insertIndex <= rebuiltLines.size())
+                ? rebuiltLines[insertIndex - 1u]
+                : std::string("  ");
+        rebuiltLines.insert(
+            rebuiltLines.begin() + static_cast<std::ptrdiff_t>(insertIndex),
+            BuildJsonBooleanLine(referenceLine, "z_baked", true));
+    }
+
+    std::ofstream output(path, std::ios::out | std::ios::binary | std::ios::trunc);
+    if (!output.is_open())
+        return false;
+
+    for (std::size_t index = 0; index < rebuiltLines.size(); ++index)
+    {
+        output << rebuiltLines[index];
+        if ((index + 1u) < rebuiltLines.size())
+            output << '\n';
+    }
+
+    return true;
+}
+
+struct RouteBakeScanResult
+{
+    std::uint32_t scannedFiles = 0;
+    std::uint32_t bakedFiles = 0;
+    std::uint32_t skippedAlreadyBaked = 0;
+};
+
+RouteBakeScanResult BakeRouteBundleZHeights(
+    std::filesystem::path const& routeRoot,
+    std::unordered_set<std::uint32_t> const* zoneFilter)
+{
+    RouteBakeScanResult result;
+
+    std::error_code ec;
+    if (!std::filesystem::exists(routeRoot, ec) || !std::filesystem::is_directory(routeRoot, ec))
+        return result;
+
+    for (std::filesystem::directory_entry const& entry : std::filesystem::directory_iterator(routeRoot, ec))
+    {
+        if (ec || !entry.is_regular_file())
+            continue;
+
+        std::string const filename = entry.path().filename().string();
+        bool const isRouteFile = filename.find("__routes.json") != std::string::npos;
+        bool const isConnectorFile = filename.find("__connectors.json") != std::string::npos;
+        if (!isRouteFile && !isConnectorFile)
+            continue;
+
+        if (zoneFilter && !zoneFilter->empty() && isRouteFile)
+        {
+            std::optional<std::uint32_t> const zoneId = TryParseZoneIdFromRouteFilename(filename);
+            if (!zoneId || !zoneFilter->contains(*zoneId))
+                continue;
+        }
+
+        std::ifstream input(entry.path(), std::ios::in | std::ios::binary);
+        std::string fileText;
+        if (input.is_open())
+        {
+            std::ostringstream stream;
+            stream << input.rdbuf();
+            fileText = stream.str();
+        }
+        if (fileText.find("\"z_baked\": true") != std::string::npos)
+        {
+            ++result.skippedAlreadyBaked;
+            continue;
+        }
+
+        std::optional<std::uint32_t> const mapId = TryParseMapIdFromRouteFilename(filename);
+        if (!mapId)
+            continue;
+
+        ++result.scannedFiles;
+        if (BakeRouteFileZHeights(entry.path(), *mapId))
+            ++result.bakedFiles;
+    }
+
+    return result;
+}
+
+void MaybeBakeRouteBundleOnStartup()
+{
+    bool const startupBakeEnabled =
+        sConfigMgr->GetOption<bool>("LivingWorld.RouteExportBakeZOnStartup", true);
+    bool const debugHarnessBakeEnabled =
+        sConfigMgr->GetOption<bool>("LivingWorld.DebugRouteHarnessEnabled", false) &&
+        sConfigMgr->GetOption<bool>("LivingWorld.DebugRouteHarnessBakeRouteZ", false);
+
+    if (!startupBakeEnabled && !debugHarnessBakeEnabled)
+        return;
+
+    std::filesystem::path const routeRoot = ResolveWorldBotRouteExportRoot();
+    std::error_code ec;
+    if (!std::filesystem::exists(routeRoot, ec) || !std::filesystem::is_directory(routeRoot, ec))
+    {
+        LOG_ERROR("server.worldserver",
+            "[LivingWorld] Route Z bake could not find route root {}.",
+            routeRoot.string());
+        return;
+    }
+
+    std::unordered_set<std::uint32_t> zoneFilter;
+    if (!startupBakeEnabled)
+    {
+        for (std::uint32_t const zoneId : ParseDebugIdentityIdList(
+            sConfigMgr->GetOption<std::string>("LivingWorld.DebugRouteHarnessBakeZoneIds", "")))
+        {
+            zoneFilter.insert(zoneId);
+        }
+    }
+
+    RouteBakeScanResult const result = BakeRouteBundleZHeights(
+        routeRoot,
+        zoneFilter.empty() ? nullptr : &zoneFilter);
+
+    LOG_INFO("server.worldserver",
+        "[LivingWorld] Route Z bake scanned {} file(s), baked {}, skipped {} already-marked file(s) from {}.",
+        result.scannedFiles,
+        result.bakedFiles,
+        result.skippedAlreadyBaked,
+        routeRoot.string());
+}
+
 std::vector<std::uint32_t> ParseDebugIdentityIdList(std::string const& value)
 {
     std::vector<std::uint32_t> ids;
@@ -134,6 +1302,175 @@ std::vector<std::uint32_t> ParseDebugIdentityIdList(std::string const& value)
     }
 
     return ids;
+}
+
+std::string QuoteCharactersString(std::string value)
+{
+    CharacterDatabase.EscapeString(value);
+    return "'" + value + "'";
+}
+
+std::string ResolveDefaultSpecKeyForClass(std::uint8_t classId)
+{
+    switch (classId)
+    {
+        case CLASS_WARRIOR:
+            return "Arms";
+        case CLASS_PALADIN:
+            return "Retribution";
+        case CLASS_HUNTER:
+            return "Beast Mastery";
+        case CLASS_ROGUE:
+            return "Assassination";
+        case CLASS_PRIEST:
+            return "Shadow";
+        case CLASS_DEATH_KNIGHT:
+            return "Blood";
+        case CLASS_SHAMAN:
+            return "Elemental";
+        case CLASS_MAGE:
+            return "Frost";
+        case CLASS_WARLOCK:
+            return "Affliction";
+        case CLASS_DRUID:
+            return "Feral";
+        default:
+            return "Arms";
+    }
+}
+
+std::optional<living_world::integration::BotIdentityRecord> BuildDebugRouteHarnessIdentityTemplate(
+    std::uint8_t level,
+    std::uint8_t raceId,
+    std::uint8_t classId,
+    std::uint8_t gender)
+{
+    PlayerInfo const* playerInfo = sObjectMgr->GetPlayerInfo(raceId, classId);
+    if (!playerInfo)
+        return std::nullopt;
+
+    living_world::integration::BotIdentityRecord identity;
+    identity.name = "RouteHarnessL" + std::to_string(level);
+    identity.raceId = raceId;
+    identity.classId = classId;
+    identity.specKey = ResolveDefaultSpecKeyForClass(classId);
+    identity.faction = Player::TeamIdForRace(raceId) == TEAM_HORDE ? 2u : 1u;
+    identity.displayId = gender == GENDER_FEMALE ? playerInfo->displayId_f : playerInfo->displayId_m;
+    identity.gender = gender;
+    identity.level = level;
+    identity.gearTier = static_cast<std::uint8_t>(std::clamp<std::uint32_t>(std::max<std::uint32_t>(1u, level / 20u), 1u, 5u));
+    identity.personalityKey = "uninterested";
+    identity.isAvailable = true;
+    return identity;
+}
+
+std::optional<living_world::integration::BotIdentityRecord> EnsureDebugRouteHarnessIdentity(
+    std::uint8_t level,
+    std::uint8_t raceId,
+    std::uint8_t classId,
+    std::uint8_t gender)
+{
+    auto const identityTemplate = BuildDebugRouteHarnessIdentityTemplate(level, raceId, classId, gender);
+    if (!identityTemplate)
+        return std::nullopt;
+
+    living_world::integration::SqlBotIdentityRepository repo;
+    auto identity = repo.FindByName(identityTemplate->name);
+    if (!identity)
+    {
+        CharacterDatabase.Execute(
+            "INSERT INTO living_world_bot_identity "
+            "(name, race_id, class_id, spec_key, loadout_key, faction, display_id, gender, level, gear_tier, personality_key, "
+            "has_herbalism, has_mining, has_fishing, home_zone_id, home_anchor_point_key, home_bind_point_key, "
+            "is_available, session_count, total_world_online_ms, world_online_ms_since_level, post_max_world_online_ms, "
+            "active_world_session_ms, active_world_session_start, is_retired, successor_spawned, retired_at, last_seen_zone, last_seen_at) "
+            "VALUES ({}, {}, {}, {}, '', {}, {}, {}, {}, {}, {}, 0, 0, 0, NULL, NULL, NULL, 1, 0, 0, 0, 0, 0, NULL, 0, 0, NULL, NULL, NULL)",
+            QuoteCharactersString(identityTemplate->name),
+            identityTemplate->raceId,
+            identityTemplate->classId,
+            QuoteCharactersString(identityTemplate->specKey),
+            identityTemplate->faction,
+            identityTemplate->displayId,
+            identityTemplate->gender,
+            identityTemplate->level,
+            identityTemplate->gearTier,
+            QuoteCharactersString(identityTemplate->personalityKey));
+
+        identity = repo.FindByName(identityTemplate->name);
+    }
+    else
+    {
+        CharacterDatabase.Execute(
+            "UPDATE living_world_bot_identity "
+            "SET race_id = {}, class_id = {}, spec_key = {}, loadout_key = '', faction = {}, display_id = {}, gender = {}, "
+            "level = {}, gear_tier = {}, personality_key = {}, has_herbalism = 0, has_mining = 0, has_fishing = 0, "
+            "is_available = 1, active_world_session_ms = 0, active_world_session_start = NULL, "
+            "is_retired = 0, successor_spawned = 0, retired_at = NULL "
+            "WHERE id = {}",
+            identityTemplate->raceId,
+            identityTemplate->classId,
+            QuoteCharactersString(identityTemplate->specKey),
+            identityTemplate->faction,
+            identityTemplate->displayId,
+            identityTemplate->gender,
+            identityTemplate->level,
+            identityTemplate->gearTier,
+            QuoteCharactersString(identityTemplate->personalityKey),
+            identity->id);
+
+        identity = repo.FindById(identity->id);
+    }
+
+    return identity;
+}
+
+living_world::service::AmbientSession BuildDebugRouteHarnessSession(
+    std::uint32_t mapId,
+    std::uint32_t destZoneId,
+    float destX,
+    float destY,
+    float destZ,
+    std::uint32_t idleDurationSec)
+{
+    living_world::service::AmbientSession session;
+
+    living_world::service::AmbientSessionTask task;
+    task.activityId = 0;
+    task.activityKey = "debug_route_harness";
+    task.displayName = "Debug Route Harness";
+    task.activityType = "travel_debug";
+    task.taskFamily = "debug";
+    task.targetZoneId = destZoneId;
+    session.tasks.push_back(std::move(task));
+
+    living_world::service::AmbientStep travelStep;
+    travelStep.type = living_world::service::AmbientStepType::Travel;
+    travelStep.mapId = mapId;
+    travelStep.x = destX;
+    travelStep.y = destY;
+    travelStep.z = destZ;
+    travelStep.durationSec = 0;
+    travelStep.taskIndex = 0;
+    travelStep.label = "Debug travel route";
+    session.steps.push_back(std::move(travelStep));
+
+    living_world::service::AmbientStep idleStep;
+    idleStep.type = living_world::service::AmbientStepType::Idle;
+    idleStep.mapId = mapId;
+    idleStep.x = destX;
+    idleStep.y = destY;
+    idleStep.z = destZ;
+    idleStep.durationSec = std::max<std::uint32_t>(idleDurationSec, 5u);
+    idleStep.taskIndex = 0;
+    idleStep.label = "Debug route arrival hold";
+    session.steps.push_back(std::move(idleStep));
+
+    session.activityId = 0;
+    session.activityKey = "debug_route_harness";
+    session.displayName = "Debug Route Harness";
+    session.sourceKind = "debug_route_harness";
+    session.sourceKey = "debug_route_harness";
+    return session;
 }
 
 bool SessionStartsInZone(
@@ -313,6 +1650,35 @@ public:
             "LivingWorld.DebugForceSessionZoneId", 0);
         _debugForcedSessionComposeAttempts = sConfigMgr->GetOption<std::uint32_t>(
             "LivingWorld.DebugForceSessionComposeAttempts", 24);
+        _debugRouteHarnessEnabled = sConfigMgr->GetOption<bool>(
+            "LivingWorld.DebugRouteHarnessEnabled", false);
+        _debugRouteHarnessSpawned = false;
+        _debugRouteHarnessLevels = ParseDebugIdentityIdList(
+            sConfigMgr->GetOption<std::string>("LivingWorld.DebugRouteHarnessLevels", "10,60"));
+        _debugRouteHarnessRaceId = static_cast<std::uint8_t>(sConfigMgr->GetOption<std::uint32_t>(
+            "LivingWorld.DebugRouteHarnessRaceId", RACE_HUMAN));
+        _debugRouteHarnessClassId = static_cast<std::uint8_t>(sConfigMgr->GetOption<std::uint32_t>(
+            "LivingWorld.DebugRouteHarnessClassId", CLASS_WARRIOR));
+        _debugRouteHarnessGender = static_cast<std::uint8_t>(sConfigMgr->GetOption<std::uint32_t>(
+            "LivingWorld.DebugRouteHarnessGender", GENDER_MALE));
+        _debugRouteHarnessMapId = sConfigMgr->GetOption<std::uint32_t>(
+            "LivingWorld.DebugRouteHarnessMapId", 0);
+        _debugRouteHarnessStartX = sConfigMgr->GetOption<float>(
+            "LivingWorld.DebugRouteHarnessStartX", -8833.0f);
+        _debugRouteHarnessStartY = sConfigMgr->GetOption<float>(
+            "LivingWorld.DebugRouteHarnessStartY", 628.0f);
+        _debugRouteHarnessStartZ = sConfigMgr->GetOption<float>(
+            "LivingWorld.DebugRouteHarnessStartZ", 95.0f);
+        _debugRouteHarnessDestZoneId = sConfigMgr->GetOption<std::uint32_t>(
+            "LivingWorld.DebugRouteHarnessDestZoneId", 40);
+        _debugRouteHarnessDestX = sConfigMgr->GetOption<float>(
+            "LivingWorld.DebugRouteHarnessDestX", -10053.198f);
+        _debugRouteHarnessDestY = sConfigMgr->GetOption<float>(
+            "LivingWorld.DebugRouteHarnessDestY", 1455.3373f);
+        _debugRouteHarnessDestZ = sConfigMgr->GetOption<float>(
+            "LivingWorld.DebugRouteHarnessDestZ", 0.0f);
+        _debugRouteHarnessIdleDurationSec = sConfigMgr->GetOption<std::uint32_t>(
+            "LivingWorld.DebugRouteHarnessIdleDurationSec", 30);
 
         std::uint32_t const debugHotZoneCooldownMs = sConfigMgr->GetOption<std::uint32_t>(
             "LivingWorld.DebugHotZoneCooldownMs", 0);
@@ -355,6 +1721,33 @@ public:
                 _debugForcedSessionComposeAttempts);
         }
 
+        if (_debugRouteHarnessEnabled)
+        {
+            std::ostringstream oss;
+            for (std::size_t i = 0; i < _debugRouteHarnessLevels.size(); ++i)
+            {
+                if (i != 0)
+                    oss << ',';
+                oss << _debugRouteHarnessLevels[i];
+            }
+
+            LOG_INFO("server.worldserver",
+                "[LivingWorldDebug] RouteHarness enabled levels='{}' race={} class={} gender={} map={} start=({:.1f},{:.1f},{:.1f}) dest_zone={} dest=({:.1f},{:.1f},{:.1f}) idle_sec={}",
+                oss.str(),
+                _debugRouteHarnessRaceId,
+                _debugRouteHarnessClassId,
+                _debugRouteHarnessGender,
+                _debugRouteHarnessMapId,
+                _debugRouteHarnessStartX,
+                _debugRouteHarnessStartY,
+                _debugRouteHarnessStartZ,
+                _debugRouteHarnessDestZoneId,
+                _debugRouteHarnessDestX,
+                _debugRouteHarnessDestY,
+                _debugRouteHarnessDestZ,
+                _debugRouteHarnessIdleDurationSec);
+        }
+
         // Force the first population check on the first world update after
         // startup/reload instead of waiting a full tick interval. This makes
         // autonomous world-bot activity visible immediately while preserving
@@ -369,8 +1762,8 @@ public:
         living_world::integration::SqlBotGlobalConfigRepository().EnsureSchema();
         living_world::integration::SqlBotOocConfigRepository().EnsureSchema();
         living_world::integration::SqlBotTalentPreferenceRepository().EnsureSchema();
-        living_world::integration::SqlBotExploredZoneRepository().EnsureSchema();
         living_world::integration::SqlBotAssignedGearRepository().EnsureSchema();
+        living_world::integration::SqlBotExploredZoneRepository().EnsureSchema();
 
         living_world::integration::SqlBotIdentityRepository identityRepo;
         identityRepo.EnsureSchema();
@@ -381,11 +1774,14 @@ public:
                 "[LivingWorld] Recovered {} stale active world-bot identities on startup.",
                 recovered);
         }
+
+        MaybeBakeRouteBundleOnStartup();
     }
 
     void OnUpdate(std::uint32_t diff) override
     {
         TickSyntheticInterestBeacon(diff);
+        MaybeSpawnDebugRouteHarness();
 
         _abstractTickAccum += diff;
         if (_abstractTickAccum >= 1000)
@@ -416,6 +1812,7 @@ private:
         living_world::integration::BotIdentityRecord identity;
         living_world::service::AmbientSession session;
         living_world::ai::AbstractWorldBotProgressState progress;
+        std::unordered_set<std::uint32_t> exploredZoneIds;
         std::uint64_t worldOnlineMs = 0;
     };
 
@@ -443,6 +1840,21 @@ private:
     std::vector<std::uint32_t> _debugForcedIdentityIds;
     std::uint32_t _debugForcedSessionZoneId = 0;
     std::uint32_t _debugForcedSessionComposeAttempts = 24;
+    bool _debugRouteHarnessEnabled = false;
+    bool _debugRouteHarnessSpawned = false;
+    std::vector<std::uint32_t> _debugRouteHarnessLevels;
+    std::uint8_t _debugRouteHarnessRaceId = RACE_HUMAN;
+    std::uint8_t _debugRouteHarnessClassId = CLASS_WARRIOR;
+    std::uint8_t _debugRouteHarnessGender = GENDER_MALE;
+    std::uint32_t _debugRouteHarnessMapId = 0;
+    float _debugRouteHarnessStartX = 0.0f;
+    float _debugRouteHarnessStartY = 0.0f;
+    float _debugRouteHarnessStartZ = 0.0f;
+    std::uint32_t _debugRouteHarnessDestZoneId = 0;
+    float _debugRouteHarnessDestX = 0.0f;
+    float _debugRouteHarnessDestY = 0.0f;
+    float _debugRouteHarnessDestZ = 0.0f;
+    std::uint32_t _debugRouteHarnessIdleDurationSec = 30;
     SpawnPoint _forcedSpawnPoint { 0u, 0.0f, 0.0f, 0.0f };
     std::unordered_map<std::uint32_t, AbstractWorldBotRuntime> _abstractWorldBots;
     std::unordered_map<std::uint32_t, MaterializedWorldBotHandle> _materializedWorldBots;
@@ -636,6 +2048,30 @@ private:
         return config;
     }
 
+    static std::unordered_set<std::uint32_t> LoadExploredZoneSet(std::uint32_t identityId)
+    {
+        std::unordered_set<std::uint32_t> exploredZones;
+        for (std::uint32_t const zoneId :
+            living_world::integration::SqlBotExploredZoneRepository().LoadExploredZones(identityId))
+        {
+            exploredZones.insert(zoneId);
+        }
+
+        return exploredZones;
+    }
+
+    static std::uint32_t ResolveZoneIdAtPosition(
+        std::uint16_t mapId,
+        float x,
+        float y,
+        float z)
+    {
+        if (mapId == 0)
+            return 0;
+
+        return sMapMgr->GetZoneId(PHASEMASK_NORMAL, mapId, x, y, z);
+    }
+
     static bool HasInterestedPlayerForMapAndZone(std::uint32_t mapId, std::uint32_t zoneId)
     {
         if (living_world::script::HasSyntheticWorldBotInterest(mapId, zoneId))
@@ -667,6 +2103,35 @@ private:
     {
         return HasInterestedPlayerForMapAndZone(mapId, zoneId)
             || living_world::script::IsWorldBotZoneHot(mapId, zoneId);
+    }
+
+    void ObserveAbstractRuntimeExploration(
+        AbstractWorldBotRuntime& runtime,
+        std::uint16_t mapId,
+        float x,
+        float y,
+        float z,
+        char const* detail)
+    {
+        std::uint32_t const zoneId = ResolveZoneIdAtPosition(mapId, x, y, z);
+        if (zoneId == 0)
+            return;
+
+        if (!runtime.exploredZoneIds.insert(zoneId).second)
+            return;
+
+        living_world::integration::SqlBotExploredZoneRepository().MarkExplored(runtime.identity.id, zoneId);
+        living_world::integration::BotActivityLog::RecordAbstract(
+            runtime.identity.name,
+            runtime.identity.id,
+            "zone_explored",
+            std::string("Unlocked taxi knowledge for zone_id=") + std::to_string(zoneId)
+                + (detail && *detail ? " via " + std::string(detail) : std::string()),
+            mapId,
+            zoneId,
+            x,
+            y,
+            z);
     }
 
     void TickSyntheticInterestBeacon(std::uint32_t diff)
@@ -837,6 +2302,82 @@ private:
         return false;
     }
 
+    void MaybeSpawnDebugRouteHarness()
+    {
+        if (!_debugRouteHarnessEnabled || _debugRouteHarnessSpawned || _debugRouteHarnessLevels.empty())
+            return;
+
+        Map* map = sMapMgr->FindMap(_debugRouteHarnessMapId, 0);
+        if (!map)
+            return;
+
+        living_world::service::AmbientSession const session = BuildDebugRouteHarnessSession(
+            _debugRouteHarnessMapId,
+            _debugRouteHarnessDestZoneId,
+            _debugRouteHarnessDestX,
+            _debugRouteHarnessDestY,
+            _debugRouteHarnessDestZ,
+            _debugRouteHarnessIdleDurationSec);
+
+        std::uint32_t spawned = 0;
+        for (std::size_t i = 0; i < _debugRouteHarnessLevels.size(); ++i)
+        {
+            std::uint32_t const levelValue = _debugRouteHarnessLevels[i];
+            std::uint8_t const level = static_cast<std::uint8_t>(std::clamp<std::uint32_t>(levelValue, 1u, 80u));
+            auto const identity = EnsureDebugRouteHarnessIdentity(
+                level,
+                _debugRouteHarnessRaceId,
+                _debugRouteHarnessClassId,
+                _debugRouteHarnessGender);
+            if (!identity)
+                continue;
+
+            Position spawnPos;
+            float const lateralOffset = static_cast<float>(i) * 3.0f;
+            spawnPos.Relocate(
+                _debugRouteHarnessStartX + lateralOffset,
+                _debugRouteHarnessStartY,
+                _debugRouteHarnessStartZ,
+                0.0f);
+
+            Creature* bot = map->SummonCreature(WorldBotEntry, spawnPos);
+            if (!bot)
+                continue;
+
+            if (auto* ai = dynamic_cast<living_world::ai::WorldBotCreatureAI*>(bot->AI()))
+            {
+                ai->SetIdentityAndSession(*identity, session, 0, 0, 0, false, false);
+                _materializedWorldBots[identity->id] = MaterializedWorldBotHandle{
+                    _debugRouteHarnessMapId,
+                    bot->GetGUID()
+                };
+                ++spawned;
+
+                LOG_INFO("server.worldserver",
+                    "[LivingWorldDebug] RouteHarness spawned '{}' identity={} level={} class={} race={} start=({:.1f},{:.1f},{:.1f}) dest_zone={} dest=({:.1f},{:.1f},{:.1f})",
+                    identity->name,
+                    identity->id,
+                    identity->level,
+                    identity->classId,
+                    identity->raceId,
+                    _debugRouteHarnessStartX,
+                    _debugRouteHarnessStartY,
+                    _debugRouteHarnessStartZ,
+                    _debugRouteHarnessDestZoneId,
+                    _debugRouteHarnessDestX,
+                    _debugRouteHarnessDestY,
+                    _debugRouteHarnessDestZ);
+            }
+            else
+            {
+                bot->DespawnOrUnsummon(Milliseconds(0));
+            }
+        }
+
+        if (spawned > 0)
+            _debugRouteHarnessSpawned = true;
+    }
+
     void DematerializeInactiveWorldBots()
     {
         if (_materializedWorldBots.empty())
@@ -873,6 +2414,12 @@ private:
                 continue;
             }
 
+            if (snapshot.session.sourceKind == "debug_route_harness")
+            {
+                ++itr;
+                continue;
+            }
+
             std::uint32_t const zoneId = ResolveStepZoneId(snapshot.session, snapshot.progress.currentStep);
             std::uint32_t const mapId = snapshot.progress.stepStartMapId != 0
                 ? snapshot.progress.stepStartMapId
@@ -889,7 +2436,15 @@ private:
             runtime.identity = snapshot.identity;
             runtime.session = snapshot.session;
             runtime.progress = snapshot.progress;
+            runtime.exploredZoneIds = LoadExploredZoneSet(runtime.identity.id);
             runtime.worldOnlineMs = snapshot.worldOnlineMs;
+            ObserveAbstractRuntimeExploration(
+                runtime,
+                runtime.progress.stepStartMapId,
+                runtime.progress.stepStartX,
+                runtime.progress.stepStartY,
+                runtime.progress.stepStartZ,
+                "dematerialize");
 
             _abstractWorldBots[runtime.identity.id] = runtime;
 
@@ -932,6 +2487,17 @@ private:
                 runtime.progress,
                 diff,
                 progressConfig);
+            auto const position = living_world::ai::ComputeAbstractWorldBotInterpolatedPosition(
+                runtime.session,
+                runtime.progress,
+                progressConfig);
+            ObserveAbstractRuntimeExploration(
+                runtime,
+                position.mapId,
+                position.x,
+                position.y,
+                position.z,
+                "abstract_travel");
 
             if (outcome.advancedStep)
             {
@@ -1138,6 +2704,14 @@ private:
             abstractRuntime.progress.stepStartX = sp->x;
             abstractRuntime.progress.stepStartY = sp->y;
             abstractRuntime.progress.stepStartZ = sp->z;
+            abstractRuntime.exploredZoneIds = LoadExploredZoneSet(identity.id);
+            ObserveAbstractRuntimeExploration(
+                abstractRuntime,
+                abstractRuntime.progress.stepStartMapId,
+                abstractRuntime.progress.stepStartX,
+                abstractRuntime.progress.stepStartY,
+                abstractRuntime.progress.stepStartZ,
+                "abstract_session_start");
 
             if (!CanMaterializeAbstractRuntime(abstractRuntime))
             {

@@ -87,6 +87,10 @@ struct WorldBotZoneTransitionCandidate
 {
     std::string connectorKey;
     bool explicitConnector = false;
+    std::int32_t fromPathIndex = -1;
+    std::int32_t fromPointIndex = -1;
+    std::int32_t toPathIndex = -1;
+    std::int32_t toPointIndex = -1;
     WorldBotRouteWaypoint fromWaypoint;
     WorldBotRouteWaypoint toWaypoint;
     float seamDistanceYards = 0.0f;
@@ -138,7 +142,9 @@ public:
         float destY,
         float destZ,
         WorldBotTravelCapabilityTier tier,
-        WorldBotTravelCapabilityConfig const& capabilityConfig = {}) const;
+        WorldBotTravelCapabilityConfig const& capabilityConfig = {},
+        float maxAttachDistanceYards = 250.0f,
+        float maxDetachDistanceYards = 250.0f) const;
 
     [[nodiscard]] std::optional<WorldBotZoneTransitionCandidate> ResolveAutomaticZoneTransition(
         std::uint16_t mapId,
