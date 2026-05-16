@@ -150,6 +150,12 @@ LivingWorld.AmbientForceSpawnZ = 0.0
 #    LivingWorld.DebugRouteHarnessDestZ
 #        Destination zone hint and coordinates for the travel step.
 #
+#    LivingWorld.DebugRouteHarnessExploredZones
+#        Optional comma-separated explored-zone seed for every synthetic
+#        harness bot. Leave empty to start with zero explored zones and force
+#        pure ground travel. Populate this to enable deterministic taxi tests.
+#        Example: "12,40,10"
+#
 #    LivingWorld.DebugRouteHarnessIdleDurationSec
 #        How long the harness bot should remain alive in an idle hold step after
 #        arriving at the destination so traces can be observed before despawn.
@@ -183,6 +189,7 @@ LivingWorld.DebugRouteHarnessDestZoneId = 40
 LivingWorld.DebugRouteHarnessDestX = -10053.198
 LivingWorld.DebugRouteHarnessDestY = 1455.3373
 LivingWorld.DebugRouteHarnessDestZ = 44.6324
+LivingWorld.DebugRouteHarnessExploredZones = ""
 LivingWorld.DebugRouteHarnessIdleDurationSec = 30
 
 ###################################################################################################

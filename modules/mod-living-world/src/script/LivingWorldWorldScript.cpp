@@ -1312,6 +1312,19 @@ std::vector<std::uint32_t> ParseDebugIdentityIdList(std::string const& value)
     return ids;
 }
 
+std::string JoinZoneIdCsv(std::vector<std::uint32_t> const& zoneIds)
+{
+    std::ostringstream oss;
+    for (std::size_t i = 0; i < zoneIds.size(); ++i)
+    {
+        if (i != 0)
+            oss << ',';
+        oss << zoneIds[i];
+    }
+
+    return oss.str();
+}
+
 std::string QuoteCharactersString(std::string value)
 {
     CharacterDatabase.EscapeString(value);
@@ -1685,6 +1698,8 @@ public:
             "LivingWorld.DebugRouteHarnessDestY", 1455.3373f);
         _debugRouteHarnessDestZ = sConfigMgr->GetOption<float>(
             "LivingWorld.DebugRouteHarnessDestZ", 0.0f);
+        _debugRouteHarnessExploredZones = ParseDebugIdentityIdList(
+            sConfigMgr->GetOption<std::string>("LivingWorld.DebugRouteHarnessExploredZones", ""));
         _debugRouteHarnessIdleDurationSec = sConfigMgr->GetOption<std::uint32_t>(
             "LivingWorld.DebugRouteHarnessIdleDurationSec", 30);
 
@@ -1740,7 +1755,7 @@ public:
             }
 
             LOG_INFO("server.worldserver",
-                "[LivingWorldDebug] RouteHarness enabled levels='{}' race={} class={} gender={} map={} start=({:.1f},{:.1f},{:.1f}) dest_zone={} dest=({:.1f},{:.1f},{:.1f}) idle_sec={}",
+                "[LivingWorldDebug] RouteHarness enabled levels='{}' race={} class={} gender={} map={} start=({:.1f},{:.1f},{:.1f}) dest_zone={} dest=({:.1f},{:.1f},{:.1f}) explored_zones='{}' idle_sec={}",
                 oss.str(),
                 _debugRouteHarnessRaceId,
                 _debugRouteHarnessClassId,
@@ -1753,6 +1768,7 @@ public:
                 _debugRouteHarnessDestX,
                 _debugRouteHarnessDestY,
                 _debugRouteHarnessDestZ,
+                JoinZoneIdCsv(_debugRouteHarnessExploredZones),
                 _debugRouteHarnessIdleDurationSec);
         }
 
@@ -1862,6 +1878,7 @@ private:
     float _debugRouteHarnessDestX = 0.0f;
     float _debugRouteHarnessDestY = 0.0f;
     float _debugRouteHarnessDestZ = 0.0f;
+    std::vector<std::uint32_t> _debugRouteHarnessExploredZones;
     std::uint32_t _debugRouteHarnessIdleDurationSec = 30;
     SpawnPoint _forcedSpawnPoint { 0u, 0.0f, 0.0f, 0.0f };
     std::unordered_map<std::uint32_t, AbstractWorldBotRuntime> _abstractWorldBots;
@@ -2419,6 +2436,10 @@ private:
             if (!identity)
                 continue;
 
+            living_world::integration::SqlBotExploredZoneRepository().ReplaceExploredZones(
+                identity->id,
+                _debugRouteHarnessExploredZones);
+
             Position spawnPos;
             float const lateralOffset = static_cast<float>(i) * 3.0f;
             spawnPos.Relocate(
@@ -2441,7 +2462,7 @@ private:
                 ++spawned;
 
                 LOG_INFO("server.worldserver",
-                    "[LivingWorldDebug] RouteHarness spawned '{}' identity={} level={} class={} race={} start=({:.1f},{:.1f},{:.1f}) dest_zone={} dest=({:.1f},{:.1f},{:.1f})",
+                    "[LivingWorldDebug] RouteHarness spawned '{}' identity={} level={} class={} race={} start=({:.1f},{:.1f},{:.1f}) dest_zone={} dest=({:.1f},{:.1f},{:.1f}) explored_zones='{}'",
                     identity->name,
                     identity->id,
                     identity->level,
@@ -2453,7 +2474,8 @@ private:
                     _debugRouteHarnessDestZoneId,
                     _debugRouteHarnessDestX,
                     _debugRouteHarnessDestY,
-                    _debugRouteHarnessDestZ);
+                    _debugRouteHarnessDestZ,
+                    JoinZoneIdCsv(_debugRouteHarnessExploredZones));
             }
             else
             {

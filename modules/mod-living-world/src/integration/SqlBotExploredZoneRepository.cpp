@@ -37,6 +37,30 @@ void SqlBotExploredZoneRepository::MarkExplored(
         zoneId);
 }
 
+void SqlBotExploredZoneRepository::ClearExploredZones(
+    std::uint32_t identityId) const
+{
+    if (identityId == 0)
+        return;
+
+    CharacterDatabase.Execute(
+        "DELETE FROM living_world_bot_explored_zone "
+        "WHERE bot_identity_id = {}",
+        identityId);
+}
+
+void SqlBotExploredZoneRepository::ReplaceExploredZones(
+    std::uint32_t identityId,
+    std::vector<std::uint32_t> const& zoneIds) const
+{
+    if (identityId == 0)
+        return;
+
+    ClearExploredZones(identityId);
+    for (std::uint32_t const zoneId : zoneIds)
+        MarkExplored(identityId, zoneId);
+}
+
 std::vector<std::uint32_t> SqlBotExploredZoneRepository::LoadExploredZones(
     std::uint32_t identityId) const
 {
