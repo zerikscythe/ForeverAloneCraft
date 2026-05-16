@@ -57,6 +57,7 @@
 #include "service/BotTalentApplicator.h"
 #include "service/PartyBotService.h"
 #include "service/SimpleBotCombatSpecRoleResolver.h"
+#include "service/WorldBotRoutePlanning.h"
 #include "integration/SqlBotTalentTemplateRepository.h"
 #include "integration/SqlBotTalentPreferenceRepository.h"
 
@@ -66,9 +67,12 @@
 #include <cctype>
 #include <cmath>
 #include <cstdint>
+#include <filesystem>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <string_view>
+#include <system_error>
 #include <unordered_map>
 #include <variant>
 #include <vector>
@@ -280,6 +284,8 @@ void RenderUsage(ChatHandler* handler)
 {
     handler->PSendSysMessage("LivingWorld usage:");
     handler->PSendSysMessage("  .lw loglevel <1-4>");
+    handler->PSendSysMessage("  .lw routeplan <destZoneId> <destX> <destY> <destZ> [level] [auto|foot|ground_basic|ground_fast|flight_basic|flight_fast|taxi]");
+    handler->PSendSysMessage("  .lw routecompare <destZoneId> <destX> <destY> <destZ> <levelA> <levelB> [tierA] [tierB]");
     handler->PSendSysMessage("  .lwbot list");
     handler->PSendSysMessage("  .lwbot request <rosterEntryId>");
     handler->PSendSysMessage("  .lwbot dismiss <rosterEntryId>");
@@ -318,6 +324,421 @@ std::string_view TrimRootWhitespace(std::string_view input)
         input.remove_suffix(1);
     }
     return input;
+}
+
+std::filesystem::path ResolveWorldBotRouteExportRoot()
+{
+    std::string configured = sConfigMgr->GetOption<std::string>(
+        "LivingWorld.RouteExportDir",
+        "data/worldbot_routes");
+
+    std::vector<std::filesystem::path> candidates;
+    candidates.emplace_back(configured);
+    if (std::filesystem::path(configured).is_relative())
+    {
+        candidates.emplace_back(std::filesystem::path("..") / configured);
+        candidates.emplace_back(std::filesystem::path("..") / ".." / configured);
+    }
+
+    candidates.emplace_back("data/worldbot_routes");
+    candidates.emplace_back(std::filesystem::path("..") / "data" / "worldbot_routes");
+    candidates.emplace_back(std::filesystem::path("..") / ".." / "data" / "worldbot_routes");
+    candidates.emplace_back("tools/lw-zone-editor/data/exported_routes");
+    candidates.emplace_back(std::filesystem::path("..") / "tools" / "lw-zone-editor" / "data" / "exported_routes");
+    candidates.emplace_back(std::filesystem::path("..") / ".." / "tools" / "lw-zone-editor" / "data" / "exported_routes");
+
+    for (std::filesystem::path const& candidate : candidates)
+    {
+        std::error_code ec;
+        if (std::filesystem::exists(candidate, ec) && std::filesystem::is_directory(candidate, ec))
+            return candidate;
+    }
+
+    return std::filesystem::path(configured);
+}
+
+service::WorldBotRoutePlanner& GetWorldBotRoutePlanner()
+{
+    static service::WorldBotRoutePlanner planner(ResolveWorldBotRouteExportRoot());
+    return planner;
+}
+
+std::string_view ToTravelCapabilityTierText(service::WorldBotTravelCapabilityTier tier)
+{
+    using Tier = service::WorldBotTravelCapabilityTier;
+    switch (tier)
+    {
+        case Tier::Foot:
+            return "foot";
+        case Tier::GroundBasic:
+            return "ground_basic";
+        case Tier::GroundFast:
+            return "ground_fast";
+        case Tier::FlightBasic:
+            return "flight_basic";
+        case Tier::FlightFast:
+            return "flight_fast";
+        case Tier::Taxi:
+            return "taxi";
+    }
+
+    return "unknown";
+}
+
+std::optional<service::WorldBotTravelCapabilityTier> ParseTravelCapabilityTierToken(std::string_view token)
+{
+    std::string normalized;
+    normalized.reserve(token.size());
+    for (char ch : token)
+    {
+        if (ch == '-' || ch == ' ')
+            normalized.push_back('_');
+        else
+            normalized.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(ch))));
+    }
+
+    using Tier = service::WorldBotTravelCapabilityTier;
+    if (normalized == "foot")
+        return Tier::Foot;
+    if (normalized == "ground_basic" || normalized == "mount_basic")
+        return Tier::GroundBasic;
+    if (normalized == "ground_fast" || normalized == "mount_fast" || normalized == "epic_ground")
+        return Tier::GroundFast;
+    if (normalized == "flight_basic")
+        return Tier::FlightBasic;
+    if (normalized == "flight_fast")
+        return Tier::FlightFast;
+    if (normalized == "taxi")
+        return Tier::Taxi;
+    return std::nullopt;
+}
+
+bool TryParseUnsigned(std::string_view token, std::uint32_t& out)
+{
+    auto const result = std::from_chars(token.data(), token.data() + token.size(), out);
+    return result.ec == std::errc{} && result.ptr == token.data() + token.size();
+}
+
+bool TryParseFloat(std::string_view token, float& out)
+{
+    std::string buffer(token);
+    char* end = nullptr;
+    out = std::strtof(buffer.c_str(), &end);
+    return end != nullptr && *end == '\0';
+}
+
+std::vector<std::string_view> TokenizeWhitespace(std::string_view text)
+{
+    std::vector<std::string_view> tokens;
+    text = TrimRootWhitespace(text);
+    while (!text.empty())
+    {
+        std::size_t split = 0;
+        while (split < text.size() && !std::isspace(static_cast<unsigned char>(text[split])))
+            ++split;
+        tokens.push_back(text.substr(0, split));
+        text.remove_prefix(split);
+        text = TrimRootWhitespace(text);
+    }
+    return tokens;
+}
+
+std::string SummarizeRouteKeys(service::WorldBotResolvedTravelPlan const& plan)
+{
+    std::vector<std::string> routeKeys;
+    for (service::WorldBotRouteWaypoint const& waypoint : plan.waypoints)
+    {
+        if (waypoint.routeKey.empty())
+            continue;
+        if (routeKeys.empty() || routeKeys.back() != waypoint.routeKey)
+            routeKeys.push_back(waypoint.routeKey);
+    }
+
+    if (routeKeys.empty())
+        return "direct";
+
+    std::ostringstream oss;
+    for (std::size_t index = 0; index < routeKeys.size(); ++index)
+    {
+        if (index != 0)
+            oss << " -> ";
+        oss << routeKeys[index];
+    }
+    return oss.str();
+}
+
+std::uint32_t CountConnectorWaypoints(service::WorldBotResolvedTravelPlan const& plan)
+{
+    std::uint32_t count = 0;
+    for (service::WorldBotRouteWaypoint const& waypoint : plan.waypoints)
+    {
+        if (waypoint.pathIndex < 0 && !waypoint.routeKey.empty())
+            ++count;
+    }
+    return count;
+}
+
+void RenderResolvedRoutePlan(
+    ChatHandler* handler,
+    char const* label,
+    std::uint8_t level,
+    service::WorldBotTravelCapabilityTier tier,
+    service::WorldBotResolvedTravelPlan const& plan,
+    bool forcedTier)
+{
+    handler->PSendSysMessage(
+        "{}: level={} tier={}{} speed={:.2f} yd/s eta={:.1f}s total={:.1f}yd attach={:.1f} route={:.1f} detach={:.1f} waypoints={} connectors={}",
+        label,
+        static_cast<std::uint32_t>(level),
+        ToTravelCapabilityTierText(tier),
+        forcedTier ? " (forced)" : "",
+        plan.speedYardsPerSecond,
+        static_cast<float>(plan.etaMs) / 1000.0f,
+        plan.totalDistanceYards,
+        plan.attachDistanceYards,
+        plan.routeDistanceYards,
+        plan.detachDistanceYards,
+        static_cast<std::uint32_t>(plan.waypoints.size()),
+        CountConnectorWaypoints(plan));
+    handler->PSendSysMessage("  route keys: {}", SummarizeRouteKeys(plan));
+}
+
+bool HandleRoutePlanDebugCommand(ChatHandler* handler, std::string_view arguments)
+{
+    Player* player = handler ? handler->GetPlayer() : nullptr;
+    if (!handler || !player)
+    {
+        if (handler)
+            handler->SendErrorMessage("LivingWorld routeplan requires an in-game player session.");
+        return true;
+    }
+
+    auto const tokens = TokenizeWhitespace(arguments);
+    if (tokens.size() < 4 || tokens.size() > 6)
+    {
+        handler->SendErrorMessage(
+            "Usage: .lw routeplan <destZoneId> <destX> <destY> <destZ> [level] [auto|foot|ground_basic|ground_fast|flight_basic|flight_fast|taxi]");
+        return true;
+    }
+
+    std::uint32_t destZoneId = 0;
+    float destX = 0.0f;
+    float destY = 0.0f;
+    float destZ = 0.0f;
+    if (!TryParseUnsigned(tokens[0], destZoneId)
+        || !TryParseFloat(tokens[1], destX)
+        || !TryParseFloat(tokens[2], destY)
+        || !TryParseFloat(tokens[3], destZ)
+        || destZoneId == 0)
+    {
+        handler->SendErrorMessage("LivingWorld routeplan: invalid destination arguments.");
+        return true;
+    }
+
+    std::uint8_t level = static_cast<std::uint8_t>(player->GetLevel());
+    if (tokens.size() >= 5)
+    {
+        std::uint32_t parsedLevel = 0;
+        if (!TryParseUnsigned(tokens[4], parsedLevel) || parsedLevel > 80)
+        {
+            handler->SendErrorMessage("LivingWorld routeplan: level must be between 0 and 80.");
+            return true;
+        }
+        level = static_cast<std::uint8_t>(parsedLevel);
+    }
+
+    service::WorldBotTravelCapabilityPolicy const capabilityPolicy =
+        service::LoadWorldBotTravelCapabilityPolicy();
+    service::WorldBotTravelCapabilityConfig const capabilityConfig =
+        service::LoadWorldBotTravelCapabilityConfig();
+
+    bool forcedTier = false;
+    service::WorldBotTravelCapabilityTier tier =
+        service::ResolveWorldBotTravelCapabilityTierForLevel(level, false, capabilityPolicy);
+    if (tokens.size() >= 6)
+    {
+        if (tokens[5] != "auto")
+        {
+            auto const parsedTier = ParseTravelCapabilityTierToken(tokens[5]);
+            if (!parsedTier)
+            {
+                handler->SendErrorMessage("LivingWorld routeplan: unknown tier token.");
+                return true;
+            }
+            tier = *parsedTier;
+            forcedTier = true;
+        }
+    }
+
+    auto const plan = GetWorldBotRoutePlanner().ResolveTravelPlan(
+        static_cast<std::uint16_t>(player->GetMapId()),
+        player->GetZoneId(),
+        destZoneId,
+        player->GetPositionX(),
+        player->GetPositionY(),
+        player->GetPositionZ(),
+        destX,
+        destY,
+        destZ,
+        tier,
+        capabilityConfig);
+    if (!plan || plan->empty())
+    {
+        handler->SendErrorMessage("LivingWorld routeplan: no route plan resolved.");
+        return true;
+    }
+
+    handler->PSendSysMessage(
+        "Route plan start: map={} zone={} pos=({:.2f}, {:.2f}, {:.2f}) -> dest zone={} pos=({:.2f}, {:.2f}, {:.2f})",
+        static_cast<std::uint32_t>(player->GetMapId()),
+        static_cast<std::uint32_t>(player->GetZoneId()),
+        player->GetPositionX(),
+        player->GetPositionY(),
+        player->GetPositionZ(),
+        destZoneId,
+        destX,
+        destY,
+        destZ);
+    RenderResolvedRoutePlan(handler, "plan", level, tier, *plan, forcedTier);
+    if (tier == service::WorldBotTravelCapabilityTier::Taxi)
+    {
+        handler->PSendSysMessage(
+            "  note: taxi tier currently affects ETA only; it does not auto-select authored taxi hops yet.");
+    }
+    return true;
+}
+
+bool HandleRouteCompareDebugCommand(ChatHandler* handler, std::string_view arguments)
+{
+    Player* player = handler ? handler->GetPlayer() : nullptr;
+    if (!handler || !player)
+    {
+        if (handler)
+            handler->SendErrorMessage("LivingWorld routecompare requires an in-game player session.");
+        return true;
+    }
+
+    auto const tokens = TokenizeWhitespace(arguments);
+    if (tokens.size() < 6 || tokens.size() > 8)
+    {
+        handler->SendErrorMessage(
+            "Usage: .lw routecompare <destZoneId> <destX> <destY> <destZ> <levelA> <levelB> [tierA] [tierB]");
+        return true;
+    }
+
+    std::uint32_t destZoneId = 0;
+    std::uint32_t levelAValue = 0;
+    std::uint32_t levelBValue = 0;
+    float destX = 0.0f;
+    float destY = 0.0f;
+    float destZ = 0.0f;
+    if (!TryParseUnsigned(tokens[0], destZoneId)
+        || !TryParseFloat(tokens[1], destX)
+        || !TryParseFloat(tokens[2], destY)
+        || !TryParseFloat(tokens[3], destZ)
+        || !TryParseUnsigned(tokens[4], levelAValue)
+        || !TryParseUnsigned(tokens[5], levelBValue)
+        || destZoneId == 0
+        || levelAValue > 80
+        || levelBValue > 80)
+    {
+        handler->SendErrorMessage("LivingWorld routecompare: invalid destination or level arguments.");
+        return true;
+    }
+
+    service::WorldBotTravelCapabilityPolicy const capabilityPolicy =
+        service::LoadWorldBotTravelCapabilityPolicy();
+    service::WorldBotTravelCapabilityConfig const capabilityConfig =
+        service::LoadWorldBotTravelCapabilityConfig();
+
+    bool forcedTierA = false;
+    bool forcedTierB = false;
+    service::WorldBotTravelCapabilityTier tierA =
+        service::ResolveWorldBotTravelCapabilityTierForLevel(
+            static_cast<std::uint8_t>(levelAValue),
+            false,
+            capabilityPolicy);
+    service::WorldBotTravelCapabilityTier tierB =
+        service::ResolveWorldBotTravelCapabilityTierForLevel(
+            static_cast<std::uint8_t>(levelBValue),
+            false,
+            capabilityPolicy);
+
+    if (tokens.size() >= 7)
+    {
+        if (tokens[6] != "auto")
+        {
+            auto const parsedTier = ParseTravelCapabilityTierToken(tokens[6]);
+            if (!parsedTier)
+            {
+                handler->SendErrorMessage("LivingWorld routecompare: unknown tierA token.");
+                return true;
+            }
+            tierA = *parsedTier;
+            forcedTierA = true;
+        }
+    }
+
+    if (tokens.size() >= 8)
+    {
+        if (tokens[7] != "auto")
+        {
+            auto const parsedTier = ParseTravelCapabilityTierToken(tokens[7]);
+            if (!parsedTier)
+            {
+                handler->SendErrorMessage("LivingWorld routecompare: unknown tierB token.");
+                return true;
+            }
+            tierB = *parsedTier;
+            forcedTierB = true;
+        }
+    }
+
+    auto const resolvePlan =
+        [&](std::uint8_t level, service::WorldBotTravelCapabilityTier tier)
+            -> std::optional<service::WorldBotResolvedTravelPlan>
+        {
+            return GetWorldBotRoutePlanner().ResolveTravelPlan(
+                static_cast<std::uint16_t>(player->GetMapId()),
+                player->GetZoneId(),
+                destZoneId,
+                player->GetPositionX(),
+                player->GetPositionY(),
+                player->GetPositionZ(),
+                destX,
+                destY,
+                destZ,
+                tier,
+                capabilityConfig);
+        };
+
+    auto const planA = resolvePlan(static_cast<std::uint8_t>(levelAValue), tierA);
+    auto const planB = resolvePlan(static_cast<std::uint8_t>(levelBValue), tierB);
+    if (!planA || planA->empty() || !planB || planB->empty())
+    {
+        handler->SendErrorMessage("LivingWorld routecompare: failed to resolve one or both route plans.");
+        return true;
+    }
+
+    handler->PSendSysMessage(
+        "Route compare start: map={} zone={} pos=({:.2f}, {:.2f}, {:.2f}) -> dest zone={} pos=({:.2f}, {:.2f}, {:.2f})",
+        static_cast<std::uint32_t>(player->GetMapId()),
+        static_cast<std::uint32_t>(player->GetZoneId()),
+        player->GetPositionX(),
+        player->GetPositionY(),
+        player->GetPositionZ(),
+        destZoneId,
+        destX,
+        destY,
+        destZ);
+    RenderResolvedRoutePlan(handler, "A", static_cast<std::uint8_t>(levelAValue), tierA, *planA, forcedTierA);
+    RenderResolvedRoutePlan(handler, "B", static_cast<std::uint8_t>(levelBValue), tierB, *planB, forcedTierB);
+    handler->PSendSysMessage(
+        "Delta: eta={:.1f}s distance={:.1f}yd speed={:.2f} yd/s",
+        (static_cast<float>(planB->etaMs) - static_cast<float>(planA->etaMs)) / 1000.0f,
+        planB->totalDistanceYards - planA->totalDistanceYards,
+        planB->speedYardsPerSecond - planA->speedYardsPerSecond);
+    return true;
 }
 
 std::string_view ToSourceText(model::RosterEntrySource source)
@@ -4566,6 +4987,8 @@ private:
 
         constexpr std::string_view loglevelToken = "loglevel";
         constexpr std::string_view economyToken = "economy";
+        constexpr std::string_view routePlanToken = "routeplan";
+        constexpr std::string_view routeCompareToken = "routecompare";
 
         if (arguments.starts_with(economyToken))
         {
@@ -4598,6 +5021,34 @@ private:
                 "Vendor prices take effect after the next restart.",
                 scale);
             return true;
+        }
+
+        if (arguments.starts_with(routePlanToken))
+        {
+            if (handler->GetSession() &&
+                handler->GetSession()->GetSecurity() < SEC_GAMEMASTER)
+            {
+                handler->SendErrorMessage("LivingWorld routeplan requires GM access.");
+                return true;
+            }
+
+            arguments.remove_prefix(routePlanToken.size());
+            arguments = living_world::script::TrimRootWhitespace(arguments);
+            return living_world::script::HandleRoutePlanDebugCommand(handler, arguments);
+        }
+
+        if (arguments.starts_with(routeCompareToken))
+        {
+            if (handler->GetSession() &&
+                handler->GetSession()->GetSecurity() < SEC_GAMEMASTER)
+            {
+                handler->SendErrorMessage("LivingWorld routecompare requires GM access.");
+                return true;
+            }
+
+            arguments.remove_prefix(routeCompareToken.size());
+            arguments = living_world::script::TrimRootWhitespace(arguments);
+            return living_world::script::HandleRouteCompareDebugCommand(handler, arguments);
         }
 
         if (!arguments.starts_with(loglevelToken))

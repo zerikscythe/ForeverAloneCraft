@@ -16,8 +16,8 @@ from PIL import Image, ImageDraw, ImageTk
 from .client_assets import load_area_table_names, load_world_map_area_records
 from .image_info import read_image_size
 from .marker_cache import MARKER_KIND_LABELS, MarkerRecord, load_marker_cache, marker_icon_crop_box
-from .paths import APP_ROOT, COMPOSITE_MAPS_DIR, PNG_MAPS_DIR
-from .settings import ROUTE_SAMPLING_SETTINGS, ROUTE_STORAGE_SETTINGS
+from .paths import APP_ROOT, COMPOSITE_MAPS_DIR, PNG_ICONS_DIR, PNG_MAPS_DIR
+from .settings import MARKER_DISPLAY_SETTINGS, ROUTE_SAMPLING_SETTINGS, ROUTE_STORAGE_SETTINGS
 
 COMPOSITE_FILENAME_RE = re.compile(r"^(?P<zone_name>.+) - (?P<zone_id>\d+)\.png$", re.IGNORECASE)
 REPO_ROOT = APP_ROOT.parents[1]
@@ -816,6 +816,7 @@ class ZoneViewerApp(tk.Tk):
         self.all_markers, self.marker_cache_payload = load_marker_cache()
         self.objective_area_index = dict(self.marker_cache_payload.get("objective_area_index", {}))
         self.quest_route_graph = list(self.marker_cache_payload.get("quest_route_graph", []))
+        self.quest_starter_marker_index = _build_quest_starter_marker_index(self.all_markers)
         self.current_zone_markers: list[MarkerRecord] = []
         self.current_view_route_payload: dict[str, object] | None = None
         self.current_view_route_path: Path | None = None
@@ -1021,6 +1022,7 @@ class ZoneViewerApp(tk.Tk):
         self.properties_tree = ttk.Treeview(self.property_tree_frame, show="tree", selectmode="browse")
         self.properties_tree.grid(row=0, column=0, sticky="nsew")
         self.properties_tree.bind("<<TreeviewSelect>>", self._on_properties_tree_selected)
+        self.properties_tree.bind("<Shift-ButtonRelease-1>", self._on_properties_tree_shift_click)
 
         property_tree_scrollbar = ttk.Scrollbar(self.property_tree_frame, orient=tk.VERTICAL, command=self.properties_tree.yview)
         property_tree_scrollbar.grid(row=0, column=1, sticky="ns")
@@ -2398,27 +2400,30 @@ class ZoneViewerApp(tk.Tk):
         if cached is not None:
             return cached
 
+        if marker.icon_relpath:
+            icon_path = PNG_MAPS_DIR / Path(marker.icon_relpath)
+            if not icon_path.is_file():
+                icon_path = PNG_ICONS_DIR / Path(marker.icon_relpath)
+            if icon_path.is_file():
+                with Image.open(icon_path) as image:
+                    icon = image.convert("RGBA")
+                if resolved_kind in {"herb", "ore"}:
+                    icon = _remove_black_icon_background(icon)
+                crop_box = marker_icon_crop_box(resolved_kind, icon.width, icon.height)
+                if crop_box is not None:
+                    icon = icon.crop(crop_box)
+                target_size = _marker_icon_target_size(resolved_kind)
+                icon.thumbnail((target_size, target_size))
+                photo = ImageTk.PhotoImage(icon)
+                self.marker_image_cache[cache_key] = icon
+                self.marker_photo_cache[cache_key] = photo
+                return photo
+
         generated_icon = _build_generated_marker_icon(resolved_kind)
-        if generated_icon is not None:
-            photo = ImageTk.PhotoImage(generated_icon)
-            self.marker_image_cache[cache_key] = generated_icon
-            self.marker_photo_cache[cache_key] = photo
-            return photo
-
-        if not marker.icon_relpath:
+        if generated_icon is None:
             return None
-
-        icon_path = PNG_MAPS_DIR / Path(marker.icon_relpath)
-        if not icon_path.is_file():
-            return None
-        with Image.open(icon_path) as image:
-            icon = image.convert("RGBA")
-        crop_box = marker_icon_crop_box(resolved_kind, icon.width, icon.height)
-        if crop_box is not None:
-            icon = icon.crop(crop_box)
-        icon.thumbnail((18, 18))
-        photo = ImageTk.PhotoImage(icon)
-        self.marker_image_cache[cache_key] = icon
+        photo = ImageTk.PhotoImage(generated_icon)
+        self.marker_image_cache[cache_key] = generated_icon
         self.marker_photo_cache[cache_key] = photo
         return photo
 
@@ -2485,6 +2490,13 @@ class ZoneViewerApp(tk.Tk):
             f"Entry: {marker.entry} | GUID: {marker.guid} | Map: {marker.map_id}",
             f"World: x={marker.world_x:.2f}, y={marker.world_y:.2f}, z={marker.world_z:.2f}",
         ]
+        if marker.kind in {"herb", "ore"}:
+            resource_item_name = str(marker.metadata.get("resource_item_name", "")).strip()
+            resource_loot = list(marker.metadata.get("resource_loot", []))
+            if resource_item_name:
+                lines.append(f"Primary item: {resource_item_name}")
+            if resource_loot:
+                lines.append(f"Possible loot entries: {len(resource_loot)}")
         if marker.kind == "quest_giver":
             raw_quests = list(marker.metadata.get("quests", []))
             visible_quests = self._visible_quests_for_marker(marker)
@@ -2550,6 +2562,30 @@ class ZoneViewerApp(tk.Tk):
             ),
         )
         self.properties_tree_payload_by_item[summary_item] = {"type": "marker", "marker": marker}
+
+        resource_loot = list(marker.metadata.get("resource_loot", [])) if marker.kind in {"herb", "ore"} else []
+        if resource_loot:
+            resource_loot_item = self.properties_tree.insert(
+                marker_item,
+                tk.END,
+                text=f"Possible Loot ({len(resource_loot)})",
+                open=False,
+            )
+            self.properties_tree_payload_by_item[resource_loot_item] = {
+                "type": "resource_loot_section",
+                "marker": marker,
+            }
+            for loot in resource_loot:
+                loot_item = self.properties_tree.insert(
+                    resource_loot_item,
+                    tk.END,
+                    text=_format_resource_loot_tree_label(loot),
+                )
+                self.properties_tree_payload_by_item[loot_item] = {
+                    "type": "resource_loot_item",
+                    "marker": marker,
+                    "loot": loot,
+                }
 
         raw_quests = list(marker.metadata.get("quests", [])) if marker.kind == "quest_giver" else []
         quests = self._visible_quests_for_marker(marker)
@@ -2712,6 +2748,16 @@ class ZoneViewerApp(tk.Tk):
             self._set_active_objective_overlay(None)
             self._set_properties_text(self._format_marker_properties_text(marker))
             return
+        if payload_type == "resource_loot_section" and isinstance(marker, MarkerRecord):
+            self._set_active_objective_overlay(None)
+            self._set_properties_text(self._format_resource_loot_section_text(marker))
+            return
+        if payload_type == "resource_loot_item" and isinstance(marker, MarkerRecord):
+            self._set_active_objective_overlay(None)
+            loot = payload.get("loot")
+            if isinstance(loot, dict):
+                self._set_properties_text(self._format_resource_loot_item_text(marker, loot))
+                return
         quest = payload.get("quest")
         section = str(payload.get("section", ""))
         if payload_type == "requirement_item":
@@ -2735,6 +2781,47 @@ class ZoneViewerApp(tk.Tk):
             self._set_properties_text(self._format_quest_section_text(quest, section))
             return
         self._set_properties_text(self._format_quest_details_text(quest))
+
+    def _on_properties_tree_shift_click(self, event: tk.Event | None = None) -> str | None:
+        if event is None:
+            return None
+        item_id = self.properties_tree.identify_row(event.y)
+        if not item_id:
+            return None
+        payload = self.properties_tree_payload_by_item.get(item_id)
+        if not payload or str(payload.get("type", "")) != "related_quest":
+            return None
+        related = payload.get("related")
+        if not isinstance(related, dict):
+            return None
+        self.properties_tree.selection_set(item_id)
+        self.properties_tree.focus(item_id)
+        self._jump_to_related_quest(related)
+        return "break"
+
+    def _jump_to_related_quest(self, related: dict) -> bool:
+        quest_id = int(related.get("quest_id", 0))
+        if quest_id <= 0:
+            self.status_var.set("Related quest has no valid quest id.")
+            return False
+        target = _find_best_related_quest_target(
+            self.assets,
+            self.current_asset,
+            self.quest_starter_marker_index,
+            quest_id,
+        )
+        if target is None:
+            self.status_var.set(f"No starter NPC marker found for related quest {quest_id}.")
+            return False
+        asset, marker = target
+        self._select_tree_asset(asset)
+        self.selected_marker = marker
+        self._set_active_objective_overlay(None, rerender=False)
+        self.marker_details_var.set(self._format_marker_details(marker))
+        self._populate_properties_for_marker(marker)
+        self.status_var.set(f"Jumped to quest starter [{quest_id}] at {marker.label} in {asset.label}.")
+        self._render_current_image()
+        return True
 
     def _clear_properties_panel(self) -> None:
         self.properties_tree_payload_by_item.clear()
@@ -2785,6 +2872,11 @@ class ZoneViewerApp(tk.Tk):
 
     def _format_marker_properties_text(self, marker: MarkerRecord) -> str:
         lines = [self._format_marker_details(marker)]
+        resource_loot = list(marker.metadata.get("resource_loot", [])) if marker.kind in {"herb", "ore"} else []
+        if resource_loot:
+            lines.append("")
+            lines.append("Possible Loot:")
+            lines.extend(_format_resource_loot_line(item) for item in resource_loot)
         quests = self._visible_quests_for_marker(marker)
         if quests:
             factions = sorted({str(quest.get("faction", "Alliance & Horde")) for quest in quests})
@@ -2888,12 +2980,30 @@ class ZoneViewerApp(tk.Tk):
         relation = _humanize_relation(str(related.get("relation", "related")))
         related_id = int(related.get("quest_id", 0))
         related_title = str(related.get("title", "") or f"Quest #{related_id}")
-        return (
-            f"{relation}\n"
-            f"[{related_id}] {related_title}\n\n"
-            f"Context quest: [{quest['quest_id']}] {quest['title']}\n"
-            "Jump-to-source linking can be added here later."
+        lines = [
+            relation,
+            f"[{related_id}] {related_title}",
+            "",
+            f"Context quest: [{quest['quest_id']}] {quest['title']}",
+        ]
+        starter_targets = _find_related_quest_targets(
+            self.assets,
+            self.current_asset,
+            self.quest_starter_marker_index,
+            related_id,
         )
+        if starter_targets:
+            lines.append("")
+            lines.append("Known starter NPCs:")
+            for asset, marker in starter_targets[:8]:
+                location_note = "this zone" if self.current_asset is not None and asset == self.current_asset else asset.label
+                lines.append(f"- {marker.label} ({location_note})")
+            lines.append("")
+            lines.append("Shift-click this related quest in the tree to jump to the best starter NPC.")
+        else:
+            lines.append("")
+            lines.append("No starter NPC marker found for this quest in the current marker cache.")
+        return "\n".join(lines).strip()
 
     def _format_requirement_text(self, quest: dict, requirement: dict) -> str:
         lines = [
@@ -2922,6 +3032,69 @@ class ZoneViewerApp(tk.Tk):
                 )
             lines.append("Selecting this requirement highlights rough spawn circles on the map.")
         return "\n".join(lines).strip()
+
+    def _format_resource_loot_section_text(self, marker: MarkerRecord) -> str:
+        lines = [self._format_marker_details(marker), "", "Possible Loot:"]
+        lines.extend(_format_resource_loot_line(item) for item in marker.metadata.get("resource_loot", []))
+        return "\n".join(lines).strip()
+
+    def _format_resource_loot_item_text(self, marker: MarkerRecord, loot: dict) -> str:
+        lines = [
+            marker.label,
+            _format_resource_loot_tree_label(loot),
+            "",
+            f"Item ID: {int(loot.get('item_id', 0))}",
+        ]
+        chance_detail = _format_resource_loot_chance_detail(loot)
+        if chance_detail:
+            lines.append(f"Odds: {chance_detail}")
+        if loot.get("comment"):
+            lines.append(f"Source: {loot['comment']}")
+        if bool(loot.get("quest_required", False)):
+            lines.append("Quest Required: yes")
+        return "\n".join(lines).strip()
+
+
+def _format_resource_loot_tree_label(loot: dict) -> str:
+    item_name = str(loot.get("name", "") or f"Item #{int(loot.get('item_id', 0))}")
+    min_count = max(1, int(loot.get("min_count", 1)))
+    max_count = max(1, int(loot.get("max_count", min_count)))
+    count_label = f"{min_count}" if min_count == max_count else f"{min_count}-{max_count}"
+    chance_label = _format_resource_loot_chance_summary(loot)
+    suffix = f" [{chance_label}]" if chance_label else ""
+    return f"{count_label}x {item_name}{suffix}"
+
+
+def _format_resource_loot_line(loot: dict) -> str:
+    line = f"- {_format_resource_loot_tree_label(loot)}"
+    if bool(loot.get("quest_required", False)):
+        line += " (quest)"
+    return line
+
+
+def _format_resource_loot_chance_summary(loot: dict) -> str:
+    estimated = loot.get("estimated_chance")
+    if estimated is None:
+        group_id = int(loot.get("group_id", 0))
+        if group_id > 0:
+            return f"group {group_id}"
+        return ""
+    return f"{float(estimated):.1f}%"
+
+
+def _format_resource_loot_chance_detail(loot: dict) -> str:
+    estimated = loot.get("estimated_chance")
+    listed = float(loot.get("chance", 0.0))
+    group_id = int(loot.get("group_id", 0))
+    if estimated is not None and group_id > 0 and listed <= 0.0:
+        return f"Estimated equal roll in group {group_id}: {float(estimated):.1f}%"
+    if estimated is not None and listed > 0.0 and group_id > 0:
+        return f"Listed {float(estimated):.1f}% in group {group_id}"
+    if estimated is not None:
+        return f"{float(estimated):.1f}%"
+    if group_id > 0:
+        return f"Grouped loot table {group_id} (variable)"
+    return ""
 
 
 def _format_money_line(copper: int) -> str:
@@ -2956,6 +3129,71 @@ def _format_related_quest_tree_label(related: dict) -> str:
 def _humanize_relation(relation: str) -> str:
     normalized = relation.strip().replace("_", " ")
     return normalized[:1].upper() + normalized[1:]
+
+
+def _build_quest_starter_marker_index(markers: Sequence[MarkerRecord]) -> dict[int, list[MarkerRecord]]:
+    index: dict[int, list[MarkerRecord]] = defaultdict(list)
+    for marker in markers:
+        if marker.kind != "quest_giver":
+            continue
+        for quest in marker.metadata.get("quests", []):
+            quest_id = int(quest.get("quest_id", 0))
+            if quest_id > 0:
+                index[quest_id].append(marker)
+    return index
+
+
+def _asset_contains_marker(asset: ZoneCompositeAsset, marker: MarkerRecord) -> bool:
+    transform = asset.coordinate_transform
+    if transform is None:
+        return False
+    allowed_map_id = asset.map_id if asset.map_id is not None else transform.map_id
+    if marker.map_id != allowed_map_id:
+        return False
+    min_world_x = min(transform.world_x1, transform.world_x2)
+    max_world_x = max(transform.world_x1, transform.world_x2)
+    min_world_y = min(transform.world_y1, transform.world_y2)
+    max_world_y = max(transform.world_y1, transform.world_y2)
+    return min_world_x <= marker.world_x <= max_world_x and min_world_y <= marker.world_y <= max_world_y
+
+
+def _find_related_quest_targets(
+    assets: Sequence[ZoneCompositeAsset],
+    current_asset: ZoneCompositeAsset | None,
+    quest_starter_marker_index: dict[int, list[MarkerRecord]],
+    quest_id: int,
+) -> list[tuple[ZoneCompositeAsset, MarkerRecord]]:
+    starter_markers = quest_starter_marker_index.get(int(quest_id), [])
+    matches: list[tuple[ZoneCompositeAsset, MarkerRecord]] = []
+    seen_keys: set[tuple[Path, int, float, float]] = set()
+    for marker in starter_markers:
+        for asset in assets:
+            if not _asset_contains_marker(asset, marker):
+                continue
+            dedupe_key = (asset.path, marker.entry, marker.world_x, marker.world_y)
+            if dedupe_key not in seen_keys:
+                matches.append((asset, marker))
+                seen_keys.add(dedupe_key)
+            break
+
+    def _sort_key(item: tuple[ZoneCompositeAsset, MarkerRecord]) -> tuple[int, int, int, str, str]:
+        asset, marker = item
+        same_asset = 0 if current_asset is not None and asset == current_asset else 1
+        same_zone = 0 if current_asset is not None and asset.zone_id == current_asset.zone_id else 1
+        same_map = 0 if current_asset is not None and asset.map_id == current_asset.map_id else 1
+        return same_asset, same_zone, same_map, asset.label.lower(), marker.label.lower()
+
+    return sorted(matches, key=_sort_key)
+
+
+def _find_best_related_quest_target(
+    assets: Sequence[ZoneCompositeAsset],
+    current_asset: ZoneCompositeAsset | None,
+    quest_starter_marker_index: dict[int, list[MarkerRecord]],
+    quest_id: int,
+) -> tuple[ZoneCompositeAsset, MarkerRecord] | None:
+    matches = _find_related_quest_targets(assets, current_asset, quest_starter_marker_index, quest_id)
+    return matches[0] if matches else None
 
 
 def _format_requirement_tree_label(requirement: dict) -> str:
@@ -3077,6 +3315,32 @@ def _build_generated_marker_icon(kind: str) -> Image.Image | None:
         draw.ellipse((6, 6, 11, 11), fill=(255, 214, 64, 255), outline=(255, 245, 180, 255))
         return icon
     return None
+
+
+def _marker_icon_target_size(kind: str) -> int:
+    base_size = 18
+    if kind not in {"herb", "ore"}:
+        return base_size
+    scaled = int(round(base_size * MARKER_DISPLAY_SETTINGS.gather_node_icon_size_scale))
+    return max(8, scaled)
+
+
+def _remove_black_icon_background(icon: Image.Image) -> Image.Image:
+    rgba = icon.convert("RGBA")
+    cleaned = rgba.copy()
+    pixels = cleaned.load()
+    width, height = cleaned.size
+    for y in range(height):
+        for x in range(width):
+            r, g, b, a = pixels[x, y]
+            if a <= 0:
+                continue
+            if r <= 16 and g <= 16 and b <= 16:
+                pixels[x, y] = (r, g, b, 0)
+    bbox = cleaned.getbbox()
+    if bbox is None:
+        return rgba
+    return cleaned.crop(bbox)
 
 
 def _objective_center_image_coords(

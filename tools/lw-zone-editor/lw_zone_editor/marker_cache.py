@@ -3,12 +3,15 @@ from __future__ import annotations
 from collections import Counter
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
+from functools import lru_cache
 import json
 from pathlib import Path
+import shutil
+import struct
 import subprocess
 from typing import Any
 
-from .paths import MARKER_CACHE_DIR, PNG_MAPS_DIR
+from .paths import APP_ROOT, MARKER_CACHE_DIR, PNG_ICONS_DIR, PNG_MAPS_DIR
 
 CREATURE_NPC_FLAGS = {
     "quest_giver": 0x00000002,
@@ -50,6 +53,7 @@ MARKER_KIND_ICON_RELATIVE_PATHS = {
 }
 
 DEFAULT_MARKER_CACHE_PATH = MARKER_CACHE_DIR / "world_markers.json"
+MARKER_CACHE_CHUNK_SIZE = 5000
 
 ATLAS_SPRITES = {
     "quest_giver": {
@@ -153,6 +157,28 @@ ORE_NAME_KEYWORDS = (
 )
 
 RESOURCE_NAME_FILTER_TERMS = tuple(sorted(set(HERB_NAME_KEYWORDS + ORE_NAME_KEYWORDS)))
+RESOURCE_ORE_ITEM_NAME_BY_NODE = {
+    "copper vein": "Copper Ore",
+    "tin vein": "Tin Ore",
+    "silver vein": "Silver Ore",
+    "gold vein": "Gold Ore",
+    "iron deposit": "Iron Ore",
+    "mithril deposit": "Mithril Ore",
+    "truesilver deposit": "Truesilver Ore",
+    "dark iron deposit": "Dark Iron Ore",
+    "small thorium vein": "Thorium Ore",
+    "rich thorium vein": "Thorium Ore",
+    "fel iron deposit": "Fel Iron Ore",
+    "adamantite deposit": "Adamantite Ore",
+    "rich adamantite deposit": "Adamantite Ore",
+    "khorium vein": "Khorium Ore",
+    "cobalt deposit": "Cobalt Ore",
+    "rich cobalt deposit": "Cobalt Ore",
+    "saronite deposit": "Saronite Ore",
+    "rich saronite deposit": "Saronite Ore",
+    "titanium vein": "Titanium Ore",
+}
+ITEM_DISPLAY_INFO_DBC_PATH = APP_ROOT.parent.parent / "var" / "extractors" / "dbc" / "ItemDisplayInfo.dbc"
 
 
 @dataclass(frozen=True, slots=True)
@@ -200,15 +226,66 @@ def load_marker_cache(path: str | Path = DEFAULT_MARKER_CACHE_PATH) -> tuple[lis
         return [], {}
 
     payload = json.loads(cache_path.read_text(encoding="utf-8"))
-    markers = [MarkerRecord(**row) for row in payload.get("markers", [])]
+    marker_rows: list[dict[str, Any]]
+    if "markers" in payload:
+        marker_rows = list(payload.get("markers", []))
+    else:
+        marker_rows = []
+        for chunk_name in payload.get("marker_chunks", []):
+            chunk_path = _marker_chunk_dir_for_path(cache_path) / chunk_name
+            if not chunk_path.is_file():
+                continue
+            chunk_payload = json.loads(chunk_path.read_text(encoding="utf-8"))
+            marker_rows.extend(chunk_payload.get("markers", []))
+
+    markers = [MarkerRecord(**row) for row in marker_rows]
     return markers, payload
 
 
 def write_marker_cache(payload: dict[str, Any], path: str | Path = DEFAULT_MARKER_CACHE_PATH) -> Path:
     output_path = Path(path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    markers = list(payload.get("markers", []))
+    manifest = dict(payload)
+    chunk_dir = _marker_chunk_dir_for_path(output_path)
+    if chunk_dir.exists():
+        shutil.rmtree(chunk_dir)
+
+    if markers:
+        chunk_dir.mkdir(parents=True, exist_ok=True)
+        chunk_names: list[str] = []
+        for chunk_index, chunk_rows in enumerate(_iter_marker_chunks(markers, MARKER_CACHE_CHUNK_SIZE), start=1):
+            chunk_name = f"markers_{chunk_index:04d}.json"
+            chunk_path = chunk_dir / chunk_name
+            chunk_path.write_text(
+                json.dumps({"markers": chunk_rows}, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            chunk_names.append(chunk_name)
+
+        manifest.pop("markers", None)
+        manifest["marker_chunk_size"] = MARKER_CACHE_CHUNK_SIZE
+        manifest["marker_chunk_count"] = len(chunk_names)
+        manifest["marker_chunks"] = chunk_names
+    else:
+        manifest["markers"] = []
+        manifest.pop("marker_chunk_size", None)
+        manifest.pop("marker_chunk_count", None)
+        manifest.pop("marker_chunks", None)
+
+    output_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return output_path
+
+
+def _marker_chunk_dir_for_path(path: Path) -> Path:
+    return path.parent / path.stem
+
+
+def _iter_marker_chunks(
+    markers: list[dict[str, Any]],
+    chunk_size: int,
+) -> list[list[dict[str, Any]]]:
+    return [markers[index:index + chunk_size] for index in range(0, len(markers), chunk_size)]
 
 
 def build_marker_cache(
@@ -273,6 +350,24 @@ def build_marker_cache(
         database=database,
         mysql_binary=mysql_binary,
     )
+    resource_item_icons = _query_resource_item_icon_relpaths(
+        host=host,
+        port=port,
+        user=user,
+        password=password,
+        database=database,
+        mysql_binary=mysql_binary,
+        resource_rows=resource_rows,
+    )
+    resource_loot_by_entry = _query_resource_loot_by_entry(
+        host=host,
+        port=port,
+        user=user,
+        password=password,
+        database=database,
+        mysql_binary=mysql_binary,
+        resource_rows=resource_rows,
+    )
     mailbox_rows = _query_mailbox_markers(
         host=host,
         port=port,
@@ -286,7 +381,7 @@ def build_marker_cache(
     for row in creature_rows:
         markers.extend(_markers_from_creature_row(row, quest_index))
     for row in resource_rows:
-        resource_marker = _marker_from_resource_row(row)
+        resource_marker = _marker_from_resource_row(row, resource_item_icons, resource_loot_by_entry)
         if resource_marker is not None:
             markers.append(resource_marker)
     for row in mailbox_rows:
@@ -736,7 +831,8 @@ SELECT
     g.position_x,
     g.position_y,
     g.position_z,
-    gt.Data0
+    gt.Data0,
+    gt.Data1
 FROM gameobject g
 JOIN gameobject_template gt ON gt.entry = g.id
 WHERE gt.type = 3
@@ -744,6 +840,158 @@ WHERE gt.type = 3
 ORDER BY gt.name, g.map, g.guid
 """
     return _run_mysql_query(mysql_binary, host, port, user, password, database, sql)
+
+
+def _query_resource_item_icon_relpaths(
+    host: str,
+    port: int,
+    user: str,
+    password: str,
+    database: str,
+    mysql_binary: str,
+    resource_rows: list[list[str]],
+) -> dict[str, str]:
+    candidate_names: set[str] = set()
+    for row in resource_rows:
+        if len(row) < 3:
+            continue
+        resource_name = row[2]
+        kind = _resource_kind_from_name(resource_name)
+        if kind is None:
+            continue
+        item_name = _resource_item_name_from_node_name(resource_name, kind)
+        if item_name:
+            candidate_names.add(item_name)
+
+    if not candidate_names:
+        return {}
+
+    icon_name_by_display_id = _load_item_display_icon_index_from_dbc(ITEM_DISPLAY_INFO_DBC_PATH)
+    if not icon_name_by_display_id:
+        return {}
+
+    ordered_names = sorted(candidate_names)
+    sql_names = ", ".join(_sql_quote_literal(name) for name in ordered_names)
+    sql = f"""
+SELECT
+    name,
+    displayid
+FROM item_template
+WHERE name IN ({sql_names})
+  AND displayid > 0
+"""
+    rows = _run_mysql_query(mysql_binary, host, port, user, password, database, sql)
+
+    result: dict[str, str] = {}
+    for row in rows:
+        if len(row) < 2:
+            continue
+        item_name = row[0]
+        display_id = _int_or_zero(row[1])
+        if not item_name or display_id <= 0:
+            continue
+        icon_name = icon_name_by_display_id.get(display_id, "")
+        if not icon_name:
+            continue
+        icon_filename = f"{icon_name.lower()}.png"
+        icon_relpath = Path("interface") / "icons" / icon_filename
+        if (PNG_ICONS_DIR / icon_relpath).is_file():
+            result[item_name] = icon_relpath.as_posix()
+    return result
+
+
+def _query_resource_loot_by_entry(
+    host: str,
+    port: int,
+    user: str,
+    password: str,
+    database: str,
+    mysql_binary: str,
+    resource_rows: list[list[str]],
+) -> dict[int, list[dict[str, Any]]]:
+    loot_entry_ids = sorted(
+        {
+            _int_or_zero(row[8])
+            for row in resource_rows
+            if len(row) >= 9 and _int_or_zero(row[8]) > 0
+        }
+    )
+    if not loot_entry_ids:
+        return {}
+
+    icon_name_by_display_id = _load_item_display_icon_index_from_dbc(ITEM_DISPLAY_INFO_DBC_PATH)
+    sql_entries = ", ".join(str(entry_id) for entry_id in loot_entry_ids)
+    sql = f"""
+SELECT
+    glt.Entry,
+    glt.Item,
+    glt.Chance,
+    glt.QuestRequired,
+    glt.GroupId,
+    glt.MinCount,
+    glt.MaxCount,
+    COALESCE(glt.Comment, ''),
+    COALESCE(it.name, CONCAT('Item #', glt.Item)),
+    COALESCE(it.displayid, 0)
+FROM gameobject_loot_template glt
+LEFT JOIN item_template it ON it.entry = glt.Item
+WHERE glt.Entry IN ({sql_entries})
+  AND glt.Item > 0
+  AND glt.Reference = 0
+ORDER BY glt.Entry, glt.GroupId, glt.Chance DESC, glt.Item
+"""
+    rows = _run_mysql_query(mysql_binary, host, port, user, password, database, sql)
+    by_entry: dict[int, list[dict[str, Any]]] = {}
+    for row in rows:
+        if len(row) < 10:
+            continue
+        loot_entry = _int_or_zero(row[0])
+        item_id = _int_or_zero(row[1])
+        display_id = _int_or_zero(row[9])
+        icon_name = icon_name_by_display_id.get(display_id, "")
+        icon_relpath = ""
+        if icon_name:
+            icon_candidate = Path("interface") / "icons" / f"{icon_name.lower()}.png"
+            if (PNG_ICONS_DIR / icon_candidate).is_file():
+                icon_relpath = icon_candidate.as_posix()
+        item_payload = {
+            "item_id": item_id,
+            "name": row[8],
+            "chance": _float_or_zero(row[2]),
+            "quest_required": bool(_int_or_zero(row[3])),
+            "group_id": _int_or_zero(row[4]),
+            "min_count": max(1, _int_or_zero(row[5])),
+            "max_count": max(1, _int_or_zero(row[6])),
+            "comment": row[7],
+            "icon_relpath": icon_relpath,
+        }
+        by_entry.setdefault(loot_entry, []).append(item_payload)
+
+    for loot_entry, items in by_entry.items():
+        _annotate_resource_loot_chances(items)
+        by_entry[loot_entry] = items
+    return by_entry
+
+
+def _annotate_resource_loot_chances(items: list[dict[str, Any]]) -> None:
+    groups: dict[int, list[dict[str, Any]]] = {}
+    for item in items:
+        groups.setdefault(_int_or_zero(item.get("group_id")), []).append(item)
+
+    for group_id, group_items in groups.items():
+        explicit_positive = [entry for entry in group_items if _float_or_zero(entry.get("chance")) > 0.0]
+        equal_roll_items = [entry for entry in group_items if _float_or_zero(entry.get("chance")) <= 0.0]
+        equal_roll_chance = None
+        if group_id > 0 and equal_roll_items and not explicit_positive:
+            equal_roll_chance = 100.0 / float(len(equal_roll_items))
+
+        for entry in group_items:
+            listed_chance = _float_or_zero(entry.get("chance"))
+            estimated_chance = listed_chance if listed_chance > 0.0 else equal_roll_chance
+            if estimated_chance is not None:
+                entry["estimated_chance"] = round(float(estimated_chance), 3)
+            else:
+                entry["estimated_chance"] = None
 
 
 def _query_quest_details(
@@ -1037,11 +1285,19 @@ def _marker_from_mailbox_row(row: list[str]) -> MarkerRecord:
     )
 
 
-def _marker_from_resource_row(row: list[str]) -> MarkerRecord | None:
-    guid, entry, name, map_id, x, y, z, lock_id = row
+def _marker_from_resource_row(
+    row: list[str],
+    resource_item_icons: dict[str, str],
+    resource_loot_by_entry: dict[int, list[dict[str, Any]]],
+) -> MarkerRecord | None:
+    guid, entry, name, map_id, x, y, z, lock_id, loot_entry_id = row
     kind = _resource_kind_from_name(name)
     if kind is None:
         return None
+    item_name = _resource_item_name_from_node_name(name, kind)
+    icon_relpath = resource_item_icons.get(item_name, MARKER_KIND_ICON_RELATIVE_PATHS[kind]) if item_name else ""
+    loot_entry = _int_or_zero(loot_entry_id)
+    resource_loot = [dict(item) for item in resource_loot_by_entry.get(loot_entry, [])]
     return MarkerRecord(
         uid=f"gameobject:{guid}:{kind}",
         kind=kind,
@@ -1053,10 +1309,14 @@ def _marker_from_resource_row(row: list[str]) -> MarkerRecord | None:
         world_z=float(z),
         entry=int(entry),
         guid=int(guid),
-        icon_relpath=MARKER_KIND_ICON_RELATIVE_PATHS[kind],
+        icon_relpath=icon_relpath,
         metadata={
             "lock_id": _int_or_zero(lock_id),
+            "loot_entry_id": loot_entry,
             "resource_kind": kind,
+            "resource_item_name": item_name or "",
+            "resource_item_icon_relpath": icon_relpath,
+            "resource_loot": resource_loot,
         },
     )
 
@@ -1328,6 +1588,53 @@ def _resource_kind_from_name(name: str) -> str | None:
     if any(keyword in normalized_name for keyword in HERB_NAME_KEYWORDS):
         return "herb"
     return None
+
+
+def _resource_item_name_from_node_name(name: str, kind: str) -> str | None:
+    normalized_name = name.strip()
+    if not normalized_name:
+        return None
+    lowered_name = normalized_name.lower()
+    if kind == "herb":
+        return normalized_name
+    if kind == "ore":
+        return RESOURCE_ORE_ITEM_NAME_BY_NODE.get(lowered_name)
+    return None
+
+
+def _sql_quote_literal(value: str) -> str:
+    return "'" + value.replace("\\", "\\\\").replace("'", "''") + "'"
+
+
+@lru_cache(maxsize=4)
+def _load_item_display_icon_index_from_dbc(dbc_path: Path) -> dict[int, str]:
+    if not dbc_path.is_file():
+        return {}
+
+    with dbc_path.open("rb") as handle:
+        magic, record_count, field_count, record_size, string_size = struct.unpack("<4s4I", handle.read(20))
+        if magic != b"WDBC":
+            return {}
+        records = handle.read(record_count * record_size)
+        string_block = handle.read(string_size)
+
+    def read_string(offset: int) -> str:
+        if not offset:
+            return ""
+        end = string_block.find(b"\x00", offset)
+        if end < 0:
+            end = len(string_block)
+        return string_block[offset:end].decode("utf-8", errors="ignore").strip()
+
+    result: dict[int, str] = {}
+    unpack_format = f"<{field_count}I"
+    for index in range(record_count):
+        row = struct.unpack_from(unpack_format, records, index * record_size)
+        display_id = int(row[0])
+        icon_name = read_string(int(row[5]))
+        if display_id > 0 and icon_name:
+            result[display_id] = icon_name
+    return result
 
 
 def _resource_name_filter_sql(expression: str) -> str:

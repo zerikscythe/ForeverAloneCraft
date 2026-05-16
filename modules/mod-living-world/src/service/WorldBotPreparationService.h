@@ -5,6 +5,7 @@
 
 #include <cstdint>
 #include <string>
+#include <unordered_set>
 
 namespace living_world
 {
@@ -34,6 +35,9 @@ public:
         std::string const& specKey);
 
     [[nodiscard]] static std::uint8_t ComputeAvailableTalentPoints(std::uint8_t level);
+
+    [[nodiscard]] static std::unordered_set<std::uint32_t> CollectTravelMobilitySpellIds(
+        integration::BotIdentityRecord const& identity);
 
 private:
     integration::BotCombatDefaultProfileRepository const& _defaultProfileRepository;

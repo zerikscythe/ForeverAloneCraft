@@ -24,6 +24,26 @@ namespace service
 {
 namespace
 {
+constexpr std::uint32_t SPELL_TRAVEL_FORM = 783;
+constexpr std::uint32_t SPELL_SUMMON_WARHORSE = 13819;
+constexpr std::uint32_t SPELL_SUMMON_CHARGER = 23214;
+constexpr std::uint32_t SPELL_SUMMON_THALASSIAN_WARHORSE = 34769;
+constexpr std::uint32_t SPELL_SUMMON_THALASSIAN_CHARGER = 34767;
+constexpr std::uint32_t SPELL_SUMMON_FELSTEED = 5784;
+constexpr std::uint32_t SPELL_SUMMON_DREADSTEED = 23161;
+constexpr std::uint32_t SPELL_ACHERUS_DEATHCHARGER = 48778;
+
+constexpr std::uint32_t SPELL_BROWN_HORSE = 458;
+constexpr std::uint32_t SPELL_BROWN_WOLF = 6654;
+constexpr std::uint32_t SPELL_BROWN_RAM = 6899;
+constexpr std::uint32_t SPELL_STRIPED_NIGHTSABER = 10793;
+constexpr std::uint32_t SPELL_BROWN_SKELETAL_HORSE = 17464;
+constexpr std::uint32_t SPELL_BROWN_KODO = 18990;
+constexpr std::uint32_t SPELL_BLUE_MECHANOSTRIDER = 10969;
+constexpr std::uint32_t SPELL_TURQUOISE_RAPTOR = 10796;
+constexpr std::uint32_t SPELL_RED_HAWKSTRIDER = 34795;
+constexpr std::uint32_t SPELL_BROWN_ELEKK = 34406;
+
 std::string_view ToDoctrineClassKey(std::uint8_t classId)
 {
     switch (classId)
@@ -61,6 +81,95 @@ bool IsSpellUsableForLevel(std::uint32_t spellId, std::uint8_t level)
 
     std::uint32_t const requiredLevel = std::max(spellInfo->SpellLevel, spellInfo->BaseLevel);
     return requiredLevel == 0 || requiredLevel <= level;
+}
+
+void AddMobilitySpellIfUsable(
+    std::unordered_set<std::uint32_t>& knownSpells,
+    std::uint32_t spellId,
+    std::uint8_t level)
+{
+    if (spellId != 0 && IsSpellUsableForLevel(spellId, level))
+        knownSpells.insert(spellId);
+}
+
+void AddRacialGroundMountSpell(
+    std::unordered_set<std::uint32_t>& knownSpells,
+    std::uint8_t raceId,
+    std::uint8_t level)
+{
+    switch (raceId)
+    {
+        case RACE_HUMAN:
+            AddMobilitySpellIfUsable(knownSpells, SPELL_BROWN_HORSE, level);
+            return;
+        case RACE_ORC:
+            AddMobilitySpellIfUsable(knownSpells, SPELL_BROWN_WOLF, level);
+            return;
+        case RACE_DWARF:
+            AddMobilitySpellIfUsable(knownSpells, SPELL_BROWN_RAM, level);
+            return;
+        case RACE_NIGHTELF:
+            AddMobilitySpellIfUsable(knownSpells, SPELL_STRIPED_NIGHTSABER, level);
+            return;
+        case RACE_UNDEAD_PLAYER:
+            AddMobilitySpellIfUsable(knownSpells, SPELL_BROWN_SKELETAL_HORSE, level);
+            return;
+        case RACE_TAUREN:
+            AddMobilitySpellIfUsable(knownSpells, SPELL_BROWN_KODO, level);
+            return;
+        case RACE_GNOME:
+            AddMobilitySpellIfUsable(knownSpells, SPELL_BLUE_MECHANOSTRIDER, level);
+            return;
+        case RACE_TROLL:
+            AddMobilitySpellIfUsable(knownSpells, SPELL_TURQUOISE_RAPTOR, level);
+            return;
+        case RACE_BLOODELF:
+            AddMobilitySpellIfUsable(knownSpells, SPELL_RED_HAWKSTRIDER, level);
+            return;
+        case RACE_DRAENEI:
+            AddMobilitySpellIfUsable(knownSpells, SPELL_BROWN_ELEKK, level);
+            return;
+        default:
+            return;
+    }
+}
+
+void AddTravelMobilitySpells(
+    std::unordered_set<std::uint32_t>& knownSpells,
+    integration::BotIdentityRecord const& identity)
+{
+    switch (identity.classId)
+    {
+        case CLASS_DRUID:
+            AddMobilitySpellIfUsable(knownSpells, SPELL_TRAVEL_FORM, identity.level);
+            return;
+
+        case CLASS_PALADIN:
+            if (identity.raceId == RACE_BLOODELF)
+            {
+                AddMobilitySpellIfUsable(knownSpells, SPELL_SUMMON_THALASSIAN_WARHORSE, identity.level);
+                AddMobilitySpellIfUsable(knownSpells, SPELL_SUMMON_THALASSIAN_CHARGER, identity.level);
+            }
+            else
+            {
+                AddMobilitySpellIfUsable(knownSpells, SPELL_SUMMON_WARHORSE, identity.level);
+                AddMobilitySpellIfUsable(knownSpells, SPELL_SUMMON_CHARGER, identity.level);
+            }
+            return;
+
+        case CLASS_WARLOCK:
+            AddMobilitySpellIfUsable(knownSpells, SPELL_SUMMON_FELSTEED, identity.level);
+            AddMobilitySpellIfUsable(knownSpells, SPELL_SUMMON_DREADSTEED, identity.level);
+            return;
+
+        case CLASS_DEATH_KNIGHT:
+            AddMobilitySpellIfUsable(knownSpells, SPELL_ACHERUS_DEATHCHARGER, identity.level);
+            return;
+
+        default:
+            AddRacialGroundMountSpell(knownSpells, identity.raceId, identity.level);
+            return;
+    }
 }
 
 void AddKnownSpellForAction(
@@ -427,6 +536,8 @@ model::WorldBotPreparedBuild WorldBotPreparationService::Prepare(
     AddClassSkillLineSpells(prepared.knownSpellIds, *playerInfo, identity.level);
     AddAllocatedTalentSpells(prepared.knownSpellIds, prepared.allocatedTalents, identity.level);
     AddProfileSpells(prepared.knownSpellIds, *defaultProfile, identity.level);
+    for (std::uint32_t spellId : CollectTravelMobilitySpellIds(identity))
+        prepared.knownSpellIds.insert(spellId);
 
     prepared.status = model::WorldBotPreparationStatus::Ready;
     LOG_INFO("server.worldserver",
@@ -489,6 +600,14 @@ std::uint8_t WorldBotPreparationService::ComputeAvailableTalentPoints(std::uint8
         return 0;
 
     return static_cast<std::uint8_t>(level - 9);
+}
+
+std::unordered_set<std::uint32_t> WorldBotPreparationService::CollectTravelMobilitySpellIds(
+    integration::BotIdentityRecord const& identity)
+{
+    std::unordered_set<std::uint32_t> knownSpells;
+    AddTravelMobilitySpells(knownSpells, identity);
+    return knownSpells;
 }
 } // namespace service
 } // namespace living_world

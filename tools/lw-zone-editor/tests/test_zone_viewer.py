@@ -24,6 +24,8 @@ from lw_zone_editor.zone_viewer import (
     _category_root_asset,
     _build_route_editor_filename,
     _asset_floor_tree_label,
+    _asset_contains_marker,
+    _build_quest_starter_marker_index,
     _build_route_export_filename,
     _build_route_runtime_filename,
     _deserialize_editor_path_state,
@@ -34,13 +36,19 @@ from lw_zone_editor.zone_viewer import (
     _expansion_root_asset,
     _filter_visible_quests,
     _filter_event_quests,
+    _format_resource_loot_chance_detail,
+    _format_resource_loot_tree_label,
     _format_requirement_tree_label,
+    _find_best_related_quest_target,
+    _find_related_quest_targets,
     _move_anchor_with_handles,
+    _marker_icon_target_size,
     _parse_optional_level_filter,
     _propagate_connected_anchor_position,
     _quest_filter_level_value,
     _quest_marker_icon_kind,
     _quest_matches_level_filter,
+    _remove_black_icon_background,
     _route_export_group_key,
     _route_export_preference,
     _overlay_id_from_requirement,
@@ -60,6 +68,7 @@ from lw_zone_editor.zone_viewer import (
     group_category_assets,
     group_assets_for_tree,
 )
+from lw_zone_editor.marker_cache import MarkerRecord
 
 
 class ZoneViewerTests(unittest.TestCase):
@@ -262,6 +271,285 @@ class ZoneViewerTests(unittest.TestCase):
         )
 
         self.assertEqual(label, "Reward next: [124] Return to Goldshire")
+
+    def test_build_quest_starter_marker_index_collects_quest_giver_markers(self) -> None:
+        giver = MarkerRecord(
+            uid="quest:1",
+            kind="quest_giver",
+            label="Marshal Dughan",
+            object_type="creature",
+            map_id=0,
+            world_x=-9469.0,
+            world_y=74.0,
+            world_z=54.0,
+            entry=240,
+            guid=1,
+            icon_relpath="",
+            metadata={"quests": [{"quest_id": 54, "title": "Report to Goldshire"}]},
+        )
+        non_giver = MarkerRecord(
+            uid="mail:1",
+            kind="mailbox",
+            label="Mailbox",
+            object_type="gameobject",
+            map_id=0,
+            world_x=-9460.0,
+            world_y=70.0,
+            world_z=54.0,
+            entry=1,
+            guid=2,
+            icon_relpath="",
+            metadata={"quests": [{"quest_id": 54}]},
+        )
+
+        index = _build_quest_starter_marker_index([giver, non_giver])
+
+        self.assertEqual(index[54], [giver])
+
+    def test_asset_contains_marker_checks_world_bounds_and_map(self) -> None:
+        transform = ZoneCoordinateTransform(
+            world_map_area_id=30,
+            map_id=0,
+            zone_id=12,
+            world_y1=0.0,
+            world_y2=100.0,
+            world_x1=100.0,
+            world_x2=0.0,
+        )
+        asset = ZoneCompositeAsset(
+            source_zone_name="Elwynn Forest",
+            zone_name="Elwynn Forest",
+            zone_id=12,
+            path=Path("elwynn.png"),
+            width=1000,
+            height=800,
+            map_id=0,
+            coordinate_transform=transform,
+        )
+        inside = MarkerRecord(
+            uid="quest:2",
+            kind="quest_giver",
+            label="Innkeeper Farley",
+            object_type="creature",
+            map_id=0,
+            world_x=50.0,
+            world_y=50.0,
+            world_z=0.0,
+            entry=295,
+            guid=3,
+            icon_relpath="",
+            metadata={"quests": []},
+        )
+        wrong_map = MarkerRecord(
+            uid="quest:3",
+            kind="quest_giver",
+            label="Wrong Map",
+            object_type="creature",
+            map_id=1,
+            world_x=50.0,
+            world_y=50.0,
+            world_z=0.0,
+            entry=296,
+            guid=4,
+            icon_relpath="",
+            metadata={"quests": []},
+        )
+        outside = MarkerRecord(
+            uid="quest:4",
+            kind="quest_giver",
+            label="Outside",
+            object_type="creature",
+            map_id=0,
+            world_x=150.0,
+            world_y=50.0,
+            world_z=0.0,
+            entry=297,
+            guid=5,
+            icon_relpath="",
+            metadata={"quests": []},
+        )
+
+        self.assertTrue(_asset_contains_marker(asset, inside))
+        self.assertFalse(_asset_contains_marker(asset, wrong_map))
+        self.assertFalse(_asset_contains_marker(asset, outside))
+
+    def test_find_best_related_quest_target_prefers_current_asset(self) -> None:
+        elwynn_transform = ZoneCoordinateTransform(
+            world_map_area_id=30,
+            map_id=0,
+            zone_id=12,
+            world_y1=0.0,
+            world_y2=100.0,
+            world_x1=100.0,
+            world_x2=0.0,
+        )
+        westfall_transform = ZoneCoordinateTransform(
+            world_map_area_id=40,
+            map_id=0,
+            zone_id=40,
+            world_y1=0.0,
+            world_y2=100.0,
+            world_x1=300.0,
+            world_x2=200.0,
+        )
+        current_asset = ZoneCompositeAsset(
+            source_zone_name="Elwynn Forest",
+            zone_name="Elwynn Forest",
+            zone_id=12,
+            path=Path("elwynn.png"),
+            width=1000,
+            height=800,
+            map_id=0,
+            coordinate_transform=elwynn_transform,
+        )
+        other_asset = ZoneCompositeAsset(
+            source_zone_name="Westfall",
+            zone_name="Westfall",
+            zone_id=40,
+            path=Path("westfall.png"),
+            width=1000,
+            height=800,
+            map_id=0,
+            coordinate_transform=westfall_transform,
+        )
+        current_marker = MarkerRecord(
+            uid="quest:5",
+            kind="quest_giver",
+            label="Goldshire Starter",
+            object_type="creature",
+            map_id=0,
+            world_x=50.0,
+            world_y=50.0,
+            world_z=0.0,
+            entry=298,
+            guid=6,
+            icon_relpath="",
+            metadata={"quests": [{"quest_id": 999, "title": "Next Quest"}]},
+        )
+        other_marker = MarkerRecord(
+            uid="quest:6",
+            kind="quest_giver",
+            label="Sentinel Hill Starter",
+            object_type="creature",
+            map_id=0,
+            world_x=250.0,
+            world_y=50.0,
+            world_z=0.0,
+            entry=299,
+            guid=7,
+            icon_relpath="",
+            metadata={"quests": [{"quest_id": 999, "title": "Next Quest"}]},
+        )
+
+        target = _find_best_related_quest_target(
+            [other_asset, current_asset],
+            current_asset,
+            _build_quest_starter_marker_index([other_marker, current_marker]),
+            999,
+        )
+
+        self.assertEqual(target, (current_asset, current_marker))
+
+    def test_find_related_quest_targets_can_report_other_zone_starters(self) -> None:
+        elwynn_transform = ZoneCoordinateTransform(
+            world_map_area_id=30,
+            map_id=0,
+            zone_id=12,
+            world_y1=0.0,
+            world_y2=100.0,
+            world_x1=100.0,
+            world_x2=0.0,
+        )
+        duskwood_transform = ZoneCoordinateTransform(
+            world_map_area_id=10,
+            map_id=0,
+            zone_id=10,
+            world_y1=0.0,
+            world_y2=100.0,
+            world_x1=500.0,
+            world_x2=400.0,
+        )
+        current_asset = ZoneCompositeAsset(
+            source_zone_name="Elwynn Forest",
+            zone_name="Elwynn Forest",
+            zone_id=12,
+            path=Path("elwynn.png"),
+            width=1000,
+            height=800,
+            map_id=0,
+            coordinate_transform=elwynn_transform,
+        )
+        duskwood_asset = ZoneCompositeAsset(
+            source_zone_name="Duskwood",
+            zone_name="Duskwood",
+            zone_id=10,
+            path=Path("duskwood.png"),
+            width=1000,
+            height=800,
+            map_id=0,
+            coordinate_transform=duskwood_transform,
+        )
+        duskwood_marker = MarkerRecord(
+            uid="quest:7",
+            kind="quest_giver",
+            label="Commander Althea Ebonlocke",
+            object_type="creature",
+            map_id=0,
+            world_x=450.0,
+            world_y=50.0,
+            world_z=0.0,
+            entry=300,
+            guid=8,
+            icon_relpath="",
+            metadata={"quests": [{"quest_id": 1234, "title": "Deliver to Darkshire"}]},
+        )
+
+        targets = _find_related_quest_targets(
+            [current_asset, duskwood_asset],
+            current_asset,
+            _build_quest_starter_marker_index([duskwood_marker]),
+            1234,
+        )
+
+        self.assertEqual(targets, [(duskwood_asset, duskwood_marker)])
+
+    def test_format_resource_loot_tree_label_includes_count_and_estimated_chance(self) -> None:
+        label = _format_resource_loot_tree_label(
+            {
+                "item_id": 2453,
+                "name": "Bruiseweed",
+                "min_count": 1,
+                "max_count": 2,
+                "estimated_chance": 50.0,
+            }
+        )
+
+        self.assertEqual(label, "1-2x Bruiseweed [50.0%]")
+
+    def test_format_resource_loot_chance_detail_describes_equal_roll_group(self) -> None:
+        detail = _format_resource_loot_chance_detail(
+            {
+                "chance": 0.0,
+                "estimated_chance": 50.0,
+                "group_id": 3,
+            }
+        )
+
+        self.assertEqual(detail, "Estimated equal roll in group 3: 50.0%")
+
+    def test_marker_icon_target_size_uses_smaller_scale_for_gather_nodes(self) -> None:
+        self.assertEqual(_marker_icon_target_size("quest_giver"), 18)
+        self.assertEqual(_marker_icon_target_size("herb"), 14)
+        self.assertEqual(_marker_icon_target_size("ore"), 14)
+
+    def test_remove_black_icon_background_makes_black_pixels_transparent(self) -> None:
+        icon = Image.new("RGBA", (3, 3), (0, 0, 0, 255))
+        icon.putpixel((1, 1), (10, 200, 10, 255))
+
+        cleaned = _remove_black_icon_background(icon)
+
+        self.assertEqual(cleaned.size, (1, 1))
+        self.assertEqual(cleaned.getpixel((0, 0)), (10, 200, 10, 255))
 
     def test_format_requirement_tree_label_uses_creature_and_collect_variants(self) -> None:
         creature_label = _format_requirement_tree_label(

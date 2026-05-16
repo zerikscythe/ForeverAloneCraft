@@ -10,9 +10,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from lw_zone_editor.settings import (  # noqa: E402
     DEFAULT_DATABASE_SETTINGS,
+    DEFAULT_MARKER_DISPLAY_SETTINGS,
     DEFAULT_ROUTE_SAMPLING_SETTINGS,
     DEFAULT_ROUTE_STORAGE_SETTINGS,
     load_database_settings,
+    load_marker_display_settings,
     load_route_sampling_settings,
     load_route_storage_settings,
 )
@@ -123,6 +125,32 @@ class SettingsTests(unittest.TestCase):
             settings = load_database_settings(config_path)
 
             self.assertEqual(settings, DEFAULT_DATABASE_SETTINGS)
+
+    def test_load_marker_display_settings_reads_ini_values(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.ini"
+            config_path.write_text(
+                "[marker_display]\n"
+                "GatherNodeIconSizeScale = 0.65\n",
+                encoding="utf-8",
+            )
+
+            settings = load_marker_display_settings(config_path)
+
+            self.assertEqual(settings.gather_node_icon_size_scale, 0.65)
+
+    def test_load_marker_display_settings_clamps_invalid_values(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.ini"
+            config_path.write_text(
+                "[marker_display]\n"
+                "GatherNodeIconSizeScale = 0\n",
+                encoding="utf-8",
+            )
+
+            settings = load_marker_display_settings(config_path)
+
+            self.assertEqual(settings, DEFAULT_MARKER_DISPLAY_SETTINGS)
 
 
 if __name__ == "__main__":

@@ -11,6 +11,7 @@
 
 #include <optional>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 namespace living_world
@@ -19,6 +20,11 @@ namespace service
 {
 namespace
 {
+bool HasSpell(std::unordered_set<std::uint32_t> const& spells, std::uint32_t spellId)
+{
+    return spells.find(spellId) != spells.end();
+}
+
 struct DefaultProfileQuery
 {
     std::string specKey;
@@ -193,6 +199,76 @@ TEST(WorldBotPreparationServiceTest, ComputesAvailableTalentPointsFromLevel)
     EXPECT_EQ(WorldBotPreparationService::ComputeAvailableTalentPoints(1), 0u);
     EXPECT_EQ(WorldBotPreparationService::ComputeAvailableTalentPoints(10), 1u);
     EXPECT_EQ(WorldBotPreparationService::ComputeAvailableTalentPoints(80), 71u);
+}
+
+TEST(WorldBotPreparationServiceTest, AddsBasicRacialGroundMountSpellsAtEligibleLevels)
+{
+    integration::BotIdentityRecord humanWarrior;
+    humanWarrior.raceId = RACE_HUMAN;
+    humanWarrior.classId = CLASS_WARRIOR;
+    humanWarrior.level = 20;
+    EXPECT_TRUE(HasSpell(WorldBotPreparationService::CollectTravelMobilitySpellIds(humanWarrior), 458u));
+
+    integration::BotIdentityRecord dwarfWarrior;
+    dwarfWarrior.raceId = RACE_DWARF;
+    dwarfWarrior.classId = CLASS_WARRIOR;
+    dwarfWarrior.level = 20;
+    EXPECT_TRUE(HasSpell(WorldBotPreparationService::CollectTravelMobilitySpellIds(dwarfWarrior), 6899u));
+
+    integration::BotIdentityRecord trollWarrior;
+    trollWarrior.raceId = RACE_TROLL;
+    trollWarrior.classId = CLASS_WARRIOR;
+    trollWarrior.level = 20;
+    EXPECT_TRUE(HasSpell(WorldBotPreparationService::CollectTravelMobilitySpellIds(trollWarrior), 10796u));
+}
+
+TEST(WorldBotPreparationServiceTest, DoesNotGrantBasicRacialGroundMountBelowRequiredLevel)
+{
+    integration::BotIdentityRecord humanWarrior;
+    humanWarrior.raceId = RACE_HUMAN;
+    humanWarrior.classId = CLASS_WARRIOR;
+    humanWarrior.level = 10;
+
+    EXPECT_TRUE(WorldBotPreparationService::CollectTravelMobilitySpellIds(humanWarrior).empty());
+}
+
+TEST(WorldBotPreparationServiceTest, PrefersDruidTravelFormInsteadOfRacialMount)
+{
+    integration::BotIdentityRecord nightElfDruid;
+    nightElfDruid.raceId = RACE_NIGHTELF;
+    nightElfDruid.classId = CLASS_DRUID;
+    nightElfDruid.level = 20;
+
+    auto const spells = WorldBotPreparationService::CollectTravelMobilitySpellIds(nightElfDruid);
+    EXPECT_TRUE(HasSpell(spells, 783u));
+    EXPECT_FALSE(HasSpell(spells, 10793u));
+}
+
+TEST(WorldBotPreparationServiceTest, GrantsClassMountsForPaladinsWarlocksAndDeathKnights)
+{
+    integration::BotIdentityRecord bloodElfPaladin;
+    bloodElfPaladin.raceId = RACE_BLOODELF;
+    bloodElfPaladin.classId = CLASS_PALADIN;
+    bloodElfPaladin.level = 20;
+    auto const paladinSpells = WorldBotPreparationService::CollectTravelMobilitySpellIds(bloodElfPaladin);
+    EXPECT_TRUE(HasSpell(paladinSpells, 34769u));
+    EXPECT_FALSE(HasSpell(paladinSpells, 34795u));
+
+    integration::BotIdentityRecord orcWarlock;
+    orcWarlock.raceId = RACE_ORC;
+    orcWarlock.classId = CLASS_WARLOCK;
+    orcWarlock.level = 20;
+    auto const warlockSpells = WorldBotPreparationService::CollectTravelMobilitySpellIds(orcWarlock);
+    EXPECT_TRUE(HasSpell(warlockSpells, 5784u));
+    EXPECT_FALSE(HasSpell(warlockSpells, 6654u));
+
+    integration::BotIdentityRecord humanDeathKnight;
+    humanDeathKnight.raceId = RACE_HUMAN;
+    humanDeathKnight.classId = CLASS_DEATH_KNIGHT;
+    humanDeathKnight.level = 60;
+    auto const deathKnightSpells = WorldBotPreparationService::CollectTravelMobilitySpellIds(humanDeathKnight);
+    EXPECT_TRUE(HasSpell(deathKnightSpells, 48778u));
+    EXPECT_FALSE(HasSpell(deathKnightSpells, 458u));
 }
 
 TEST(WorldBotPreparationServiceTest, FailsCleanlyWhenNoDefaultCombatProfileExists)

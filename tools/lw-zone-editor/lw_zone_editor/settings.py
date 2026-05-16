@@ -47,6 +47,11 @@ class DatabaseSettings:
     mysql_binary: str
 
 
+@dataclass(frozen=True, slots=True)
+class MarkerDisplaySettings:
+    gather_node_icon_size_scale: float
+
+
 DEFAULT_ROUTE_SAMPLING_SETTINGS = RouteSamplingSettings(
     base_spacing_yards=25.0,
     min_spacing_yards=5.0,
@@ -66,6 +71,10 @@ DEFAULT_DATABASE_SETTINGS = DatabaseSettings(
     password="",
     database="acore_world",
     mysql_binary="mysql",
+)
+
+DEFAULT_MARKER_DISPLAY_SETTINGS = MarkerDisplaySettings(
+    gather_node_icon_size_scale=0.8,
 )
 
 CONFIG_PATH = APP_ROOT / "config.ini"
@@ -171,6 +180,25 @@ def load_database_settings(
     )
 
 
+def load_marker_display_settings(
+    config_path: Path = CONFIG_PATH,
+    defaults: MarkerDisplaySettings = DEFAULT_MARKER_DISPLAY_SETTINGS,
+) -> MarkerDisplaySettings:
+    parser = _load_parser(config_path)
+    section = "marker_display"
+    gather_node_icon_size_scale = _parse_positive_float(
+        parser,
+        section,
+        "GatherNodeIconSizeScale",
+        defaults.gather_node_icon_size_scale,
+    )
+    gather_node_icon_size_scale = min(max(gather_node_icon_size_scale, 0.1), 2.0)
+    return MarkerDisplaySettings(
+        gather_node_icon_size_scale=gather_node_icon_size_scale,
+    )
+
+
 ROUTE_SAMPLING_SETTINGS = load_route_sampling_settings()
 ROUTE_STORAGE_SETTINGS = load_route_storage_settings()
 DATABASE_SETTINGS = load_database_settings()
+MARKER_DISPLAY_SETTINGS = load_marker_display_settings()

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import struct
 import tempfile
 import unittest
 from pathlib import Path
@@ -8,13 +10,18 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from lw_zone_editor.marker_cache import (
+    MARKER_CACHE_CHUNK_SIZE,
     MarkerRecord,
     _annotate_quests_with_objective_area_data,
+    _annotate_resource_loot_chances,
     _build_objective_area_index,
     _build_quest_payload_from_row,
     _build_quest_route_graph,
+    _load_item_display_icon_index_from_dbc,
+    _marker_from_resource_row,
     _quest_classification_tags,
     _resource_kind_from_name,
+    _resource_item_name_from_node_name,
     load_marker_cache,
     marker_icon_crop_box,
     write_marker_cache,
@@ -56,6 +63,43 @@ class MarkerCacheTests(unittest.TestCase):
             self.assertEqual(len(markers), 1)
             self.assertIsInstance(markers[0], MarkerRecord)
             self.assertEqual(markers[0].kind, "mailbox")
+
+    def test_marker_cache_is_written_in_chunks(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cache_path = Path(tmp) / "markers.json"
+            payload = {
+                "version": 1,
+                "markers": [
+                    {
+                        "uid": f"gameobject:{index}:mailbox",
+                        "kind": "mailbox",
+                        "label": f"Mailbox {index}",
+                        "object_type": "gameobject",
+                        "map_id": 0,
+                        "world_x": float(index),
+                        "world_y": float(index),
+                        "world_z": 0.0,
+                        "entry": 142075,
+                        "guid": index,
+                        "icon_relpath": "interface/minimap/tracking/mailbox.png",
+                        "metadata": {},
+                    }
+                    for index in range(MARKER_CACHE_CHUNK_SIZE + 3)
+                ],
+            }
+
+            write_marker_cache(payload, cache_path)
+            manifest = json.loads(cache_path.read_text(encoding="utf-8"))
+            chunk_dir = cache_path.parent / cache_path.stem
+
+            self.assertNotIn("markers", manifest)
+            self.assertEqual(manifest["marker_chunk_size"], MARKER_CACHE_CHUNK_SIZE)
+            self.assertEqual(manifest["marker_chunk_count"], 2)
+            self.assertEqual(len(manifest["marker_chunks"]), 2)
+            self.assertTrue(chunk_dir.is_dir())
+
+            markers, _ = load_marker_cache(cache_path)
+            self.assertEqual(len(markers), MARKER_CACHE_CHUNK_SIZE + 3)
 
     def test_build_quest_payload_parses_requirements_rewards_and_related_quests(self) -> None:
         row = [
@@ -254,6 +298,53 @@ class MarkerCacheTests(unittest.TestCase):
         self.assertEqual(_resource_kind_from_name("Copper Vein"), "ore")
         self.assertEqual(_resource_kind_from_name("Rich Saronite Deposit"), "ore")
         self.assertIsNone(_resource_kind_from_name("Ordinary Barrel"))
+
+    def test_resource_item_name_from_node_name_maps_herbs_and_ores(self) -> None:
+        self.assertEqual(_resource_item_name_from_node_name("Bruiseweed", "herb"), "Bruiseweed")
+        self.assertEqual(_resource_item_name_from_node_name("Kingsblood", "herb"), "Kingsblood")
+        self.assertEqual(_resource_item_name_from_node_name("Copper Vein", "ore"), "Copper Ore")
+        self.assertEqual(_resource_item_name_from_node_name("Rich Saronite Deposit", "ore"), "Saronite Ore")
+        self.assertIsNone(_resource_item_name_from_node_name("Ordinary Barrel", "ore"))
+
+    def test_load_item_display_icon_index_from_dbc_reads_inventory_icon(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dbc_path = Path(tmp) / "ItemDisplayInfo.dbc"
+            string_block = b"\x00INV_Misc_Herb_01\x00"
+            icon_offset = 1
+            row = [7337] + [0] * 24
+            row[5] = icon_offset
+            records = struct.pack("<25I", *row)
+            header = struct.pack("<4s4I", b"WDBC", 1, 25, 100, len(string_block))
+            dbc_path.write_bytes(header + records + string_block)
+
+            icon_index = _load_item_display_icon_index_from_dbc(dbc_path)
+
+            self.assertEqual(icon_index[7337], "INV_Misc_Herb_01")
+
+    def test_marker_from_resource_row_uses_specific_item_icon_when_available(self) -> None:
+        marker = _marker_from_resource_row(
+            ["1", "2041", "Bruiseweed", "0", "-1.0", "2.0", "3.0", "1610", "1419"],
+            {"Bruiseweed": "interface/icons/inv_misc_herb_01.png"},
+            {},
+        )
+
+        self.assertIsNotNone(marker)
+        assert marker is not None
+        self.assertEqual(marker.icon_relpath, "interface/icons/inv_misc_herb_01.png")
+        self.assertEqual(marker.metadata["resource_item_name"], "Bruiseweed")
+
+    def test_annotate_resource_loot_chances_estimates_equal_group_rolls(self) -> None:
+        items = [
+            {"item_id": 1, "name": "A", "chance": 0.0, "group_id": 1},
+            {"item_id": 2, "name": "B", "chance": 0.0, "group_id": 1},
+            {"item_id": 3, "name": "C", "chance": 25.0, "group_id": 0},
+        ]
+
+        _annotate_resource_loot_chances(items)
+
+        self.assertEqual(items[0]["estimated_chance"], 50.0)
+        self.assertEqual(items[1]["estimated_chance"], 50.0)
+        self.assertEqual(items[2]["estimated_chance"], 25.0)
 
 
 if __name__ == "__main__":
