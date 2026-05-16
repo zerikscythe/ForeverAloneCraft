@@ -477,6 +477,45 @@ char const* DescribeAoEMode(std::optional<model::BotCombatAoEMode> aoeMode)
     return "unknown";
 }
 
+std::string DescribeTravelOptionChoice(service::WorldBotResolvedTravelOption const& option)
+{
+    std::ostringstream oss;
+    if (option.usesTaxi() && option.taxiJourney.has_value() && !option.taxiJourney->empty())
+    {
+        service::WorldBotResolvedTaxiJourney const& journey = *option.taxiJourney;
+        oss << "taking taxi via " << journey.taxiCandidate.sourceNode.name
+            << " -> " << journey.taxiCandidate.destinationNode.name
+            << " ride_eta=" << FormatDurationMs(journey.taxiCandidate.route.totalEtaMs)
+            << " total_eta=" << FormatDurationMs(option.totalEtaMs);
+
+        if (option.groundPlan.has_value() && option.groundPlan->etaMs > option.totalEtaMs)
+        {
+            oss << " saved="
+                << FormatDurationMs(option.groundPlan->etaMs - option.totalEtaMs)
+                << " vs roads";
+        }
+
+        return oss.str();
+    }
+
+    oss << "staying on roads eta=" << FormatDurationMs(option.totalEtaMs);
+    if (option.taxiJourney.has_value() && !option.taxiJourney->empty())
+    {
+        service::WorldBotResolvedTaxiJourney const& journey = *option.taxiJourney;
+        oss << " taxi_alt=" << FormatDurationMs(journey.totalEtaMs)
+            << " via " << journey.taxiCandidate.sourceNode.name
+            << " -> " << journey.taxiCandidate.destinationNode.name;
+        if (journey.totalEtaMs > option.totalEtaMs)
+            oss << " slower_by=" << FormatDurationMs(journey.totalEtaMs - option.totalEtaMs);
+    }
+    else
+    {
+        oss << " no_known_taxi_route";
+    }
+
+    return oss.str();
+}
+
 char const* DescribeMovementStyle(model::WorldBotMovementStyle style)
 {
     switch (style)
@@ -1654,6 +1693,16 @@ std::string WorldBotCreatureAI::DescribeActiveTravelTarget(service::AmbientStep 
         return oss.str();
     }
 
+    if (_activeTravelExecutionPhase == ActiveTravelExecutionPhase::TaxiApproach && !_activeTaxiJourney.empty())
+    {
+        oss << "heading to flight master " << _activeTaxiJourney.taxiCandidate.sourceNode.name << " | ";
+    }
+    else if (_activeTravelExecutionPhase == ActiveTravelExecutionPhase::TaxiFinalLeg && !_activeTaxiJourney.empty())
+    {
+        oss << "after taxi from " << _activeTaxiJourney.taxiCandidate.sourceNode.name
+            << " -> " << _activeTaxiJourney.taxiCandidate.destinationNode.name << " | ";
+    }
+
     if (_routeTravelPlanActive && _routeTravelWaypointIndex < _routeTravelPlan.waypoints.size())
     {
         service::WorldBotRouteWaypoint const& waypoint =
@@ -2399,16 +2448,20 @@ void WorldBotCreatureAI::TickStep(uint32 /*diff*/)
                         BuildTravelNarrative(
                             _session,
                             step,
-                            std::string("mode=") + DescribeTravelOptionMode(travelOption.mode)
-                                + " source_taxi=" + _activeTaxiJourney.taxiCandidate.sourceNode.name
-                                + " destination_taxi=" + _activeTaxiJourney.taxiCandidate.destinationNode.name
-                                + " taxi_eta=" + FormatDurationMs(_activeTaxiJourney.taxiCandidate.route.totalEtaMs)
-                                + " total_eta=" + FormatDurationMs(travelOption.totalEtaMs)));
+                            DescribeTravelOptionChoice(travelOption)));
                 }
                 else if (travelOption.groundPlan.has_value() && !travelOption.groundPlan->empty())
                 {
                     _activeTravelExecutionPhase = ActiveTravelExecutionPhase::GroundOnly;
                     ActivateRouteTravelPlan(*travelOption.groundPlan);
+
+                    integration::BotActivityLog::Record(
+                        me, _identity.name, _identity.id,
+                        "travel_option",
+                        BuildTravelNarrative(
+                            _session,
+                            step,
+                            DescribeTravelOptionChoice(travelOption)));
                 }
             }
             else

@@ -805,6 +805,43 @@ std::string_view ToTravelOptionModeText(service::WorldBotTravelOptionMode mode)
     return "unknown";
 }
 
+std::string DescribeTravelOptionDecision(service::WorldBotResolvedTravelOption const& option)
+{
+    std::ostringstream oss;
+    if (option.usesTaxi() && option.taxiJourney.has_value() && !option.taxiJourney->empty())
+    {
+        service::WorldBotResolvedTaxiJourney const& journey = *option.taxiJourney;
+        if (option.groundPlan.has_value() && option.groundPlan->etaMs > option.totalEtaMs)
+        {
+            oss << "Taking taxi via " << journey.taxiCandidate.sourceNode.name
+                << " -> " << journey.taxiCandidate.destinationNode.name
+                << " and saving "
+                << std::fixed << std::setprecision(1)
+                << ((static_cast<float>(option.groundPlan->etaMs) - static_cast<float>(option.totalEtaMs)) / 1000.0f)
+                << "s versus roads.";
+            return oss.str();
+        }
+
+        oss << "Taking taxi via " << journey.taxiCandidate.sourceNode.name
+            << " -> " << journey.taxiCandidate.destinationNode.name << ".";
+        return oss.str();
+    }
+
+    if (option.taxiJourney.has_value() && !option.taxiJourney->empty())
+    {
+        service::WorldBotResolvedTaxiJourney const& journey = *option.taxiJourney;
+        oss << "Staying on roads; taxi via " << journey.taxiCandidate.sourceNode.name
+            << " -> " << journey.taxiCandidate.destinationNode.name
+            << " would be slower by "
+            << std::fixed << std::setprecision(1)
+            << ((static_cast<float>(journey.totalEtaMs) - static_cast<float>(option.totalEtaMs)) / 1000.0f)
+            << "s.";
+        return oss.str();
+    }
+
+    return "Staying on roads; no known taxi route is available.";
+}
+
 std::optional<service::WorldBotTravelCapabilityTier> ParseTravelCapabilityTierToken(std::string_view token)
 {
     std::string normalized;
@@ -1358,6 +1395,9 @@ bool HandleRouteOptionDebugCommand(ChatHandler* handler, std::string_view argume
         ToTravelOptionModeText(option->mode),
         static_cast<float>(option->totalEtaMs) / 1000.0f,
         option->totalDistanceYards);
+    handler->PSendSysMessage(
+        "Decision summary: {}",
+        DescribeTravelOptionDecision(*option));
 
     if (option->groundPlan.has_value())
     {
