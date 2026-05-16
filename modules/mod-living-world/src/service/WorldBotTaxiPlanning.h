@@ -1,5 +1,7 @@
 #pragma once
 
+#include "service/WorldBotRoutePlanning.h"
+
 #include <cstdint>
 #include <functional>
 #include <optional>
@@ -55,6 +57,57 @@ struct WorldBotTaxiTravelCandidate
 
     [[nodiscard]] bool empty() const { return route.empty(); }
 };
+
+enum class WorldBotTravelOptionMode : std::uint8_t
+{
+    Ground = 0,
+    TaxiFull = 1,
+    TaxiPartial = 2,
+};
+
+struct WorldBotResolvedTaxiJourney
+{
+    WorldBotResolvedTravelPlan sourceGroundPlan;
+    WorldBotTaxiTravelCandidate taxiCandidate;
+    WorldBotResolvedTravelPlan destinationGroundPlan;
+    float totalDistanceYards = 0.0f;
+    std::uint32_t totalEtaMs = 0;
+
+    [[nodiscard]] bool empty() const
+    {
+        return sourceGroundPlan.empty()
+            || taxiCandidate.empty()
+            || destinationGroundPlan.empty();
+    }
+};
+
+struct WorldBotResolvedTravelOption
+{
+    WorldBotTravelOptionMode mode = WorldBotTravelOptionMode::Ground;
+    std::optional<WorldBotResolvedTravelPlan> groundPlan;
+    std::optional<WorldBotResolvedTaxiJourney> taxiJourney;
+    float totalDistanceYards = 0.0f;
+    std::uint32_t totalEtaMs = 0;
+
+    [[nodiscard]] bool usesTaxi() const
+    {
+        return mode == WorldBotTravelOptionMode::TaxiFull
+            || mode == WorldBotTravelOptionMode::TaxiPartial;
+    }
+};
+
+using WorldBotGroundRouteResolver = std::function<std::optional<WorldBotResolvedTravelPlan>(
+    std::uint16_t mapId,
+    std::uint32_t startZoneIdHint,
+    std::uint32_t destZoneId,
+    float startX,
+    float startY,
+    float startZ,
+    float destX,
+    float destY,
+    float destZ,
+    WorldBotTravelCapabilityTier tier,
+    WorldBotTravelCapabilityConfig const& capabilityConfig)>;
 
 bool IsWorldBotTaxiNodeUsableForFaction(
     WorldBotTaxiNode const& node,
@@ -121,6 +174,40 @@ using WorldBotTaxiZoneResolver = std::function<std::uint32_t(
 
 WorldBotTaxiNetwork LoadWorldBotTaxiNetwork(
     WorldBotTaxiZoneResolver zoneResolver = {});
+
+std::optional<WorldBotResolvedTaxiJourney> ResolveBestTaxiJourney(
+    WorldBotTaxiNetwork const& network,
+    WorldBotGroundRouteResolver const& groundRouteResolver,
+    std::uint16_t mapId,
+    std::uint32_t startZoneIdHint,
+    std::uint32_t destZoneId,
+    float startX,
+    float startY,
+    float startZ,
+    float destX,
+    float destY,
+    float destZ,
+    std::unordered_set<std::uint32_t> const& exploredZoneIds,
+    std::uint8_t faction,
+    WorldBotTravelCapabilityTier groundTier,
+    WorldBotTravelCapabilityConfig const& capabilityConfig = {});
+
+std::optional<WorldBotResolvedTravelOption> ResolveBestTravelOption(
+    WorldBotTaxiNetwork const& network,
+    WorldBotGroundRouteResolver const& groundRouteResolver,
+    std::uint16_t mapId,
+    std::uint32_t startZoneIdHint,
+    std::uint32_t destZoneId,
+    float startX,
+    float startY,
+    float startZ,
+    float destX,
+    float destY,
+    float destZ,
+    std::unordered_set<std::uint32_t> const& exploredZoneIds,
+    std::uint8_t faction,
+    WorldBotTravelCapabilityTier groundTier,
+    WorldBotTravelCapabilityConfig const& capabilityConfig = {});
 
 } // namespace service
 } // namespace living_world

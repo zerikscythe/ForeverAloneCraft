@@ -454,5 +454,194 @@ WorldBotTaxiNetwork LoadWorldBotTaxiNetwork(WorldBotTaxiZoneResolver zoneResolve
     return WorldBotTaxiNetwork(std::move(nodes), std::move(links));
 }
 
+std::optional<WorldBotResolvedTaxiJourney> ResolveBestTaxiJourney(
+    WorldBotTaxiNetwork const& network,
+    WorldBotGroundRouteResolver const& groundRouteResolver,
+    std::uint16_t mapId,
+    std::uint32_t startZoneIdHint,
+    std::uint32_t destZoneId,
+    float startX,
+    float startY,
+    float startZ,
+    float destX,
+    float destY,
+    float destZ,
+    std::unordered_set<std::uint32_t> const& exploredZoneIds,
+    std::uint8_t faction,
+    WorldBotTravelCapabilityTier groundTier,
+    WorldBotTravelCapabilityConfig const& capabilityConfig)
+{
+    if (!groundRouteResolver || destZoneId == 0)
+        return std::nullopt;
+
+    std::vector<WorldBotTaxiNode> const knownNodes = network.GetKnownNodes(exploredZoneIds, faction);
+    if (knownNodes.empty())
+        return std::nullopt;
+
+    std::optional<WorldBotResolvedTaxiJourney> bestJourney;
+
+    for (WorldBotTaxiNode const& sourceNode : knownNodes)
+    {
+        if (sourceNode.mapId != mapId)
+            continue;
+
+        auto const sourceGroundPlan = groundRouteResolver(
+            mapId,
+            startZoneIdHint,
+            sourceNode.zoneId,
+            startX,
+            startY,
+            startZ,
+            sourceNode.x,
+            sourceNode.y,
+            sourceNode.z,
+            groundTier,
+            capabilityConfig);
+        if (!sourceGroundPlan || sourceGroundPlan->empty())
+            continue;
+
+        for (WorldBotTaxiNode const& destinationNode : knownNodes)
+        {
+            if (destinationNode.mapId != mapId)
+                continue;
+
+            auto const taxiRoute = network.ResolveKnownRoute(
+                sourceNode.nodeId,
+                destinationNode.nodeId,
+                exploredZoneIds,
+                faction);
+            if (!taxiRoute || taxiRoute->empty())
+                continue;
+
+            auto const destinationGroundPlan = groundRouteResolver(
+                mapId,
+                destinationNode.zoneId,
+                destZoneId,
+                destinationNode.x,
+                destinationNode.y,
+                destinationNode.z,
+                destX,
+                destY,
+                destZ,
+                groundTier,
+                capabilityConfig);
+            if (!destinationGroundPlan || destinationGroundPlan->empty())
+                continue;
+
+            WorldBotResolvedTaxiJourney journey;
+            journey.sourceGroundPlan = *sourceGroundPlan;
+            journey.taxiCandidate.sourceNode = sourceNode;
+            journey.taxiCandidate.destinationNode = destinationNode;
+            journey.taxiCandidate.route = *taxiRoute;
+            journey.taxiCandidate.sourceAttachDistanceYards = sourceGroundPlan->totalDistanceYards;
+            journey.taxiCandidate.destinationDetachDistanceYards = destinationGroundPlan->totalDistanceYards;
+            journey.destinationGroundPlan = *destinationGroundPlan;
+            journey.totalDistanceYards =
+                sourceGroundPlan->totalDistanceYards
+                + taxiRoute->totalDistanceYards
+                + destinationGroundPlan->totalDistanceYards;
+            journey.totalEtaMs =
+                sourceGroundPlan->etaMs
+                + taxiRoute->totalEtaMs
+                + destinationGroundPlan->etaMs;
+
+            if (!bestJourney.has_value() || journey.totalEtaMs < bestJourney->totalEtaMs)
+                bestJourney = std::move(journey);
+        }
+    }
+
+    return bestJourney;
+}
+
+std::optional<WorldBotResolvedTravelOption> ResolveBestTravelOption(
+    WorldBotTaxiNetwork const& network,
+    WorldBotGroundRouteResolver const& groundRouteResolver,
+    std::uint16_t mapId,
+    std::uint32_t startZoneIdHint,
+    std::uint32_t destZoneId,
+    float startX,
+    float startY,
+    float startZ,
+    float destX,
+    float destY,
+    float destZ,
+    std::unordered_set<std::uint32_t> const& exploredZoneIds,
+    std::uint8_t faction,
+    WorldBotTravelCapabilityTier groundTier,
+    WorldBotTravelCapabilityConfig const& capabilityConfig)
+{
+    if (!groundRouteResolver || destZoneId == 0)
+        return std::nullopt;
+
+    auto const groundPlan = groundRouteResolver(
+        mapId,
+        startZoneIdHint,
+        destZoneId,
+        startX,
+        startY,
+        startZ,
+        destX,
+        destY,
+        destZ,
+        groundTier,
+        capabilityConfig);
+
+    auto const taxiJourney = ResolveBestTaxiJourney(
+        network,
+        groundRouteResolver,
+        mapId,
+        startZoneIdHint,
+        destZoneId,
+        startX,
+        startY,
+        startZ,
+        destX,
+        destY,
+        destZ,
+        exploredZoneIds,
+        faction,
+        groundTier,
+        capabilityConfig);
+
+    if (taxiJourney.has_value()
+        && (!groundPlan.has_value() || taxiJourney->totalEtaMs < groundPlan->etaMs))
+    {
+        WorldBotResolvedTravelOption option;
+        option.mode = taxiJourney->taxiCandidate.destinationNode.zoneId == destZoneId
+            ? WorldBotTravelOptionMode::TaxiFull
+            : WorldBotTravelOptionMode::TaxiPartial;
+        option.groundPlan = groundPlan;
+        option.taxiJourney = taxiJourney;
+        option.totalDistanceYards = taxiJourney->totalDistanceYards;
+        option.totalEtaMs = taxiJourney->totalEtaMs;
+        return option;
+    }
+
+    if (groundPlan.has_value())
+    {
+        WorldBotResolvedTravelOption option;
+        option.mode = WorldBotTravelOptionMode::Ground;
+        option.groundPlan = groundPlan;
+        option.taxiJourney = taxiJourney;
+        option.totalDistanceYards = groundPlan->totalDistanceYards;
+        option.totalEtaMs = groundPlan->etaMs;
+        return option;
+    }
+
+    if (taxiJourney.has_value())
+    {
+        WorldBotResolvedTravelOption option;
+        option.mode = taxiJourney->taxiCandidate.destinationNode.zoneId == destZoneId
+            ? WorldBotTravelOptionMode::TaxiFull
+            : WorldBotTravelOptionMode::TaxiPartial;
+        option.taxiJourney = taxiJourney;
+        option.totalDistanceYards = taxiJourney->totalDistanceYards;
+        option.totalEtaMs = taxiJourney->totalEtaMs;
+        return option;
+    }
+
+    return std::nullopt;
+}
+
 } // namespace service
 } // namespace living_world

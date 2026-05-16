@@ -31,6 +31,32 @@ WorldBotTaxiNode MakeNode(
     return node;
 }
 
+WorldBotResolvedTravelPlan MakeGroundPlan(
+    std::uint32_t zoneId,
+    float totalDistanceYards,
+    std::uint32_t etaMs)
+{
+    WorldBotResolvedTravelPlan plan;
+    plan.mapId = 0;
+    plan.zoneId = zoneId;
+    plan.totalDistanceYards = totalDistanceYards;
+    plan.routeDistanceYards = totalDistanceYards;
+    plan.speedYardsPerSecond = etaMs > 0
+        ? totalDistanceYards / (static_cast<float>(etaMs) / 1000.0f)
+        : 0.0f;
+    plan.etaMs = etaMs;
+
+    WorldBotRouteWaypoint waypoint;
+    waypoint.mapId = 0;
+    waypoint.x = static_cast<float>(zoneId);
+    waypoint.y = totalDistanceYards;
+    waypoint.z = 0.0f;
+    waypoint.cumulativeDistanceYards = totalDistanceYards;
+    waypoint.routeKey = "test";
+    plan.waypoints.push_back(waypoint);
+    return plan;
+}
+
 } // namespace
 
 TEST(WorldBotTaxiPlanningTest, FiltersKnownNodesByExploredZonesAndFaction)
@@ -179,6 +205,191 @@ TEST(WorldBotTaxiPlanningTest, ResolvesTravelCandidateFromNearestKnownTaxiNodes)
     ASSERT_EQ(candidate->route.nodeIds.size(), 3u);
     EXPECT_EQ(candidate->route.nodeIds[1], 4u);
     EXPECT_FLOAT_EQ(candidate->route.totalDistanceYards, 70.0f);
+}
+
+TEST(WorldBotTaxiPlanningTest, ResolvesBestTaxiJourneyWithPartialLandingWhenNeeded)
+{
+    WorldBotTaxiNetwork const network(
+        {
+            MakeNode(1, 12, true, true),
+            MakeNode(2, 40, true, true),
+            MakeNode(3, 44, true, true),
+        },
+        {
+            { 100, 1, 2, 0, 20.0f, 2000u },
+            { 101, 2, 3, 0, 30.0f, 3000u },
+        });
+
+    std::unordered_set<std::uint32_t> const exploredZones = { 12u, 40u, 44u };
+    WorldBotGroundRouteResolver const resolver =
+        [](std::uint16_t /*mapId*/,
+           std::uint32_t startZoneIdHint,
+           std::uint32_t destZoneId,
+           float /*startX*/,
+           float /*startY*/,
+           float /*startZ*/,
+           float /*destX*/,
+           float /*destY*/,
+           float /*destZ*/,
+           WorldBotTravelCapabilityTier /*tier*/,
+           WorldBotTravelCapabilityConfig const& /*config*/)
+            -> std::optional<WorldBotResolvedTravelPlan>
+        {
+            if (startZoneIdHint == 12u && destZoneId == 12u)
+                return MakeGroundPlan(12u, 10.0f, 1000u);
+            if (startZoneIdHint == 12u && destZoneId == 40u)
+                return MakeGroundPlan(40u, 80.0f, 8000u);
+            if (startZoneIdHint == 12u && destZoneId == 44u)
+                return MakeGroundPlan(44u, 120.0f, 12000u);
+            if (startZoneIdHint == 40u && destZoneId == 10u)
+                return MakeGroundPlan(10u, 80.0f, 8000u);
+            if (startZoneIdHint == 44u && destZoneId == 10u)
+                return MakeGroundPlan(10u, 15.0f, 1500u);
+            return std::nullopt;
+        };
+
+    auto const journey = ResolveBestTaxiJourney(
+        network,
+        resolver,
+        0,
+        12u,
+        10u,
+        0.0f,
+        0.0f,
+        0.0f,
+        500.0f,
+        500.0f,
+        0.0f,
+        exploredZones,
+        1,
+        WorldBotTravelCapabilityTier::GroundBasic);
+
+    ASSERT_TRUE(journey.has_value());
+    EXPECT_EQ(journey->taxiCandidate.sourceNode.nodeId, 1u);
+    EXPECT_EQ(journey->taxiCandidate.destinationNode.nodeId, 3u);
+    EXPECT_EQ(journey->sourceGroundPlan.zoneId, 12u);
+    EXPECT_EQ(journey->destinationGroundPlan.zoneId, 10u);
+    EXPECT_EQ(journey->totalEtaMs, 7500u);
+    EXPECT_FLOAT_EQ(journey->totalDistanceYards, 75.0f);
+}
+
+TEST(WorldBotTaxiPlanningTest, PrefersGroundWhenTaxiIsSlower)
+{
+    WorldBotTaxiNetwork const network(
+        {
+            MakeNode(1, 12, true, true),
+            MakeNode(2, 40, true, true),
+        },
+        {
+            { 100, 1, 2, 0, 50.0f, 5000u },
+        });
+
+    std::unordered_set<std::uint32_t> const exploredZones = { 12u, 40u };
+    WorldBotGroundRouteResolver const resolver =
+        [](std::uint16_t /*mapId*/,
+           std::uint32_t startZoneIdHint,
+           std::uint32_t destZoneId,
+           float /*startX*/,
+           float /*startY*/,
+           float /*startZ*/,
+           float /*destX*/,
+           float /*destY*/,
+           float /*destZ*/,
+           WorldBotTravelCapabilityTier /*tier*/,
+           WorldBotTravelCapabilityConfig const& /*config*/)
+            -> std::optional<WorldBotResolvedTravelPlan>
+        {
+            if (startZoneIdHint == 12u && destZoneId == 10u)
+                return MakeGroundPlan(10u, 60.0f, 6000u);
+            if (startZoneIdHint == 12u && destZoneId == 12u)
+                return MakeGroundPlan(12u, 10.0f, 1000u);
+            if (startZoneIdHint == 40u && destZoneId == 10u)
+                return MakeGroundPlan(10u, 25.0f, 2500u);
+            return std::nullopt;
+        };
+
+    auto const option = ResolveBestTravelOption(
+        network,
+        resolver,
+        0,
+        12u,
+        10u,
+        0.0f,
+        0.0f,
+        0.0f,
+        500.0f,
+        500.0f,
+        0.0f,
+        exploredZones,
+        1,
+        WorldBotTravelCapabilityTier::GroundBasic);
+
+    ASSERT_TRUE(option.has_value());
+    EXPECT_EQ(option->mode, WorldBotTravelOptionMode::Ground);
+    ASSERT_TRUE(option->groundPlan.has_value());
+    EXPECT_EQ(option->groundPlan->etaMs, 6000u);
+    ASSERT_TRUE(option->taxiJourney.has_value());
+    EXPECT_EQ(option->taxiJourney->totalEtaMs, 8500u);
+}
+
+TEST(WorldBotTaxiPlanningTest, ChoosesFullTaxiWhenItBeatsGround)
+{
+    WorldBotTaxiNetwork const network(
+        {
+            MakeNode(1, 12, true, true),
+            MakeNode(2, 10, true, true),
+        },
+        {
+            { 100, 1, 2, 0, 40.0f, 4000u },
+        });
+
+    std::unordered_set<std::uint32_t> const exploredZones = { 12u, 10u };
+    WorldBotGroundRouteResolver const resolver =
+        [](std::uint16_t /*mapId*/,
+           std::uint32_t startZoneIdHint,
+           std::uint32_t destZoneId,
+           float /*startX*/,
+           float /*startY*/,
+           float /*startZ*/,
+           float /*destX*/,
+           float /*destY*/,
+           float /*destZ*/,
+           WorldBotTravelCapabilityTier /*tier*/,
+           WorldBotTravelCapabilityConfig const& /*config*/)
+            -> std::optional<WorldBotResolvedTravelPlan>
+        {
+            if (startZoneIdHint == 12u && destZoneId == 10u)
+                return MakeGroundPlan(10u, 120.0f, 12000u);
+            if (startZoneIdHint == 12u && destZoneId == 12u)
+                return MakeGroundPlan(12u, 8.0f, 800u);
+            if (startZoneIdHint == 10u && destZoneId == 10u)
+                return MakeGroundPlan(10u, 6.0f, 600u);
+            return std::nullopt;
+        };
+
+    auto const option = ResolveBestTravelOption(
+        network,
+        resolver,
+        0,
+        12u,
+        10u,
+        0.0f,
+        0.0f,
+        0.0f,
+        500.0f,
+        500.0f,
+        0.0f,
+        exploredZones,
+        1,
+        WorldBotTravelCapabilityTier::GroundBasic);
+
+    ASSERT_TRUE(option.has_value());
+    EXPECT_EQ(option->mode, WorldBotTravelOptionMode::TaxiFull);
+    EXPECT_TRUE(option->usesTaxi());
+    ASSERT_TRUE(option->taxiJourney.has_value());
+    EXPECT_EQ(option->taxiJourney->totalEtaMs, 5400u);
+    ASSERT_TRUE(option->groundPlan.has_value());
+    EXPECT_EQ(option->groundPlan->etaMs, 12000u);
 }
 
 } // namespace service
