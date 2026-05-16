@@ -107,6 +107,48 @@ float ComputeTaxiPathDistanceYards(std::uint32_t pathId)
     return totalDistance;
 }
 
+std::optional<WorldBotResolvedTravelPlan> BuildDirectLocalGroundPlan(
+    std::uint16_t mapId,
+    std::uint32_t zoneId,
+    float startX,
+    float startY,
+    float startZ,
+    float destX,
+    float destY,
+    float destZ,
+    WorldBotTravelCapabilityTier tier,
+    WorldBotTravelCapabilityConfig const& capabilityConfig,
+    float maxDistanceYards = 125.0f)
+{
+    float const totalDistance = ComputeDistanceYards(startX, startY, startZ, destX, destY, destZ);
+    if (totalDistance > maxDistanceYards)
+        return std::nullopt;
+
+    WorldBotResolvedTravelPlan plan;
+    plan.mapId = mapId;
+    plan.zoneId = zoneId;
+    plan.attachDistanceYards = totalDistance;
+    plan.routeDistanceYards = 0.0f;
+    plan.detachDistanceYards = 0.0f;
+    plan.totalDistanceYards = totalDistance;
+    plan.speedYardsPerSecond = ResolveWorldBotTravelSpeedYardsPerSecond(tier, capabilityConfig);
+    plan.etaMs = (plan.speedYardsPerSecond > 0.0f)
+        ? static_cast<std::uint32_t>(std::lround((totalDistance / plan.speedYardsPerSecond) * 1000.0f))
+        : 0u;
+
+    WorldBotRouteWaypoint waypoint;
+    waypoint.mapId = mapId;
+    waypoint.x = destX;
+    waypoint.y = destY;
+    waypoint.z = destZ;
+    waypoint.cumulativeDistanceYards = totalDistance;
+    waypoint.routeKey = "local_direct";
+    waypoint.pathIndex = -1;
+    waypoint.pointIndex = -1;
+    plan.waypoints.push_back(std::move(waypoint));
+    return plan;
+}
+
 } // namespace
 
 bool IsWorldBotTaxiNodeUsableForFaction(
@@ -497,7 +539,22 @@ std::optional<WorldBotResolvedTaxiJourney> ResolveBestTaxiJourney(
             sourceNode.z,
             groundTier,
             capabilityConfig);
-        if (!sourceGroundPlan || sourceGroundPlan->empty())
+        auto resolvedSourceGroundPlan = sourceGroundPlan;
+        if (!resolvedSourceGroundPlan || resolvedSourceGroundPlan->empty())
+        {
+            resolvedSourceGroundPlan = BuildDirectLocalGroundPlan(
+                mapId,
+                sourceNode.zoneId,
+                startX,
+                startY,
+                startZ,
+                sourceNode.x,
+                sourceNode.y,
+                sourceNode.z,
+                groundTier,
+                capabilityConfig);
+        }
+        if (!resolvedSourceGroundPlan || resolvedSourceGroundPlan->empty())
             continue;
 
         for (WorldBotTaxiNode const& destinationNode : knownNodes)
@@ -525,25 +582,40 @@ std::optional<WorldBotResolvedTaxiJourney> ResolveBestTaxiJourney(
                 destZ,
                 groundTier,
                 capabilityConfig);
-            if (!destinationGroundPlan || destinationGroundPlan->empty())
+            auto resolvedDestinationGroundPlan = destinationGroundPlan;
+            if (!resolvedDestinationGroundPlan || resolvedDestinationGroundPlan->empty())
+            {
+                resolvedDestinationGroundPlan = BuildDirectLocalGroundPlan(
+                    mapId,
+                    destZoneId,
+                    destinationNode.x,
+                    destinationNode.y,
+                    destinationNode.z,
+                    destX,
+                    destY,
+                    destZ,
+                    groundTier,
+                    capabilityConfig);
+            }
+            if (!resolvedDestinationGroundPlan || resolvedDestinationGroundPlan->empty())
                 continue;
 
             WorldBotResolvedTaxiJourney journey;
-            journey.sourceGroundPlan = *sourceGroundPlan;
+            journey.sourceGroundPlan = *resolvedSourceGroundPlan;
             journey.taxiCandidate.sourceNode = sourceNode;
             journey.taxiCandidate.destinationNode = destinationNode;
             journey.taxiCandidate.route = *taxiRoute;
-            journey.taxiCandidate.sourceAttachDistanceYards = sourceGroundPlan->totalDistanceYards;
-            journey.taxiCandidate.destinationDetachDistanceYards = destinationGroundPlan->totalDistanceYards;
-            journey.destinationGroundPlan = *destinationGroundPlan;
+            journey.taxiCandidate.sourceAttachDistanceYards = resolvedSourceGroundPlan->totalDistanceYards;
+            journey.taxiCandidate.destinationDetachDistanceYards = resolvedDestinationGroundPlan->totalDistanceYards;
+            journey.destinationGroundPlan = *resolvedDestinationGroundPlan;
             journey.totalDistanceYards =
-                sourceGroundPlan->totalDistanceYards
+                resolvedSourceGroundPlan->totalDistanceYards
                 + taxiRoute->totalDistanceYards
-                + destinationGroundPlan->totalDistanceYards;
+                + resolvedDestinationGroundPlan->totalDistanceYards;
             journey.totalEtaMs =
-                sourceGroundPlan->etaMs
+                resolvedSourceGroundPlan->etaMs
                 + taxiRoute->totalEtaMs
-                + destinationGroundPlan->etaMs;
+                + resolvedDestinationGroundPlan->etaMs;
 
             if (!bestJourney.has_value() || journey.totalEtaMs < bestJourney->totalEtaMs)
                 bestJourney = std::move(journey);

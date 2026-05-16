@@ -273,6 +273,63 @@ TEST(WorldBotTaxiPlanningTest, ResolvesBestTaxiJourneyWithPartialLandingWhenNeed
     EXPECT_FLOAT_EQ(journey->totalDistanceYards, 75.0f);
 }
 
+TEST(WorldBotTaxiPlanningTest, ResolvesTaxiJourneyWithDirectLocalFlightMasterFallback)
+{
+    WorldBotTaxiNetwork const network(
+        {
+            MakeNode(25, 17, false, true),
+            MakeNode(80, 17, false, true),
+        },
+        {
+            { 462, 25, 80, 0, 1545.4f, 48295u },
+        });
+
+    std::unordered_set<std::uint32_t> const exploredZones = { 17u };
+    auto const directRoute = network.ResolveKnownRoute(25, 80, exploredZones, 2);
+    ASSERT_TRUE(directRoute.has_value());
+    ASSERT_FALSE(directRoute->empty());
+
+    WorldBotGroundRouteResolver const resolver =
+        [](std::uint16_t /*mapId*/,
+           std::uint32_t /*startZoneIdHint*/,
+           std::uint32_t /*destZoneId*/,
+           float /*startX*/,
+           float /*startY*/,
+           float /*startZ*/,
+           float /*destX*/,
+           float /*destY*/,
+           float /*destZ*/,
+           WorldBotTravelCapabilityTier /*tier*/,
+           WorldBotTravelCapabilityConfig const& /*config*/)
+            -> std::optional<WorldBotResolvedTravelPlan>
+        {
+            return std::nullopt;
+        };
+
+    auto const journey = ResolveBestTaxiJourney(
+        network,
+        resolver,
+        0,
+        17u,
+        17u,
+        25.0f,
+        17.0f,
+        0.0f,
+        80.0f,
+        17.0f,
+        0.0f,
+        exploredZones,
+        2,
+        WorldBotTravelCapabilityTier::GroundFast);
+
+    ASSERT_TRUE(journey.has_value());
+    EXPECT_EQ(journey->taxiCandidate.sourceNode.nodeId, 25u);
+    EXPECT_EQ(journey->taxiCandidate.destinationNode.nodeId, 80u);
+    EXPECT_FLOAT_EQ(journey->sourceGroundPlan.totalDistanceYards, 0.0f);
+    EXPECT_FLOAT_EQ(journey->destinationGroundPlan.totalDistanceYards, 0.0f);
+    EXPECT_EQ(journey->totalEtaMs, 48295u);
+}
+
 TEST(WorldBotTaxiPlanningTest, PrefersGroundWhenTaxiIsSlower)
 {
     WorldBotTaxiNetwork const network(

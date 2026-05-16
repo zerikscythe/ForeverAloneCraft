@@ -42,6 +42,15 @@ std::filesystem::path WriteRouteFixture(
     return dir;
 }
 
+std::filesystem::path WriteEmptyRouteFixture()
+{
+    std::filesystem::path const dir =
+        std::filesystem::temp_directory_path() / "lw_route_planner_test_empty";
+    std::filesystem::remove_all(dir);
+    std::filesystem::create_directories(dir);
+    return dir;
+}
+
 } // namespace
 
 TEST(WorldBotRoutePlanningTest, ResolvesSameZoneBranchAwarePlanFromExportedJson)
@@ -222,6 +231,74 @@ TEST(WorldBotRoutePlanningTest, FasterCapabilityTiersReduceEtaForSameRoute)
     EXPECT_FLOAT_EQ(footPlan->totalDistanceYards, mountPlan->totalDistanceYards);
     EXPECT_GT(footPlan->etaMs, mountPlan->etaMs);
     EXPECT_GT(mountPlan->speedYardsPerSecond, footPlan->speedYardsPerSecond);
+}
+
+TEST(WorldBotRoutePlanningTest, FallsBackToDirectLocalTravelWhenZoneHasNoRouteGraph)
+{
+    std::filesystem::path const root = WriteEmptyRouteFixture();
+
+    WorldBotRoutePlanner planner(root);
+    auto const plan = planner.ResolveTravelPlan(
+        1,
+        17,
+        17,
+        -450.0f,
+        -2600.0f,
+        96.0f,
+        -441.8f,
+        -2596.08f,
+        96.06f,
+        WorldBotTravelCapabilityTier::Foot);
+
+    ASSERT_TRUE(plan.has_value());
+    ASSERT_FALSE(plan->empty());
+    EXPECT_EQ(plan->zoneId, 17u);
+    EXPECT_EQ(plan->waypoints.front().routeKey, "local_direct");
+    EXPECT_LT(plan->totalDistanceYards, 15.0f);
+}
+
+TEST(WorldBotRoutePlanningTest, FallsBackToDirectLocalTravelWhenNearbyTargetIsOffNetwork)
+{
+    std::filesystem::path const root = WriteRouteFixture(R"json(
+{
+  "route_group_key": "Demo",
+  "zone_name": "Demo Zone",
+  "zone_id": 17,
+  "map_id": 1,
+  "paths": [
+    {
+      "path_index": 0,
+      "path_key": "Demo_01",
+      "anchors": [
+        { "world_x": 1000.0, "world_y": 1000.0, "world_z": 0.0 },
+        { "world_x": 1200.0, "world_y": 1000.0, "world_z": 0.0 }
+      ],
+      "movement_points": [
+        { "point_index": 0, "map_id": 1, "world_x": 1000.0, "world_y": 1000.0, "world_z": 0.0, "distance_from_start_yards": 0.0 },
+        { "point_index": 1, "map_id": 1, "world_x": 1200.0, "world_y": 1000.0, "world_z": 0.0, "distance_from_start_yards": 200.0 }
+      ]
+    }
+  ]
+}
+)json");
+
+    WorldBotRoutePlanner planner(root);
+    auto const plan = planner.ResolveTravelPlan(
+        1,
+        17,
+        17,
+        -450.0f,
+        -2600.0f,
+        96.0f,
+        -441.8f,
+        -2596.08f,
+        96.06f,
+        WorldBotTravelCapabilityTier::Foot);
+
+    ASSERT_TRUE(plan.has_value());
+    ASSERT_FALSE(plan->empty());
+    EXPECT_EQ(plan->waypoints.front().routeKey, "local_direct");
+    EXPECT_LT(plan->totalDistanceYards, 15.0f);
 }
 
 TEST(WorldBotRoutePlanningTest, AutomaticZoneTransitionPrefersForwardSeamOverBackwardReversal)

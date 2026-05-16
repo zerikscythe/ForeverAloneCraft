@@ -930,6 +930,48 @@ std::optional<WorldBotResolvedTravelPlan> BuildResolvedTravelPlan(
     return plan;
 }
 
+std::optional<WorldBotResolvedTravelPlan> BuildDirectLocalTravelPlan(
+    std::uint16_t mapId,
+    std::uint32_t zoneId,
+    float startX,
+    float startY,
+    float startZ,
+    float destX,
+    float destY,
+    float destZ,
+    WorldBotTravelCapabilityTier tier,
+    WorldBotTravelCapabilityConfig const& capabilityConfig,
+    float maxDistanceYards = 200.0f)
+{
+    float const totalDistance = Distance3D(startX, startY, startZ, destX, destY, destZ);
+    if (totalDistance > maxDistanceYards)
+        return std::nullopt;
+
+    WorldBotResolvedTravelPlan plan;
+    plan.mapId = mapId;
+    plan.zoneId = zoneId;
+    plan.attachDistanceYards = totalDistance;
+    plan.routeDistanceYards = 0.0f;
+    plan.detachDistanceYards = 0.0f;
+    plan.totalDistanceYards = totalDistance;
+    plan.speedYardsPerSecond = ResolveWorldBotTravelSpeedYardsPerSecond(tier, capabilityConfig);
+    plan.etaMs = (plan.speedYardsPerSecond > 0.0f)
+        ? static_cast<std::uint32_t>(std::lround((totalDistance / plan.speedYardsPerSecond) * 1000.0f))
+        : 0u;
+
+    WorldBotRouteWaypoint waypoint;
+    waypoint.mapId = mapId;
+    waypoint.x = destX;
+    waypoint.y = destY;
+    waypoint.z = destZ;
+    waypoint.cumulativeDistanceYards = totalDistance;
+    waypoint.routeKey = "local_direct";
+    waypoint.pathIndex = -1;
+    waypoint.pointIndex = -1;
+    plan.waypoints.push_back(std::move(waypoint));
+    return plan;
+}
+
 } // namespace
 
 float ResolveWorldBotTravelSpeedYardsPerSecond(
@@ -1272,12 +1314,36 @@ std::optional<WorldBotResolvedTravelPlan> WorldBotRoutePlanner::ResolveSameZoneT
 {
     auto const graph = LoadZoneGraph(mapId, zoneId);
     if (!graph || graph->nodes.empty())
-        return std::nullopt;
+    {
+        return BuildDirectLocalTravelPlan(
+            mapId,
+            zoneId,
+            startX,
+            startY,
+            startZ,
+            destX,
+            destY,
+            destZ,
+            tier,
+            capabilityConfig);
+    }
 
     auto const [entryNodeId, attachDistance] = FindNearestNode(*graph, startX, startY, startZ);
     auto const [exitNodeId, detachDistance] = FindNearestNode(*graph, destX, destY, destZ);
     if (attachDistance > maxAttachDistanceYards || detachDistance > maxDetachDistanceYards)
-        return std::nullopt;
+    {
+        return BuildDirectLocalTravelPlan(
+            mapId,
+            zoneId,
+            startX,
+            startY,
+            startZ,
+            destX,
+            destY,
+            destZ,
+            tier,
+            capabilityConfig);
+    }
 
     return BuildResolvedTravelPlan(
         *graph,
