@@ -26,6 +26,7 @@
 #include "service/BotActivitySessionComposer.h"
 #include "service/BotQuestRewardService.h"
 #include "service/WorldBotRoutePlanning.h"
+#include "service/WorldBotTaxiPlanning.h"
 
 #include <fstream>
 #include <filesystem>
@@ -113,6 +114,13 @@ living_world::service::WorldBotRoutePlanner& GetWorldBotRoutePlanner()
 {
     static living_world::service::WorldBotRoutePlanner planner(ResolveWorldBotRouteExportRoot());
     return planner;
+}
+
+living_world::service::WorldBotTaxiNetwork& GetWorldBotTaxiNetwork()
+{
+    static living_world::service::WorldBotTaxiNetwork network =
+        living_world::service::LoadWorldBotTaxiNetwork();
+    return network;
 }
 
 std::vector<std::uint32_t> ParseDebugIdentityIdList(std::string const& value);
@@ -1998,13 +2006,20 @@ private:
 
     static living_world::ai::AbstractWorldBotProgressConfig BuildAbstractProgressConfig(
         living_world::service::AmbientSession const& session,
-        std::uint8_t botLevel)
+        living_world::integration::BotIdentityRecord const& identity)
     {
         living_world::ai::AbstractWorldBotProgressConfig config;
         living_world::service::WorldBotTravelCapabilityConfig const capabilityConfig =
             living_world::service::LoadWorldBotTravelCapabilityConfig();
         living_world::service::WorldBotTravelCapabilityPolicy const capabilityPolicy =
             living_world::service::LoadWorldBotTravelCapabilityPolicy();
+        std::unordered_set<std::uint32_t> exploredZones;
+        for (std::uint32_t const zoneId :
+            living_world::integration::SqlBotExploredZoneRepository().LoadExploredZones(identity.id))
+        {
+            exploredZones.insert(zoneId);
+        }
+        std::uint8_t const botLevel = static_cast<std::uint8_t>(identity.level);
         config.travelYardsPerSecond = capabilityConfig.footYardsPerSecond;
         config.routePlanResolver = [&session, botLevel, capabilityConfig, capabilityPolicy](
             living_world::service::AmbientStep const& step,
@@ -2039,6 +2054,78 @@ private:
                 step.x,
                 step.y,
                 step.z,
+                living_world::service::ResolveWorldBotTravelCapabilityTierForLevel(
+                    botLevel,
+                    false,
+                    capabilityPolicy),
+                capabilityConfig);
+        };
+        config.travelOptionResolver =
+            [&session, identity, exploredZones, botLevel, capabilityConfig, capabilityPolicy](
+                living_world::service::AmbientStep const& step,
+                std::uint16_t startMapId,
+                float startX,
+                float startY,
+                float startZ) -> std::optional<living_world::service::WorldBotResolvedTravelOption>
+        {
+            if (step.type != living_world::service::AmbientStepType::Travel)
+                return std::nullopt;
+            if (startMapId == 0 || startMapId != step.mapId)
+                return std::nullopt;
+
+            std::uint32_t zoneId = 0;
+            if (step.taskIndex >= 0)
+            {
+                std::size_t const taskIndex = static_cast<std::size_t>(step.taskIndex);
+                if (taskIndex < session.tasks.size())
+                    zoneId = session.tasks[taskIndex].targetZoneId;
+            }
+
+            if (zoneId == 0)
+                return std::nullopt;
+
+            auto const groundResolver =
+                [](std::uint16_t mapId,
+                   std::uint32_t startZoneIdHint,
+                   std::uint32_t destZoneId,
+                   float legStartX,
+                   float legStartY,
+                   float legStartZ,
+                   float legDestX,
+                   float legDestY,
+                   float legDestZ,
+                   living_world::service::WorldBotTravelCapabilityTier tier,
+                   living_world::service::WorldBotTravelCapabilityConfig const& config)
+                    -> std::optional<living_world::service::WorldBotResolvedTravelPlan>
+            {
+                return GetWorldBotRoutePlanner().ResolveTravelPlan(
+                    mapId,
+                    startZoneIdHint,
+                    destZoneId,
+                    legStartX,
+                    legStartY,
+                    legStartZ,
+                    legDestX,
+                    legDestY,
+                    legDestZ,
+                    tier,
+                    config);
+            };
+
+            return living_world::service::ResolveBestTravelOption(
+                GetWorldBotTaxiNetwork(),
+                groundResolver,
+                step.mapId,
+                0,
+                zoneId,
+                startX,
+                startY,
+                startZ,
+                step.x,
+                step.y,
+                step.z,
+                exploredZones,
+                identity.faction,
                 living_world::service::ResolveWorldBotTravelCapabilityTierForLevel(
                     botLevel,
                     false,
@@ -2232,7 +2319,7 @@ private:
             return false;
 
         living_world::ai::AbstractWorldBotProgressConfig const progressConfig =
-            BuildAbstractProgressConfig(runtime.session, static_cast<std::uint8_t>(runtime.identity.level));
+            BuildAbstractProgressConfig(runtime.session, runtime.identity);
         living_world::ai::AbstractWorldBotInterpolatedPosition const pos =
             living_world::ai::ComputeAbstractWorldBotInterpolatedPosition(
                 runtime.session,
@@ -2481,7 +2568,7 @@ private:
 
             runtime.worldOnlineMs += diff;
             living_world::ai::AbstractWorldBotProgressConfig const progressConfig =
-                BuildAbstractProgressConfig(runtime.session, static_cast<std::uint8_t>(runtime.identity.level));
+                BuildAbstractProgressConfig(runtime.session, runtime.identity);
             auto const outcome = living_world::ai::AdvanceAbstractWorldBotProgress(
                 runtime.session,
                 runtime.progress,

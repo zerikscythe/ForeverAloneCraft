@@ -170,5 +170,84 @@ TEST(AbstractWorldBotProgressorTest, RoutePlanResolverOverridesDirectTravelTimin
     EXPECT_NEAR(pos.z, 0.0f, 0.01f);
 }
 
+TEST(AbstractWorldBotProgressorTest, TravelOptionResolverUsesTaxiJourneyTimingAndInterpolation)
+{
+    service::AmbientSession session;
+    service::AmbientStep step;
+    step.type = service::AmbientStepType::Travel;
+    step.mapId = 1;
+    step.x = 300.0f;
+    step.y = 0.0f;
+    step.z = 0.0f;
+    session.steps.push_back(step);
+
+    AbstractWorldBotProgressState state;
+    state.stepStartMapId = 1;
+    state.stepStartX = 0.0f;
+    state.stepStartY = 0.0f;
+    state.stepStartZ = 0.0f;
+
+    service::WorldBotResolvedTaxiJourney journey;
+    journey.sourceGroundPlan.mapId = 1;
+    journey.sourceGroundPlan.zoneId = 12;
+    journey.sourceGroundPlan.totalDistanceYards = 100.0f;
+    journey.sourceGroundPlan.speedYardsPerSecond = 10.0f;
+    journey.sourceGroundPlan.etaMs = 10000u;
+    journey.sourceGroundPlan.waypoints.push_back({1, 100.0f, 0.0f, 0.0f, 100.0f});
+
+    journey.taxiCandidate.sourceNode = {100u, 1u, 12u, 100.0f, 0.0f, 0.0f, true, true, "Goldshire"};
+    journey.taxiCandidate.destinationNode = {200u, 1u, 40u, 200.0f, 0.0f, 0.0f, true, true, "Sentinel Hill"};
+    journey.taxiCandidate.route.links.push_back({900u, 100u, 200u, 0u, 100.0f, 20000u});
+    journey.taxiCandidate.route.totalDistanceYards = 100.0f;
+    journey.taxiCandidate.route.totalEtaMs = 20000u;
+
+    journey.destinationGroundPlan.mapId = 1;
+    journey.destinationGroundPlan.zoneId = 40;
+    journey.destinationGroundPlan.totalDistanceYards = 100.0f;
+    journey.destinationGroundPlan.speedYardsPerSecond = 10.0f;
+    journey.destinationGroundPlan.etaMs = 10000u;
+    journey.destinationGroundPlan.waypoints.push_back({1, 300.0f, 0.0f, 0.0f, 100.0f});
+
+    journey.totalDistanceYards = 300.0f;
+    journey.totalEtaMs = 40000u;
+
+    service::WorldBotResolvedTravelOption option;
+    option.mode = service::WorldBotTravelOptionMode::TaxiFull;
+    option.taxiJourney = journey;
+    option.totalDistanceYards = journey.totalDistanceYards;
+    option.totalEtaMs = journey.totalEtaMs;
+
+    ASSERT_TRUE(option.taxiJourney.has_value());
+    ASSERT_FALSE(option.taxiJourney->empty());
+
+    AbstractWorldBotProgressConfig cfg;
+    cfg.travelOptionResolver =
+        [option](service::AmbientStep const&,
+                 std::uint16_t,
+                 float,
+                 float,
+                 float) -> std::optional<service::WorldBotResolvedTravelOption>
+        {
+            return option;
+        };
+
+    EXPECT_EQ(ComputeAbstractWorldBotStepDurationMs(step, state, cfg), 40000u);
+
+    state.stepElapsedMs = 5000u;
+    auto sample = ComputeAbstractWorldBotTravelOptionPosition(option, state);
+    ASSERT_TRUE(sample.has_value());
+    EXPECT_NEAR(sample->x, 50.0f, 0.01f);
+    auto pos = ComputeAbstractWorldBotInterpolatedPosition(session, state, cfg);
+    EXPECT_NEAR(pos.x, 50.0f, 0.01f);
+
+    state.stepElapsedMs = 20000u;
+    pos = ComputeAbstractWorldBotInterpolatedPosition(session, state, cfg);
+    EXPECT_NEAR(pos.x, 150.0f, 0.01f);
+
+    state.stepElapsedMs = 35000u;
+    pos = ComputeAbstractWorldBotInterpolatedPosition(session, state, cfg);
+    EXPECT_NEAR(pos.x, 250.0f, 0.01f);
+}
+
 } // namespace ai
 } // namespace living_world

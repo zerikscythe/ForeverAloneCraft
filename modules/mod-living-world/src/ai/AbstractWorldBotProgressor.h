@@ -2,11 +2,13 @@
 
 #include "service/BotActivitySessionComposer.h"
 #include "service/WorldBotRoutePlanning.h"
+#include "service/WorldBotTaxiPlanning.h"
 
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <optional>
 
 namespace living_world
@@ -30,6 +32,12 @@ struct AbstractWorldBotProgressConfig
     std::uint32_t minStepDurationMs      = 1000;
     std::uint32_t crossMapTravelMs       = 30000;
     service::WorldBotRoutePlanResolver routePlanResolver;
+    std::function<std::optional<service::WorldBotResolvedTravelOption>(
+        service::AmbientStep const&,
+        std::uint16_t,
+        float,
+        float,
+        float)> travelOptionResolver;
 };
 
 struct AbstractWorldBotInterpolatedPosition
@@ -47,6 +55,86 @@ struct AbstractWorldBotProgressOutcome
     std::uint32_t stepsCompleted = 0;
 };
 
+inline std::optional<AbstractWorldBotInterpolatedPosition> ComputeAbstractWorldBotTravelOptionPosition(
+    service::WorldBotResolvedTravelOption const& option,
+    AbstractWorldBotProgressState const& state)
+{
+    if (option.usesTaxi() && option.taxiJourney.has_value() && !option.taxiJourney->empty())
+    {
+        service::WorldBotResolvedTaxiJourney const& journey = *option.taxiJourney;
+        std::uint32_t const sourceMs = journey.sourceGroundPlan.etaMs;
+        std::uint32_t const taxiMs = journey.taxiCandidate.route.totalEtaMs;
+        std::uint32_t const destinationMs = journey.destinationGroundPlan.etaMs;
+
+        if (sourceMs > 0 && state.stepElapsedMs <= sourceMs)
+        {
+            auto const sample = service::SampleWorldBotTravelPlanPosition(
+                journey.sourceGroundPlan,
+                state.stepStartX,
+                state.stepStartY,
+                state.stepStartZ,
+                journey.sourceGroundPlan.totalDistanceYards
+                    * std::clamp(
+                        static_cast<float>(state.stepElapsedMs) / static_cast<float>(sourceMs),
+                        0.0f,
+                        1.0f));
+            return AbstractWorldBotInterpolatedPosition{sample.mapId, sample.x, sample.y, sample.z};
+        }
+
+        if (taxiMs > 0 && state.stepElapsedMs <= (sourceMs + taxiMs))
+        {
+            float const taxiProgress = std::clamp(
+                static_cast<float>(state.stepElapsedMs - sourceMs) / static_cast<float>(taxiMs),
+                0.0f,
+                1.0f);
+            service::WorldBotTaxiNode const& sourceNode = journey.taxiCandidate.sourceNode;
+            service::WorldBotTaxiNode const& destinationNode = journey.taxiCandidate.destinationNode;
+            return AbstractWorldBotInterpolatedPosition{
+                sourceNode.mapId,
+                sourceNode.x + ((destinationNode.x - sourceNode.x) * taxiProgress),
+                sourceNode.y + ((destinationNode.y - sourceNode.y) * taxiProgress),
+                sourceNode.z + ((destinationNode.z - sourceNode.z) * taxiProgress)};
+        }
+
+        if (destinationMs > 0)
+        {
+            std::uint32_t const destinationElapsedMs =
+                state.stepElapsedMs > (sourceMs + taxiMs)
+                    ? (state.stepElapsedMs - sourceMs - taxiMs)
+                    : 0u;
+            service::WorldBotTaxiNode const& destinationNode = journey.taxiCandidate.destinationNode;
+            auto const sample = service::SampleWorldBotTravelPlanPosition(
+                journey.destinationGroundPlan,
+                destinationNode.x,
+                destinationNode.y,
+                destinationNode.z,
+                journey.destinationGroundPlan.totalDistanceYards
+                    * std::clamp(
+                        static_cast<float>(destinationElapsedMs) / static_cast<float>(destinationMs),
+                        0.0f,
+                        1.0f));
+            return AbstractWorldBotInterpolatedPosition{sample.mapId, sample.x, sample.y, sample.z};
+        }
+    }
+
+    if (option.groundPlan.has_value() && !option.groundPlan->empty() && option.groundPlan->etaMs > 0)
+    {
+        auto const sample = service::SampleWorldBotTravelPlanPosition(
+            *option.groundPlan,
+            state.stepStartX,
+            state.stepStartY,
+            state.stepStartZ,
+            option.groundPlan->totalDistanceYards
+                * std::clamp(
+                    static_cast<float>(state.stepElapsedMs) / static_cast<float>(option.groundPlan->etaMs),
+                    0.0f,
+                    1.0f));
+        return AbstractWorldBotInterpolatedPosition{sample.mapId, sample.x, sample.y, sample.z};
+    }
+
+    return std::nullopt;
+}
+
 inline std::uint32_t ComputeAbstractWorldBotStepDurationMs(
     service::AmbientStep const& step,
     AbstractWorldBotProgressState const& state,
@@ -59,6 +147,20 @@ inline std::uint32_t ComputeAbstractWorldBotStepDurationMs(
     {
         if (state.stepStartMapId == 0 || state.stepStartMapId != step.mapId)
             return std::max(config.minStepDurationMs, config.crossMapTravelMs);
+
+        if (config.travelOptionResolver)
+        {
+            if (auto const option = config.travelOptionResolver(
+                step,
+                state.stepStartMapId,
+                state.stepStartX,
+                state.stepStartY,
+                state.stepStartZ))
+            {
+                if (option->totalEtaMs > 0)
+                    return std::max(config.minStepDurationMs, option->totalEtaMs);
+            }
+        }
 
         if (config.routePlanResolver)
         {
@@ -120,6 +222,20 @@ inline AbstractWorldBotInterpolatedPosition ComputeAbstractWorldBotInterpolatedP
     float const progress = durationMs == 0
         ? 1.0f
         : std::clamp(static_cast<float>(state.stepElapsedMs) / static_cast<float>(durationMs), 0.0f, 1.0f);
+
+    if (config.travelOptionResolver)
+    {
+        if (auto const option = config.travelOptionResolver(
+            step,
+            state.stepStartMapId,
+            state.stepStartX,
+            state.stepStartY,
+            state.stepStartZ))
+        {
+            if (auto const sample = ComputeAbstractWorldBotTravelOptionPosition(*option, state))
+                return *sample;
+        }
+    }
 
     if (config.routePlanResolver)
     {
