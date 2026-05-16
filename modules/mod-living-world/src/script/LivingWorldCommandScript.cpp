@@ -1,6 +1,7 @@
 #include "script/LivingWorldCommandGrammar.h"
 #include "script/LivingWorldChatConfig.h"
 #include "ai/CompanionAI.h"
+#include "service/WorldBotTaxiPlanning.h"
 #include "Trainer.h"
 #include "ObjectMgr.h"
 
@@ -294,6 +295,7 @@ void RenderUsage(ChatHandler* handler)
     handler->PSendSysMessage("  .lw loglevel <1-4>");
     handler->PSendSysMessage("  .lw routeplan <destZoneId> <destX> <destY> <destZ> [level] [auto|foot|ground_basic|ground_fast|flight_basic|flight_fast|taxi]");
     handler->PSendSysMessage("  .lw routecompare <destZoneId> <destX> <destY> <destZ> <levelA> <levelB> [tierA] [tierB]");
+    handler->PSendSysMessage("  .lw routeoption <destZoneId> <destX> <destY> <destZ> [level] [alliance|horde|neutral] [exploredZoneCsv]");
     handler->PSendSysMessage("  .lw routebakez [mapId] [zoneId]");
     handler->PSendSysMessage("  .lwbot list");
     handler->PSendSysMessage("  .lwbot request <rosterEntryId>");
@@ -760,6 +762,12 @@ service::WorldBotRoutePlanner& GetWorldBotRoutePlanner()
     return planner;
 }
 
+service::WorldBotTaxiNetwork const& GetWorldBotTaxiNetwork()
+{
+    static service::WorldBotTaxiNetwork network = service::LoadWorldBotTaxiNetwork();
+    return network;
+}
+
 std::string_view ToTravelCapabilityTierText(service::WorldBotTravelCapabilityTier tier)
 {
     using Tier = service::WorldBotTravelCapabilityTier;
@@ -777,6 +785,21 @@ std::string_view ToTravelCapabilityTierText(service::WorldBotTravelCapabilityTie
             return "flight_fast";
         case Tier::Taxi:
             return "taxi";
+    }
+
+    return "unknown";
+}
+
+std::string_view ToTravelOptionModeText(service::WorldBotTravelOptionMode mode)
+{
+    switch (mode)
+    {
+        case service::WorldBotTravelOptionMode::Ground:
+            return "ground";
+        case service::WorldBotTravelOptionMode::TaxiFull:
+            return "taxi_full";
+        case service::WorldBotTravelOptionMode::TaxiPartial:
+            return "taxi_partial";
     }
 
     return "unknown";
@@ -808,6 +831,62 @@ std::optional<service::WorldBotTravelCapabilityTier> ParseTravelCapabilityTierTo
     if (normalized == "taxi")
         return Tier::Taxi;
     return std::nullopt;
+}
+
+std::optional<std::uint8_t> ParseFactionToken(std::string_view token)
+{
+    if (token == "alliance" || token == "a" || token == "1")
+        return static_cast<std::uint8_t>(1);
+    if (token == "horde" || token == "h" || token == "2")
+        return static_cast<std::uint8_t>(2);
+    if (token == "neutral" || token == "either" || token == "0")
+        return static_cast<std::uint8_t>(0);
+    return std::nullopt;
+}
+
+std::unordered_set<std::uint32_t> ParseZoneIdCsv(std::string_view csv)
+{
+    std::unordered_set<std::uint32_t> zoneIds;
+    std::size_t start = 0;
+    while (start < csv.size())
+    {
+        std::size_t end = csv.find(',', start);
+        if (end == std::string_view::npos)
+            end = csv.size();
+
+        std::string_view token = csv.substr(start, end - start);
+        while (!token.empty() && token.front() == ' ')
+            token.remove_prefix(1);
+        while (!token.empty() && token.back() == ' ')
+            token.remove_suffix(1);
+
+        std::uint32_t zoneId = 0;
+        if (!token.empty() && TryParseUnsigned(token, zoneId) && zoneId != 0)
+            zoneIds.insert(zoneId);
+
+        start = end + 1;
+    }
+
+    return zoneIds;
+}
+
+std::string JoinSortedZoneIds(std::unordered_set<std::uint32_t> const& zoneIds)
+{
+    if (zoneIds.empty())
+        return {};
+
+    std::vector<std::uint32_t> sorted(zoneIds.begin(), zoneIds.end());
+    std::sort(sorted.begin(), sorted.end());
+
+    std::ostringstream text;
+    for (std::size_t index = 0; index < sorted.size(); ++index)
+    {
+        if (index != 0)
+            text << ',';
+        text << sorted[index];
+    }
+
+    return text.str();
 }
 
 bool TryParseUnsigned(std::string_view token, std::uint32_t& out)
@@ -1135,6 +1214,177 @@ bool HandleRouteCompareDebugCommand(ChatHandler* handler, std::string_view argum
         (static_cast<float>(planB->etaMs) - static_cast<float>(planA->etaMs)) / 1000.0f,
         planB->totalDistanceYards - planA->totalDistanceYards,
         planB->speedYardsPerSecond - planA->speedYardsPerSecond);
+    return true;
+}
+
+bool HandleRouteOptionDebugCommand(ChatHandler* handler, std::string_view arguments)
+{
+    Player* player = handler ? handler->GetPlayer() : nullptr;
+    if (!handler || !player)
+    {
+        if (handler)
+            handler->SendErrorMessage("LivingWorld routeoption requires an in-game player session.");
+        return true;
+    }
+
+    auto const tokens = TokenizeWhitespace(arguments);
+    if (tokens.size() < 4 || tokens.size() > 7)
+    {
+        handler->SendErrorMessage(
+            "Usage: .lw routeoption <destZoneId> <destX> <destY> <destZ> [level] [alliance|horde|neutral] [exploredZoneCsv]");
+        return true;
+    }
+
+    std::uint32_t destZoneId = 0;
+    float destX = 0.0f;
+    float destY = 0.0f;
+    float destZ = 0.0f;
+    if (!TryParseUnsigned(tokens[0], destZoneId)
+        || !TryParseFloat(tokens[1], destX)
+        || !TryParseFloat(tokens[2], destY)
+        || !TryParseFloat(tokens[3], destZ)
+        || destZoneId == 0)
+    {
+        handler->SendErrorMessage("LivingWorld routeoption: invalid destination arguments.");
+        return true;
+    }
+
+    std::uint8_t level = static_cast<std::uint8_t>(player->GetLevel());
+    if (tokens.size() >= 5)
+    {
+        std::uint32_t parsedLevel = 0;
+        if (!TryParseUnsigned(tokens[4], parsedLevel) || parsedLevel > 80)
+        {
+            handler->SendErrorMessage("LivingWorld routeoption: level must be between 0 and 80.");
+            return true;
+        }
+        level = static_cast<std::uint8_t>(parsedLevel);
+    }
+
+    std::uint8_t faction = player->GetTeamId() == TEAM_HORDE
+        ? static_cast<std::uint8_t>(2)
+        : static_cast<std::uint8_t>(1);
+    if (tokens.size() >= 6)
+    {
+        auto const parsedFaction = ParseFactionToken(tokens[5]);
+        if (!parsedFaction.has_value())
+        {
+            handler->SendErrorMessage("LivingWorld routeoption: invalid faction token.");
+            return true;
+        }
+        faction = *parsedFaction;
+    }
+
+    std::unordered_set<std::uint32_t> exploredZones = {
+        static_cast<std::uint32_t>(player->GetZoneId())
+    };
+    if (tokens.size() >= 7)
+        exploredZones = ParseZoneIdCsv(tokens[6]);
+
+    service::WorldBotTravelCapabilityPolicy const capabilityPolicy =
+        service::LoadWorldBotTravelCapabilityPolicy();
+    service::WorldBotTravelCapabilityConfig const capabilityConfig =
+        service::LoadWorldBotTravelCapabilityConfig();
+    service::WorldBotTravelCapabilityTier const groundTier =
+        service::ResolveWorldBotTravelCapabilityTierForLevel(level, false, capabilityPolicy);
+
+    auto const option = service::ResolveBestTravelOption(
+        GetWorldBotTaxiNetwork(),
+        [](std::uint16_t mapId,
+           std::uint32_t startZoneIdHint,
+           std::uint32_t destZoneId,
+           float startX,
+           float startY,
+           float startZ,
+           float destX,
+           float destY,
+           float destZ,
+           service::WorldBotTravelCapabilityTier tier,
+           service::WorldBotTravelCapabilityConfig const& config)
+            -> std::optional<service::WorldBotResolvedTravelPlan>
+        {
+            return GetWorldBotRoutePlanner().ResolveTravelPlan(
+                mapId,
+                startZoneIdHint,
+                destZoneId,
+                startX,
+                startY,
+                startZ,
+                destX,
+                destY,
+                destZ,
+                tier,
+                config);
+        },
+        static_cast<std::uint16_t>(player->GetMapId()),
+        player->GetZoneId(),
+        destZoneId,
+        player->GetPositionX(),
+        player->GetPositionY(),
+        player->GetPositionZ(),
+        destX,
+        destY,
+        destZ,
+        exploredZones,
+        faction,
+        groundTier,
+        capabilityConfig);
+
+    if (!option.has_value())
+    {
+        handler->SendErrorMessage("LivingWorld routeoption: no viable travel option resolved.");
+        return true;
+    }
+
+    handler->PSendSysMessage(
+        "Travel option start: map={} zone={} pos=({:.2f}, {:.2f}, {:.2f}) -> dest zone={} pos=({:.2f}, {:.2f}, {:.2f})",
+        static_cast<std::uint32_t>(player->GetMapId()),
+        static_cast<std::uint32_t>(player->GetZoneId()),
+        player->GetPositionX(),
+        player->GetPositionY(),
+        player->GetPositionZ(),
+        destZoneId,
+        destX,
+        destY,
+        destZ);
+    handler->PSendSysMessage(
+        "Travel option context: level={} faction={} explored_zones=[{}] ground_tier={}",
+        static_cast<std::uint32_t>(level),
+        static_cast<std::uint32_t>(faction),
+        JoinSortedZoneIds(exploredZones),
+        ToTravelCapabilityTierText(groundTier));
+    handler->PSendSysMessage(
+        "Chosen mode: {} eta={:.1f}s distance={:.1f}yd",
+        ToTravelOptionModeText(option->mode),
+        static_cast<float>(option->totalEtaMs) / 1000.0f,
+        option->totalDistanceYards);
+
+    if (option->groundPlan.has_value())
+    {
+        RenderResolvedRoutePlan(
+            handler,
+            option->usesTaxi() ? "ground_alt" : "ground",
+            level,
+            groundTier,
+            *option->groundPlan,
+            false);
+    }
+
+    if (option->taxiJourney.has_value())
+    {
+        service::WorldBotResolvedTaxiJourney const& taxiJourney = *option->taxiJourney;
+        handler->PSendSysMessage(
+            "Taxi journey: source_node={}({}) dest_node={}({}) ride_eta={:.1f}s ride_distance={:.1f}yd",
+            taxiJourney.taxiCandidate.sourceNode.nodeId,
+            taxiJourney.taxiCandidate.sourceNode.name,
+            taxiJourney.taxiCandidate.destinationNode.nodeId,
+            taxiJourney.taxiCandidate.destinationNode.name,
+            static_cast<float>(taxiJourney.taxiCandidate.route.totalEtaMs) / 1000.0f,
+            taxiJourney.taxiCandidate.route.totalDistanceYards);
+        RenderResolvedRoutePlan(handler, "taxi_leg_source", level, groundTier, taxiJourney.sourceGroundPlan, false);
+        RenderResolvedRoutePlan(handler, "taxi_leg_dest", level, groundTier, taxiJourney.destinationGroundPlan, false);
+    }
+
     return true;
 }
 
@@ -5386,6 +5636,7 @@ private:
         constexpr std::string_view economyToken = "economy";
         constexpr std::string_view routePlanToken = "routeplan";
         constexpr std::string_view routeCompareToken = "routecompare";
+        constexpr std::string_view routeOptionToken = "routeoption";
         constexpr std::string_view routeBakeZToken = "routebakez";
 
         if (arguments.starts_with(economyToken))
@@ -5447,6 +5698,20 @@ private:
             arguments.remove_prefix(routeCompareToken.size());
             arguments = living_world::script::TrimRootWhitespace(arguments);
             return living_world::script::HandleRouteCompareDebugCommand(handler, arguments);
+        }
+
+        if (arguments.starts_with(routeOptionToken))
+        {
+            if (handler->GetSession() &&
+                handler->GetSession()->GetSecurity() < SEC_GAMEMASTER)
+            {
+                handler->SendErrorMessage("LivingWorld routeoption requires GM access.");
+                return true;
+            }
+
+            arguments.remove_prefix(routeOptionToken.size());
+            arguments = living_world::script::TrimRootWhitespace(arguments);
+            return living_world::script::HandleRouteOptionDebugCommand(handler, arguments);
         }
 
         if (arguments.starts_with(routeBakeZToken))
