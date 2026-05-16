@@ -15,6 +15,7 @@
 #include "integration/BotActivityLog.h"
 #include "integration/SqlActivityLibraryRepository.h"
 #include "integration/SqlBotIdentityRepository.h"
+#include "integration/SqlBotExploredZoneRepository.h"
 #include "integration/SqlBotGlobalConfigRepository.h"
 #include "integration/SqlBotHazardConfigRepository.h"
 #include "integration/SqlBotAssignedGearRepository.h"
@@ -368,6 +369,7 @@ public:
         living_world::integration::SqlBotGlobalConfigRepository().EnsureSchema();
         living_world::integration::SqlBotOocConfigRepository().EnsureSchema();
         living_world::integration::SqlBotTalentPreferenceRepository().EnsureSchema();
+        living_world::integration::SqlBotExploredZoneRepository().EnsureSchema();
         living_world::integration::SqlBotAssignedGearRepository().EnsureSchema();
 
         living_world::integration::SqlBotIdentityRepository identityRepo;

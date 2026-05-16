@@ -139,6 +139,15 @@ But the important rule is:
 - keep one authoritative editor/source artifact per zone
 - derive runtime/export artifacts from that source
 
+Current implementation direction:
+
+- the zone editor/source file is the authoring truth
+- runtime `__routes.json` files are derived export artifacts
+- transition-node markup in the editor now generates `map_XXX__connectors.json`
+  as an editor-owned artifact
+- the server should primarily treat route/connectors JSON as input and only
+  perform terrain/Z enrichment plus validation at startup
+
 ### 3.3 Keep route infrastructure separate from activity intent
 
 The authored route network should answer:
@@ -327,6 +336,16 @@ This gives us a stable way to connect:
 - one zone route graph to another
 - one sub-map/overlay to another
 - one travel mode to another (road -> taxi, road -> boat, etc.)
+
+Current implementation direction:
+
+- connector seams are authored by marking transition anchors in neighboring zone
+  route files
+- the editor regenerates connector manifests from reciprocal transition-node
+  markup on save
+- server startup should no longer be the primary topology author; it should
+  consume connectors, repair/bake `world_z` when needed, and validate
+  continuity
 
 ### 8. Broad travel routes are not enough for vertical/local traversal
 
@@ -792,6 +811,16 @@ Important rule:
 
 - connectors should be authored explicitly, not guessed from map borders alone
 
+Current implementation notes:
+
+- explicit connectors exist and are now the preferred production seam source
+- runtime keeps a tolerant re-anchor fallback on zone transition because border
+  tips and seam spacing can still be imperfect
+- editor transition ghosts and transition-node markup exist specifically to
+  tighten seam placement during authoring
+- startup/server Z-bake should patch seam heights and route-point heights, but
+  should not be relied on to invent missing topology
+
 ---
 
 ### Workstream E.3 — Micro-navigation and vertical connectors
@@ -870,7 +899,57 @@ Future policies:
 - city-entry / city-exit anchor behavior
 - role/personality specific travel style
 
+Near-term concrete direction:
+
+- foot and ground-mount tiers already affect ETA and visible materialized
+  travel
+- taxi should be the next real transit policy layer
+- first-pass taxi knowledge should be derived from **explored zones**
+- bots start with **zero explored zones**
+- entering a zone by any meaningful gameplay path (abstract travel,
+  materialized travel, questing, gathering, patrol, etc.) should unlock that
+  zone
+- unlocking a zone unlocks **all taxi points in that zone**
+- ground/mount travel remains universally allowed; taxi becomes an earned
+  convenience layer
+
 This should come **after** the basic route network exists.
+
+---
+
+### Workstream F.2 - Explored-zone travel memory and taxi eligibility
+
+Goal:
+
+- give bots persistent world-memory that can unlock transit options over time
+
+Core rule:
+
+- if a bot has ever entered a zone, that zone is marked explored
+- if a zone is explored, all taxi nodes in that zone are considered known
+
+First-pass behavior:
+
+- pregenerated bots begin with no explored zones
+- early world traffic should therefore skew heavily toward road/ground travel
+- over time, bots naturally unlock more efficient taxi options by moving
+  through the world
+
+Recommended persistence model:
+
+- store explored zones in a normalized child table, not a comma-separated blob
+- derive known taxi nodes from explored zones rather than storing taxi-node
+  knowledge separately
+
+Planned supporting pieces:
+
+- explored-zone repository/schema
+- zone-entry hooks for both materialized and abstract travel
+- taxi node -> zone mapping
+- planner comparison between:
+  - pure ground
+  - partial taxi + ground
+  - full taxi
 
 ---
 
@@ -1126,21 +1205,18 @@ Definition of done:
 - implementation does not duplicate generic local obstacle pathfinding already
   provided by AzerothCore
 
-Status: `Planned`
+Status: `Completed`
 
-Current next-slice note:
+Current implementation note:
 
-- this is the immediate next engineering slice
-- the first concrete target is to resolve an existing scheduled
-  `AmbientStepType::Travel` destination into a route-backed travel plan rather
-  than inventing a second scheduler
-- that plan should include:
-  - nearest attach
-  - chosen route path
-  - total route distance
-  - ETA from travel capability tier
-  - enough progress metadata to support abstract timing and later hot-zone
-    materialization
+- route-backed travel-plan resolution now exists for scheduled travel
+- same-zone graph traversal and attach/detach distance/ETA calculation are in
+- planner/debug harness commands exist for route-plan inspection and capability
+  comparison
+- remaining hardening moved into later slices:
+  - richer travel-mode choice
+  - explored-zone taxi eligibility
+  - broader multi-zone graph routing
 
 ### Slice 6 — Route-followed session travel integration
 
@@ -1165,7 +1241,7 @@ Definition of done:
   a hot zone at an approximate in-progress route position instead of a blank
   fresh start
 
-Status: `Planned`
+Status: `In Progress`
 
 ### Slice 6.1 - Quest-derived activity composition
 
@@ -1214,7 +1290,12 @@ Definition of done:
 - ETA differs correctly across foot, ground-mount, flight, and transit
   capability tiers where applicable
 
-Status: `Planned`
+Status: `In Progress`
+
+Current implementation note:
+
+- ground mobility tiers and visible materialized mount/form behavior are in
+- taxi still needs the explored-zone memory and planner-choice layer
 
 ### Slice 7.1 - Road patrol and ambush overlays
 
@@ -1240,7 +1321,14 @@ Definition of done:
   traffic rather than always looking like a questing character
 - those sessions still reuse route-based travel, ETA, and abstract progress
 
-Status: `Planned`
+Status: `In Progress`
+
+Current implementation note:
+
+- explicit connectors exist and are usable
+- editor transition nodes now generate connector manifests on save
+- runtime seam handling now relies on explicit connectors first plus
+  re-anchor/grounding tolerance rather than pure border guessing
 
 ### Slice 8 — Cross-zone route connectors
 
@@ -1411,7 +1499,29 @@ need.
 - `world_map_area_id` optional
 - `travel_mode` or later `route_sets`
 - authored path list with anchors/handles/connections
+- optional transition-node metadata for seam generation
 - derived runtime export metadata
+
+### Bot explored-zone memory
+
+- `bot_identity_id`
+- `zone_id`
+- `first_seen_at`
+- `last_seen_at`
+
+Recommended rule:
+
+- the first meaningful entry into a zone unlocks it forever for travel memory
+- taxi-node knowledge should be derived from this explored-zone set
+
+### Bot guild identity (parallel social ledger work)
+
+- `guild_id` on bot identity
+- guild table for shared guild definitions
+- later relationship tables for:
+  - `neutral`
+  - `rival`
+  - `at_war`
 
 ### Surveillance snapshot model
 
@@ -1456,6 +1566,8 @@ need.
 - `to_point_index` or node key
 - `connector_kind`
 - `travel_mode`
+- `generated_from_transition_nodes`
+- `z_baked`
 
 ### Micro-route metadata
 
@@ -1475,7 +1587,13 @@ need.
 - `local_y`
 - `world_x`
 - `world_y`
-- `world_z` optional/derived later
+- `world_z`
+
+Implementation note:
+
+- route authoring is still effectively 2D-first, but runtime exports and
+  connector manifests should be terrain-enriched through server-side Z-bake
+  passes
 
 ### Area overlays (later)
 
@@ -1503,6 +1621,9 @@ need.
 
 - route saved and reloaded without drift
 - line editing stable across sessions
+- transition-node markup survives save/reload
+- editor-generated connector manifests update on save and preserve unrelated
+  manual connectors
 
 ### Runtime validation
 
@@ -1518,11 +1639,17 @@ need.
 - fallback behavior remains sane where no route exists
 - if attacked mid-route and survives, bot resumes route travel cleanly
 - cross-zone connectors hand off to the intended next route graph
+- zone-transition re-anchor fallback behaves sensibly when seam geometry is
+  imperfect
+- startup/server Z-bake updates missing route and connector heights without
+  rewriting already baked files unnecessarily
 - micro-route traversal preserves the intended local up/down/interior path
 - critical vertical transit hubs are tested to determine whether native
   pathfinding is sufficient or needs an authored micro-route override
 - when a cold zone becomes hot, bots materialize into believable in-progress
   activity rather than blank newly-started state
+- explored-zone unlocks occur for both abstract and materialized zone entry
+- taxi eligibility reflects explored-zone knowledge rather than global omniscience
 
 ### Surveillance / observability validation
 
@@ -1599,16 +1726,24 @@ Preferred implementation order remains:
 4. route export/import
 5. route-plan resolution and runtime attach/follow
 6. route-followed session integration
-7. quest-derived and patrol/ambush activity composition
+7. explored-zone memory and taxi eligibility
 8. transit/mount policy
+9. quest-derived and patrol/ambush activity composition
 
 ---
 
 ## Status summary
 
 - overall system: `In Progress`
-- completed slices: `Slices 1-3`
-- current active slice: `Slice 4 - Route export/import schema`
-- next recommended slice after Slice 4: `Slice 5 - Runtime nearest-route attach`
-- first target inside Slice 5: `resolve existing AmbientStep Travel destinations into route-backed travel plans`
+- completed slices: `Slices 1-5`
+- in-progress slices:
+  - `Slice 6 - Route-followed session travel integration`
+  - `Slice 7 - Transit and mount policy integration`
+  - `Slice 8 - Cross-zone route connectors`
+- current active implementation focus: `explored-zone memory and taxi eligibility`
+- next recommended engineering slice:
+  - persist explored zones
+  - unlock explored zones on abstract/materialized zone entry
+  - derive taxi knowledge from explored zones
+  - compare taxi vs ground travel in the planner
 - next content-oriented slice after that: `Slice 6.1 - Quest-derived activity composition`
