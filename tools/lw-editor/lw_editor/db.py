@@ -784,9 +784,29 @@ class DBCtx:
     def load_world_bot_statuses(self, active_only: bool = False) -> list[dict]:
         where = "WHERE i.is_available = 0 AND i.is_retired = 0" if active_only else ""
         personality_select = "'uninterested' AS personality_key"
+        explored_select = "'' AS explored_zone_ids, 0 AS explored_zone_count"
+        explored_join = ""
         try:
             if self.q(self.chars, "SHOW COLUMNS FROM living_world_bot_identity LIKE 'personality_key'"):
                 personality_select = "COALESCE(NULLIF(i.personality_key, ''), 'uninterested') AS personality_key"
+        except Exception:
+            pass
+        try:
+            if self.q(self.chars, "SHOW TABLES LIKE 'living_world_bot_explored_zone'"):
+                explored_select = (
+                    "COALESCE(explored.zone_ids, '') AS explored_zone_ids, "
+                    "COALESCE(explored.zone_count, 0) AS explored_zone_count"
+                )
+                explored_join = """
+                LEFT JOIN (
+                    SELECT
+                        bot_identity_id,
+                        GROUP_CONCAT(zone_id ORDER BY first_seen_at ASC, zone_id ASC) AS zone_ids,
+                        COUNT(*) AS zone_count
+                    FROM living_world_bot_explored_zone
+                    GROUP BY bot_identity_id
+                ) explored ON explored.bot_identity_id = i.id
+                """
         except Exception:
             pass
         return self.q(self.chars,
@@ -810,6 +830,7 @@ class DBCtx:
                 i.active_world_session_start,
                 i.last_seen_zone,
                 i.last_seen_at,
+                {explored_select},
                 latest.event_type AS latest_event_type,
                 latest.detail AS latest_detail,
                 latest.map_id AS latest_map_id,
@@ -831,6 +852,7 @@ class DBCtx:
                 FROM living_world_bot_activity_log
                 WHERE bot_guid = i.id AND event_type = 'session_start'
             )
+            {explored_join}
             {where}
             ORDER BY i.is_retired ASC, i.is_available ASC, i.level DESC, i.name ASC
             """)

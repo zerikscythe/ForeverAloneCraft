@@ -56,6 +56,13 @@ def _fmt_pos(row: dict) -> str:
     return f"({float(x):.1f}, {float(y):.1f}, {float(z):.1f})"
 
 
+def _fmt_zone_list(value) -> str:
+    raw = (value or "").strip()
+    if not raw:
+        return "(none yet)"
+    return ", ".join(part.strip() for part in raw.split(",") if part.strip())
+
+
 def _parse_int_filter(text: str) -> int | None:
     raw = (text or "").strip()
     if not raw:
@@ -131,6 +138,7 @@ class BotViewerApp(tk.Tk):
         self._rows_by_id: dict[int, dict] = {}
         self._selected_bot_id: int | None = None
         self._refresh_job = None
+        self._activity_rows: list[dict] = []
 
         self.v_status = tk.StringVar(value="Not connected")
         self.v_summary = tk.StringVar(value="Bots: 0")
@@ -212,8 +220,13 @@ class BotViewerApp(tk.Tk):
         self.txt_detail.pack(fill=tk.X, expand=False)
 
         ttk.Label(right, text="Recent Activity").pack(anchor="w", pady=(8, 4))
+        action_bar = ttk.Frame(right)
+        action_bar.pack(fill=tk.X, pady=(0, 4))
+        ttk.Button(action_bar, text="Copy Selected", command=self._copy_selected_activity).pack(side=tk.LEFT, padx=(0, 6))
+        ttk.Button(action_bar, text="Copy All Visible", command=self._copy_all_activity).pack(side=tk.LEFT)
+
         act_cols = ("time", "event", "map", "zone", "pos", "detail")
-        self.tv_activity = ttk.Treeview(right, columns=act_cols, show="headings", height=18)
+        self.tv_activity = ttk.Treeview(right, columns=act_cols, show="headings", height=18, selectmode="extended")
         act_headings = {
             "time": "Time", "event": "Event", "map": "Map", "zone": "Zone", "pos": "Position", "detail": "Detail"
         }
@@ -222,6 +235,11 @@ class BotViewerApp(tk.Tk):
             self.tv_activity.heading(col, text=act_headings[col])
             self.tv_activity.column(col, width=act_widths[col], anchor="w")
         self.tv_activity.pack(fill=tk.BOTH, expand=True)
+        self.tv_activity.bind("<Control-c>", self._on_copy_activity)
+        self.tv_activity.bind("<Button-3>", self._show_activity_context_menu)
+        self._activity_menu = tk.Menu(self, tearoff=0)
+        self._activity_menu.add_command(label="Copy Selected", command=self._copy_selected_activity)
+        self._activity_menu.add_command(label="Copy All Visible", command=self._copy_all_activity)
 
     def _connect_from_config(self):
         try:
@@ -330,6 +348,7 @@ class BotViewerApp(tk.Tk):
             self._selected_bot_id = None
             self.txt_detail.delete("1.0", tk.END)
             self.tv_activity.delete(*self.tv_activity.get_children())
+            self._activity_rows = []
 
     def _on_select_bot(self, _event=None):
         sel = self.tv_bots.selection()
@@ -360,6 +379,8 @@ class BotViewerApp(tk.Tk):
             f"Post-Max World Online Ms: {row.get('post_max_world_online_ms', 0)}",
             f"Last Seen Zone: {row.get('last_seen_zone', '')}",
             f"Last Seen At: {_fmt_dt(row.get('last_seen_at'))}",
+            f"Explored Zone Count: {row.get('explored_zone_count', 0)}",
+            f"Explored Zones: {_fmt_zone_list(row.get('explored_zone_ids'))}",
             "",
             f"Current/Last Session Source Kind: {session_meta.get('source_kind', '')}",
             f"Current/Last Session Source Key: {session_meta.get('source_key', '')}",
@@ -379,12 +400,13 @@ class BotViewerApp(tk.Tk):
 
     def _refresh_activity(self, bot_id: int):
         rows = db.load_world_bot_activity_log(bot_id, limit=200)
+        self._activity_rows = rows
         self.tv_activity.delete(*self.tv_activity.get_children())
-        for row in rows:
+        for idx, row in enumerate(rows):
             pos = ""
             if row.get("pos_x") is not None and row.get("pos_y") is not None and row.get("pos_z") is not None:
                 pos = f"({float(row['pos_x']):.1f}, {float(row['pos_y']):.1f}, {float(row['pos_z']):.1f})"
-            self.tv_activity.insert("", "end", values=(
+            self.tv_activity.insert("", "end", iid=f"act:{idx}", values=(
                 _fmt_dt(row.get("logged_at")),
                 row.get("event_type", ""),
                 row.get("map_id", ""),
@@ -392,6 +414,65 @@ class BotViewerApp(tk.Tk):
                 pos,
                 row.get("detail", ""),
             ))
+
+    def _activity_row_to_tsv(self, row: dict) -> str:
+        pos = ""
+        if row.get("pos_x") is not None and row.get("pos_y") is not None and row.get("pos_z") is not None:
+            pos = f"({float(row['pos_x']):.1f}, {float(row['pos_y']):.1f}, {float(row['pos_z']):.1f})"
+        values = [
+            _fmt_dt(row.get("logged_at")),
+            str(row.get("event_type", "")),
+            str(row.get("map_id", "")),
+            str(row.get("zone_id", "")),
+            pos,
+            str(row.get("detail", "")),
+        ]
+        return "\t".join(value.replace("\t", " ").replace("\r", " ").replace("\n", " ") for value in values)
+
+    def _copy_activity_rows(self, rows: list[dict]):
+        if not rows:
+            self.bell()
+            return
+
+        header = "Time\tEvent\tMap\tZone\tPosition\tDetail"
+        payload = "\n".join([header, *[self._activity_row_to_tsv(row) for row in rows]])
+        self.clipboard_clear()
+        self.clipboard_append(payload)
+        self.update_idletasks()
+        self.v_status.set(f"Copied {len(rows)} activity row(s) to clipboard")
+
+    def _copy_selected_activity(self):
+        selection = self.tv_activity.selection()
+        rows: list[dict] = []
+        for iid in selection:
+            if not iid.startswith("act:"):
+                continue
+            try:
+                idx = int(iid.split(":", 1)[1])
+            except ValueError:
+                continue
+            if 0 <= idx < len(self._activity_rows):
+                rows.append(self._activity_rows[idx])
+        self._copy_activity_rows(rows)
+
+    def _copy_all_activity(self):
+        self._copy_activity_rows(list(self._activity_rows))
+
+    def _on_copy_activity(self, _event=None):
+        if self.tv_activity.selection():
+            self._copy_selected_activity()
+        else:
+            self._copy_all_activity()
+        return "break"
+
+    def _show_activity_context_menu(self, event):
+        row_id = self.tv_activity.identify_row(event.y)
+        if row_id and row_id not in self.tv_activity.selection():
+            self.tv_activity.selection_set(row_id)
+        try:
+            self._activity_menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            self._activity_menu.grab_release()
 
     def on_close(self):
         if self._refresh_job:
