@@ -45,6 +45,17 @@ struct WorldBotResolvedTaxiRoute
     [[nodiscard]] bool empty() const { return links.empty(); }
 };
 
+struct WorldBotTaxiTravelCandidate
+{
+    WorldBotTaxiNode sourceNode;
+    WorldBotTaxiNode destinationNode;
+    WorldBotResolvedTaxiRoute route;
+    float sourceAttachDistanceYards = 0.0f;
+    float destinationDetachDistanceYards = 0.0f;
+
+    [[nodiscard]] bool empty() const { return route.empty(); }
+};
+
 bool IsWorldBotTaxiNodeUsableForFaction(
     WorldBotTaxiNode const& node,
     std::uint8_t faction);
@@ -65,11 +76,37 @@ public:
         std::unordered_set<std::uint32_t> const& exploredZoneIds,
         std::uint8_t faction) const;
 
+    [[nodiscard]] std::optional<WorldBotTaxiNode> FindNearestKnownNode(
+        std::uint16_t mapId,
+        float x,
+        float y,
+        float z,
+        std::unordered_set<std::uint32_t> const& exploredZoneIds,
+        std::uint8_t faction,
+        float maxDistanceYards = 1500.0f) const;
+
     [[nodiscard]] std::optional<WorldBotResolvedTaxiRoute> ResolveKnownRoute(
         std::uint32_t sourceNodeId,
         std::uint32_t destinationNodeId,
         std::unordered_set<std::uint32_t> const& exploredZoneIds,
         std::uint8_t faction) const;
+
+    [[nodiscard]] std::optional<WorldBotTaxiTravelCandidate> ResolveTravelCandidate(
+        std::uint16_t startMapId,
+        float startX,
+        float startY,
+        float startZ,
+        std::uint16_t destinationMapId,
+        float destinationX,
+        float destinationY,
+        float destinationZ,
+        std::unordered_set<std::uint32_t> const& exploredZoneIds,
+        std::uint8_t faction,
+        float maxSourceAttachDistanceYards = 1500.0f,
+        float maxDestinationDetachDistanceYards = 1500.0f) const;
+
+    [[nodiscard]] std::optional<WorldBotTaxiNode> FindNode(
+        std::uint32_t nodeId) const;
 
 private:
     std::vector<WorldBotTaxiNode> _nodes;

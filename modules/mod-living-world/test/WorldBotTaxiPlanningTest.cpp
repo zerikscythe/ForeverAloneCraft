@@ -129,5 +129,57 @@ TEST(WorldBotTaxiPlanningTest, KnownRouteFailsWhenRequiredIntermediateZoneIsUnkn
     EXPECT_FALSE(route.has_value());
 }
 
+TEST(WorldBotTaxiPlanningTest, FindsNearestKnownNodeWithinExploredZones)
+{
+    WorldBotTaxiNetwork const network({
+        MakeNode(1, 12, true, true),
+        MakeNode(2, 40, true, true),
+        MakeNode(3, 12, true, true),
+    });
+
+    std::unordered_set<std::uint32_t> const exploredZones = { 12u };
+    auto const node = network.FindNearestKnownNode(0, 2.2f, 12.1f, 0.0f, exploredZones, 1, 100.0f);
+
+    ASSERT_TRUE(node.has_value());
+    EXPECT_EQ(node->nodeId, 3u);
+}
+
+TEST(WorldBotTaxiPlanningTest, ResolvesTravelCandidateFromNearestKnownTaxiNodes)
+{
+    WorldBotTaxiNetwork const network(
+        {
+            MakeNode(1, 12, true, true),
+            MakeNode(2, 40, true, true),
+            MakeNode(3, 10, true, true),
+            MakeNode(4, 44, true, true),
+        },
+        {
+            { 100, 1, 4, 0, 30.0f, 3000u },
+            { 101, 4, 3, 0, 40.0f, 4000u },
+        });
+
+    std::unordered_set<std::uint32_t> const exploredZones = { 12u, 10u, 44u };
+    auto const candidate = network.ResolveTravelCandidate(
+        0,
+        1.2f,
+        12.0f,
+        0.0f,
+        0,
+        2.8f,
+        10.0f,
+        0.0f,
+        exploredZones,
+        1,
+        100.0f,
+        100.0f);
+
+    ASSERT_TRUE(candidate.has_value());
+    EXPECT_EQ(candidate->sourceNode.nodeId, 1u);
+    EXPECT_EQ(candidate->destinationNode.nodeId, 3u);
+    ASSERT_EQ(candidate->route.nodeIds.size(), 3u);
+    EXPECT_EQ(candidate->route.nodeIds[1], 4u);
+    EXPECT_FLOAT_EQ(candidate->route.totalDistanceYards, 70.0f);
+}
+
 } // namespace service
 } // namespace living_world

@@ -31,6 +31,20 @@ bool HasTaxiMaskBit(TaxiMask const& mask, std::uint32_t nodeId)
     return field < TaxiMaskSize && (mask[field] & submask) != 0;
 }
 
+float ComputeDistanceYards(
+    float ax,
+    float ay,
+    float az,
+    float bx,
+    float by,
+    float bz)
+{
+    float const dx = bx - ax;
+    float const dy = by - ay;
+    float const dz = bz - az;
+    return std::sqrt((dx * dx) + (dy * dy) + (dz * dz));
+}
+
 std::uint32_t ResolveTaxiNodeZoneId(
     WorldBotTaxiZoneResolver const& resolver,
     TaxiNodesEntry const& entry)
@@ -155,6 +169,40 @@ std::vector<WorldBotTaxiNode> WorldBotTaxiNetwork::GetKnownNodes(
     return knownNodes;
 }
 
+std::optional<WorldBotTaxiNode> WorldBotTaxiNetwork::FindNearestKnownNode(
+    std::uint16_t mapId,
+    float x,
+    float y,
+    float z,
+    std::unordered_set<std::uint32_t> const& exploredZoneIds,
+    std::uint8_t faction,
+    float maxDistanceYards) const
+{
+    std::optional<WorldBotTaxiNode> bestNode;
+    float bestDistance = maxDistanceYards;
+
+    for (WorldBotTaxiNode const& node : _nodes)
+    {
+        if (node.mapId != mapId || node.zoneId == 0)
+            continue;
+
+        if (exploredZoneIds.find(node.zoneId) == exploredZoneIds.end())
+            continue;
+
+        if (!IsWorldBotTaxiNodeUsableForFaction(node, faction))
+            continue;
+
+        float const distance = ComputeDistanceYards(x, y, z, node.x, node.y, node.z);
+        if (!bestNode.has_value() || distance < bestDistance)
+        {
+            bestNode = node;
+            bestDistance = distance;
+        }
+    }
+
+    return bestNode;
+}
+
 std::optional<WorldBotResolvedTaxiRoute> WorldBotTaxiNetwork::ResolveKnownRoute(
     std::uint32_t sourceNodeId,
     std::uint32_t destinationNodeId,
@@ -272,6 +320,82 @@ std::optional<WorldBotResolvedTaxiRoute> WorldBotTaxiNetwork::ResolveKnownRoute(
         route.totalDistanceYards += link.rideDistanceYards;
 
     return route;
+}
+
+std::optional<WorldBotTaxiTravelCandidate> WorldBotTaxiNetwork::ResolveTravelCandidate(
+    std::uint16_t startMapId,
+    float startX,
+    float startY,
+    float startZ,
+    std::uint16_t destinationMapId,
+    float destinationX,
+    float destinationY,
+    float destinationZ,
+    std::unordered_set<std::uint32_t> const& exploredZoneIds,
+    std::uint8_t faction,
+    float maxSourceAttachDistanceYards,
+    float maxDestinationDetachDistanceYards) const
+{
+    auto const sourceNode = FindNearestKnownNode(
+        startMapId,
+        startX,
+        startY,
+        startZ,
+        exploredZoneIds,
+        faction,
+        maxSourceAttachDistanceYards);
+    if (!sourceNode.has_value())
+        return std::nullopt;
+
+    auto const destinationNode = FindNearestKnownNode(
+        destinationMapId,
+        destinationX,
+        destinationY,
+        destinationZ,
+        exploredZoneIds,
+        faction,
+        maxDestinationDetachDistanceYards);
+    if (!destinationNode.has_value())
+        return std::nullopt;
+
+    auto const route = ResolveKnownRoute(
+        sourceNode->nodeId,
+        destinationNode->nodeId,
+        exploredZoneIds,
+        faction);
+    if (!route.has_value())
+        return std::nullopt;
+
+    WorldBotTaxiTravelCandidate candidate;
+    candidate.sourceNode = *sourceNode;
+    candidate.destinationNode = *destinationNode;
+    candidate.route = *route;
+    candidate.sourceAttachDistanceYards = ComputeDistanceYards(
+        startX,
+        startY,
+        startZ,
+        sourceNode->x,
+        sourceNode->y,
+        sourceNode->z);
+    candidate.destinationDetachDistanceYards = ComputeDistanceYards(
+        destinationNode->x,
+        destinationNode->y,
+        destinationNode->z,
+        destinationX,
+        destinationY,
+        destinationZ);
+    return candidate;
+}
+
+std::optional<WorldBotTaxiNode> WorldBotTaxiNetwork::FindNode(std::uint32_t nodeId) const
+{
+    for (WorldBotTaxiNode const& node : _nodes)
+    {
+        if (node.nodeId == nodeId)
+            return node;
+    }
+
+    return std::nullopt;
 }
 
 WorldBotTaxiNetwork LoadWorldBotTaxiNetwork(WorldBotTaxiZoneResolver zoneResolver)
