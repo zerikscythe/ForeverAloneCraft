@@ -45,6 +45,7 @@
 #include "service/WorldBotPlayerStatBaseline.h"
 #include "service/WorldBotPowerBaseline.h"
 #include "service/WorldBotPreparationService.h"
+#include "service/WorldBotTaxiPlanning.h"
 #include "model/BotSpecKey.h"
 
 #include <algorithm>
@@ -98,6 +99,12 @@ service::WorldBotRoutePlanner& GetWorldBotRoutePlanner()
 {
     static service::WorldBotRoutePlanner planner(ResolveWorldBotRouteExportRoot());
     return planner;
+}
+
+service::WorldBotTaxiNetwork& GetWorldBotTaxiNetwork()
+{
+    static service::WorldBotTaxiNetwork network = service::LoadWorldBotTaxiNetwork();
+    return network;
 }
 
 constexpr float GatherSearchRadius = 200.0f;
@@ -266,6 +273,20 @@ std::string BuildTravelNarrative(
     if (!routeBits.empty())
         oss << " | " << routeBits;
     return oss.str();
+}
+
+char const* DescribeTravelOptionMode(service::WorldBotTravelOptionMode mode)
+{
+    switch (mode)
+    {
+        case service::WorldBotTravelOptionMode::TaxiFull:
+            return "taxi_full";
+        case service::WorldBotTravelOptionMode::TaxiPartial:
+            return "taxi_partial";
+        case service::WorldBotTravelOptionMode::Ground:
+        default:
+            return "ground";
+    }
 }
 
 std::string BuildPositionDetail(
@@ -765,6 +786,7 @@ void WorldBotCreatureAI::SetIdentityAndSession(
     _lastDebugCombatManaDrainWorldMs = 0;
     _debugCombatManaGemObserved = false;
     _usedSimulatedItemsThisCombat.clear();
+    ClearActiveTaxiTravel();
 
     _preparedBuild = GetWorldBotPreparationService().Prepare(_identity, "PvE");
     {
@@ -1345,6 +1367,74 @@ bool WorldBotCreatureAI::TryBuildRouteTravelPlan(
     return true;
 }
 
+bool WorldBotCreatureAI::TryBuildBestTravelOption(
+    service::AmbientStep const& step,
+    service::WorldBotResolvedTravelOption& outOption) const
+{
+    if (!me || step.type != service::AmbientStepType::Travel)
+        return false;
+    if (step.mapId != me->GetMapId())
+        return false;
+
+    std::uint32_t const zoneId = ResolveStepZoneId(_session, step);
+    if (zoneId == 0)
+        return false;
+
+    service::WorldBotTravelCapabilityTier const travelTier = ResolveTravelCapabilityTier();
+    service::WorldBotTravelCapabilityConfig const capabilityConfig =
+        service::LoadWorldBotTravelCapabilityConfig();
+
+    auto const groundResolver =
+        [](std::uint16_t mapId,
+           std::uint32_t startZoneIdHint,
+           std::uint32_t destZoneId,
+           float startX,
+           float startY,
+           float startZ,
+           float destX,
+           float destY,
+           float destZ,
+           service::WorldBotTravelCapabilityTier tier,
+           service::WorldBotTravelCapabilityConfig const& config)
+            -> std::optional<service::WorldBotResolvedTravelPlan>
+        {
+            return GetWorldBotRoutePlanner().ResolveTravelPlan(
+                mapId,
+                startZoneIdHint,
+                destZoneId,
+                startX,
+                startY,
+                startZ,
+                destX,
+                destY,
+                destZ,
+                tier,
+                config);
+        };
+
+    auto const option = service::ResolveBestTravelOption(
+        GetWorldBotTaxiNetwork(),
+        groundResolver,
+        step.mapId,
+        me->GetZoneId(),
+        zoneId,
+        me->GetPositionX(),
+        me->GetPositionY(),
+        me->GetPositionZ(),
+        step.x,
+        step.y,
+        step.z,
+        _knownExploredZoneIds,
+        _identity.faction,
+        travelTier,
+        capabilityConfig);
+    if (!option.has_value())
+        return false;
+
+    outOption = *option;
+    return true;
+}
+
 void WorldBotCreatureAI::ClearActiveRouteTravelPlan()
 {
     _routeTravelPlanActive = false;
@@ -1352,6 +1442,110 @@ void WorldBotCreatureAI::ClearActiveRouteTravelPlan()
     _routeTravelLastZoneId = 0;
     _routeTravelLastReanchorWorldMs = 0;
     _routeTravelPlan = {};
+}
+
+void WorldBotCreatureAI::ActivateRouteTravelPlan(service::WorldBotResolvedTravelPlan const& plan)
+{
+    _routeTravelPlan = plan;
+    _routeTravelPlanActive = true;
+    _routeTravelWaypointIndex = 0;
+    _routeTravelLastZoneId = me ? me->GetZoneId() : 0;
+    _routeTravelLastReanchorWorldMs = _worldOnlineMs;
+}
+
+void WorldBotCreatureAI::ClearActiveTaxiTravel()
+{
+    _activeTravelExecutionPhase = ActiveTravelExecutionPhase::None;
+    _activeTravelOptionMode = service::WorldBotTravelOptionMode::Ground;
+    _activeTaxiTransitElapsedMs = 0;
+    _activeTaxiJourney = {};
+}
+
+bool WorldBotCreatureAI::BeginActiveTaxiTransit(service::AmbientStep const& step)
+{
+    if (!me || _activeTaxiJourney.empty())
+        return false;
+
+    _activeTravelExecutionPhase = ActiveTravelExecutionPhase::TaxiTransit;
+    _activeTaxiTransitElapsedMs = 0;
+    _travelWatchdogConfig = {};
+    ResetTravelWatchdog(_travelWatchdog);
+    ClearVisibleTravelMode();
+    ClearActiveRouteTravelPlan();
+    me->StopMoving();
+    me->GetMotionMaster()->Clear();
+
+    integration::BotActivityLog::Record(
+        me,
+        _identity.name,
+        _identity.id,
+        "travel_taxi_board",
+        BuildTravelNarrative(
+            _session,
+            step,
+            "boarding taxi at " + _activeTaxiJourney.taxiCandidate.sourceNode.name
+                + " -> " + _activeTaxiJourney.taxiCandidate.destinationNode.name
+                + " eta=" + FormatDurationMs(_activeTaxiJourney.taxiCandidate.route.totalEtaMs)));
+
+    integration::BotActivityLog::Record(
+        me,
+        _identity.name,
+        _identity.id,
+        "status_change",
+        "Taxi in transit -> " + _activeTaxiJourney.taxiCandidate.sourceNode.name
+            + " to " + _activeTaxiJourney.taxiCandidate.destinationNode.name
+            + " (" + FormatDurationMs(_activeTaxiJourney.taxiCandidate.route.totalEtaMs) + ")");
+
+    return true;
+}
+
+bool WorldBotCreatureAI::CompleteActiveTaxiTransit(service::AmbientStep const& step)
+{
+    if (!me || _activeTaxiJourney.empty())
+        return false;
+
+    service::WorldBotTaxiNode const& destinationNode = _activeTaxiJourney.taxiCandidate.destinationNode;
+    float landingZ = destinationNode.z;
+    if (std::fabs(landingZ) <= 0.01f)
+        me->UpdateGroundPositionZ(destinationNode.x, destinationNode.y, landingZ);
+    me->NearTeleportTo(destinationNode.x, destinationNode.y, landingZ, me->GetOrientation());
+    ObserveCurrentZoneExploration();
+
+    integration::BotActivityLog::Record(
+        me,
+        _identity.name,
+        _identity.id,
+        "travel_taxi_arrive",
+        BuildTravelNarrative(
+            _session,
+            step,
+            "landed at " + destinationNode.name
+                + " zone=" + std::to_string(destinationNode.zoneId)));
+
+    ActivateRouteTravelPlan(_activeTaxiJourney.destinationGroundPlan);
+    _activeTravelExecutionPhase = ActiveTravelExecutionPhase::TaxiFinalLeg;
+    _activeTaxiTransitElapsedMs = 0;
+    _travelWatchdogConfig = BuildActiveTravelWatchdogConfig(step, ResolveTravelCapabilityTier());
+    ApplyVisibleTravelMode(ResolveTravelCapabilityTier());
+    MoveToActiveTravelTarget(step);
+    ResetTravelWatchdog(_travelWatchdog);
+
+    integration::BotActivityLog::Record(
+        me,
+        _identity.name,
+        _identity.id,
+        "travel_taxi_resume_ground",
+        BuildTravelNarrative(_session, step, DescribeActiveTravelTarget(step)));
+
+    integration::BotActivityLog::Record(
+        me,
+        _identity.name,
+        _identity.id,
+        "status_change",
+        "Taxi complete -> resuming ground travel | "
+            + BuildTravelNarrative(_session, step, DescribeActiveTravelTarget(step)));
+
+    return true;
 }
 
 void WorldBotCreatureAI::MoveToActiveTravelTarget(service::AmbientStep const& step)
@@ -1448,6 +1642,18 @@ bool WorldBotCreatureAI::TryReanchorActiveRouteTravelPlan(service::AmbientStep c
 std::string WorldBotCreatureAI::DescribeActiveTravelTarget(service::AmbientStep const& step) const
 {
     std::ostringstream oss;
+    if (_activeTravelExecutionPhase == ActiveTravelExecutionPhase::TaxiTransit && !_activeTaxiJourney.empty())
+    {
+        std::uint32_t const rideEtaMs = _activeTaxiJourney.taxiCandidate.route.totalEtaMs;
+        std::uint32_t const remainingMs = rideEtaMs > _activeTaxiTransitElapsedMs
+            ? (rideEtaMs - _activeTaxiTransitElapsedMs)
+            : 0u;
+        oss << "taxi transit " << _activeTaxiJourney.taxiCandidate.sourceNode.name
+            << " -> " << _activeTaxiJourney.taxiCandidate.destinationNode.name
+            << " remaining=" << FormatDurationMs(remainingMs);
+        return oss.str();
+    }
+
     if (_routeTravelPlanActive && _routeTravelWaypointIndex < _routeTravelPlan.waypoints.size())
     {
         service::WorldBotRouteWaypoint const& waypoint =
@@ -1684,6 +1890,7 @@ void WorldBotCreatureAI::SuspendCurrentStepForCombat(Unit* target)
         _traveling = false;
         ClearVisibleTravelMode();
         ClearActiveRouteTravelPlan();
+        ClearActiveTaxiTravel();
         _gatherMovingToNode = false;
         ResetTravelWatchdog(_travelWatchdog);
     }
@@ -1708,6 +1915,7 @@ void WorldBotCreatureAI::ResumeSuspendedStepAfterCombat()
     _traveling = false;
     ClearVisibleTravelMode();
     ClearActiveRouteTravelPlan();
+    ClearActiveTaxiTravel();
     service::ResetSharedHazardEvaluationState(_hazardEvaluationState);
     _lastDebugCombatManaDrainWorldMs = 0;
     _debugCombatManaGemObserved = false;
@@ -2159,6 +2367,7 @@ void WorldBotCreatureAI::TickStep(uint32 /*diff*/)
         if (!_traveling)
         {
             ClearActiveRouteTravelPlan();
+            ClearActiveTaxiTravel();
             service::WorldBotTravelCapabilityTier const travelTier = ResolveTravelCapabilityTier();
             // Same-map only for now — skip cross-map travel steps.
             if (step.mapId != me->GetMapId())
@@ -2172,14 +2381,49 @@ void WorldBotCreatureAI::TickStep(uint32 /*diff*/)
                 return;
             }
 
-            service::WorldBotResolvedTravelPlan routePlan;
-            if (TryBuildRouteTravelPlan(step, routePlan))
+            service::WorldBotResolvedTravelOption travelOption;
+            if (TryBuildBestTravelOption(step, travelOption))
             {
-                _routeTravelPlan = std::move(routePlan);
-                _routeTravelPlanActive = true;
-                _routeTravelWaypointIndex = 0;
-                _routeTravelLastZoneId = me->GetZoneId();
-                _routeTravelLastReanchorWorldMs = _worldOnlineMs;
+                _activeTravelOptionMode = travelOption.mode;
+                if (travelOption.usesTaxi()
+                    && travelOption.taxiJourney.has_value()
+                    && !travelOption.taxiJourney->empty())
+                {
+                    _activeTaxiJourney = *travelOption.taxiJourney;
+                    _activeTravelExecutionPhase = ActiveTravelExecutionPhase::TaxiApproach;
+                    ActivateRouteTravelPlan(_activeTaxiJourney.sourceGroundPlan);
+
+                    integration::BotActivityLog::Record(
+                        me, _identity.name, _identity.id,
+                        "travel_option",
+                        BuildTravelNarrative(
+                            _session,
+                            step,
+                            std::string("mode=") + DescribeTravelOptionMode(travelOption.mode)
+                                + " source_taxi=" + _activeTaxiJourney.taxiCandidate.sourceNode.name
+                                + " destination_taxi=" + _activeTaxiJourney.taxiCandidate.destinationNode.name
+                                + " taxi_eta=" + FormatDurationMs(_activeTaxiJourney.taxiCandidate.route.totalEtaMs)
+                                + " total_eta=" + FormatDurationMs(travelOption.totalEtaMs)));
+                }
+                else if (travelOption.groundPlan.has_value() && !travelOption.groundPlan->empty())
+                {
+                    _activeTravelExecutionPhase = ActiveTravelExecutionPhase::GroundOnly;
+                    ActivateRouteTravelPlan(*travelOption.groundPlan);
+                }
+            }
+            else
+            {
+                service::WorldBotResolvedTravelPlan routePlan;
+                if (TryBuildRouteTravelPlan(step, routePlan))
+                {
+                    _activeTravelExecutionPhase = ActiveTravelExecutionPhase::GroundOnly;
+                    _activeTravelOptionMode = service::WorldBotTravelOptionMode::Ground;
+                    ActivateRouteTravelPlan(routePlan);
+                }
+            }
+
+            if (_routeTravelPlanActive)
+            {
                 integration::BotActivityLog::Record(
                     me, _identity.name, _identity.id,
                     "travel_plan",
@@ -2209,12 +2453,21 @@ void WorldBotCreatureAI::TickStep(uint32 /*diff*/)
                 me, _identity.name, _identity.id,
                 "status_change",
                 std::string("Starting travel | mode=") + DescribeTravelCapabilityTier(travelTier)
+                    + " option=" + DescribeTravelOptionMode(_activeTravelOptionMode)
                     + " spell=" + std::to_string(_visibleTravelModeSpellId)
                     + " speed_rate=" + std::to_string(_visibleTravelSpeedRate)
                     + " | " + BuildTravelNarrative(_session, step, DescribeActiveTravelTarget(step)));
         }
         else
         {
+            if (_activeTravelExecutionPhase == ActiveTravelExecutionPhase::TaxiTransit)
+            {
+                _activeTaxiTransitElapsedMs += TickIntervalMs;
+                if (_activeTaxiTransitElapsedMs >= _activeTaxiJourney.taxiCandidate.route.totalEtaMs)
+                    CompleteActiveTaxiTransit(step);
+                return;
+            }
+
             std::uint32_t const currentZoneId = me->GetZoneId();
             if (_routeTravelPlanActive
                 && _routeTravelLastZoneId != 0
@@ -2252,9 +2505,16 @@ void WorldBotCreatureAI::TickStep(uint32 /*diff*/)
                     return;
                 }
 
+                if (_activeTravelExecutionPhase == ActiveTravelExecutionPhase::TaxiApproach)
+                {
+                    BeginActiveTaxiTransit(step);
+                    return;
+                }
+
                 _traveling = false;
                 ClearVisibleTravelMode();
                 ClearActiveRouteTravelPlan();
+                ClearActiveTaxiTravel();
                 integration::BotActivityLog::Record(
                     me, _identity.name, _identity.id,
                     "travel_arrive",
@@ -2310,6 +2570,7 @@ void WorldBotCreatureAI::TickStep(uint32 /*diff*/)
                     _traveling = false;
                     ClearVisibleTravelMode();
                     ClearActiveRouteTravelPlan();
+                    ClearActiveTaxiTravel();
                     ResetTravelWatchdog(_travelWatchdog);
                     _sessionDone = true;
                     return;
@@ -2330,6 +2591,7 @@ void WorldBotCreatureAI::TickStep(uint32 /*diff*/)
                 _traveling = false;
                 ClearVisibleTravelMode();
                 ClearActiveRouteTravelPlan();
+                ClearActiveTaxiTravel();
                 ResetTravelWatchdog(_travelWatchdog);
                 AdvanceStep();
             }
@@ -2420,6 +2682,7 @@ void WorldBotCreatureAI::AdvanceStep()
     _activityTimer = 0;
     ClearVisibleTravelMode();
     ClearActiveRouteTravelPlan();
+    ClearActiveTaxiTravel();
     ResetGatherState();
     ResetTravelWatchdog(_travelWatchdog);
 
@@ -2433,6 +2696,7 @@ void WorldBotCreatureAI::CompletSession()
         return;
     _sessionDone = true;
     ClearVisibleTravelMode();
+    ClearActiveTaxiTravel();
 
     std::uint32_t const zoneId = me->GetZoneId();
 
@@ -2451,6 +2715,7 @@ void WorldBotCreatureAI::JustDied(Unit* /*killer*/)
 {
     service::ResetSharedHazardEvaluationState(_hazardEvaluationState);
     ClearVisibleTravelMode();
+    ClearActiveTaxiTravel();
 
     integration::BotActivityLog::Record(
         me, _identity.name, _identity.id,

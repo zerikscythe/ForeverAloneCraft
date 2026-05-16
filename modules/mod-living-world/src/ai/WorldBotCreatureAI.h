@@ -10,6 +10,7 @@
 #include "service/BotCombatRuntimeEvaluator.h"
 #include "service/SharedHazardEvaluation.h"
 #include "service/WorldBotRoutePlanning.h"
+#include "service/WorldBotTaxiPlanning.h"
 
 #include "CreatureAI.h"
 
@@ -35,6 +36,15 @@ namespace ai
 class WorldBotCreatureAI : public CreatureAI
 {
 public:
+    enum class ActiveTravelExecutionPhase : std::uint8_t
+    {
+        None = 0,
+        GroundOnly = 1,
+        TaxiApproach = 2,
+        TaxiTransit = 3,
+        TaxiFinalLeg = 4,
+    };
+
     struct RuntimeSnapshot
     {
         integration::BotIdentityRecord     identity;
@@ -101,6 +111,13 @@ private:
     float GetActiveTravelTargetDistance(service::AmbientStep const& step) const;
     bool AdvanceAlongActiveRouteTravelPlan();
     bool TryReanchorActiveRouteTravelPlan(service::AmbientStep const& step, char const* reason);
+    bool TryBuildBestTravelOption(
+        service::AmbientStep const& step,
+        service::WorldBotResolvedTravelOption& outOption) const;
+    void ActivateRouteTravelPlan(service::WorldBotResolvedTravelPlan const& plan);
+    void ClearActiveTaxiTravel();
+    bool BeginActiveTaxiTransit(service::AmbientStep const& step);
+    bool CompleteActiveTaxiTransit(service::AmbientStep const& step);
     ai::TravelWatchdogConfig BuildActiveTravelWatchdogConfig(
         service::AmbientStep const& step,
         service::WorldBotTravelCapabilityTier tier) const;
@@ -137,6 +154,9 @@ private:
     std::uint64_t  _lastDebugCombatManaDrainWorldMs = 0;
     bool           _debugCombatManaGemObserved = false;
     bool           _hasShieldBaseline = false;
+    ActiveTravelExecutionPhase _activeTravelExecutionPhase = ActiveTravelExecutionPhase::None;
+    service::WorldBotTravelOptionMode _activeTravelOptionMode = service::WorldBotTravelOptionMode::Ground;
+    std::uint32_t  _activeTaxiTransitElapsedMs = 0;
     bool           _routeTravelPlanActive = false;
     std::size_t    _routeTravelWaypointIndex = 0;
     std::uint32_t  _routeTravelLastZoneId = 0;
@@ -149,6 +169,7 @@ private:
     std::unordered_set<std::uint32_t> _knownExploredZoneIds;
     service::SharedHazardEvaluationState _hazardEvaluationState;
     service::WorldBotResolvedTravelPlan _routeTravelPlan;
+    service::WorldBotResolvedTaxiJourney _activeTaxiJourney;
 
     // Accumulates UpdateAI diff for the 500ms tick gate.
     std::uint32_t _tickAccum     = 0;
