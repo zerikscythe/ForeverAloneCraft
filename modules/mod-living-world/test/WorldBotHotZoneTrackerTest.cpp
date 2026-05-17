@@ -13,6 +13,14 @@ TEST(WorldBotHotZoneTrackerTest, MarkedZoneIsImmediatelyHot)
     EXPECT_TRUE(IsWorldBotZoneHot(1u, 12u, 1000u));
 }
 
+TEST(WorldBotHotZoneTrackerTest, MapZeroZoneIsTrackedNormally)
+{
+    ClearWorldBotHotZoneStateForTests();
+
+    MarkWorldBotZoneHot(0u, 35u, 1000u);
+    EXPECT_TRUE(IsWorldBotZoneHot(0u, 35u, 1000u));
+}
+
 TEST(WorldBotHotZoneTrackerTest, ZoneExpiresAfterCooldown)
 {
     ClearWorldBotHotZoneStateForTests();
@@ -69,6 +77,15 @@ TEST(WorldBotHotZoneTrackerTest, SyntheticInterestCanBeMapWide)
     SetSyntheticWorldBotInterest(530u, 0u);
     EXPECT_TRUE(HasSyntheticWorldBotInterest(530u, 3703u));
     EXPECT_TRUE(HasSyntheticWorldBotInterest(530u, 3519u));
+}
+
+TEST(WorldBotHotZoneTrackerTest, SyntheticInterestSupportsMapZero)
+{
+    ClearWorldBotHotZoneStateForTests();
+
+    SetSyntheticWorldBotInterest(0u, 35u);
+    EXPECT_TRUE(HasSyntheticWorldBotInterest(0u, 35u));
+    EXPECT_FALSE(HasSyntheticWorldBotInterest(1u, 35u));
 }
 
 TEST(WorldBotHotZoneTrackerTest, CooldownOverrideShortensHotLifetime)

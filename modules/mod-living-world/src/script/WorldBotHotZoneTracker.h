@@ -275,7 +275,7 @@ inline void ObserveWorldBotPlayerInterest(Player* player, bool forceRefresh = fa
 
     if (transportRoute.has_value())
     {
-        if (mapId != 0 && zoneId != 0)
+        if (zoneId != 0)
             MarkWorldBotZoneHotLocked(mapId, zoneId, nowMs);
 
         MarkWorldBotZoneHotLocked(transportRoute->destMapId, transportRoute->destZoneId, nowMs);
@@ -300,7 +300,7 @@ inline void ObserveWorldBotPlayerInterest(Player* player, bool forceRefresh = fa
 
     if (inFlight)
     {
-        if (!state.inFlight && state.mapId != 0 && state.zoneId != 0)
+        if (!state.inFlight && state.zoneId != 0)
             MarkWorldBotZoneHotLocked(state.mapId, state.zoneId, nowMs);
 
         state.mapId = mapId;
@@ -310,7 +310,7 @@ inline void ObserveWorldBotPlayerInterest(Player* player, bool forceRefresh = fa
         return;
     }
 
-    if (!state.inFlight && state.mapId != 0 && state.zoneId != 0
+    if (!state.inFlight && state.zoneId != 0
         && (state.mapId != mapId || state.zoneId != zoneId))
     {
         MarkWorldBotZoneHotLocked(state.mapId, state.zoneId, nowMs);
@@ -338,7 +338,7 @@ inline void ForgetWorldBotPlayerInterest(Player* player)
     if (itr == interest.end())
         return;
 
-    if (!itr->second.inFlight && itr->second.mapId != 0 && itr->second.zoneId != 0)
+    if (!itr->second.inFlight && itr->second.zoneId != 0)
         MarkWorldBotZoneHotLocked(itr->second.mapId, itr->second.zoneId, nowMs);
 
     interest.erase(itr);

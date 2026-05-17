@@ -1786,7 +1786,7 @@ public:
             "LivingWorld.DebugHotZoneCooldownMs", 0);
         living_world::script::SetWorldBotHotZoneCooldownOverrideMs(debugHotZoneCooldownMs);
 
-        if (_debugSyntheticInterestEnabled && _debugSyntheticInterestMapId != 0)
+        if (_debugSyntheticInterestEnabled)
         {
             living_world::script::SetSyntheticWorldBotInterest(
                 _debugSyntheticInterestMapId,
@@ -2497,7 +2497,7 @@ private:
 
     void TickSyntheticInterestBeacon(std::uint32_t diff)
     {
-        if (!_debugSyntheticInterestEnabled || _debugSyntheticInterestMapId == 0)
+        if (!_debugSyntheticInterestEnabled)
             return;
 
         _debugSyntheticInterestElapsedMs += diff;
