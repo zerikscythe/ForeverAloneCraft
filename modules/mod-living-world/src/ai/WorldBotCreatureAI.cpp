@@ -3141,6 +3141,23 @@ void WorldBotCreatureAI::TickCombat(uint32 diff)
             RecordCombatTrace(movementTrace.str());
         };
 
+    auto const applyMovementDoctrinePlan =
+        [&]()
+        {
+            switch (movementPlan.kind)
+            {
+                case service::WorldBotMovementPlanKind::MovePoint:
+                    me->GetMotionMaster()->MovePoint(0, movementPlan.pointX, movementPlan.pointY, movementPlan.pointZ);
+                    break;
+                case service::WorldBotMovementPlanKind::Chase:
+                    me->GetMotionMaster()->MoveChase(target, movementPlan.chaseDistance);
+                    break;
+                case service::WorldBotMovementPlanKind::None:
+                default:
+                    break;
+            }
+        };
+
     if (movementDecision.source == model::WorldBotMovementDecisionSource::HazardOverride)
     {
         if (me->IsNonMeleeSpellCast(false) && !movementDecision.allowHardCasts)
@@ -3151,10 +3168,10 @@ void WorldBotCreatureAI::TickCombat(uint32 diff)
         switch (movementPlan.kind)
         {
             case service::WorldBotMovementPlanKind::MovePoint:
-                me->GetMotionMaster()->MovePoint(0, movementPlan.pointX, movementPlan.pointY, movementPlan.pointZ);
+                applyMovementDoctrinePlan();
                 break;
             case service::WorldBotMovementPlanKind::Chase:
-                me->GetMotionMaster()->MoveChase(target, movementPlan.chaseDistance);
+                applyMovementDoctrinePlan();
                 break;
             case service::WorldBotMovementPlanKind::None:
             default:
@@ -3281,6 +3298,14 @@ void WorldBotCreatureAI::TickCombat(uint32 diff)
         RecordCombatTrace(BuildCombatMovementTraceDetail("no_prepared_entries", target));
     }
 
+    if (acted
+        && movementPlan.kind != service::WorldBotMovementPlanKind::None
+        && (!me->IsNonMeleeSpellCast(false) || !movementDecision.allowHardCasts))
+    {
+        recordMovementDoctrineTrace();
+        applyMovementDoctrinePlan();
+    }
+
     if (!acted)
     {
         if (IsDebugForcedCombatIdentity())
@@ -3303,11 +3328,11 @@ void WorldBotCreatureAI::TickCombat(uint32 diff)
         {
             case service::WorldBotMovementPlanKind::MovePoint:
                 recordMovementDoctrineTrace();
-                me->GetMotionMaster()->MovePoint(0, movementPlan.pointX, movementPlan.pointY, movementPlan.pointZ);
+                applyMovementDoctrinePlan();
                 break;
             case service::WorldBotMovementPlanKind::Chase:
                 recordMovementDoctrineTrace();
-                me->GetMotionMaster()->MoveChase(target, movementPlan.chaseDistance);
+                applyMovementDoctrinePlan();
                 break;
             case service::WorldBotMovementPlanKind::None:
             default:
