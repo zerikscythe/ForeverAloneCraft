@@ -4,6 +4,7 @@
 
 #include "DBCStores.h"
 #include "DBCStructure.h"
+#include "Log.h"
 #include "MapMgr.h"
 #include "SharedDefines.h"
 
@@ -56,7 +57,7 @@ std::uint32_t ResolveTaxiNodeZoneId(
             entry.y,
             entry.z);
 
-    if (entry.map_id == 0)
+    if (!sMapStore.LookupEntry(entry.map_id))
         return 0;
 
     return sMapMgr->GetZoneId(
@@ -453,6 +454,17 @@ WorldBotTaxiNetwork LoadWorldBotTaxiNetwork(WorldBotTaxiZoneResolver zoneResolve
 
         if (!HasTaxiMaskBit(sTaxiNodesMask, nodeId))
             continue;
+
+        if (!sMapStore.LookupEntry(entry->map_id))
+        {
+            LOG_WARN(
+                "server.loading",
+                "[LivingWorld] Skipping taxi node {} ('{}') with invalid map id {}.",
+                nodeId,
+                ResolveTaxiNodeName(*entry),
+                entry->map_id);
+            continue;
+        }
 
         WorldBotTaxiNode node;
         node.nodeId = nodeId;
