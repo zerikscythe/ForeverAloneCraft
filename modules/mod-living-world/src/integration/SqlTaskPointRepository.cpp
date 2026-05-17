@@ -105,6 +105,25 @@ std::optional<model::TaskPointEntry> SqlTaskPointRepository::FindByKey(std::stri
     return BuildPoint(qr->Fetch());
 }
 
+std::optional<model::TaskTransitRouteEntry> SqlTaskPointRepository::FindTransitRouteByKey(
+    std::string const& routeKey) const
+{
+    QueryResult qr = WorldDatabase.Query(
+        "SELECT r.route_id, r.route_key, r.source_point_key, r.dest_point_key, "
+        "r.transit_type, r.required_faction, r.min_level, r.max_level, r.duration_sec, r.display_name, "
+        "sp.zone_id, sp.map_id, sp.point_name, sp.x, sp.y, sp.z, "
+        "dp.zone_id, dp.map_id, dp.point_name, dp.x, dp.y, dp.z "
+        "FROM living_world_transit_route r "
+        "JOIN living_world_task_point sp ON sp.point_key = r.source_point_key "
+        "JOIN living_world_task_point dp ON dp.point_key = r.dest_point_key "
+        "WHERE r.route_key = '{}' LIMIT 1",
+        routeKey);
+    if (!qr)
+        return std::nullopt;
+
+    return BuildRoute(qr->Fetch());
+}
+
 std::optional<model::TaskPointEntry> SqlTaskPointRepository::FindByZoneAndType(
     std::uint32_t zoneId,
     std::string const& pointType) const

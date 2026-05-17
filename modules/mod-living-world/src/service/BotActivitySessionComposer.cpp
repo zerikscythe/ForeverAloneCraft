@@ -129,6 +129,9 @@ void AppendTransitStep(
     float z,
     std::uint32_t durationSec,
     std::string const& label,
+    std::string const& routeKey,
+    std::string const& sourcePointKey,
+    std::string const& destPointKey,
     std::string const& transitType,
     std::string const& sourceLabel,
     std::string const& destLabel)
@@ -142,6 +145,9 @@ void AppendTransitStep(
     flightStep.durationSec = durationSec;
     flightStep.taskIndex   = taskIndex;
     flightStep.transitType = transitType;
+    flightStep.transitRouteKey = routeKey;
+    flightStep.transitSourcePointKey = sourcePointKey;
+    flightStep.transitDestPointKey = destPointKey;
     flightStep.transitSourceLabel = sourceLabel;
     flightStep.transitDestLabel = destLabel;
     flightStep.label       = label;
@@ -209,6 +215,9 @@ bool AppendDynamicTaxiTransit(
         candidate->destinationNode.z,
         std::max<std::uint32_t>(15u, (candidate->route.totalEtaMs + 999u) / 1000u),
         "Taxi via " + candidate->sourceNode.name + " -> " + candidate->destinationNode.name,
+        "",
+        "",
+        "",
         "taxi",
         candidate->sourceNode.name,
         candidate->destinationNode.name);
@@ -530,6 +539,9 @@ std::optional<AmbientSession> BuildSessionFromTemplate(
                             route.destZ,
                             std::max<std::uint32_t>(15u, route.durationSec),
                             route.displayName,
+                            route.routeKey,
+                            route.sourcePointKey,
+                            route.destPointKey,
                             route.transitType,
                             route.sourcePointName,
                             route.destPointName);

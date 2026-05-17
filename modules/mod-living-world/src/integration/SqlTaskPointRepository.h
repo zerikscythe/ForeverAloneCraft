@@ -15,6 +15,7 @@ class SqlTaskPointRepository
 {
 public:
     std::optional<model::TaskPointEntry> FindByKey(std::string const& pointKey) const;
+    std::optional<model::TaskTransitRouteEntry> FindTransitRouteByKey(std::string const& routeKey) const;
     std::optional<model::TaskPointEntry> FindByZoneAndType(std::uint32_t zoneId, std::string const& pointType) const;
     std::optional<model::ZoneAnchorEntry> FindZoneAnchor(
         std::uint32_t zoneId,

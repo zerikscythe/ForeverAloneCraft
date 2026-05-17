@@ -21,6 +21,7 @@
 #include "integration/SqlBotAssignedGearRepository.h"
 #include "integration/SqlBotOocConfigRepository.h"
 #include "integration/SqlBotTalentPreferenceRepository.h"
+#include "integration/SqlTaskPointRepository.h"
 #include "integration/SqlZoneIndexRepository.h"
 #include "QueryResult.h"
 #include "service/BotActivitySessionComposer.h"
@@ -1451,9 +1452,84 @@ living_world::service::AmbientSession BuildDebugRouteHarnessSession(
     float destX,
     float destY,
     float destZ,
-    std::uint32_t idleDurationSec)
+    std::uint32_t idleDurationSec,
+    std::string const& transitRouteKey = "")
 {
     living_world::service::AmbientSession session;
+
+    if (!transitRouteKey.empty())
+    {
+        living_world::integration::SqlTaskPointRepository pointRepo;
+        auto const transitRoute = pointRepo.FindTransitRouteByKey(transitRouteKey);
+        if (transitRoute)
+        {
+            living_world::service::AmbientSessionTask embarkTask;
+            embarkTask.activityId = 0;
+            embarkTask.activityKey = "debug_route_harness_embark";
+            embarkTask.displayName = "Debug Transit Embark";
+            embarkTask.activityType = "travel_debug";
+            embarkTask.taskFamily = "debug";
+            embarkTask.targetZoneId = transitRoute->sourceZoneId;
+            session.tasks.push_back(std::move(embarkTask));
+
+            living_world::service::AmbientStep travelStep;
+            travelStep.type = living_world::service::AmbientStepType::Travel;
+            travelStep.mapId = transitRoute->sourceMapId;
+            travelStep.x = transitRoute->sourceX;
+            travelStep.y = transitRoute->sourceY;
+            travelStep.z = transitRoute->sourceZ;
+            travelStep.durationSec = 0;
+            travelStep.taskIndex = 0;
+            travelStep.label = "Travel to " + transitRoute->sourcePointName;
+            session.steps.push_back(std::move(travelStep));
+
+            living_world::service::AmbientSessionTask arriveTask;
+            arriveTask.activityId = 0;
+            arriveTask.activityKey = "debug_route_harness_arrive";
+            arriveTask.displayName = "Debug Transit Arrival";
+            arriveTask.activityType = "travel_debug";
+            arriveTask.taskFamily = "debug";
+            arriveTask.targetZoneId = transitRoute->destZoneId;
+            session.tasks.push_back(std::move(arriveTask));
+
+            living_world::service::AmbientStep transitStep;
+            transitStep.type = living_world::service::AmbientStepType::Transit;
+            transitStep.mapId = transitRoute->destMapId;
+            transitStep.x = transitRoute->destX;
+            transitStep.y = transitRoute->destY;
+            transitStep.z = transitRoute->destZ;
+            transitStep.durationSec = std::max<std::uint32_t>(15u, transitRoute->durationSec);
+            transitStep.taskIndex = 1;
+            transitStep.transitType = transitRoute->transitType;
+            transitStep.transitRouteKey = transitRoute->routeKey;
+            transitStep.transitSourcePointKey = transitRoute->sourcePointKey;
+            transitStep.transitDestPointKey = transitRoute->destPointKey;
+            transitStep.transitSourceLabel = transitRoute->sourcePointName;
+            transitStep.transitDestLabel = transitRoute->destPointName;
+            transitStep.label = transitRoute->displayName.empty()
+                ? ("Debug transit " + transitRoute->sourcePointName + " -> " + transitRoute->destPointName)
+                : transitRoute->displayName;
+            session.steps.push_back(std::move(transitStep));
+
+            living_world::service::AmbientStep idleStep;
+            idleStep.type = living_world::service::AmbientStepType::Idle;
+            idleStep.mapId = transitRoute->destMapId;
+            idleStep.x = transitRoute->destX;
+            idleStep.y = transitRoute->destY;
+            idleStep.z = transitRoute->destZ;
+            idleStep.durationSec = std::max<std::uint32_t>(idleDurationSec, 5u);
+            idleStep.taskIndex = 1;
+            idleStep.label = "Debug transit arrival hold";
+            session.steps.push_back(std::move(idleStep));
+
+            session.activityId = 0;
+            session.activityKey = "debug_route_harness";
+            session.displayName = "Debug Route Harness";
+            session.sourceKind = "debug_route_harness";
+            session.sourceKey = "debug_route_harness";
+            return session;
+        }
+    }
 
     living_world::service::AmbientSessionTask task;
     task.activityId = 0;
@@ -1698,6 +1774,8 @@ public:
             "LivingWorld.DebugRouteHarnessDestY", 1455.3373f);
         _debugRouteHarnessDestZ = sConfigMgr->GetOption<float>(
             "LivingWorld.DebugRouteHarnessDestZ", 0.0f);
+        _debugRouteHarnessTransitRouteKey = sConfigMgr->GetOption<std::string>(
+            "LivingWorld.DebugRouteHarnessTransitRouteKey", "");
         _debugRouteHarnessExploredZones = ParseDebugIdentityIdList(
             sConfigMgr->GetOption<std::string>("LivingWorld.DebugRouteHarnessExploredZones", ""));
         _debugRouteHarnessIdleDurationSec = sConfigMgr->GetOption<std::uint32_t>(
@@ -1883,6 +1961,7 @@ private:
     float _debugRouteHarnessDestX = 0.0f;
     float _debugRouteHarnessDestY = 0.0f;
     float _debugRouteHarnessDestZ = 0.0f;
+    std::string _debugRouteHarnessTransitRouteKey;
     std::vector<std::uint32_t> _debugRouteHarnessExploredZones;
     std::uint32_t _debugRouteHarnessIdleDurationSec = 30;
     SpawnPoint _forcedSpawnPoint { 0u, 0.0f, 0.0f, 0.0f };
@@ -2709,7 +2788,8 @@ private:
             _debugRouteHarnessDestX,
             _debugRouteHarnessDestY,
             _debugRouteHarnessDestZ,
-            _debugRouteHarnessIdleDurationSec);
+            _debugRouteHarnessIdleDurationSec,
+            _debugRouteHarnessTransitRouteKey);
 
         std::uint32_t spawned = 0;
         for (std::size_t i = 0; i < _debugRouteHarnessLevels.size(); ++i)
@@ -2825,7 +2905,14 @@ private:
                 : (snapshot.progress.currentStep < snapshot.session.steps.size()
                     ? snapshot.session.steps[snapshot.progress.currentStep].mapId
                     : 0u);
-            if (!snapshot.inTaxiTransit && IsZoneHotOrInterested(mapId, zoneId))
+            if ((!snapshot.inTaxiTransit && !snapshot.inPhysicalTransit)
+                && IsZoneHotOrInterested(mapId, zoneId))
+            {
+                ++itr;
+                continue;
+            }
+
+            if (snapshot.inPhysicalTransit)
             {
                 ++itr;
                 continue;

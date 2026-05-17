@@ -45,7 +45,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dest-x", type=float, default=-10053.198)
     parser.add_argument("--dest-y", type=float, default=1455.3373)
     parser.add_argument("--dest-z", type=float, default=44.6324)
+    parser.add_argument("--transit-route-key", default="", help="Optional authored transit route key for a Travel -> Transit -> Hold harness run")
     parser.add_argument("--interest-zone-id", type=int, default=0, help="Optional synthetic-interest zone override; defaults to destination zone")
+    parser.add_argument("--interest-switch-map-id", type=int, default=0, help="Optional synthetic-interest switch map id")
+    parser.add_argument("--interest-switch-zone-id", type=int, default=0, help="Optional synthetic-interest switch zone id")
+    parser.add_argument("--interest-switch-ms", type=int, default=0, help="Optional synthetic-interest switch delay in milliseconds")
     parser.add_argument("--explored-zone-ids", default="", help="Comma-separated explored zones to seed onto each harness bot")
     parser.add_argument("--bake-zone-ids", default="", help="Comma-separated zone ids to terrain-bake before harness spawn")
     parser.add_argument("--idle-seconds", type=int, default=30)
@@ -280,6 +284,9 @@ def wait_for_progress_rows(
         "travel_taxi_start",
         "travel_taxi_board",
         "travel_taxi_arrive",
+        "travel_transit_wait",
+        "travel_transit_board",
+        "travel_transit_arrive",
         "travel_arrive",
         "activity_complete",
         "session_complete",
@@ -328,7 +335,8 @@ def fetch_identity_rows(
     return run_mysql_query(
         settings,
         str(settings["characters_db"]),
-        "SELECT name, level, is_available, session_count, active_world_session_ms, last_seen_zone "
+        "SELECT name, level, is_available, session_count, active_world_session_ms, "
+        "last_seen_zone, runtime_state, runtime_detail "
         "FROM living_world_bot_identity "
         f"WHERE name IN ({name_list}) "
         "ORDER BY name ASC",
@@ -369,6 +377,7 @@ def build_report(
                 "  "
                 f"name={row[0]} level={row[1]} is_available={row[2]} "
                 f"session_count={row[3]} active_world_session_ms={row[4]} last_seen_zone={row[5]}"
+                f" runtime_state={row[6]} runtime_detail={row[7]}"
             )
         lines.append("")
 
@@ -386,6 +395,10 @@ def build_report(
             "travel_taxi_board",
             "travel_taxi_arrive",
             "travel_taxi_resume_ground",
+            "travel_transit_wait",
+            "travel_transit_board",
+            "travel_transit_timeout",
+            "travel_transit_arrive",
             "travel_arrive",
             "travel_timeout",
             "travel_stuck",
@@ -433,9 +446,9 @@ def main() -> int:
         "LivingWorld.DebugSyntheticInterestEnabled": "1",
         "LivingWorld.DebugSyntheticInterestMapId": str(args.map_id),
         "LivingWorld.DebugSyntheticInterestZoneId": str(args.interest_zone_id or args.dest_zone_id),
-        "LivingWorld.DebugSyntheticInterestSwitchMapId": "0",
-        "LivingWorld.DebugSyntheticInterestSwitchZoneId": "0",
-        "LivingWorld.DebugSyntheticInterestSwitchMs": "0",
+        "LivingWorld.DebugSyntheticInterestSwitchMapId": str(args.interest_switch_map_id),
+        "LivingWorld.DebugSyntheticInterestSwitchZoneId": str(args.interest_switch_zone_id),
+        "LivingWorld.DebugSyntheticInterestSwitchMs": str(args.interest_switch_ms),
         "LivingWorld.DebugSyntheticInterestClearMs": "0",
         "LivingWorld.DebugHotZoneCooldownMs": "0",
         "LivingWorld.DebugForceIdentityIds": "\"\"",
@@ -455,6 +468,7 @@ def main() -> int:
         "LivingWorld.DebugRouteHarnessDestX": str(args.dest_x),
         "LivingWorld.DebugRouteHarnessDestY": str(args.dest_y),
         "LivingWorld.DebugRouteHarnessDestZ": str(args.dest_z),
+        "LivingWorld.DebugRouteHarnessTransitRouteKey": f"\"{args.transit_route_key}\"",
         "LivingWorld.DebugRouteHarnessExploredZones": f"\"{args.explored_zone_ids}\"",
         "LivingWorld.DebugRouteHarnessBakeRouteZ": "1" if args.bake_zone_ids else "0",
         "LivingWorld.DebugRouteHarnessBakeZoneIds": f"\"{args.bake_zone_ids}\"",

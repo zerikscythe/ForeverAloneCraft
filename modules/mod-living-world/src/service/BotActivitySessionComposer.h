@@ -38,6 +38,9 @@ struct AmbientStep
     std::string     returnAnchorRole;
     std::uint8_t    cycleCount  = 1;
     std::string     transitType;
+    std::string     transitRouteKey;
+    std::string     transitSourcePointKey;
+    std::string     transitDestPointKey;
     std::string     transitSourceLabel;
     std::string     transitDestLabel;
     std::string     label;

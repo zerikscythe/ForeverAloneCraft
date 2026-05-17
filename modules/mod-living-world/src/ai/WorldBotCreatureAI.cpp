@@ -5,6 +5,7 @@
 #include "CreatureAIImpl.h"
 #include "CellImpl.h"
 #include "DataStores/DBCStores.h"
+#include "Map.h"
 #include "Globals/ObjectMgr.h"
 #include "Log.h"
 #include "MotionMaster.h"
@@ -25,6 +26,7 @@
 #include "integration/SqlBotAssignedGearRepository.h"
 #include "integration/SqlBotExploredZoneRepository.h"
 #include "integration/SqlBotHazardConfigRepository.h"
+#include "integration/SqlTaskPointRepository.h"
 #include "integration/SqlBotTalentTemplateRepository.h"
 #include "integration/SqlBotVirtualLoadoutRepository.h"
 #include "service/BotCombatDoctrineResolver.h"
@@ -47,8 +49,10 @@
 #include "service/WorldBotPreparationService.h"
 #include "service/WorldBotTaxiPlanning.h"
 #include "model/BotSpecKey.h"
+#include "Transport.h"
 
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <chrono>
 #include <filesystem>
@@ -112,6 +116,73 @@ constexpr float GatherSearchRadius = 200.0f;
 constexpr float GatherInteractRange = 6.0f;
 constexpr float GatherAnchorReturnDistance = 60.0f;
 constexpr std::uint32_t DebugManaGemItemId = 33312;
+
+struct PhysicalTransitRouteSpec
+{
+    char const* routeKey = "";
+    char const* transitType = "";
+    std::uint32_t transportEntry = 0;
+    float boardDetectRadius = 90.0f;
+    float boardArriveRadius = 10.0f;
+    float disembarkRadius = 70.0f;
+};
+
+struct PhysicalTransitDeckSpot
+{
+    float x = 0.0f;
+    float y = 0.0f;
+    float z = 0.0f;
+    float o = 0.0f;
+};
+
+std::optional<PhysicalTransitRouteSpec> ResolvePhysicalTransitRouteSpec(
+    service::AmbientStep const& step)
+{
+    std::string transitType = step.transitType;
+    std::transform(
+        transitType.begin(),
+        transitType.end(),
+        transitType.begin(),
+        [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    if (transitType != "boat")
+        return std::nullopt;
+
+    if (step.transitRouteKey == "ratchet_to_booty_bay"
+        || step.transitRouteKey == "booty_bay_to_ratchet")
+    {
+        // Maiden's Fancy transport-local deck coordinates sampled from its
+        // passenger map so boarding lands on a sane lower-deck location.
+        return PhysicalTransitRouteSpec{
+            step.transitRouteKey.c_str(),
+            "boat",
+            20808u,
+            110.0f,
+            8.0f,
+            85.0f,
+        };
+    }
+
+    return std::nullopt;
+}
+
+PhysicalTransitDeckSpot PickPhysicalTransitDeckSpot(PhysicalTransitRouteSpec const& routeSpec)
+{
+    if (routeSpec.transportEntry == 20808u)
+    {
+        // Maiden's Fancy transport-local deck spots sampled from its passenger map.
+        static constexpr std::array<PhysicalTransitDeckSpot, 6> spots{{
+            { 15.6121f,  1.09944f,  6.09764f, 2.52482f },
+            { 17.8437f, -7.84575f,  6.09877f, 1.64493f },
+            { 15.8067f, -5.80051f, 11.9732f,  1.86484f },
+            {  9.39981f, 9.17899f, 11.5941f,  1.52083f },
+            { -11.4014f, 6.67999f,  6.09785f, 2.93715f },
+            {  6.20811f, 0.005208f, 14.0554f, 2.54813f },
+        }};
+        return spots[urand(0u, static_cast<std::uint32_t>(spots.size() - 1u))];
+    }
+
+    return {};
+}
 
 integration::SqlBotIdentityRepository& GetIdentityRepo()
 {
@@ -1297,7 +1368,25 @@ std::string WorldBotCreatureAI::DescribeRuntimeStateKey() const
     }
 
     if (step.type == service::AmbientStepType::Transit)
+    {
+        if (_activeTransitExecutionPhase != ActiveTransitExecutionPhase::None)
+        {
+            switch (_activeTransitExecutionPhase)
+            {
+                case ActiveTransitExecutionPhase::WaitingForTransport:
+                    return std::string("travel_transit_") + NormalizeTransitType(step.transitType) + "_wait";
+                case ActiveTransitExecutionPhase::Boarding:
+                    return std::string("travel_transit_") + NormalizeTransitType(step.transitType) + "_board";
+                case ActiveTransitExecutionPhase::Riding:
+                    return std::string("travel_transit_") + NormalizeTransitType(step.transitType) + "_ride";
+                case ActiveTransitExecutionPhase::None:
+                default:
+                    break;
+            }
+        }
+
         return std::string("travel_transit_") + NormalizeTransitType(step.transitType);
+    }
 
     return std::string("activity_") + DescribeAmbientStepTypeKey(step.type);
 }
@@ -1320,6 +1409,28 @@ std::string WorldBotCreatureAI::DescribeRuntimeStateDetail() const
 
     if (step.type == service::AmbientStepType::Transit)
     {
+        if (_activeTransitExecutionPhase != ActiveTransitExecutionPhase::None && !_activePhysicalTransit.empty())
+        {
+            switch (_activeTransitExecutionPhase)
+            {
+                case ActiveTransitExecutionPhase::WaitingForTransport:
+                    return "Waiting at " + _activePhysicalTransit.sourceLabel
+                        + " for " + _activePhysicalTransit.transitType
+                        + " to " + _activePhysicalTransit.destLabel;
+                case ActiveTransitExecutionPhase::Boarding:
+                    return "Boarding " + _activePhysicalTransit.transitType
+                        + " " + _activePhysicalTransit.sourceLabel
+                        + " -> " + _activePhysicalTransit.destLabel;
+                case ActiveTransitExecutionPhase::Riding:
+                    return "Riding " + _activePhysicalTransit.transitType
+                        + " " + _activePhysicalTransit.sourceLabel
+                        + " -> " + _activePhysicalTransit.destLabel;
+                case ActiveTransitExecutionPhase::None:
+                default:
+                    break;
+            }
+        }
+
         std::string detail = DescribeScriptedTransitDetail(step);
         if (!step.label.empty() && step.label != detail)
             detail += " | " + step.label;
@@ -1492,6 +1603,10 @@ bool WorldBotCreatureAI::BuildRuntimeSnapshot(RuntimeSnapshot& out) const
     out.progress.stepStartZ = me->GetPositionZ();
     out.progress.stepElapsedMs = 0;
     out.inTaxiTransit = _activeTravelExecutionPhase == ActiveTravelExecutionPhase::TaxiTransit;
+    out.inPhysicalTransit =
+        _currentStep < _session.steps.size()
+        && _session.steps[_currentStep].type == service::AmbientStepType::Transit
+        && _activeTransitExecutionPhase != ActiveTransitExecutionPhase::None;
 
     if (_currentStep >= _session.steps.size())
         return true;
@@ -1649,6 +1764,15 @@ void WorldBotCreatureAI::ClearActiveTaxiTravel()
     _activeTaxiJourney = {};
 }
 
+void WorldBotCreatureAI::ClearActivePhysicalTransit()
+{
+    if (me && me->GetTransport())
+        me->GetTransport()->RemovePassenger(me, true);
+
+    _activeTransitExecutionPhase = ActiveTransitExecutionPhase::None;
+    _activePhysicalTransit = {};
+}
+
 bool WorldBotCreatureAI::BeginActiveTaxiTransit(service::AmbientStep const& step)
 {
     if (!me || _activeTaxiJourney.empty())
@@ -1737,6 +1861,217 @@ bool WorldBotCreatureAI::CompleteActiveTaxiTransit(service::AmbientStep const& s
 
     PersistRuntimeLedgerState();
 
+    return true;
+}
+
+bool WorldBotCreatureAI::TryBeginPhysicalTransit(service::AmbientStep const& step)
+{
+    if (!me || step.type != service::AmbientStepType::Transit)
+        return false;
+    if (_activeTransitExecutionPhase != ActiveTransitExecutionPhase::None)
+        return true;
+
+    auto const routeSpec = ResolvePhysicalTransitRouteSpec(step);
+    if (!routeSpec.has_value())
+        return false;
+    if (step.transitSourcePointKey.empty() || step.transitDestPointKey.empty())
+        return false;
+
+    integration::SqlTaskPointRepository pointRepo;
+    auto const sourcePoint = pointRepo.FindByKey(step.transitSourcePointKey);
+    auto const destPoint = pointRepo.FindByKey(step.transitDestPointKey);
+    if (!sourcePoint || !destPoint)
+        return false;
+
+    _activePhysicalTransit.routeKey = step.transitRouteKey;
+    _activePhysicalTransit.transitType = NormalizeTransitType(step.transitType);
+    _activePhysicalTransit.sourceLabel = step.transitSourceLabel.empty() ? sourcePoint->pointName : step.transitSourceLabel;
+    _activePhysicalTransit.destLabel = step.transitDestLabel.empty() ? destPoint->pointName : step.transitDestLabel;
+    _activePhysicalTransit.transportEntry = routeSpec->transportEntry;
+    _activePhysicalTransit.sourceMapId = sourcePoint->mapId;
+    _activePhysicalTransit.destMapId = destPoint->mapId;
+    _activePhysicalTransit.sourceX = sourcePoint->x;
+    _activePhysicalTransit.sourceY = sourcePoint->y;
+    _activePhysicalTransit.sourceZ = sourcePoint->z;
+    _activePhysicalTransit.destX = destPoint->x;
+    _activePhysicalTransit.destY = destPoint->y;
+    _activePhysicalTransit.destZ = destPoint->z;
+    PhysicalTransitDeckSpot const deckSpot = PickPhysicalTransitDeckSpot(*routeSpec);
+    _activePhysicalTransit.boardLocalX = deckSpot.x;
+    _activePhysicalTransit.boardLocalY = deckSpot.y;
+    _activePhysicalTransit.boardLocalZ = deckSpot.z;
+    _activePhysicalTransit.boardLocalO = deckSpot.o;
+    _activePhysicalTransit.boardDetectRadius = routeSpec->boardDetectRadius;
+    _activePhysicalTransit.boardArriveRadius = routeSpec->boardArriveRadius;
+    _activePhysicalTransit.disembarkRadius = routeSpec->disembarkRadius;
+    _activePhysicalTransit.activeTransportGuid.Clear();
+    _activeTransitExecutionPhase = ActiveTransitExecutionPhase::WaitingForTransport;
+
+    ClearVisibleTravelMode();
+    me->StopMoving();
+    me->GetMotionMaster()->Clear();
+
+    integration::BotActivityLog::Record(
+        me,
+        _identity.name,
+        _identity.id,
+        "travel_transit_wait",
+        BuildTravelNarrative(
+            _session,
+            step,
+            "waiting for " + _activePhysicalTransit.sourceLabel
+                + " -> " + _activePhysicalTransit.destLabel
+                + " transport"));
+
+    integration::BotActivityLog::Record(
+        me,
+        _identity.name,
+        _identity.id,
+        "status_change",
+        "Waiting for physical transit -> " + DescribeRuntimeStateDetail());
+
+    PersistRuntimeLedgerState();
+    return true;
+}
+
+bool WorldBotCreatureAI::TickPhysicalTransit(service::AmbientStep const& step)
+{
+    if (!me || _activePhysicalTransit.empty())
+        return false;
+
+    auto findTransport =
+        [this]() -> Transport*
+        {
+            Map* map = me ? me->GetMap() : nullptr;
+            if (!map)
+                return nullptr;
+
+            if (!_activePhysicalTransit.activeTransportGuid.IsEmpty())
+            {
+                if (Transport* transport = map->GetTransport(_activePhysicalTransit.activeTransportGuid))
+                {
+                    if (transport->GetEntry() == _activePhysicalTransit.transportEntry)
+                        return transport;
+                }
+            }
+
+            for (Transport* transport : map->GetAllTransports())
+            {
+                if (!transport
+                    || !transport->IsInWorld()
+                    || transport->GetEntry() != _activePhysicalTransit.transportEntry)
+                {
+                    continue;
+                }
+
+                _activePhysicalTransit.activeTransportGuid = transport->GetGUID();
+                return transport;
+            }
+
+            return nullptr;
+        };
+
+    if (_activeTransitExecutionPhase == ActiveTransitExecutionPhase::WaitingForTransport
+        || _activeTransitExecutionPhase == ActiveTransitExecutionPhase::Boarding)
+    {
+        Transport* transport = findTransport();
+        if (!transport)
+            return true;
+
+        if (transport->GetMapId() != _activePhysicalTransit.sourceMapId)
+            return true;
+
+        float const sourceDist = transport->GetDistance(
+            _activePhysicalTransit.sourceX,
+            _activePhysicalTransit.sourceY,
+            _activePhysicalTransit.sourceZ);
+        if (sourceDist > _activePhysicalTransit.boardDetectRadius)
+            return true;
+
+        float boardX = _activePhysicalTransit.boardLocalX;
+        float boardY = _activePhysicalTransit.boardLocalY;
+        float boardZ = _activePhysicalTransit.boardLocalZ;
+        float boardO = _activePhysicalTransit.boardLocalO;
+        transport->CalculatePassengerPosition(boardX, boardY, boardZ, &boardO);
+
+        _activeTransitExecutionPhase = ActiveTransitExecutionPhase::Boarding;
+        if (me->GetDistance(boardX, boardY, boardZ) > _activePhysicalTransit.boardArriveRadius)
+        {
+            me->GetMotionMaster()->MovePoint(
+                static_cast<uint32>(_currentStep),
+                boardX,
+                boardY,
+                boardZ);
+            return true;
+        }
+
+        me->NearTeleportTo(boardX, boardY, boardZ, boardO);
+        transport->AddPassenger(me, true);
+        me->StopMovingOnCurrentPos();
+        _activeTransitExecutionPhase = ActiveTransitExecutionPhase::Riding;
+
+        integration::BotActivityLog::Record(
+            me,
+            _identity.name,
+            _identity.id,
+            "travel_transit_board",
+            BuildTravelNarrative(
+                _session,
+                step,
+                "boarded " + _activePhysicalTransit.transitType
+                    + " " + _activePhysicalTransit.sourceLabel
+                    + " -> " + _activePhysicalTransit.destLabel));
+        PersistRuntimeLedgerState();
+        return true;
+    }
+
+    if (_activeTransitExecutionPhase != ActiveTransitExecutionPhase::Riding)
+        return false;
+
+    Transport* transport = me->GetTransport();
+    if (!transport)
+        transport = findTransport();
+    if (!transport)
+        return true;
+
+    float const destDist = transport->GetDistance(
+        _activePhysicalTransit.destX,
+        _activePhysicalTransit.destY,
+        _activePhysicalTransit.destZ);
+    if (destDist > _activePhysicalTransit.disembarkRadius)
+        return true;
+
+    if (me->GetTransport())
+        me->GetTransport()->RemovePassenger(me, true);
+
+    me->NearTeleportTo(
+        _activePhysicalTransit.destX,
+        _activePhysicalTransit.destY,
+        _activePhysicalTransit.destZ,
+        me->GetOrientation());
+    ObserveCurrentZoneExploration();
+
+    integration::BotActivityLog::Record(
+        me,
+        _identity.name,
+        _identity.id,
+        "travel_transit_arrive",
+        BuildTravelNarrative(
+            _session,
+            step,
+            "arrived by " + _activePhysicalTransit.transitType
+                + " at " + _activePhysicalTransit.destLabel));
+
+    integration::BotActivityLog::Record(
+        me,
+        _identity.name,
+        _identity.id,
+        "status_change",
+        "Transit complete -> " + DescribeNextTask(_session, _currentStep + 1));
+
+    _activityTimer = 0;
+    ClearActivePhysicalTransit();
+    AdvanceStep();
     return true;
 }
 
@@ -2815,23 +3150,45 @@ void WorldBotCreatureAI::TickStep(uint32 /*diff*/)
 
     if (step.type == service::AmbientStepType::Transit)
     {
-        if (_activityTimer == 0)
+        if (_activityTimer == 0 && _activeTransitExecutionPhase == ActiveTransitExecutionPhase::None)
         {
-            ClearVisibleTravelMode();
-            integration::BotActivityLog::Record(
-                me, _identity.name, _identity.id,
-                "travel_transit_start",
-                DescribeRuntimeStateDetail());
+            if (!TryBeginPhysicalTransit(step))
+            {
+                ClearVisibleTravelMode();
+                integration::BotActivityLog::Record(
+                    me, _identity.name, _identity.id,
+                    "travel_transit_start",
+                    DescribeRuntimeStateDetail());
 
-            integration::BotActivityLog::Record(
-                me, _identity.name, _identity.id,
-                "status_change",
-                "In transit -> " + DescribeRuntimeStateDetail());
+                integration::BotActivityLog::Record(
+                    me, _identity.name, _identity.id,
+                    "status_change",
+                    "In transit -> " + DescribeRuntimeStateDetail());
 
-            PersistRuntimeLedgerState();
+                PersistRuntimeLedgerState();
+            }
         }
 
         _activityTimer += TickIntervalMs;
+        if (_activeTransitExecutionPhase != ActiveTransitExecutionPhase::None)
+        {
+            uint32 const physicalTimeoutMs = std::max<uint32>(180000u, std::max<uint32>(1000u, step.durationSec * 1000u) + 60000u);
+            if (_activityTimer >= physicalTimeoutMs)
+            {
+                integration::BotActivityLog::Record(
+                    me, _identity.name, _identity.id,
+                    "travel_transit_timeout",
+                    "Physical transit timeout -> retrying " + DescribeRuntimeStateDetail());
+                ClearActivePhysicalTransit();
+                _activityTimer = 0;
+                PersistRuntimeLedgerState("Retrying transit after timeout");
+                return;
+            }
+
+            if (TickPhysicalTransit(step))
+                return;
+        }
+
         uint32 const durationMs = std::max<uint32>(1000u, step.durationSec * 1000u);
         if (_activityTimer >= durationMs)
         {
@@ -2851,6 +3208,7 @@ void WorldBotCreatureAI::TickStep(uint32 /*diff*/)
                 "Transit complete -> " + DescribeNextTask(_session, _currentStep + 1));
 
             _activityTimer = 0;
+            ClearActivePhysicalTransit();
             AdvanceStep();
         }
         return;
@@ -2902,6 +3260,7 @@ void WorldBotCreatureAI::AdvanceStep()
     ClearVisibleTravelMode();
     ClearActiveRouteTravelPlan();
     ClearActiveTaxiTravel();
+    ClearActivePhysicalTransit();
     ResetGatherState();
     ResetTravelWatchdog(_travelWatchdog);
 
@@ -2918,6 +3277,7 @@ void WorldBotCreatureAI::CompletSession()
     _sessionDone = true;
     ClearVisibleTravelMode();
     ClearActiveTaxiTravel();
+    ClearActivePhysicalTransit();
 
     std::uint32_t const zoneId = me->GetZoneId();
 

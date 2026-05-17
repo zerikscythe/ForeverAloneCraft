@@ -45,6 +45,44 @@ public:
         TaxiFinalLeg = 4,
     };
 
+    enum class ActiveTransitExecutionPhase : std::uint8_t
+    {
+        None = 0,
+        WaitingForTransport = 1,
+        Boarding = 2,
+        Riding = 3,
+    };
+
+    struct ActivePhysicalTransitState
+    {
+        std::string routeKey;
+        std::string transitType;
+        std::string sourceLabel;
+        std::string destLabel;
+        std::uint32_t transportEntry = 0;
+        std::uint16_t sourceMapId = 0;
+        std::uint16_t destMapId = 0;
+        float sourceX = 0.0f;
+        float sourceY = 0.0f;
+        float sourceZ = 0.0f;
+        float destX = 0.0f;
+        float destY = 0.0f;
+        float destZ = 0.0f;
+        float boardLocalX = 0.0f;
+        float boardLocalY = 0.0f;
+        float boardLocalZ = 0.0f;
+        float boardLocalO = 0.0f;
+        float boardDetectRadius = 90.0f;
+        float boardArriveRadius = 10.0f;
+        float disembarkRadius = 70.0f;
+        ObjectGuid activeTransportGuid;
+
+        [[nodiscard]] bool empty() const
+        {
+            return routeKey.empty() || transportEntry == 0;
+        }
+    };
+
     struct RuntimeSnapshot
     {
         integration::BotIdentityRecord     identity;
@@ -52,6 +90,7 @@ public:
         AbstractWorldBotProgressState      progress;
         std::uint64_t                      worldOnlineMs = 0;
         bool                               inTaxiTransit = false;
+        bool                               inPhysicalTransit = false;
     };
 
     explicit WorldBotCreatureAI(Creature* creature);
@@ -120,6 +159,9 @@ private:
     void ClearActiveTaxiTravel();
     bool BeginActiveTaxiTransit(service::AmbientStep const& step);
     bool CompleteActiveTaxiTransit(service::AmbientStep const& step);
+    void ClearActivePhysicalTransit();
+    bool TryBeginPhysicalTransit(service::AmbientStep const& step);
+    bool TickPhysicalTransit(service::AmbientStep const& step);
     ai::TravelWatchdogConfig BuildActiveTravelWatchdogConfig(
         service::AmbientStep const& step,
         service::WorldBotTravelCapabilityTier tier) const;
@@ -174,11 +216,13 @@ private:
     std::uint32_t  _visibleTravelModeSpellId = 0;
     service::WorldBotTravelCapabilityTier _visibleTravelCapabilityTier = service::WorldBotTravelCapabilityTier::Foot;
     float          _visibleTravelSpeedRate = 1.0f;
+    ActiveTransitExecutionPhase _activeTransitExecutionPhase = ActiveTransitExecutionPhase::None;
     std::unordered_set<std::uint32_t> _usedSimulatedItemsThisCombat;
     std::unordered_set<std::uint32_t> _knownExploredZoneIds;
     service::SharedHazardEvaluationState _hazardEvaluationState;
     service::WorldBotResolvedTravelPlan _routeTravelPlan;
     service::WorldBotResolvedTaxiJourney _activeTaxiJourney;
+    ActivePhysicalTransitState _activePhysicalTransit;
 
     // Accumulates UpdateAI diff for the 500ms tick gate.
     std::uint32_t _tickAccum     = 0;
