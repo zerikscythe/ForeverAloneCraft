@@ -91,6 +91,12 @@ public:
         std::uint64_t                      worldOnlineMs = 0;
         bool                               inTaxiTransit = false;
         bool                               inPhysicalTransit = false;
+        bool                               physicalTransitReadyForAbstract = false;
+        std::uint32_t                      physicalTransitTransportEntry = 0;
+        float                              physicalTransitLocalX = 0.0f;
+        float                              physicalTransitLocalY = 0.0f;
+        float                              physicalTransitLocalZ = 0.0f;
+        float                              physicalTransitLocalO = 0.0f;
     };
 
     explicit WorldBotCreatureAI(Creature* creature);
@@ -161,6 +167,7 @@ private:
     bool CompleteActiveTaxiTransit(service::AmbientStep const& step);
     void ClearActivePhysicalTransit();
     bool TryBeginPhysicalTransit(service::AmbientStep const& step);
+    bool TryResumePhysicalTransit(service::AmbientStep const& step);
     bool TickPhysicalTransit(service::AmbientStep const& step);
     ai::TravelWatchdogConfig BuildActiveTravelWatchdogConfig(
         service::AmbientStep const& step,

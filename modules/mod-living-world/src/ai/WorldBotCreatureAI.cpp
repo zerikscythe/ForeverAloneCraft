@@ -116,6 +116,8 @@ constexpr float GatherSearchRadius = 200.0f;
 constexpr float GatherInteractRange = 6.0f;
 constexpr float GatherAnchorReturnDistance = 60.0f;
 constexpr std::uint32_t DebugManaGemItemId = 33312;
+constexpr float CrossMapTransitAbstractSourceDistanceYards = 300.0f;
+constexpr std::uint32_t CrossMapTransitAbstractMinElapsedMs = 20000u;
 
 struct PhysicalTransitRouteSpec
 {
@@ -948,6 +950,7 @@ void WorldBotCreatureAI::SetIdentityAndSession(
     _debugCombatManaGemObserved = false;
     _usedSimulatedItemsThisCombat.clear();
     ClearActiveTaxiTravel();
+    ClearActivePhysicalTransit();
 
     _preparedBuild = GetWorldBotPreparationService().Prepare(_identity, "PvE");
     {
@@ -1059,6 +1062,13 @@ void WorldBotCreatureAI::SetIdentityAndSession(
 
     if (resumedFromAbstract)
     {
+        if (_currentStep < _session.steps.size())
+        {
+            service::AmbientStep const& step = _session.steps[_currentStep];
+            if (step.type == service::AmbientStepType::Transit)
+                TryResumePhysicalTransit(step);
+        }
+
         integration::BotActivityLog::Record(
             me,
             _identity.name,
@@ -1607,6 +1617,23 @@ bool WorldBotCreatureAI::BuildRuntimeSnapshot(RuntimeSnapshot& out) const
         _currentStep < _session.steps.size()
         && _session.steps[_currentStep].type == service::AmbientStepType::Transit
         && _activeTransitExecutionPhase != ActiveTransitExecutionPhase::None;
+    if (out.inPhysicalTransit
+        && _activeTransitExecutionPhase == ActiveTransitExecutionPhase::Riding
+        && !_activePhysicalTransit.empty()
+        && _activePhysicalTransit.sourceMapId != _activePhysicalTransit.destMapId)
+    {
+        out.physicalTransitTransportEntry = _activePhysicalTransit.transportEntry;
+        out.physicalTransitReadyForAbstract = _activityTimer >= CrossMapTransitAbstractMinElapsedMs;
+
+        if (me->GetTransport())
+        {
+            me->m_movementInfo.transport.pos.GetPosition(
+                out.physicalTransitLocalX,
+                out.physicalTransitLocalY,
+                out.physicalTransitLocalZ,
+                out.physicalTransitLocalO);
+        }
+    }
 
     if (_currentStep >= _session.steps.size())
         return true;
@@ -1934,6 +1961,57 @@ bool WorldBotCreatureAI::TryBeginPhysicalTransit(service::AmbientStep const& ste
     return true;
 }
 
+bool WorldBotCreatureAI::TryResumePhysicalTransit(service::AmbientStep const& step)
+{
+    if (!me || step.type != service::AmbientStepType::Transit)
+        return false;
+    if (_activeTransitExecutionPhase != ActiveTransitExecutionPhase::None)
+        return true;
+
+    Transport* transport = me->GetTransport();
+    if (!transport)
+        return false;
+
+    auto const routeSpec = ResolvePhysicalTransitRouteSpec(step);
+    if (!routeSpec.has_value() || transport->GetEntry() != routeSpec->transportEntry)
+        return false;
+
+    if (step.transitSourcePointKey.empty() || step.transitDestPointKey.empty())
+        return false;
+
+    integration::SqlTaskPointRepository pointRepo;
+    auto const sourcePoint = pointRepo.FindByKey(step.transitSourcePointKey);
+    auto const destPoint = pointRepo.FindByKey(step.transitDestPointKey);
+    if (!sourcePoint || !destPoint)
+        return false;
+
+    _activePhysicalTransit.routeKey = step.transitRouteKey;
+    _activePhysicalTransit.transitType = NormalizeTransitType(step.transitType);
+    _activePhysicalTransit.sourceLabel = step.transitSourceLabel.empty() ? sourcePoint->pointName : step.transitSourceLabel;
+    _activePhysicalTransit.destLabel = step.transitDestLabel.empty() ? destPoint->pointName : step.transitDestLabel;
+    _activePhysicalTransit.transportEntry = routeSpec->transportEntry;
+    _activePhysicalTransit.sourceMapId = sourcePoint->mapId;
+    _activePhysicalTransit.destMapId = destPoint->mapId;
+    _activePhysicalTransit.sourceX = sourcePoint->x;
+    _activePhysicalTransit.sourceY = sourcePoint->y;
+    _activePhysicalTransit.sourceZ = sourcePoint->z;
+    _activePhysicalTransit.destX = destPoint->x;
+    _activePhysicalTransit.destY = destPoint->y;
+    _activePhysicalTransit.destZ = destPoint->z;
+    _activePhysicalTransit.boardDetectRadius = routeSpec->boardDetectRadius;
+    _activePhysicalTransit.boardArriveRadius = routeSpec->boardArriveRadius;
+    _activePhysicalTransit.disembarkRadius = routeSpec->disembarkRadius;
+    _activePhysicalTransit.activeTransportGuid = transport->GetGUID();
+    me->m_movementInfo.transport.pos.GetPosition(
+        _activePhysicalTransit.boardLocalX,
+        _activePhysicalTransit.boardLocalY,
+        _activePhysicalTransit.boardLocalZ,
+        _activePhysicalTransit.boardLocalO);
+    _activeTransitExecutionPhase = ActiveTransitExecutionPhase::Riding;
+    PersistRuntimeLedgerState();
+    return true;
+}
+
 bool WorldBotCreatureAI::TickPhysicalTransit(service::AmbientStep const& step)
 {
     if (!me || _activePhysicalTransit.empty())
@@ -1978,15 +2056,18 @@ bool WorldBotCreatureAI::TickPhysicalTransit(service::AmbientStep const& step)
         if (!transport)
             return true;
 
-        if (transport->GetMapId() != _activePhysicalTransit.sourceMapId)
-            return true;
+        if (_activeTransitExecutionPhase == ActiveTransitExecutionPhase::WaitingForTransport)
+        {
+            if (transport->GetMapId() != _activePhysicalTransit.sourceMapId)
+                return true;
 
-        float const sourceDist = transport->GetDistance(
-            _activePhysicalTransit.sourceX,
-            _activePhysicalTransit.sourceY,
-            _activePhysicalTransit.sourceZ);
-        if (sourceDist > _activePhysicalTransit.boardDetectRadius)
-            return true;
+            float const sourceDist = transport->GetDistance(
+                _activePhysicalTransit.sourceX,
+                _activePhysicalTransit.sourceY,
+                _activePhysicalTransit.sourceZ);
+            if (sourceDist > _activePhysicalTransit.boardDetectRadius)
+                return true;
+        }
 
         float boardX = _activePhysicalTransit.boardLocalX;
         float boardY = _activePhysicalTransit.boardLocalY;

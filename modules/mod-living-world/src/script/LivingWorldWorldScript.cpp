@@ -6,6 +6,7 @@
 #include "ObjectAccessor.h"
 #include "Player.h"
 #include "ScriptMgr.h"
+#include "Transport.h"
 #include "WorldSession.h"
 #include "ai/AbstractWorldBotProgressor.h"
 #include "ai/WorldBotCreatureAI.h"
@@ -1921,6 +1922,11 @@ private:
         std::uint64_t lastRuntimeLedgerSyncMs = 0;
         std::string lastRuntimeState;
         std::string lastRuntimeDetail;
+        std::uint32_t physicalTransitTransportEntry = 0;
+        float physicalTransitLocalX = 0.0f;
+        float physicalTransitLocalY = 0.0f;
+        float physicalTransitLocalZ = 0.0f;
+        float physicalTransitLocalO = 0.0f;
     };
 
     struct MaterializedWorldBotHandle
@@ -2376,6 +2382,119 @@ private:
         return transitType;
     }
 
+    static bool IsKnownPhysicalTransitRoute(living_world::service::AmbientStep const& step)
+    {
+        std::string const transitType = NormalizeRuntimeTransitType(step.transitType);
+        if (transitType != "boat")
+            return false;
+
+        return step.transitRouteKey == "ratchet_to_booty_bay"
+            || step.transitRouteKey == "booty_bay_to_ratchet";
+    }
+
+    static std::uint32_t ResolveKnownPhysicalTransitTransportEntry(
+        living_world::service::AmbientStep const& step)
+    {
+        if (!IsKnownPhysicalTransitRoute(step))
+            return 0;
+
+        return 20808u;
+    }
+
+    static std::optional<SpawnPoint> ResolveAbstractPhysicalTransitAnchorPosition(
+        AbstractWorldBotRuntime const& runtime,
+        Transport** outTransport = nullptr)
+    {
+        if (runtime.progress.currentStep >= runtime.session.steps.size())
+            return std::nullopt;
+
+        living_world::service::AmbientStep const& step = runtime.session.steps[runtime.progress.currentStep];
+        if (step.type != living_world::service::AmbientStepType::Transit
+            || !IsKnownPhysicalTransitRoute(step))
+        {
+            return std::nullopt;
+        }
+
+        std::uint32_t const transportEntry =
+            runtime.physicalTransitTransportEntry != 0
+                ? runtime.physicalTransitTransportEntry
+                : ResolveKnownPhysicalTransitTransportEntry(step);
+        if (transportEntry == 0)
+            return std::nullopt;
+
+        Map* map = sMapMgr->CreateBaseMap(step.mapId);
+        if (!map)
+            return std::nullopt;
+
+        Transport* selectedTransport = nullptr;
+        for (Transport* transport : map->GetAllTransports())
+        {
+            if (!transport
+                || !transport->IsInWorld()
+                || transport->GetEntry() != transportEntry)
+            {
+                continue;
+            }
+
+            float const dockDist = transport->GetDistance(step.x, step.y, step.z);
+            if (dockDist > 125.0f)
+                continue;
+
+            selectedTransport = transport;
+            break;
+        }
+
+        if (!selectedTransport)
+            return std::nullopt;
+
+        float spawnX = step.x;
+        float spawnY = step.y;
+        float spawnZ = step.z;
+        float spawnO = 0.0f;
+
+        if (MotionTransport* motionTransport = dynamic_cast<MotionTransport*>(selectedTransport))
+        {
+            for (WorldObject* passenger : motionTransport->GetStaticPassengers())
+            {
+                Creature* creature = passenger ? passenger->ToCreature() : nullptr;
+                if (!creature || creature->GetMapId() != step.mapId)
+                    continue;
+
+                spawnX = creature->GetPositionX() + 1.5f;
+                spawnY = creature->GetPositionY() + 1.5f;
+                spawnZ = creature->GetPositionZ();
+                spawnO = creature->GetOrientation();
+                break;
+            }
+        }
+
+        if ((std::fabs(spawnX - step.x) <= 0.01f)
+            && (std::fabs(spawnY - step.y) <= 0.01f)
+            && (std::fabs(spawnZ - step.z) <= 0.01f))
+        {
+            float localX = runtime.physicalTransitLocalX;
+            float localY = runtime.physicalTransitLocalY;
+            float localZ = runtime.physicalTransitLocalZ;
+            float localO = runtime.physicalTransitLocalO;
+            if (std::fabs(localX) > 0.01f || std::fabs(localY) > 0.01f || std::fabs(localZ) > 0.01f)
+            {
+                selectedTransport->CalculatePassengerPosition(localX, localY, localZ, &localO);
+                spawnX = localX;
+                spawnY = localY;
+                spawnZ = localZ;
+                spawnO = localO;
+            }
+        }
+
+        if (!Acore::IsValidMapCoord(spawnX, spawnY, spawnZ))
+            return std::nullopt;
+
+        if (outTransport)
+            *outTransport = selectedTransport;
+
+        return SpawnPoint{ step.mapId, spawnX, spawnY, spawnZ };
+    }
+
     void TickSyntheticInterestBeacon(std::uint32_t diff)
     {
         if (!_debugSyntheticInterestEnabled || _debugSyntheticInterestMapId == 0)
@@ -2481,7 +2600,13 @@ private:
 
         living_world::service::AmbientStep const& step = runtime.session.steps[runtime.progress.currentStep];
         if (step.type == living_world::service::AmbientStepType::Transit)
-            return false;
+        {
+            std::uint32_t const zoneId = ResolveStepZoneId(runtime.session, runtime.progress.currentStep);
+            if (!IsZoneHotOrInterested(step.mapId, zoneId))
+                return false;
+
+            return ResolveAbstractPhysicalTransitAnchorPosition(runtime).has_value();
+        }
         if (step.type == living_world::service::AmbientStepType::Travel
             && (!runtime.progress.stepStartKnown || runtime.progress.stepStartMapId != step.mapId))
         {
@@ -2704,11 +2829,24 @@ private:
 
         living_world::ai::AbstractWorldBotProgressConfig const progressConfig =
             BuildAbstractProgressConfig(runtime.session, runtime.identity);
+        living_world::service::AmbientStep const& step =
+            runtime.session.steps[runtime.progress.currentStep];
+        Transport* materializeTransport = nullptr;
+        std::optional<SpawnPoint> physicalTransitSpawn;
+        if (step.type == living_world::service::AmbientStepType::Transit)
+            physicalTransitSpawn = ResolveAbstractPhysicalTransitAnchorPosition(runtime, &materializeTransport);
+
         living_world::ai::AbstractWorldBotInterpolatedPosition const pos =
-            living_world::ai::ComputeAbstractWorldBotInterpolatedPosition(
-                runtime.session,
-                runtime.progress,
-                progressConfig);
+            physicalTransitSpawn.has_value()
+                ? living_world::ai::AbstractWorldBotInterpolatedPosition{
+                    static_cast<std::uint16_t>(physicalTransitSpawn->mapId),
+                    physicalTransitSpawn->x,
+                    physicalTransitSpawn->y,
+                    physicalTransitSpawn->z }
+                : living_world::ai::ComputeAbstractWorldBotInterpolatedPosition(
+                    runtime.session,
+                    runtime.progress,
+                    progressConfig);
 
         living_world::integration::SqlBotIdentityRepository identityRepository;
         auto const refreshedIdentity = identityRepository.FindById(runtime.identity.id);
@@ -2724,6 +2862,7 @@ private:
         Creature* bot = map->SummonCreature(WorldBotEntry, spawnPos);
         if (!bot)
             return false;
+        (void)materializeTransport;
 
         living_world::integration::BotActivityLog::RecordAbstract(
             identity.name,
@@ -2754,11 +2893,19 @@ private:
 
         if (auto* ai = dynamic_cast<living_world::ai::WorldBotCreatureAI*>(bot->AI()))
         {
+            std::size_t resumeStep = runtime.progress.currentStep;
+            std::uint32_t resumeElapsedMs = runtime.progress.stepElapsedMs;
+            if (step.type == living_world::service::AmbientStepType::Transit && physicalTransitSpawn.has_value())
+            {
+                resumeStep = std::min(runtime.progress.currentStep + 1u, runtime.session.steps.size());
+                resumeElapsedMs = 0;
+            }
+
             ai->SetIdentityAndSession(
                 identity,
                 runtime.session,
-                runtime.progress.currentStep,
-                runtime.progress.stepElapsedMs,
+                resumeStep,
+                resumeElapsedMs,
                 runtime.worldOnlineMs,
                 true,
                 true);
@@ -2893,7 +3040,7 @@ private:
                 continue;
             }
 
-            if (snapshot.session.sourceKind == "debug_route_harness")
+            if (snapshot.session.sourceKind == "debug_route_harness" && !snapshot.inPhysicalTransit)
             {
                 ++itr;
                 continue;
@@ -2912,7 +3059,7 @@ private:
                 continue;
             }
 
-            if (snapshot.inPhysicalTransit)
+            if (snapshot.inPhysicalTransit && !snapshot.physicalTransitReadyForAbstract)
             {
                 ++itr;
                 continue;
@@ -2924,6 +3071,11 @@ private:
             runtime.progress = snapshot.progress;
             runtime.exploredZoneIds = LoadExploredZoneSet(runtime.identity.id);
             runtime.worldOnlineMs = snapshot.worldOnlineMs;
+            runtime.physicalTransitTransportEntry = snapshot.physicalTransitTransportEntry;
+            runtime.physicalTransitLocalX = snapshot.physicalTransitLocalX;
+            runtime.physicalTransitLocalY = snapshot.physicalTransitLocalY;
+            runtime.physicalTransitLocalZ = snapshot.physicalTransitLocalZ;
+            runtime.physicalTransitLocalO = snapshot.physicalTransitLocalO;
             if (snapshot.inTaxiTransit)
                 runtime.lastTravelPhase = living_world::ai::AbstractWorldBotTravelPhaseKind::TaxiFlight;
             ObserveAbstractRuntimeExploration(
@@ -2940,7 +3092,11 @@ private:
                 runtime.identity.name,
                 runtime.identity.id,
                 "status_change",
-                std::string(snapshot.inTaxiTransit ? "dematerializing_to_abstract_taxi -> " : "dematerializing_to_abstract -> ")
+                std::string(snapshot.inTaxiTransit
+                        ? "dematerializing_to_abstract_taxi -> "
+                        : (snapshot.inPhysicalTransit
+                            ? "dematerializing_to_abstract_transit -> "
+                            : "dematerializing_to_abstract -> "))
                     + DescribeAbstractRuntime(runtime),
                 runtime.progress.stepStartMapId,
                 zoneId,

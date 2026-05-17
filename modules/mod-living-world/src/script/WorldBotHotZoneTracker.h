@@ -2,11 +2,14 @@
 
 #include "Player.h"
 #include "Timer.h"
+#include "Transport.h"
 #include "WorldSession.h"
 
 #include <cstdint>
 #include <mutex>
+#include <optional>
 #include <shared_mutex>
+#include <string>
 #include <unordered_map>
 
 namespace living_world::script
@@ -39,6 +42,11 @@ struct WorldBotPlayerInterestState
     std::uint32_t zoneId = 0;
     std::uint32_t lastRefreshMs = 0;
     bool inFlight = false;
+    std::uint32_t transportEntry = 0;
+    std::uint32_t transportDestMapId = 0;
+    std::uint32_t transportDestZoneId = 0;
+    bool transportCrossMap = false;
+    std::string transportRouteKey;
 };
 
 inline std::shared_mutex& WorldBotHotZoneLock()
@@ -82,6 +90,21 @@ inline std::uint32_t& WorldBotHotZoneCooldownOverrideMs()
 inline constexpr std::uint32_t WorldBotHotZoneCooldownMs = 10u * 60u * 1000u;
 inline constexpr std::uint32_t WorldBotHotZoneRefreshMs = 30u * 1000u;
 
+struct WorldBotKnownTransportRoute
+{
+    std::string routeKey;
+    std::uint32_t transportEntry = 0;
+    std::uint32_t sourceMapId = 0;
+    std::uint32_t sourceZoneId = 0;
+    std::uint32_t destMapId = 0;
+    std::uint32_t destZoneId = 0;
+
+    [[nodiscard]] bool isCrossMap() const
+    {
+        return sourceMapId != destMapId;
+    }
+};
+
 inline std::uint32_t GetWorldBotHotZoneCooldownMs()
 {
     std::shared_lock<std::shared_mutex> lock(detail::WorldBotHotZoneLock());
@@ -100,7 +123,7 @@ inline void SetSyntheticWorldBotInterest(std::uint32_t mapId, std::uint32_t zone
 {
     std::unique_lock<std::shared_mutex> lock(detail::WorldBotHotZoneLock());
     detail::WorldBotSyntheticInterestState& state = detail::WorldBotSyntheticInterest();
-    state.enabled = mapId != 0;
+    state.enabled = true;
     state.mapId = mapId;
     state.zoneId = zoneId;
 }
@@ -115,7 +138,7 @@ inline bool HasSyntheticWorldBotInterest(std::uint32_t mapId, std::uint32_t zone
 {
     std::shared_lock<std::shared_mutex> lock(detail::WorldBotHotZoneLock());
     detail::WorldBotSyntheticInterestState const& state = detail::WorldBotSyntheticInterest();
-    if (!state.enabled || state.mapId == 0 || state.mapId != mapId)
+    if (!state.enabled || state.mapId != mapId)
         return false;
 
     return state.zoneId == 0 || zoneId == 0 || state.zoneId == zoneId;
@@ -123,7 +146,7 @@ inline bool HasSyntheticWorldBotInterest(std::uint32_t mapId, std::uint32_t zone
 
 inline void MarkWorldBotZoneHotLocked(std::uint32_t mapId, std::uint32_t zoneId, std::uint32_t nowMs)
 {
-    if (mapId == 0 || zoneId == 0)
+    if (zoneId == 0)
         return;
 
     detail::WorldBotHotZones()[detail::WorldBotZoneKey{ mapId, zoneId }] = nowMs;
@@ -137,7 +160,7 @@ inline void MarkWorldBotZoneHot(std::uint32_t mapId, std::uint32_t zoneId, std::
 
 inline bool IsWorldBotZoneHot(std::uint32_t mapId, std::uint32_t zoneId, std::uint32_t nowMs = getMSTime())
 {
-    if (mapId == 0 || zoneId == 0)
+    if (zoneId == 0)
         return false;
 
     std::shared_lock<std::shared_mutex> lock(detail::WorldBotHotZoneLock());
@@ -167,6 +190,63 @@ inline void PruneWorldBotHotZones(std::uint32_t nowMs = getMSTime())
     }
 }
 
+inline std::optional<WorldBotKnownTransportRoute> ResolveKnownWorldBotTransportRoute(
+    Player* player,
+    detail::WorldBotPlayerInterestState const* priorState = nullptr)
+{
+    if (!player)
+        return std::nullopt;
+
+    Transport* transport = player->GetTransport();
+    if (!transport)
+        return std::nullopt;
+
+    std::uint32_t const entry = transport->GetEntry();
+    std::uint32_t const mapId = player->GetMapId();
+    std::uint32_t const zoneId = player->GetZoneId();
+
+    if (entry == 20808u)
+    {
+        if (mapId == 1u && zoneId == 17u)
+        {
+            return WorldBotKnownTransportRoute{
+                "ratchet_to_booty_bay",
+                entry,
+                1u,
+                17u,
+                0u,
+                35u };
+        }
+
+        if (mapId == 0u && zoneId == 35u)
+        {
+            return WorldBotKnownTransportRoute{
+                "booty_bay_to_ratchet",
+                entry,
+                0u,
+                35u,
+                1u,
+                17u };
+        }
+    }
+
+    if (priorState
+        && priorState->transportEntry == entry
+        && !priorState->transportRouteKey.empty()
+        && priorState->transportDestZoneId != 0)
+    {
+        return WorldBotKnownTransportRoute{
+            priorState->transportRouteKey,
+            entry,
+            priorState->mapId,
+            priorState->zoneId,
+            priorState->transportDestMapId,
+            priorState->transportDestZoneId };
+    }
+
+    return std::nullopt;
+}
+
 inline void ObserveWorldBotPlayerInterest(Player* player, bool forceRefresh = false)
 {
     if (!player || !player->GetSession() || player->GetSession()->IsBotSession())
@@ -181,12 +261,42 @@ inline void ObserveWorldBotPlayerInterest(Player* player, bool forceRefresh = fa
     std::unique_lock<std::shared_mutex> lock(detail::WorldBotHotZoneLock());
     auto& interest = detail::WorldBotPlayerInterest();
     detail::WorldBotPlayerInterestState& state = interest[guid];
+    auto const transportRoute = ResolveKnownWorldBotTransportRoute(player, &state);
 
     bool const unchanged = state.mapId == mapId
         && state.zoneId == zoneId
-        && state.inFlight == inFlight;
+        && state.inFlight == inFlight
+        && state.transportEntry == (transportRoute ? transportRoute->transportEntry : 0u)
+        && state.transportDestMapId == (transportRoute ? transportRoute->destMapId : 0u)
+        && state.transportDestZoneId == (transportRoute ? transportRoute->destZoneId : 0u)
+        && state.transportRouteKey == (transportRoute ? transportRoute->routeKey : std::string());
     if (!forceRefresh && unchanged && getMSTimeDiff(state.lastRefreshMs, nowMs) < WorldBotHotZoneRefreshMs)
         return;
+
+    if (transportRoute.has_value())
+    {
+        if (mapId != 0 && zoneId != 0)
+            MarkWorldBotZoneHotLocked(mapId, zoneId, nowMs);
+
+        MarkWorldBotZoneHotLocked(transportRoute->destMapId, transportRoute->destZoneId, nowMs);
+
+        state.mapId = mapId;
+        state.zoneId = zoneId;
+        state.inFlight = false;
+        state.transportEntry = transportRoute->transportEntry;
+        state.transportDestMapId = transportRoute->destMapId;
+        state.transportDestZoneId = transportRoute->destZoneId;
+        state.transportCrossMap = transportRoute->isCrossMap();
+        state.transportRouteKey = transportRoute->routeKey;
+        state.lastRefreshMs = nowMs;
+        return;
+    }
+
+    state.transportEntry = 0;
+    state.transportDestMapId = 0;
+    state.transportDestZoneId = 0;
+    state.transportCrossMap = false;
+    state.transportRouteKey.clear();
 
     if (inFlight)
     {
