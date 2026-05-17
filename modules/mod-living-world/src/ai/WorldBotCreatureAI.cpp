@@ -3493,6 +3493,7 @@ void WorldBotCreatureAI::TickCombat(uint32 diff)
         context.defaultAoEMode = _combatPreparedProfile.resolution.profile.settings.defaultAoEMode;
         context.defaultAoEMinTargets = _combatPreparedProfile.resolution.profile.settings.defaultAoEMinTargets;
         context.defaultAoEScanRadius = _combatPreparedProfile.resolution.profile.settings.defaultAoEScanRadius;
+        context.situation = situation;
         context.availableSpells = _combatPreparedProfile.availableSpells;
 
         auto const tryResult =

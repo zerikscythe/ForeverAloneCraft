@@ -62,6 +62,40 @@ struct BestAoEPointResult
 static constexpr std::uint32_t WorldBotEntry = 9900001;
 static constexpr float AmbientSupportScanRadius = 45.0f;
 
+char const* CombatEnvironmentToKey(model::WorldBotCombatEnvironment environment)
+{
+    switch (environment)
+    {
+        case model::WorldBotCombatEnvironment::DungeonOrRaid:
+            return "dungeon_or_raid";
+        case model::WorldBotCombatEnvironment::OpenWorld:
+        default:
+            return "open_world";
+    }
+}
+
+bool StringConditionMatches(
+    std::string const& actualValue,
+    std::string const& expectedValue)
+{
+    if (actualValue.empty())
+        return false;
+
+    std::string actualLower = actualValue;
+    std::string expectedLower = expectedValue;
+    std::transform(
+        actualLower.begin(),
+        actualLower.end(),
+        actualLower.begin(),
+        [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    std::transform(
+        expectedLower.begin(),
+        expectedLower.end(),
+        expectedLower.begin(),
+        [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return actualLower == expectedLower;
+}
+
 // Returns the remaining cooldown in milliseconds for the given spell on any Unit.
 // Dispatches to Player::GetSpellCooldownDelay or Creature::GetSpellCooldown.
 std::uint32_t GetSpellCooldownRemainingMs(Unit* bot, std::uint32_t spellId)
@@ -1165,6 +1199,31 @@ bool BotCombatRuntimeEvaluator::EvaluateCondition(
         }
     }
 
+    if (condition.statKey == "combat_environment")
+    {
+        std::string const actualEnvironment = CombatEnvironmentToKey(context.situation.environment);
+        bool const matches = StringConditionMatches(actualEnvironment, condition.stringValue);
+        switch (condition.comparison)
+        {
+            case model::BotCombatConditionOperator::Equal:
+            case model::BotCombatConditionOperator::Has:
+                return matches;
+            case model::BotCombatConditionOperator::NotEqual:
+            case model::BotCombatConditionOperator::NotHas:
+                return !matches;
+            case model::BotCombatConditionOperator::Exists:
+                return !actualEnvironment.empty();
+            case model::BotCombatConditionOperator::LessThan:
+            case model::BotCombatConditionOperator::LessThanOrEqual:
+            case model::BotCombatConditionOperator::GreaterThan:
+            case model::BotCombatConditionOperator::GreaterThanOrEqual:
+                return CompareNumeric(
+                    condition.comparison,
+                    matches ? 1.0f : 0.0f,
+                    condition.numericValue);
+        }
+    }
+
     if (condition.statKey == "aura" || condition.statKey == "has_aura")
     {
         std::optional<std::uint32_t> spellId = ParseConditionSpellId(condition);
@@ -1287,6 +1346,46 @@ bool BotCombatRuntimeEvaluator::EvaluateCondition(
         return CompareNumeric(
             condition.comparison,
             static_cast<float>(CountNearbyEnemies(context, subject, radius)),
+            condition.numericValue);
+    }
+
+    if (condition.statKey == "hazard_active")
+    {
+        return CompareNumeric(
+            condition.comparison,
+            context.situation.hazard.active ? 1.0f : 0.0f,
+            condition.numericValue);
+    }
+
+    if (condition.statKey == "hazard_aura")
+    {
+        return CompareNumeric(
+            condition.comparison,
+            context.situation.hazard.explicitAuraTriggered ? 1.0f : 0.0f,
+            condition.numericValue);
+    }
+
+    if (condition.statKey == "hazard_repeat")
+    {
+        return CompareNumeric(
+            condition.comparison,
+            context.situation.hazard.repeatedDamageTriggered ? 1.0f : 0.0f,
+            condition.numericValue);
+    }
+
+    if (condition.statKey == "hazard_commit_window")
+    {
+        return CompareNumeric(
+            condition.comparison,
+            context.situation.hazard.commitWindowActive ? 1.0f : 0.0f,
+            condition.numericValue);
+    }
+
+    if (condition.statKey == "hazard_severity")
+    {
+        return CompareNumeric(
+            condition.comparison,
+            context.situation.hazard.severity,
             condition.numericValue);
     }
 

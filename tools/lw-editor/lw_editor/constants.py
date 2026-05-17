@@ -44,15 +44,18 @@ STAT_KEYS     = [
     "hp_pct", "mana_pct", "power", "power_pct",
     "runic_power", "runic_power_pct",
     "distance",
+    "combat_environment",
     "creature_type",
     "aura", "aura_remaining_secs", "aura_stacks",
     "combo_points",
     "threat_pct", "is_aggro_holder",
     "runes_ready", "runes_available",
     "nearby_enemies", "party_members_below_hp_pct",
+    "hazard_active", "hazard_aura", "hazard_repeat",
+    "hazard_commit_window", "hazard_severity",
 ]
 BOOL_STAT_KEYS = {"is_aggro_holder"}
-STRING_STAT_KEYS = {"creature_type"}
+STRING_STAT_KEYS = {"creature_type", "combat_environment"}
 CREATURE_TYPE_OPTS = [
     "Beast",
     "Dragonkin",
@@ -67,6 +70,10 @@ CREATURE_TYPE_OPTS = [
     "Totem",
     "NonCombatPet",
     "GasCloud",
+]
+COMBAT_ENVIRONMENT_OPTS = [
+    "open_world",
+    "dungeon_or_raid",
 ]
 
 WOW_CLASSES = {
