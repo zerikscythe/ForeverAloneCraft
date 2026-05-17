@@ -14,6 +14,7 @@ COND_LOGIC         = {0: "All (AND)",  1: "Any (OR)"}
 COND_OPS           = {0: "==", 1: "!=", 2: "<", 3: "<=", 4: ">", 5: ">=",
                       6: "Has", 7: "NotHas", 8: "Exists"}
 AOE_MODES          = {0: "Centroid",   1: "Feet"}
+TARGETING_MODES    = {0: "Standard",   1: "Assist", 2: "Skirmish"}
 
 def _inv(d): return {v: k for k, v in d.items()}
 
@@ -23,6 +24,7 @@ RANK_INV         = _inv(RANK_MODES)
 COND_LOGIC_INV   = _inv(COND_LOGIC)
 COND_OPS_INV     = _inv(COND_OPS)
 AOE_INV          = _inv(AOE_MODES)
+TARGETING_INV    = _inv(TARGETING_MODES)
 
 CONSERVATION_OPTS = list(CONSERVATION_MODES.values())
 ACTION_OPTS       = list(ACTION_TYPES.values())
@@ -30,6 +32,7 @@ RANK_OPTS         = list(RANK_MODES.values())
 COND_LOGIC_OPTS   = list(COND_LOGIC.values())
 COND_OPS_OPTS     = list(COND_OPS.values())
 AOE_OPTS          = list(AOE_MODES.values())
+TARGETING_OPTS    = list(TARGETING_MODES.values())
 
 TARGET_KEYS   = [
     "enemy", "enemy_primary", "enemy_trash", "enemy_primary_victim",

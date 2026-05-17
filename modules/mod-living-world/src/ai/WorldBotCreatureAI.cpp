@@ -3243,12 +3243,138 @@ Unit* WorldBotCreatureAI::FindNearbyAmbientCombatTarget(float radius) const
     std::sort(candidates.begin(), candidates.end());
     candidates.erase(std::unique(candidates.begin(), candidates.end()), candidates.end());
 
+    model::BotCombatProfileSettings::TargetingSettings targetingSettings;
+    if (_combatPreparedProfile.resolution.source != service::BotCombatDoctrineSource::None)
+        targetingSettings = _combatPreparedProfile.resolution.profile.settings.targeting;
+
+    auto const countAlliedFocus =
+        [&](Unit* candidate) -> std::uint32_t
+        {
+            std::uint32_t alliedFocusCount = 0;
+            for (Unit* ally : friendlyAllies)
+            {
+                if (!ally || !ally->IsAlive())
+                    continue;
+                if (ally->GetVictim() == candidate)
+                    ++alliedFocusCount;
+            }
+            if (me->GetVictim() == candidate)
+                ++alliedFocusCount;
+            return alliedFocusCount;
+        };
+
+    std::unordered_map<Unit*, std::uint32_t> assistVictimCounts;
+    for (Unit* ally : friendlyAllies)
+    {
+        if (!ally || !ally->IsAlive())
+            continue;
+        if (Unit* victim = ally->GetVictim())
+        {
+            if (isViableTarget(victim))
+                ++assistVictimCounts[victim];
+        }
+    }
+    if (Unit* victim = me->GetVictim())
+    {
+        if (isViableTarget(victim))
+            ++assistVictimCounts[victim];
+    }
+
+    Unit* preferredAssistTarget = nullptr;
+    std::uint32_t preferredAssistCount = 0;
+    for (auto const& [candidate, count] : assistVictimCounts)
+    {
+        if (!preferredAssistTarget || count > preferredAssistCount)
+        {
+            preferredAssistTarget = candidate;
+            preferredAssistCount = count;
+        }
+    }
+
+    Unit* tankAssistTarget = nullptr;
+    auto const considerTankVictim =
+        [&](Unit* ally)
+        {
+            if (!ally || !ally->IsAlive())
+                return;
+            if (classifyWorldBotRole(ally) != PvPTargetRole::Tank)
+                return;
+            Unit* victim = ally->GetVictim();
+            if (isViableTarget(victim))
+                tankAssistTarget = victim;
+        };
+    considerTankVictim(me);
+    if (!tankAssistTarget)
+    {
+        for (Unit* ally : friendlyAllies)
+        {
+            considerTankVictim(ally);
+            if (tankAssistTarget)
+                break;
+        }
+    }
+
+    auto const scoreAssistCandidate =
+        [&](Unit* candidate) -> float
+        {
+            if (!isViableTarget(candidate))
+                return -100000.0f;
+
+            float score = 0.0f;
+            float const distance = me->GetDistance(candidate);
+            score += std::max(0.0f, 120.0f - distance * 4.0f);
+            score += std::clamp(100.0f - candidate->GetHealthPct(), 0.0f, 100.0f) * 2.0f;
+
+            if (candidate == me->GetVictim())
+                score += targetingSettings.currentTargetBias;
+            if (candidate == tankAssistTarget)
+                score += targetingSettings.assistTargetBias;
+            else if (candidate == preferredAssistTarget)
+                score += targetingSettings.assistTargetBias * 0.75f;
+
+            Unit* victim = candidate->GetVictim();
+            if (victim && me->IsFriendlyTo(victim))
+            {
+                PvPTargetRole const victimRole = classifyWorldBotRole(victim);
+                if (victimRole == PvPTargetRole::Healer)
+                    score += targetingSettings.protectAllyBias;
+                else if (victimRole == PvPTargetRole::Damage)
+                    score += targetingSettings.protectAllyBias * 0.8f;
+                else if (victimRole == PvPTargetRole::Tank)
+                    score += targetingSettings.protectAllyBias * 0.5f;
+                else
+                    score += targetingSettings.protectAllyBias * 0.35f;
+            }
+
+            score += static_cast<float>(countAlliedFocus(candidate)) * targetingSettings.focusFireBias;
+            return score;
+        };
+
     bool const pvpLikeFight = std::any_of(
         candidates.begin(),
         candidates.end(),
         [&](Unit* candidate) { return isPvPLikeTarget(candidate); });
     if (!pvpLikeFight)
+    {
+        if (targetingSettings.mode == model::BotCombatTargetingMode::Assist
+            || targetingSettings.mode == model::BotCombatTargetingMode::Skirmish)
+        {
+            Unit* best = nullptr;
+            float bestScore = -100000.0f;
+            for (Unit* candidate : candidates)
+            {
+                float const score = scoreAssistCandidate(candidate);
+                if (!best || score > bestScore)
+                {
+                    best = candidate;
+                    bestScore = score;
+                }
+            }
+            if (best)
+                return best;
+        }
         return considerClosest(candidates);
+    }
 
     bool const hasEnemyHealer = std::any_of(
         candidates.begin(),
@@ -3269,12 +3395,30 @@ Unit* WorldBotCreatureAI::FindNearbyAmbientCombatTarget(float radius) const
             float score = 0.0f;
             float const distance = me->GetDistance(candidate);
             PvPTargetRole const candidateRole = classifyWorldBotRole(candidate);
+            bool const assistMode = targetingSettings.mode == model::BotCombatTargetingMode::Assist;
+            bool const skirmishMode = targetingSettings.mode == model::BotCombatTargetingMode::Skirmish;
+            float const assistBias = skirmishMode
+                ? (targetingSettings.assistTargetBias * 0.55f)
+                : (assistMode ? targetingSettings.assistTargetBias * 1.35f : targetingSettings.assistTargetBias);
+            float const healerBias = skirmishMode
+                ? (targetingSettings.preferHealerBias * 1.5f)
+                : (assistMode ? targetingSettings.preferHealerBias * 0.6f : targetingSettings.preferHealerBias);
+            float const dpsBias = skirmishMode
+                ? (targetingSettings.preferDpsBias * 1.15f)
+                : targetingSettings.preferDpsBias;
+            float const tankPenalty = skirmishMode
+                ? (targetingSettings.avoidTankBias * 1.2f)
+                : targetingSettings.avoidTankBias;
 
             score += std::max(0.0f, 120.0f - distance * 4.0f);
             score += std::clamp(100.0f - candidate->GetHealthPct(), 0.0f, 100.0f) * 3.0f;
 
             if (candidate == me->GetVictim())
-                score += 80.0f;
+                score += targetingSettings.currentTargetBias;
+            if (candidate == tankAssistTarget)
+                score += assistBias;
+            else if (candidate == preferredAssistTarget)
+                score += assistBias * 0.75f;
 
             if (candidateRole == PvPTargetRole::Healer && candidate->GetHealthPct() <= 55.0f)
                 score += 120.0f;
@@ -3284,21 +3428,21 @@ Unit* WorldBotCreatureAI::FindNearbyAmbientCombatTarget(float radius) const
                 case PvPTargetRole::Tank:
                     switch (candidateRole)
                     {
-                        case PvPTargetRole::Damage: score += 340.0f; break;
-                        case PvPTargetRole::Healer: score += 220.0f; break;
+                        case PvPTargetRole::Damage: score += dpsBias * 2.0f; break;
+                        case PvPTargetRole::Healer: score += healerBias; break;
                         case PvPTargetRole::Tank:   score += 20.0f; break;
-                        case PvPTargetRole::Unknown:score += 140.0f; break;
+                        case PvPTargetRole::Unknown:score += dpsBias; break;
                     }
                     if (hasEnemyDamage && candidateRole == PvPTargetRole::Tank)
-                        score -= 220.0f;
+                        score -= tankPenalty * 1.5f;
                     break;
                 case PvPTargetRole::Healer:
                     switch (candidateRole)
                     {
-                        case PvPTargetRole::Damage: score += 140.0f; break;
-                        case PvPTargetRole::Healer: score += 70.0f; break;
+                        case PvPTargetRole::Damage: score += dpsBias; break;
+                        case PvPTargetRole::Healer: score += healerBias * 0.4f; break;
                         case PvPTargetRole::Tank:   score += 40.0f; break;
-                        case PvPTargetRole::Unknown:score += 90.0f; break;
+                        case PvPTargetRole::Unknown:score += dpsBias * 0.65f; break;
                     }
                     break;
                 case PvPTargetRole::Damage:
@@ -3306,15 +3450,15 @@ Unit* WorldBotCreatureAI::FindNearbyAmbientCombatTarget(float radius) const
                 default:
                     switch (candidateRole)
                     {
-                        case PvPTargetRole::Healer: score += 460.0f; break;
-                        case PvPTargetRole::Damage: score += 220.0f; break;
+                        case PvPTargetRole::Healer: score += healerBias * 2.0f; break;
+                        case PvPTargetRole::Damage: score += dpsBias * 1.4f; break;
                         case PvPTargetRole::Tank:   score += 10.0f; break;
-                        case PvPTargetRole::Unknown:score += 120.0f; break;
+                        case PvPTargetRole::Unknown:score += dpsBias * 0.85f; break;
                     }
                     if (hasEnemyHealer && candidateRole != PvPTargetRole::Healer)
-                        score -= 160.0f;
+                        score -= healerBias * 0.75f;
                     else if (!hasEnemyHealer && hasEnemyDamage && candidateRole == PvPTargetRole::Tank)
-                        score -= 120.0f;
+                        score -= tankPenalty;
                     break;
             }
 
@@ -3323,29 +3467,20 @@ Unit* WorldBotCreatureAI::FindNearbyAmbientCombatTarget(float radius) const
             {
                 PvPTargetRole const victimRole = classifyWorldBotRole(victim);
                 if (victim == me)
-                    score += (selfRole == PvPTargetRole::Healer) ? 260.0f : 160.0f;
+                    score += (selfRole == PvPTargetRole::Healer)
+                        ? (targetingSettings.protectAllyBias * 1.35f)
+                        : targetingSettings.protectAllyBias;
 
                 switch (victimRole)
                 {
-                    case PvPTargetRole::Healer: score += 240.0f; break;
-                    case PvPTargetRole::Damage: score += 170.0f; break;
-                    case PvPTargetRole::Tank:   score += 110.0f; break;
-                    case PvPTargetRole::Unknown:score += 90.0f; break;
+                    case PvPTargetRole::Healer: score += targetingSettings.protectAllyBias; break;
+                    case PvPTargetRole::Damage: score += targetingSettings.protectAllyBias * 0.8f; break;
+                    case PvPTargetRole::Tank:   score += targetingSettings.protectAllyBias * 0.5f; break;
+                    case PvPTargetRole::Unknown:score += targetingSettings.protectAllyBias * 0.35f; break;
                 }
             }
 
-            std::uint32_t alliedFocusCount = 0;
-            for (Unit* ally : friendlyAllies)
-            {
-                if (!ally || !ally->IsAlive())
-                    continue;
-                if (ally->GetVictim() == candidate)
-                    ++alliedFocusCount;
-            }
-            if (me->GetVictim() == candidate)
-                ++alliedFocusCount;
-
-            score += static_cast<float>(alliedFocusCount) * 55.0f;
+            score += static_cast<float>(countAlliedFocus(candidate)) * targetingSettings.focusFireBias;
             return score;
         };
 

@@ -449,6 +449,30 @@ class DBCtx:
          "ALTER TABLE living_world_bot_combat_default_profile "
          "ADD UNIQUE KEY uq_class_spec_context (class_key, spec_key, context_key)"),
 
+        ("2026_21_default_profile_targeting_columns",
+         "world",
+         "ALTER TABLE living_world_bot_combat_default_profile "
+         "ADD COLUMN targeting_mode TINYINT NOT NULL DEFAULT 0 COMMENT '0=standard 1=assist 2=skirmish', "
+         "ADD COLUMN current_target_bias FLOAT NOT NULL DEFAULT 80, "
+         "ADD COLUMN assist_target_bias FLOAT NOT NULL DEFAULT 140, "
+         "ADD COLUMN focus_fire_bias FLOAT NOT NULL DEFAULT 55, "
+         "ADD COLUMN protect_ally_bias FLOAT NOT NULL DEFAULT 170, "
+         "ADD COLUMN prefer_healer_bias FLOAT NOT NULL DEFAULT 220, "
+         "ADD COLUMN prefer_dps_bias FLOAT NOT NULL DEFAULT 140, "
+         "ADD COLUMN avoid_tank_bias FLOAT NOT NULL DEFAULT 120"),
+
+        ("2026_22_character_profile_targeting_columns",
+         "chars",
+         "ALTER TABLE living_world_bot_combat_profile "
+         "ADD COLUMN targeting_mode TINYINT NOT NULL DEFAULT 0 COMMENT '0=standard 1=assist 2=skirmish', "
+         "ADD COLUMN current_target_bias FLOAT NOT NULL DEFAULT 80, "
+         "ADD COLUMN assist_target_bias FLOAT NOT NULL DEFAULT 140, "
+         "ADD COLUMN focus_fire_bias FLOAT NOT NULL DEFAULT 55, "
+         "ADD COLUMN protect_ally_bias FLOAT NOT NULL DEFAULT 170, "
+         "ADD COLUMN prefer_healer_bias FLOAT NOT NULL DEFAULT 220, "
+         "ADD COLUMN prefer_dps_bias FLOAT NOT NULL DEFAULT 140, "
+         "ADD COLUMN avoid_tank_bias FLOAT NOT NULL DEFAULT 120"),
+
         # ── PvP seed — mirrors every PvE entry with context_key='PvP' ────────
         ("2025_26_pvp_profiles_seed",
          "world",
@@ -2084,26 +2108,38 @@ class DBCtx:
                 "spec_key=%s, role_key=%s, display_name=%s, class_key=%s, context_key=%s, "
                 "conservation_mode=%s, resource_low_water=%s, resource_high_water=%s, "
                 "enable_down_rank=%s, down_rank_floor=%s, default_aoe_mode=%s, "
-                "default_aoe_min_targets=%s, default_aoe_scan_radius=%s "
+                "default_aoe_min_targets=%s, default_aoe_scan_radius=%s, "
+                "targeting_mode=%s, current_target_bias=%s, assist_target_bias=%s, focus_fire_bias=%s, "
+                "protect_ally_bias=%s, prefer_healer_bias=%s, prefer_dps_bias=%s, avoid_tank_bias=%s "
                 "WHERE default_profile_id=%s",
                 (p["spec_key"], p["role_key"], p.get("display_name"),
                  p.get("class_key"), p.get("context_key", "PvE"),
                  p["conservation_mode"], p["resource_low_water"], p["resource_high_water"],
                  p["enable_down_rank"], p["down_rank_floor"], p["default_aoe_mode"],
                  p["default_aoe_min_targets"], p["default_aoe_scan_radius"],
+                 p.get("targeting_mode", 0), p.get("current_target_bias", 80.0),
+                 p.get("assist_target_bias", 140.0), p.get("focus_fire_bias", 55.0),
+                 p.get("protect_ally_bias", 170.0), p.get("prefer_healer_bias", 220.0),
+                 p.get("prefer_dps_bias", 140.0), p.get("avoid_tank_bias", 120.0),
                  p["default_profile_id"]))
             return p["default_profile_id"]
         return self.run(self.world,
             "INSERT INTO living_world_bot_combat_default_profile "
             "(spec_key, role_key, display_name, class_key, context_key, conservation_mode, "
             "resource_low_water, resource_high_water, enable_down_rank, down_rank_floor, "
-            "default_aoe_mode, default_aoe_min_targets, default_aoe_scan_radius) VALUES "
-            "(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            "default_aoe_mode, default_aoe_min_targets, default_aoe_scan_radius, targeting_mode, "
+            "current_target_bias, assist_target_bias, focus_fire_bias, protect_ally_bias, prefer_healer_bias, "
+            "prefer_dps_bias, avoid_tank_bias) VALUES "
+            "(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
             (p["spec_key"], p["role_key"], p.get("display_name"), p.get("class_key"),
              p.get("context_key", "PvE"),
              p["conservation_mode"], p["resource_low_water"], p["resource_high_water"],
              p["enable_down_rank"], p["down_rank_floor"], p["default_aoe_mode"],
-             p["default_aoe_min_targets"], p["default_aoe_scan_radius"]))
+             p["default_aoe_min_targets"], p["default_aoe_scan_radius"],
+             p.get("targeting_mode", 0), p.get("current_target_bias", 80.0),
+             p.get("assist_target_bias", 140.0), p.get("focus_fire_bias", 55.0),
+             p.get("protect_ally_bias", 170.0), p.get("prefer_healer_bias", 220.0),
+             p.get("prefer_dps_bias", 140.0), p.get("avoid_tank_bias", 120.0)))
 
     def delete_default_profile(self, pid: int):
         for e in self.q(self.world,
@@ -2300,7 +2336,9 @@ class DBCtx:
                 "spec_override_key=%s, role_override_key=%s, conservation_mode=%s, "
                 "resource_low_water=%s, resource_high_water=%s, enable_down_rank=%s, "
                 "down_rank_floor=%s, default_aoe_mode=%s, default_aoe_min_targets=%s, "
-                "default_aoe_scan_radius=%s, "
+                "default_aoe_scan_radius=%s, targeting_mode=%s, current_target_bias=%s, "
+                "assist_target_bias=%s, focus_fire_bias=%s, protect_ally_bias=%s, "
+                "prefer_healer_bias=%s, prefer_dps_bias=%s, avoid_tank_bias=%s, "
                 "buff_scope=%s, buff_reapply_secs=%s, buff_on_spawn=%s, "
                 "follow_dist_override=%s, auto_loot_override=%s, loot_quality_min=%s, "
                 "gather_nodes=%s, gather_skin=%s, skin_loot_quality_max=%s, "
@@ -2311,6 +2349,10 @@ class DBCtx:
                  p["conservation_mode"], p["resource_low_water"], p["resource_high_water"],
                  p["enable_down_rank"], p["down_rank_floor"], p["default_aoe_mode"],
                  p["default_aoe_min_targets"], p["default_aoe_scan_radius"],
+                 p.get("targeting_mode", 0), p.get("current_target_bias", 80.0),
+                 p.get("assist_target_bias", 140.0), p.get("focus_fire_bias", 55.0),
+                 p.get("protect_ally_bias", 170.0), p.get("prefer_healer_bias", 220.0),
+                 p.get("prefer_dps_bias", 140.0), p.get("avoid_tank_bias", 120.0),
                  p.get("buff_scope", 2), p.get("buff_reapply_secs", 30),
                  p.get("buff_on_spawn", 1), p.get("follow_dist_override"),
                  p.get("auto_loot_override"), p.get("loot_quality_min", 0),
@@ -2323,13 +2365,19 @@ class DBCtx:
             "(source_character_guid, owner_account_id, slot, profile_name, "
             "guessed_spec_key, guessed_role_key, conservation_mode, resource_low_water, "
             "resource_high_water, enable_down_rank, down_rank_floor, default_aoe_mode, "
-            "default_aoe_min_targets, default_aoe_scan_radius) VALUES "
-            "(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            "default_aoe_min_targets, default_aoe_scan_radius, targeting_mode, current_target_bias, "
+            "assist_target_bias, focus_fire_bias, protect_ally_bias, prefer_healer_bias, prefer_dps_bias, "
+            "avoid_tank_bias) VALUES "
+            "(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
             (p["source_character_guid"], p["owner_account_id"], p["slot"],
              p["profile_name"], p["guessed_spec_key"], p["guessed_role_key"],
              p["conservation_mode"], p["resource_low_water"], p["resource_high_water"],
              p["enable_down_rank"], p["down_rank_floor"], p["default_aoe_mode"],
-             p["default_aoe_min_targets"], p["default_aoe_scan_radius"]))
+             p["default_aoe_min_targets"], p["default_aoe_scan_radius"],
+             p.get("targeting_mode", 0), p.get("current_target_bias", 80.0),
+             p.get("assist_target_bias", 140.0), p.get("focus_fire_bias", 55.0),
+             p.get("protect_ally_bias", 170.0), p.get("prefer_healer_bias", 220.0),
+             p.get("prefer_dps_bias", 140.0), p.get("avoid_tank_bias", 120.0)))
 
     def delete_bot_profile(self, pid: int):
         for e in self.q(self.chars,

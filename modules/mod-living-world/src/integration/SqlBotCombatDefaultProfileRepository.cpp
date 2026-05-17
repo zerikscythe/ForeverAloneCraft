@@ -37,6 +37,20 @@ model::BotCombatAoEMode FromDbAoEMode(std::uint8_t value)
     }
 }
 
+model::BotCombatTargetingMode FromDbTargetingMode(std::uint8_t value)
+{
+    switch (value)
+    {
+        case 1:
+            return model::BotCombatTargetingMode::Assist;
+        case 2:
+            return model::BotCombatTargetingMode::Skirmish;
+        case 0:
+        default:
+            return model::BotCombatTargetingMode::Standard;
+    }
+}
+
 model::BotCombatActionType FromDbActionType(std::uint8_t value)
 {
     switch (value)
@@ -112,6 +126,14 @@ model::BotCombatProfileSettings BuildSettings(Field const* fields, std::size_t o
     settings.defaultAoEMode = FromDbAoEMode(fields[offset + 5].Get<std::uint8_t>());
     settings.defaultAoEMinTargets = fields[offset + 6].Get<std::uint8_t>();
     settings.defaultAoEScanRadius = fields[offset + 7].Get<float>();
+    settings.targeting.mode = FromDbTargetingMode(fields[offset + 8].Get<std::uint8_t>());
+    settings.targeting.currentTargetBias = fields[offset + 9].Get<float>();
+    settings.targeting.assistTargetBias = fields[offset + 10].Get<float>();
+    settings.targeting.focusFireBias = fields[offset + 11].Get<float>();
+    settings.targeting.protectAllyBias = fields[offset + 12].Get<float>();
+    settings.targeting.preferHealerBias = fields[offset + 13].Get<float>();
+    settings.targeting.preferDpsBias = fields[offset + 14].Get<float>();
+    settings.targeting.avoidTankBias = fields[offset + 15].Get<float>();
     return settings;
 }
 
@@ -265,7 +287,8 @@ SqlBotCombatDefaultProfileRepository::ListDefaultProfiles() const
         "SELECT default_profile_id, spec_key, role_key, display_name, "
         "class_key, context_key, variant_key, description, conservation_mode, resource_low_water, resource_high_water, "
         "enable_down_rank, down_rank_floor, default_aoe_mode, "
-        "default_aoe_min_targets, default_aoe_scan_radius "
+        "default_aoe_min_targets, default_aoe_scan_radius, targeting_mode, current_target_bias, assist_target_bias, "
+        "focus_fire_bias, protect_ally_bias, prefer_healer_bias, prefer_dps_bias, avoid_tank_bias "
         "FROM living_world_bot_combat_default_profile "
         "ORDER BY spec_key ASC, role_key ASC, class_key ASC, context_key ASC, default_profile_id ASC");
     if (!result)
@@ -305,7 +328,8 @@ SqlBotCombatDefaultProfileRepository::FindDefaultProfile(
                 "SELECT default_profile_id, spec_key, role_key, display_name, "
                 "class_key, context_key, variant_key, description, conservation_mode, resource_low_water, resource_high_water, "
                 "enable_down_rank, down_rank_floor, default_aoe_mode, "
-                "default_aoe_min_targets, default_aoe_scan_radius "
+                "default_aoe_min_targets, default_aoe_scan_radius, targeting_mode, current_target_bias, assist_target_bias, "
+                "focus_fire_bias, protect_ally_bias, prefer_healer_bias, prefer_dps_bias, avoid_tank_bias "
                 "FROM living_world_bot_combat_default_profile "
                 "WHERE spec_key = '{}' AND role_key = '{}' "
                 "AND (context_key = '{}' OR context_key IS NULL OR context_key = '') "
@@ -325,7 +349,8 @@ SqlBotCombatDefaultProfileRepository::FindDefaultProfile(
                 "SELECT default_profile_id, spec_key, role_key, display_name, "
                 "class_key, context_key, variant_key, description, conservation_mode, resource_low_water, resource_high_water, "
                 "enable_down_rank, down_rank_floor, default_aoe_mode, "
-                "default_aoe_min_targets, default_aoe_scan_radius "
+                "default_aoe_min_targets, default_aoe_scan_radius, targeting_mode, current_target_bias, assist_target_bias, "
+                "focus_fire_bias, protect_ally_bias, prefer_healer_bias, prefer_dps_bias, avoid_tank_bias "
                 "FROM living_world_bot_combat_default_profile "
                 "WHERE spec_key = '{}' "
                 "AND (context_key = '{}' OR context_key IS NULL OR context_key = '') "
@@ -360,7 +385,8 @@ SqlBotCombatDefaultProfileRepository::FindDefaultProfile(
                 "SELECT default_profile_id, spec_key, role_key, display_name, "
                 "class_key, context_key, variant_key, description, conservation_mode, resource_low_water, resource_high_water, "
                 "enable_down_rank, down_rank_floor, default_aoe_mode, "
-                "default_aoe_min_targets, default_aoe_scan_radius "
+                "default_aoe_min_targets, default_aoe_scan_radius, targeting_mode, current_target_bias, assist_target_bias, "
+                "focus_fire_bias, protect_ally_bias, prefer_healer_bias, prefer_dps_bias, avoid_tank_bias "
                 "FROM living_world_bot_combat_default_profile "
                 "WHERE spec_key = '{}' AND role_key = '{}' "
                 "AND (context_key = '{}' OR context_key IS NULL OR context_key = '') "
@@ -385,7 +411,8 @@ SqlBotCombatDefaultProfileRepository::FindDefaultProfile(
                 "SELECT default_profile_id, spec_key, role_key, display_name, "
                 "class_key, context_key, variant_key, description, conservation_mode, resource_low_water, resource_high_water, "
                 "enable_down_rank, down_rank_floor, default_aoe_mode, "
-                "default_aoe_min_targets, default_aoe_scan_radius "
+                "default_aoe_min_targets, default_aoe_scan_radius, targeting_mode, current_target_bias, assist_target_bias, "
+                "focus_fire_bias, protect_ally_bias, prefer_healer_bias, prefer_dps_bias, avoid_tank_bias "
                 "FROM living_world_bot_combat_default_profile "
                 "WHERE spec_key = '{}' "
                 "AND (context_key = '{}' OR context_key IS NULL OR context_key = '') "

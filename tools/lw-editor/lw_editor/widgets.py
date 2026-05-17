@@ -8,6 +8,7 @@ from .constants import (
     WOW_CLASSES, CLASS_OPTS, CLASS_NAME_TO_ID, CLASS_SPEC_OPTS, ROLE_OPTS,
     CONSERVATION_MODES, CONSERVATION_INV, CONSERVATION_OPTS,
     AOE_MODES, AOE_INV, AOE_OPTS,
+    TARGETING_MODES, TARGETING_INV, TARGETING_OPTS,
     _normalize_role,
 )
 from .db import db
@@ -105,6 +106,41 @@ class ProfileHeaderFrame(ttk.LabelFrame):
         self.v_aoe_radius = tk.StringVar()
         entry_w(f, self.v_aoe_radius, r, 8, width=6)
 
+        # Row 4 — targeting policy
+        r = 4
+        lbl(f, "Targeting:", r, 0)
+        self.v_targeting_mode = tk.StringVar()
+        combo_w(f, self.v_targeting_mode, TARGETING_OPTS, r, 1, width=10)
+
+        lbl(f, "Current bias:", r, 2)
+        self.v_target_current = tk.StringVar()
+        entry_w(f, self.v_target_current, r, 3, width=6)
+
+        lbl(f, "Assist bias:", r, 4)
+        self.v_target_assist = tk.StringVar()
+        entry_w(f, self.v_target_assist, r, 5, width=6)
+
+        lbl(f, "Focus bias:", r, 6)
+        self.v_target_focus = tk.StringVar()
+        entry_w(f, self.v_target_focus, r, 7, width=6)
+
+        r = 5
+        lbl(f, "Protect ally:", r, 0)
+        self.v_target_protect = tk.StringVar()
+        entry_w(f, self.v_target_protect, r, 1, width=6)
+
+        lbl(f, "Healer bias:", r, 2)
+        self.v_target_healer = tk.StringVar()
+        entry_w(f, self.v_target_healer, r, 3, width=6)
+
+        lbl(f, "DPS bias:", r, 4)
+        self.v_target_dps = tk.StringVar()
+        entry_w(f, self.v_target_dps, r, 5, width=6)
+
+        lbl(f, "Avoid tank:", r, 6)
+        self.v_target_avoid_tank = tk.StringVar()
+        entry_w(f, self.v_target_avoid_tank, r, 7, width=6)
+
     def set_class_from_character(self, class_id: int | None):
         """Clone Profiles tab calls this when the character selection changes.
         Updates the class badge and repopulates the spec combobox immediately,
@@ -151,6 +187,14 @@ class ProfileHeaderFrame(ttk.LabelFrame):
         self.v_aoe_mode.set(AOE_MODES[0])
         self.v_aoe_min.set("2")
         self.v_aoe_radius.set("10.0")
+        self.v_targeting_mode.set(TARGETING_MODES[0])
+        self.v_target_current.set("80")
+        self.v_target_assist.set("140")
+        self.v_target_focus.set("55")
+        self.v_target_protect.set("170")
+        self.v_target_healer.set("220")
+        self.v_target_dps.set("140")
+        self.v_target_avoid_tank.set("120")
         if self.is_default:
             self.v_display.set("")
         else:
@@ -185,6 +229,14 @@ class ProfileHeaderFrame(ttk.LabelFrame):
         self.v_aoe_mode.set(AOE_MODES.get(p.get("default_aoe_mode", 0), "Centroid"))
         self.v_aoe_min.set(str(p.get("default_aoe_min_targets", 2)))
         self.v_aoe_radius.set(str(p.get("default_aoe_scan_radius", 10.0)))
+        self.v_targeting_mode.set(TARGETING_MODES.get(p.get("targeting_mode", 0), "Standard"))
+        self.v_target_current.set(str(p.get("current_target_bias", 80)))
+        self.v_target_assist.set(str(p.get("assist_target_bias", 140)))
+        self.v_target_focus.set(str(p.get("focus_fire_bias", 55)))
+        self.v_target_protect.set(str(p.get("protect_ally_bias", 170)))
+        self.v_target_healer.set(str(p.get("prefer_healer_bias", 220)))
+        self.v_target_dps.set(str(p.get("prefer_dps_bias", 140)))
+        self.v_target_avoid_tank.set(str(p.get("avoid_tank_bias", 120)))
         if self.is_default:
             self.v_display.set(p.get("display_name", "") or "")
         else:
@@ -201,6 +253,14 @@ class ProfileHeaderFrame(ttk.LabelFrame):
         base["default_aoe_mode"]     = AOE_INV.get(self.v_aoe_mode.get(), 0)
         base["default_aoe_min_targets"] = int(self.v_aoe_min.get() or 2)
         base["default_aoe_scan_radius"] = float(self.v_aoe_radius.get() or 10.0)
+        base["targeting_mode"] = TARGETING_INV.get(self.v_targeting_mode.get(), 0)
+        base["current_target_bias"] = float(self.v_target_current.get() or 80.0)
+        base["assist_target_bias"] = float(self.v_target_assist.get() or 140.0)
+        base["focus_fire_bias"] = float(self.v_target_focus.get() or 55.0)
+        base["protect_ally_bias"] = float(self.v_target_protect.get() or 170.0)
+        base["prefer_healer_bias"] = float(self.v_target_healer.get() or 220.0)
+        base["prefer_dps_bias"] = float(self.v_target_dps.get() or 140.0)
+        base["avoid_tank_bias"] = float(self.v_target_avoid_tank.get() or 120.0)
         if self.is_default:
             base["class_key"]   = self.v_class.get().strip() or None
             base["spec_key"]    = self.v_spec.get().strip()

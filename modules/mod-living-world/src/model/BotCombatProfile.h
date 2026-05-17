@@ -60,6 +60,13 @@ enum class BotCombatAoEMode : std::uint8_t
     Feet = 1
 };
 
+enum class BotCombatTargetingMode : std::uint8_t
+{
+    Standard = 0,
+    Assist = 1,
+    Skirmish = 2,
+};
+
 // These operators intentionally stay generic. Subject/stat/target keys remain
 // strings for now so the profile system can stay data-driven while the rule
 // vocabulary is still being finalized.
@@ -141,6 +148,18 @@ struct BotOocBehavior
 
 struct BotCombatProfileSettings
 {
+    struct TargetingSettings
+    {
+        BotCombatTargetingMode mode = BotCombatTargetingMode::Standard;
+        float currentTargetBias = 80.0f;
+        float assistTargetBias = 140.0f;
+        float focusFireBias = 55.0f;
+        float protectAllyBias = 170.0f;
+        float preferHealerBias = 220.0f;
+        float preferDpsBias = 140.0f;
+        float avoidTankBias = 120.0f;
+    };
+
     BotCombatConservationMode conservationMode =
         BotCombatConservationMode::Conservative;
     std::uint32_t rotationWaitMs = 500;
@@ -155,6 +174,7 @@ struct BotCombatProfileSettings
     BotCombatAoEMode defaultAoEMode = BotCombatAoEMode::Centroid;
     std::uint8_t defaultAoEMinTargets = 2;
     float defaultAoEScanRadius = 10.0f;
+    TargetingSettings targeting;
 };
 
 struct BotCombatActionDefinition

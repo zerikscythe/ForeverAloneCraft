@@ -660,7 +660,11 @@ class DefaultProfilesTab(ttk.Frame):
                  context_key=ctx, display_name=name,
                  conservation_mode=1, resource_low_water=55, resource_high_water=75,
                  enable_down_rank=1, down_rank_floor=2,
-                 default_aoe_mode=0, default_aoe_min_targets=2, default_aoe_scan_radius=10.0)
+                 default_aoe_mode=0, default_aoe_min_targets=2, default_aoe_scan_radius=10.0,
+                 targeting_mode=1 if ctx == "PvE" else 2,
+                 current_target_bias=80.0, assist_target_bias=140.0, focus_fire_bias=55.0,
+                 protect_ally_bias=170.0, prefer_healer_bias=220.0, prefer_dps_bias=140.0,
+                 avoid_tank_bias=120.0)
         try:
             pid = db.upsert_default_profile(p)
             p["default_profile_id"] = pid
@@ -939,6 +943,18 @@ class BotProfilesTab(ttk.Frame):
             target["default_aoe_min_targets"] = src.get("default_aoe_min_targets", 2)
         if "default_aoe_scan_radius" in src:
             target["default_aoe_scan_radius"] = src.get("default_aoe_scan_radius", 10.0)
+        for key, default in (
+            ("targeting_mode", 0),
+            ("current_target_bias", 80.0),
+            ("assist_target_bias", 140.0),
+            ("focus_fire_bias", 55.0),
+            ("protect_ally_bias", 170.0),
+            ("prefer_healer_bias", 220.0),
+            ("prefer_dps_bias", 140.0),
+            ("avoid_tank_bias", 120.0),
+        ):
+            if key in src:
+                target[key] = src.get(key, default)
         db.upsert_bot_profile(target)
 
         for src_entry in db.load_default_entries(default_profile_id):
@@ -1005,7 +1021,11 @@ class BotProfilesTab(ttk.Frame):
                      conservation_mode=1, resource_low_water=55, resource_high_water=75,
                      enable_down_rank=1, down_rank_floor=2,
                      default_aoe_mode=0, default_aoe_min_targets=2,
-                     default_aoe_scan_radius=10.0)
+                     default_aoe_scan_radius=10.0,
+                     targeting_mode=0, current_target_bias=80.0,
+                     assist_target_bias=140.0, focus_fire_bias=55.0,
+                     protect_ally_bias=170.0, prefer_healer_bias=220.0,
+                     prefer_dps_bias=140.0, avoid_tank_bias=120.0)
             new_profile_id = db.upsert_bot_profile(p)
             if picker.selection is not None:
                 self._copy_default_profile_to_bot(picker.selection, new_profile_id)

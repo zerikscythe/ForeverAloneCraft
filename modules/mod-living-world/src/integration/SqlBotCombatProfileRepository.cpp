@@ -39,6 +39,20 @@ model::BotCombatAoEMode FromDbAoEMode(std::uint8_t value)
     }
 }
 
+model::BotCombatTargetingMode FromDbTargetingMode(std::uint8_t value)
+{
+    switch (value)
+    {
+        case 1:
+            return model::BotCombatTargetingMode::Assist;
+        case 2:
+            return model::BotCombatTargetingMode::Skirmish;
+        case 0:
+        default:
+            return model::BotCombatTargetingMode::Standard;
+    }
+}
+
 model::BotCombatActionType FromDbActionType(std::uint8_t value)
 {
     switch (value)
@@ -130,6 +144,14 @@ model::BotCombatProfileSettings BuildSettings(Field const* fields, std::size_t o
     settings.defaultAoEMode = FromDbAoEMode(fields[offset + 5].Get<std::uint8_t>());
     settings.defaultAoEMinTargets = fields[offset + 6].Get<std::uint8_t>();
     settings.defaultAoEScanRadius = fields[offset + 7].Get<float>();
+    settings.targeting.mode = FromDbTargetingMode(fields[offset + 8].Get<std::uint8_t>());
+    settings.targeting.currentTargetBias = fields[offset + 9].Get<float>();
+    settings.targeting.assistTargetBias = fields[offset + 10].Get<float>();
+    settings.targeting.focusFireBias = fields[offset + 11].Get<float>();
+    settings.targeting.protectAllyBias = fields[offset + 12].Get<float>();
+    settings.targeting.preferHealerBias = fields[offset + 13].Get<float>();
+    settings.targeting.preferDpsBias = fields[offset + 14].Get<float>();
+    settings.targeting.avoidTankBias = fields[offset + 15].Get<float>();
     return settings;
 }
 
@@ -181,21 +203,21 @@ model::BotCombatProfileRecord BuildProfile(Field const* fields)
     if (!fields[8].IsNull())
         profile.roleOverrideKey = fields[8].Get<std::string>();
     profile.settings = BuildSettings(fields, 9);
-    // OOC behavior — fields 16..24 (added by migration 2025_12)
+    // OOC behavior — fields 24..32 after targeting settings columns
     // Graceful defaults if columns are absent (NULL fallback via COALESCE in SELECT).
     auto& ooc = profile.oocBehavior;
-    ooc.buffScope         = static_cast<model::BotBuffScope>(fields[16].Get<std::uint8_t>());
-    ooc.buffReapplySecs   = fields[17].Get<std::uint16_t>();
-    ooc.buffOnSpawn       = fields[18].Get<bool>();
-    if (!fields[19].IsNull())
-        ooc.followDistOverride = fields[19].Get<float>();
-    if (!fields[20].IsNull())
-        ooc.autoLootOverride = fields[20].Get<std::uint8_t>() != 0;
-    ooc.lootQualityMin    = fields[21].Get<std::uint8_t>();
-    ooc.gatherNodes       = static_cast<model::BotGatherNodes>(fields[22].Get<std::uint8_t>());
-    ooc.gatherSkin        = static_cast<model::BotGatherSkin>(fields[23].Get<std::uint8_t>());
-    ooc.skinLootQualityMax= fields[24].Get<std::uint8_t>();
-    ooc.lootCategoryFlags = fields[25].Get<std::uint32_t>();
+    ooc.buffScope         = static_cast<model::BotBuffScope>(fields[24].Get<std::uint8_t>());
+    ooc.buffReapplySecs   = fields[25].Get<std::uint16_t>();
+    ooc.buffOnSpawn       = fields[26].Get<bool>();
+    if (!fields[27].IsNull())
+        ooc.followDistOverride = fields[27].Get<float>();
+    if (!fields[28].IsNull())
+        ooc.autoLootOverride = fields[28].Get<std::uint8_t>() != 0;
+    ooc.lootQualityMin    = fields[29].Get<std::uint8_t>();
+    ooc.gatherNodes       = static_cast<model::BotGatherNodes>(fields[30].Get<std::uint8_t>());
+    ooc.gatherSkin        = static_cast<model::BotGatherSkin>(fields[31].Get<std::uint8_t>());
+    ooc.skinLootQualityMax= fields[32].Get<std::uint8_t>();
+    ooc.lootCategoryFlags = fields[33].Get<std::uint32_t>();
     return profile;
 }
 
@@ -402,6 +424,8 @@ SqlBotCombatProfileRepository::ListProfilesForCharacter(
         "guessed_spec_key, guessed_role_key, spec_override_key, role_override_key, "
         "conservation_mode, resource_low_water, resource_high_water, enable_down_rank, "
         "down_rank_floor, default_aoe_mode, default_aoe_min_targets, default_aoe_scan_radius, "
+        "targeting_mode, current_target_bias, assist_target_bias, focus_fire_bias, protect_ally_bias, "
+        "prefer_healer_bias, prefer_dps_bias, avoid_tank_bias, "
         "COALESCE(buff_scope,2), COALESCE(buff_reapply_secs,30), COALESCE(buff_on_spawn,1), "
         "follow_dist_override, auto_loot_override, COALESCE(loot_quality_min,0), "
         "COALESCE(gather_nodes,0), COALESCE(gather_skin,0), COALESCE(skin_loot_quality_max,0), "
@@ -435,6 +459,8 @@ SqlBotCombatProfileRepository::FindProfileForCharacterSlot(
         "guessed_spec_key, guessed_role_key, spec_override_key, role_override_key, "
         "conservation_mode, resource_low_water, resource_high_water, enable_down_rank, "
         "down_rank_floor, default_aoe_mode, default_aoe_min_targets, default_aoe_scan_radius, "
+        "targeting_mode, current_target_bias, assist_target_bias, focus_fire_bias, protect_ally_bias, "
+        "prefer_healer_bias, prefer_dps_bias, avoid_tank_bias, "
         "COALESCE(buff_scope,2), COALESCE(buff_reapply_secs,30), COALESCE(buff_on_spawn,1), "
         "follow_dist_override, auto_loot_override, COALESCE(loot_quality_min,0), "
         "COALESCE(gather_nodes,0), COALESCE(gather_skin,0), COALESCE(skin_loot_quality_max,0), "
@@ -461,11 +487,12 @@ void SqlBotCombatProfileRepository::SaveProfile(
         "source_character_guid, owner_account_id, slot, profile_name, guessed_spec_key, "
         "guessed_role_key, spec_override_key, role_override_key, conservation_mode, "
         "resource_low_water, resource_high_water, enable_down_rank, down_rank_floor, default_aoe_mode, "
-        "default_aoe_min_targets, default_aoe_scan_radius, "
+        "default_aoe_min_targets, default_aoe_scan_radius, targeting_mode, current_target_bias, assist_target_bias, "
+        "focus_fire_bias, protect_ally_bias, prefer_healer_bias, prefer_dps_bias, avoid_tank_bias, "
         "buff_scope, buff_reapply_secs, buff_on_spawn, follow_dist_override, "
         "auto_loot_override, loot_quality_min, gather_nodes, gather_skin, skin_loot_quality_max, "
         "loot_category_flags) "
-        "VALUES ({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}) "
+        "VALUES ({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}) "
         "ON DUPLICATE KEY UPDATE "
         "profile_name = VALUES(profile_name), "
         "guessed_spec_key = VALUES(guessed_spec_key), "
@@ -480,6 +507,14 @@ void SqlBotCombatProfileRepository::SaveProfile(
         "default_aoe_mode = VALUES(default_aoe_mode), "
         "default_aoe_min_targets = VALUES(default_aoe_min_targets), "
         "default_aoe_scan_radius = VALUES(default_aoe_scan_radius), "
+        "targeting_mode = VALUES(targeting_mode), "
+        "current_target_bias = VALUES(current_target_bias), "
+        "assist_target_bias = VALUES(assist_target_bias), "
+        "focus_fire_bias = VALUES(focus_fire_bias), "
+        "protect_ally_bias = VALUES(protect_ally_bias), "
+        "prefer_healer_bias = VALUES(prefer_healer_bias), "
+        "prefer_dps_bias = VALUES(prefer_dps_bias), "
+        "avoid_tank_bias = VALUES(avoid_tank_bias), "
         "buff_scope = VALUES(buff_scope), "
         "buff_reapply_secs = VALUES(buff_reapply_secs), "
         "buff_on_spawn = VALUES(buff_on_spawn), "
@@ -506,6 +541,14 @@ void SqlBotCombatProfileRepository::SaveProfile(
         static_cast<std::uint32_t>(profile.settings.defaultAoEMode),
         static_cast<std::uint32_t>(profile.settings.defaultAoEMinTargets),
         profile.settings.defaultAoEScanRadius,
+        static_cast<std::uint32_t>(profile.settings.targeting.mode),
+        profile.settings.targeting.currentTargetBias,
+        profile.settings.targeting.assistTargetBias,
+        profile.settings.targeting.focusFireBias,
+        profile.settings.targeting.protectAllyBias,
+        profile.settings.targeting.preferHealerBias,
+        profile.settings.targeting.preferDpsBias,
+        profile.settings.targeting.avoidTankBias,
         static_cast<std::uint32_t>(profile.oocBehavior.buffScope),
         static_cast<std::uint32_t>(profile.oocBehavior.buffReapplySecs),
         profile.oocBehavior.buffOnSpawn ? 1 : 0,

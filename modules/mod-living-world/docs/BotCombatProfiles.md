@@ -218,6 +218,102 @@ check inside that broader shared runtime path.
 ### 4.2 Conservative
 
 - offensive casting is gated by low/high water marks
+
+---
+
+## 5. Target Selection Policy
+
+Target selection should follow the same broad design principles as the spell
+rotation system:
+
+- server authoritative
+- data-authored where practical
+- defaults that work without per-bot hand tuning
+- clean room for later encounter-specific overrides
+
+### 5.1 Base targeting policy
+
+Combat profiles should own a small targeting-policy surface that can be edited
+in the database and exposed in the editor. The intent is to let a profile say
+how it prefers to pick and stick to targets without hardcoding all of those
+weights in `WorldBotCreatureAI.cpp`.
+
+The current design direction is a small mode plus score/bias knobs:
+
+- `Standard`
+- `Assist`
+- `Skirmish`
+
+And a first-pass set of editable biases such as:
+
+- current-target bias
+- assist-target bias
+- focus-fire bias
+- protect-ally bias
+- prefer-healer bias
+- prefer-dps bias
+- avoid-tank bias
+
+This gives us a practical way to tune:
+
+- party-like open-world and dungeon target assist behavior
+- PvP skirmish target selection
+- role-specific target preference without duplicating a whole combat profile
+
+### 5.2 Party and world PvE expectations
+
+For normal world travel and dungeon-style bot groups, target selection should
+usually look more coordinated than chaotic:
+
+- tanks should prefer holding or peeling enemies that threaten allies
+- ranged DPS should often assist the tank's target
+- melee DPS may bias toward softer or more disruptive targets when reachable
+- healers should stay support-first and only contribute damage in safe windows
+
+This is intentionally close to small-group PvE logic even when the bots are out
+in the world rather than inside a dungeon map. The difference between "world"
+and "dungeon" should mostly come from hazard rules, leash/encounter strictness,
+and role conservatism, not from replacing the entire target model.
+
+### 5.3 PvP and skirmish expectations
+
+For player-like open-world PvP or bot-vs-bot skirmishes, the same targeting
+surface should be able to produce more aggressive behavior:
+
+- tanks/frontliners peel and disrupt enemy DPS/support
+- DPS strongly prefer healers and weaker support targets
+- healers focus on survival, tank support, and opportunistic damage only
+
+This should be a profile/context choice, not a completely separate combat
+engine.
+
+### 5.4 Raid icon orchestration comes later
+
+Raid and encounter orchestration should sit **above** the base targeting-policy
+layer.
+
+That means future raid markers such as:
+
+- `Skull` -> main kill target
+- `X` -> secondary kill or off-tank hold
+- `Moon` -> polymorph / crowd control hold
+- `Diamond` -> sap / isolate
+
+should be treated as **explicit tactical overrides**, not as replacements for
+the underlying profile-driven targeting brain.
+
+In practice the intended stack is:
+
+```text
+Encounter / raid-icon override
+  -> target-selection policy
+  -> movement/posture doctrine
+  -> spell rotation / interrupts
+```
+
+So if there is no icon, bots fall back to normal targeting policy. If there is
+an icon, the icon supplies the tactical assignment and the profile still
+governs how the bot behaves around that assignment.
 - example doctrine:
   - if mana falls below low-water threshold, stop offensive magic
   - if mana rises above high-water threshold, resume offensive magic
