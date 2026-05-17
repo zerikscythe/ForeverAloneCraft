@@ -52,7 +52,7 @@ struct ActivityEntry
 struct TaskTemplateStepEntry
 {
     std::uint32_t stepOrder      = 0;
-    std::string   stepType;          // travel|gather_herb|gather_ore|fish|idle_city|idle_inn|patrol
+    std::string   stepType;          // travel|gather_herb|gather_ore|fish|idle_city|idle_inn|patrol|grind
     std::uint32_t targetZoneId   = 0;
     std::string   targetPointKey;
     std::string   resolverKind;      // point|zone|home_city|resource_auto|resource_zone|quest_auto|quest_zone|creature_auto|creature_zone

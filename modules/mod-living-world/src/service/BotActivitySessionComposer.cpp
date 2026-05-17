@@ -207,6 +207,7 @@ AmbientStepType ActivityTypeToStepType(std::string const& activityType)
     if (activityType == "gather_ore")  return AmbientStepType::GatherOre;
     if (activityType == "fish")        return AmbientStepType::Fish;
     if (activityType == "patrol")      return AmbientStepType::Patrol;
+    if (activityType == "grind")       return AmbientStepType::Grind;
     return AmbientStepType::Idle;
 }
 
@@ -711,6 +712,7 @@ std::optional<AmbientSession> BuildSessionFromTemplate(
         activityStep.subjectKey = templateStep.subjectKey;
         activityStep.returnAnchorRole = templateStep.returnAnchorRole;
         activityStep.cycleCount = std::max<std::uint8_t>(1u, templateStep.cycleCount);
+        activityStep.combatRadius = 30.f;
         activityStep.label     = templateStep.label;
 
         if (templateStep.durationMinSec == 0 && templateStep.durationMaxSec == 0)

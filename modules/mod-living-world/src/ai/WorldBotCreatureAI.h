@@ -44,6 +44,21 @@ public:
         std::uint64_t incomingHealing = 0;
     };
 
+    enum class CombatInterruptionReason : std::uint8_t
+    {
+        ReactiveDefense = 0,
+        AuthoredGrind = 1,
+    };
+
+    struct CombatInterruptionContext
+    {
+        bool active = false;
+        CombatInterruptionReason reason = CombatInterruptionReason::ReactiveDefense;
+        std::size_t suspendedStepIndex = 0;
+        std::uint32_t allClearElapsedMs = 0;
+        std::uint32_t allClearRequiredMs = 0;
+    };
+
     enum class ActiveTravelExecutionPhase : std::uint8_t
     {
         None = 0,
@@ -141,6 +156,7 @@ private:
     void TickStep(uint32 diff);
     void TickCombat(uint32 diff);
     void TickGatherStep(service::AmbientStep const& step);
+    void TickGrindStep(service::AmbientStep const& step);
     void AdvanceStep();
     void CompletSession();
     void PersistRuntimeLedgerState(std::string const& detailOverride = "") const;
@@ -199,6 +215,10 @@ private:
     void RecordCombatSummary(char const* reason);
     [[nodiscard]] Unit* FindNearbyAmbientCombatTarget(float radius) const;
     bool TrySustainAmbientCombat(char const* reason);
+    [[nodiscard]] Creature* FindNearestGrindTarget(service::AmbientStep const& step) const;
+    bool TryStartGrindCombat(service::AmbientStep const& step);
+    bool IsCombatAreaStep(service::AmbientStep const& step) const;
+    std::uint32_t ResolveCombatResumeDelayMs() const;
 
     // Apply identity fields (level, display_id) to the creature.
     void ApplyIdentityToCreature();
@@ -211,7 +231,7 @@ private:
     bool          _traveling     = false;
     bool          _sessionReady  = false;
     bool          _sessionDone   = false;
-    bool          _combatSuspendedStep = false;
+    CombatInterruptionContext _combatInterrupt;
     bool          _preparedBuildReady = false;
     bool          _combatProfilePrepared = false;
     bool          _gatherMovingToNode = false;
@@ -267,6 +287,8 @@ private:
     static constexpr std::uint32_t CorpseRecoveryCorpseDelaySec = 15;
     static constexpr std::uint32_t CorpseRecoveryRunbackDelaySec = 10;
     static constexpr std::uint32_t CombatDisengageGraceMs = 3000;
+    static constexpr std::uint32_t ReactiveCombatResumeDelayMs = 3000;
+    static constexpr std::uint32_t AuthoredCombatResumeDelayMs = 1000;
     static constexpr float AmbientCombatAssistRadius = 60.0f;
 };
 

@@ -55,6 +55,7 @@
 #include <array>
 #include <cctype>
 #include <chrono>
+#include <cstdlib>
 #include <filesystem>
 #include <limits>
 #include <iomanip>
@@ -607,6 +608,9 @@ std::string DescribeSessionBlueprint(service::AmbientSession const& session)
             case service::AmbientStepType::Patrol:
                 oss << "patrol";
                 break;
+            case service::AmbientStepType::Grind:
+                oss << "grind";
+                break;
             case service::AmbientStepType::GatherHerb:
                 oss << "gather_herb";
                 break;
@@ -666,6 +670,8 @@ char const* DescribeAmbientStepTypeKey(service::AmbientStepType type)
             return "idle";
         case service::AmbientStepType::Patrol:
             return "patrol";
+        case service::AmbientStepType::Grind:
+            return "grind";
         case service::AmbientStepType::Transit:
             return "transit";
         default:
@@ -1233,7 +1239,7 @@ void WorldBotCreatureAI::SetIdentityAndSession(
     _sessionDone  = false;
     _sessionReady = true;
     _worldOnlineMs = worldOnlineMsSoFar;
-    _combatSuspendedStep = false;
+    _combatInterrupt = {};
     ResetGatherState();
     ResetTravelWatchdog(_travelWatchdog);
     _knownExploredZoneIds.clear();
@@ -1618,7 +1624,7 @@ void WorldBotCreatureAI::UpdateAI(uint32 diff)
         return;
     }
 
-    if (_combatSuspendedStep)
+    if (_combatInterrupt.active)
     {
         if (TrySustainAmbientCombat("combat_resume_from_nearby_ally"))
         {
@@ -1626,17 +1632,21 @@ void WorldBotCreatureAI::UpdateAI(uint32 diff)
             return;
         }
 
-        _combatDisengageGraceMs = std::min(
-            CombatDisengageGraceMs,
-            _combatDisengageGraceMs + TickIntervalMs);
-        if (_combatDisengageGraceMs < CombatDisengageGraceMs)
+        std::uint32_t const resumeDelayMs =
+            _combatInterrupt.allClearRequiredMs != 0
+                ? _combatInterrupt.allClearRequiredMs
+                : ResolveCombatResumeDelayMs();
+        _combatInterrupt.allClearElapsedMs = std::min(
+            resumeDelayMs,
+            _combatInterrupt.allClearElapsedMs + TickIntervalMs);
+        if (_combatInterrupt.allClearElapsedMs < resumeDelayMs)
         {
             if (IsDebugForcedCombatIdentity())
             {
                 std::ostringstream graceTrace;
                 graceTrace << "phase='combat' decision='hold_resume' "
                            << "reason='disengage_grace' "
-                           << "grace_ms=" << _combatDisengageGraceMs << " "
+                           << "grace_ms=" << _combatInterrupt.allClearElapsedMs << " "
                            << "victim=" << DescribeTraceUnit(nullptr);
                 RecordCombatTrace(graceTrace.str());
             }
@@ -2720,7 +2730,7 @@ void WorldBotCreatureAI::JustEngagedWith(Unit* who)
 
 void WorldBotCreatureAI::JustReachedHome()
 {
-    if (_combatSuspendedStep && !me->IsInCombat() && !me->GetVictim())
+    if (_combatInterrupt.active && !me->IsInCombat() && !me->GetVictim())
         ResumeSuspendedStepAfterCombat();
 }
 
@@ -2732,7 +2742,7 @@ void WorldBotCreatureAI::JustRespawned()
         return;
 
     _pendingCorpseRecovery = false;
-    _combatSuspendedStep = false;
+    _combatInterrupt = {};
     _syntheticGlobalCooldownRemainingMs = 0;
     _combatDisengageGraceMs = 0;
     _usedSimulatedItemsThisCombat.clear();
@@ -2847,6 +2857,31 @@ bool IsTrainingDummyTarget(Creature const* creature)
     }
 
     return creature->GetScriptName() == "npc_training_dummy";
+}
+
+std::vector<std::uint32_t> ParseSubjectEntryList(service::AmbientStep const& step)
+{
+    std::vector<std::uint32_t> entries;
+    if (step.subjectId != 0)
+        entries.push_back(step.subjectId);
+
+    std::string token;
+    std::istringstream input(step.subjectKey);
+    while (std::getline(input, token, ','))
+    {
+        token.erase(std::remove_if(token.begin(), token.end(), [](unsigned char c) { return std::isspace(c) != 0; }), token.end());
+        if (token.empty())
+            continue;
+
+        char* end = nullptr;
+        unsigned long parsed = std::strtoul(token.c_str(), &end, 10);
+        if (end && *end == '\0' && parsed > 0ul)
+            entries.push_back(static_cast<std::uint32_t>(parsed));
+    }
+
+    std::sort(entries.begin(), entries.end());
+    entries.erase(std::unique(entries.begin(), entries.end()), entries.end());
+    return entries;
 }
 
 bool ShouldBypassDebugForcedAttack(Creature* me, Creature* target)
@@ -3037,10 +3072,17 @@ bool WorldBotCreatureAI::ApplyDebugCombatManaTarget(Unit* target, char const* tr
 
 void WorldBotCreatureAI::SuspendCurrentStepForCombat(Unit* target)
 {
-    if (_combatSuspendedStep || !_sessionReady || _sessionDone)
+    if (_combatInterrupt.active || !_sessionReady || _sessionDone)
         return;
 
-    _combatSuspendedStep = true;
+    _combatInterrupt.active = true;
+    _combatInterrupt.reason =
+        (_currentStep < _session.steps.size() && IsCombatAreaStep(_session.steps[_currentStep]))
+            ? CombatInterruptionReason::AuthoredGrind
+            : CombatInterruptionReason::ReactiveDefense;
+    _combatInterrupt.suspendedStepIndex = _currentStep;
+    _combatInterrupt.allClearElapsedMs = 0;
+    _combatInterrupt.allClearRequiredMs = ResolveCombatResumeDelayMs();
     _combatDisengageGraceMs = 0;
     ResetCombatMetricsSegment();
     service::ResetSharedHazardEvaluationState(_hazardEvaluationState);
@@ -3072,11 +3114,11 @@ void WorldBotCreatureAI::SuspendCurrentStepForCombat(Unit* target)
 
 void WorldBotCreatureAI::ResumeSuspendedStepAfterCombat()
 {
-    if (!_combatSuspendedStep)
+    if (!_combatInterrupt.active)
         return;
 
     RecordCombatSummary("combat_exit");
-    _combatSuspendedStep = false;
+    _combatInterrupt = {};
     _combatDisengageGraceMs = 0;
     _traveling = false;
     ClearVisibleTravelMode();
@@ -3139,7 +3181,7 @@ void WorldBotCreatureAI::RecordCombatHealingTaken(std::uint32_t amount)
 
 void WorldBotCreatureAI::RecordCombatSummary(char const* reason)
 {
-    if (!me || !_combatSuspendedStep)
+    if (!me || !_combatInterrupt.active)
         return;
 
     if (_combatMetricsCurrent.outgoingDamage == 0
@@ -3567,9 +3609,91 @@ Unit* WorldBotCreatureAI::FindNearbyAmbientCombatTarget(float radius) const
     return considerClosest(candidates);
 }
 
+bool WorldBotCreatureAI::IsCombatAreaStep(service::AmbientStep const& step) const
+{
+    return step.type == service::AmbientStepType::Grind;
+}
+
+std::uint32_t WorldBotCreatureAI::ResolveCombatResumeDelayMs() const
+{
+    if (!_combatInterrupt.active)
+        return ReactiveCombatResumeDelayMs;
+
+    return _combatInterrupt.reason == CombatInterruptionReason::AuthoredGrind
+        ? AuthoredCombatResumeDelayMs
+        : ReactiveCombatResumeDelayMs;
+}
+
+Creature* WorldBotCreatureAI::FindNearestGrindTarget(service::AmbientStep const& step) const
+{
+    if (!me)
+        return nullptr;
+
+    std::vector<std::uint32_t> const entries = ParseSubjectEntryList(step);
+    float const searchRadius = std::max(5.0f, step.combatRadius);
+    Creature* bestTarget = nullptr;
+    float bestDistance = std::numeric_limits<float>::max();
+
+    auto considerTarget =
+        [&](Creature* target)
+        {
+            if (!target || !target->IsAlive() || target == me || target->IsFriendlyTo(me))
+                return;
+
+            float const distance = me->GetDistance(target);
+            if (distance < bestDistance)
+            {
+                bestTarget = target;
+                bestDistance = distance;
+            }
+        };
+
+    if (!entries.empty())
+    {
+        for (std::uint32_t entry : entries)
+            considerTarget(me->FindNearestCreature(entry, searchRadius, true));
+    }
+    else
+    {
+        Unit* nearbyTarget = FindNearbyAmbientCombatTarget(searchRadius);
+        considerTarget(nearbyTarget ? nearbyTarget->ToCreature() : nullptr);
+    }
+
+    return bestTarget;
+}
+
+bool WorldBotCreatureAI::TryStartGrindCombat(service::AmbientStep const& step)
+{
+    if (!me || me->IsInCombat() || me->GetVictim())
+        return false;
+
+    Creature* target = FindNearestGrindTarget(step);
+    if (!target)
+        return false;
+
+    SuspendCurrentStepForCombat(target);
+    me->SetInCombatWith(target);
+    target->SetInCombatWith(me);
+    me->AddThreat(target, 1.0f);
+    target->AddThreat(me, 1.0f);
+    AttackStart(target);
+
+    if (target->IsAIEnabled)
+        target->AI()->AttackStart(me);
+
+    integration::BotActivityLog::Record(
+        me,
+        _identity.name,
+        _identity.id,
+        "combat_pull",
+        "authored_grind target_guid=" + std::to_string(target->GetGUID().GetCounter())
+            + " target='" + target->GetName() + "'");
+    return true;
+}
+
 bool WorldBotCreatureAI::TrySustainAmbientCombat(char const* reason)
 {
-    if (!me || !_combatSuspendedStep)
+    if (!me || !_combatInterrupt.active)
         return false;
 
     Unit* target = FindNearbyAmbientCombatTarget(AmbientCombatAssistRadius);
@@ -3577,6 +3701,7 @@ bool WorldBotCreatureAI::TrySustainAmbientCombat(char const* reason)
         return false;
 
     _combatDisengageGraceMs = 0;
+    _combatInterrupt.allClearElapsedMs = 0;
     me->SetInCombatWith(target);
     target->SetInCombatWith(me);
     AttackStart(target);
@@ -3805,6 +3930,48 @@ void WorldBotCreatureAI::TickGatherStep(service::AmbientStep const& step)
         step.label + " target_guid=" + std::to_string(target->GetGUID().GetCounter())
             + " cycles=" + std::to_string(_gatherCompletedCycles)
             + "/" + std::to_string(requiredCycles));
+}
+
+void WorldBotCreatureAI::TickGrindStep(service::AmbientStep const& step)
+{
+    if (_activityTimer == 0)
+    {
+        integration::BotActivityLog::Record(
+            me,
+            _identity.name,
+            _identity.id,
+            "status_change",
+            "beginning task -> " + step.label);
+        PersistRuntimeLedgerState();
+    }
+
+    _activityTimer += TickIntervalMs;
+    uint32 const durationMs = step.durationSec * 1000u;
+
+    if (!me->IsInCombat() && !me->GetVictim() && !_combatInterrupt.active)
+        TryStartGrindCombat(step);
+
+    if (_activityTimer % 60000 < TickIntervalMs)
+    {
+        integration::BotActivityLog::Record(
+            me,
+            _identity.name,
+            _identity.id,
+            "activity_tick",
+            step.label + " | patrolling for grind targets");
+    }
+
+    if (_activityTimer >= durationMs)
+    {
+        integration::BotActivityLog::Record(
+            me,
+            _identity.name,
+            _identity.id,
+            "activity_complete",
+            step.label);
+        _activityTimer = 0;
+        AdvanceStep();
+    }
 }
 
 void WorldBotCreatureAI::TickCombat(uint32 diff)
@@ -4485,6 +4652,12 @@ void WorldBotCreatureAI::TickStep(uint32 /*diff*/)
         return;
     }
 
+    if (step.type == service::AmbientStepType::Grind)
+    {
+        TickGrindStep(step);
+        return;
+    }
+
     // Activity step — count down duration.
     if (_activityTimer == 0)
     {
@@ -4567,7 +4740,7 @@ void WorldBotCreatureAI::CompletSession()
 
 void WorldBotCreatureAI::JustDied(Unit* /*killer*/)
 {
-    if (_combatSuspendedStep)
+    if (_combatInterrupt.active)
         RecordCombatSummary("death");
 
     service::ResetSharedHazardEvaluationState(_hazardEvaluationState);

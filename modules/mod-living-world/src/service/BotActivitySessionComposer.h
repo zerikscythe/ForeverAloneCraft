@@ -21,6 +21,7 @@ enum class AmbientStepType : std::uint8_t
     Idle       = 5,  // Stand at location for duration
     Patrol     = 6,  // Walk between anchor and nearby waypoints
     Transit    = 7,  // Timed scripted transit: taxi|boat|zeppelin|portal
+    Grind      = 8,  // Patrol a local area and actively pull matching nearby hostiles
 };
 
 struct AmbientStep
@@ -43,6 +44,7 @@ struct AmbientStep
     std::string     transitDestPointKey;
     std::string     transitSourceLabel;
     std::string     transitDestLabel;
+    float           combatRadius = 30.f;
     std::string     label;
 };
 
