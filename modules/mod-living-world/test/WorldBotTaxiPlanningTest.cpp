@@ -107,6 +107,25 @@ TEST(WorldBotTaxiPlanningTest, FactionUsabilityHelperHonorsFactionFlags)
     EXPECT_TRUE(IsWorldBotTaxiNodeUsableForFaction(sharedNode, 2));
 }
 
+TEST(WorldBotTaxiPlanningTest, ClassifiesSpecialTaxiNodesBeforeMapValidation)
+{
+    EXPECT_EQ(
+        ClassifyWorldBotTaxiNodeForPlanner(9770568u, "Transport, Undercity", false),
+        WorldBotTaxiNodeClassification::Transport);
+    EXPECT_EQ(
+        ClassifyWorldBotTaxiNodeForPlanner(12u, "Quest - New Agamand -> Venomspite", false),
+        WorldBotTaxiNodeClassification::Quest);
+    EXPECT_EQ(
+        ClassifyWorldBotTaxiNodeForPlanner(999999u, "Some Broken Flight Master", false),
+        WorldBotTaxiNodeClassification::InvalidMap);
+    EXPECT_EQ(
+        ClassifyWorldBotTaxiNodeForPlanner(0u, "Crossroads, The Barrens", true),
+        WorldBotTaxiNodeClassification::Standard);
+    EXPECT_STREQ(
+        DescribeWorldBotTaxiNodeClassification(WorldBotTaxiNodeClassification::Transport),
+        "transport");
+}
+
 TEST(WorldBotTaxiPlanningTest, ResolvesShortestKnownRouteAcrossKnownTaxiGraph)
 {
     WorldBotTaxiNetwork const network(

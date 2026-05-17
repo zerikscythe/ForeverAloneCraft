@@ -27,6 +27,15 @@ struct WorldBotTaxiNode
     std::string name;
 };
 
+enum class WorldBotTaxiNodeClassification : std::uint8_t
+{
+    Standard = 0,
+    Transport = 1,
+    Quest = 2,
+    InvalidMap = 3,
+    UnknownZone = 4,
+};
+
 struct WorldBotTaxiPathLink
 {
     std::uint32_t pathId = 0;
@@ -112,6 +121,14 @@ using WorldBotGroundRouteResolver = std::function<std::optional<WorldBotResolved
 bool IsWorldBotTaxiNodeUsableForFaction(
     WorldBotTaxiNode const& node,
     std::uint8_t faction);
+
+WorldBotTaxiNodeClassification ClassifyWorldBotTaxiNodeForPlanner(
+    std::uint32_t mapId,
+    std::string const& nodeName,
+    bool mapExists);
+
+char const* DescribeWorldBotTaxiNodeClassification(
+    WorldBotTaxiNodeClassification classification);
 
 class WorldBotTaxiNetwork
 {

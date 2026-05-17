@@ -9,9 +9,11 @@
 #include "SharedDefines.h"
 
 #include <algorithm>
+#include <cctype>
 #include <limits>
 #include <queue>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 
 namespace living_world
@@ -80,6 +82,25 @@ std::string ResolveTaxiNodeName(TaxiNodesEntry const& entry)
     }
 
     return {};
+}
+
+std::string LowercaseAscii(std::string value)
+{
+    std::transform(
+        value.begin(),
+        value.end(),
+        value.begin(),
+        [](unsigned char c)
+        {
+            return static_cast<char>(std::tolower(c));
+        });
+    return value;
+}
+
+bool StartsWith(std::string const& value, std::string const& prefix)
+{
+    return value.size() >= prefix.size()
+        && std::equal(prefix.begin(), prefix.end(), value.begin());
 }
 
 float ComputeTaxiPathDistanceYards(std::uint32_t pathId)
@@ -165,6 +186,44 @@ bool IsWorldBotTaxiNodeUsableForFaction(
         default:
             return node.usableByAlliance || node.usableByHorde;
     }
+}
+
+WorldBotTaxiNodeClassification ClassifyWorldBotTaxiNodeForPlanner(
+    std::uint32_t /*mapId*/,
+    std::string const& nodeName,
+    bool mapExists)
+{
+    std::string const normalizedName = LowercaseAscii(nodeName);
+    if (StartsWith(normalizedName, "transport"))
+        return WorldBotTaxiNodeClassification::Transport;
+
+    if (StartsWith(normalizedName, "quest"))
+        return WorldBotTaxiNodeClassification::Quest;
+
+    if (!mapExists)
+        return WorldBotTaxiNodeClassification::InvalidMap;
+
+    return WorldBotTaxiNodeClassification::Standard;
+}
+
+char const* DescribeWorldBotTaxiNodeClassification(
+    WorldBotTaxiNodeClassification classification)
+{
+    switch (classification)
+    {
+        case WorldBotTaxiNodeClassification::Standard:
+            return "standard";
+        case WorldBotTaxiNodeClassification::Transport:
+            return "transport";
+        case WorldBotTaxiNodeClassification::Quest:
+            return "quest";
+        case WorldBotTaxiNodeClassification::InvalidMap:
+            return "invalid_map";
+        case WorldBotTaxiNodeClassification::UnknownZone:
+            return "unknown_zone";
+    }
+
+    return "unknown";
 }
 
 WorldBotTaxiNetwork::WorldBotTaxiNetwork(std::vector<WorldBotTaxiNode> nodes)
@@ -445,6 +504,12 @@ WorldBotTaxiNetwork LoadWorldBotTaxiNetwork(WorldBotTaxiZoneResolver zoneResolve
 {
     std::vector<WorldBotTaxiNode> nodes;
     nodes.reserve(sTaxiNodesStore.GetNumRows());
+    std::unordered_set<std::uint32_t> retainedNodeIds;
+    std::uint32_t skippedTransport = 0;
+    std::uint32_t skippedQuest = 0;
+    std::uint32_t skippedInvalidMap = 0;
+    std::uint32_t skippedUnknownZone = 0;
+    std::uint32_t skippedNoFaction = 0;
 
     for (std::uint32_t nodeId = 1; nodeId < sTaxiNodesStore.GetNumRows(); ++nodeId)
     {
@@ -455,21 +520,42 @@ WorldBotTaxiNetwork LoadWorldBotTaxiNetwork(WorldBotTaxiZoneResolver zoneResolve
         if (!HasTaxiMaskBit(sTaxiNodesMask, nodeId))
             continue;
 
-        if (!sMapStore.LookupEntry(entry->map_id))
+        std::string const nodeName = ResolveTaxiNodeName(*entry);
+        WorldBotTaxiNodeClassification classification =
+            ClassifyWorldBotTaxiNodeForPlanner(
+                entry->map_id,
+                nodeName,
+                sMapStore.LookupEntry(entry->map_id) != nullptr);
+        if (classification != WorldBotTaxiNodeClassification::Standard)
         {
-            LOG_WARN(
-                "server.loading",
-                "[LivingWorld] Skipping taxi node {} ('{}') with invalid map id {}.",
-                nodeId,
-                ResolveTaxiNodeName(*entry),
-                entry->map_id);
+            switch (classification)
+            {
+                case WorldBotTaxiNodeClassification::Transport:
+                    ++skippedTransport;
+                    break;
+                case WorldBotTaxiNodeClassification::Quest:
+                    ++skippedQuest;
+                    break;
+                case WorldBotTaxiNodeClassification::InvalidMap:
+                    ++skippedInvalidMap;
+                    break;
+                default:
+                    break;
+            }
+            continue;
+        }
+
+        std::uint32_t const resolvedZoneId = ResolveTaxiNodeZoneId(zoneResolver, *entry);
+        if (resolvedZoneId == 0)
+        {
+            ++skippedUnknownZone;
             continue;
         }
 
         WorldBotTaxiNode node;
         node.nodeId = nodeId;
         node.mapId = static_cast<std::uint16_t>(entry->map_id);
-        node.zoneId = ResolveTaxiNodeZoneId(zoneResolver, *entry);
+        node.zoneId = resolvedZoneId;
         node.x = entry->x;
         node.y = entry->y;
         node.z = entry->z;
@@ -479,16 +565,38 @@ WorldBotTaxiNetwork LoadWorldBotTaxiNetwork(WorldBotTaxiZoneResolver zoneResolve
         node.usableByHorde =
             HasTaxiMaskBit(sHordeTaxiNodesMask, nodeId)
             || HasTaxiMaskBit(sDeathKnightTaxiNodesMask, nodeId);
-        node.name = ResolveTaxiNodeName(*entry);
+        if (!node.usableByAlliance && !node.usableByHorde)
+        {
+            ++skippedNoFaction;
+            continue;
+        }
+
+        node.name = nodeName;
         nodes.push_back(std::move(node));
+        retainedNodeIds.insert(nodeId);
     }
+
+    LOG_INFO(
+        "server.loading",
+        "[LivingWorld] Loaded {} world-bot taxi nodes. Skipped transport={} quest={} invalid_map={} unknown_zone={} no_faction={}.",
+        nodes.size(),
+        skippedTransport,
+        skippedQuest,
+        skippedInvalidMap,
+        skippedUnknownZone,
+        skippedNoFaction);
 
     std::vector<WorldBotTaxiPathLink> links;
     for (auto const& [fromNodeId, destinations] : sTaxiPathSetBySource)
     {
+        if (retainedNodeIds.find(fromNodeId) == retainedNodeIds.end())
+            continue;
+
         for (auto const& [toNodeId, pathEntry] : destinations)
         {
             if (!pathEntry || pathEntry->ID == 0)
+                continue;
+            if (retainedNodeIds.find(toNodeId) == retainedNodeIds.end())
                 continue;
 
             WorldBotTaxiPathLink link;
@@ -501,9 +609,17 @@ WorldBotTaxiNetwork LoadWorldBotTaxiNetwork(WorldBotTaxiZoneResolver zoneResolve
             link.rideEtaMs = taxiSpeed > 0.0f
                 ? static_cast<std::uint32_t>(std::lround((link.rideDistanceYards / taxiSpeed) * 1000.0f))
                 : 0u;
+            if (link.rideEtaMs == 0)
+                continue;
+
             links.push_back(std::move(link));
         }
     }
+
+    LOG_INFO(
+        "server.loading",
+        "[LivingWorld] Loaded {} world-bot taxi graph links after filtering special nodes.",
+        links.size());
 
     return WorldBotTaxiNetwork(std::move(nodes), std::move(links));
 }
