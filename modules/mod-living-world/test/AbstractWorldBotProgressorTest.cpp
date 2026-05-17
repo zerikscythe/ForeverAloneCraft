@@ -20,6 +20,7 @@ TEST(AbstractWorldBotProgressorTest, TimedActivityAdvancesAfterDuration)
     session.steps.push_back(step);
 
     AbstractWorldBotProgressState state;
+    state.stepStartKnown = true;
     state.stepStartMapId = 0;
     state.stepStartX = 1.0f;
     state.stepStartY = 2.0f;
@@ -48,6 +49,7 @@ TEST(AbstractWorldBotProgressorTest, SameMapTravelUsesDistanceAndInterpolates)
     session.steps.push_back(step);
 
     AbstractWorldBotProgressState state;
+    state.stepStartKnown = true;
     state.stepStartMapId = 1;
     state.stepStartX = 0.0f;
     state.stepStartY = 0.0f;
@@ -81,6 +83,7 @@ TEST(AbstractWorldBotProgressorTest, CrossMapTravelFallsBackToConfiguredDuration
     session.steps.push_back(step);
 
     AbstractWorldBotProgressState state;
+    state.stepStartKnown = true;
     state.stepStartMapId = 0;
     state.stepStartX = 0.0f;
     state.stepStartY = 0.0f;
@@ -110,6 +113,7 @@ TEST(AbstractWorldBotProgressorTest, RoutePlanResolverOverridesDirectTravelTimin
     session.steps.push_back(step);
 
     AbstractWorldBotProgressState state;
+    state.stepStartKnown = true;
     state.stepStartMapId = 1;
     state.stepStartX = 0.0f;
     state.stepStartY = 0.0f;
@@ -182,6 +186,7 @@ TEST(AbstractWorldBotProgressorTest, TravelOptionResolverUsesTaxiJourneyTimingAn
     session.steps.push_back(step);
 
     AbstractWorldBotProgressState state;
+    state.stepStartKnown = true;
     state.stepStartMapId = 1;
     state.stepStartX = 0.0f;
     state.stepStartY = 0.0f;
@@ -234,6 +239,9 @@ TEST(AbstractWorldBotProgressorTest, TravelOptionResolverUsesTaxiJourneyTimingAn
     EXPECT_EQ(ComputeAbstractWorldBotStepDurationMs(step, state, cfg), 40000u);
 
     state.stepElapsedMs = 5000u;
+    auto phase = ResolveAbstractWorldBotTravelOptionPhase(option, state);
+    ASSERT_TRUE(phase.has_value());
+    EXPECT_EQ(phase->kind, AbstractWorldBotTravelPhaseKind::TaxiSourceGround);
     auto sample = ComputeAbstractWorldBotTravelOptionPosition(option, state);
     ASSERT_TRUE(sample.has_value());
     EXPECT_NEAR(sample->x, 50.0f, 0.01f);
@@ -241,12 +249,45 @@ TEST(AbstractWorldBotProgressorTest, TravelOptionResolverUsesTaxiJourneyTimingAn
     EXPECT_NEAR(pos.x, 50.0f, 0.01f);
 
     state.stepElapsedMs = 20000u;
+    phase = ResolveAbstractWorldBotTravelOptionPhase(option, state);
+    ASSERT_TRUE(phase.has_value());
+    EXPECT_EQ(phase->kind, AbstractWorldBotTravelPhaseKind::TaxiFlight);
     pos = ComputeAbstractWorldBotInterpolatedPosition(session, state, cfg);
     EXPECT_NEAR(pos.x, 150.0f, 0.01f);
+
+    state.stepElapsedMs = 30000u;
+    phase = ResolveAbstractWorldBotTravelOptionPhase(option, state);
+    ASSERT_TRUE(phase.has_value());
+    EXPECT_EQ(phase->kind, AbstractWorldBotTravelPhaseKind::TaxiDestinationGround);
+    pos = ComputeAbstractWorldBotInterpolatedPosition(session, state, cfg);
+    EXPECT_NEAR(pos.x, 200.0f, 0.01f);
 
     state.stepElapsedMs = 35000u;
     pos = ComputeAbstractWorldBotInterpolatedPosition(session, state, cfg);
     EXPECT_NEAR(pos.x, 250.0f, 0.01f);
+}
+
+TEST(AbstractWorldBotProgressorTest, MapZeroCanBeKnownSameMapTravel)
+{
+    service::AmbientStep step;
+    step.type = service::AmbientStepType::Travel;
+    step.mapId = 0;
+    step.x = 90.0f;
+    step.y = 0.0f;
+    step.z = 0.0f;
+
+    AbstractWorldBotProgressState state;
+    state.stepStartKnown = true;
+    state.stepStartMapId = 0;
+    state.stepStartX = 0.0f;
+    state.stepStartY = 0.0f;
+    state.stepStartZ = 0.0f;
+
+    AbstractWorldBotProgressConfig cfg;
+    cfg.travelYardsPerSecond = 9.0f;
+    cfg.crossMapTravelMs = 30000u;
+
+    EXPECT_EQ(ComputeAbstractWorldBotStepDurationMs(step, state, cfg), 10000u);
 }
 
 } // namespace ai

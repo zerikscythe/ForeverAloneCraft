@@ -20,6 +20,7 @@ struct AbstractWorldBotProgressState
 {
     std::size_t   currentStep    = 0;
     std::uint32_t stepElapsedMs  = 0;
+    bool          stepStartKnown = false;
     std::uint16_t stepStartMapId = 0;
     float         stepStartX     = 0.0f;
     float         stepStartY     = 0.0f;
@@ -55,7 +56,42 @@ struct AbstractWorldBotProgressOutcome
     std::uint32_t stepsCompleted = 0;
 };
 
-inline std::optional<AbstractWorldBotInterpolatedPosition> ComputeAbstractWorldBotTravelOptionPosition(
+enum class AbstractWorldBotTravelPhaseKind : std::uint8_t
+{
+    None = 0,
+    GroundOnly = 1,
+    TaxiSourceGround = 2,
+    TaxiFlight = 3,
+    TaxiDestinationGround = 4,
+};
+
+struct AbstractWorldBotTravelPhase
+{
+    AbstractWorldBotTravelPhaseKind kind = AbstractWorldBotTravelPhaseKind::None;
+    AbstractWorldBotInterpolatedPosition position;
+    std::uint32_t zoneId = 0;
+};
+
+inline std::optional<service::WorldBotResolvedTravelOption> ResolveAbstractWorldBotTravelOption(
+    service::AmbientStep const& step,
+    AbstractWorldBotProgressState const& state,
+    AbstractWorldBotProgressConfig const& config)
+{
+    if (step.type != service::AmbientStepType::Travel || !state.stepStartKnown || state.stepStartMapId != step.mapId)
+        return std::nullopt;
+
+    if (!config.travelOptionResolver)
+        return std::nullopt;
+
+    return config.travelOptionResolver(
+        step,
+        state.stepStartMapId,
+        state.stepStartX,
+        state.stepStartY,
+        state.stepStartZ);
+}
+
+inline std::optional<AbstractWorldBotTravelPhase> ResolveAbstractWorldBotTravelOptionPhase(
     service::WorldBotResolvedTravelOption const& option,
     AbstractWorldBotProgressState const& state)
 {
@@ -66,7 +102,7 @@ inline std::optional<AbstractWorldBotInterpolatedPosition> ComputeAbstractWorldB
         std::uint32_t const taxiMs = journey.taxiCandidate.route.totalEtaMs;
         std::uint32_t const destinationMs = journey.destinationGroundPlan.etaMs;
 
-        if (sourceMs > 0 && state.stepElapsedMs <= sourceMs)
+        if (sourceMs > 0 && state.stepElapsedMs < sourceMs)
         {
             auto const sample = service::SampleWorldBotTravelPlanPosition(
                 journey.sourceGroundPlan,
@@ -78,10 +114,13 @@ inline std::optional<AbstractWorldBotInterpolatedPosition> ComputeAbstractWorldB
                         static_cast<float>(state.stepElapsedMs) / static_cast<float>(sourceMs),
                         0.0f,
                         1.0f));
-            return AbstractWorldBotInterpolatedPosition{sample.mapId, sample.x, sample.y, sample.z};
+            return AbstractWorldBotTravelPhase{
+                AbstractWorldBotTravelPhaseKind::TaxiSourceGround,
+                {sample.mapId, sample.x, sample.y, sample.z},
+                journey.taxiCandidate.sourceNode.zoneId};
         }
 
-        if (taxiMs > 0 && state.stepElapsedMs <= (sourceMs + taxiMs))
+        if (taxiMs > 0 && state.stepElapsedMs < (sourceMs + taxiMs))
         {
             float const taxiProgress = std::clamp(
                 static_cast<float>(state.stepElapsedMs - sourceMs) / static_cast<float>(taxiMs),
@@ -89,20 +128,24 @@ inline std::optional<AbstractWorldBotInterpolatedPosition> ComputeAbstractWorldB
                 1.0f);
             service::WorldBotTaxiNode const& sourceNode = journey.taxiCandidate.sourceNode;
             service::WorldBotTaxiNode const& destinationNode = journey.taxiCandidate.destinationNode;
-            return AbstractWorldBotInterpolatedPosition{
-                sourceNode.mapId,
-                sourceNode.x + ((destinationNode.x - sourceNode.x) * taxiProgress),
-                sourceNode.y + ((destinationNode.y - sourceNode.y) * taxiProgress),
-                sourceNode.z + ((destinationNode.z - sourceNode.z) * taxiProgress)};
+            return AbstractWorldBotTravelPhase{
+                AbstractWorldBotTravelPhaseKind::TaxiFlight,
+                {
+                    sourceNode.mapId,
+                    sourceNode.x + ((destinationNode.x - sourceNode.x) * taxiProgress),
+                    sourceNode.y + ((destinationNode.y - sourceNode.y) * taxiProgress),
+                    sourceNode.z + ((destinationNode.z - sourceNode.z) * taxiProgress)
+                },
+                destinationNode.zoneId};
         }
 
+        service::WorldBotTaxiNode const& destinationNode = journey.taxiCandidate.destinationNode;
         if (destinationMs > 0)
         {
             std::uint32_t const destinationElapsedMs =
                 state.stepElapsedMs > (sourceMs + taxiMs)
                     ? (state.stepElapsedMs - sourceMs - taxiMs)
                     : 0u;
-            service::WorldBotTaxiNode const& destinationNode = journey.taxiCandidate.destinationNode;
             auto const sample = service::SampleWorldBotTravelPlanPosition(
                 journey.destinationGroundPlan,
                 destinationNode.x,
@@ -113,8 +156,16 @@ inline std::optional<AbstractWorldBotInterpolatedPosition> ComputeAbstractWorldB
                         static_cast<float>(destinationElapsedMs) / static_cast<float>(destinationMs),
                         0.0f,
                         1.0f));
-            return AbstractWorldBotInterpolatedPosition{sample.mapId, sample.x, sample.y, sample.z};
+            return AbstractWorldBotTravelPhase{
+                AbstractWorldBotTravelPhaseKind::TaxiDestinationGround,
+                {sample.mapId, sample.x, sample.y, sample.z},
+                destinationNode.zoneId};
         }
+
+        return AbstractWorldBotTravelPhase{
+            AbstractWorldBotTravelPhaseKind::TaxiDestinationGround,
+            {destinationNode.mapId, destinationNode.x, destinationNode.y, destinationNode.z},
+            destinationNode.zoneId};
     }
 
     if (option.groundPlan.has_value() && !option.groundPlan->empty() && option.groundPlan->etaMs > 0)
@@ -129,8 +180,21 @@ inline std::optional<AbstractWorldBotInterpolatedPosition> ComputeAbstractWorldB
                     static_cast<float>(state.stepElapsedMs) / static_cast<float>(option.groundPlan->etaMs),
                     0.0f,
                     1.0f));
-        return AbstractWorldBotInterpolatedPosition{sample.mapId, sample.x, sample.y, sample.z};
+        return AbstractWorldBotTravelPhase{
+            AbstractWorldBotTravelPhaseKind::GroundOnly,
+            {sample.mapId, sample.x, sample.y, sample.z},
+            option.groundPlan->zoneId};
     }
+
+    return std::nullopt;
+}
+
+inline std::optional<AbstractWorldBotInterpolatedPosition> ComputeAbstractWorldBotTravelOptionPosition(
+    service::WorldBotResolvedTravelOption const& option,
+    AbstractWorldBotProgressState const& state)
+{
+    if (auto const phase = ResolveAbstractWorldBotTravelOptionPhase(option, state))
+        return phase->position;
 
     return std::nullopt;
 }
@@ -145,21 +209,13 @@ inline std::uint32_t ComputeAbstractWorldBotStepDurationMs(
 
     if (step.type == service::AmbientStepType::Travel)
     {
-        if (state.stepStartMapId == 0 || state.stepStartMapId != step.mapId)
+        if (!state.stepStartKnown || state.stepStartMapId != step.mapId)
             return std::max(config.minStepDurationMs, config.crossMapTravelMs);
 
-        if (config.travelOptionResolver)
+        if (auto const option = ResolveAbstractWorldBotTravelOption(step, state, config))
         {
-            if (auto const option = config.travelOptionResolver(
-                step,
-                state.stepStartMapId,
-                state.stepStartX,
-                state.stepStartY,
-                state.stepStartZ))
-            {
-                if (option->totalEtaMs > 0)
-                    return std::max(config.minStepDurationMs, option->totalEtaMs);
-            }
+            if (option->totalEtaMs > 0)
+                return std::max(config.minStepDurationMs, option->totalEtaMs);
         }
 
         if (config.routePlanResolver)
@@ -210,7 +266,7 @@ inline AbstractWorldBotInterpolatedPosition ComputeAbstractWorldBotInterpolatedP
     service::AmbientStep const& step = session.steps[state.currentStep];
     pos.mapId = step.mapId;
 
-    if (step.type != service::AmbientStepType::Travel || state.stepStartMapId != step.mapId)
+    if (step.type != service::AmbientStepType::Travel || !state.stepStartKnown || state.stepStartMapId != step.mapId)
     {
         pos.x = step.x;
         pos.y = step.y;
@@ -223,18 +279,10 @@ inline AbstractWorldBotInterpolatedPosition ComputeAbstractWorldBotInterpolatedP
         ? 1.0f
         : std::clamp(static_cast<float>(state.stepElapsedMs) / static_cast<float>(durationMs), 0.0f, 1.0f);
 
-    if (config.travelOptionResolver)
+    if (auto const option = ResolveAbstractWorldBotTravelOption(step, state, config))
     {
-        if (auto const option = config.travelOptionResolver(
-            step,
-            state.stepStartMapId,
-            state.stepStartX,
-            state.stepStartY,
-            state.stepStartZ))
-        {
-            if (auto const sample = ComputeAbstractWorldBotTravelOptionPosition(*option, state))
-                return *sample;
-        }
+        if (auto const sample = ComputeAbstractWorldBotTravelOptionPosition(*option, state))
+            return *sample;
     }
 
     if (config.routePlanResolver)
@@ -299,6 +347,7 @@ inline AbstractWorldBotProgressOutcome AdvanceAbstractWorldBotProgress(
         state.stepStartX = step.x;
         state.stepStartY = step.y;
         state.stepStartZ = step.z;
+        state.stepStartKnown = true;
         state.stepElapsedMs = 0;
         ++state.currentStep;
     }

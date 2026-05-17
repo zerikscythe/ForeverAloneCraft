@@ -1354,18 +1354,36 @@ bool WorldBotCreatureAI::BuildRuntimeSnapshot(RuntimeSnapshot& out) const
     out.session = _session;
     out.worldOnlineMs = _worldOnlineMs;
     out.progress.currentStep = _currentStep;
+    out.progress.stepStartKnown = true;
     out.progress.stepStartMapId = static_cast<std::uint16_t>(me->GetMapId());
     out.progress.stepStartX = me->GetPositionX();
     out.progress.stepStartY = me->GetPositionY();
     out.progress.stepStartZ = me->GetPositionZ();
     out.progress.stepElapsedMs = 0;
+    out.inTaxiTransit = _activeTravelExecutionPhase == ActiveTravelExecutionPhase::TaxiTransit;
 
     if (_currentStep >= _session.steps.size())
         return true;
 
     service::AmbientStep const& step = _session.steps[_currentStep];
-    if (step.type != service::AmbientStepType::Travel)
+    if (step.type == service::AmbientStepType::Travel && _activeTravelStepStartKnown)
+    {
+        out.progress.stepStartMapId = _activeTravelStepStartMapId;
+        out.progress.stepStartX = _activeTravelStepStartX;
+        out.progress.stepStartY = _activeTravelStepStartY;
+        out.progress.stepStartZ = _activeTravelStepStartZ;
+
+        if (out.inTaxiTransit && !_activeTaxiJourney.empty())
+        {
+            out.progress.stepElapsedMs =
+                _activeTaxiJourney.sourceGroundPlan.etaMs
+                + std::min(_activeTaxiTransitElapsedMs, _activeTaxiJourney.taxiCandidate.route.totalEtaMs);
+        }
+    }
+    else if (step.type != service::AmbientStepType::Travel)
+    {
         out.progress.stepElapsedMs = _activityTimer;
+    }
 
     return true;
 }
@@ -2417,6 +2435,11 @@ void WorldBotCreatureAI::TickStep(uint32 /*diff*/)
         {
             ClearActiveRouteTravelPlan();
             ClearActiveTaxiTravel();
+            _activeTravelStepStartKnown = true;
+            _activeTravelStepStartMapId = static_cast<std::uint16_t>(me->GetMapId());
+            _activeTravelStepStartX = me->GetPositionX();
+            _activeTravelStepStartY = me->GetPositionY();
+            _activeTravelStepStartZ = me->GetPositionZ();
             service::WorldBotTravelCapabilityTier const travelTier = ResolveTravelCapabilityTier();
             // Same-map only for now — skip cross-map travel steps.
             if (step.mapId != me->GetMapId())
@@ -2565,6 +2588,7 @@ void WorldBotCreatureAI::TickStep(uint32 /*diff*/)
                 }
 
                 _traveling = false;
+                _activeTravelStepStartKnown = false;
                 ClearVisibleTravelMode();
                 ClearActiveRouteTravelPlan();
                 ClearActiveTaxiTravel();

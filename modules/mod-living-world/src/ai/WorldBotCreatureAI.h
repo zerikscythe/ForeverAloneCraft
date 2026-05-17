@@ -51,6 +51,7 @@ public:
         service::AmbientSession            session;
         AbstractWorldBotProgressState      progress;
         std::uint64_t                      worldOnlineMs = 0;
+        bool                               inTaxiTransit = false;
     };
 
     explicit WorldBotCreatureAI(Creature* creature);
@@ -157,6 +158,11 @@ private:
     ActiveTravelExecutionPhase _activeTravelExecutionPhase = ActiveTravelExecutionPhase::None;
     service::WorldBotTravelOptionMode _activeTravelOptionMode = service::WorldBotTravelOptionMode::Ground;
     std::uint32_t  _activeTaxiTransitElapsedMs = 0;
+    bool           _activeTravelStepStartKnown = false;
+    std::uint16_t  _activeTravelStepStartMapId = 0;
+    float          _activeTravelStepStartX = 0.0f;
+    float          _activeTravelStepStartY = 0.0f;
+    float          _activeTravelStepStartZ = 0.0f;
     bool           _routeTravelPlanActive = false;
     std::size_t    _routeTravelWaypointIndex = 0;
     std::uint32_t  _routeTravelLastZoneId = 0;
