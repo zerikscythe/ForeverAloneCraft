@@ -661,6 +661,17 @@ std::string DescribeCombatActionForTrace(service::BotCombatEvaluatedAction const
     return DescribeSpellForTrace(action.spellId);
 }
 
+std::string DescribeTraceUnit(Unit const* unit)
+{
+    if (!unit)
+        return "none";
+
+    std::ostringstream oss;
+    oss << "'" << unit->GetName() << "'"
+        << " guid=" << unit->GetGUID().GetCounter();
+    return oss.str();
+}
+
 char const* DescribeAoEMode(std::optional<model::BotCombatAoEMode> aoeMode)
 {
     if (!aoeMode)
@@ -3065,7 +3076,27 @@ void WorldBotCreatureAI::TickCombat(uint32 /*diff*/)
                 if (action.breaksCurrentCast && me->IsNonMeleeSpellCast(false))
                     me->InterruptNonMeleeSpells(false);
 
-                bool casted = service::CastEvaluatedAction(me, action);
+                service::BotCombatActionDispatchResult const dispatchResult =
+                    service::DispatchEvaluatedAction(me, action);
+                bool const casted = dispatchResult.dispatched;
+
+                if (IsDebugForcedCombatIdentity())
+                {
+                    std::ostringstream castTrace;
+                    castTrace << "phase='cast' "
+                        << "decision='dispatch' "
+                        << "entry='" << (!action.entryLabel.empty() ? action.entryLabel : "unnamed") << "' "
+                        << "action='" << DescribeCombatActionForTrace(action) << "' "
+                        << "action_type='" << (action.actionType == model::BotCombatActionType::Item ? "item" : "spell") << "' "
+                        << "target=" << DescribeTraceUnit(action.target) << " "
+                        << "primary_target=" << DescribeTraceUnit(target) << " "
+                        << "dispatched=" << (casted ? 1 : 0) << " "
+                        << "reason='" << dispatchResult.reason << "' "
+                        << "resolved_spell=" << dispatchResult.resolvedSpellId << " "
+                        << "breaks_cast=" << (action.breaksCurrentCast ? 1 : 0) << " "
+                        << "bot_casting=" << (me->IsNonMeleeSpellCast(false) ? 1 : 0);
+                    RecordCombatTrace(castTrace.str());
+                }
 
                 if (casted && action.actionType == model::BotCombatActionType::Spell)
                 {

@@ -14,6 +14,13 @@ namespace living_world
 {
 namespace service
 {
+struct BotCombatActionDispatchResult
+{
+    bool dispatched = false;
+    std::string reason;
+    std::uint32_t resolvedSpellId = 0;
+};
+
 namespace
 {
 inline bool TryExecuteSimulatedCombatItem(Unit* bot, BotCombatEvaluatedAction const& action)
@@ -40,31 +47,43 @@ inline bool TryExecuteSimulatedCombatItem(Unit* bot, BotCombatEvaluatedAction co
 }
 } // namespace
 
-inline bool CastEvaluatedAction(Unit* bot, BotCombatEvaluatedAction const& action)
+inline BotCombatActionDispatchResult DispatchEvaluatedAction(Unit* bot, BotCombatEvaluatedAction const& action)
 {
     if (!bot)
-        return false;
+        return { false, "missing_bot", 0 };
 
     if (action.actionType == model::BotCombatActionType::Item)
     {
         if (action.simulatedItemUse)
-            return TryExecuteSimulatedCombatItem(bot, action);
+        {
+            std::optional<SimulatedCombatItemDefinition> definition =
+                GetSimulatedCombatItemDefinition(action.itemId);
+            if (!definition)
+                return { false, "missing_simulated_item_definition", 0 };
+
+            bool const dispatched = TryExecuteSimulatedCombatItem(bot, action);
+            return {
+                dispatched,
+                dispatched ? "simulated_item_dispatched" : "simulated_item_rejected",
+                definition->useSpellId
+            };
+        }
 
         Player* player = bot->ToPlayer();
         if (!player || action.itemId == 0)
-            return false;
+            return { false, "missing_player_or_item", 0 };
 
         Item* item = player->GetItemByEntry(action.itemId);
         if (!item)
-            return false;
+            return { false, "item_not_found", 0 };
 
         if (player->CanUseItem(item) != EQUIP_ERR_OK)
-            return false;
+            return { false, "item_cannot_be_used", 0 };
 
         SpellCastTargets targets;
         targets.SetUnitTarget(action.target ? action.target : player);
         player->CastItemUseSpell(item, targets, 1, 0);
-        return true;
+        return { true, "item_use_dispatched", 0 };
     }
 
     if (action.useDestination)
@@ -75,14 +94,19 @@ inline bool CastEvaluatedAction(Unit* bot, BotCombatEvaluatedAction const& actio
             action.destinationZ,
             action.spellId,
             false);
-        return true;
+        return { true, "ground_target_spell_dispatched", action.spellId };
     }
 
     if (!action.target)
-        return false;
+        return { false, "missing_action_target", action.spellId };
 
     bot->CastSpell(action.target, action.spellId, false);
-    return true;
+    return { true, "unit_target_spell_dispatched", action.spellId };
+}
+
+inline bool CastEvaluatedAction(Unit* bot, BotCombatEvaluatedAction const& action)
+{
+    return DispatchEvaluatedAction(bot, action).dispatched;
 }
 } // namespace service
 } // namespace living_world
