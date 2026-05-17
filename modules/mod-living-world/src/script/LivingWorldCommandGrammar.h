@@ -11,9 +11,11 @@
 //   .lwbot roster list
 //   .lwbot roster request <rosterEntryId>
 //   .lwbot roster dismiss <rosterEntryId>
+//   .lwbot combat strict|smart
 //   .lwbot <position|name> profile <1-10>
 //   .lwbot <position|name> cast <Ability Name> [on <target>]
-//   .lwbot <position|name> mode assist|passive|hold|guard
+//   .lwbot <position|name> mode assist|passive|hold|stay|guard
+//   .lwbot <position|name> stay
 //
 // The parser intentionally produces a structured command object rather
 // than executing anything. Parse errors are returned as a dedicated
@@ -21,6 +23,7 @@
 // without exception handling.
 
 #include "model/BotCombatMode.h"
+#include "model/BotCombatControlMode.h"
 
 #include <cstdint>
 #include <optional>
@@ -311,6 +314,16 @@ struct BotModeSetCommand
     model::BotCombatMode mode = model::BotCombatMode::Assist;
 };
 
+// "combat strict|smart"
+//
+// Changes the owner-wide combat control layer for companion/account bots.
+// Strict preserves old obedient assist behavior. Smart allows doctrine-aware
+// target arbitration when there is no explicit player command override.
+struct BotCombatControlModeSetCommand
+{
+    model::BotCombatControlMode mode = model::BotCombatControlMode::Strict;
+};
+
 // "<position|name> info" — request the bot's current config state pushed back
 // as a LWBT:BINFO system message so the Bot-Tune addon can render it.
 struct BotInfoCommand
@@ -369,6 +382,7 @@ using ParsedCommand = std::variant<
     QuestRewardModeSetCommand,
     BotRewardChoiceCommand,
     BotModeSetCommand,
+    BotCombatControlModeSetCommand,
     BotInfoCommand,
     BotAddTalentCommand,
     BotResetTalentsCommand,

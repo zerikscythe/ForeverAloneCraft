@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ObjectGuid.h"
+#include "model/BotCombatControlMode.h"
 #include "model/BotCombatMode.h"
 
 #include <cstdint>
@@ -42,6 +43,16 @@ public:
     model::BotCombatMode GetBotMode(ObjectGuid ownerCharacterGuid) const;
     void ClearBotMode(ObjectGuid ownerCharacterGuid);
 
+    // Combat control mode is keyed by owner GUID; defaults to Strict so the
+    // old owner-assist behavior remains stable until a player opts into smart
+    // targeting.
+    void SetBotControlMode(
+        ObjectGuid ownerCharacterGuid,
+        model::BotCombatControlMode mode);
+    model::BotCombatControlMode GetBotControlMode(
+        ObjectGuid ownerCharacterGuid) const;
+    void ClearBotControlMode(ObjectGuid ownerCharacterGuid);
+
 private:
     mutable std::mutex _mutex;
     std::unordered_map<std::uint64_t, std::uint64_t> _pendingOwnersByBot;
@@ -49,6 +60,7 @@ private:
     // owner guid -> list of bot guids
     std::unordered_map<std::uint64_t, std::vector<ObjectGuid>> _botsByOwner;
     std::unordered_map<std::uint64_t, model::BotCombatMode> _botModes;
+    std::unordered_map<std::uint64_t, model::BotCombatControlMode> _botControlModes;
 };
 } // namespace service
 } // namespace living_world

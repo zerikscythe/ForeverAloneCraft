@@ -79,6 +79,7 @@ void BotPlayerRegistry::UnregisterBotPlayer(Player* botPlayer)
             if (bots.empty())
             {
                 _botModes.erase(ownerGuidLow);
+                _botControlModes.erase(ownerGuidLow);
                 _botsByOwner.erase(botsItr);
             }
         }
@@ -197,6 +198,30 @@ void BotPlayerRegistry::ClearBotMode(ObjectGuid ownerCharacterGuid)
 {
     std::lock_guard<std::mutex> guard(_mutex);
     _botModes.erase(ownerCharacterGuid.GetCounter());
+}
+
+void BotPlayerRegistry::SetBotControlMode(
+    ObjectGuid ownerCharacterGuid,
+    model::BotCombatControlMode mode)
+{
+    std::lock_guard<std::mutex> guard(_mutex);
+    _botControlModes[ownerCharacterGuid.GetCounter()] = mode;
+}
+
+model::BotCombatControlMode BotPlayerRegistry::GetBotControlMode(
+    ObjectGuid ownerCharacterGuid) const
+{
+    std::lock_guard<std::mutex> guard(_mutex);
+    auto const itr = _botControlModes.find(ownerCharacterGuid.GetCounter());
+    if (itr == _botControlModes.end())
+        return model::BotCombatControlMode::Strict;
+    return itr->second;
+}
+
+void BotPlayerRegistry::ClearBotControlMode(ObjectGuid ownerCharacterGuid)
+{
+    std::lock_guard<std::mutex> guard(_mutex);
+    _botControlModes.erase(ownerCharacterGuid.GetCounter());
 }
 } // namespace service
 } // namespace living_world

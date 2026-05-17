@@ -38,6 +38,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstdint>
+#include <limits>
 #include <optional>
 #include <mutex>
 #include <unordered_map>
@@ -226,6 +227,8 @@ struct BotCombatResolvedProfile
 struct BotCombatDoctrine
 {
     BotCombatRole role = BotCombatRole::Melee;
+    std::string effectiveSpecKey;
+    std::string effectiveRoleKey;
     BotCombatResolvedProfile profile;
     model::BotCombatProfileSettings settings;
 };
@@ -361,6 +364,8 @@ BotCombatDoctrine LoadCombatDoctrine(Unit* bot, Player* owner)
             bot->getClass(),
             ownerAccountId);
     doctrine.settings    = resolution.profile.settings;
+    doctrine.effectiveSpecKey = resolution.effectiveSpecKey;
+    doctrine.effectiveRoleKey = resolution.effectiveRoleKey;
 
     doctrine.role = ResolveDoctrineRole(
         bot->getClass(),
@@ -1364,6 +1369,250 @@ Unit* ResolveGuardTarget(Player* bot, Player* owner)
     return nullptr;
 }
 
+bool IsLikelyHealerClass(std::uint8_t classId)
+{
+    switch (classId)
+    {
+        case CLASS_PALADIN:
+        case CLASS_PRIEST:
+        case CLASS_SHAMAN:
+        case CLASS_DRUID:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool IsLikelyTankClass(std::uint8_t classId)
+{
+    switch (classId)
+    {
+        case CLASS_WARRIOR:
+        case CLASS_PALADIN:
+        case CLASS_DEATH_KNIGHT:
+        case CLASS_DRUID:
+            return true;
+        default:
+            return false;
+    }
+}
+
+enum class SmartAssistTargetRole : std::uint8_t
+{
+    Unknown,
+    Healer,
+    Tank,
+    Damage
+};
+
+SmartAssistTargetRole GuessSmartAssistTargetRole(Unit* candidate)
+{
+    Player* candidatePlayer = candidate ? candidate->ToPlayer() : nullptr;
+    if (!candidatePlayer)
+        return SmartAssistTargetRole::Damage;
+
+    if (std::optional<ObjectGuid> ownerGuid =
+            service::BotPlayerRegistry::Instance().FindOwnerForBot(candidatePlayer->GetGUID()))
+    {
+        Player* candidateOwner = ObjectAccessor::FindConnectedPlayer(*ownerGuid);
+        BotCombatDoctrine const doctrine = GetCombatDoctrine(candidatePlayer, candidateOwner);
+        if (doctrine.effectiveRoleKey == "HEAL")
+            return SmartAssistTargetRole::Healer;
+        if (doctrine.effectiveRoleKey == "TANK")
+            return SmartAssistTargetRole::Tank;
+        if (doctrine.effectiveRoleKey == "DPS")
+            return SmartAssistTargetRole::Damage;
+    }
+
+    if (IsLikelyHealerClass(candidatePlayer->getClass()))
+        return SmartAssistTargetRole::Healer;
+    if (IsLikelyTankClass(candidatePlayer->getClass()))
+        return SmartAssistTargetRole::Tank;
+    return SmartAssistTargetRole::Damage;
+}
+
+Unit* ResolveSmartAssistTarget(Player* bot, Player* owner, BotCombatDoctrine const& doctrine)
+{
+    BotOverride const ovr = GetOverride(bot->GetGUID());
+    model::BotGlobalConfig const cfg = GetGlobalConfigService().Get();
+
+    auto const now = std::chrono::steady_clock::now();
+
+    if (ovr.retreatExpiry > now)
+    {
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=retreat result=none",
+            bot->GetName(),
+            bot->GetGUID().GetCounter());
+        return nullptr;
+    }
+
+    if (ovr.disengaged)
+    {
+        if (now < ovr.disengageExpiry)
+        {
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=disengaged result=none",
+                bot->GetName(),
+                bot->GetGUID().GetCounter());
+            return nullptr;
+        }
+
+        ClearBotOverride(bot->GetGUID());
+    }
+
+    if (ovr.forcedTarget)
+    {
+        Unit* forced = ObjectAccessor::GetUnit(*bot, ovr.forcedTarget);
+        if (forced && IsViableCommandTarget(bot, owner, forced, cfg))
+        {
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=forced targetGuid={}",
+                bot->GetName(),
+                bot->GetGUID().GetCounter(),
+                forced->GetGUID().GetCounter());
+            return forced;
+        }
+
+        SetBotForcedTarget(bot->GetGUID(), ObjectGuid::Empty);
+    }
+
+    if (ovr.attackLocked)
+        return ResolveAssistTarget(bot, owner);
+
+    std::vector<Player*> friendlyBots =
+        service::BotPlayerRegistry::Instance().FindBotsForOwner(owner->GetGUID());
+
+    std::unordered_map<std::uint64_t, std::uint32_t> allyFocusCounts;
+    std::unordered_set<std::uint64_t> protectedAllyGuids;
+    protectedAllyGuids.insert(owner->GetGUID().GetCounter());
+
+    for (Player* friendlyBot : friendlyBots)
+    {
+        if (!friendlyBot)
+            continue;
+
+        protectedAllyGuids.insert(friendlyBot->GetGUID().GetCounter());
+
+        if (Unit* victim = friendlyBot->GetVictim())
+            ++allyFocusCounts[victim->GetGUID().GetCounter()];
+    }
+
+    if (Unit* ownerVictim = owner->GetVictim())
+        ++allyFocusCounts[ownerVictim->GetGUID().GetCounter()];
+
+    std::vector<Unit*> candidates;
+    std::unordered_set<std::uint64_t> candidateGuids;
+    auto addCandidate = [&](Unit* candidate)
+    {
+        if (!candidate || !IsValidAssistTarget(bot, owner, candidate, cfg))
+            return;
+        if (!candidateGuids.insert(candidate->GetGUID().GetCounter()).second)
+            return;
+        candidates.push_back(candidate);
+    };
+
+    addCandidate(bot->GetVictim());
+    addCandidate(owner->GetVictim());
+
+    if (ObjectGuid const ownerSelection = owner->GetTarget())
+        addCandidate(ObjectAccessor::GetUnit(*owner, ownerSelection));
+
+    for (Unit* attacker : owner->getAttackers())
+        addCandidate(attacker);
+
+    for (Player* friendlyBot : friendlyBots)
+    {
+        if (!friendlyBot)
+            continue;
+
+        addCandidate(friendlyBot->GetVictim());
+        for (Unit* attacker : friendlyBot->getAttackers())
+            addCandidate(attacker);
+    }
+
+    if (candidates.empty())
+        return ResolveAssistTarget(bot, owner);
+
+    model::BotCombatProfileSettings::TargetingSettings const& targeting =
+        doctrine.settings.targeting;
+
+    Unit* bestCandidate = nullptr;
+    float bestScore = std::numeric_limits<float>::lowest();
+
+    for (Unit* candidate : candidates)
+    {
+        float score = 0.0f;
+        float const distance = bot->GetDistance(candidate);
+        score -= distance * 2.0f;
+
+        if (candidate == bot->GetVictim())
+            score += static_cast<float>(targeting.currentTargetBias);
+
+        if (candidate == owner->GetVictim())
+            score += static_cast<float>(targeting.assistTargetBias);
+
+        if (ObjectGuid const ownerSelection = owner->GetTarget();
+            ownerSelection && ownerSelection == candidate->GetGUID())
+        {
+            score += static_cast<float>(targeting.assistTargetBias);
+        }
+
+        auto focusIt = allyFocusCounts.find(candidate->GetGUID().GetCounter());
+        if (focusIt != allyFocusCounts.end() && focusIt->second > 0)
+            score += static_cast<float>(targeting.focusFireBias) *
+                static_cast<float>(focusIt->second);
+
+        if (Unit* victim = candidate->GetVictim())
+        {
+            if (protectedAllyGuids.find(victim->GetGUID().GetCounter()) !=
+                protectedAllyGuids.end())
+                score += static_cast<float>(targeting.protectAllyBias);
+        }
+
+        switch (GuessSmartAssistTargetRole(candidate))
+        {
+            case SmartAssistTargetRole::Healer:
+                score += static_cast<float>(targeting.preferHealerBias);
+                break;
+            case SmartAssistTargetRole::Damage:
+                score += static_cast<float>(targeting.preferDpsBias);
+                break;
+            case SmartAssistTargetRole::Tank:
+                score -= static_cast<float>(targeting.avoidTankBias);
+                break;
+            default:
+                break;
+        }
+
+        if (candidate->GetHealthPct() < 35.0f)
+            score += 35.0f;
+
+        if (score > bestScore)
+        {
+            bestScore = score;
+            bestCandidate = candidate;
+        }
+    }
+
+    if (bestCandidate)
+    {
+        LOG_INFO(
+            "server.worldserver",
+            "[LivingWorldDebug] AssistTarget bot='{}' guid={} mode=smart targetGuid={} score={:.1f}",
+            bot->GetName(),
+            bot->GetGUID().GetCounter(),
+            bestCandidate->GetGUID().GetCounter(),
+            bestScore);
+        return bestCandidate;
+    }
+
+    return ResolveAssistTarget(bot, owner);
+}
+
 // ---------------------------------------------------------------
 // Main tick
 // ---------------------------------------------------------------
@@ -1372,6 +1621,8 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& conserving)
 {
     model::BotCombatMode const mode =
         service::BotPlayerRegistry::Instance().GetBotMode(owner->GetGUID());
+    model::BotCombatControlMode const controlMode =
+        service::BotPlayerRegistry::Instance().GetBotControlMode(owner->GetGUID());
 
     // Hold: stop all combat and stand still.
     if (mode == model::BotCombatMode::Hold)
@@ -1476,7 +1727,9 @@ void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& conserving)
 
     Unit* const assistTarget = (mode == model::BotCombatMode::Guard)
         ? ResolveGuardTarget(bot, owner)
-        : ResolveAssistTarget(bot, owner);
+        : (controlMode == model::BotCombatControlMode::Smart
+            ? ResolveSmartAssistTarget(bot, owner, doctrine)
+            : ResolveAssistTarget(bot, owner));
 
     if (role == BotCombatRole::HybridHealer)
     {

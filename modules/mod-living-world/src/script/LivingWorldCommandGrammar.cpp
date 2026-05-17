@@ -293,6 +293,15 @@ ParsedCommand ParseBotActionCommand(BotRef botRef, std::string_view remaining)
         return cmd;
     }
 
+    // "stay" path -> alias for mode hold.
+    if (secondToken == "stay")
+    {
+        BotModeSetCommand cmd;
+        cmd.botRef = std::move(botRef);
+        cmd.mode = model::BotCombatMode::Hold;
+        return cmd;
+    }
+
     // "yoink" path.
     if (secondToken == "yoink")
     {
@@ -530,7 +539,7 @@ ParsedCommand ParseBotActionCommand(BotRef botRef, std::string_view remaining)
         return cmd;
     }
 
-    // "mode assist|passive|hold|guard" path.
+    // "mode assist|passive|hold|stay|guard" path.
     if (secondToken == "mode")
     {
         std::string_view modeTok = ConsumeToken(remaining);
@@ -538,7 +547,7 @@ ParsedCommand ParseBotActionCommand(BotRef botRef, std::string_view remaining)
         {
             return MakeError(
                 CommandParseErrorKind::MissingArgument,
-                "mode required: assist, passive, hold, or guard");
+                "mode required: assist, passive, hold, stay, or guard");
         }
 
         model::BotCombatMode mode;
@@ -546,7 +555,7 @@ ParsedCommand ParseBotActionCommand(BotRef botRef, std::string_view remaining)
             mode = model::BotCombatMode::Assist;
         else if (modeTok == "passive")
             mode = model::BotCombatMode::Passive;
-        else if (modeTok == "hold")
+        else if (modeTok == "hold" || modeTok == "stay")
             mode = model::BotCombatMode::Hold;
         else if (modeTok == "guard")
             mode = model::BotCombatMode::Guard;
@@ -554,7 +563,7 @@ ParsedCommand ParseBotActionCommand(BotRef botRef, std::string_view remaining)
             return MakeError(
                 CommandParseErrorKind::InvalidArgument,
                 std::string("unknown mode '") + std::string(modeTok) +
-                    "'; expected assist, passive, hold, or guard");
+                    "'; expected assist, passive, hold, stay, or guard");
 
         BotModeSetCommand cmd;
         cmd.botRef = std::move(botRef);
@@ -651,7 +660,7 @@ ParsedCommand ParseBotActionCommand(BotRef botRef, std::string_view remaining)
     return MakeError(
         CommandParseErrorKind::UnknownVerb,
         std::string("expected 'profile', 'cast', 'attack', 'disengage', 'train', 'retreat', "
-                    "'follow', 'refreshments', 'buff', 'bags', 'retrieve', 'equip', 'unequip', "
+                    "'follow', 'stay', 'refreshments', 'buff', 'bags', 'retrieve', 'equip', 'unequip', "
                     "'pickup', 'turnin', 'trainspell', 'trainall', 'reward', 'mode', 'info', "
                     "'addtalent', 'resettalents', 'applytalent', or 'favoritetalent', got: ") +
             std::string(secondToken));
@@ -828,6 +837,28 @@ ParsedCommand ParseLivingWorldCommand(std::string_view arguments)
         return MakeError(
             CommandParseErrorKind::InvalidArgument,
             "questmode must be 'smart' or 'manual'");
+    }
+
+    if (firstToken == "combat")
+    {
+        std::string_view modeToken = ConsumeToken(remaining);
+        if (modeToken.empty())
+        {
+            return MakeError(
+                CommandParseErrorKind::MissingArgument,
+                "combat requires 'strict' or 'smart'");
+        }
+
+        BotCombatControlModeSetCommand cmd;
+        if (modeToken == "strict" || modeToken == "strick")
+            cmd.mode = model::BotCombatControlMode::Strict;
+        else if (modeToken == "smart")
+            cmd.mode = model::BotCombatControlMode::Smart;
+        else
+            return MakeError(
+                CommandParseErrorKind::InvalidArgument,
+                "combat must be 'strict' or 'smart'");
+        return cmd;
     }
 
     // `.lwbot <position> profile <slot>` — digit-leading token is always a position.

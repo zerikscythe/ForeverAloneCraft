@@ -605,6 +605,27 @@ TEST(LivingWorldCommandGrammarTest, ModeHoldParsesByPosition)
     EXPECT_EQ(mode->mode, model::BotCombatMode::Hold);
 }
 
+TEST(LivingWorldCommandGrammarTest, ModeStayAliasParsesByPosition)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("3 mode stay");
+
+    auto const* mode = std::get_if<BotModeSetCommand>(&cmd);
+    ASSERT_NE(mode, nullptr);
+    EXPECT_EQ(mode->mode, model::BotCombatMode::Hold);
+}
+
+TEST(LivingWorldCommandGrammarTest, DirectStayVerbParsesByName)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("Thrall stay");
+
+    auto const* mode = std::get_if<BotModeSetCommand>(&cmd);
+    ASSERT_NE(mode, nullptr);
+    auto const* name = std::get_if<std::string>(&mode->botRef);
+    ASSERT_NE(name, nullptr);
+    EXPECT_EQ(*name, "Thrall");
+    EXPECT_EQ(mode->mode, model::BotCombatMode::Hold);
+}
+
 TEST(LivingWorldCommandGrammarTest, ModeGuardParsesByName)
 {
     ParsedCommand cmd = ParseLivingWorldCommand("arthas mode guard");
@@ -633,6 +654,33 @@ TEST(LivingWorldCommandGrammarTest, ModeRejectsUnknownToken)
     auto const* error = std::get_if<CommandParseError>(&cmd);
     ASSERT_NE(error, nullptr);
     EXPECT_EQ(error->kind, CommandParseErrorKind::InvalidArgument);
+}
+
+TEST(LivingWorldCommandGrammarTest, CombatStrictParses)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("combat strict");
+
+    auto const* control = std::get_if<BotCombatControlModeSetCommand>(&cmd);
+    ASSERT_NE(control, nullptr);
+    EXPECT_EQ(control->mode, model::BotCombatControlMode::Strict);
+}
+
+TEST(LivingWorldCommandGrammarTest, CombatSmartParses)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("combat smart");
+
+    auto const* control = std::get_if<BotCombatControlModeSetCommand>(&cmd);
+    ASSERT_NE(control, nullptr);
+    EXPECT_EQ(control->mode, model::BotCombatControlMode::Smart);
+}
+
+TEST(LivingWorldCommandGrammarTest, CombatStrickAliasParses)
+{
+    ParsedCommand cmd = ParseLivingWorldCommand("combat strick");
+
+    auto const* control = std::get_if<BotCombatControlModeSetCommand>(&cmd);
+    ASSERT_NE(control, nullptr);
+    EXPECT_EQ(control->mode, model::BotCombatControlMode::Strict);
 }
 } // namespace script
 } // namespace living_world

@@ -308,6 +308,7 @@ void RenderUsage(ChatHandler* handler)
     handler->PSendSysMessage("  .lwbot <#|name> attack [<name>]");
     handler->PSendSysMessage("  .lwbot <#|name> disengage");
     handler->PSendSysMessage("  .lwbot <#|name> retreat  (30s no-combat flee mode; repeat to cancel)");
+    handler->PSendSysMessage("  .lwbot <#|name> stay");
     handler->PSendSysMessage("  .lwbot <#|name> train  (must be near a class trainer)");
     handler->PSendSysMessage("  .lwbot <#|name|party> follow");
     handler->PSendSysMessage("  .lwbot <#|name|party> yoink  (teleport stuck bots to you)");
@@ -319,7 +320,8 @@ void RenderUsage(ChatHandler* handler)
     handler->PSendSysMessage("  .lwbot quests");
     handler->PSendSysMessage("  .lwbot questmode <smart|manual>");
     handler->PSendSysMessage("  .lwbot <#|name> reward <questId> <choiceNumber>");
-    handler->PSendSysMessage("  .lwbot <#|name> mode assist|passive|hold|guard");
+    handler->PSendSysMessage("  .lwbot <#|name> mode assist|passive|hold|stay|guard");
+    handler->PSendSysMessage("  .lwbot combat strict|smart");
 }
 
 std::optional<std::uint32_t> TryParseMapIdFromRouteFilename(std::string const& filename)
@@ -2762,6 +2764,15 @@ std::string_view BotCombatModeToString(model::BotCombatMode mode)
     }
 }
 
+std::string_view BotCombatControlModeToString(model::BotCombatControlMode mode)
+{
+    switch (mode)
+    {
+        case model::BotCombatControlMode::Smart: return "smart";
+        default:                                 return "strict";
+    }
+}
+
 void SendBotInfoMessage(
     ChatHandler* handler,
     model::RosterEntry const& entry,
@@ -2839,6 +2850,37 @@ void HandleBotModeSet(
             }
         }
     }
+}
+
+void HandleBotCombatControlModeSet(
+    ChatHandler* handler,
+    BotCombatControlModeSetCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld combat mode commands require an in-game player.");
+        return;
+    }
+
+    std::vector<Player*> bots =
+        service::BotPlayerRegistry::Instance().FindBotsForOwner(
+            player->GetGUID());
+    if (bots.empty())
+    {
+        handler->PSendSysMessage(
+            "LivingWorld no active bots. Use '.lwbot request <id>' first.");
+        return;
+    }
+
+    service::BotPlayerRegistry::Instance().SetBotControlMode(
+        player->GetGUID(),
+        command.mode);
+
+    handler->PSendSysMessage(
+        "LivingWorld combat control set to %s.",
+        BotCombatControlModeToString(command.mode).data());
 }
 
 void HandleBotAddTalent(
@@ -5594,6 +5636,13 @@ bool HandleParsedCommand(
         std::get_if<BotModeSetCommand>(&parsed))
     {
         HandleBotModeSet(handler, *command);
+        return true;
+    }
+
+    if (BotCombatControlModeSetCommand const* command =
+        std::get_if<BotCombatControlModeSetCommand>(&parsed))
+    {
+        HandleBotCombatControlModeSet(handler, *command);
         return true;
     }
 
