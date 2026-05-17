@@ -22,6 +22,7 @@ namespace service
 {
 namespace
 {
+constexpr float kTaxiFlightSpeedYardsPerSecond = 32.0f;
 
 bool HasTaxiMaskBit(TaxiMask const& mask, std::uint32_t nodeId)
 {
@@ -127,6 +128,20 @@ float ComputeTaxiPathDistanceYards(std::uint32_t pathId)
     }
 
     return totalDistance;
+}
+
+std::uint32_t ComputeTaxiPathEtaMs(std::uint32_t pathId)
+{
+    float const distanceYards = ComputeTaxiPathDistanceYards(pathId);
+    if (distanceYards <= 0.0f)
+        return 0u;
+
+    // AzerothCore's FlightPathMovementGenerator launches taxi splines at
+    // PLAYER_FLIGHT_SPEED, currently 32 yards/second. Keep our abstract
+    // timers aligned with the server flight spline instead of using the
+    // configurable ground/travel speed table.
+    return static_cast<std::uint32_t>(std::lround(
+        (distanceYards / kTaxiFlightSpeedYardsPerSecond) * 1000.0f));
 }
 
 std::optional<WorldBotResolvedTravelPlan> BuildDirectLocalGroundPlan(
@@ -605,10 +620,7 @@ WorldBotTaxiNetwork LoadWorldBotTaxiNetwork(WorldBotTaxiZoneResolver zoneResolve
             link.toNodeId = toNodeId;
             link.price = pathEntry->price;
             link.rideDistanceYards = ComputeTaxiPathDistanceYards(pathEntry->ID);
-            float const taxiSpeed = ResolveWorldBotTravelSpeedYardsPerSecond(WorldBotTravelCapabilityTier::Taxi);
-            link.rideEtaMs = taxiSpeed > 0.0f
-                ? static_cast<std::uint32_t>(std::lround((link.rideDistanceYards / taxiSpeed) * 1000.0f))
-                : 0u;
+            link.rideEtaMs = ComputeTaxiPathEtaMs(pathEntry->ID);
             if (link.rideEtaMs == 0)
                 continue;
 
