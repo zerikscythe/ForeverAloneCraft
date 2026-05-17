@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 namespace living_world
@@ -76,7 +77,8 @@ public:
         std::uint32_t startZoneId = 0,
         std::uint32_t homeZoneId = 0,
         std::string const& homeAnchorPointKey = "",
-        std::string const& homeBindPointKey = "") const;
+        std::string const& homeBindPointKey = "",
+        std::unordered_set<std::uint32_t> const* exploredZoneIds = nullptr) const;
 };
 
 } // namespace service

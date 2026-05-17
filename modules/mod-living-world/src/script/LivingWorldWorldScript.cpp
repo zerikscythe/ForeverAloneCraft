@@ -2724,6 +2724,8 @@ private:
         for (auto const& identity : identities)
         {
             bool usedForcedSpawn = false;
+            std::unordered_set<std::uint32_t> const composeExploredZones =
+                LoadExploredZoneSet(identity.id);
 
             // Compose a session for this identity.
             std::optional<living_world::service::AmbientSession> session;
@@ -2752,7 +2754,8 @@ private:
                     composeStartZoneId,
                     composeHomeZoneId,
                     composeHomeAnchorPointKey,
-                    composeHomeBindPointKey);
+                    composeHomeBindPointKey,
+                    &composeExploredZones);
                 if (!candidate)
                     continue;
 

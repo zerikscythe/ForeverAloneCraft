@@ -1,5 +1,6 @@
 #include "service/BotActivitySessionComposer.h"
 #include "service/AmbientTaskEligibility.h"
+#include "service/WorldBotTaxiPlanning.h"
 #include "integration/SqlActivityLibraryRepository.h"
 #include "integration/SqlTaskPointRepository.h"
 #include "integration/SqlTaskTemplateRepository.h"
@@ -139,6 +140,85 @@ void AppendTaxiFlightStep(
     flightStep.taskIndex   = taskIndex;
     flightStep.label       = label;
     session.steps.push_back(flightStep);
+}
+
+service::WorldBotTaxiNetwork const& GetSessionComposerTaxiNetwork()
+{
+    static service::WorldBotTaxiNetwork network = service::LoadWorldBotTaxiNetwork();
+    return network;
+}
+
+bool AppendDynamicTaxiTransit(
+    AmbientSession& session,
+    std::int32_t taskIndex,
+    std::uint8_t faction,
+    std::unordered_set<std::uint32_t> const* exploredZoneIds,
+    std::uint16_t currentMapId,
+    std::uint32_t currentZoneId,
+    float currentX,
+    float currentY,
+    float currentZ,
+    std::uint16_t targetMapId,
+    float targetX,
+    float targetY,
+    float targetZ,
+    std::string const& targetLabel)
+{
+    if (!exploredZoneIds || exploredZoneIds->empty())
+        return false;
+    if (currentMapId == 0 || currentMapId != targetMapId)
+        return false;
+    if (currentZoneId == 0)
+        return false;
+
+    auto const candidate = GetSessionComposerTaxiNetwork().ResolveTravelCandidate(
+        currentMapId,
+        currentX,
+        currentY,
+        currentZ,
+        targetMapId,
+        targetX,
+        targetY,
+        targetZ,
+        *exploredZoneIds,
+        faction);
+    if (!candidate.has_value() || candidate->empty())
+        return false;
+
+    AppendTravelStep(
+        session,
+        taskIndex,
+        candidate->sourceNode.mapId,
+        candidate->sourceNode.x,
+        candidate->sourceNode.y,
+        candidate->sourceNode.z,
+        "Travel to flight master " + candidate->sourceNode.name);
+    AppendTaxiFlightStep(
+        session,
+        taskIndex,
+        candidate->destinationNode.mapId,
+        candidate->destinationNode.x,
+        candidate->destinationNode.y,
+        candidate->destinationNode.z,
+        std::max<std::uint32_t>(15u, (candidate->route.totalEtaMs + 999u) / 1000u),
+        "Taxi via " + candidate->sourceNode.name + " -> " + candidate->destinationNode.name);
+
+    if (candidate->destinationNode.mapId != targetMapId
+        || candidate->destinationNode.x != targetX
+        || candidate->destinationNode.y != targetY
+        || candidate->destinationNode.z != targetZ)
+    {
+        AppendTravelStep(
+            session,
+            taskIndex,
+            targetMapId,
+            targetX,
+            targetY,
+            targetZ,
+            "Travel to " + targetLabel);
+    }
+
+    return true;
 }
 
 bool ResolvePointTarget(
@@ -324,11 +404,19 @@ std::optional<AmbientSession> BuildSessionFromTemplate(
     std::uint32_t startZoneId,
     std::uint32_t homeZoneId,
     std::string const& homeAnchorPointKey,
-    std::string const& homeBindPointKey)
+    std::string const& homeBindPointKey,
+    std::unordered_set<std::uint32_t> const* exploredZoneIds)
 {
     AmbientSession session;
     integration::SqlTaskPointRepository pointRepo;
     std::uint32_t currentZoneId = startZoneId;
+    std::uint16_t currentMapId = 0;
+    float currentX = 0.f;
+    float currentY = 0.f;
+    float currentZ = 0.f;
+    std::uint32_t resolvedCurrentZoneId = currentZoneId;
+    if (currentZoneId != 0)
+        ResolveZoneTarget(zoneRepo, currentZoneId, currentMapId, currentX, currentY, currentZ, resolvedCurrentZoneId);
 
     for (model::TaskTemplateStepEntry const& templateStep : tmpl.steps)
     {
@@ -379,39 +467,68 @@ std::optional<AmbientSession> BuildSessionFromTemplate(
                 tmpl.minLevel);
             if (!transitPath.empty())
             {
-                for (model::TaskTransitRouteEntry const& route : transitPath)
-                {
-                    AppendTravelStep(
-                        session,
-                        taskIndex,
-                        route.sourceMapId,
-                        route.sourceX,
-                        route.sourceY,
-                        route.sourceZ,
-                        "Travel to " + route.sourcePointName);
-                    AppendTaxiFlightStep(
-                        session,
-                        taskIndex,
-                        route.destMapId,
-                        route.destX,
-                        route.destY,
-                        route.destZ,
-                        std::max<std::uint32_t>(15u, route.durationSec),
-                        route.displayName);
-                }
+                bool const pathUsesOnlyTaxi = std::all_of(
+                    transitPath.begin(),
+                    transitPath.end(),
+                    [](model::TaskTransitRouteEntry const& route)
+                    {
+                        return route.transitType == "taxi";
+                    });
 
-                if (transitPath.back().destPointKey != templateStep.targetPointKey)
+                if (!pathUsesOnlyTaxi)
                 {
-                    AppendTravelStep(
-                        session,
-                        taskIndex,
-                        mapId,
-                        targetX,
-                        targetY,
-                        targetZ,
-                        "Travel to " + templateStep.label);
-                }
+                    for (model::TaskTransitRouteEntry const& route : transitPath)
+                    {
+                        AppendTravelStep(
+                            session,
+                            taskIndex,
+                            route.sourceMapId,
+                            route.sourceX,
+                            route.sourceY,
+                            route.sourceZ,
+                            "Travel to " + route.sourcePointName);
+                        AppendTaxiFlightStep(
+                            session,
+                            taskIndex,
+                            route.destMapId,
+                            route.destX,
+                            route.destY,
+                            route.destZ,
+                            std::max<std::uint32_t>(15u, route.durationSec),
+                            route.displayName);
+                    }
 
+                    if (transitPath.back().destPointKey != templateStep.targetPointKey)
+                    {
+                        AppendTravelStep(
+                            session,
+                            taskIndex,
+                            mapId,
+                            targetX,
+                            targetY,
+                            targetZ,
+                            "Travel to " + templateStep.label);
+                    }
+
+                    addedTransitRoute = true;
+                }
+            }
+            else if (AppendDynamicTaxiTransit(
+                session,
+                taskIndex,
+                faction,
+                exploredZoneIds,
+                currentMapId,
+                currentZoneId,
+                currentX,
+                currentY,
+                currentZ,
+                mapId,
+                targetX,
+                targetY,
+                targetZ,
+                templateStep.label))
+            {
                 addedTransitRoute = true;
             }
         }
@@ -452,6 +569,10 @@ std::optional<AmbientSession> BuildSessionFromTemplate(
         session.steps.push_back(activityStep);
 
         currentZoneId = targetZoneId;
+        currentMapId = mapId;
+        currentX = targetX;
+        currentY = targetY;
+        currentZ = targetZ;
     }
 
     if (session.tasks.empty() || session.steps.empty())
@@ -490,7 +611,8 @@ std::optional<AmbientSession> BuildSessionFromPlaylist(
     std::uint32_t startZoneId,
     std::uint32_t homeZoneId,
     std::string const& homeAnchorPointKey,
-    std::string const& homeBindPointKey)
+    std::string const& homeBindPointKey,
+    std::unordered_set<std::uint32_t> const* exploredZoneIds)
 {
     AmbientSession session;
     std::uint32_t currentZoneId = startZoneId;
@@ -513,7 +635,8 @@ std::optional<AmbientSession> BuildSessionFromPlaylist(
                 currentZoneId,
                 homeZoneId,
                 homeAnchorPointKey,
-                homeBindPointKey);
+                homeBindPointKey,
+                exploredZoneIds);
             if (!subSession)
                 return std::nullopt;
 
@@ -678,7 +801,8 @@ std::optional<AmbientSession> BotActivitySessionComposer::Compose(
     std::uint32_t startZoneId,
     std::uint32_t homeZoneId,
     std::string const& homeAnchorPointKey,
-    std::string const& homeBindPointKey) const
+    std::string const& homeBindPointKey,
+    std::unordered_set<std::uint32_t> const* exploredZoneIds) const
 {
     AmbientProfessionCapabilities const professionCapabilities{
         hasHerbalism,
@@ -760,7 +884,8 @@ std::optional<AmbientSession> BotActivitySessionComposer::Compose(
                         startZoneId,
                         homeZoneId,
                         homeAnchorPointKey,
-                        homeBindPointKey))
+                        homeBindPointKey,
+                        exploredZoneIds))
                     return session;
                 break;
             }
@@ -796,7 +921,8 @@ std::optional<AmbientSession> BotActivitySessionComposer::Compose(
                         startZoneId,
                         homeZoneId,
                         homeAnchorPointKey,
-                        homeBindPointKey))
+                        homeBindPointKey,
+                        exploredZoneIds))
                     return session;
                 break;
             }
