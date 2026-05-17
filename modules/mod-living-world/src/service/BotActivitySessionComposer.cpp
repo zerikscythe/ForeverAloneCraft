@@ -153,6 +153,7 @@ bool AppendDynamicTaxiTransit(
     std::int32_t taskIndex,
     std::uint8_t faction,
     std::unordered_set<std::uint32_t> const* exploredZoneIds,
+    bool currentLocationResolved,
     std::uint16_t currentMapId,
     std::uint32_t currentZoneId,
     float currentX,
@@ -166,7 +167,7 @@ bool AppendDynamicTaxiTransit(
 {
     if (!exploredZoneIds || exploredZoneIds->empty())
         return false;
-    if (currentMapId == 0 || currentMapId != targetMapId)
+    if (!currentLocationResolved || currentMapId != targetMapId)
         return false;
     if (currentZoneId == 0)
         return false;
@@ -415,8 +416,12 @@ std::optional<AmbientSession> BuildSessionFromTemplate(
     float currentY = 0.f;
     float currentZ = 0.f;
     std::uint32_t resolvedCurrentZoneId = currentZoneId;
+    bool currentLocationResolved = false;
     if (currentZoneId != 0)
-        ResolveZoneTarget(zoneRepo, currentZoneId, currentMapId, currentX, currentY, currentZ, resolvedCurrentZoneId);
+    {
+        currentLocationResolved =
+            ResolveZoneTarget(zoneRepo, currentZoneId, currentMapId, currentX, currentY, currentZ, resolvedCurrentZoneId);
+    }
 
     for (model::TaskTemplateStepEntry const& templateStep : tmpl.steps)
     {
@@ -518,6 +523,7 @@ std::optional<AmbientSession> BuildSessionFromTemplate(
                 taskIndex,
                 faction,
                 exploredZoneIds,
+                currentLocationResolved,
                 currentMapId,
                 currentZoneId,
                 currentX,
@@ -573,6 +579,7 @@ std::optional<AmbientSession> BuildSessionFromTemplate(
         currentX = targetX;
         currentY = targetY;
         currentZ = targetZ;
+        currentLocationResolved = true;
     }
 
     if (session.tasks.empty() || session.steps.empty())
