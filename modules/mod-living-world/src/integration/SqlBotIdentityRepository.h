@@ -35,6 +35,8 @@ struct BotIdentityRecord
     std::uint64_t worldOnlineMsSinceLevel = 0;
     std::uint64_t postMaxWorldOnlineMs = 0;
     std::uint64_t activeWorldSessionMs = 0;
+    std::string   runtimeState;
+    std::string   runtimeDetail;
     bool          gearRefreshPending = false;
     std::uint8_t  lastGearRefreshBand = 0;
     std::uint32_t lastSeenZoneId = 0;
@@ -79,7 +81,9 @@ public:
     void UpdateActiveRuntimeState(
         std::uint32_t id,
         std::uint32_t zoneId,
-        std::uint64_t activeWorldSessionMs) const;
+        std::uint64_t activeWorldSessionMs,
+        std::string const& runtimeState,
+        std::string const& runtimeDetail) const;
 
     // Finalizes one counted world session, applying online-time progression and
     // retirement rules before returning the identity to the available pool.

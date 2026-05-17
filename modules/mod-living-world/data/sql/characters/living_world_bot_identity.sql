@@ -43,6 +43,8 @@ CREATE TABLE IF NOT EXISTS living_world_bot_identity (
     world_online_ms_since_level BIGINT UNSIGNED NOT NULL DEFAULT 0,
     post_max_world_online_ms    BIGINT UNSIGNED NOT NULL DEFAULT 0,
     active_world_session_ms     BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    runtime_state               VARCHAR(64)     NOT NULL DEFAULT '',
+    runtime_detail              VARCHAR(255)    NOT NULL DEFAULT '',
     active_world_session_start  DATETIME        NULL,
     is_retired     TINYINT UNSIGNED NOT NULL DEFAULT 0,
     successor_spawned TINYINT UNSIGNED NOT NULL DEFAULT 0,

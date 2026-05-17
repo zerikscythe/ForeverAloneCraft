@@ -1840,6 +1840,9 @@ private:
             living_world::ai::AbstractWorldBotTravelPhaseKind::None;
         std::unordered_set<std::uint32_t> exploredZoneIds;
         std::uint64_t worldOnlineMs = 0;
+        std::uint64_t lastRuntimeLedgerSyncMs = 0;
+        std::string lastRuntimeState;
+        std::string lastRuntimeDetail;
     };
 
     struct MaterializedWorldBotHandle
@@ -2237,6 +2240,50 @@ private:
             z);
     }
 
+    static std::string ResolveRuntimeZoneName(std::uint32_t zoneId)
+    {
+        if (zoneId == 0)
+            return "Unknown";
+
+        if (AreaTableEntry const* area = sAreaTableStore.LookupEntry(zoneId))
+        {
+            if (area->area_name[0] && area->area_name[0][0] != '\0')
+                return area->area_name[0];
+        }
+
+        return "Zone " + std::to_string(zoneId);
+    }
+
+    static std::string ResolveRuntimeObjectiveLabel(
+        living_world::service::AmbientSession const& session,
+        std::size_t stepIndex)
+    {
+        if (stepIndex < session.steps.size())
+        {
+            living_world::service::AmbientStep const& step = session.steps[stepIndex];
+            if (step.taskIndex >= 0)
+            {
+                std::size_t const taskIndex = static_cast<std::size_t>(step.taskIndex);
+                if (taskIndex < session.tasks.size())
+                {
+                    living_world::service::AmbientSessionTask const& task = session.tasks[taskIndex];
+                    if (!task.displayName.empty())
+                        return task.displayName;
+                    if (!task.activityKey.empty())
+                        return task.activityKey;
+                }
+            }
+
+            if (!step.label.empty())
+                return step.label;
+        }
+
+        if (!session.displayName.empty())
+            return session.displayName;
+
+        return "current objective";
+    }
+
     void TickSyntheticInterestBeacon(std::uint32_t diff)
     {
         if (!_debugSyntheticInterestEnabled || _debugSyntheticInterestMapId == 0)
@@ -2371,6 +2418,150 @@ private:
             + " step_elapsed_ms=" + std::to_string(runtime.progress.stepElapsedMs)
             + " travel_phase='" + DescribeAbstractTravelPhase(runtime.lastTravelPhase) + "'"
             + " world_online_ms=" + std::to_string(runtime.worldOnlineMs);
+    }
+
+    static std::string DescribeAbstractRuntimeStateKey(
+        AbstractWorldBotRuntime const& runtime,
+        living_world::ai::AbstractWorldBotProgressConfig const& progressConfig)
+    {
+        if (runtime.progress.currentStep >= runtime.session.steps.size())
+            return "session_complete";
+
+        living_world::service::AmbientStep const& step = runtime.session.steps[runtime.progress.currentStep];
+        if (step.type == living_world::service::AmbientStepType::Travel)
+        {
+            if (auto const phase = ResolveAbstractRuntimeTravelPhase(runtime, progressConfig))
+            {
+                switch (phase->kind)
+                {
+                    case living_world::ai::AbstractWorldBotTravelPhaseKind::TaxiSourceGround:
+                        return "travel_taxi_approach";
+                    case living_world::ai::AbstractWorldBotTravelPhaseKind::TaxiFlight:
+                        return "travel_taxi_flight";
+                    case living_world::ai::AbstractWorldBotTravelPhaseKind::TaxiDestinationGround:
+                        return "travel_taxi_final_leg";
+                    case living_world::ai::AbstractWorldBotTravelPhaseKind::GroundOnly:
+                        return "travel_ground";
+                    case living_world::ai::AbstractWorldBotTravelPhaseKind::None:
+                    default:
+                        break;
+                }
+            }
+
+            return "travel_planning";
+        }
+
+        switch (step.type)
+        {
+            case living_world::service::AmbientStepType::GatherHerb:
+                return "activity_gather_herb";
+            case living_world::service::AmbientStepType::GatherOre:
+                return "activity_gather_ore";
+            case living_world::service::AmbientStepType::Fish:
+                return "activity_fish";
+            case living_world::service::AmbientStepType::Patrol:
+                return "activity_patrol";
+            case living_world::service::AmbientStepType::Idle:
+                return "activity_idle";
+            case living_world::service::AmbientStepType::TaxiFlight:
+                return "travel_taxi_flight";
+            case living_world::service::AmbientStepType::Travel:
+            default:
+                return "activity_unknown";
+        }
+    }
+
+    static std::string DescribeAbstractRuntimeStateDetail(
+        AbstractWorldBotRuntime const& runtime,
+        living_world::ai::AbstractWorldBotProgressConfig const& progressConfig)
+    {
+        if (runtime.progress.currentStep >= runtime.session.steps.size())
+            return "Session complete";
+
+        living_world::service::AmbientStep const& step = runtime.session.steps[runtime.progress.currentStep];
+        std::string const objective = ResolveRuntimeObjectiveLabel(runtime.session, runtime.progress.currentStep);
+        std::string const zoneName = ResolveRuntimeZoneName(
+            ResolveStepZoneId(runtime.session, runtime.progress.currentStep));
+
+        if (step.type == living_world::service::AmbientStepType::Travel)
+        {
+            std::string prefix = "En route to " + zoneName;
+            if (!objective.empty() && objective != zoneName)
+                prefix += " for " + objective;
+
+            if (auto const option =
+                living_world::ai::ResolveAbstractWorldBotTravelOption(step, runtime.progress, progressConfig))
+            {
+                if (auto const phase = living_world::ai::ResolveAbstractWorldBotTravelOptionPhase(*option, runtime.progress))
+                {
+                    if (option->taxiJourney.has_value() && !option->taxiJourney->empty())
+                    {
+                        auto const& journey = *option->taxiJourney;
+                        switch (phase->kind)
+                        {
+                            case living_world::ai::AbstractWorldBotTravelPhaseKind::TaxiSourceGround:
+                                return prefix + " | heading to flight master "
+                                    + journey.taxiCandidate.sourceNode.name;
+                            case living_world::ai::AbstractWorldBotTravelPhaseKind::TaxiFlight:
+                                return "Flying "
+                                    + journey.taxiCandidate.sourceNode.name
+                                    + " -> " + journey.taxiCandidate.destinationNode.name
+                                    + " offscreen";
+                            case living_world::ai::AbstractWorldBotTravelPhaseKind::TaxiDestinationGround:
+                                return prefix + " | final ground leg after taxi from "
+                                    + journey.taxiCandidate.sourceNode.name
+                                    + " -> " + journey.taxiCandidate.destinationNode.name;
+                            case living_world::ai::AbstractWorldBotTravelPhaseKind::GroundOnly:
+                                return prefix + " | road travel";
+                            case living_world::ai::AbstractWorldBotTravelPhaseKind::None:
+                            default:
+                                break;
+                        }
+                    }
+
+                    return prefix + " | road travel";
+                }
+            }
+
+            return prefix + " | planning route";
+        }
+
+        if (!objective.empty())
+            return objective + " offscreen";
+
+        return "Offscreen activity";
+    }
+
+    void SyncAbstractRuntimeLedgerState(
+        AbstractWorldBotRuntime& runtime,
+        living_world::ai::AbstractWorldBotProgressConfig const& progressConfig,
+        living_world::ai::AbstractWorldBotInterpolatedPosition const& position,
+        bool force)
+    {
+        std::string const state = DescribeAbstractRuntimeStateKey(runtime, progressConfig);
+        std::string const detail = DescribeAbstractRuntimeStateDetail(runtime, progressConfig);
+        bool const intervalElapsed =
+            runtime.lastRuntimeLedgerSyncMs == 0
+            || (runtime.worldOnlineMs - runtime.lastRuntimeLedgerSyncMs) >= 5000;
+
+        if (!force
+            && !intervalElapsed
+            && state == runtime.lastRuntimeState
+            && detail == runtime.lastRuntimeDetail)
+        {
+            return;
+        }
+
+        runtime.lastRuntimeLedgerSyncMs = runtime.worldOnlineMs;
+        runtime.lastRuntimeState = state;
+        runtime.lastRuntimeDetail = detail;
+
+        living_world::integration::SqlBotIdentityRepository().UpdateActiveRuntimeState(
+            runtime.identity.id,
+            ResolveZoneIdAtPosition(position.mapId, position.x, position.y, position.z),
+            runtime.worldOnlineMs,
+            state,
+            detail);
     }
 
     static std::string DescribeAbstractResumeState(
@@ -2673,6 +2864,7 @@ private:
                 runtime.session,
                 runtime.progress,
                 progressConfig);
+            SyncAbstractRuntimeLedgerState(runtime, progressConfig, position, false);
             ObserveAbstractRuntimeExploration(
                 runtime,
                 position.mapId,

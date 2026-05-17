@@ -380,6 +380,29 @@ std::string DescribeTravelRecovery(
         + std::to_string(step.z) + ")";
 }
 
+char const* DescribeAmbientStepTypeKey(service::AmbientStepType type)
+{
+    switch (type)
+    {
+        case service::AmbientStepType::Travel:
+            return "travel";
+        case service::AmbientStepType::GatherHerb:
+            return "gather_herb";
+        case service::AmbientStepType::GatherOre:
+            return "gather_ore";
+        case service::AmbientStepType::Fish:
+            return "fish";
+        case service::AmbientStepType::Idle:
+            return "idle";
+        case service::AmbientStepType::Patrol:
+            return "patrol";
+        case service::AmbientStepType::TaxiFlight:
+            return "taxi_flight_scripted";
+        default:
+            return "unknown";
+    }
+}
+
 std::uint32_t ResolveStepZoneId(
     service::AmbientSession const& session,
     service::AmbientStep const& step)
@@ -957,6 +980,8 @@ void WorldBotCreatureAI::SetIdentityAndSession(
             "is alive - resuming tasks");
     }
 
+    PersistRuntimeLedgerState();
+
     if (_currentStep >= _session.steps.size())
         CompletSession();
 }
@@ -1212,12 +1237,74 @@ void WorldBotCreatureAI::UpdateAI(uint32 diff)
     }
 }
 
-void WorldBotCreatureAI::RecordPositionSnapshot(char const* eventType, std::string const& detail) const
+std::string WorldBotCreatureAI::DescribeRuntimeStateKey() const
 {
+    if (!_sessionReady)
+        return "session_loading";
+    if (_sessionDone || _currentStep >= _session.steps.size())
+        return "session_complete";
+
+    service::AmbientStep const& step = _session.steps[_currentStep];
+    if (step.type == service::AmbientStepType::Travel)
+    {
+        switch (_activeTravelExecutionPhase)
+        {
+            case ActiveTravelExecutionPhase::TaxiApproach:
+                return "travel_taxi_approach";
+            case ActiveTravelExecutionPhase::TaxiTransit:
+                return "travel_taxi_flight";
+            case ActiveTravelExecutionPhase::TaxiFinalLeg:
+                return "travel_taxi_final_leg";
+            case ActiveTravelExecutionPhase::GroundOnly:
+                return "travel_ground";
+            case ActiveTravelExecutionPhase::None:
+            default:
+                return _traveling ? "travel_ground" : "travel_planning";
+        }
+    }
+
+    return std::string("activity_") + DescribeAmbientStepTypeKey(step.type);
+}
+
+std::string WorldBotCreatureAI::DescribeRuntimeStateDetail() const
+{
+    if (!_sessionReady)
+        return "Preparing session";
+    if (_sessionDone || _currentStep >= _session.steps.size())
+        return "Session complete";
+
+    service::AmbientStep const& step = _session.steps[_currentStep];
+    if (step.type == service::AmbientStepType::Travel)
+    {
+        if (_traveling)
+            return BuildTravelNarrative(_session, step, DescribeActiveTravelTarget(step));
+
+        return BuildTravelNarrative(_session, step, "planning route");
+    }
+
+    if (!step.label.empty())
+        return step.label;
+
+    return ResolveStepObjectiveLabel(_session, step);
+}
+
+void WorldBotCreatureAI::PersistRuntimeLedgerState(std::string const& detailOverride) const
+{
+    std::string const detail = detailOverride.empty()
+        ? DescribeRuntimeStateDetail()
+        : detailOverride;
+
     GetIdentityRepo().UpdateActiveRuntimeState(
         _identity.id,
         me ? me->GetZoneId() : 0u,
-        _worldOnlineMs);
+        _worldOnlineMs,
+        DescribeRuntimeStateKey(),
+        detail);
+}
+
+void WorldBotCreatureAI::RecordPositionSnapshot(char const* eventType, std::string const& detail) const
+{
+    PersistRuntimeLedgerState(detail);
 
     integration::BotActivityLog::Record(
         me,
@@ -1553,6 +1640,8 @@ bool WorldBotCreatureAI::BeginActiveTaxiTransit(service::AmbientStep const& step
             + " to " + _activeTaxiJourney.taxiCandidate.destinationNode.name
             + " (" + FormatDurationMs(_activeTaxiJourney.taxiCandidate.route.totalEtaMs) + ")");
 
+    PersistRuntimeLedgerState();
+
     return true;
 }
 
@@ -1601,6 +1690,8 @@ bool WorldBotCreatureAI::CompleteActiveTaxiTransit(service::AmbientStep const& s
         "status_change",
         "Taxi complete -> resuming ground travel | "
             + BuildTravelNarrative(_session, step, DescribeActiveTravelTarget(step)));
+
+    PersistRuntimeLedgerState();
 
     return true;
 }
@@ -2533,6 +2624,8 @@ void WorldBotCreatureAI::TickStep(uint32 /*diff*/)
                     + " spell=" + std::to_string(_visibleTravelModeSpellId)
                     + " speed_rate=" + std::to_string(_visibleTravelSpeedRate)
                     + " | " + BuildTravelNarrative(_session, step, DescribeActiveTravelTarget(step)));
+
+            PersistRuntimeLedgerState();
         }
         else
         {
@@ -2689,6 +2782,8 @@ void WorldBotCreatureAI::TickStep(uint32 /*diff*/)
                 me, _identity.name, _identity.id,
                 "status_change",
                 "In transit -> " + step.label);
+
+            PersistRuntimeLedgerState();
         }
 
         _activityTimer += TickIntervalMs;
@@ -2729,6 +2824,7 @@ void WorldBotCreatureAI::TickStep(uint32 /*diff*/)
             me, _identity.name, _identity.id,
             "status_change",
             "beginning task -> " + step.label);
+        PersistRuntimeLedgerState();
     }
 
     _activityTimer += TickIntervalMs;
@@ -2765,6 +2861,8 @@ void WorldBotCreatureAI::AdvanceStep()
 
     if (_currentStep >= _session.steps.size())
         CompletSession();
+    else
+        PersistRuntimeLedgerState();
 }
 
 void WorldBotCreatureAI::CompletSession()

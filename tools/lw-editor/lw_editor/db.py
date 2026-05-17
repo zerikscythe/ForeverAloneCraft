@@ -784,11 +784,23 @@ class DBCtx:
     def load_world_bot_statuses(self, active_only: bool = False) -> list[dict]:
         where = "WHERE i.is_available = 0 AND i.is_retired = 0" if active_only else ""
         personality_select = "'uninterested' AS personality_key"
+        runtime_state_select = "'' AS runtime_state"
+        runtime_detail_select = "'' AS runtime_detail"
         explored_select = "'' AS explored_zone_ids, 0 AS explored_zone_count"
         explored_join = ""
         try:
             if self.q(self.chars, "SHOW COLUMNS FROM living_world_bot_identity LIKE 'personality_key'"):
                 personality_select = "COALESCE(NULLIF(i.personality_key, ''), 'uninterested') AS personality_key"
+        except Exception:
+            pass
+        try:
+            if self.q(self.chars, "SHOW COLUMNS FROM living_world_bot_identity LIKE 'runtime_state'"):
+                runtime_state_select = "COALESCE(i.runtime_state, '') AS runtime_state"
+        except Exception:
+            pass
+        try:
+            if self.q(self.chars, "SHOW COLUMNS FROM living_world_bot_identity LIKE 'runtime_detail'"):
+                runtime_detail_select = "COALESCE(i.runtime_detail, '') AS runtime_detail"
         except Exception:
             pass
         try:
@@ -828,6 +840,8 @@ class DBCtx:
                 i.post_max_world_online_ms,
                 i.active_world_session_ms,
                 i.active_world_session_start,
+                {runtime_state_select},
+                {runtime_detail_select},
                 i.last_seen_zone,
                 i.last_seen_at,
                 {explored_select},

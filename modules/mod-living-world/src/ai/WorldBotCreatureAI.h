@@ -84,6 +84,7 @@ private:
     void TickGatherStep(service::AmbientStep const& step);
     void AdvanceStep();
     void CompletSession();
+    void PersistRuntimeLedgerState(std::string const& detailOverride = "") const;
     void RecordPositionSnapshot(char const* eventType, std::string const& detail) const;
     void RecordCombatTrace(std::string const& detail);
     void SuspendCurrentStepForCombat(Unit* target);
@@ -122,6 +123,8 @@ private:
     ai::TravelWatchdogConfig BuildActiveTravelWatchdogConfig(
         service::AmbientStep const& step,
         service::WorldBotTravelCapabilityTier tier) const;
+    std::string DescribeRuntimeStateKey() const;
+    std::string DescribeRuntimeStateDetail() const;
     std::string DescribeActiveTravelTarget(service::AmbientStep const& step) const;
     service::WorldBotTravelCapabilityTier ResolveTravelCapabilityTier() const;
     void ApplyVisibleTravelMode(service::WorldBotTravelCapabilityTier tier);

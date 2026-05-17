@@ -375,6 +375,8 @@ class BotViewerApp(tk.Tk):
             f"Sessions: {row.get('session_count', 0)}",
             f"Active Session Ms: {row.get('active_world_session_ms', 0)}",
             f"Active Session Start: {_fmt_dt(row.get('active_world_session_start'))}",
+            f"Runtime State: {row.get('runtime_state', '')}",
+            f"Runtime Detail: {row.get('runtime_detail', '')}",
             f"World Online Since Level Ms: {row.get('world_online_ms_since_level', 0)}",
             f"Post-Max World Online Ms: {row.get('post_max_world_online_ms', 0)}",
             f"Last Seen Zone: {row.get('last_seen_zone', '')}",

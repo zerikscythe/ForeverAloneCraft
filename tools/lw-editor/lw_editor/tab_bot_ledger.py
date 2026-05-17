@@ -561,6 +561,8 @@ class BotLedgerTab(ttk.Frame):
             f"Status: {_bot_status(row)}",
             f"Current / Last Zone: {self._zone_label(zone_id, with_id=True)}",
             f"Latest Map: {self._map_label(row.get('latest_map_id'), with_id=True)}",
+            f"Runtime State: {_humanize_identifier(row.get('runtime_state', ''))}",
+            f"Runtime Detail: {row.get('runtime_detail', '')}",
             f"Latest Event: {_event_label(row.get('latest_event_type', ''))}",
             f"Latest Event Time: {_fmt_dt(row.get('latest_logged_at'))}",
             f"Latest Position: {_fmt_pos(row)}",
