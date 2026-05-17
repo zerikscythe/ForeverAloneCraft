@@ -1,0 +1,896 @@
+{
+  "version": 1,
+  "zoneId": 12,
+  "zoneName": "Elwynn Forest",
+  "mapId": 0,
+  "hubCount": 13,
+  "hubs": [
+    {
+      "hubId": "elwynn_forest_hub_01",
+      "position": {
+        "mapId": 0,
+        "x": -10014.0,
+        "y": 37.605,
+        "z": 35.253
+      },
+      "questGivers": [
+        251
+      ],
+      "levelRange": {
+        "min": 5,
+        "max": 6,
+        "avg": 6
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "elwynn_forest_hub_02",
+          "zoneId": 12,
+          "zoneName": "Elwynn Forest",
+          "questGivers": [
+            252
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -9930.05,
+            "y": 499.734,
+            "z": 32.52
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "elwynn_forest_hub_02",
+      "position": {
+        "mapId": 0,
+        "x": -9930.05,
+        "y": 499.734,
+        "z": 32.52
+      },
+      "questGivers": [
+        252
+      ],
+      "levelRange": {
+        "min": 5,
+        "max": 6,
+        "avg": 6
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "elwynn_forest_hub_04",
+          "zoneId": 12,
+          "zoneName": "Elwynn Forest",
+          "questGivers": [
+            244,
+            246,
+            248
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -9895.0,
+            "y": 332.424,
+            "z": 36.55
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "elwynn_forest_hub_03",
+      "position": {
+        "mapId": 0,
+        "x": -9921.14,
+        "y": 38.874,
+        "z": 32.64
+      },
+      "questGivers": [
+        247,
+        255
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 8,
+        "avg": 5
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:159:map:0:cluster:8",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -9303.19,
+            "y": -292.23,
+            "z": 70.73
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            40,
+            46,
+            60,
+            61,
+            79,
+            94
+          ],
+          "targetCount": 241
+        },
+        {
+          "taskAreaId": "item_source:159:map:0:cluster:9",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -9323.56,
+            "y": 510.98,
+            "z": 71.91
+          },
+          "radius": 157.73,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            40,
+            46,
+            60,
+            61,
+            79,
+            94
+          ],
+          "targetCount": 241
+        },
+        {
+          "taskAreaId": "item_source:769:map:0:cluster:24",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -10049.6,
+            "y": 849.51,
+            "z": 33.8
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            113,
+            119,
+            157,
+            330,
+            390,
+            454
+          ],
+          "targetCount": 18
+        },
+        {
+          "taskAreaId": "item_source:769:map:0:cluster:23",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -10141.65,
+            "y": 906.33,
+            "z": 37.19
+          },
+          "radius": 77.86,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            113,
+            119,
+            157,
+            330,
+            390,
+            454
+          ],
+          "targetCount": 18
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "elwynn_forest_hub_04",
+          "zoneId": 12,
+          "zoneName": "Elwynn Forest",
+          "questGivers": [
+            244,
+            246,
+            248
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -9895.0,
+            "y": 332.424,
+            "z": 36.55
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "elwynn_forest_hub_04",
+      "position": {
+        "mapId": 0,
+        "x": -9888.437,
+        "y": 331.17,
+        "z": 37.008
+      },
+      "questGivers": [
+        244,
+        246,
+        248
+      ],
+      "levelRange": {
+        "min": 5,
+        "max": 9,
+        "avg": 7
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "elwynn_forest_hub_03",
+          "zoneId": 12,
+          "zoneName": "Elwynn Forest",
+          "questGivers": [
+            247,
+            255
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -9923.68,
+            "y": 38.387,
+            "z": 32.595
+          },
+          "weight": 2
+        },
+        {
+          "hubId": "elwynn_forest_hub_08",
+          "zoneId": 12,
+          "zoneName": "Elwynn Forest",
+          "questGivers": [
+            240,
+            241,
+            253,
+            328,
+            377,
+            913,
+            917,
+            927,
+            6121
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -9496.32,
+            "y": 72.826,
+            "z": 56.598
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "elwynn_forest_hub_05",
+      "position": {
+        "mapId": 0,
+        "x": -9662.75,
+        "y": 694.321,
+        "z": 36.936
+      },
+      "questGivers": [
+        963
+      ],
+      "levelRange": {
+        "min": 6,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:782:map:0:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -9207.39,
+            "y": -846.82,
+            "z": 68.36
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            97,
+            478
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "elwynn_forest_hub_06",
+      "position": {
+        "mapId": 0,
+        "x": -9610.23,
+        "y": -1032.05,
+        "z": 41.306
+      },
+      "questGivers": [
+        261
+      ],
+      "levelRange": {
+        "min": 7,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:822:map:0:cluster:12",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -9493.99,
+            "y": -1074.57,
+            "z": 51.98
+          },
+          "radius": 57.46,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            822
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:822:map:0:cluster:10",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -9673.12,
+            "y": -916.46,
+            "z": 42.29
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            822
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:118:map:0:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -9449.92,
+            "y": -970.27,
+            "z": 55.91
+          },
+          "radius": 47.45,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            118
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:118:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -9362.71,
+            "y": -1222.16,
+            "z": 64.2
+          },
+          "radius": 171.52,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            118
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "elwynn_forest_hub_08",
+          "zoneId": 12,
+          "zoneName": "Elwynn Forest",
+          "questGivers": [
+            240,
+            241,
+            253,
+            328,
+            377,
+            913,
+            917,
+            927,
+            6121
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -9496.32,
+            "y": 72.826,
+            "z": 56.598
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "elwynn_forest_hub_07",
+      "position": {
+        "mapId": 0,
+        "x": -9531.76,
+        "y": -1222.42,
+        "z": 47.838
+      },
+      "questGivers": [
+        278
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 9,
+        "avg": 9
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:1019:map:0:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -9131.39,
+            "y": -1036.26,
+            "z": 70.82
+          },
+          "radius": 165.08,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            116,
+            473,
+            474,
+            583,
+            880,
+            881
+          ],
+          "targetCount": 9
+        },
+        {
+          "taskAreaId": "item_source:1019:map:0:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -9312.62,
+            "y": -302.72,
+            "z": 69.83
+          },
+          "radius": 116.51,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            116,
+            473,
+            474,
+            583,
+            880,
+            881
+          ],
+          "targetCount": 9
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "elwynn_forest_hub_09",
+      "position": {
+        "mapId": 0,
+        "x": -9469.79,
+        "y": -1289.22,
+        "z": 41.185
+      },
+      "questGivers": [
+        10616
+      ],
+      "levelRange": {
+        "min": 5,
+        "max": 9,
+        "avg": 9
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "elwynn_forest_hub_08",
+      "position": {
+        "mapId": 0,
+        "x": -9469.308,
+        "y": 52.083,
+        "z": 58.617
+      },
+      "questGivers": [
+        240,
+        241,
+        253,
+        328,
+        377,
+        913,
+        917,
+        927,
+        6121
+      ],
+      "levelRange": {
+        "min": 3,
+        "max": 16,
+        "avg": 9
+      },
+      "faction": "Alliance",
+      "totalQuests": 21,
+      "estimatedMinutes": 105,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:12423:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -9514.61,
+            "y": -135.65,
+            "z": 60.41
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            12423
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:1256:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -9476.74,
+            "y": -194.14,
+            "z": 56.73
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            285,
+            735
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:1256:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -9475.42,
+            "y": -346.64,
+            "z": 58.66
+          },
+          "radius": 195.79,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            285,
+            735
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "elwynn_forest_hub_05",
+          "zoneId": 12,
+          "zoneName": "Elwynn Forest",
+          "questGivers": [
+            963
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -9662.75,
+            "y": 694.321,
+            "z": 36.936
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "elwynn_forest_hub_06",
+          "zoneId": 12,
+          "zoneName": "Elwynn Forest",
+          "questGivers": [
+            261
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -9610.23,
+            "y": -1032.05,
+            "z": 41.306
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "elwynn_forest_hub_10",
+      "position": {
+        "mapId": 0,
+        "x": -9455.37,
+        "y": -1385.33,
+        "z": 47.21
+      },
+      "questGivers": [
+        384
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 1,
+        "avg": 1
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "elwynn_forest_hub_11",
+      "position": {
+        "mapId": 0,
+        "x": -9129.59,
+        "y": -984.313,
+        "z": 76.181
+      },
+      "questGivers": [
+        6172
+      ],
+      "levelRange": {
+        "min": 12,
+        "max": 12,
+        "avg": 12
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:6846:map:0:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -9131.39,
+            "y": -1036.26,
+            "z": 70.82
+          },
+          "radius": 165.08,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            474
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:6846:map:0:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -9306.21,
+            "y": -294.36,
+            "z": 70.51
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            474
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "elwynn_forest_hub_12",
+      "position": {
+        "mapId": 0,
+        "x": -9044.56,
+        "y": -45.982,
+        "z": 88.419
+      },
+      "questGivers": [
+        6774
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 5,
+        "avg": 5
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "elwynn_forest_hub_13",
+      "position": {
+        "mapId": 0,
+        "x": -8884.666,
+        "y": -175.106,
+        "z": 82.122
+      },
+      "questGivers": [
+        196,
+        197,
+        375,
+        823,
+        9296
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 5,
+        "avg": 3
+      },
+      "faction": "Alliance",
+      "totalQuests": 19,
+      "estimatedMinutes": 95,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:50432:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -8989.88,
+            "y": -170.73,
+            "z": 78.34
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            69,
+            299
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "creature:6:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -8779.01,
+            "y": -173.46,
+            "z": 83.62
+          },
+          "radius": 121.59,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:257:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -8739.17,
+            "y": -159.87,
+            "z": 86.4
+          },
+          "radius": 157.95,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            257
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:80:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -8671.83,
+            "y": -123.34,
+            "z": 92.11
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            80
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:752:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -9035.45,
+            "y": -346.85,
+            "z": 72.46
+          },
+          "radius": 213.76,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            38
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:80:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -8596.06,
+            "y": -159.23,
+            "z": 87.11
+          },
+          "radius": 108.71,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            80
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "elwynn_forest_hub_08",
+          "zoneId": 12,
+          "zoneName": "Elwynn Forest",
+          "questGivers": [
+            240,
+            241,
+            253,
+            328,
+            377,
+            913,
+            917,
+            927,
+            6121
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -9496.32,
+            "y": 72.826,
+            "z": 56.598
+          },
+          "weight": 1
+        }
+      ]
+    }
+  ]
+}

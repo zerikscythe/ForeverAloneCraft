@@ -1,0 +1,1072 @@
+{
+  "version": 1,
+  "zoneId": 357,
+  "zoneName": "Feralas",
+  "mapId": 1,
+  "hubCount": 16,
+  "hubs": [
+    {
+      "hubId": "feralas_hub_01",
+      "position": {
+        "mapId": 1,
+        "x": -6158.57,
+        "y": -3880.56,
+        "z": -58.829
+      },
+      "questGivers": [
+        9238
+      ],
+      "levelRange": {
+        "min": 38,
+        "max": 47,
+        "avg": 47
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "feralas_hub_02",
+      "position": {
+        "mapId": 1,
+        "x": -4947.29,
+        "y": 1733.71,
+        "z": 62.246
+      },
+      "questGivers": [
+        7807
+      ],
+      "levelRange": {
+        "min": 40,
+        "max": 45,
+        "avg": 45
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "feralas_hub_03",
+      "position": {
+        "mapId": 1,
+        "x": -4505.865,
+        "y": 3333.905,
+        "z": 14.123
+      },
+      "questGivers": [
+        3936,
+        7877
+      ],
+      "levelRange": {
+        "min": 40,
+        "max": 57,
+        "avg": 46
+      },
+      "faction": "Alliance",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:9248:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -5631.35,
+            "y": 3461.0,
+            "z": 2.6
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            8136
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:9247:map:1:cluster:7",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -4788.07,
+            "y": 3413.93,
+            "z": 17.49
+          },
+          "radius": 107.39,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5331,
+            5332,
+            5333,
+            5334,
+            5335,
+            5336
+          ],
+          "targetCount": 9
+        },
+        {
+          "taskAreaId": "item_source:9247:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -4752.24,
+            "y": 3129.42,
+            "z": 1.05
+          },
+          "radius": 107.08,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5331,
+            5332,
+            5333,
+            5334,
+            5335,
+            5336
+          ],
+          "targetCount": 9
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "feralas_hub_05",
+          "zoneId": 357,
+          "zoneName": "Feralas",
+          "questGivers": [
+            7764,
+            7880,
+            7900
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -4480.03,
+            "y": 3229.6,
+            "z": 13.813
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "feralas_hub_04",
+      "position": {
+        "mapId": 1,
+        "x": -4480.815,
+        "y": 858.507,
+        "z": 74.621
+      },
+      "questGivers": [
+        7956,
+        7957
+      ],
+      "levelRange": {
+        "min": 38,
+        "max": 47,
+        "avg": 47
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:7727:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -4529.36,
+            "y": 818.46,
+            "z": 63.77
+          },
+          "radius": 99.74,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7727
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7726:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -4545.47,
+            "y": 819.83,
+            "z": 57.64
+          },
+          "radius": 79.53,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7726
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7725:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -4541.0,
+            "y": 777.21,
+            "z": 57.91
+          },
+          "radius": 166.34,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7725
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7727:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -4531.28,
+            "y": 683.68,
+            "z": 63.32
+          },
+          "radius": 72.87,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7727
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7726:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -4545.76,
+            "y": 657.79,
+            "z": 58.76
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7726
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7725:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -4177.32,
+            "y": 701.61,
+            "z": 102.3
+          },
+          "radius": 153.37,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7725
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "feralas_hub_01",
+          "zoneId": 357,
+          "zoneName": "Feralas",
+          "questGivers": [
+            9238
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -6158.57,
+            "y": -3880.56,
+            "z": -58.829
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "feralas_hub_05",
+      "position": {
+        "mapId": 1,
+        "x": -4470.88,
+        "y": 3229.957,
+        "z": 16.948
+      },
+      "questGivers": [
+        7764,
+        7880,
+        7900
+      ],
+      "levelRange": {
+        "min": 39,
+        "max": 51,
+        "avg": 46
+      },
+      "faction": "Alliance",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:5240:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -4979.37,
+            "y": 1219.29,
+            "z": 68.48
+          },
+          "radius": 129.01,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5240
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:5232:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -4967.7,
+            "y": 1216.01,
+            "z": 69.77
+          },
+          "radius": 157.44,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5232
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:5232:map:1:cluster:5",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -5358.43,
+            "y": 1352.44,
+            "z": 32.17
+          },
+          "radius": 89.5,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5232
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:5240:map:1:cluster:5",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -5355.23,
+            "y": 1331.03,
+            "z": 37.43
+          },
+          "radius": 144.99,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5240
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:5236:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -5746.93,
+            "y": 1172.88,
+            "z": 67.58
+          },
+          "radius": 84.99,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5236
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "feralas_hub_03",
+          "zoneId": 357,
+          "zoneName": "Feralas",
+          "questGivers": [
+            3936,
+            7877
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -4505.91,
+            "y": 3330.33,
+            "z": 14.125
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "feralas_hub_08",
+      "position": {
+        "mapId": 1,
+        "x": -4395.55,
+        "y": 3186.61,
+        "z": 58.644
+      },
+      "questGivers": [
+        7879
+      ],
+      "levelRange": {
+        "min": 40,
+        "max": 55,
+        "avg": 50
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "feralas_hub_05",
+          "zoneId": 357,
+          "zoneName": "Feralas",
+          "questGivers": [
+            7764,
+            7880,
+            7900
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -4480.03,
+            "y": 3229.6,
+            "z": 13.813
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "feralas_hub_09",
+      "position": {
+        "mapId": 1,
+        "x": -4378.62,
+        "y": 2327.33,
+        "z": 1.547
+      },
+      "questGivers": [
+        14637
+      ],
+      "levelRange": {
+        "min": 45,
+        "max": 55,
+        "avg": 52
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:18958:map:1:cluster:11",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -4511.62,
+            "y": 2316.16,
+            "z": 1.36
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            5461,
+            5462
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:18958:map:1:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -4176.51,
+            "y": 2356.99,
+            "z": 1.16
+          },
+          "radius": 62.73,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            5461,
+            5462
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "feralas_hub_06",
+      "position": {
+        "mapId": 1,
+        "x": -4378.343,
+        "y": 172.945,
+        "z": 29.135
+      },
+      "questGivers": [
+        4544,
+        7776,
+        7777,
+        8021,
+        8142,
+        14373
+      ],
+      "levelRange": {
+        "min": 37,
+        "max": 60,
+        "avg": 48
+      },
+      "faction": "Horde",
+      "totalQuests": 14,
+      "estimatedMinutes": 70,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:9371:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -5552.69,
+            "y": 1087.89,
+            "z": 20.58
+          },
+          "radius": 70.3,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            5239
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:9369:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -4525.37,
+            "y": 566.56,
+            "z": 59.74
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5278,
+            7997
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "creature:5229:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -3932.52,
+            "y": 206.41,
+            "z": 104.35
+          },
+          "radius": 94.68,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5229
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:5232:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -3934.33,
+            "y": 102.98,
+            "z": 120.63
+          },
+          "radius": 156.06,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5232
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:9460:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -4116.92,
+            "y": 578.08,
+            "z": 74.73
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7725,
+            7726,
+            7727
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "creature:5229:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -3986.01,
+            "y": -118.39,
+            "z": 147.02
+          },
+          "radius": 102.08,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5229
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "feralas_hub_07",
+      "position": {
+        "mapId": 1,
+        "x": -4376.233,
+        "y": 3292.553,
+        "z": 12.014
+      },
+      "questGivers": [
+        7736,
+        7852,
+        14374
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 60,
+        "avg": 47
+      },
+      "faction": "Alliance",
+      "totalQuests": 11,
+      "estimatedMinutes": 55,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:18947:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -3775.39,
+            "y": 1762.01,
+            "z": 146.56
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5296,
+            5297,
+            5299,
+            7848
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:18947:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -3848.58,
+            "y": 1706.72,
+            "z": 135.78
+          },
+          "radius": 190.56,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5296,
+            5297,
+            5299,
+            7848
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:8973:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -5001.29,
+            "y": 1601.93,
+            "z": 61.25
+          },
+          "radius": 185.81,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5292,
+            5293,
+            5295,
+            5346,
+            7848
+          ],
+          "targetCount": 5
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "feralas_hub_08",
+          "zoneId": 357,
+          "zoneName": "Feralas",
+          "questGivers": [
+            7879
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -4395.55,
+            "y": 3186.61,
+            "z": 58.644
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "feralas_hub_10",
+      "position": {
+        "mapId": 1,
+        "x": -4354.823,
+        "y": 258.018,
+        "z": 25.868
+      },
+      "questGivers": [
+        7854,
+        7875,
+        8115
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 51,
+        "avg": 46
+      },
+      "faction": "Horde",
+      "totalQuests": 24,
+      "estimatedMinutes": 120,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:9590:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -4166.35,
+            "y": 305.32,
+            "z": 58.93
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7584
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:9592:map:1:cluster:9",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -4166.35,
+            "y": 305.32,
+            "z": 58.93
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2927,
+            2928,
+            2929,
+            5300,
+            5304,
+            5305
+          ],
+          "targetCount": 14
+        },
+        {
+          "taskAreaId": "item_source:9237:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -4114.39,
+            "y": 399.2,
+            "z": 56.31
+          },
+          "radius": 143.51,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5249,
+            5251,
+            5253,
+            5254,
+            5255,
+            5258
+          ],
+          "targetCount": 6
+        },
+        {
+          "taskAreaId": "item_source:9589:map:1:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -4525.37,
+            "y": 566.56,
+            "z": 59.74
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5276,
+            5278,
+            5357,
+            5358,
+            7997,
+            14604
+          ],
+          "targetCount": 7
+        },
+        {
+          "taskAreaId": "item_source:9589:map:1:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -4427.28,
+            "y": 685.33,
+            "z": 90.55
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5276,
+            5278,
+            5357,
+            5358,
+            7997,
+            14604
+          ],
+          "targetCount": 7
+        },
+        {
+          "taskAreaId": "item_source:9590:map:1:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -4894.04,
+            "y": 334.95,
+            "z": 25.7
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7584
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "feralas_hub_11",
+          "zoneId": 357,
+          "zoneName": "Feralas",
+          "questGivers": [
+            14355,
+            36208
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -4102.58,
+            "y": 107.004,
+            "z": 76.281
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "feralas_hub_11",
+      "position": {
+        "mapId": 1,
+        "x": -4099.915,
+        "y": 101.732,
+        "z": 76.323
+      },
+      "questGivers": [
+        14355,
+        36208
+      ],
+      "levelRange": {
+        "min": 40,
+        "max": 58,
+        "avg": 52
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "feralas_hub_12",
+      "position": {
+        "mapId": 1,
+        "x": -3551.3,
+        "y": 2305.97,
+        "z": 62.822
+      },
+      "questGivers": [
+        7775
+      ],
+      "levelRange": {
+        "min": 47,
+        "max": 52,
+        "avg": 52
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "feralas_hub_13",
+      "position": {
+        "mapId": 1,
+        "x": -3385.91,
+        "y": 2495.84,
+        "z": 23.559
+      },
+      "questGivers": [
+        7765
+      ],
+      "levelRange": {
+        "min": 44,
+        "max": 49,
+        "avg": 49
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "feralas_hub_15",
+          "zoneId": 357,
+          "zoneName": "Feralas",
+          "questGivers": [
+            7774
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -2843.75,
+            "y": 2785.17,
+            "z": 94.479
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "feralas_hub_14",
+      "position": {
+        "mapId": 1,
+        "x": -3129.57,
+        "y": 2257.48,
+        "z": 39.869
+      },
+      "questGivers": [
+        7773
+      ],
+      "levelRange": {
+        "min": 25,
+        "max": 25,
+        "avg": 25
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "feralas_hub_15",
+      "position": {
+        "mapId": 1,
+        "x": -2843.75,
+        "y": 2785.17,
+        "z": 94.479
+      },
+      "questGivers": [
+        7774
+      ],
+      "levelRange": {
+        "min": 44,
+        "max": 49,
+        "avg": 49
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "feralas_hub_16",
+      "position": {
+        "mapId": 1,
+        "x": 8701.16,
+        "y": 993.116,
+        "z": 23.585
+      },
+      "questGivers": [
+        7907
+      ],
+      "levelRange": {
+        "min": 42,
+        "max": 56,
+        "avg": 51
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

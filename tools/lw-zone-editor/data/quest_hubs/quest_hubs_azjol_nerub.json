@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "zoneId": 4277,
+  "zoneName": "Azjol-Nerub",
+  "mapId": 601,
+  "hubCount": 1,
+  "hubs": [
+    {
+      "hubId": "azjol_nerub_hub_01",
+      "position": {
+        "mapId": 601,
+        "x": 575.44,
+        "y": 558.982,
+        "z": 291.963
+      },
+      "questGivers": [
+        30533
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 1,
+        "avg": 1
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

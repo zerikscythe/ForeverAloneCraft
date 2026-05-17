@@ -1,0 +1,942 @@
+{
+  "version": 1,
+  "zoneId": 400,
+  "zoneName": "Thousand Needles",
+  "mapId": 1,
+  "hubCount": 14,
+  "hubs": [
+    {
+      "hubId": "thousand_needles_hub_01",
+      "position": {
+        "mapId": 1,
+        "x": -7128.14,
+        "y": -3735.07,
+        "z": 8.438
+      },
+      "questGivers": [
+        4708
+      ],
+      "levelRange": {
+        "min": 29,
+        "max": 41,
+        "avg": 41
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "thousand_needles_hub_02",
+      "position": {
+        "mapId": 1,
+        "x": -6253.28,
+        "y": -4025.25,
+        "z": -58.667
+      },
+      "questGivers": [
+        4629
+      ],
+      "levelRange": {
+        "min": 28,
+        "max": 33,
+        "avg": 33
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:4150:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -6277.34,
+            "y": -4106.34,
+            "z": -58.62
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4150
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4151:map:1:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -6301.23,
+            "y": -4261.62,
+            "z": -58.63
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4151
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4151:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -6543.87,
+            "y": -3882.87,
+            "z": -58.65
+          },
+          "radius": 148.14,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4151
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4150:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -6583.71,
+            "y": -3827.94,
+            "z": -58.69
+          },
+          "radius": 86.48,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4150
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4147:map:1:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -5952.48,
+            "y": -3557.14,
+            "z": -58.62
+          },
+          "radius": 46.08,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4147
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4147:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -5782.92,
+            "y": -3456.7,
+            "z": -53.42
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4147
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "thousand_needles_hub_03",
+      "position": {
+        "mapId": 1,
+        "x": -6219.577,
+        "y": -3868.505,
+        "z": -58.667
+      },
+      "questGivers": [
+        4452,
+        4453,
+        4454,
+        6548
+      ],
+      "levelRange": {
+        "min": 26,
+        "max": 50,
+        "avg": 37
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 16,
+      "estimatedMinutes": 80,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:5795:map:1:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6082.45,
+            "y": -3875.72,
+            "z": -59.84
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4142,
+            4143,
+            4144
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:5794:map:1:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6312.25,
+            "y": -4127.81,
+            "z": -58.64
+          },
+          "radius": 88.65,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4139,
+            4140,
+            5937
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:5795:map:1:cluster:7",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6250.57,
+            "y": -3554.54,
+            "z": -58.62
+          },
+          "radius": 93.02,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4142,
+            4143,
+            4144
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:5794:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6528.02,
+            "y": -4039.31,
+            "z": -58.62
+          },
+          "radius": 63.32,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4139,
+            4140,
+            5937
+          ],
+          "targetCount": 3
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "thousand_needles_hub_04",
+      "position": {
+        "mapId": 1,
+        "x": -6205.827,
+        "y": -3957.963,
+        "z": -58.653
+      },
+      "questGivers": [
+        4630,
+        4706,
+        4709
+      ],
+      "levelRange": {
+        "min": 29,
+        "max": 42,
+        "avg": 39
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:5848:map:1:cluster:7",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6040.81,
+            "y": -4111.52,
+            "z": -58.62
+          },
+          "radius": 61.83,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4154,
+            4158
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:5848:map:1:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6592.1,
+            "y": -3894.57,
+            "z": -58.64
+          },
+          "radius": 65.71,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4154,
+            4158
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "thousand_needles_hub_01",
+          "zoneId": 400,
+          "zoneName": "Thousand Needles",
+          "questGivers": [
+            4708
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -7128.14,
+            "y": -3735.07,
+            "z": 8.438
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "thousand_needles_hub_05",
+      "position": {
+        "mapId": 1,
+        "x": -5842.36,
+        "y": -3406.93,
+        "z": -50.85
+      },
+      "questGivers": [
+        4483
+      ],
+      "levelRange": {
+        "min": 29,
+        "max": 35,
+        "avg": 35
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:4130:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -6385.4,
+            "y": -3445.5,
+            "z": -57.92
+          },
+          "radius": 98.73,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4130
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4133:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -6444.21,
+            "y": -3485.11,
+            "z": -58.66
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4133
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4130:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -6450.19,
+            "y": -3590.23,
+            "z": -58.62
+          },
+          "radius": 74.35,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4130
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4131:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -6482.18,
+            "y": -3311.39,
+            "z": -99.79
+          },
+          "radius": 103.4,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4131
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4133:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -6482.63,
+            "y": -3239.85,
+            "z": -112.68
+          },
+          "radius": 46.03,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4133
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "thousand_needles_hub_06",
+      "position": {
+        "mapId": 1,
+        "x": -5435.85,
+        "y": -2429.235,
+        "z": 89.571
+      },
+      "questGivers": [
+        10377,
+        10537,
+        10539,
+        17093
+      ],
+      "levelRange": {
+        "min": 23,
+        "max": 35,
+        "avg": 28
+      },
+      "faction": "Horde",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:4094:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -5189.2,
+            "y": -2434.27,
+            "z": -46.96
+          },
+          "radius": 89.66,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4094
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4094:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -5191.0,
+            "y": -2479.31,
+            "z": -47.82
+          },
+          "radius": 169.57,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4094
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4096:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -5159.44,
+            "y": -2445.83,
+            "z": -48.81
+          },
+          "radius": 172.79,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4096
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4093:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -5173.44,
+            "y": -2575.52,
+            "z": -50.47
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4093
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4096:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -5181.98,
+            "y": -2240.58,
+            "z": -46.1
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4096
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4093:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -5079.83,
+            "y": -2189.45,
+            "z": -54.04
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4093
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "thousand_needles_hub_09",
+          "zoneId": 400,
+          "zoneName": "Thousand Needles",
+          "questGivers": [
+            10428,
+            10638,
+            10941
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -4921.56,
+            "y": -1376.35,
+            "z": -52.529
+          },
+          "weight": 2
+        }
+      ]
+    },
+    {
+      "hubId": "thousand_needles_hub_07",
+      "position": {
+        "mapId": 1,
+        "x": -5183.59,
+        "y": -2806.95,
+        "z": -6.92
+      },
+      "questGivers": [
+        2986
+      ],
+      "levelRange": {
+        "min": 25,
+        "max": 30,
+        "avg": 29
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:5844:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -5201.8,
+            "y": -1569.02,
+            "z": -48.14
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4499
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "thousand_needles_hub_14",
+          "zoneId": 400,
+          "zoneName": "Thousand Needles",
+          "questGivers": [
+            4489
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 1429.03,
+            "y": -602.057,
+            "z": 62.854
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "thousand_needles_hub_08",
+      "position": {
+        "mapId": 1,
+        "x": -5156.69,
+        "y": -1220.49,
+        "z": 48.789
+      },
+      "questGivers": [
+        10427
+      ],
+      "levelRange": {
+        "min": 25,
+        "max": 29,
+        "avg": 29
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "thousand_needles_hub_09",
+      "position": {
+        "mapId": 1,
+        "x": -4914.393,
+        "y": -1374.84,
+        "z": -52.577
+      },
+      "questGivers": [
+        10428,
+        10638,
+        10941
+      ],
+      "levelRange": {
+        "min": 23,
+        "max": 30,
+        "avg": 28
+      },
+      "faction": "Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:12946:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -4688.74,
+            "y": -1434.57,
+            "z": -50.46
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            10992
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "thousand_needles_hub_10",
+      "position": {
+        "mapId": 1,
+        "x": -4801.73,
+        "y": -2343.74,
+        "z": 116.104
+      },
+      "questGivers": [
+        12866
+      ],
+      "levelRange": {
+        "min": 28,
+        "max": 35,
+        "avg": 35
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:7873:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -4803.29,
+            "y": -2270.86,
+            "z": 88.64
+          },
+          "radius": 106.4,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7873
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7872:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -4819.23,
+            "y": -2250.67,
+            "z": 85.99
+          },
+          "radius": 96.5,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7872
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7874:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -4779.32,
+            "y": -2249.69,
+            "z": 85.45
+          },
+          "radius": 193.78,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7874
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7872:map:1:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -4655.13,
+            "y": -2486.75,
+            "z": 82.19
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7872
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7874:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -4576.84,
+            "y": -2227.94,
+            "z": 88.72
+          },
+          "radius": 189.81,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7874
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7873:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -4457.74,
+            "y": -2310.84,
+            "z": 92.87
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7873
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "thousand_needles_hub_11",
+      "position": {
+        "mapId": 1,
+        "x": -4742.52,
+        "y": -2103.0,
+        "z": 83.715
+      },
+      "questGivers": [
+        10646
+      ],
+      "levelRange": {
+        "min": 25,
+        "max": 29,
+        "avg": 29
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "thousand_needles_hub_12",
+      "position": {
+        "mapId": 1,
+        "x": -4617.0,
+        "y": -1851.97,
+        "z": 86.153
+      },
+      "questGivers": [
+        10079
+      ],
+      "levelRange": {
+        "min": 23,
+        "max": 25,
+        "avg": 25
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "thousand_needles_hub_06",
+          "zoneId": 400,
+          "zoneName": "Thousand Needles",
+          "questGivers": [
+            10377,
+            10537,
+            10539,
+            17093
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -5454.95,
+            "y": -2442.79,
+            "z": 90.299
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "thousand_needles_hub_13",
+      "position": {
+        "mapId": 1,
+        "x": -4523.845,
+        "y": -780.409,
+        "z": -41.264
+      },
+      "questGivers": [
+        4048,
+        7870
+      ],
+      "levelRange": {
+        "min": 23,
+        "max": 55,
+        "avg": 41
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "thousand_needles_hub_14",
+      "position": {
+        "mapId": 1,
+        "x": 1429.03,
+        "y": -602.057,
+        "z": 62.854
+      },
+      "questGivers": [
+        4489
+      ],
+      "levelRange": {
+        "min": 25,
+        "max": 30,
+        "avg": 30
+      },
+      "faction": "Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

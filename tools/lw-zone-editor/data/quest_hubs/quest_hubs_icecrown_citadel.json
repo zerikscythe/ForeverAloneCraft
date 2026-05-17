@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "zoneId": 4812,
+  "zoneName": "Icecrown Citadel",
+  "mapId": 631,
+  "hubCount": 1,
+  "hubs": [
+    {
+      "hubId": "icecrown_citadel_hub_01",
+      "position": {
+        "mapId": 631,
+        "x": -62.017,
+        "y": 2181.883,
+        "z": 28.903
+      },
+      "questGivers": [
+        37120,
+        38316,
+        39509
+      ],
+      "levelRange": {
+        "min": 80,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 47,
+      "estimatedMinutes": 235,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:38153:map:631:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 631,
+            "x": 4203.7,
+            "y": 2484.83,
+            "z": 364.96
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            38153
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    }
+  ]
+}

@@ -1,0 +1,1635 @@
+{
+  "version": 1,
+  "zoneId": 67,
+  "zoneName": "The Storm Peaks",
+  "mapId": 571,
+  "hubCount": 35,
+  "hubs": [
+    {
+      "hubId": "the_storm_peaks_hub_01",
+      "position": {
+        "mapId": 571,
+        "x": 5789.08,
+        "y": 739.74,
+        "z": 618.644
+      },
+      "questGivers": [
+        30490
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 78,
+        "avg": 78
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_storm_peaks_hub_02",
+      "position": {
+        "mapId": 571,
+        "x": 6121.92,
+        "y": -1076.73,
+        "z": 403.333
+      },
+      "questGivers": [
+        29428,
+        29431,
+        29473
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 79,
+        "avg": 78
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 14,
+      "estimatedMinutes": 70,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "the_storm_peaks_hub_13",
+          "zoneId": 67,
+          "zoneName": "The Storm Peaks",
+          "questGivers": [
+            29481
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 6931.07,
+            "y": -1202.59,
+            "z": 808.828
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_storm_peaks_hub_03",
+      "position": {
+        "mapId": 571,
+        "x": 6320.61,
+        "y": -1726.14,
+        "z": 455.911
+      },
+      "questGivers": [
+        29432
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 78,
+        "avg": 78
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_storm_peaks_hub_04",
+      "position": {
+        "mapId": 571,
+        "x": 6404.13,
+        "y": -1122.33,
+        "z": 426.433
+      },
+      "questGivers": [
+        29430
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 78,
+        "avg": 78
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_storm_peaks_hub_06",
+      "position": {
+        "mapId": 571,
+        "x": 6630.9,
+        "y": -1250.24,
+        "z": 396.258
+      },
+      "questGivers": [
+        29434
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 78,
+        "avg": 78
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "the_storm_peaks_hub_08",
+          "zoneId": 67,
+          "zoneName": "The Storm Peaks",
+          "questGivers": [
+            29434
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 6691.62,
+            "y": -1166.98,
+            "z": 398.74
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_storm_peaks_hub_07",
+      "position": {
+        "mapId": 571,
+        "x": 6646.12,
+        "y": -1111.91,
+        "z": 427.432
+      },
+      "questGivers": [
+        29434
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 78,
+        "avg": 78
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "the_storm_peaks_hub_08",
+          "zoneId": 67,
+          "zoneName": "The Storm Peaks",
+          "questGivers": [
+            29434
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 6691.62,
+            "y": -1166.98,
+            "z": 398.74
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_storm_peaks_hub_05",
+      "position": {
+        "mapId": 571,
+        "x": 6662.945,
+        "y": -256.96,
+        "z": 962.899
+      },
+      "questGivers": [
+        29593,
+        29650,
+        29727,
+        29732,
+        29743,
+        29744
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 79
+      },
+      "faction": "Alliance",
+      "totalQuests": 13,
+      "estimatedMinutes": 65,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:42780:map:571:cluster:8",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 7884.27,
+            "y": -1398.6,
+            "z": 1533.95
+          },
+          "radius": 119.55,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27960,
+            27961,
+            27962,
+            27963,
+            27964,
+            27965
+          ],
+          "targetCount": 104
+        },
+        {
+          "taskAreaId": "item_source:42780:map:571:cluster:20",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 8140.12,
+            "y": -1125.28,
+            "z": 925.85
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27960,
+            27961,
+            27962,
+            27963,
+            27964,
+            27965
+          ],
+          "targetCount": 104
+        },
+        {
+          "taskAreaId": "creature:30142:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 8392.7,
+            "y": -1970.14,
+            "z": 1461.84
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30142
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "the_storm_peaks_hub_14",
+          "zoneId": 67,
+          "zoneName": "The Storm Peaks",
+          "questGivers": [
+            29751
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 6951.33,
+            "y": 46.356,
+            "z": 795.069
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_storm_peaks_hub_08",
+      "position": {
+        "mapId": 571,
+        "x": 6691.62,
+        "y": -1166.98,
+        "z": 398.74
+      },
+      "questGivers": [
+        29434
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 78,
+        "avg": 78
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_storm_peaks_hub_09",
+      "position": {
+        "mapId": 571,
+        "x": 6777.145,
+        "y": -1599.4,
+        "z": 820.507
+      },
+      "questGivers": [
+        29997,
+        30041
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_storm_peaks_hub_10",
+      "position": {
+        "mapId": 571,
+        "x": 6793.03,
+        "y": -1696.48,
+        "z": 821.291
+      },
+      "questGivers": [
+        29839
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "the_storm_peaks_hub_11",
+          "zoneId": 67,
+          "zoneName": "The Storm Peaks",
+          "questGivers": [
+            29975
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 6922.17,
+            "y": -1534.57,
+            "z": 836.157
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_storm_peaks_hub_11",
+      "position": {
+        "mapId": 571,
+        "x": 6922.17,
+        "y": -1534.57,
+        "z": 836.157
+      },
+      "questGivers": [
+        29975
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "the_storm_peaks_hub_15",
+          "zoneId": 67,
+          "zoneName": "The Storm Peaks",
+          "questGivers": [
+            29592
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 7081.52,
+            "y": -1938.02,
+            "z": 772.39
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "the_storm_peaks_hub_16",
+          "zoneId": 67,
+          "zoneName": "The Storm Peaks",
+          "questGivers": [
+            29796
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 7088.28,
+            "y": -1777.09,
+            "z": 821.37
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_storm_peaks_hub_12",
+      "position": {
+        "mapId": 571,
+        "x": 6929.4,
+        "y": -1315.77,
+        "z": 831.346
+      },
+      "questGivers": [
+        29885
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 79,
+        "avg": 79
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "the_storm_peaks_hub_13",
+          "zoneId": 67,
+          "zoneName": "The Storm Peaks",
+          "questGivers": [
+            29481
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 6931.07,
+            "y": -1202.59,
+            "z": 808.828
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_storm_peaks_hub_13",
+      "position": {
+        "mapId": 571,
+        "x": 6931.07,
+        "y": -1202.59,
+        "z": 808.828
+      },
+      "questGivers": [
+        29481
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 79,
+        "avg": 79
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "the_storm_peaks_hub_11",
+          "zoneId": 67,
+          "zoneName": "The Storm Peaks",
+          "questGivers": [
+            29975
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 6922.17,
+            "y": -1534.57,
+            "z": 836.157
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "the_storm_peaks_hub_12",
+          "zoneId": 67,
+          "zoneName": "The Storm Peaks",
+          "questGivers": [
+            29885
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 6929.4,
+            "y": -1315.77,
+            "z": 831.346
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_storm_peaks_hub_14",
+      "position": {
+        "mapId": 571,
+        "x": 6951.33,
+        "y": 46.356,
+        "z": 795.069
+      },
+      "questGivers": [
+        29751
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "the_storm_peaks_hub_24",
+          "zoneId": 67,
+          "zoneName": "The Storm Peaks",
+          "questGivers": [
+            30052
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 7364.14,
+            "y": -963.991,
+            "z": 909.548
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_storm_peaks_hub_15",
+      "position": {
+        "mapId": 571,
+        "x": 7081.52,
+        "y": -1938.02,
+        "z": 772.39
+      },
+      "questGivers": [
+        29592
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "the_storm_peaks_hub_10",
+          "zoneId": 67,
+          "zoneName": "The Storm Peaks",
+          "questGivers": [
+            29839
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 6793.03,
+            "y": -1696.48,
+            "z": 821.291
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_storm_peaks_hub_16",
+      "position": {
+        "mapId": 571,
+        "x": 7088.28,
+        "y": -1777.09,
+        "z": 821.37
+      },
+      "questGivers": [
+        29796
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "the_storm_peaks_hub_26",
+          "zoneId": 67,
+          "zoneName": "The Storm Peaks",
+          "questGivers": [
+            29445
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 7448.98,
+            "y": -534.783,
+            "z": 1896.95
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_storm_peaks_hub_17",
+      "position": {
+        "mapId": 571,
+        "x": 7137.46,
+        "y": -1324.46,
+        "z": 916.448
+      },
+      "questGivers": [
+        30548
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "the_storm_peaks_hub_20",
+          "zoneId": 67,
+          "zoneName": "The Storm Peaks",
+          "questGivers": [
+            30082
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 7263.44,
+            "y": -873.846,
+            "z": 925.228
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_storm_peaks_hub_18",
+      "position": {
+        "mapId": 571,
+        "x": 7199.22,
+        "y": -2653.99,
+        "z": 813.64
+      },
+      "questGivers": [
+        30127
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "the_storm_peaks_hub_26",
+          "zoneId": 67,
+          "zoneName": "The Storm Peaks",
+          "questGivers": [
+            29445
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 7448.98,
+            "y": -534.783,
+            "z": 1896.95
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_storm_peaks_hub_19",
+      "position": {
+        "mapId": 571,
+        "x": 7199.92,
+        "y": -3530.57,
+        "z": 826.946
+      },
+      "questGivers": [
+        30099
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_storm_peaks_hub_20",
+      "position": {
+        "mapId": 571,
+        "x": 7263.44,
+        "y": -873.846,
+        "z": 925.228
+      },
+      "questGivers": [
+        30082
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_storm_peaks_hub_21",
+      "position": {
+        "mapId": 571,
+        "x": 7285.09,
+        "y": -2864.6,
+        "z": 822.226
+      },
+      "questGivers": [
+        32540
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:42780:map:571:cluster:29",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 7705.57,
+            "y": -2361.33,
+            "z": 1051.69
+          },
+          "radius": 172.01,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27960,
+            27961,
+            27962,
+            27963,
+            27964,
+            27965
+          ],
+          "targetCount": 104
+        },
+        {
+          "taskAreaId": "item_source:42780:map:571:cluster:30",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 7789.77,
+            "y": -2409.79,
+            "z": 1086.79
+          },
+          "radius": 68.44,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27960,
+            27961,
+            27962,
+            27963,
+            27964,
+            27965
+          ],
+          "targetCount": 104
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_storm_peaks_hub_22",
+      "position": {
+        "mapId": 571,
+        "x": 7306.99,
+        "y": -2931.49,
+        "z": 851.378
+      },
+      "questGivers": [
+        32594
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 77,
+        "avg": 77
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_storm_peaks_hub_23",
+      "position": {
+        "mapId": 571,
+        "x": 7345.9,
+        "y": -2812.95,
+        "z": 798.571
+      },
+      "questGivers": [
+        30105
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "the_storm_peaks_hub_19",
+          "zoneId": 67,
+          "zoneName": "The Storm Peaks",
+          "questGivers": [
+            30099
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 7199.92,
+            "y": -3530.57,
+            "z": 826.946
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_storm_peaks_hub_24",
+      "position": {
+        "mapId": 571,
+        "x": 7364.14,
+        "y": -963.991,
+        "z": 909.548
+      },
+      "questGivers": [
+        30052
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:30315:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 7865.79,
+            "y": -1397.25,
+            "z": 1534.06
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30315
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:30318:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 8194.56,
+            "y": -1963.53,
+            "z": 1738.48
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30318
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:30316:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 7994.02,
+            "y": -2734.84,
+            "z": 1134.24
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30316
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "the_storm_peaks_hub_17",
+          "zoneId": 67,
+          "zoneName": "The Storm Peaks",
+          "questGivers": [
+            30548
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 7137.46,
+            "y": -1324.46,
+            "z": 916.448
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_storm_peaks_hub_25",
+      "position": {
+        "mapId": 571,
+        "x": 7397.65,
+        "y": -2770.25,
+        "z": 771.041
+      },
+      "questGivers": [
+        30252
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_storm_peaks_hub_26",
+      "position": {
+        "mapId": 571,
+        "x": 7448.98,
+        "y": -534.783,
+        "z": 1896.95
+      },
+      "questGivers": [
+        29445
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "the_storm_peaks_hub_18",
+          "zoneId": 67,
+          "zoneName": "The Storm Peaks",
+          "questGivers": [
+            30127
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 7199.22,
+            "y": -2653.99,
+            "z": 813.64
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_storm_peaks_hub_27",
+      "position": {
+        "mapId": 571,
+        "x": 7524.93,
+        "y": -972.161,
+        "z": 478.767
+      },
+      "questGivers": [
+        30382
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_storm_peaks_hub_28",
+      "position": {
+        "mapId": 571,
+        "x": 7620.37,
+        "y": -1609.42,
+        "z": 969.651
+      },
+      "questGivers": [
+        30469
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:42927:map:571:cluster:8",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 7675.26,
+            "y": -1577.77,
+            "z": 962.92
+          },
+          "radius": 117.34,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29390,
+            29605,
+            30148,
+            30291
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:42927:map:571:cluster:7",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 7927.72,
+            "y": -1570.66,
+            "z": 914.65
+          },
+          "radius": 140.88,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29390,
+            29605,
+            30148,
+            30291
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "creature:30167:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 7990.45,
+            "y": -1642.17,
+            "z": 909.9
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30167
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_storm_peaks_hub_29",
+      "position": {
+        "mapId": 571,
+        "x": 7759.75,
+        "y": -2836.43,
+        "z": 1216.85
+      },
+      "questGivers": [
+        30381
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:30381:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 7759.75,
+            "y": -2836.43,
+            "z": 1216.85
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30381
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:42782:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 8168.92,
+            "y": -2858.28,
+            "z": 1083.29
+          },
+          "radius": 161.54,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30184
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:42783:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 8168.92,
+            "y": -2858.28,
+            "z": 1083.29
+          },
+          "radius": 161.54,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30184
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:42782:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 8180.55,
+            "y": -2755.12,
+            "z": 1047.13
+          },
+          "radius": 148.21,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30184
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:42783:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 8180.55,
+            "y": -2755.12,
+            "z": 1047.13
+          },
+          "radius": 148.21,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30184
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:30395:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 8348.89,
+            "y": -2509.48,
+            "z": 1147.37
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30395
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_storm_peaks_hub_30",
+      "position": {
+        "mapId": 571,
+        "x": 7761.1,
+        "y": -2160.86,
+        "z": 1233.33
+      },
+      "questGivers": [
+        30295
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:30341:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 8143.64,
+            "y": -2092.24,
+            "z": 1194.87
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30341
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:30376:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 8033.54,
+            "y": -1623.42,
+            "z": 1176.04
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30376
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:30353:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 8394.52,
+            "y": -1354.78,
+            "z": 979.66
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30353
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "the_storm_peaks_hub_23",
+          "zoneId": 67,
+          "zoneName": "The Storm Peaks",
+          "questGivers": [
+            30105
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 7345.9,
+            "y": -2812.95,
+            "z": 798.571
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_storm_peaks_hub_31",
+      "position": {
+        "mapId": 571,
+        "x": 7770.48,
+        "y": -1058.47,
+        "z": 929.394
+      },
+      "questGivers": [
+        29855
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_storm_peaks_hub_32",
+      "position": {
+        "mapId": 571,
+        "x": 7850.89,
+        "y": -790.175,
+        "z": 1181.972
+      },
+      "questGivers": [
+        29651,
+        29937,
+        30247,
+        30472
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Horde",
+      "totalQuests": 9,
+      "estimatedMinutes": 45,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:42780:map:571:cluster:20",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 8140.12,
+            "y": -1125.28,
+            "z": 925.85
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27960,
+            27961,
+            27962,
+            27963,
+            27964,
+            27965
+          ],
+          "targetCount": 104
+        },
+        {
+          "taskAreaId": "item_source:42780:map:571:cluster:19",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 8242.68,
+            "y": -1004.3,
+            "z": 929.88
+          },
+          "radius": 211.66,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27960,
+            27961,
+            27962,
+            27963,
+            27964,
+            27965
+          ],
+          "targetCount": 104
+        },
+        {
+          "taskAreaId": "item_source:42510:map:571:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 8025.01,
+            "y": -1506.32,
+            "z": 900.04
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30164
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:42510:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 7955.91,
+            "y": -1575.24,
+            "z": 910.64
+          },
+          "radius": 148.15,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30164
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "the_storm_peaks_hub_28",
+          "zoneId": 67,
+          "zoneName": "The Storm Peaks",
+          "questGivers": [
+            30469
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 7620.37,
+            "y": -1609.42,
+            "z": 969.651
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "the_storm_peaks_hub_29",
+          "zoneId": 67,
+          "zoneName": "The Storm Peaks",
+          "questGivers": [
+            30381
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 7759.75,
+            "y": -2836.43,
+            "z": 1216.85
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "the_storm_peaks_hub_31",
+          "zoneId": 67,
+          "zoneName": "The Storm Peaks",
+          "questGivers": [
+            29855
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 7770.48,
+            "y": -1058.47,
+            "z": 929.394
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_storm_peaks_hub_33",
+      "position": {
+        "mapId": 571,
+        "x": 7989.46,
+        "y": -840.086,
+        "z": 968.251
+      },
+      "questGivers": [
+        29806
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_storm_peaks_hub_34",
+      "position": {
+        "mapId": 571,
+        "x": 8348.89,
+        "y": -2509.48,
+        "z": 1147.37
+      },
+      "questGivers": [
+        30395
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_storm_peaks_hub_35",
+      "position": {
+        "mapId": 571,
+        "x": 8390.315,
+        "y": -387.945,
+        "z": 903.202
+      },
+      "questGivers": [
+        29801,
+        30152
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 14,
+      "estimatedMinutes": 70,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:33470:map:571:cluster:262",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 7705.57,
+            "y": -2361.33,
+            "z": 1051.69
+          },
+          "radius": 172.01,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23643,
+            23644,
+            23645,
+            23651,
+            23652,
+            23653
+          ],
+          "targetCount": 772
+        },
+        {
+          "taskAreaId": "item_source:33470:map:571:cluster:263",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 7789.77,
+            "y": -2409.79,
+            "z": 1086.79
+          },
+          "radius": 68.44,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23643,
+            23644,
+            23645,
+            23651,
+            23652,
+            23653
+          ],
+          "targetCount": 772
+        }
+      ],
+      "nextHubs": []
+    }
+  ]
+}

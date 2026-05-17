@@ -1,0 +1,707 @@
+{
+  "version": 1,
+  "zoneId": 1377,
+  "zoneName": "Silithus",
+  "mapId": 1,
+  "hubCount": 8,
+  "hubs": [
+    {
+      "hubId": "silithus_hub_01",
+      "position": {
+        "mapId": 1,
+        "x": -8071.32,
+        "y": 1633.95,
+        "z": 24.424
+      },
+      "questGivers": [
+        15693
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "silithus_hub_02",
+      "position": {
+        "mapId": 1,
+        "x": -8017.78,
+        "y": 1107.72,
+        "z": 3.776
+      },
+      "questGivers": [
+        15170,
+        15171
+      ],
+      "levelRange": {
+        "min": 58,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:20459:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -8132.36,
+            "y": 775.66,
+            "z": -77.71
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11730,
+            11731,
+            11732,
+            11733,
+            11734
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:20459:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -8275.29,
+            "y": 662.15,
+            "z": -73.76
+          },
+          "radius": 217.57,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11730,
+            11731,
+            11732,
+            11733,
+            11734
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:20458:map:1:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -7545.54,
+            "y": 1472.22,
+            "z": 4.11
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11725,
+            11726,
+            11727,
+            11728,
+            11729
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:20458:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -7411.24,
+            "y": 1262.45,
+            "z": -83.17
+          },
+          "radius": 178.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11725,
+            11726,
+            11727,
+            11728,
+            11729
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:20457:map:1:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -7111.02,
+            "y": 789.35,
+            "z": 12.61
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11698,
+            11721,
+            11722,
+            11723,
+            11724,
+            13136
+          ],
+          "targetCount": 7
+        },
+        {
+          "taskAreaId": "item_source:20457:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6998.63,
+            "y": 835.89,
+            "z": 11.14
+          },
+          "radius": 135.43,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11698,
+            11721,
+            11722,
+            11723,
+            11724,
+            13136
+          ],
+          "targetCount": 7
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "silithus_hub_06",
+          "zoneId": 1377,
+          "zoneName": "Silithus",
+          "questGivers": [
+            15174,
+            15176,
+            15180,
+            15181,
+            15183,
+            15189,
+            15190,
+            15191,
+            15270,
+            15282,
+            15306,
+            15498,
+            15499,
+            15500,
+            15540,
+            16091,
+            17081,
+            17082
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -6876.72,
+            "y": 734.648,
+            "z": 45.745
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "silithus_hub_03",
+      "position": {
+        "mapId": 1,
+        "x": -7578.72,
+        "y": 196.914,
+        "z": 11.549
+      },
+      "questGivers": [
+        15194
+      ],
+      "levelRange": {
+        "min": 54,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:20404:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6992.43,
+            "y": 1164.65,
+            "z": 7.23
+          },
+          "radius": 130.01,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            11804,
+            11880,
+            11881,
+            11882,
+            11883,
+            14479
+          ],
+          "targetCount": 11
+        },
+        {
+          "taskAreaId": "item_source:20404:map:1:cluster:7",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6367.58,
+            "y": 542.05,
+            "z": 6.83
+          },
+          "radius": 46.78,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            11804,
+            11880,
+            11881,
+            11882,
+            11883,
+            14479
+          ],
+          "targetCount": 11
+        },
+        {
+          "taskAreaId": "item_source:20396:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6939.14,
+            "y": 1114.2,
+            "z": 0.86
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11804
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:20394:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6809.02,
+            "y": 1619.7,
+            "z": 1.72
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15200
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:20395:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -7964.69,
+            "y": 1977.1,
+            "z": 7.06
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11803
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "silithus_hub_04",
+      "position": {
+        "mapId": 1,
+        "x": -7560.865,
+        "y": 744.26,
+        "z": -16.977
+      },
+      "questGivers": [
+        15612,
+        17079
+      ],
+      "levelRange": {
+        "min": 55,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:18199:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -7568.77,
+            "y": 763.38,
+            "z": -17.6
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18199
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "silithus_hub_05",
+      "position": {
+        "mapId": 1,
+        "x": -7156.26,
+        "y": 1379.27,
+        "z": 3.138
+      },
+      "questGivers": [
+        15440,
+        17080
+      ],
+      "levelRange": {
+        "min": 55,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:17090:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -7138.58,
+            "y": 1389.88,
+            "z": 3.71
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17090
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "silithus_hub_06",
+      "position": {
+        "mapId": 1,
+        "x": -6834.425,
+        "y": 773.235,
+        "z": 50.613
+      },
+      "questGivers": [
+        15174,
+        15176,
+        15180,
+        15181,
+        15183,
+        15189,
+        15190,
+        15191,
+        15270,
+        15282,
+        15306,
+        15498,
+        15499,
+        15500,
+        15540,
+        16091,
+        17081,
+        17082
+      ],
+      "levelRange": {
+        "min": 54,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 82,
+      "estimatedMinutes": 410,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:20384:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6998.63,
+            "y": 835.89,
+            "z": 11.14
+          },
+          "radius": 135.43,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            11698,
+            11721,
+            11722,
+            11723,
+            11724,
+            11725
+          ],
+          "targetCount": 18
+        },
+        {
+          "taskAreaId": "item_source:20384:map:1:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -7111.02,
+            "y": 789.35,
+            "z": 12.61
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            11698,
+            11721,
+            11722,
+            11723,
+            11724,
+            11725
+          ],
+          "targetCount": 18
+        },
+        {
+          "taskAreaId": "item_source:20404:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6992.43,
+            "y": 1164.65,
+            "z": 7.23
+          },
+          "radius": 130.01,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            11804,
+            11880,
+            11881,
+            11882,
+            11883,
+            14479
+          ],
+          "targetCount": 11
+        },
+        {
+          "taskAreaId": "item_source:20404:map:1:cluster:7",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6367.58,
+            "y": 542.05,
+            "z": 6.83
+          },
+          "radius": 46.78,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            11804,
+            11880,
+            11881,
+            11882,
+            11883,
+            14479
+          ],
+          "targetCount": 11
+        },
+        {
+          "taskAreaId": "item_source:20378:map:1:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6740.08,
+            "y": 718.92,
+            "z": 4.91
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11744,
+            11746,
+            14455
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:20376:map:1:cluster:14",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6930.12,
+            "y": 978.2,
+            "z": 7.35
+          },
+          "radius": 53.99,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11738
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "silithus_hub_03",
+          "zoneId": 1377,
+          "zoneName": "Silithus",
+          "questGivers": [
+            15194
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -7578.72,
+            "y": 196.914,
+            "z": 11.549
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "silithus_hub_04",
+          "zoneId": 1377,
+          "zoneName": "Silithus",
+          "questGivers": [
+            15612,
+            17079
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -7573.79,
+            "y": 769.702,
+            "z": -17.66
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "silithus_hub_05",
+          "zoneId": 1377,
+          "zoneName": "Silithus",
+          "questGivers": [
+            15440,
+            17080
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -7168.18,
+            "y": 1380.71,
+            "z": 3.019
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "silithus_hub_07",
+      "position": {
+        "mapId": 1,
+        "x": -6398.14,
+        "y": -314.356,
+        "z": -1.418
+      },
+      "questGivers": [
+        13220
+      ],
+      "levelRange": {
+        "min": 54,
+        "max": 57,
+        "avg": 56
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:12179:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -7191.34,
+            "y": 352.51,
+            "z": 24.62
+          },
+          "radius": 188.81,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            12179
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:12178:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -7180.25,
+            "y": 374.98,
+            "z": 19.19
+          },
+          "radius": 194.83,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            12178
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "silithus_hub_08",
+      "position": {
+        "mapId": 1,
+        "x": -6157.52,
+        "y": 1781.23,
+        "z": 29.096
+      },
+      "questGivers": [
+        14347
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

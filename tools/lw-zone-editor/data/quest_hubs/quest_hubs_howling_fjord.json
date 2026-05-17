@@ -1,0 +1,3218 @@
+{
+  "version": 1,
+  "zoneId": 495,
+  "zoneName": "Howling Fjord",
+  "mapId": 571,
+  "hubCount": 44,
+  "hubs": [
+    {
+      "hubId": "howling_fjord_hub_01",
+      "position": {
+        "mapId": 571,
+        "x": -122.051,
+        "y": -3550.012,
+        "z": 5.859
+      },
+      "questGivers": [
+        24525,
+        24537,
+        24539,
+        24541,
+        24741
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 16,
+      "estimatedMinutes": 80,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:34128:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": -73.8,
+            "y": -3435.55,
+            "z": -15.1
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24547
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:24713:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": -253.31,
+            "y": -3571.24,
+            "z": 19.22
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24713
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:34084:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": -31.18,
+            "y": -3443.69,
+            "z": 29.49
+          },
+          "radius": 201.47,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24633,
+            25038
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:34070:map:571:cluster:8",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": -374.22,
+            "y": -3556.8,
+            "z": -92.71
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            22887,
+            24637
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:34235:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": -360.48,
+            "y": -3641.0,
+            "z": -13.8
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24899
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:34070:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 143.62,
+            "y": -3552.41,
+            "z": -1.39
+          },
+          "radius": 163.77,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            22887,
+            24637
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "howling_fjord_hub_09",
+          "zoneId": 495,
+          "zoneName": "Howling Fjord",
+          "questGivers": [
+            23804
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 687.807,
+            "y": -3830.52,
+            "z": 249.701
+          },
+          "weight": 3
+        }
+      ]
+    },
+    {
+      "hubId": "howling_fjord_hub_02",
+      "position": {
+        "mapId": 571,
+        "x": -91.272,
+        "y": -3680.29,
+        "z": 13.058
+      },
+      "questGivers": [
+        24784
+      ],
+      "levelRange": {
+        "min": 69,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:34122:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": -25.55,
+            "y": -3302.97,
+            "z": -1.55
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24785
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "howling_fjord_hub_03",
+      "position": {
+        "mapId": 571,
+        "x": 451.077,
+        "y": -4622.993,
+        "z": 244.969
+      },
+      "questGivers": [
+        24125,
+        24157,
+        24251,
+        24252
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 72,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 11,
+      "estimatedMinutes": 55,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:38098:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 371.74,
+            "y": -4227.56,
+            "z": 251.46
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27926
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:33611:map:571:cluster:13",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 98.2,
+            "y": -4426.59,
+            "z": 252.15
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23690,
+            23691,
+            24791
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:34043:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": -27.28,
+            "y": -4986.73,
+            "z": 311.82
+          },
+          "radius": 174.07,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24871
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:33611:map:571:cluster:15",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 521.88,
+            "y": -3989.1,
+            "z": 263.12
+          },
+          "radius": 44.04,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23690,
+            23691,
+            24791
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:34043:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": -136.78,
+            "y": -5147.39,
+            "z": 324.03
+          },
+          "radius": 74.48,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24871
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "howling_fjord_hub_04",
+      "position": {
+        "mapId": 571,
+        "x": 484.343,
+        "y": -5937.747,
+        "z": 310.673
+      },
+      "questGivers": [
+        24717,
+        24750,
+        24807
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 14,
+      "estimatedMinutes": 70,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:24820:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 466.75,
+            "y": -5921.27,
+            "z": 309.24
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24820
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:34136:map:571:cluster:8",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 402.51,
+            "y": -6014.79,
+            "z": 324.35
+          },
+          "radius": 41.8,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23690,
+            23691,
+            24791
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:34136:map:571:cluster:7",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 660.37,
+            "y": -5800.13,
+            "z": 286.79
+          },
+          "radius": 153.26,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23690,
+            23691,
+            24791
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "creature:24824:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 220.85,
+            "y": -5759.19,
+            "z": 121.8
+          },
+          "radius": 200.34,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24824
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:34137:map:571:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 829.57,
+            "y": -5596.87,
+            "z": 222.47
+          },
+          "radius": 98.09,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23653,
+            23654,
+            23655,
+            23656,
+            23657,
+            24644
+          ],
+          "targetCount": 6
+        },
+        {
+          "taskAreaId": "item_source:34137:map:571:cluster:7",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 831.38,
+            "y": -5502.96,
+            "z": 213.34
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23653,
+            23654,
+            23655,
+            23656,
+            23657,
+            24644
+          ],
+          "targetCount": 6
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "howling_fjord_hub_23",
+          "zoneId": 495,
+          "zoneName": "Howling Fjord",
+          "questGivers": [
+            23749,
+            23888,
+            24038
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 1333.45,
+            "y": -3143.48,
+            "z": 172.275
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "howling_fjord_hub_07",
+      "position": {
+        "mapId": 571,
+        "x": 591.654,
+        "y": -2792.85,
+        "z": 0.28
+      },
+      "questGivers": [
+        24643
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "howling_fjord_hub_01",
+          "zoneId": 495,
+          "zoneName": "Howling Fjord",
+          "questGivers": [
+            24525,
+            24537,
+            24539,
+            24541,
+            24741
+          ],
+          "position": {
+            "mapId": 571,
+            "x": -146.215,
+            "y": -3519.69,
+            "z": 3.535
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "howling_fjord_hub_06",
+      "position": {
+        "mapId": 571,
+        "x": 601.956,
+        "y": -4927.84,
+        "z": 23.468
+      },
+      "questGivers": [
+        26905,
+        26914
+      ],
+      "levelRange": {
+        "min": 65,
+        "max": 65,
+        "avg": 65
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:43013:map:571:cluster:10",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 222.74,
+            "y": -5485.46,
+            "z": 336.02
+          },
+          "radius": 44.71,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18601,
+            18607,
+            18621,
+            23690,
+            23691,
+            23740
+          ],
+          "targetCount": 113
+        },
+        {
+          "taskAreaId": "item_source:43013:map:571:cluster:13",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 98.2,
+            "y": -4426.59,
+            "z": 252.15
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18601,
+            18607,
+            18621,
+            23690,
+            23691,
+            23740
+          ],
+          "targetCount": 113
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "howling_fjord_hub_05",
+      "position": {
+        "mapId": 571,
+        "x": 614.245,
+        "y": -5041.557,
+        "z": 5.453
+      },
+      "questGivers": [
+        23546,
+        23547,
+        23548,
+        23728,
+        23975,
+        26915
+      ],
+      "levelRange": {
+        "min": 65,
+        "max": 71,
+        "avg": 70
+      },
+      "faction": "Alliance",
+      "totalQuests": 15,
+      "estimatedMinutes": 75,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:34032:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 1003.62,
+            "y": -5044.86,
+            "z": 8.13
+          },
+          "radius": 115.21,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            24635
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:24051:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 780.42,
+            "y": -4934.66,
+            "z": 1.46
+          },
+          "radius": 79.52,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24051
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "howling_fjord_hub_04",
+          "zoneId": 495,
+          "zoneName": "Howling Fjord",
+          "questGivers": [
+            24717,
+            24750,
+            24807
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 475.726,
+            "y": -5935.29,
+            "z": 308.804
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "howling_fjord_hub_15",
+          "zoneId": 495,
+          "zoneName": "Howling Fjord",
+          "questGivers": [
+            24122,
+            24189
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 882.39,
+            "y": -4985.62,
+            "z": -71.117
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "howling_fjord_hub_21",
+          "zoneId": 495,
+          "zoneName": "Howling Fjord",
+          "questGivers": [
+            24634
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 1223.97,
+            "y": -5293.33,
+            "z": 179.426
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "howling_fjord_hub_08",
+      "position": {
+        "mapId": 571,
+        "x": 679.934,
+        "y": -5472.695,
+        "z": 238.622
+      },
+      "questGivers": [
+        24548,
+        27922
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:34040:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 815.95,
+            "y": -5480.1,
+            "z": 212.15
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23656
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:34042:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 815.95,
+            "y": -5480.1,
+            "z": 212.15
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23656
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23656:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 815.95,
+            "y": -5480.1,
+            "z": 212.15
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23656
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23654:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 831.38,
+            "y": -5502.96,
+            "z": 213.34
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23654
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23654:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 829.57,
+            "y": -5596.87,
+            "z": 222.47
+          },
+          "radius": 98.09,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23654
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23994:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 912.58,
+            "y": -5530.19,
+            "z": 196.09
+          },
+          "radius": 141.82,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23994
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "howling_fjord_hub_09",
+      "position": {
+        "mapId": 571,
+        "x": 687.807,
+        "y": -3830.52,
+        "z": 249.701
+      },
+      "questGivers": [
+        23804
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:24874:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": -17.78,
+            "y": -4883.05,
+            "z": 302.57
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24874
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:24876:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 17.81,
+            "y": -4981.98,
+            "z": 309.81
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24876
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:24877:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": -83.87,
+            "y": -5008.06,
+            "z": 315.92
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24877
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:24875:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": -109.95,
+            "y": -5143.21,
+            "z": 329.27
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24875
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "howling_fjord_hub_13",
+          "zoneId": 495,
+          "zoneName": "Howling Fjord",
+          "questGivers": [
+            24755
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 820.483,
+            "y": -2910.46,
+            "z": 7.638
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "howling_fjord_hub_10",
+      "position": {
+        "mapId": 571,
+        "x": 732.739,
+        "y": -5199.28,
+        "z": -70.817
+      },
+      "questGivers": [
+        23730
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "howling_fjord_hub_11",
+      "position": {
+        "mapId": 571,
+        "x": 795.209,
+        "y": -4086.39,
+        "z": 204.904
+      },
+      "questGivers": [
+        23906
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:23921:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 864.65,
+            "y": -4329.36,
+            "z": 184.88
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23921
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23922:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 989.35,
+            "y": -4306.56,
+            "z": 178.9
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23922
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23924:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 793.88,
+            "y": -4507.29,
+            "z": 196.87
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23924
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23923:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1091.17,
+            "y": -4492.48,
+            "z": 199.89
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23923
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "howling_fjord_hub_12",
+      "position": {
+        "mapId": 571,
+        "x": 803.879,
+        "y": -4766.54,
+        "z": -94.099
+      },
+      "questGivers": [
+        24151
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "howling_fjord_hub_16",
+          "zoneId": 495,
+          "zoneName": "Howling Fjord",
+          "questGivers": [
+            24145,
+            24150
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 949.697,
+            "y": -4840.25,
+            "z": -69.556
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "howling_fjord_hub_13",
+      "position": {
+        "mapId": 571,
+        "x": 820.483,
+        "y": -2910.46,
+        "z": 7.638
+      },
+      "questGivers": [
+        24755
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:34101:map:571:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 946.18,
+            "y": -3054.92,
+            "z": 51.97
+          },
+          "radius": 174.16,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24673
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:36776:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 683.98,
+            "y": -3228.67,
+            "z": 26.25
+          },
+          "radius": 132.84,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24681
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:34101:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 482.54,
+            "y": -3061.39,
+            "z": 75.76
+          },
+          "radius": 46.13,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24673
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:36776:map:571:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 495.37,
+            "y": -3134.97,
+            "z": 25.31
+          },
+          "radius": 39.44,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24681
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:24676:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 421.73,
+            "y": -3210.77,
+            "z": 57.11
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24676
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:24676:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 539.98,
+            "y": -3462.08,
+            "z": 8.44
+          },
+          "radius": 90.59,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24676
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "howling_fjord_hub_07",
+          "zoneId": 495,
+          "zoneName": "Howling Fjord",
+          "questGivers": [
+            24643
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 591.654,
+            "y": -2792.85,
+            "z": 0.28
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "howling_fjord_hub_14",
+      "position": {
+        "mapId": 571,
+        "x": 867.501,
+        "y": -4780.97,
+        "z": 20.743
+      },
+      "questGivers": [
+        24106
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "howling_fjord_hub_19",
+          "zoneId": 495,
+          "zoneName": "Howling Fjord",
+          "questGivers": [
+            24111
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 1138.35,
+            "y": -4988.17,
+            "z": 32.499
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "howling_fjord_hub_15",
+      "position": {
+        "mapId": 571,
+        "x": 899.516,
+        "y": -4980.885,
+        "z": -33.906
+      },
+      "questGivers": [
+        24122,
+        24189
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "howling_fjord_hub_16",
+          "zoneId": 495,
+          "zoneName": "Howling Fjord",
+          "questGivers": [
+            24145,
+            24150
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 949.697,
+            "y": -4840.25,
+            "z": -69.556
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "howling_fjord_hub_16",
+      "position": {
+        "mapId": 571,
+        "x": 977.444,
+        "y": -4830.93,
+        "z": -35.38
+      },
+      "questGivers": [
+        24145,
+        24150
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:33355:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 862.89,
+            "y": -4866.97,
+            "z": -76.29
+          },
+          "radius": 124.69,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24250
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:33355:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 845.18,
+            "y": -4946.44,
+            "z": -72.36
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24250
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "howling_fjord_hub_05",
+          "zoneId": 495,
+          "zoneName": "Howling Fjord",
+          "questGivers": [
+            23546,
+            23547,
+            23548,
+            23728,
+            23975,
+            26915
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 542.818,
+            "y": -5020.94,
+            "z": 10.689
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "howling_fjord_hub_12",
+          "zoneId": 495,
+          "zoneName": "Howling Fjord",
+          "questGivers": [
+            24151
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 803.879,
+            "y": -4766.54,
+            "z": -94.099
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "howling_fjord_hub_17",
+      "position": {
+        "mapId": 571,
+        "x": 1024.35,
+        "y": -3670.58,
+        "z": 172.123
+      },
+      "questGivers": [
+        23870
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:23940:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1006.58,
+            "y": -3904.67,
+            "z": 178.53
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23940
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23871:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 991.05,
+            "y": -3913.7,
+            "z": 167.41
+          },
+          "radius": 152.69,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23871
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "howling_fjord_hub_18",
+      "position": {
+        "mapId": 571,
+        "x": 1130.14,
+        "y": -3890.18,
+        "z": 149.393
+      },
+      "questGivers": [
+        23870
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:23940:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1006.58,
+            "y": -3904.67,
+            "z": 178.53
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23940
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23871:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 991.05,
+            "y": -3913.7,
+            "z": 167.41
+          },
+          "radius": 152.69,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23871
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "howling_fjord_hub_19",
+      "position": {
+        "mapId": 571,
+        "x": 1138.35,
+        "y": -4988.17,
+        "z": 32.499
+      },
+      "questGivers": [
+        24111
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "howling_fjord_hub_20",
+      "position": {
+        "mapId": 571,
+        "x": 1146.71,
+        "y": -6162.39,
+        "z": 266.225
+      },
+      "questGivers": [
+        24811
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 70
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:23711:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1202.38,
+            "y": -6152.33,
+            "z": 226.74
+          },
+          "radius": 101.18,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23711
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23676:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1206.42,
+            "y": -6137.49,
+            "z": 259.72
+          },
+          "radius": 153.77,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23676
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23674:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1212.76,
+            "y": -6161.98,
+            "z": 252.93
+          },
+          "radius": 137.93,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23674
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "howling_fjord_hub_21",
+      "position": {
+        "mapId": 571,
+        "x": 1223.97,
+        "y": -5293.33,
+        "z": 179.426
+      },
+      "questGivers": [
+        24634
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:24538:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1071.78,
+            "y": -5037.6,
+            "z": 53.06
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24538
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:34032:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 1003.62,
+            "y": -5044.86,
+            "z": 8.13
+          },
+          "radius": 115.21,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24635
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:24646:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 977.17,
+            "y": -5014.54,
+            "z": 34.85
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24646
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:24644:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 835.74,
+            "y": -5336.44,
+            "z": 203.31
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24644
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:24647:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 916.15,
+            "y": -4977.83,
+            "z": 30.5
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24647
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "howling_fjord_hub_22",
+      "position": {
+        "mapId": 571,
+        "x": 1247.05,
+        "y": -3341.22,
+        "z": 199.881
+      },
+      "questGivers": [
+        25233
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "howling_fjord_hub_09",
+          "zoneId": 495,
+          "zoneName": "Howling Fjord",
+          "questGivers": [
+            23804
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 687.807,
+            "y": -3830.52,
+            "z": 249.701
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "howling_fjord_hub_23",
+      "position": {
+        "mapId": 571,
+        "x": 1337.543,
+        "y": -3144.573,
+        "z": 172.257
+      },
+      "questGivers": [
+        23749,
+        23888,
+        24038
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 72,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 13,
+      "estimatedMinutes": 65,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:23689:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1174.54,
+            "y": -3680.11,
+            "z": 213.5
+          },
+          "radius": 74.84,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23689
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23777:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1150.6,
+            "y": -3717.26,
+            "z": 149.66
+          },
+          "radius": 96.39,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23777
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23689:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1000.1,
+            "y": -3750.22,
+            "z": 221.25
+          },
+          "radius": 51.58,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23689
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23688:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1192.58,
+            "y": -3911.47,
+            "z": 143.84
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23688
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23777:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 978.81,
+            "y": -3959.94,
+            "z": 162.69
+          },
+          "radius": 63.84,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23777
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:24290:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 398.58,
+            "y": -4582.81,
+            "z": 254.79
+          },
+          "radius": 133.46,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24290
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "howling_fjord_hub_11",
+          "zoneId": 495,
+          "zoneName": "Howling Fjord",
+          "questGivers": [
+            23906
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 795.209,
+            "y": -4086.39,
+            "z": 204.904
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "howling_fjord_hub_24",
+      "position": {
+        "mapId": 571,
+        "x": 1351.14,
+        "y": -3451.95,
+        "z": 176.313
+      },
+      "questGivers": [
+        23770
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "howling_fjord_hub_25",
+      "position": {
+        "mapId": 571,
+        "x": 1379.01,
+        "y": -6429.79,
+        "z": 0.814
+      },
+      "questGivers": [
+        23784
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "howling_fjord_hub_27",
+      "position": {
+        "mapId": 571,
+        "x": 1432.43,
+        "y": -3157.68,
+        "z": 164.897
+      },
+      "questGivers": [
+        23976
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:33187:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 1524.96,
+            "y": -3202.0,
+            "z": 68.94
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23967
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:33188:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 1524.96,
+            "y": -3202.0,
+            "z": 68.94
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23967
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:24048:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1764.98,
+            "y": -3311.02,
+            "z": 82.75
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24048
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:33187:map:571:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 1579.8,
+            "y": -3649.98,
+            "z": 129.95
+          },
+          "radius": 131.94,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23967
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:33188:map:571:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 1579.8,
+            "y": -3649.98,
+            "z": 129.95
+          },
+          "radius": 131.94,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23967
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "howling_fjord_hub_26",
+      "position": {
+        "mapId": 571,
+        "x": 1434.392,
+        "y": -3284.0,
+        "z": 167.013
+      },
+      "questGivers": [
+        23773,
+        23831,
+        23978,
+        24283,
+        24494
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:24284:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1367.31,
+            "y": -3179.08,
+            "z": 153.66
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24284
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23977:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1543.06,
+            "y": -3130.7,
+            "z": 2.1
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23977
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23977:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1656.34,
+            "y": -3279.32,
+            "z": 24.58
+          },
+          "radius": 164.12,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23977
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:33120:map:571:cluster:22",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 1469.77,
+            "y": -3506.68,
+            "z": 168.6
+          },
+          "radius": 44.96,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23690,
+            23691,
+            24791
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:33120:map:571:cluster:20",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 1311.27,
+            "y": -3586.5,
+            "z": 153.35
+          },
+          "radius": 178.44,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23690,
+            23691,
+            24791
+          ],
+          "targetCount": 3
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "howling_fjord_hub_23",
+          "zoneId": 495,
+          "zoneName": "Howling Fjord",
+          "questGivers": [
+            23749,
+            23888,
+            24038
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 1333.45,
+            "y": -3143.48,
+            "z": 172.275
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "howling_fjord_hub_28",
+      "position": {
+        "mapId": 571,
+        "x": 1538.55,
+        "y": -5707.94,
+        "z": 250.798
+      },
+      "questGivers": [
+        24027,
+        28314
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:24183:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1510.94,
+            "y": -5448.92,
+            "z": 196.68
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24183
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:24185:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1508.51,
+            "y": -5386.12,
+            "z": 190.99
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24185
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:24182:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1460.17,
+            "y": -5325.6,
+            "z": 197.6
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24182
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:24184:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1484.76,
+            "y": -5250.04,
+            "z": 207.45
+          },
+          "radius": 56.65,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24184
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:24182:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1452.46,
+            "y": -5186.66,
+            "z": 191.61
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24182
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "howling_fjord_hub_30",
+          "zoneId": 495,
+          "zoneName": "Howling Fjord",
+          "questGivers": [
+            24458
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 1634.11,
+            "y": -5380.04,
+            "z": 191.162
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "howling_fjord_hub_29",
+      "position": {
+        "mapId": 571,
+        "x": 1599.17,
+        "y": -6198.03,
+        "z": 7.534
+      },
+      "questGivers": [
+        23778
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:23963:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1475.05,
+            "y": -6368.89,
+            "z": 7.85
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23963
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23962:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1368.0,
+            "y": -6325.13,
+            "z": 21.78
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23962
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23964:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1377.3,
+            "y": -6428.21,
+            "z": 0.87
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23964
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "howling_fjord_hub_30",
+      "position": {
+        "mapId": 571,
+        "x": 1634.11,
+        "y": -5380.04,
+        "z": 191.162
+      },
+      "questGivers": [
+        24458
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "howling_fjord_hub_31",
+      "position": {
+        "mapId": 571,
+        "x": 1647.06,
+        "y": -6516.57,
+        "z": 20.071
+      },
+      "questGivers": [
+        24037
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:23983:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1607.22,
+            "y": -6484.57,
+            "z": 11.06
+          },
+          "radius": 141.95,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23983
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23957:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1578.04,
+            "y": -6253.95,
+            "z": 16.02
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23957
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23972:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1498.19,
+            "y": -6194.46,
+            "z": 15.35
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23972
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "howling_fjord_hub_29",
+          "zoneId": 495,
+          "zoneName": "Howling Fjord",
+          "questGivers": [
+            23778
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 1599.17,
+            "y": -6198.03,
+            "z": 7.534
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "howling_fjord_hub_32",
+      "position": {
+        "mapId": 571,
+        "x": 1808.19,
+        "y": -2863.75,
+        "z": 3.726
+      },
+      "questGivers": [
+        23833
+      ],
+      "levelRange": {
+        "min": 69,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:23645:map:571:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1841.28,
+            "y": -2732.2,
+            "z": 1.19
+          },
+          "radius": 49.1,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23645
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:24464:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1909.51,
+            "y": -2746.26,
+            "z": 4.54
+          },
+          "radius": 88.84,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24464
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "howling_fjord_hub_33",
+      "position": {
+        "mapId": 571,
+        "x": 1863.663,
+        "y": -6177.39,
+        "z": 23.985
+      },
+      "questGivers": [
+        23780,
+        23938,
+        26964
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:23998:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1717.78,
+            "y": -6088.73,
+            "z": 8.21
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23998
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23778:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1599.17,
+            "y": -6198.03,
+            "z": 7.53
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23778
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "howling_fjord_hub_28",
+          "zoneId": 495,
+          "zoneName": "Howling Fjord",
+          "questGivers": [
+            24027,
+            28314
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 1535.82,
+            "y": -5718.61,
+            "z": 251.538
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "howling_fjord_hub_31",
+          "zoneId": 495,
+          "zoneName": "Howling Fjord",
+          "questGivers": [
+            24037
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 1647.06,
+            "y": -6516.57,
+            "z": 20.071
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "howling_fjord_hub_34",
+      "position": {
+        "mapId": 571,
+        "x": 1944.127,
+        "y": -6164.3,
+        "z": 23.804
+      },
+      "questGivers": [
+        24126,
+        26953,
+        26960
+      ],
+      "levelRange": {
+        "min": 65,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:33337:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 1788.14,
+            "y": -6307.4,
+            "z": -10.34
+          },
+          "radius": 116.97,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23929
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:43013:map:571:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 1309.14,
+            "y": -6032.25,
+            "z": 281.54
+          },
+          "radius": 46.67,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18601,
+            18607,
+            18621,
+            23690,
+            23691,
+            23740
+          ],
+          "targetCount": 113
+        },
+        {
+          "taskAreaId": "item_source:33337:map:571:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 1380.87,
+            "y": -6553.34,
+            "z": -46.04
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23929
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:43013:map:571:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 1117.35,
+            "y": -5899.62,
+            "z": 277.7
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18601,
+            18607,
+            18621,
+            23690,
+            23691,
+            23740
+          ],
+          "targetCount": 113
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "howling_fjord_hub_03",
+          "zoneId": 495,
+          "zoneName": "Howling Fjord",
+          "questGivers": [
+            24125,
+            24157,
+            24251,
+            24252
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 418.718,
+            "y": -4606.22,
+            "z": 241.705
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "howling_fjord_hub_35",
+      "position": {
+        "mapId": 571,
+        "x": 1961.425,
+        "y": -3231.533,
+        "z": 149.0
+      },
+      "questGivers": [
+        23891,
+        24227,
+        24273,
+        24399
+      ],
+      "levelRange": {
+        "min": 69,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "howling_fjord_hub_44",
+          "zoneId": 495,
+          "zoneName": "Howling Fjord",
+          "questGivers": [
+            24261
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 2888.16,
+            "y": -3192.99,
+            "z": 122.953
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "howling_fjord_hub_36",
+      "position": {
+        "mapId": 571,
+        "x": 2125.983,
+        "y": -2979.75,
+        "z": 148.846
+      },
+      "questGivers": [
+        24152,
+        24218,
+        24359
+      ],
+      "levelRange": {
+        "min": 69,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:24464:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1909.51,
+            "y": -2746.26,
+            "z": 4.54
+          },
+          "radius": 88.84,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24464
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23645:map:571:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1841.28,
+            "y": -2732.2,
+            "z": 1.19
+          },
+          "radius": 49.1,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23645
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "howling_fjord_hub_37",
+      "position": {
+        "mapId": 571,
+        "x": 2131.735,
+        "y": -3285.495,
+        "z": 152.535
+      },
+      "questGivers": [
+        24186,
+        24209
+      ],
+      "levelRange": {
+        "min": 69,
+        "max": 72,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "howling_fjord_hub_44",
+          "zoneId": 495,
+          "zoneName": "Howling Fjord",
+          "questGivers": [
+            24261
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 2888.16,
+            "y": -3192.99,
+            "z": 122.953
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "howling_fjord_hub_38",
+      "position": {
+        "mapId": 571,
+        "x": 2195.11,
+        "y": -5115.1,
+        "z": 236.583
+      },
+      "questGivers": [
+        24117
+      ],
+      "levelRange": {
+        "min": 69,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:23763:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2000.22,
+            "y": -4530.05,
+            "z": 208.52
+          },
+          "radius": 139.78,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23763
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "howling_fjord_hub_39",
+      "position": {
+        "mapId": 571,
+        "x": 2221.07,
+        "y": -2593.75,
+        "z": 8.13
+      },
+      "questGivers": [
+        24544
+      ],
+      "levelRange": {
+        "min": 69,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:34035:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 1721.23,
+            "y": -2812.89,
+            "z": 3.98
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24546
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "howling_fjord_hub_40",
+      "position": {
+        "mapId": 571,
+        "x": 2363.18,
+        "y": -5041.72,
+        "z": 251.408
+      },
+      "questGivers": [
+        24056
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 70
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "howling_fjord_hub_41",
+      "position": {
+        "mapId": 571,
+        "x": 2434.986,
+        "y": -5169.766,
+        "z": 277.438
+      },
+      "questGivers": [
+        24131,
+        24139,
+        24282,
+        24328,
+        24376
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 72,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 10,
+      "estimatedMinutes": 50,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:33487:map:571:cluster:12",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 1955.78,
+            "y": -5185.29,
+            "z": 191.52
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24196,
+            24206
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:33487:map:571:cluster:8",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 2014.92,
+            "y": -4786.55,
+            "z": 203.19
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24196,
+            24206
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "howling_fjord_hub_38",
+          "zoneId": 495,
+          "zoneName": "Howling Fjord",
+          "questGivers": [
+            24117
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 2195.11,
+            "y": -5115.1,
+            "z": 236.583
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "howling_fjord_hub_42",
+      "position": {
+        "mapId": 571,
+        "x": 2487.1,
+        "y": -5036.1,
+        "z": 282.818
+      },
+      "questGivers": [
+        24176
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "howling_fjord_hub_43",
+      "position": {
+        "mapId": 571,
+        "x": 2663.579,
+        "y": -4340.977,
+        "z": 285.979
+      },
+      "questGivers": [
+        24032,
+        24123,
+        24127,
+        24129,
+        24135,
+        24234,
+        24256,
+        24362,
+        24390
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 72,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 20,
+      "estimatedMinutes": 100,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "howling_fjord_hub_36",
+          "zoneId": 495,
+          "zoneName": "Howling Fjord",
+          "questGivers": [
+            24152,
+            24218,
+            24359
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 2117.28,
+            "y": -2976.3,
+            "z": 149.008
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "howling_fjord_hub_38",
+          "zoneId": 495,
+          "zoneName": "Howling Fjord",
+          "questGivers": [
+            24117
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 2195.11,
+            "y": -5115.1,
+            "z": 236.583
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "howling_fjord_hub_44",
+      "position": {
+        "mapId": 571,
+        "x": 2888.16,
+        "y": -3192.99,
+        "z": 122.953
+      },
+      "questGivers": [
+        24261
+      ],
+      "levelRange": {
+        "min": 69,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:24517:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1949.97,
+            "y": -3456.01,
+            "z": 139.39
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            24517
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:34027:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 1655.63,
+            "y": -3908.88,
+            "z": 188.08
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            24518
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    }
+  ]
+}

@@ -278,11 +278,15 @@ living_world::integration::BotIdentityRecord ReadBotIdentityRecord(Field const* 
     rec.activeWorldSessionMs = f[22].Get<std::uint64_t>();
     rec.runtimeState = f[23].IsNull() ? "" : f[23].Get<std::string>();
     rec.runtimeDetail = f[24].IsNull() ? "" : f[24].Get<std::string>();
-    rec.gearRefreshPending = f[25].Get<bool>();
-    rec.lastGearRefreshBand = f[26].Get<std::uint8_t>();
-    rec.lastSeenZoneId = f[27].IsNull() ? 0u : f[27].Get<std::uint32_t>();
-    rec.isRetired    = f[28].Get<bool>();
-    rec.isAvailable  = f[29].Get<bool>();
+    rec.lastSessionSourceKind = f[25].IsNull() ? "" : f[25].Get<std::string>();
+    rec.lastSessionSourceKey = f[26].IsNull() ? "" : f[26].Get<std::string>();
+    rec.lastTaskFamily = f[27].IsNull() ? "" : f[27].Get<std::string>();
+    rec.lastTaskTargetZoneId = f[28].IsNull() ? 0u : f[28].Get<std::uint32_t>();
+    rec.gearRefreshPending = f[29].Get<bool>();
+    rec.lastGearRefreshBand = f[30].Get<std::uint8_t>();
+    rec.lastSeenZoneId = f[31].IsNull() ? 0u : f[31].Get<std::uint32_t>();
+    rec.isRetired    = f[32].Get<bool>();
+    rec.isAvailable  = f[33].Get<bool>();
     return rec;
 }
 } // namespace
@@ -311,6 +315,38 @@ void SqlBotIdentityRepository::EnsureSchema() const
     }
 
     if (!CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_identity LIKE 'last_session_source_kind'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD COLUMN last_session_source_kind VARCHAR(64) NOT NULL DEFAULT '' AFTER runtime_detail");
+    }
+
+    if (!CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_identity LIKE 'last_session_source_key'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD COLUMN last_session_source_key VARCHAR(128) NOT NULL DEFAULT '' AFTER last_session_source_kind");
+    }
+
+    if (!CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_identity LIKE 'last_task_family'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD COLUMN last_task_family VARCHAR(32) NOT NULL DEFAULT '' AFTER last_session_source_key");
+    }
+
+    if (!CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_identity LIKE 'last_task_target_zone'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD COLUMN last_task_target_zone INT UNSIGNED NULL AFTER last_task_family");
+    }
+
+    if (!CharacterDatabase.Query(
         "SHOW COLUMNS FROM living_world_bot_identity LIKE 'gear_refresh_pending'"))
     {
         CharacterDatabase.Execute(
@@ -334,8 +370,9 @@ std::optional<BotIdentityRecord> SqlBotIdentityRepository::FindById(std::uint32_
         "gender, level, gear_tier, personality_key, has_herbalism, has_mining, has_fishing, "
         "home_zone_id, home_anchor_point_key, home_bind_point_key, "
         "session_count, total_world_online_ms, world_online_ms_since_level, "
-        "post_max_world_online_ms, active_world_session_ms, runtime_state, runtime_detail, gear_refresh_pending, last_gear_refresh_band, "
-        "last_seen_zone, is_retired, is_available "
+        "post_max_world_online_ms, active_world_session_ms, runtime_state, runtime_detail, "
+        "last_session_source_kind, last_session_source_key, last_task_family, last_task_target_zone, "
+        "gear_refresh_pending, last_gear_refresh_band, last_seen_zone, is_retired, is_available "
         "FROM living_world_bot_identity "
         "WHERE id = {}",
         id);
@@ -353,8 +390,9 @@ std::optional<BotIdentityRecord> SqlBotIdentityRepository::FindByName(std::strin
         "gender, level, gear_tier, personality_key, has_herbalism, has_mining, has_fishing, "
         "home_zone_id, home_anchor_point_key, home_bind_point_key, "
         "session_count, total_world_online_ms, world_online_ms_since_level, "
-        "post_max_world_online_ms, active_world_session_ms, runtime_state, runtime_detail, gear_refresh_pending, last_gear_refresh_band, "
-        "last_seen_zone, is_retired, is_available "
+        "post_max_world_online_ms, active_world_session_ms, runtime_state, runtime_detail, "
+        "last_session_source_kind, last_session_source_key, last_task_family, last_task_target_zone, "
+        "gear_refresh_pending, last_gear_refresh_band, last_seen_zone, is_retired, is_available "
         "FROM living_world_bot_identity "
         "WHERE name = {}",
         QuoteCharactersString(name));
@@ -385,8 +423,9 @@ std::vector<BotIdentityRecord> SqlBotIdentityRepository::LoadAvailable(
             "gender, level, gear_tier, personality_key, has_herbalism, has_mining, has_fishing, "
             "home_zone_id, home_anchor_point_key, home_bind_point_key, "
             "session_count, total_world_online_ms, world_online_ms_since_level, "
-            "post_max_world_online_ms, active_world_session_ms, runtime_state, runtime_detail, gear_refresh_pending, last_gear_refresh_band, "
-            "last_seen_zone, is_retired, is_available "
+            "post_max_world_online_ms, active_world_session_ms, runtime_state, runtime_detail, "
+            "last_session_source_kind, last_session_source_key, last_task_family, last_task_target_zone, "
+            "gear_refresh_pending, last_gear_refresh_band, last_seen_zone, is_retired, is_available "
             "FROM living_world_bot_identity "
             "WHERE is_available = 1 AND is_retired = 0 "
             "ORDER BY RAND() LIMIT {}",
@@ -399,8 +438,9 @@ std::vector<BotIdentityRecord> SqlBotIdentityRepository::LoadAvailable(
             "gender, level, gear_tier, personality_key, has_herbalism, has_mining, has_fishing, "
             "home_zone_id, home_anchor_point_key, home_bind_point_key, "
             "session_count, total_world_online_ms, world_online_ms_since_level, "
-            "post_max_world_online_ms, active_world_session_ms, runtime_state, runtime_detail, gear_refresh_pending, last_gear_refresh_band, "
-            "last_seen_zone, is_retired, is_available "
+            "post_max_world_online_ms, active_world_session_ms, runtime_state, runtime_detail, "
+            "last_session_source_kind, last_session_source_key, last_task_family, last_task_target_zone, "
+            "gear_refresh_pending, last_gear_refresh_band, last_seen_zone, is_retired, is_available "
             "FROM living_world_bot_identity "
             "WHERE is_available = 1 AND is_retired = 0 AND faction = {} "
             "ORDER BY RAND() LIMIT {}",
@@ -486,7 +526,11 @@ void SqlBotIdentityRepository::UpdateActiveRuntimeState(
 void SqlBotIdentityRepository::CompleteWorldSession(
     std::uint32_t id,
     std::uint32_t lastSeenZoneId,
-    std::uint64_t sessionWorldOnlineMs) const
+    std::uint64_t sessionWorldOnlineMs,
+    std::string const& lastSessionSourceKind,
+    std::string const& lastSessionSourceKey,
+    std::string const& lastTaskFamily,
+    std::uint32_t lastTaskTargetZoneId) const
 {
     if (sessionWorldOnlineMs == 0)
     {
@@ -590,6 +634,12 @@ void SqlBotIdentityRepository::CompleteWorldSession(
     bool const crossedGearBand = newGearBand != oldGearBand;
     bool const newGearRefreshPending = gearRefreshPending || crossedGearBand;
     bool retireNow = newLevel >= MaxBotLevel && newPostMax >= RetirementGraceMs;
+    std::string const normalizedSourceKind =
+        NormalizeRuntimeLedgerText(lastSessionSourceKind, 64);
+    std::string const normalizedSourceKey =
+        NormalizeRuntimeLedgerText(lastSessionSourceKey, 128);
+    std::string const normalizedTaskFamily =
+        NormalizeRuntimeLedgerText(lastTaskFamily, 32);
 
     std::string const progressDetail =
         "personality='" + personalityKey
@@ -657,10 +707,17 @@ void SqlBotIdentityRepository::CompleteWorldSession(
             "world_online_ms_since_level = {}, post_max_world_online_ms = {}, successor_spawned = {}, gear_refresh_pending = {}, "
             "is_available = 0, is_retired = 1, retired_at = NOW(), "
             "last_seen_zone = {}, last_seen_at = NOW(), "
+            "last_session_source_kind = {}, last_session_source_key = {}, last_task_family = {}, last_task_target_zone = {}, "
             "active_world_session_ms = 0, active_world_session_start = NULL, "
             "runtime_state = '', runtime_detail = '' "
             "WHERE id = {}",
-            newLevel, newTotal, newSinceLevel, newPostMax, newSuccessorSpawned, newGearRefreshPending, lastSeenZoneId, id);
+            newLevel, newTotal, newSinceLevel, newPostMax, newSuccessorSpawned, newGearRefreshPending,
+            lastSeenZoneId,
+            QuoteCharactersString(normalizedSourceKind),
+            QuoteCharactersString(normalizedSourceKey),
+            QuoteCharactersString(normalizedTaskFamily),
+            lastTaskTargetZoneId == 0 ? std::string("NULL") : std::to_string(lastTaskTargetZoneId),
+            id);
         return;
     }
 
@@ -670,10 +727,17 @@ void SqlBotIdentityRepository::CompleteWorldSession(
         "world_online_ms_since_level = {}, post_max_world_online_ms = {}, successor_spawned = {}, gear_refresh_pending = {}, "
         "is_available = 1, is_retired = 0, retired_at = NULL, "
         "last_seen_zone = {}, last_seen_at = NOW(), "
+        "last_session_source_kind = {}, last_session_source_key = {}, last_task_family = {}, last_task_target_zone = {}, "
         "active_world_session_ms = 0, active_world_session_start = NULL, "
         "runtime_state = '', runtime_detail = '' "
         "WHERE id = {}",
-        newLevel, newTotal, newSinceLevel, newPostMax, newSuccessorSpawned, newGearRefreshPending, lastSeenZoneId, id);
+        newLevel, newTotal, newSinceLevel, newPostMax, newSuccessorSpawned, newGearRefreshPending,
+        lastSeenZoneId,
+        QuoteCharactersString(normalizedSourceKind),
+        QuoteCharactersString(normalizedSourceKey),
+        QuoteCharactersString(normalizedTaskFamily),
+        lastTaskTargetZoneId == 0 ? std::string("NULL") : std::to_string(lastTaskTargetZoneId),
+        id);
 }
 
 std::uint32_t SqlBotIdentityRepository::RecoverStaleActiveSessions() const

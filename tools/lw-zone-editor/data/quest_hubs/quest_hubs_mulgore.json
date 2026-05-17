@@ -1,0 +1,1060 @@
+{
+  "version": 1,
+  "zoneId": 215,
+  "zoneName": "Mulgore",
+  "mapId": 1,
+  "hubCount": 21,
+  "hubs": [
+    {
+      "hubId": "mulgore_hub_01",
+      "position": {
+        "mapId": 1,
+        "x": -3617.51,
+        "y": -1776.77,
+        "z": 135.658
+      },
+      "questGivers": [
+        5899
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 20,
+        "avg": 20
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "mulgore_hub_02",
+      "position": {
+        "mapId": 1,
+        "x": -3430.31,
+        "y": -139.28,
+        "z": 103.16
+      },
+      "questGivers": [
+        2982
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 4,
+        "avg": 4
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "mulgore_hub_03",
+      "position": {
+        "mapId": 1,
+        "x": -3066.02,
+        "y": 68.8,
+        "z": 79.469
+      },
+      "questGivers": [
+        6775
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 5,
+        "avg": 5
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "mulgore_hub_04",
+      "position": {
+        "mapId": 1,
+        "x": -3052.54,
+        "y": -522.498,
+        "z": 27.014
+      },
+      "questGivers": [
+        2991
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 3,
+        "avg": 3
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "mulgore_hub_06",
+          "zoneId": 215,
+          "zoneName": "Mulgore",
+          "questGivers": [
+            2980,
+            2981,
+            3060,
+            3061,
+            3209,
+            5888
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -2912.7,
+            "y": -257.54,
+            "z": 53.024
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "mulgore_hub_05",
+      "position": {
+        "mapId": 1,
+        "x": -3031.36,
+        "y": -720.833,
+        "z": 44.992
+      },
+      "questGivers": [
+        5891
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 4,
+        "avg": 4
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "mulgore_hub_06",
+      "position": {
+        "mapId": 1,
+        "x": -2884.178,
+        "y": -243.913,
+        "z": 54.093
+      },
+      "questGivers": [
+        2980,
+        2981,
+        3060,
+        3061,
+        3209,
+        5888
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 5,
+        "avg": 3
+      },
+      "faction": "Horde",
+      "totalQuests": 18,
+      "estimatedMinutes": 90,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:4848:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -2915.63,
+            "y": -984.05,
+            "z": 57.54
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2954,
+            2966
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:4849:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -2915.63,
+            "y": -984.05,
+            "z": 57.54
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2954,
+            2966
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:4848:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -3302.32,
+            "y": -1001.64,
+            "z": 91.34
+          },
+          "radius": 178.31,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2954,
+            2966
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:4849:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -3302.32,
+            "y": -1001.64,
+            "z": 91.34
+          },
+          "radius": 178.31,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2954,
+            2966
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:10459:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -2932.87,
+            "y": -1276.25,
+            "z": 72.29
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            8554
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "mulgore_hub_02",
+          "zoneId": 215,
+          "zoneName": "Mulgore",
+          "questGivers": [
+            2982
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -3430.31,
+            "y": -139.28,
+            "z": 103.16
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "mulgore_hub_04",
+          "zoneId": 215,
+          "zoneName": "Mulgore",
+          "questGivers": [
+            2991
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -3052.54,
+            "y": -522.498,
+            "z": 27.014
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "mulgore_hub_05",
+          "zoneId": 215,
+          "zoneName": "Mulgore",
+          "questGivers": [
+            5891
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -3031.36,
+            "y": -720.833,
+            "z": 44.992
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "mulgore_hub_12",
+          "zoneId": 215,
+          "zoneName": "Mulgore",
+          "questGivers": [
+            3065
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -2180.22,
+            "y": -408.816,
+            "z": -4.518
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "mulgore_hub_08",
+      "position": {
+        "mapId": 1,
+        "x": -2397.07,
+        "y": -384.831,
+        "z": -2.195
+      },
+      "questGivers": [
+        2985
+      ],
+      "levelRange": {
+        "min": 5,
+        "max": 8,
+        "avg": 8
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:4751:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -2714.47,
+            "y": -1155.04,
+            "z": 20.21
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2962,
+            2963
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "mulgore_hub_07",
+      "position": {
+        "mapId": 1,
+        "x": -2380.633,
+        "y": -1909.38,
+        "z": 96.22
+      },
+      "questGivers": [
+        3418,
+        5911,
+        6394
+      ],
+      "levelRange": {
+        "min": 9,
+        "max": 20,
+        "avg": 17
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:7119:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -3163.61,
+            "y": -1683.68,
+            "z": 93.27
+          },
+          "radius": 132.15,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3250,
+            3251,
+            3252,
+            3253,
+            3503
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:7119:map:1:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -3086.4,
+            "y": -2351.3,
+            "z": 94.35
+          },
+          "radius": 94.29,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3250,
+            3251,
+            3252,
+            3253,
+            3503
+          ],
+          "targetCount": 5
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "mulgore_hub_14",
+          "zoneId": 215,
+          "zoneName": "Mulgore",
+          "questGivers": [
+            5908
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -1622.75,
+            "y": -1765.32,
+            "z": 91.75
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "mulgore_hub_09",
+      "position": {
+        "mapId": 1,
+        "x": -2369.16,
+        "y": -876.936,
+        "z": -9.422
+      },
+      "questGivers": [
+        2988
+      ],
+      "levelRange": {
+        "min": 5,
+        "max": 12,
+        "avg": 10
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:4819:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -1756.3,
+            "y": -1286.41,
+            "z": 113.4
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3051
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:2978:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -1635.65,
+            "y": -1089.24,
+            "z": 103.62
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2978
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:2978:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -1520.54,
+            "y": -1122.71,
+            "z": 136.57
+          },
+          "radius": 155.34,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2978
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:2979:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -1480.61,
+            "y": -1005.45,
+            "z": 147.1
+          },
+          "radius": 100.65,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2979
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "mulgore_hub_10",
+      "position": {
+        "mapId": 1,
+        "x": -2302.903,
+        "y": -418.728,
+        "z": -7.601
+      },
+      "questGivers": [
+        2947,
+        2948,
+        2993,
+        3052,
+        3054,
+        3055,
+        3063,
+        3064,
+        3066,
+        3685
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 10,
+        "avg": 7
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 20,
+      "estimatedMinutes": 100,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:4759:map:1:cluster:25",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -2566.35,
+            "y": -530.99,
+            "z": -3.52
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2956,
+            2957,
+            3068,
+            3244,
+            3245,
+            3246
+          ],
+          "targetCount": 6
+        },
+        {
+          "taskAreaId": "item_source:4806:map:1:cluster:25",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -2566.35,
+            "y": -530.99,
+            "z": -3.52
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2956,
+            2957,
+            3068,
+            3244,
+            3245,
+            3246
+          ],
+          "targetCount": 6
+        },
+        {
+          "taskAreaId": "item_source:4759:map:1:cluster:24",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -2328.25,
+            "y": -717.5,
+            "z": -5.58
+          },
+          "radius": 135.87,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2956,
+            2957,
+            3068,
+            3244,
+            3245,
+            3246
+          ],
+          "targetCount": 6
+        },
+        {
+          "taskAreaId": "item_source:4806:map:1:cluster:24",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -2328.25,
+            "y": -717.5,
+            "z": -5.58
+          },
+          "radius": 135.87,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2956,
+            2957,
+            3068,
+            3244,
+            3245,
+            3246
+          ],
+          "targetCount": 6
+        },
+        {
+          "taskAreaId": "item_source:4769:map:1:cluster:8",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -2282.15,
+            "y": -720.12,
+            "z": -7.27
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2969,
+            2970,
+            2971
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:4807:map:1:cluster:8",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -2282.15,
+            "y": -720.12,
+            "z": -7.27
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2969,
+            2970,
+            2971
+          ],
+          "targetCount": 3
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "mulgore_hub_15",
+          "zoneId": 215,
+          "zoneName": "Mulgore",
+          "questGivers": [
+            2984
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -1508.91,
+            "y": 367.215,
+            "z": 62.824
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "mulgore_hub_11",
+      "position": {
+        "mapId": 1,
+        "x": -2248.6,
+        "y": -2373.76,
+        "z": 91.709
+      },
+      "questGivers": [
+        6244,
+        6247
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 25,
+        "avg": 25
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "mulgore_hub_12",
+      "position": {
+        "mapId": 1,
+        "x": -2180.22,
+        "y": -408.816,
+        "z": -4.518
+      },
+      "questGivers": [
+        3065
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "mulgore_hub_13",
+      "position": {
+        "mapId": 1,
+        "x": -2097.52,
+        "y": -430.539,
+        "z": -6.628
+      },
+      "questGivers": [
+        23618
+      ],
+      "levelRange": {
+        "min": 5,
+        "max": 7,
+        "avg": 7
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:23616:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -2459.23,
+            "y": -484.06,
+            "z": -9.01
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23616
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "mulgore_hub_14",
+      "position": {
+        "mapId": 1,
+        "x": -1622.75,
+        "y": -1765.32,
+        "z": 91.75
+      },
+      "questGivers": [
+        5908
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 20,
+        "avg": 20
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "mulgore_hub_15",
+      "position": {
+        "mapId": 1,
+        "x": -1508.91,
+        "y": 367.215,
+        "z": 62.824
+      },
+      "questGivers": [
+        2984
+      ],
+      "levelRange": {
+        "min": 3,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "mulgore_hub_18",
+          "zoneId": 215,
+          "zoneName": "Mulgore",
+          "questGivers": [
+            2994
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -992.732,
+            "y": -1109.12,
+            "z": 44.499
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "mulgore_hub_16",
+      "position": {
+        "mapId": 1,
+        "x": -1209.64,
+        "y": -112.698,
+        "z": 163.882
+      },
+      "questGivers": [
+        3057
+      ],
+      "levelRange": {
+        "min": 3,
+        "max": 14,
+        "avg": 14
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:4841:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -751.42,
+            "y": -674.71,
+            "z": -19.18
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3058
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "mulgore_hub_17",
+      "position": {
+        "mapId": 1,
+        "x": -1150.41,
+        "y": -1027.37,
+        "z": 3.58
+      },
+      "questGivers": [
+        3233
+      ],
+      "levelRange": {
+        "min": 7,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:3232:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -998.63,
+            "y": -1099.2,
+            "z": 43.8
+          },
+          "radius": 106.46,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3232
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "mulgore_hub_18",
+      "position": {
+        "mapId": 1,
+        "x": -992.732,
+        "y": -1109.12,
+        "z": 44.499
+      },
+      "questGivers": [
+        2994
+      ],
+      "levelRange": {
+        "min": 3,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "mulgore_hub_16",
+          "zoneId": 215,
+          "zoneName": "Mulgore",
+          "questGivers": [
+            3057
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -1209.64,
+            "y": -112.698,
+            "z": 163.882
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "mulgore_hub_19",
+      "position": {
+        "mapId": 1,
+        "x": -799.496,
+        "y": -2038.16,
+        "z": 96.711
+      },
+      "questGivers": [
+        5767,
+        5768
+      ],
+      "levelRange": {
+        "min": 13,
+        "max": 21,
+        "avg": 19
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:6443:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -719.27,
+            "y": -2116.27,
+            "z": 67.21
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3630,
+            3631,
+            3632,
+            3633,
+            3634,
+            3636
+          ],
+          "targetCount": 22
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "mulgore_hub_20",
+      "position": {
+        "mapId": 1,
+        "x": -534.982,
+        "y": -2982.22,
+        "z": 93.078
+      },
+      "questGivers": [
+        3443
+      ],
+      "levelRange": {
+        "min": 15,
+        "max": 23,
+        "avg": 23
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "mulgore_hub_21",
+      "position": {
+        "mapId": 1,
+        "x": -529.43,
+        "y": -2667.07,
+        "z": 95.871
+      },
+      "questGivers": [
+        3484
+      ],
+      "levelRange": {
+        "min": 26,
+        "max": 26,
+        "avg": 26
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

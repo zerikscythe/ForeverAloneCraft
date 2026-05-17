@@ -1,0 +1,131 @@
+{
+  "version": 1,
+  "zoneId": 41,
+  "zoneName": "Deadwind Pass",
+  "mapId": 0,
+  "hubCount": 3,
+  "hubs": [
+    {
+      "hubId": "deadwind_pass_hub_01",
+      "position": {
+        "mapId": 0,
+        "x": -11118.35,
+        "y": -2014.83,
+        "z": 47.174
+      },
+      "questGivers": [
+        17613,
+        18253
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 29,
+      "estimatedMinutes": 145,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:18162:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -11172.9,
+            "y": -1898.83,
+            "z": -17.69
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18162
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:24480:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -11206.85,
+            "y": -2238.4,
+            "z": 22.76
+          },
+          "radius": 50.21,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7370,
+            12377,
+            12378,
+            12379
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "creature:18161:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -11370.4,
+            "y": -2163.39,
+            "z": 26.82
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18161
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "deadwind_pass_hub_02",
+      "position": {
+        "mapId": 0,
+        "x": -10599.1,
+        "y": -1200.37,
+        "z": 28.493
+      },
+      "questGivers": [
+        661
+      ],
+      "levelRange": {
+        "min": 25,
+        "max": 30,
+        "avg": 30
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "deadwind_pass_hub_03",
+      "position": {
+        "mapId": 0,
+        "x": -10577.0,
+        "y": -1108.37,
+        "z": 30.069
+      },
+      "questGivers": [
+        270
+      ],
+      "levelRange": {
+        "min": 22,
+        "max": 26,
+        "avg": 26
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

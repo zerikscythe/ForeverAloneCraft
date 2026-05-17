@@ -1,0 +1,765 @@
+{
+  "version": 1,
+  "zoneId": 40,
+  "zoneName": "Westfall",
+  "mapId": 0,
+  "hubCount": 11,
+  "hubs": [
+    {
+      "hubId": "westfall_hub_01",
+      "position": {
+        "mapId": 0,
+        "x": -11482.3,
+        "y": 1557.41,
+        "z": 48.706
+      },
+      "questGivers": [
+        6182
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 20,
+        "avg": 20
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "westfall_hub_02",
+      "position": {
+        "mapId": 0,
+        "x": -11407.1,
+        "y": 1966.15,
+        "z": 10.512
+      },
+      "questGivers": [
+        392
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 20,
+        "avg": 18
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:517:map:0:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -11376.98,
+            "y": 1823.3,
+            "z": 5.39
+          },
+          "radius": 73.03,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            517
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:3636:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -11360.7,
+            "y": 1826.72,
+            "z": 7.73
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            391
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:127:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -11384.71,
+            "y": 1798.85,
+            "z": 6.82
+          },
+          "radius": 72.55,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            127
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:127:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -11093.51,
+            "y": 2070.42,
+            "z": 2.04
+          },
+          "radius": 121.65,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            127
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:517:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -11084.4,
+            "y": 2068.06,
+            "z": 1.15
+          },
+          "radius": 118.28,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            517
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:814:map:0:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -10678.8,
+            "y": 1652.12,
+            "z": 42.41
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            36,
+            114,
+            115,
+            480,
+            573,
+            1030
+          ],
+          "targetCount": 16
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "westfall_hub_03",
+      "position": {
+        "mapId": 0,
+        "x": -11272.6,
+        "y": 1455.03,
+        "z": 89.632
+      },
+      "questGivers": [
+        239
+      ],
+      "levelRange": {
+        "min": 40,
+        "max": 44,
+        "avg": 39
+      },
+      "faction": "Alliance",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:1274:map:0:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -10678.8,
+            "y": 1652.12,
+            "z": 42.41
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            36,
+            114,
+            115,
+            480,
+            573
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:1274:map:0:cluster:10",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -10821.3,
+            "y": 884.51,
+            "z": 33.48
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            36,
+            114,
+            115,
+            480,
+            573
+          ],
+          "targetCount": 5
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "westfall_hub_04",
+      "position": {
+        "mapId": 0,
+        "x": -10636.3,
+        "y": 1127.26,
+        "z": 33.877
+      },
+      "questGivers": [
+        878
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 15,
+        "avg": 15
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:829:map:0:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -10494.4,
+            "y": 1278.67,
+            "z": 55.41
+          },
+          "radius": 102.75,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            95,
+            121,
+            122,
+            449,
+            450,
+            481
+          ],
+          "targetCount": 11
+        },
+        {
+          "taskAreaId": "item_source:829:map:0:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -10645.0,
+            "y": 1385.82,
+            "z": 41.76
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            95,
+            121,
+            122,
+            449,
+            450,
+            481
+          ],
+          "targetCount": 11
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "westfall_hub_05",
+      "position": {
+        "mapId": 0,
+        "x": -10628.3,
+        "y": 1037.27,
+        "z": 34.191
+      },
+      "questGivers": [
+        523
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "westfall_hub_11",
+          "zoneId": 40,
+          "zoneName": "Westfall",
+          "questGivers": [
+            1323
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8702.28,
+            "y": 382.052,
+            "z": 103.909
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "westfall_hub_06",
+      "position": {
+        "mapId": 0,
+        "x": -10506.76,
+        "y": 1041.982,
+        "z": 66.604
+      },
+      "questGivers": [
+        234,
+        467,
+        491,
+        820,
+        821
+      ],
+      "levelRange": {
+        "min": 8,
+        "max": 22,
+        "avg": 16
+      },
+      "faction": "Alliance",
+      "totalQuests": 12,
+      "estimatedMinutes": 60,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:95:map:0:cluster:6",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -10494.4,
+            "y": 1278.67,
+            "z": 55.41
+          },
+          "radius": 102.75,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            95
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:122:map:0:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -10758.4,
+            "y": 892.56,
+            "z": 36.14
+          },
+          "radius": 37.67,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            122
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:449:map:0:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -10777.05,
+            "y": 896.39,
+            "z": 34.48
+          },
+          "radius": 41.2,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            449
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:504:map:0:cluster:5",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -10388.81,
+            "y": 1327.17,
+            "z": 46.88
+          },
+          "radius": 185.24,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            504
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:95:map:0:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -10351.89,
+            "y": 1332.53,
+            "z": 42.9
+          },
+          "radius": 175.27,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            95
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:725:map:0:cluster:12",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -10845.5,
+            "y": 1159.61,
+            "z": 39.09
+          },
+          "radius": 63.47,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            98,
+            117,
+            123,
+            124,
+            125,
+            452
+          ],
+          "targetCount": 12
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "westfall_hub_05",
+          "zoneId": 40,
+          "zoneName": "Westfall",
+          "questGivers": [
+            523
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -10628.3,
+            "y": 1037.27,
+            "z": 34.191
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "westfall_hub_09",
+          "zoneId": 40,
+          "zoneName": "Westfall",
+          "questGivers": [
+            266
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -9231.59,
+            "y": -2145.62,
+            "z": 71.395
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "westfall_hub_07",
+      "position": {
+        "mapId": 0,
+        "x": -10120.4,
+        "y": 1048.655,
+        "z": 36.994
+      },
+      "questGivers": [
+        233,
+        235
+      ],
+      "levelRange": {
+        "min": 8,
+        "max": 15,
+        "avg": 12
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:729:map:0:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -10332.9,
+            "y": 893.27,
+            "z": 40.85
+          },
+          "radius": 57.27,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            154,
+            199,
+            462,
+            1109,
+            1809,
+            4154
+          ],
+          "targetCount": 7
+        },
+        {
+          "taskAreaId": "item_source:723:map:0:cluster:9",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -10314.7,
+            "y": 1513.49,
+            "z": 40.08
+          },
+          "radius": 72.26,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            157,
+            345,
+            454,
+            547
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:731:map:0:cluster:9",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -10314.7,
+            "y": 1513.49,
+            "z": 40.08
+          },
+          "radius": 72.26,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            157,
+            454
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:723:map:0:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -10174.2,
+            "y": 1575.4,
+            "z": 45.36
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            157,
+            345,
+            454,
+            547
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:731:map:0:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -10174.2,
+            "y": 1575.4,
+            "z": 45.36
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            157,
+            454
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:729:map:0:cluster:8",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -10149.4,
+            "y": 1683.88,
+            "z": 38.23
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            154,
+            199,
+            462,
+            1109,
+            1809,
+            4154
+          ],
+          "targetCount": 7
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "westfall_hub_08",
+      "position": {
+        "mapId": 0,
+        "x": -9852.365,
+        "y": 918.919,
+        "z": 30.488
+      },
+      "questGivers": [
+        237,
+        238
+      ],
+      "levelRange": {
+        "min": 9,
+        "max": 14,
+        "avg": 12
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "westfall_hub_09",
+      "position": {
+        "mapId": 0,
+        "x": -9231.59,
+        "y": -2145.62,
+        "z": 71.395
+      },
+      "questGivers": [
+        266
+      ],
+      "levelRange": {
+        "min": 14,
+        "max": 18,
+        "avg": 18
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "westfall_hub_06",
+          "zoneId": 40,
+          "zoneName": "Westfall",
+          "questGivers": [
+            234,
+            467,
+            491,
+            820,
+            821
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -10511.2,
+            "y": 1041.84,
+            "z": 60.701
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "westfall_hub_10",
+      "position": {
+        "mapId": 0,
+        "x": -8835.76,
+        "y": 490.084,
+        "z": 109.699
+      },
+      "questGivers": [
+        352
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "westfall_hub_11",
+      "position": {
+        "mapId": 0,
+        "x": -8702.28,
+        "y": 382.052,
+        "z": 103.909
+      },
+      "questGivers": [
+        1323
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "westfall_hub_10",
+          "zoneId": 40,
+          "zoneName": "Westfall",
+          "questGivers": [
+            352
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8835.76,
+            "y": 490.084,
+            "z": 109.699
+          },
+          "weight": 1
+        }
+      ]
+    }
+  ]
+}

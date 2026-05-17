@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "zoneId": 4820,
+  "zoneName": "Halls of Reflection",
+  "mapId": 668,
+  "hubCount": 1,
+  "hubs": [
+    {
+      "hubId": "halls_of_reflection_hub_01",
+      "position": {
+        "mapId": 668,
+        "x": 5232.69,
+        "y": 1931.52,
+        "z": 707.778
+      },
+      "questGivers": [
+        37779
+      ],
+      "levelRange": {
+        "min": 78,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:37554:map:668:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 668,
+            "x": 5549.51,
+            "y": 2257.59,
+            "z": 733.01
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            37554
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    }
+  ]
+}

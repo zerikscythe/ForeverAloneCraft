@@ -1,0 +1,1512 @@
+{
+  "version": 1,
+  "zoneId": 14,
+  "zoneName": "Durotar",
+  "mapId": 1,
+  "hubCount": 24,
+  "hubs": [
+    {
+      "hubId": "durotar_hub_01",
+      "position": {
+        "mapId": 1,
+        "x": -1709.14,
+        "y": -4330.07,
+        "z": 4.334
+      },
+      "questGivers": [
+        6236
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 30,
+        "avg": 30
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "durotar_hub_02",
+      "position": {
+        "mapId": 1,
+        "x": -928.34,
+        "y": -3769.83,
+        "z": 6.393
+      },
+      "questGivers": [
+        3665
+      ],
+      "levelRange": {
+        "min": 14,
+        "max": 18,
+        "avg": 18
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "durotar_hub_03",
+      "position": {
+        "mapId": 1,
+        "x": -877.79,
+        "y": -4290.36,
+        "z": 72.707
+      },
+      "questGivers": [
+        5891
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 4,
+        "avg": 4
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "durotar_hub_04",
+      "position": {
+        "mapId": 1,
+        "x": -824.431,
+        "y": -4920.857,
+        "z": 20.991
+      },
+      "questGivers": [
+        3188,
+        3194,
+        3304,
+        5880,
+        6408,
+        7952
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 55,
+        "avg": 18
+      },
+      "faction": "Horde",
+      "totalQuests": 13,
+      "estimatedMinutes": 65,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:4888:map:1:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -785.42,
+            "y": -5122.69,
+            "z": -2.48
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3106,
+            3107,
+            3108,
+            3228
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:4887:map:1:cluster:13",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -1070.56,
+            "y": -4983.07,
+            "z": -6.93
+          },
+          "radius": 150.86,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3103,
+            3104,
+            3105,
+            3141,
+            6020
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:4887:map:1:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -879.79,
+            "y": -5179.26,
+            "z": -4.52
+          },
+          "radius": 202.14,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3103,
+            3104,
+            3105,
+            3141,
+            6020
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:4888:map:1:cluster:7",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -1104.53,
+            "y": -4805.81,
+            "z": -2.43
+          },
+          "radius": 172.4,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3106,
+            3107,
+            3108,
+            3228
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:4892:map:1:cluster:9",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -1102.64,
+            "y": -5139.02,
+            "z": 2.65
+          },
+          "radius": 125.57,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3121
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:4892:map:1:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -1041.23,
+            "y": -5414.35,
+            "z": 6.57
+          },
+          "radius": 70.24,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3121
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "durotar_hub_05",
+      "position": {
+        "mapId": 1,
+        "x": -799.383,
+        "y": -3723.19,
+        "z": 33.898
+      },
+      "questGivers": [
+        3494,
+        6251,
+        6252,
+        6254,
+        6266,
+        7161,
+        8738,
+        23534,
+        23535
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 52,
+        "avg": 38
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 20,
+      "estimatedMinutes": 100,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "durotar_hub_06",
+      "position": {
+        "mapId": 1,
+        "x": -774.774,
+        "y": -4830.36,
+        "z": 19.833
+      },
+      "questGivers": [
+        3140
+      ],
+      "levelRange": {
+        "min": 5,
+        "max": 8,
+        "avg": 8
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "durotar_hub_07",
+      "position": {
+        "mapId": 1,
+        "x": -613.473,
+        "y": -4217.306,
+        "z": 39.164
+      },
+      "questGivers": [
+        3143,
+        3145,
+        3154,
+        3707,
+        5765,
+        5887,
+        9796,
+        10176
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 5,
+        "avg": 2
+      },
+      "faction": "Horde",
+      "totalQuests": 26,
+      "estimatedMinutes": 130,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:4862:map:1:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -588.4,
+            "y": -4111.45,
+            "z": 64.14
+          },
+          "radius": 133.08,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3124,
+            3281
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "creature:3098:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -486.28,
+            "y": -4144.73,
+            "z": 55.06
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3098
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:4862:map:1:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -759.94,
+            "y": -4308.07,
+            "z": 51.54
+          },
+          "radius": 102.38,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3124,
+            3281
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "creature:3098:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -419.54,
+            "y": -4316.98,
+            "z": 51.2
+          },
+          "radius": 201.42,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3098
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:3101:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -159.15,
+            "y": -4323.96,
+            "z": 64.44
+          },
+          "radius": 186.52,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3101
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:3101:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -94.89,
+            "y": -4260.21,
+            "z": 65.95
+          },
+          "radius": 105.41,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3101
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "durotar_hub_03",
+          "zoneId": 14,
+          "zoneName": "Durotar",
+          "questGivers": [
+            5891
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -877.79,
+            "y": -4290.36,
+            "z": 72.707
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "durotar_hub_15",
+          "zoneId": 14,
+          "zoneName": "Durotar",
+          "questGivers": [
+            3139,
+            3142,
+            3170,
+            3171,
+            3191,
+            3336
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 268.13,
+            "y": -4710.94,
+            "z": 17.572
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "durotar_hub_17",
+          "zoneId": 14,
+          "zoneName": "Durotar",
+          "questGivers": [
+            3169,
+            3173,
+            3294,
+            3706
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 294.884,
+            "y": -4831.49,
+            "z": 10.607
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "durotar_hub_08",
+      "position": {
+        "mapId": 1,
+        "x": -611.587,
+        "y": -4322.08,
+        "z": 40.093
+      },
+      "questGivers": [
+        11378
+      ],
+      "levelRange": {
+        "min": 3,
+        "max": 4,
+        "avg": 4
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:10556:map:1:cluster:6",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -721.72,
+            "y": -4287.99,
+            "z": 44.54
+          },
+          "radius": 142.11,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            10556
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:10556:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -499.78,
+            "y": -4414.4,
+            "z": 48.63
+          },
+          "radius": 74.01,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            10556
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "durotar_hub_09",
+      "position": {
+        "mapId": 1,
+        "x": -599.449,
+        "y": -4715.32,
+        "z": 35.23
+      },
+      "questGivers": [
+        6786
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 5,
+        "avg": 5
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "durotar_hub_10",
+      "position": {
+        "mapId": 1,
+        "x": -437.62,
+        "y": -3176.26,
+        "z": 211.385
+      },
+      "questGivers": [
+        5878
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 30,
+        "avg": 27
+      },
+      "faction": "Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "durotar_hub_04",
+          "zoneId": 14,
+          "zoneName": "Durotar",
+          "questGivers": [
+            3188,
+            3194,
+            3304,
+            5880,
+            6408,
+            7952
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -858.232,
+            "y": -4882.66,
+            "z": 22.116
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "durotar_hub_11",
+      "position": {
+        "mapId": 1,
+        "x": -397.761,
+        "y": -4108.99,
+        "z": 50.288
+      },
+      "questGivers": [
+        3287
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 5,
+        "avg": 5
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:4905:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -547.34,
+            "y": -4103.85,
+            "z": 70.1
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3281
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "durotar_hub_12",
+      "position": {
+        "mapId": 1,
+        "x": -269.97,
+        "y": -4000.87,
+        "z": 168.355
+      },
+      "questGivers": [
+        5900
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:6655:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -246.26,
+            "y": -4009.98,
+            "z": 187.39
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5893
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:5026:map:1:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -35.04,
+            "y": -3370.4,
+            "z": 92.01
+          },
+          "radius": 83.18,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3267,
+            3268,
+            3269,
+            3271,
+            3458
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:5026:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -187.77,
+            "y": -2992.73,
+            "z": 91.92
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3267,
+            3268,
+            3269,
+            3271,
+            3458
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:6652:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 908.4,
+            "y": -4731.65,
+            "z": 24.33
+          },
+          "radius": 79.85,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3199
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "durotar_hub_13",
+      "position": {
+        "mapId": 1,
+        "x": 185.746,
+        "y": -3597.21,
+        "z": 27.338
+      },
+      "questGivers": [
+        5810
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "durotar_hub_10",
+          "zoneId": 14,
+          "zoneName": "Durotar",
+          "questGivers": [
+            5878
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -437.62,
+            "y": -3176.26,
+            "z": 211.385
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "durotar_hub_16",
+      "position": {
+        "mapId": 1,
+        "x": 268.899,
+        "y": -3055.15,
+        "z": 97.393
+      },
+      "questGivers": [
+        5907
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "durotar_hub_12",
+          "zoneId": 14,
+          "zoneName": "Durotar",
+          "questGivers": [
+            5900
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -269.97,
+            "y": -4000.87,
+            "z": 168.355
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "durotar_hub_14",
+      "position": {
+        "mapId": 1,
+        "x": 279.845,
+        "y": -3690.055,
+        "z": 26.814
+      },
+      "questGivers": [
+        3337,
+        3521
+      ],
+      "levelRange": {
+        "min": 9,
+        "max": 14,
+        "avg": 13
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "durotar_hub_15",
+      "position": {
+        "mapId": 1,
+        "x": 281.605,
+        "y": -4694.15,
+        "z": 14.714
+      },
+      "questGivers": [
+        3139,
+        3142,
+        3170,
+        3171,
+        3191,
+        3336
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 16,
+        "avg": 10
+      },
+      "faction": "Horde",
+      "totalQuests": 16,
+      "estimatedMinutes": 80,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:3111:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 86.69,
+            "y": -4554.75,
+            "z": 50.51
+          },
+          "radius": 131.31,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3111
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:3112:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 83.97,
+            "y": -4539.89,
+            "z": 49.5
+          },
+          "radius": 123.26,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3112
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:3111:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 86.99,
+            "y": -4440.44,
+            "z": 42.65
+          },
+          "radius": 69.95,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3111
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:3128:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -60.17,
+            "y": -4968.46,
+            "z": 20.91
+          },
+          "radius": 49.28,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3128
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:3112:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 38.33,
+            "y": -4295.62,
+            "z": 68.52
+          },
+          "radius": 83.14,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3112
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:3114:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 431.17,
+            "y": -4241.05,
+            "z": 25.11
+          },
+          "radius": 155.31,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3114
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "durotar_hub_14",
+          "zoneId": 14,
+          "zoneName": "Durotar",
+          "questGivers": [
+            3337,
+            3521
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 256.258,
+            "y": -3693.95,
+            "z": 26.477
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "durotar_hub_21",
+          "zoneId": 14,
+          "zoneName": "Durotar",
+          "questGivers": [
+            3208
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 1102.09,
+            "y": -4945.36,
+            "z": 15.686
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "durotar_hub_17",
+      "position": {
+        "mapId": 1,
+        "x": 316.575,
+        "y": -4834.16,
+        "z": 10.442
+      },
+      "questGivers": [
+        3169,
+        3173,
+        3294,
+        3706
+      ],
+      "levelRange": {
+        "min": 5,
+        "max": 4,
+        "avg": 4
+      },
+      "faction": "Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:12430:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 170.6,
+            "y": -4769.92,
+            "z": 14.49
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            12430
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "durotar_hub_13",
+          "zoneId": 14,
+          "zoneName": "Durotar",
+          "questGivers": [
+            5810
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 185.746,
+            "y": -3597.21,
+            "z": 27.338
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "durotar_hub_16",
+          "zoneId": 14,
+          "zoneName": "Durotar",
+          "questGivers": [
+            5907
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 268.899,
+            "y": -3055.15,
+            "z": 97.393
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "durotar_hub_18",
+      "position": {
+        "mapId": 1,
+        "x": 384.743,
+        "y": -4600.13,
+        "z": 76.172
+      },
+      "questGivers": [
+        3147
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 7,
+        "avg": 7
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:4870:map:1:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -60.17,
+            "y": -4968.46,
+            "z": 20.91
+          },
+          "radius": 49.28,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3119,
+            3120,
+            3128,
+            3129,
+            3192,
+            5808
+          ],
+          "targetCount": 7
+        },
+        {
+          "taskAreaId": "item_source:4870:map:1:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -183.62,
+            "y": -4931.51,
+            "z": 24.18
+          },
+          "radius": 162.16,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3119,
+            3120,
+            3128,
+            3129,
+            3192,
+            5808
+          ],
+          "targetCount": 7
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "durotar_hub_19",
+      "position": {
+        "mapId": 1,
+        "x": 742.385,
+        "y": -4241.65,
+        "z": 18.762
+      },
+      "questGivers": [
+        3193
+      ],
+      "levelRange": {
+        "min": 8,
+        "max": 11,
+        "avg": 11
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:4891:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 625.51,
+            "y": -3792.52,
+            "z": 17.28
+          },
+          "radius": 162.17,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3110,
+            3231
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:4891:map:1:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 425.92,
+            "y": -3817.55,
+            "z": 19.53
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3110,
+            3231
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "durotar_hub_20",
+      "position": {
+        "mapId": 1,
+        "x": 999.763,
+        "y": -4414.4,
+        "z": 14.472
+      },
+      "questGivers": [
+        3293
+      ],
+      "levelRange": {
+        "min": 7,
+        "max": 11,
+        "avg": 10
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:3118:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 1037.15,
+            "y": -4713.92,
+            "z": 28.27
+          },
+          "radius": 145.86,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3118
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:3117:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 964.8,
+            "y": -4775.97,
+            "z": 17.67
+          },
+          "radius": 178.47,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3117
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "durotar_hub_21",
+      "position": {
+        "mapId": 1,
+        "x": 1102.09,
+        "y": -4945.36,
+        "z": 15.686
+      },
+      "questGivers": [
+        3208
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 12,
+        "avg": 12
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:4871:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 862.48,
+            "y": -4742.05,
+            "z": 31.11
+          },
+          "radius": 122.36,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3195,
+            3196,
+            3197,
+            3198,
+            3199
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:4871:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 866.28,
+            "y": -4197.73,
+            "z": -12.97
+          },
+          "radius": 68.54,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3195,
+            3196,
+            3197,
+            3198,
+            3199
+          ],
+          "targetCount": 5
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "durotar_hub_24",
+          "zoneId": 14,
+          "zoneName": "Durotar",
+          "questGivers": [
+            3189,
+            3216
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 1772.72,
+            "y": -4343.18,
+            "z": -7.572
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "durotar_hub_22",
+      "position": {
+        "mapId": 1,
+        "x": 1236.78,
+        "y": -2994.62,
+        "z": 91.792
+      },
+      "questGivers": [
+        7233
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 20,
+        "avg": 20
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:8074:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 1235.16,
+            "y": -2925.27,
+            "z": 141.82
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7288
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7308:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 1231.8,
+            "y": -2923.29,
+            "z": 107.05
+          },
+          "radius": 43.26,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7308
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7307:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 1226.81,
+            "y": -2922.7,
+            "z": 120.68
+          },
+          "radius": 47.32,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7307
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7310:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 1225.62,
+            "y": -2921.09,
+            "z": 93.29
+          },
+          "radius": 36.93,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7310
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "durotar_hub_23",
+      "position": {
+        "mapId": 1,
+        "x": 1279.03,
+        "y": -4188.68,
+        "z": 28.024
+      },
+      "questGivers": [
+        3190
+      ],
+      "levelRange": {
+        "min": 7,
+        "max": 9,
+        "avg": 9
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "durotar_hub_24",
+      "position": {
+        "mapId": 1,
+        "x": 1786.69,
+        "y": -4358.845,
+        "z": -12.338
+      },
+      "questGivers": [
+        3189,
+        3216
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 16,
+        "avg": 14
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:4886:map:1:cluster:9",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 1188.64,
+            "y": -4608.47,
+            "z": 18.53
+          },
+          "radius": 51.99,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3127,
+            3226,
+            5823
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:4886:map:1:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 1182.86,
+            "y": -4022.2,
+            "z": 15.86
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3127,
+            3226,
+            5823
+          ],
+          "targetCount": 3
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "durotar_hub_14",
+          "zoneId": 14,
+          "zoneName": "Durotar",
+          "questGivers": [
+            3337,
+            3521
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 256.258,
+            "y": -3693.95,
+            "z": 26.477
+          },
+          "weight": 1
+        }
+      ]
+    }
+  ]
+}

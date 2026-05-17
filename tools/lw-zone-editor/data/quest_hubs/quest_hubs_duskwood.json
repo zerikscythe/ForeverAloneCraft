@@ -1,0 +1,1032 @@
+{
+  "version": 1,
+  "zoneId": 10,
+  "zoneName": "Duskwood",
+  "mapId": 0,
+  "hubCount": 16,
+  "hubs": [
+    {
+      "hubId": "duskwood_hub_01",
+      "position": {
+        "mapId": 0,
+        "x": -11035.2,
+        "y": 619.354,
+        "z": 35.42
+      },
+      "questGivers": [
+        7024
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 20,
+        "avg": 20
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:7923:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -11147.3,
+            "y": 512.54,
+            "z": 32.62
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7051
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "duskwood_hub_02",
+      "position": {
+        "mapId": 0,
+        "x": -10923.2,
+        "y": -384.928,
+        "z": 39.434
+      },
+      "questGivers": [
+        888
+      ],
+      "levelRange": {
+        "min": 17,
+        "max": 21,
+        "avg": 21
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:539:map:0:cluster:9",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -10159.5,
+            "y": -83.56,
+            "z": 28.31
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            539
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:539:map:0:cluster:10",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -10213.8,
+            "y": 56.01,
+            "z": 32.55
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            539
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "duskwood_hub_03",
+      "position": {
+        "mapId": 0,
+        "x": -10780.2,
+        "y": -1380.28,
+        "z": 39.719
+      },
+      "questGivers": [
+        302
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 25,
+        "avg": 24
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "duskwood_hub_05",
+          "zoneId": 10,
+          "zoneName": "Duskwood",
+          "questGivers": [
+            263,
+            264,
+            265,
+            267,
+            268,
+            272,
+            273,
+            576,
+            633,
+            663,
+            5464
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -10593.1,
+            "y": -1200.6,
+            "z": 28.499
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "duskwood_hub_06",
+          "zoneId": 10,
+          "zoneName": "Duskwood",
+          "questGivers": [
+            276
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -10581.1,
+            "y": -1321.31,
+            "z": 50.393
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "duskwood_hub_04",
+      "position": {
+        "mapId": 0,
+        "x": -10731.4,
+        "y": 337.138,
+        "z": 38.469
+      },
+      "questGivers": [
+        288
+      ],
+      "levelRange": {
+        "min": 17,
+        "max": 25,
+        "avg": 22
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "duskwood_hub_05",
+          "zoneId": 10,
+          "zoneName": "Duskwood",
+          "questGivers": [
+            263,
+            264,
+            265,
+            267,
+            268,
+            272,
+            273,
+            576,
+            633,
+            663,
+            5464
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -10593.1,
+            "y": -1200.6,
+            "z": 28.499
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "duskwood_hub_08",
+          "zoneId": 10,
+          "zoneName": "Duskwood",
+          "questGivers": [
+            311,
+            893
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -10329.9,
+            "y": 623.241,
+            "z": 26.874
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "duskwood_hub_06",
+      "position": {
+        "mapId": 0,
+        "x": -10581.1,
+        "y": -1321.31,
+        "z": 50.393
+      },
+      "questGivers": [
+        276
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 30,
+        "avg": 27
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:1968:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -11224.8,
+            "y": -160.55,
+            "z": 5.96
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            300
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "duskwood_hub_03",
+          "zoneId": 10,
+          "zoneName": "Duskwood",
+          "questGivers": [
+            302
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -10780.2,
+            "y": -1380.28,
+            "z": 39.719
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "duskwood_hub_05",
+      "position": {
+        "mapId": 0,
+        "x": -10554.064,
+        "y": -1167.27,
+        "z": 28.477
+      },
+      "questGivers": [
+        263,
+        264,
+        265,
+        267,
+        268,
+        272,
+        273,
+        576,
+        633,
+        663,
+        5464
+      ],
+      "levelRange": {
+        "min": 17,
+        "max": 45,
+        "avg": 27
+      },
+      "faction": "Alliance",
+      "totalQuests": 39,
+      "estimatedMinutes": 195,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:533:map:0:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -10667.1,
+            "y": -779.64,
+            "z": 65.96
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            533
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:1015:map:0:cluster:15",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -10766.3,
+            "y": -773.84,
+            "z": 42.95
+          },
+          "radius": 45.75,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            213,
+            521,
+            565,
+            628,
+            923,
+            1258
+          ],
+          "targetCount": 14
+        },
+        {
+          "taskAreaId": "creature:533:map:0:cluster:5",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -10254.35,
+            "y": -727.28,
+            "z": 44.35
+          },
+          "radius": 51.25,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            533
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:1015:map:0:cluster:21",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -11060.1,
+            "y": -594.03,
+            "z": 29.04
+          },
+          "radius": 66.17,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            213,
+            521,
+            565,
+            628,
+            923,
+            1258
+          ],
+          "targetCount": 14
+        },
+        {
+          "taskAreaId": "item_source:1130:map:0:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -10038.9,
+            "y": -452.52,
+            "z": 41.36
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            217,
+            539,
+            569,
+            574,
+            930,
+            949
+          ],
+          "targetCount": 6
+        },
+        {
+          "taskAreaId": "item_source:2251:map:0:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -10038.9,
+            "y": -452.52,
+            "z": 41.36
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            217,
+            539,
+            569,
+            574,
+            616,
+            930
+          ],
+          "targetCount": 19
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "duskwood_hub_09",
+          "zoneId": 10,
+          "zoneName": "Duskwood",
+          "questGivers": [
+            289
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -10283.0,
+            "y": 74.401,
+            "z": 38.931
+          },
+          "weight": 2
+        },
+        {
+          "hubId": "duskwood_hub_03",
+          "zoneId": 10,
+          "zoneName": "Duskwood",
+          "questGivers": [
+            302
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -10780.2,
+            "y": -1380.28,
+            "z": 39.719
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "duskwood_hub_04",
+          "zoneId": 10,
+          "zoneName": "Duskwood",
+          "questGivers": [
+            288
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -10731.4,
+            "y": 337.138,
+            "z": 38.469
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "duskwood_hub_11",
+          "zoneId": 10,
+          "zoneName": "Duskwood",
+          "questGivers": [
+            295
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -9462.66,
+            "y": 16.192,
+            "z": 57.046
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "duskwood_hub_07",
+      "position": {
+        "mapId": 0,
+        "x": -10354.55,
+        "y": -1532.725,
+        "z": 92.518
+      },
+      "questGivers": [
+        5414,
+        5418
+      ],
+      "levelRange": {
+        "min": 37,
+        "max": 42,
+        "avg": 42
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "duskwood_hub_08",
+      "position": {
+        "mapId": 0,
+        "x": -10322.05,
+        "y": 624.14,
+        "z": 26.749
+      },
+      "questGivers": [
+        311,
+        893
+      ],
+      "levelRange": {
+        "min": 19,
+        "max": 32,
+        "avg": 27
+      },
+      "faction": "Alliance",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:213:map:0:cluster:6",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -10237.1,
+            "y": 516.68,
+            "z": 27.44
+          },
+          "radius": 61.82,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            213
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:565:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -10251.97,
+            "y": 472.51,
+            "z": 38.89
+          },
+          "radius": 127.07,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            565
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:565:map:0:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -10499.2,
+            "y": 567.5,
+            "z": 27.3
+          },
+          "radius": 88.36,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            565
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:785:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -10330.46,
+            "y": 398.39,
+            "z": 19.0
+          },
+          "radius": 146.91,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            785
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:787:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -10375.63,
+            "y": 403.38,
+            "z": 29.5
+          },
+          "radius": 174.46,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            787
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1110:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -10365.22,
+            "y": 391.92,
+            "z": 44.69
+          },
+          "radius": 121.56,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1110
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "duskwood_hub_05",
+          "zoneId": 10,
+          "zoneName": "Duskwood",
+          "questGivers": [
+            263,
+            264,
+            265,
+            267,
+            268,
+            272,
+            273,
+            576,
+            633,
+            663,
+            5464
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -10593.1,
+            "y": -1200.6,
+            "z": 28.499
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "duskwood_hub_13",
+          "zoneId": 10,
+          "zoneName": "Duskwood",
+          "questGivers": [
+            1212
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8529.0,
+            "y": 855.316,
+            "z": 106.619
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "duskwood_hub_09",
+      "position": {
+        "mapId": 0,
+        "x": -10283.0,
+        "y": 74.401,
+        "z": 38.931
+      },
+      "questGivers": [
+        289
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 30,
+        "avg": 27
+      },
+      "faction": "Alliance",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:884:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -10192.6,
+            "y": 312.35,
+            "z": 6.92
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3,
+            210,
+            570,
+            604,
+            948
+          ],
+          "targetCount": 5
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "duskwood_hub_05",
+          "zoneId": 10,
+          "zoneName": "Duskwood",
+          "questGivers": [
+            263,
+            264,
+            265,
+            267,
+            268,
+            272,
+            273,
+            576,
+            633,
+            663,
+            5464
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -10593.1,
+            "y": -1200.6,
+            "z": 28.499
+          },
+          "weight": 3
+        }
+      ]
+    },
+    {
+      "hubId": "duskwood_hub_10",
+      "position": {
+        "mapId": 0,
+        "x": -9545.33,
+        "y": -1401.1,
+        "z": 54.148
+      },
+      "questGivers": [
+        294
+      ],
+      "levelRange": {
+        "min": 9,
+        "max": 28,
+        "avg": 19
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "duskwood_hub_05",
+          "zoneId": 10,
+          "zoneName": "Duskwood",
+          "questGivers": [
+            263,
+            264,
+            265,
+            267,
+            268,
+            272,
+            273,
+            576,
+            633,
+            663,
+            5464
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -10593.1,
+            "y": -1200.6,
+            "z": 28.499
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "duskwood_hub_11",
+      "position": {
+        "mapId": 0,
+        "x": -9462.66,
+        "y": 16.192,
+        "z": 57.046
+      },
+      "questGivers": [
+        295
+      ],
+      "levelRange": {
+        "min": 22,
+        "max": 28,
+        "avg": 28
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "duskwood_hub_12",
+          "zoneId": 10,
+          "zoneName": "Duskwood",
+          "questGivers": [
+            297
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8834.0,
+            "y": 983.482,
+            "z": 98.47
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "duskwood_hub_12",
+      "position": {
+        "mapId": 0,
+        "x": -8834.0,
+        "y": 983.482,
+        "z": 98.47
+      },
+      "questGivers": [
+        297
+      ],
+      "levelRange": {
+        "min": 22,
+        "max": 28,
+        "avg": 28
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "duskwood_hub_13",
+      "position": {
+        "mapId": 0,
+        "x": -8529.0,
+        "y": 855.316,
+        "z": 106.619
+      },
+      "questGivers": [
+        1212
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 29,
+        "avg": 29
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "duskwood_hub_16",
+          "zoneId": 10,
+          "zoneName": "Duskwood",
+          "questGivers": [
+            1217
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -3818.05,
+            "y": -827.299,
+            "z": 9.675
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "duskwood_hub_14",
+      "position": {
+        "mapId": 0,
+        "x": -8442.97,
+        "y": 325.454,
+        "z": 122.246
+      },
+      "questGivers": [
+        17103
+      ],
+      "levelRange": {
+        "min": 18,
+        "max": 20,
+        "avg": 20
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "duskwood_hub_15",
+      "position": {
+        "mapId": 0,
+        "x": -8387.0,
+        "y": 685.202,
+        "z": 95.356
+      },
+      "questGivers": [
+        1416
+      ],
+      "levelRange": {
+        "min": 9,
+        "max": 30,
+        "avg": 26
+      },
+      "faction": "Alliance",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:6844:map:0:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -10244.5,
+            "y": -740.2,
+            "z": 43.47
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            205,
+            206,
+            533,
+            898,
+            920
+          ],
+          "targetCount": 5
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "duskwood_hub_08",
+          "zoneId": 10,
+          "zoneName": "Duskwood",
+          "questGivers": [
+            311,
+            893
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -10329.9,
+            "y": 623.241,
+            "z": 26.874
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "duskwood_hub_16",
+      "position": {
+        "mapId": 0,
+        "x": -3818.05,
+        "y": -827.299,
+        "z": 9.675
+      },
+      "questGivers": [
+        1217
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 30,
+        "avg": 29
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "duskwood_hub_15",
+          "zoneId": 10,
+          "zoneName": "Duskwood",
+          "questGivers": [
+            1416
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8387.0,
+            "y": 685.202,
+            "z": 95.356
+          },
+          "weight": 1
+        }
+      ]
+    }
+  ]
+}

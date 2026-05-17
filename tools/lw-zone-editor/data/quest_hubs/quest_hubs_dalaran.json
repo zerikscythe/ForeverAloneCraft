@@ -1,0 +1,335 @@
+{
+  "version": 1,
+  "zoneId": 4395,
+  "zoneName": "Dalaran",
+  "mapId": 571,
+  "hubCount": 9,
+  "hubs": [
+    {
+      "hubId": "dalaran_hub_01",
+      "position": {
+        "mapId": 571,
+        "x": 586.722,
+        "y": -4951.09,
+        "z": 27.674
+      },
+      "questGivers": [
+        23729
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "dalaran_hub_09",
+          "zoneId": 4395,
+          "zoneName": "Dalaran",
+          "questGivers": [
+            29156
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5808.13,
+            "y": 585.193,
+            "z": 652.463
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dalaran_hub_02",
+      "position": {
+        "mapId": 571,
+        "x": 1930.11,
+        "y": -6200.63,
+        "z": 24.857
+      },
+      "questGivers": [
+        29159
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "dalaran_hub_09",
+          "zoneId": 4395,
+          "zoneName": "Dalaran",
+          "questGivers": [
+            29156
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5808.13,
+            "y": 585.193,
+            "z": 652.463
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dalaran_hub_03",
+      "position": {
+        "mapId": 571,
+        "x": 2272.88,
+        "y": 5193.82,
+        "z": 12.577
+      },
+      "questGivers": [
+        29158
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "dalaran_hub_09",
+          "zoneId": 4395,
+          "zoneName": "Dalaran",
+          "questGivers": [
+            29156
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5808.13,
+            "y": 585.193,
+            "z": 652.463
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dalaran_hub_04",
+      "position": {
+        "mapId": 571,
+        "x": 2837.65,
+        "y": 6173.48,
+        "z": 85.238
+      },
+      "questGivers": [
+        29155
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "dalaran_hub_09",
+          "zoneId": 4395,
+          "zoneName": "Dalaran",
+          "questGivers": [
+            29156
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5808.13,
+            "y": 585.193,
+            "z": 652.463
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dalaran_hub_05",
+      "position": {
+        "mapId": 571,
+        "x": 3210.57,
+        "y": -682.367,
+        "z": 167.62
+      },
+      "questGivers": [
+        29162
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "dalaran_hub_09",
+          "zoneId": 4395,
+          "zoneName": "Dalaran",
+          "questGivers": [
+            29156
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5808.13,
+            "y": 585.193,
+            "z": 652.463
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dalaran_hub_06",
+      "position": {
+        "mapId": 571,
+        "x": 3265.85,
+        "y": -2193.09,
+        "z": 117.456
+      },
+      "questGivers": [
+        29160
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "dalaran_hub_09",
+          "zoneId": 4395,
+          "zoneName": "Dalaran",
+          "questGivers": [
+            29156
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5808.13,
+            "y": 585.193,
+            "z": 652.463
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dalaran_hub_07",
+      "position": {
+        "mapId": 571,
+        "x": 3424.13,
+        "y": -2790.68,
+        "z": 201.587
+      },
+      "questGivers": [
+        29161
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "dalaran_hub_09",
+          "zoneId": 4395,
+          "zoneName": "Dalaran",
+          "questGivers": [
+            29156
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5808.13,
+            "y": 585.193,
+            "z": 652.463
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dalaran_hub_08",
+      "position": {
+        "mapId": 571,
+        "x": 5441.6,
+        "y": -2629.17,
+        "z": 306.634
+      },
+      "questGivers": [
+        29169
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "dalaran_hub_09",
+          "zoneId": 4395,
+          "zoneName": "Dalaran",
+          "questGivers": [
+            29156
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5808.13,
+            "y": 585.193,
+            "z": 652.463
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dalaran_hub_09",
+      "position": {
+        "mapId": 571,
+        "x": 5808.13,
+        "y": 585.193,
+        "z": 652.463
+      },
+      "questGivers": [
+        29156
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

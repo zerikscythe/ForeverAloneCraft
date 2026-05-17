@@ -1,0 +1,1095 @@
+{
+  "version": 1,
+  "zoneId": 38,
+  "zoneName": "Loch Modan",
+  "mapId": 0,
+  "hubCount": 15,
+  "hubs": [
+    {
+      "hubId": "loch_modan_hub_01",
+      "position": {
+        "mapId": 0,
+        "x": -6032.95,
+        "y": -2495.33,
+        "z": 310.092
+      },
+      "questGivers": [
+        3836
+      ],
+      "levelRange": {
+        "min": 40,
+        "max": 43,
+        "avg": 43
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "loch_modan_hub_02",
+      "position": {
+        "mapId": 0,
+        "x": -5856.695,
+        "y": -2630.312,
+        "z": 314.323
+      },
+      "questGivers": [
+        1089,
+        1090,
+        1091,
+        1092
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 17,
+        "avg": 14
+      },
+      "faction": "Alliance",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:1162:map:0:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -5828.3,
+            "y": -2809.33,
+            "z": 374.87
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1162
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1161:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -5865.29,
+            "y": -2883.26,
+            "z": 368.41
+          },
+          "radius": 144.38,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1161
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:2536:map:0:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -5795.31,
+            "y": -2885.62,
+            "z": 366.64
+          },
+          "radius": 101.26,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1161,
+            1162,
+            1163,
+            1164,
+            1165,
+            1166
+          ],
+          "targetCount": 9
+        },
+        {
+          "taskAreaId": "creature:1161:map:0:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -5795.31,
+            "y": -2885.62,
+            "z": 366.64
+          },
+          "radius": 101.26,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1161
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1162:map:0:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -5870.88,
+            "y": -2907.41,
+            "z": 368.51
+          },
+          "radius": 150.47,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1162
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:2536:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -5453.01,
+            "y": -2735.09,
+            "z": 366.12
+          },
+          "radius": 168.58,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1161,
+            1162,
+            1163,
+            1164,
+            1165,
+            1166
+          ],
+          "targetCount": 9
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "loch_modan_hub_03",
+      "position": {
+        "mapId": 0,
+        "x": -5784.32,
+        "y": -2055.22,
+        "z": 408.232
+      },
+      "questGivers": [
+        6177
+      ],
+      "levelRange": {
+        "min": 12,
+        "max": 12,
+        "avg": 12
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:6847:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -5885.69,
+            "y": -2016.36,
+            "z": 404.64
+          },
+          "radius": 95.97,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6123
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "loch_modan_hub_04",
+      "position": {
+        "mapId": 0,
+        "x": -5763.79,
+        "y": -3433.645,
+        "z": 305.827
+      },
+      "questGivers": [
+        1379,
+        2057
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 15,
+        "avg": 15
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "loch_modan_hub_05",
+      "position": {
+        "mapId": 0,
+        "x": -5704.2,
+        "y": -3798.115,
+        "z": 322.359
+      },
+      "questGivers": [
+        1344,
+        1345
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 38,
+        "avg": 27
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:2636:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -5668.63,
+            "y": -3927.06,
+            "z": 327.61
+          },
+          "radius": 157.35,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1165,
+            1167,
+            1393
+          ],
+          "targetCount": 3
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "loch_modan_hub_08",
+          "zoneId": 38,
+          "zoneName": "Loch Modan",
+          "questGivers": [
+            1105,
+            1139,
+            1470,
+            1681,
+            6241
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -5395.86,
+            "y": -3016.18,
+            "z": 327.663
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "loch_modan_hub_06",
+      "position": {
+        "mapId": 0,
+        "x": -5660.303,
+        "y": -4264.387,
+        "z": 407.678
+      },
+      "questGivers": [
+        1154,
+        1156,
+        1187
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 20,
+        "avg": 18
+      },
+      "faction": "Alliance",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:2713:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -5716.18,
+            "y": -3110.81,
+            "z": 316.79
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            1225
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1194:map:0:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -5580.04,
+            "y": -4139.32,
+            "z": 378.54
+          },
+          "radius": 123.17,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1194
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1192:map:0:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -5345.43,
+            "y": -4080.12,
+            "z": 333.54
+          },
+          "radius": 121.23,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1192
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1194:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -5436.05,
+            "y": -3914.14,
+            "z": 339.45
+          },
+          "radius": 74.23,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1194
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:2924:map:0:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -5435.31,
+            "y": -3716.03,
+            "z": 298.04
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1693,
+            2089,
+            2476,
+            2635,
+            3110,
+            3231
+          ],
+          "targetCount": 7
+        },
+        {
+          "taskAreaId": "item_source:2925:map:0:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -5435.31,
+            "y": -3716.03,
+            "z": 298.04
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1693,
+            2089,
+            2476,
+            2635,
+            3110,
+            3231
+          ],
+          "targetCount": 7
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "loch_modan_hub_07",
+      "position": {
+        "mapId": 0,
+        "x": -5394.69,
+        "y": -2941.023,
+        "z": 332.182
+      },
+      "questGivers": [
+        1340,
+        1572,
+        1963
+      ],
+      "levelRange": {
+        "min": 7,
+        "max": 23,
+        "avg": 15
+      },
+      "faction": "Alliance",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:3174:map:0:cluster:31",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -5465.02,
+            "y": -2859.67,
+            "z": 357.09
+          },
+          "radius": 152.43,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            217,
+            442,
+            471,
+            505,
+            539,
+            569
+          ],
+          "targetCount": 29
+        },
+        {
+          "taskAreaId": "item_source:3172:map:0:cluster:30",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -5349.17,
+            "y": -2818.89,
+            "z": 345.52
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            157,
+            345,
+            454,
+            547,
+            1190,
+            1191
+          ],
+          "targetCount": 13
+        },
+        {
+          "taskAreaId": "item_source:3173:map:0:cluster:34",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -5478.31,
+            "y": -2837.02,
+            "z": 354.13
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            822,
+            1130,
+            1186,
+            1188,
+            1189,
+            1225
+          ],
+          "targetCount": 22
+        },
+        {
+          "taskAreaId": "item_source:3174:map:0:cluster:32",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -5349.43,
+            "y": -2804.48,
+            "z": 352.6
+          },
+          "radius": 81.96,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            217,
+            442,
+            471,
+            505,
+            539,
+            569
+          ],
+          "targetCount": 29
+        },
+        {
+          "taskAreaId": "item_source:3110:map:0:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -5287.81,
+            "y": -2725.78,
+            "z": 346.31
+          },
+          "radius": 89.32,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1172,
+            1173,
+            1174,
+            1175,
+            1176,
+            1177
+          ],
+          "targetCount": 7
+        },
+        {
+          "taskAreaId": "item_source:3173:map:0:cluster:27",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -5592.49,
+            "y": -3082.19,
+            "z": 347.85
+          },
+          "radius": 181.86,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            822,
+            1130,
+            1186,
+            1188,
+            1189,
+            1225
+          ],
+          "targetCount": 22
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "loch_modan_hub_10",
+          "zoneId": 38,
+          "zoneName": "Loch Modan",
+          "questGivers": [
+            1343
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -4825.92,
+            "y": -2676.82,
+            "z": 341.206
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "loch_modan_hub_13",
+          "zoneId": 38,
+          "zoneName": "Loch Modan",
+          "questGivers": [
+            4256
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -4708.06,
+            "y": -1120.93,
+            "z": 504.531
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "loch_modan_hub_09",
+      "position": {
+        "mapId": 0,
+        "x": -5368.99,
+        "y": -3746.97,
+        "z": 304.797
+      },
+      "questGivers": [
+        6577
+      ],
+      "levelRange": {
+        "min": 12,
+        "max": 15,
+        "avg": 15
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "loch_modan_hub_08",
+      "position": {
+        "mapId": 0,
+        "x": -5348.204,
+        "y": -2997.092,
+        "z": 324.695
+      },
+      "questGivers": [
+        1105,
+        1139,
+        1470,
+        1681,
+        6241
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 44,
+        "avg": 25
+      },
+      "faction": "Alliance",
+      "totalQuests": 9,
+      "estimatedMinutes": 45,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:1179:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -4955.3,
+            "y": -3867.93,
+            "z": 310.93
+          },
+          "radius": 188.2,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1179
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1180:map:0:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -4860.08,
+            "y": -3892.7,
+            "z": 303.23
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1180
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1179:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -4959.14,
+            "y": -3995.32,
+            "z": 299.46
+          },
+          "radius": 97.35,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1179
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1180:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -4950.75,
+            "y": -4055.1,
+            "z": 299.48
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1180
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "loch_modan_hub_04",
+          "zoneId": 38,
+          "zoneName": "Loch Modan",
+          "questGivers": [
+            1379,
+            2057
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -5764.81,
+            "y": -3433.93,
+            "z": 305.89
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "loch_modan_hub_05",
+          "zoneId": 38,
+          "zoneName": "Loch Modan",
+          "questGivers": [
+            1344,
+            1345
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -5713.75,
+            "y": -3783.78,
+            "z": 323.018
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "loch_modan_hub_07",
+          "zoneId": 38,
+          "zoneName": "Loch Modan",
+          "questGivers": [
+            1340,
+            1572,
+            1963
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -5424.85,
+            "y": -2929.87,
+            "z": 347.645
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "loch_modan_hub_14",
+          "zoneId": 38,
+          "zoneName": "Loch Modan",
+          "questGivers": [
+            1356
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -4631.19,
+            "y": -1303.73,
+            "z": 503.465
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "loch_modan_hub_10",
+      "position": {
+        "mapId": 0,
+        "x": -4825.92,
+        "y": -2676.82,
+        "z": 341.206
+      },
+      "questGivers": [
+        1343
+      ],
+      "levelRange": {
+        "min": 9,
+        "max": 15,
+        "avg": 14
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "loch_modan_hub_11",
+      "position": {
+        "mapId": 0,
+        "x": -4821.13,
+        "y": -1152.4,
+        "z": 502.295
+      },
+      "questGivers": [
+        1573
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "loch_modan_hub_12",
+      "position": {
+        "mapId": 0,
+        "x": -4737.9,
+        "y": -3263.86,
+        "z": 310.34
+      },
+      "questGivers": [
+        1093
+      ],
+      "levelRange": {
+        "min": 16,
+        "max": 18,
+        "avg": 18
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:2606:map:0:cluster:9",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -4916.53,
+            "y": -3629.65,
+            "z": 300.91
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1184,
+            1185,
+            1195,
+            14266
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:2606:map:0:cluster:10",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -4840.78,
+            "y": -2803.87,
+            "z": 325.21
+          },
+          "radius": 120.62,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1184,
+            1185,
+            1195,
+            14266
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:2939:map:0:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -5202.44,
+            "y": -3554.13,
+            "z": 300.03
+          },
+          "radius": 111.42,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1693,
+            2476
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:2939:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -5478.06,
+            "y": -3513.5,
+            "z": 298.91
+          },
+          "radius": 84.64,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1693,
+            2476
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "loch_modan_hub_15",
+          "zoneId": 38,
+          "zoneName": "Loch Modan",
+          "questGivers": [
+            1073
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -2648.59,
+            "y": -2459.22,
+            "z": 80.483
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "loch_modan_hub_13",
+      "position": {
+        "mapId": 0,
+        "x": -4708.06,
+        "y": -1120.93,
+        "z": 504.531
+      },
+      "questGivers": [
+        4256
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "loch_modan_hub_11",
+          "zoneId": 38,
+          "zoneName": "Loch Modan",
+          "questGivers": [
+            1573
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -4821.13,
+            "y": -1152.4,
+            "z": 502.295
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "loch_modan_hub_14",
+      "position": {
+        "mapId": 0,
+        "x": -4631.19,
+        "y": -1303.73,
+        "z": 503.465
+      },
+      "questGivers": [
+        1356
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 40,
+        "avg": 32
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "loch_modan_hub_05",
+          "zoneId": 38,
+          "zoneName": "Loch Modan",
+          "questGivers": [
+            1344,
+            1345
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -5713.75,
+            "y": -3783.78,
+            "z": 323.018
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "loch_modan_hub_08",
+          "zoneId": 38,
+          "zoneName": "Loch Modan",
+          "questGivers": [
+            1105,
+            1139,
+            1470,
+            1681,
+            6241
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -5395.86,
+            "y": -3016.18,
+            "z": 327.663
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "loch_modan_hub_15",
+      "position": {
+        "mapId": 0,
+        "x": -2648.59,
+        "y": -2459.22,
+        "z": 80.483
+      },
+      "questGivers": [
+        1073
+      ],
+      "levelRange": {
+        "min": 16,
+        "max": 18,
+        "avg": 18
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "loch_modan_hub_12",
+          "zoneId": 38,
+          "zoneName": "Loch Modan",
+          "questGivers": [
+            1093
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -4737.9,
+            "y": -3263.86,
+            "z": 310.34
+          },
+          "weight": 1
+        }
+      ]
+    }
+  ]
+}

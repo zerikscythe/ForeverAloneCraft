@@ -1,0 +1,740 @@
+{
+  "version": 1,
+  "zoneId": 47,
+  "zoneName": "The Hinterlands",
+  "mapId": 0,
+  "hubCount": 14,
+  "hubs": [
+    {
+      "hubId": "the_hinterlands_hub_01",
+      "position": {
+        "mapId": 0,
+        "x": -11001.5,
+        "y": -3482.74,
+        "z": 103.227
+      },
+      "questGivers": [
+        8022
+      ],
+      "levelRange": {
+        "min": 40,
+        "max": 47,
+        "avg": 47
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "the_hinterlands_hub_11",
+          "zoneId": 47,
+          "zoneName": "The Hinterlands",
+          "questGivers": [
+            5636
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 325.182,
+            "y": -1950.5,
+            "z": 197.708
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_hinterlands_hub_02",
+      "position": {
+        "mapId": 0,
+        "x": -626.071,
+        "y": -4667.71,
+        "z": 6.508
+      },
+      "questGivers": [
+        14740
+      ],
+      "levelRange": {
+        "min": 44,
+        "max": 50,
+        "avg": 49
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:2505:map:0:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -517.04,
+            "y": -4676.53,
+            "z": -8.64
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2505
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:2505:map:0:cluster:5",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -720.65,
+            "y": -4530.76,
+            "z": -4.22
+          },
+          "radius": 74.53,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2505
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:19023:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -27.8,
+            "y": -4670.38,
+            "z": 10.33
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7977
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_hinterlands_hub_03",
+      "position": {
+        "mapId": 0,
+        "x": -584.72,
+        "y": -4596.722,
+        "z": 14.166
+      },
+      "questGivers": [
+        14731,
+        14736,
+        14737,
+        14738,
+        14739,
+        14741
+      ],
+      "levelRange": {
+        "min": 44,
+        "max": 51,
+        "avg": 49
+      },
+      "faction": "Horde",
+      "totalQuests": 12,
+      "estimatedMinutes": 60,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:2926:map:0:cluster:7",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 19.73,
+            "y": -4361.74,
+            "z": 134.19
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2926
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:2926:map:0:cluster:9",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 94.54,
+            "y": -4517.43,
+            "z": 136.44
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2926
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:2929:map:0:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -17.65,
+            "y": -4099.59,
+            "z": 119.25
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2929
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4467:map:0:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 222.68,
+            "y": -4307.36,
+            "z": 117.83
+          },
+          "radius": 49.23,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4467
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4466:map:0:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 230.82,
+            "y": -4312.33,
+            "z": 119.21
+          },
+          "radius": 92.87,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4466
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:19025:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 133.36,
+            "y": -4032.63,
+            "z": 127.87
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2659
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "the_hinterlands_hub_04",
+          "zoneId": 47,
+          "zoneName": "The Hinterlands",
+          "questGivers": [
+            14757
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -531.294,
+            "y": -3873.08,
+            "z": 232.593
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_hinterlands_hub_04",
+      "position": {
+        "mapId": 0,
+        "x": -531.294,
+        "y": -3873.08,
+        "z": 232.593
+      },
+      "questGivers": [
+        14757
+      ],
+      "levelRange": {
+        "min": 46,
+        "max": 51,
+        "avg": 51
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_hinterlands_hub_05",
+      "position": {
+        "mapId": 0,
+        "x": -463.676,
+        "y": -2874.4,
+        "z": 96.85
+      },
+      "questGivers": [
+        5598
+      ],
+      "levelRange": {
+        "min": 38,
+        "max": 53,
+        "avg": 48
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_hinterlands_hub_06",
+      "position": {
+        "mapId": 0,
+        "x": 219.507,
+        "y": -2607.79,
+        "z": 160.452
+      },
+      "questGivers": [
+        5634,
+        7801
+      ],
+      "levelRange": {
+        "min": 38,
+        "max": 48,
+        "avg": 46
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_hinterlands_hub_07",
+      "position": {
+        "mapId": 0,
+        "x": 254.952,
+        "y": -2156.55,
+        "z": 120.151
+      },
+      "questGivers": [
+        17223
+      ],
+      "levelRange": {
+        "min": 40,
+        "max": 46,
+        "avg": 45
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:2923:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 59.37,
+            "y": -2173.3,
+            "z": 107.16
+          },
+          "radius": 67.05,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2923
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:2923:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 139.92,
+            "y": -2347.41,
+            "z": 117.09
+          },
+          "radius": 177.23,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2923
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:2924:map:0:cluster:6",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 155.73,
+            "y": -2525.83,
+            "z": 124.74
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2924
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:2924:map:0:cluster:7",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 85.78,
+            "y": -2679.8,
+            "z": 114.27
+          },
+          "radius": 70.15,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2924
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_hinterlands_hub_08",
+      "position": {
+        "mapId": 0,
+        "x": 262.982,
+        "y": -2758.03,
+        "z": 122.636
+      },
+      "questGivers": [
+        7780
+      ],
+      "levelRange": {
+        "min": 42,
+        "max": 47,
+        "avg": 47
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_hinterlands_hub_09",
+      "position": {
+        "mapId": 0,
+        "x": 266.603,
+        "y": -2029.53,
+        "z": 171.866
+      },
+      "questGivers": [
+        5635
+      ],
+      "levelRange": {
+        "min": 38,
+        "max": 43,
+        "avg": 43
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "the_hinterlands_hub_11",
+          "zoneId": 47,
+          "zoneName": "The Hinterlands",
+          "questGivers": [
+            5636
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 325.182,
+            "y": -1950.5,
+            "z": 197.708
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_hinterlands_hub_10",
+      "position": {
+        "mapId": 0,
+        "x": 322.773,
+        "y": -2146.14,
+        "z": 123.311
+      },
+      "questGivers": [
+        7884
+      ],
+      "levelRange": {
+        "min": 40,
+        "max": 48,
+        "avg": 46
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:2656:map:0:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 431.84,
+            "y": -3344.24,
+            "z": 120.28
+          },
+          "radius": 118.14,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2656
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:2656:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 171.1,
+            "y": -3459.9,
+            "z": 127.9
+          },
+          "radius": 104.21,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2656
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:2655:map:0:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 229.02,
+            "y": -3484.88,
+            "z": 158.65
+          },
+          "radius": 60.84,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2655
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:9259:map:0:cluster:8",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 456.38,
+            "y": -3624.96,
+            "z": 120.16
+          },
+          "radius": 76.84,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2639,
+            2640,
+            2641,
+            2642,
+            2643,
+            2644
+          ],
+          "targetCount": 29
+        },
+        {
+          "taskAreaId": "creature:2655:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 375.94,
+            "y": -3784.82,
+            "z": 118.88
+          },
+          "radius": 134.87,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2655
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:9259:map:0:cluster:10",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 331.38,
+            "y": -4125.7,
+            "z": 119.77
+          },
+          "radius": 74.7,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2639,
+            2640,
+            2641,
+            2642,
+            2643,
+            2644
+          ],
+          "targetCount": 29
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_hinterlands_hub_11",
+      "position": {
+        "mapId": 0,
+        "x": 325.182,
+        "y": -1950.5,
+        "z": 197.708
+      },
+      "questGivers": [
+        5636
+      ],
+      "levelRange": {
+        "min": 38,
+        "max": 51,
+        "avg": 47
+      },
+      "faction": "Alliance",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "the_hinterlands_hub_01",
+          "zoneId": 47,
+          "zoneName": "The Hinterlands",
+          "questGivers": [
+            8022
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -11001.5,
+            "y": -3482.74,
+            "z": 103.227
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "the_hinterlands_hub_06",
+          "zoneId": 47,
+          "zoneName": "The Hinterlands",
+          "questGivers": [
+            5634,
+            7801
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 219.417,
+            "y": -2603.37,
+            "z": 160.356
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_hinterlands_hub_12",
+      "position": {
+        "mapId": 0,
+        "x": 500.159,
+        "y": -3475.07,
+        "z": 116.513
+      },
+      "questGivers": [
+        7806
+      ],
+      "levelRange": {
+        "min": 43,
+        "max": 48,
+        "avg": 48
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_hinterlands_hub_13",
+      "position": {
+        "mapId": 0,
+        "x": 1206.14,
+        "y": -2411.52,
+        "z": 61.225
+      },
+      "questGivers": [
+        11936
+      ],
+      "levelRange": {
+        "min": 52,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_hinterlands_hub_14",
+      "position": {
+        "mapId": 0,
+        "x": 1253.55,
+        "y": -2602.62,
+        "z": 91.588
+      },
+      "questGivers": [
+        11216
+      ],
+      "levelRange": {
+        "min": 55,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

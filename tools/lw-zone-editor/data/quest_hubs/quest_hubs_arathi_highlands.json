@@ -1,0 +1,402 @@
+{
+  "version": 1,
+  "zoneId": 45,
+  "zoneName": "Arathi Highlands",
+  "mapId": 0,
+  "hubCount": 4,
+  "hubs": [
+    {
+      "hubId": "arathi_highlands_hub_01",
+      "position": {
+        "mapId": 0,
+        "x": -2082.66,
+        "y": -2058.203,
+        "z": 6.779
+      },
+      "questGivers": [
+        2610,
+        2766,
+        2767,
+        2768,
+        2769,
+        2774
+      ],
+      "levelRange": {
+        "min": 35,
+        "max": 44,
+        "avg": 40
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:2595:map:0:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -2326.77,
+            "y": -1785.46,
+            "z": -37.16
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2595
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:2596:map:0:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -2163.87,
+            "y": -1693.85,
+            "z": -35.39
+          },
+          "radius": 63.34,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2596
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:2595:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -2218.31,
+            "y": -1670.64,
+            "z": -47.3
+          },
+          "radius": 189.76,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2595
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:2596:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -2215.58,
+            "y": -1624.1,
+            "z": -46.04
+          },
+          "radius": 158.29,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2596
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "arathi_highlands_hub_02",
+      "position": {
+        "mapId": 0,
+        "x": -1246.457,
+        "y": -2524.748,
+        "z": 21.697
+      },
+      "questGivers": [
+        2700,
+        2788,
+        2789,
+        14983,
+        14984,
+        15127
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 70,
+        "avg": 43
+      },
+      "faction": "Alliance",
+      "totalQuests": 22,
+      "estimatedMinutes": 110,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:4503:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -1116.13,
+            "y": -2216.56,
+            "z": 59.6
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2552,
+            2553,
+            2554,
+            2555,
+            2556,
+            2557
+          ],
+          "targetCount": 8
+        },
+        {
+          "taskAreaId": "item_source:4503:map:0:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -1911.25,
+            "y": -3020.16,
+            "z": 65.83
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2552,
+            2553,
+            2554,
+            2555,
+            2556,
+            2557
+          ],
+          "targetCount": 8
+        },
+        {
+          "taskAreaId": "item_source:4522:map:0:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -1664.53,
+            "y": -3256.47,
+            "z": 25.77
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2555
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:4525:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -2098.22,
+            "y": -2837.68,
+            "z": 79.14
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2793
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:4522:map:0:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -1731.55,
+            "y": -3372.45,
+            "z": 32.32
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2555
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:4527:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -1751.98,
+            "y": -1583.99,
+            "z": 58.78
+          },
+          "radius": 122.89,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2570
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "arathi_highlands_hub_03",
+      "position": {
+        "mapId": 0,
+        "x": -968.873,
+        "y": -3527.531,
+        "z": 63.083
+      },
+      "questGivers": [
+        2703,
+        2706,
+        2771,
+        2772,
+        2787,
+        2792,
+        12920
+      ],
+      "levelRange": {
+        "min": 29,
+        "max": 42,
+        "avg": 38
+      },
+      "faction": "Horde",
+      "totalQuests": 21,
+      "estimatedMinutes": 105,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:4512:map:0:cluster:20",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -880.18,
+            "y": -3613.46,
+            "z": 76.98
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2559,
+            2560
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:4512:map:0:cluster:15",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -986.95,
+            "y": -3302.35,
+            "z": 56.7
+          },
+          "radius": 186.36,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2559,
+            2560
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "creature:2554:map:0:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -1570.4,
+            "y": -3430.07,
+            "z": 49.74
+          },
+          "radius": 79.42,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2554
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:2554:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -1645.94,
+            "y": -3487.22,
+            "z": 59.86
+          },
+          "radius": 129.77,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2554
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:2556:map:0:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -1662.74,
+            "y": -3468.77,
+            "z": 53.92
+          },
+          "radius": 57.12,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2556
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:2555:map:0:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -1668.56,
+            "y": -3465.4,
+            "z": 51.95
+          },
+          "radius": 133.75,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2555
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "arathi_highlands_hub_04",
+      "position": {
+        "mapId": 0,
+        "x": -846.672,
+        "y": -3507.643,
+        "z": 73.609
+      },
+      "questGivers": [
+        15021,
+        15022,
+        15126
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 70,
+        "avg": 46
+      },
+      "faction": "Horde",
+      "totalQuests": 14,
+      "estimatedMinutes": 70,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

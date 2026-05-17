@@ -1,0 +1,1977 @@
+{
+  "version": 1,
+  "zoneId": 210,
+  "zoneName": "Icecrown",
+  "mapId": 571,
+  "hubCount": 33,
+  "hubs": [
+    {
+      "hubId": "icecrown_hub_01",
+      "position": {
+        "mapId": 571,
+        "x": 5641.55,
+        "y": 2097.045,
+        "z": 798.138
+      },
+      "questGivers": [
+        36624,
+        36642
+      ],
+      "levelRange": {
+        "min": 80,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Horde",
+      "totalQuests": 16,
+      "estimatedMinutes": 80,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "icecrown_hub_27",
+          "zoneId": 210,
+          "zoneName": "Icecrown",
+          "questGivers": [
+            36624,
+            36642
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 8117.69,
+            "y": 795.523,
+            "z": 481.184
+          },
+          "weight": 6
+        },
+        {
+          "hubId": "icecrown_hub_02",
+          "zoneId": 210,
+          "zoneName": "Icecrown",
+          "questGivers": [
+            36669
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5745.5,
+            "y": 720.524,
+            "z": 657.121
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "icecrown_hub_05",
+          "zoneId": 210,
+          "zoneName": "Icecrown",
+          "questGivers": [
+            31081,
+            31085,
+            36670
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5805.43,
+            "y": 490.447,
+            "z": 657.279
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "icecrown_hub_02",
+      "position": {
+        "mapId": 571,
+        "x": 5745.5,
+        "y": 720.524,
+        "z": 657.121
+      },
+      "questGivers": [
+        36669
+      ],
+      "levelRange": {
+        "min": 80,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "icecrown_hub_03",
+      "position": {
+        "mapId": 571,
+        "x": 5792.52,
+        "y": 2069.49,
+        "z": -345.088
+      },
+      "questGivers": [
+        31237
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:44001:map:571:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 5816.38,
+            "y": 1936.38,
+            "z": -345.15
+          },
+          "radius": 213.97,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            23661,
+            23662,
+            23663,
+            23664,
+            23665,
+            23666
+          ],
+          "targetCount": 11
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "icecrown_hub_04",
+      "position": {
+        "mapId": 571,
+        "x": 5802.4,
+        "y": 2198.67,
+        "z": 514.367
+      },
+      "questGivers": [
+        31444
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:31411:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5759.02,
+            "y": 2064.04,
+            "z": 505.23
+          },
+          "radius": 168.89,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            31411
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "icecrown_hub_05",
+      "position": {
+        "mapId": 571,
+        "x": 5846.633,
+        "y": 479.419,
+        "z": 652.243
+      },
+      "questGivers": [
+        31081,
+        31085,
+        36670
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "icecrown_hub_06",
+      "position": {
+        "mapId": 571,
+        "x": 5874.2,
+        "y": 1948.5,
+        "z": 516.1
+      },
+      "questGivers": [
+        31440
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:31413:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5759.02,
+            "y": 2064.04,
+            "z": 505.23
+          },
+          "radius": 168.89,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            31413
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "icecrown_hub_07",
+      "position": {
+        "mapId": 571,
+        "x": 6123.02,
+        "y": -12.607,
+        "z": 383.594
+      },
+      "questGivers": [
+        30227
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 78,
+        "avg": 78
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "icecrown_hub_08",
+          "zoneId": 210,
+          "zoneName": "Icecrown",
+          "questGivers": [
+            28179,
+            30223,
+            30226
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 6222.29,
+            "y": -2.551,
+            "z": 410.193
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "icecrown_hub_08",
+      "position": {
+        "mapId": 571,
+        "x": 6244.813,
+        "y": -20.422,
+        "z": 413.941
+      },
+      "questGivers": [
+        28179,
+        30223,
+        30226
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 78,
+        "avg": 78
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "icecrown_hub_07",
+          "zoneId": 210,
+          "zoneName": "Icecrown",
+          "questGivers": [
+            30227
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 6123.02,
+            "y": -12.607,
+            "z": 383.594
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "icecrown_hub_09",
+          "zoneId": 210,
+          "zoneName": "Icecrown",
+          "questGivers": [
+            30224,
+            30657,
+            30677
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 6249.12,
+            "y": 74.689,
+            "z": 390.15
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "icecrown_hub_09",
+      "position": {
+        "mapId": 571,
+        "x": 6255.93,
+        "y": 57.363,
+        "z": 389.02
+      },
+      "questGivers": [
+        30224,
+        30657,
+        30677
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 79,
+        "avg": 78
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "icecrown_hub_08",
+          "zoneId": 210,
+          "zoneName": "Icecrown",
+          "questGivers": [
+            28179,
+            30223,
+            30226
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 6222.29,
+            "y": -2.551,
+            "z": 410.193
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "icecrown_hub_11",
+          "zoneId": 210,
+          "zoneName": "Icecrown",
+          "questGivers": [
+            30596,
+            30683,
+            30686,
+            30714
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 6370.63,
+            "y": 232.238,
+            "z": 396.046
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "icecrown_hub_10",
+      "position": {
+        "mapId": 571,
+        "x": 6364.04,
+        "y": 2328.19,
+        "z": 473.12
+      },
+      "questGivers": [
+        32497
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "icecrown_hub_11",
+      "position": {
+        "mapId": 571,
+        "x": 6375.73,
+        "y": 239.464,
+        "z": 396.357
+      },
+      "questGivers": [
+        30596,
+        30683,
+        30686,
+        30714
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 79,
+        "avg": 79
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:43169:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 6655.04,
+            "y": 328.89,
+            "z": 442.76
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30202,
+            30482,
+            30541,
+            30543
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "creature:30202:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6655.04,
+            "y": 328.89,
+            "z": 442.76
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30202
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:30543:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6556.75,
+            "y": 581.58,
+            "z": 419.19
+          },
+          "radius": 39.29,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30543
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:30541:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6682.65,
+            "y": 529.51,
+            "z": 410.25
+          },
+          "radius": 193.84,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30541
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:30831:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6869.48,
+            "y": 423.29,
+            "z": 471.78
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30831
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:30829:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6839.02,
+            "y": 594.45,
+            "z": 427.23
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30829
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "icecrown_hub_09",
+          "zoneId": 210,
+          "zoneName": "Icecrown",
+          "questGivers": [
+            30224,
+            30657,
+            30677
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 6249.12,
+            "y": 74.689,
+            "z": 390.15
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "icecrown_hub_12",
+      "position": {
+        "mapId": 571,
+        "x": 6397.673,
+        "y": 455.871,
+        "z": 514.751
+      },
+      "questGivers": [
+        31044,
+        31240,
+        31241
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "icecrown_hub_18",
+          "zoneId": 210,
+          "zoneName": "Icecrown",
+          "questGivers": [
+            31892
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 6947.77,
+            "y": 2027.07,
+            "z": 519.605
+          },
+          "weight": 2
+        },
+        {
+          "hubId": "icecrown_hub_28",
+          "zoneId": 210,
+          "zoneName": "Icecrown",
+          "questGivers": [
+            30562
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 8139.51,
+            "y": 435.557,
+            "z": 574.775
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "icecrown_hub_13",
+      "position": {
+        "mapId": 571,
+        "x": 6439.61,
+        "y": 2065.58,
+        "z": 563.378
+      },
+      "questGivers": [
+        30944
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 9,
+      "estimatedMinutes": 45,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:31049:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6504.86,
+            "y": 1970.68,
+            "z": 647.6
+          },
+          "radius": 51.2,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            31049
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:31068:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6461.64,
+            "y": 1801.17,
+            "z": 527.06
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            31068
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:31075:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6290.88,
+            "y": 1826.9,
+            "z": 518.16
+          },
+          "radius": 88.56,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            31075
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:31159:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6408.76,
+            "y": 1725.81,
+            "z": 508.6
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            31159
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:31066:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6312.41,
+            "y": 1742.58,
+            "z": 525.28
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            31066
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:31012:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6206.86,
+            "y": 1780.79,
+            "z": 618.46
+          },
+          "radius": 47.95,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            31012
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "icecrown_hub_14",
+      "position": {
+        "mapId": 571,
+        "x": 6601.223,
+        "y": 1167.103,
+        "z": 278.39
+      },
+      "questGivers": [
+        31273,
+        31304
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:31304:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6555.34,
+            "y": 1151.96,
+            "z": 276.96
+          },
+          "radius": 86.92,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            31304
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:31304:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6519.17,
+            "y": 925.56,
+            "z": 298.15
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            31304
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "icecrown_hub_15",
+      "position": {
+        "mapId": 571,
+        "x": 6651.46,
+        "y": 3221.18,
+        "z": 810.501
+      },
+      "questGivers": [
+        30631,
+        30708
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 12,
+      "estimatedMinutes": 60,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:43291:map:571:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 6319.87,
+            "y": 1822.66,
+            "z": 510.0
+          },
+          "radius": 44.05,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30921,
+            31321
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:43291:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 6349.78,
+            "y": 1747.49,
+            "z": 525.47
+          },
+          "radius": 169.12,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30921,
+            31321
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "icecrown_hub_17",
+      "position": {
+        "mapId": 571,
+        "x": 6717.81,
+        "y": 3451.98,
+        "z": 683.747
+      },
+      "questGivers": [
+        31279
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "icecrown_hub_16",
+      "position": {
+        "mapId": 571,
+        "x": 6797.119,
+        "y": 1067.703,
+        "z": 292.802
+      },
+      "questGivers": [
+        31273,
+        31304
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:31304:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6555.34,
+            "y": 1151.96,
+            "z": 276.96
+          },
+          "radius": 86.92,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            31304
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:31304:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6519.17,
+            "y": 925.56,
+            "z": 298.15
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            31304
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "icecrown_hub_18",
+      "position": {
+        "mapId": 571,
+        "x": 6947.77,
+        "y": 2027.07,
+        "z": 519.605
+      },
+      "questGivers": [
+        31892
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:44153:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 6944.83,
+            "y": 1987.42,
+            "z": 524.95
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            31399
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "icecrown_hub_19",
+      "position": {
+        "mapId": 571,
+        "x": 7304.98,
+        "y": 1178.44,
+        "z": 323.646
+      },
+      "questGivers": [
+        32408
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:31815:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 7418.52,
+            "y": 1355.11,
+            "z": 312.21
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            31815
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:31815:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 7588.71,
+            "y": 1499.28,
+            "z": 333.55
+          },
+          "radius": 141.04,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            31815
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:31812:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 7759.47,
+            "y": 1350.28,
+            "z": 363.11
+          },
+          "radius": 42.28,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            31812
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:31813:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 7782.06,
+            "y": 1384.76,
+            "z": 373.14
+          },
+          "radius": 50.88,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            31813
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "icecrown_hub_21",
+          "zoneId": 210,
+          "zoneName": "Icecrown",
+          "questGivers": [
+            32404
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 7600.17,
+            "y": 1398.21,
+            "z": 333.427
+          },
+          "weight": 2
+        }
+      ]
+    },
+    {
+      "hubId": "icecrown_hub_20",
+      "position": {
+        "mapId": 571,
+        "x": 7413.87,
+        "y": 4218.32,
+        "z": 315.422
+      },
+      "questGivers": [
+        29344
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:29542:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 7450.03,
+            "y": 4846.02,
+            "z": 57.26
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29542
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:29490:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 7674.19,
+            "y": 5002.68,
+            "z": 20.45
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29490
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:29489:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 7673.72,
+            "y": 5088.04,
+            "z": 20.26
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29489
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "icecrown_hub_21",
+      "position": {
+        "mapId": 571,
+        "x": 7600.17,
+        "y": 1398.21,
+        "z": 333.427
+      },
+      "questGivers": [
+        32404
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "icecrown_hub_22",
+      "position": {
+        "mapId": 571,
+        "x": 7623.05,
+        "y": 2060.18,
+        "z": 600.359
+      },
+      "questGivers": [
+        32444
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:32154:map:571:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 7496.35,
+            "y": 2096.04,
+            "z": 500.2
+          },
+          "radius": 145.16,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            32154
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:32154:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 7851.09,
+            "y": 1955.81,
+            "z": 367.0
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            32154
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "icecrown_hub_23",
+      "position": {
+        "mapId": 571,
+        "x": 7631.19,
+        "y": 3405.44,
+        "z": 656.402
+      },
+      "questGivers": [
+        30232
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 9,
+      "estimatedMinutes": 45,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:43089:map:571:cluster:10",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 7725.69,
+            "y": 3407.21,
+            "z": 659.19
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            29738,
+            29880,
+            29915,
+            30037,
+            30243,
+            30250
+          ],
+          "targetCount": 21
+        },
+        {
+          "taskAreaId": "item_source:43089:map:571:cluster:13",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 7647.92,
+            "y": 3599.57,
+            "z": 658.73
+          },
+          "radius": 90.22,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            29738,
+            29880,
+            29915,
+            30037,
+            30243,
+            30250
+          ],
+          "targetCount": 21
+        },
+        {
+          "taskAreaId": "creature:30409:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 7895.97,
+            "y": 3296.92,
+            "z": 632.7
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30409
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "icecrown_hub_24",
+      "position": {
+        "mapId": 571,
+        "x": 7854.05,
+        "y": 957.014,
+        "z": 450.898
+      },
+      "questGivers": [
+        32423
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:44631:map:571:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 7852.41,
+            "y": 1154.5,
+            "z": 445.86
+          },
+          "radius": 144.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            31718
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:44631:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 7517.95,
+            "y": 670.67,
+            "z": 488.05
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            31718
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "icecrown_hub_10",
+          "zoneId": 210,
+          "zoneName": "Icecrown",
+          "questGivers": [
+            32497
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 6364.04,
+            "y": 2328.19,
+            "z": 473.12
+          },
+          "weight": 2
+        }
+      ]
+    },
+    {
+      "hubId": "icecrown_hub_25",
+      "position": {
+        "mapId": 571,
+        "x": 7897.96,
+        "y": 2057.59,
+        "z": 600.36
+      },
+      "questGivers": [
+        32430
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:32154:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 7851.09,
+            "y": 1955.81,
+            "z": 367.0
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            32154
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:32154:map:571:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 7496.35,
+            "y": 2096.04,
+            "z": 500.2
+          },
+          "radius": 145.16,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            32154
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "icecrown_hub_26",
+      "position": {
+        "mapId": 571,
+        "x": 8044.34,
+        "y": 3179.39,
+        "z": 676.195
+      },
+      "questGivers": [
+        30406
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:30475:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 7830.01,
+            "y": 3387.26,
+            "z": 652.49
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30475
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "icecrown_hub_27",
+      "position": {
+        "mapId": 571,
+        "x": 8122.16,
+        "y": 781.388,
+        "z": 481.872
+      },
+      "questGivers": [
+        36624,
+        36642
+      ],
+      "levelRange": {
+        "min": 80,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Horde",
+      "totalQuests": 16,
+      "estimatedMinutes": 80,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "icecrown_hub_02",
+          "zoneId": 210,
+          "zoneName": "Icecrown",
+          "questGivers": [
+            36669
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5745.5,
+            "y": 720.524,
+            "z": 657.121
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "icecrown_hub_05",
+          "zoneId": 210,
+          "zoneName": "Icecrown",
+          "questGivers": [
+            31081,
+            31085,
+            36670
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5805.43,
+            "y": 490.447,
+            "z": 657.279
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "icecrown_hub_28",
+      "position": {
+        "mapId": 571,
+        "x": 8139.51,
+        "y": 435.557,
+        "z": 574.775
+      },
+      "questGivers": [
+        30562
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "icecrown_hub_12",
+          "zoneId": 210,
+          "zoneName": "Icecrown",
+          "questGivers": [
+            31044,
+            31240,
+            31241
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 6379.6,
+            "y": 465.147,
+            "z": 516.483
+          },
+          "weight": 3
+        }
+      ]
+    },
+    {
+      "hubId": "icecrown_hub_29",
+      "position": {
+        "mapId": 571,
+        "x": 8216.23,
+        "y": 3516.22,
+        "z": 630.964
+      },
+      "questGivers": [
+        31135
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "icecrown_hub_30",
+      "position": {
+        "mapId": 571,
+        "x": 8387.188,
+        "y": 2713.952,
+        "z": 656.51
+      },
+      "questGivers": [
+        29343,
+        29804,
+        30074,
+        30216,
+        30946
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 18,
+      "estimatedMinutes": 90,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:41361:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 8326.57,
+            "y": 2764.95,
+            "z": 674.09
+          },
+          "radius": 154.38,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29719
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:29880:map:571:cluster:11",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 8426.17,
+            "y": 2936.95,
+            "z": 606.59
+          },
+          "radius": 108.31,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29880
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:30081:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 8376.6,
+            "y": 3069.63,
+            "z": 588.23
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30081
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:30180:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 8468.22,
+            "y": 3069.44,
+            "z": 588.88
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30180
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:31131:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 8064.92,
+            "y": 2919.09,
+            "z": 566.7
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            31131
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:30951:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 7999.38,
+            "y": 2823.74,
+            "z": 526.62
+          },
+          "radius": 79.12,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30951
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "icecrown_hub_13",
+          "zoneId": 210,
+          "zoneName": "Icecrown",
+          "questGivers": [
+            30944
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 6439.61,
+            "y": 2065.58,
+            "z": 563.378
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "icecrown_hub_20",
+          "zoneId": 210,
+          "zoneName": "Icecrown",
+          "questGivers": [
+            29344
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 7413.87,
+            "y": 4218.32,
+            "z": 315.422
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "icecrown_hub_32",
+          "zoneId": 210,
+          "zoneName": "Icecrown",
+          "questGivers": [
+            30218
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 8546.19,
+            "y": 2740.24,
+            "z": 652.437
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "icecrown_hub_33",
+          "zoneId": 210,
+          "zoneName": "Icecrown",
+          "questGivers": [
+            30002
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 8576.94,
+            "y": 2643.16,
+            "z": 652.437
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "icecrown_hub_31",
+      "position": {
+        "mapId": 571,
+        "x": 8429.11,
+        "y": 2870.46,
+        "z": 606.349
+      },
+      "questGivers": [
+        30056
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:41843:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 8456.6,
+            "y": 3113.97,
+            "z": 588.19
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29915
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "icecrown_hub_32",
+      "position": {
+        "mapId": 571,
+        "x": 8546.19,
+        "y": 2740.24,
+        "z": 652.437
+      },
+      "questGivers": [
+        30218
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:30186:map:571:cluster:6",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 7878.6,
+            "y": 3499.39,
+            "z": 672.48
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30186
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:30186:map:571:cluster:5",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 7734.15,
+            "y": 3657.75,
+            "z": 658.9
+          },
+          "radius": 111.16,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30186
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "icecrown_hub_33",
+      "position": {
+        "mapId": 571,
+        "x": 8576.94,
+        "y": 2643.16,
+        "z": 652.437
+      },
+      "questGivers": [
+        30002
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:29919:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 8426.61,
+            "y": 2927.59,
+            "z": 606.26
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29919
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "icecrown_hub_30",
+          "zoneId": 210,
+          "zoneName": "Icecrown",
+          "questGivers": [
+            29343,
+            29804,
+            30074,
+            30216,
+            30946
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 8374.06,
+            "y": 2738.74,
+            "z": 655.211
+          },
+          "weight": 1
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,763 @@
+{
+  "version": 1,
+  "zoneId": 51,
+  "zoneName": "Searing Gorge",
+  "mapId": 0,
+  "hubCount": 11,
+  "hubs": [
+    {
+      "hubId": "searing_gorge_hub_01",
+      "position": {
+        "mapId": 0,
+        "x": -7508.63,
+        "y": -1039.84,
+        "z": 180.995
+      },
+      "questGivers": [
+        14387
+      ],
+      "levelRange": {
+        "min": 55,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "searing_gorge_hub_02",
+      "position": {
+        "mapId": 0,
+        "x": -7471.29,
+        "y": -2189.733,
+        "z": 165.338
+      },
+      "questGivers": [
+        9544,
+        9563,
+        10260
+      ],
+      "levelRange": {
+        "min": 48,
+        "max": 60,
+        "avg": 58
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "searing_gorge_hub_03",
+      "position": {
+        "mapId": 0,
+        "x": -7230.06,
+        "y": -1741.08,
+        "z": 244.53
+      },
+      "questGivers": [
+        7868
+      ],
+      "levelRange": {
+        "min": 40,
+        "max": 55,
+        "avg": 55
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:7077:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -7237.0,
+            "y": -1609.41,
+            "z": 264.12
+          },
+          "radius": 68.36,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2745,
+            5850,
+            5852,
+            5855,
+            6520,
+            6521
+          ],
+          "targetCount": 38
+        },
+        {
+          "taskAreaId": "item_source:7077:map:0:cluster:9",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -7023.5,
+            "y": -1492.53,
+            "z": 239.32
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2745,
+            5850,
+            5852,
+            5855,
+            6520,
+            6521
+          ],
+          "targetCount": 38
+        },
+        {
+          "taskAreaId": "item_source:7075:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -7338.75,
+            "y": -2453.5,
+            "z": 305.15
+          },
+          "radius": 105.96,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2736,
+            2752,
+            2755,
+            2791,
+            2919,
+            5465
+          ],
+          "targetCount": 37
+        },
+        {
+          "taskAreaId": "item_source:7075:map:0:cluster:17",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -7028.84,
+            "y": -981.84,
+            "z": 250.0
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2736,
+            2752,
+            2755,
+            2791,
+            2919,
+            5465
+          ],
+          "targetCount": 37
+        },
+        {
+          "taskAreaId": "item_source:7079:map:0:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6653.33,
+            "y": -668.79,
+            "z": 233.73
+          },
+          "radius": 129.54,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5461,
+            5462,
+            7132,
+            8519,
+            8520,
+            8521
+          ],
+          "targetCount": 18
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "searing_gorge_hub_04",
+      "position": {
+        "mapId": 0,
+        "x": -7214.83,
+        "y": -1237.47,
+        "z": 254.776
+      },
+      "questGivers": [
+        8439
+      ],
+      "levelRange": {
+        "min": 40,
+        "max": 50,
+        "avg": 50
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:10467:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6873.29,
+            "y": -1097.47,
+            "z": 192.75
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            8444
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:8444:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -6873.29,
+            "y": -1097.47,
+            "z": 192.75
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            8444
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:8447:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -6871.87,
+            "y": -1096.94,
+            "z": 193.03
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            8447
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:8442:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -6475.9,
+            "y": -1653.26,
+            "z": 297.21
+          },
+          "radius": 39.04,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            8442
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "searing_gorge_hub_05",
+      "position": {
+        "mapId": 0,
+        "x": -7007.21,
+        "y": -1749.16,
+        "z": 234.182
+      },
+      "questGivers": [
+        8284
+      ],
+      "levelRange": {
+        "min": 40,
+        "max": 46,
+        "avg": 46
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "searing_gorge_hub_06",
+      "position": {
+        "mapId": 0,
+        "x": -6685.855,
+        "y": -2156.52,
+        "z": 244.195
+      },
+      "questGivers": [
+        9078,
+        9084
+      ],
+      "levelRange": {
+        "min": 48,
+        "max": 60,
+        "avg": 55
+      },
+      "faction": "Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:11129:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6796.7,
+            "y": -1464.24,
+            "z": 173.09
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            8281,
+            8905,
+            8906,
+            8908,
+            8909,
+            8910
+          ],
+          "targetCount": 12
+        },
+        {
+          "taskAreaId": "item_source:11129:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6929.1,
+            "y": -1125.1,
+            "z": 148.78
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            8281,
+            8905,
+            8906,
+            8908,
+            8909,
+            8910
+          ],
+          "targetCount": 12
+        },
+        {
+          "taskAreaId": "creature:9026:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -7230.64,
+            "y": -880.76,
+            "z": 166.04
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            9026
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "searing_gorge_hub_08",
+      "position": {
+        "mapId": 0,
+        "x": -6680.0,
+        "y": -1195.605,
+        "z": 240.313
+      },
+      "questGivers": [
+        8479,
+        8509
+      ],
+      "levelRange": {
+        "min": 40,
+        "max": 52,
+        "avg": 50
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:10509:map:0:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6646.35,
+            "y": -1230.8,
+            "z": 249.05
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5850,
+            5852,
+            5855
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:10511:map:0:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6708.54,
+            "y": -1109.27,
+            "z": 244.62
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5853,
+            5854,
+            5855
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:10509:map:0:cluster:9",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6722.15,
+            "y": -1061.96,
+            "z": 239.66
+          },
+          "radius": 92.15,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5850,
+            5852,
+            5855
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:10551:map:0:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6528.8,
+            "y": -1212.87,
+            "z": 182.65
+          },
+          "radius": 165.62,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5839,
+            5840,
+            5843,
+            5844,
+            5846,
+            8337
+          ],
+          "targetCount": 10
+        },
+        {
+          "taskAreaId": "item_source:10511:map:0:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6881.75,
+            "y": -1047.02,
+            "z": 246.43
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5853,
+            5854,
+            5855
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:10551:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6995.43,
+            "y": -1728.4,
+            "z": 240.5
+          },
+          "radius": 70.47,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5839,
+            5840,
+            5843,
+            5844,
+            5846,
+            8337
+          ],
+          "targetCount": 10
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "searing_gorge_hub_07",
+      "position": {
+        "mapId": 0,
+        "x": -6679.393,
+        "y": -2225.53,
+        "z": 278.604
+      },
+      "questGivers": [
+        9077,
+        9080,
+        9081
+      ],
+      "levelRange": {
+        "min": 48,
+        "max": 60,
+        "avg": 58
+      },
+      "faction": "Horde",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "searing_gorge_hub_09",
+      "position": {
+        "mapId": 0,
+        "x": -6516.787,
+        "y": -1183.707,
+        "z": 309.337
+      },
+      "questGivers": [
+        14624,
+        14627,
+        14628
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 60,
+        "avg": 55
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 10,
+      "estimatedMinutes": 50,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:3857:map:0:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6646.35,
+            "y": -1230.8,
+            "z": 249.05
+          },
+          "radius": 35.0,
+          "weight": 3,
+          "relatedQuestCount": 3,
+          "targetEntries": [
+            2745,
+            2760,
+            4022,
+            4023,
+            4024,
+            4025
+          ],
+          "targetCount": 51
+        },
+        {
+          "taskAreaId": "item_source:18944:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6510.23,
+            "y": -1401.11,
+            "z": 147.87
+          },
+          "radius": 207.19,
+          "weight": 3,
+          "relatedQuestCount": 3,
+          "targetEntries": [
+            9318
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:3857:map:0:cluster:11",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6722.15,
+            "y": -1061.96,
+            "z": 239.66
+          },
+          "radius": 92.15,
+          "weight": 3,
+          "relatedQuestCount": 3,
+          "targetEntries": [
+            2745,
+            2760,
+            4022,
+            4023,
+            4024,
+            4025
+          ],
+          "targetCount": 51
+        },
+        {
+          "taskAreaId": "item_source:18945:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -7206.97,
+            "y": -881.28,
+            "z": 165.04
+          },
+          "radius": 58.68,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            8891,
+            8892,
+            8893,
+            8894,
+            8895,
+            8896
+          ],
+          "targetCount": 83
+        },
+        {
+          "taskAreaId": "item_source:18945:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -7328.65,
+            "y": -941.7,
+            "z": 171.28
+          },
+          "radius": 196.65,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            8891,
+            8892,
+            8893,
+            8894,
+            8895,
+            8896
+          ],
+          "targetCount": 83
+        },
+        {
+          "taskAreaId": "creature:5858:map:0:cluster:5",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -6595.89,
+            "y": -1170.97,
+            "z": 273.37
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5858
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "searing_gorge_hub_10",
+      "position": {
+        "mapId": 0,
+        "x": -6491.07,
+        "y": -982.717,
+        "z": 335.561
+      },
+      "questGivers": [
+        8436
+      ],
+      "levelRange": {
+        "min": 40,
+        "max": 50,
+        "avg": 50
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "searing_gorge_hub_11",
+      "position": {
+        "mapId": 0,
+        "x": -6480.21,
+        "y": -1240.93,
+        "z": 180.21
+      },
+      "questGivers": [
+        8417
+      ],
+      "levelRange": {
+        "min": 40,
+        "max": 46,
+        "avg": 46
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:10446:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6461.91,
+            "y": -1254.6,
+            "z": 180.58
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            8400
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    }
+  ]
+}

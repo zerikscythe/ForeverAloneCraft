@@ -1,0 +1,117 @@
+{
+  "version": 1,
+  "zoneId": 4080,
+  "zoneName": "Isle of Quel'Danas",
+  "mapId": 530,
+  "hubCount": 4,
+  "hubs": [
+    {
+      "hubId": "isle_of_quel_danas_hub_01",
+      "position": {
+        "mapId": 530,
+        "x": -2176.86,
+        "y": 5421.91,
+        "z": 50.311
+      },
+      "questGivers": [
+        18594
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "isle_of_quel_danas_hub_04",
+          "zoneId": 4080,
+          "zoneName": "Isle of Quel'Danas",
+          "questGivers": [
+            24813,
+            24967,
+            25032
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 12885.6,
+            "y": -6874.22,
+            "z": 10.705
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "isle_of_quel_danas_hub_02",
+      "position": {
+        "mapId": 530,
+        "x": -1854.02,
+        "y": 5435.06,
+        "z": -10.364
+      },
+      "questGivers": [
+        25167
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "isle_of_quel_danas_hub_03",
+      "position": {
+        "mapId": 530,
+        "x": 12559.3,
+        "y": -6783.32,
+        "z": 15.069
+      },
+      "questGivers": [
+        37527
+      ],
+      "levelRange": {
+        "min": 80,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Horde",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "isle_of_quel_danas_hub_04",
+      "position": {
+        "mapId": 530,
+        "x": 12887.733,
+        "y": -6878.307,
+        "z": 10.635
+      },
+      "questGivers": [
+        24813,
+        24967,
+        25032
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

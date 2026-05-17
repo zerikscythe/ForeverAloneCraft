@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "zoneId": 4416,
+  "zoneName": "Gundrak",
+  "mapId": 604,
+  "hubCount": 1,
+  "hubs": [
+    {
+      "hubId": "gundrak_hub_01",
+      "position": {
+        "mapId": 604,
+        "x": 1697.6,
+        "y": 751.785,
+        "z": 142.85
+      },
+      "questGivers": [
+        30537
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 1,
+        "avg": 1
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

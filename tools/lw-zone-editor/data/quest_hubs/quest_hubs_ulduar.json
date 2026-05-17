@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "zoneId": 4273,
+  "zoneName": "Ulduar",
+  "mapId": 603,
+  "hubCount": 1,
+  "hubs": [
+    {
+      "hubId": "ulduar_hub_01",
+      "position": {
+        "mapId": 603,
+        "x": 1556.94,
+        "y": 144.098,
+        "z": 427.308
+      },
+      "questGivers": [
+        33956,
+        33957
+      ],
+      "levelRange": {
+        "min": 80,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 12,
+      "estimatedMinutes": 60,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

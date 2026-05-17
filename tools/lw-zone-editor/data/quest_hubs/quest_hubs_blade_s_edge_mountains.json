@@ -1,0 +1,1745 @@
+{
+  "version": 1,
+  "zoneId": 3522,
+  "zoneName": "Blade's Edge Mountains",
+  "mapId": 530,
+  "hubCount": 23,
+  "hubs": [
+    {
+      "hubId": "blade_s_edge_mountains_hub_01",
+      "position": {
+        "mapId": 530,
+        "x": -2067.37,
+        "y": 5287.16,
+        "z": -37.322
+      },
+      "questGivers": [
+        22940
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "blade_s_edge_mountains_hub_02",
+      "position": {
+        "mapId": 530,
+        "x": 928.52,
+        "y": 5972.8,
+        "z": 121.364
+      },
+      "questGivers": [
+        22489
+      ],
+      "levelRange": {
+        "min": 65,
+        "max": 65,
+        "avg": 65
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "blade_s_edge_mountains_hub_03",
+      "position": {
+        "mapId": 530,
+        "x": 974.253,
+        "y": 7403.09,
+        "z": 29.611
+      },
+      "questGivers": [
+        18019
+      ],
+      "levelRange": {
+        "min": 62,
+        "max": 65,
+        "avg": 64
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "blade_s_edge_mountains_hub_04",
+      "position": {
+        "mapId": 530,
+        "x": 1113.34,
+        "y": 7098.97,
+        "z": 122.612
+      },
+      "questGivers": [
+        22488
+      ],
+      "levelRange": {
+        "min": 65,
+        "max": 65,
+        "avg": 65
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "blade_s_edge_mountains_hub_05",
+      "position": {
+        "mapId": 530,
+        "x": 1775.73,
+        "y": 5856.32,
+        "z": 160.563
+      },
+      "questGivers": [
+        21690
+      ],
+      "levelRange": {
+        "min": 65,
+        "max": 67,
+        "avg": 67
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "blade_s_edge_mountains_hub_06",
+      "position": {
+        "mapId": 530,
+        "x": 1793.14,
+        "y": 6406.45,
+        "z": -11.5
+      },
+      "questGivers": [
+        21349
+      ],
+      "levelRange": {
+        "min": 65,
+        "max": 67,
+        "avg": 66
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:29443:map:530:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 1990.52,
+            "y": 6469.29,
+            "z": 2.17
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19957
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:29443:map:530:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2240.84,
+            "y": 6321.88,
+            "z": 1.97
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19957
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:20723:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 2706.78,
+            "y": 6490.82,
+            "z": 25.65
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20723
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "blade_s_edge_mountains_hub_08",
+      "position": {
+        "mapId": 530,
+        "x": 1912.46,
+        "y": 5561.149,
+        "z": 266.281
+      },
+      "questGivers": [
+        21107,
+        21110,
+        21112,
+        21118,
+        21460,
+        21691,
+        21755,
+        21824
+      ],
+      "levelRange": {
+        "min": 62,
+        "max": 68,
+        "avg": 66
+      },
+      "faction": "Alliance",
+      "totalQuests": 16,
+      "estimatedMinutes": 80,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:20714:map:530:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 2019.15,
+            "y": 5663.7,
+            "z": 266.19
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20714
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:30798:map:530:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2086.78,
+            "y": 5218.04,
+            "z": 265.27
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20751
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:20714:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 2109.63,
+            "y": 5149.19,
+            "z": 266.07
+          },
+          "radius": 56.83,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20714
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:30849:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2446.78,
+            "y": 5500.95,
+            "z": 265.83
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20749
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:30849:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2477.57,
+            "y": 5283.45,
+            "z": 264.5
+          },
+          "radius": 187.62,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20749
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:30798:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2590.39,
+            "y": 5179.09,
+            "z": 264.11
+          },
+          "radius": 60.73,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20751
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "blade_s_edge_mountains_hub_09",
+      "position": {
+        "mapId": 530,
+        "x": 2031.28,
+        "y": 6846.104,
+        "z": 173.105
+      },
+      "questGivers": [
+        21066,
+        21151,
+        21158,
+        21197,
+        21469
+      ],
+      "levelRange": {
+        "min": 65,
+        "max": 67,
+        "avg": 66
+      },
+      "faction": "Alliance",
+      "totalQuests": 11,
+      "estimatedMinutes": 55,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:19995:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 2338.09,
+            "y": 6733.68,
+            "z": 23.19
+          },
+          "radius": 81.54,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19995
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:29443:map:530:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 1990.52,
+            "y": 6469.29,
+            "z": 2.17
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19957
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:20058:map:530:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 1981.4,
+            "y": 6379.49,
+            "z": -10.21
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20058
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:29443:map:530:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2240.84,
+            "y": 6321.88,
+            "z": 1.97
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19957
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19995:map:530:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 2606.51,
+            "y": 6549.67,
+            "z": 12.51
+          },
+          "radius": 205.76,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19995
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "blade_s_edge_mountains_hub_05",
+          "zoneId": 3522,
+          "zoneName": "Blade's Edge Mountains",
+          "questGivers": [
+            21690
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 1775.73,
+            "y": 5856.32,
+            "z": 160.563
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "blade_s_edge_mountains_hub_07",
+      "position": {
+        "mapId": 530,
+        "x": 2042.723,
+        "y": 5399.831,
+        "z": 230.589
+      },
+      "questGivers": [
+        22423
+      ],
+      "levelRange": {
+        "min": 65,
+        "max": 68,
+        "avg": 68
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:19747:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 2223.49,
+            "y": 5426.15,
+            "z": 144.35
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19747
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:31757:map:530:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2241.0,
+            "y": 5567.59,
+            "z": 153.11
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19978,
+            19979,
+            21516,
+            21519
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:31757:map:530:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2217.67,
+            "y": 5694.03,
+            "z": 138.77
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19978,
+            19979,
+            21516,
+            21519
+          ],
+          "targetCount": 4
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "blade_s_edge_mountains_hub_10",
+      "position": {
+        "mapId": 530,
+        "x": 2197.907,
+        "y": 4748.648,
+        "z": 157.84
+      },
+      "questGivers": [
+        21088,
+        21496,
+        21895,
+        21896,
+        22004,
+        22312
+      ],
+      "levelRange": {
+        "min": 61,
+        "max": 68,
+        "avg": 67
+      },
+      "faction": "Horde",
+      "totalQuests": 15,
+      "estimatedMinutes": 75,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:30791:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 1959.91,
+            "y": 4839.4,
+            "z": 145.44
+          },
+          "radius": 208.72,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20747
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:30792:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 1940.4,
+            "y": 4886.92,
+            "z": 143.81
+          },
+          "radius": 178.53,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21373,
+            21839
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:31670:map:530:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2086.78,
+            "y": 5218.04,
+            "z": 265.27
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20728,
+            20729,
+            20751,
+            21124,
+            22052
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:31670:map:530:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2590.39,
+            "y": 5179.09,
+            "z": 264.11
+          },
+          "radius": 60.73,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20728,
+            20729,
+            20751,
+            21124,
+            22052
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:31671:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2477.57,
+            "y": 5283.45,
+            "z": 264.5
+          },
+          "radius": 187.62,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20749,
+            21123
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:31671:map:530:cluster:8",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2827.59,
+            "y": 5057.01,
+            "z": 268.71
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20749,
+            21123
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "blade_s_edge_mountains_hub_11",
+          "zoneId": 3522,
+          "zoneName": "Blade's Edge Mountains",
+          "questGivers": [
+            21117,
+            21147,
+            21311,
+            21950,
+            21984
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 2272.95,
+            "y": 5984.4,
+            "z": 142.799
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "blade_s_edge_mountains_hub_11",
+      "position": {
+        "mapId": 530,
+        "x": 2291.206,
+        "y": 6006.662,
+        "z": 142.728
+      },
+      "questGivers": [
+        21117,
+        21147,
+        21311,
+        21950,
+        21984
+      ],
+      "levelRange": {
+        "min": 62,
+        "max": 70,
+        "avg": 67
+      },
+      "faction": "Horde",
+      "totalQuests": 18,
+      "estimatedMinutes": 90,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:21142:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 2107.12,
+            "y": 6104.5,
+            "z": 145.87
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21142
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19995:map:530:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 2606.51,
+            "y": 6549.67,
+            "z": 12.51
+          },
+          "radius": 205.76,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19995
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19995:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 2338.09,
+            "y": 6733.68,
+            "z": 23.19
+          },
+          "radius": 81.54,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19995
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19994:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 3127.35,
+            "y": 5861.14,
+            "z": -6.17
+          },
+          "radius": 110.88,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19994
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19994:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 3326.09,
+            "y": 5703.92,
+            "z": -0.7
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19994
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:22367:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 3388.65,
+            "y": 5843.18,
+            "z": 2.95
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            22367
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "blade_s_edge_mountains_hub_18",
+          "zoneId": 3522,
+          "zoneName": "Blade's Edge Mountains",
+          "questGivers": [
+            22103
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 2919.11,
+            "y": 5956.93,
+            "z": 3.161
+          },
+          "weight": 2
+        },
+        {
+          "hubId": "blade_s_edge_mountains_hub_10",
+          "zoneId": 3522,
+          "zoneName": "Blade's Edge Mountains",
+          "questGivers": [
+            21088,
+            21496,
+            21895,
+            21896,
+            22004,
+            22312
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 2162.21,
+            "y": 4769.62,
+            "z": 156.633
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "blade_s_edge_mountains_hub_12",
+      "position": {
+        "mapId": 530,
+        "x": 2318.135,
+        "y": 7291.71,
+        "z": 365.929
+      },
+      "questGivers": [
+        23233,
+        23253,
+        23300,
+        23316
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 12,
+      "estimatedMinutes": 60,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:32569:map:530:cluster:8",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2112.43,
+            "y": 7193.51,
+            "z": 364.87
+          },
+          "radius": 195.36,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18692,
+            19973,
+            20557,
+            22175,
+            22180,
+            22181
+          ],
+          "targetCount": 27
+        },
+        {
+          "taskAreaId": "item_source:32569:map:530:cluster:11",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 4081.55,
+            "y": 5842.34,
+            "z": 260.39
+          },
+          "radius": 50.02,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18692,
+            19973,
+            20557,
+            22175,
+            22180,
+            22181
+          ],
+          "targetCount": 27
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "blade_s_edge_mountains_hub_15",
+          "zoneId": 3522,
+          "zoneName": "Blade's Edge Mountains",
+          "questGivers": [
+            23120,
+            23334,
+            23335
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 2495.25,
+            "y": 7350.9,
+            "z": 380.334
+          },
+          "weight": 2
+        }
+      ]
+    },
+    {
+      "hubId": "blade_s_edge_mountains_hub_13",
+      "position": {
+        "mapId": 530,
+        "x": 2437.96,
+        "y": 5959.57,
+        "z": 153.079
+      },
+      "questGivers": [
+        19471
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 67,
+        "avg": 67
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "blade_s_edge_mountains_hub_14",
+      "position": {
+        "mapId": 530,
+        "x": 2441.4,
+        "y": 6027.56,
+        "z": 154.215
+      },
+      "questGivers": [
+        23280
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 67,
+        "avg": 67
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "blade_s_edge_mountains_hub_15",
+      "position": {
+        "mapId": 530,
+        "x": 2515.36,
+        "y": 7347.233,
+        "z": 378.104
+      },
+      "questGivers": [
+        23120,
+        23334,
+        23335
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:23118:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 2940.82,
+            "y": 7107.17,
+            "z": 370.12
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            23118
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23118:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 2934.2,
+            "y": 6956.56,
+            "z": 370.08
+          },
+          "radius": 217.58,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            23118
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "blade_s_edge_mountains_hub_16",
+      "position": {
+        "mapId": 530,
+        "x": 2533.75,
+        "y": 6458.37,
+        "z": -3.046
+      },
+      "questGivers": [
+        21277
+      ],
+      "levelRange": {
+        "min": 65,
+        "max": 67,
+        "avg": 67
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:30416:map:530:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2567.83,
+            "y": 6234.94,
+            "z": 11.99
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21296
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:30416:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2718.86,
+            "y": 6605.97,
+            "z": 23.72
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21296
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:30415:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2249.62,
+            "y": 6531.69,
+            "z": 3.38
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20726
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:20732:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 2648.19,
+            "y": 6733.19,
+            "z": 22.36
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20732
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:30413:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2514.04,
+            "y": 6766.01,
+            "z": 5.3
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20731
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "blade_s_edge_mountains_hub_17",
+      "position": {
+        "mapId": 530,
+        "x": 2779.345,
+        "y": 5837.295,
+        "z": 17.525
+      },
+      "questGivers": [
+        22941,
+        22995
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:32379:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2686.48,
+            "y": 5540.87,
+            "z": -1.94
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20216
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "blade_s_edge_mountains_hub_18",
+      "position": {
+        "mapId": 530,
+        "x": 2919.11,
+        "y": 5956.93,
+        "z": 3.161
+      },
+      "questGivers": [
+        22103
+      ],
+      "levelRange": {
+        "min": 65,
+        "max": 70,
+        "avg": 67
+      },
+      "faction": "Alliance",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:31132:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2997.82,
+            "y": 6108.39,
+            "z": 4.54
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            21380,
+            21381,
+            21849,
+            22466
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:31132:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2895.02,
+            "y": 6178.25,
+            "z": 7.18
+          },
+          "radius": 212.52,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            21380,
+            21381,
+            21849,
+            22466
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "creature:19997:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 3580.2,
+            "y": 5675.34,
+            "z": -10.21
+          },
+          "radius": 45.77,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19997
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19996:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 3491.12,
+            "y": 5295.66,
+            "z": -10.76
+          },
+          "radius": 156.8,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19996
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19996:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 3727.89,
+            "y": 5317.51,
+            "z": -7.44
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19996
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:20757:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 3679.63,
+            "y": 5229.52,
+            "z": 7.8
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20757
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "blade_s_edge_mountains_hub_11",
+          "zoneId": 3522,
+          "zoneName": "Blade's Edge Mountains",
+          "questGivers": [
+            21117,
+            21147,
+            21311,
+            21950,
+            21984
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 2272.95,
+            "y": 5984.4,
+            "z": 142.799
+          },
+          "weight": 2
+        },
+        {
+          "hubId": "blade_s_edge_mountains_hub_19",
+          "zoneId": 3522,
+          "zoneName": "Blade's Edge Mountains",
+          "questGivers": [
+            21782,
+            21983,
+            22007,
+            22020,
+            22053,
+            22127,
+            22133,
+            22149,
+            22150,
+            22924
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 2948.06,
+            "y": 5446.82,
+            "z": 147.584
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "blade_s_edge_mountains_hub_19",
+      "position": {
+        "mapId": 530,
+        "x": 3000.1,
+        "y": 5480.771,
+        "z": 146.086
+      },
+      "questGivers": [
+        21782,
+        21983,
+        22007,
+        22020,
+        22053,
+        22127,
+        22133,
+        22149,
+        22150,
+        22924
+      ],
+      "levelRange": {
+        "min": 65,
+        "max": 68,
+        "avg": 67
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 25,
+      "estimatedMinutes": 125,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:21810:map:530:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 3065.03,
+            "y": 5595.94,
+            "z": 144.92
+          },
+          "radius": 48.28,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21810
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:21810:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 2782.67,
+            "y": 5426.69,
+            "z": 140.18
+          },
+          "radius": 105.31,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21810
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:21123:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 3014.69,
+            "y": 5098.9,
+            "z": 262.17
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21123
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19994:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 3326.09,
+            "y": 5703.92,
+            "z": -0.7
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19994
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19994:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 3127.35,
+            "y": 5861.14,
+            "z": -6.17
+          },
+          "radius": 110.88,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19994
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:21123:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 3151.71,
+            "y": 5094.15,
+            "z": 266.88
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21123
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "blade_s_edge_mountains_hub_18",
+          "zoneId": 3522,
+          "zoneName": "Blade's Edge Mountains",
+          "questGivers": [
+            22103
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 2919.11,
+            "y": 5956.93,
+            "z": 3.161
+          },
+          "weight": 2
+        },
+        {
+          "hubId": "blade_s_edge_mountains_hub_07",
+          "zoneId": 3522,
+          "zoneName": "Blade's Edge Mountains",
+          "questGivers": [
+            22423
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 1815.91,
+            "y": 5349.11,
+            "z": 230.561
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "blade_s_edge_mountains_hub_21",
+          "zoneId": 3522,
+          "zoneName": "Blade's Edge Mountains",
+          "questGivers": [
+            22386
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 3108.07,
+            "y": 6131.54,
+            "z": 136.461
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "blade_s_edge_mountains_hub_22",
+          "zoneId": 3522,
+          "zoneName": "Blade's Edge Mountains",
+          "questGivers": [
+            22215
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 3609.03,
+            "y": 6829.56,
+            "z": 136.69
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "blade_s_edge_mountains_hub_20",
+      "position": {
+        "mapId": 530,
+        "x": 3092.56,
+        "y": 3687.07,
+        "z": 142.658
+      },
+      "questGivers": [
+        17636
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "blade_s_edge_mountains_hub_21",
+      "position": {
+        "mapId": 530,
+        "x": 3108.07,
+        "y": 6131.54,
+        "z": 136.461
+      },
+      "questGivers": [
+        22386
+      ],
+      "levelRange": {
+        "min": 65,
+        "max": 68,
+        "avg": 68
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:22396:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 3233.38,
+            "y": 6394.42,
+            "z": 131.46
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            22396
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "blade_s_edge_mountains_hub_19",
+          "zoneId": 3522,
+          "zoneName": "Blade's Edge Mountains",
+          "questGivers": [
+            21782,
+            21983,
+            22007,
+            22020,
+            22053,
+            22127,
+            22133,
+            22149,
+            22150,
+            22924
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 2948.06,
+            "y": 5446.82,
+            "z": 147.584
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "blade_s_edge_mountains_hub_22",
+      "position": {
+        "mapId": 530,
+        "x": 3609.03,
+        "y": 6829.56,
+        "z": 136.69
+      },
+      "questGivers": [
+        22215
+      ],
+      "levelRange": {
+        "min": 65,
+        "max": 68,
+        "avg": 68
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "blade_s_edge_mountains_hub_23",
+      "position": {
+        "mapId": 530,
+        "x": 3866.55,
+        "y": 5978.68,
+        "z": 291.792
+      },
+      "questGivers": [
+        22919
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:29460:map:530:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 3763.91,
+            "y": 6041.97,
+            "z": 266.47
+          },
+          "radius": 192.03,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18309,
+            18311,
+            18312,
+            18313,
+            18315,
+            18331
+          ],
+          "targetCount": 44
+        },
+        {
+          "taskAreaId": "item_source:29460:map:530:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2824.0,
+            "y": 5232.38,
+            "z": 265.72
+          },
+          "radius": 184.65,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18309,
+            18311,
+            18312,
+            18313,
+            18315,
+            18331
+          ],
+          "targetCount": 44
+        }
+      ],
+      "nextHubs": []
+    }
+  ]
+}

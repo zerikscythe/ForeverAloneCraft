@@ -1,0 +1,1932 @@
+{
+  "version": 1,
+  "zoneId": 3520,
+  "zoneName": "Shadowmoon Valley",
+  "mapId": 530,
+  "hubCount": 35,
+  "hubs": [
+    {
+      "hubId": "shadowmoon_valley_hub_01",
+      "position": {
+        "mapId": 530,
+        "x": -5254.18,
+        "y": 628.473,
+        "z": 48.991
+      },
+      "questGivers": [
+        23149
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_02",
+      "position": {
+        "mapId": 530,
+        "x": -5165.22,
+        "y": 757.301,
+        "z": 49.791
+      },
+      "questGivers": [
+        23149
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_03",
+      "position": {
+        "mapId": 530,
+        "x": -5161.06,
+        "y": 288.167,
+        "z": -27.113
+      },
+      "questGivers": [
+        23166
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:23324:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -5211.31,
+            "y": 183.05,
+            "z": -12.68
+          },
+          "radius": 87.99,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23324
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23305:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -5235.9,
+            "y": 182.85,
+            "z": -13.11
+          },
+          "radius": 80.35,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23305
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_04",
+      "position": {
+        "mapId": 530,
+        "x": -5091.81,
+        "y": 610.115,
+        "z": 86.015
+      },
+      "questGivers": [
+        22433,
+        23139,
+        23140,
+        23141,
+        23291,
+        23340,
+        23342,
+        23344,
+        23345,
+        23346,
+        23348,
+        23427
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 22,
+      "estimatedMinutes": 110,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "shadowmoon_valley_hub_02",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            23149
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -5165.22,
+            "y": 757.301,
+            "z": 49.791
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "shadowmoon_valley_hub_08",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            21953,
+            21954,
+            21955,
+            22211
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -4133.09,
+            "y": 1131.08,
+            "z": 44.615
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "shadowmoon_valley_hub_25",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            21402
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -2988.39,
+            "y": 783.175,
+            "z": -7.972
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_05",
+      "position": {
+        "mapId": 530,
+        "x": -4543.69,
+        "y": 1022.35,
+        "z": 9.979
+      },
+      "questGivers": [
+        21797
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:30797:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -5140.63,
+            "y": 537.61,
+            "z": 225.59
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21801
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:30799:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -3747.24,
+            "y": 696.6,
+            "z": 6.58
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21815
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:30799:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -3741.62,
+            "y": 707.41,
+            "z": 4.43
+          },
+          "radius": 178.93,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21815
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:30800:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -3582.01,
+            "y": 738.0,
+            "z": -11.6
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21784
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:30800:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -3116.85,
+            "y": 821.5,
+            "z": -21.79
+          },
+          "radius": 53.73,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21784
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_06",
+      "position": {
+        "mapId": 530,
+        "x": -4200.89,
+        "y": 382.464,
+        "z": 118.055
+      },
+      "questGivers": [
+        22112
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_07",
+      "position": {
+        "mapId": 530,
+        "x": -4147.19,
+        "y": 852.921,
+        "z": 112.449
+      },
+      "questGivers": [
+        21657
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_09",
+      "position": {
+        "mapId": 530,
+        "x": -4129.33,
+        "y": 762.282,
+        "z": 2.038
+      },
+      "questGivers": [
+        22113
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "shadowmoon_valley_hub_04",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            22433,
+            23139,
+            23140,
+            23141,
+            23291,
+            23340,
+            23342,
+            23344,
+            23345,
+            23346,
+            23348,
+            23427
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -5142.74,
+            "y": 602.02,
+            "z": 83.043
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "shadowmoon_valley_hub_07",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            21657
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -4147.19,
+            "y": 852.921,
+            "z": 112.449
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_08",
+      "position": {
+        "mapId": 530,
+        "x": -4099.878,
+        "y": 1158.705,
+        "z": 52.941
+      },
+      "questGivers": [
+        21953,
+        21954,
+        21955,
+        22211
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 14,
+      "estimatedMinutes": 70,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:30810:map:530:cluster:9",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -4151.12,
+            "y": 1506.96,
+            "z": 107.96
+          },
+          "radius": 61.33,
+          "weight": 3,
+          "relatedQuestCount": 3,
+          "targetEntries": [
+            17993,
+            17994,
+            18404,
+            18419,
+            18420,
+            18421
+          ],
+          "targetCount": 85
+        },
+        {
+          "taskAreaId": "item_source:30692:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -3884.68,
+            "y": 1410.31,
+            "z": 43.98
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21709
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:30691:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -4648.44,
+            "y": 1085.26,
+            "z": 0.84
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21711
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:21164:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3867.61,
+            "y": 430.1,
+            "z": 104.19
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21164
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:21171:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3931.08,
+            "y": 398.58,
+            "z": 120.47
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21171
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:21803:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3313.16,
+            "y": 1048.53,
+            "z": 48.6
+          },
+          "radius": 193.16,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21803
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "shadowmoon_valley_hub_15",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            21826
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -3765.8,
+            "y": 1071.98,
+            "z": 58.318
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_10",
+      "position": {
+        "mapId": 530,
+        "x": -4044.39,
+        "y": 1609.47,
+        "z": 94.724
+      },
+      "questGivers": [
+        21293
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:30640:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -4151.12,
+            "y": 1506.96,
+            "z": 107.96
+          },
+          "radius": 61.33,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19792,
+            19795,
+            19796,
+            19806
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:30645:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -3761.74,
+            "y": 1081.67,
+            "z": 125.32
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21315
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "shadowmoon_valley_hub_29",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            21183
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -2810.28,
+            "y": 1257.7,
+            "z": 74.882
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_11",
+      "position": {
+        "mapId": 530,
+        "x": -4035.205,
+        "y": 2229.2,
+        "z": 112.082
+      },
+      "questGivers": [
+        21773,
+        21937
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "shadowmoon_valley_hub_17",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            21024
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -3600.15,
+            "y": 1904.57,
+            "z": 47.365
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_12",
+      "position": {
+        "mapId": 530,
+        "x": -3968.317,
+        "y": 2201.993,
+        "z": 102.749
+      },
+      "questGivers": [
+        19370,
+        21774,
+        21777
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 70,
+        "avg": 69
+      },
+      "faction": "Alliance",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:30867:map:530:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -4031.24,
+            "y": 1345.89,
+            "z": 39.66
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21462
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:30867:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -3871.41,
+            "y": 1074.2,
+            "z": 23.4
+          },
+          "radius": 126.72,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21462
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:30851:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -3489.0,
+            "y": 1126.26,
+            "z": 10.85
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21897
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "shadowmoon_valley_hub_33",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            21465
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -2389.1,
+            "y": 2895.6,
+            "z": -55.679
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_13",
+      "position": {
+        "mapId": 530,
+        "x": -3926.865,
+        "y": 2072.08,
+        "z": 95.308
+      },
+      "questGivers": [
+        21357,
+        22042
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 69,
+        "avg": 69
+      },
+      "faction": "Alliance",
+      "totalQuests": 9,
+      "estimatedMinutes": 45,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "shadowmoon_valley_hub_19",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            21471
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -3461.75,
+            "y": 2000.4,
+            "z": 96.9
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "shadowmoon_valley_hub_20",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            22024
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -3412.86,
+            "y": 2291.42,
+            "z": 63.116
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "shadowmoon_valley_hub_30",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            21790
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -2764.22,
+            "y": 1980.79,
+            "z": 167.526
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_14",
+      "position": {
+        "mapId": 530,
+        "x": -3798.105,
+        "y": 2598.165,
+        "z": 92.13
+      },
+      "questGivers": [
+        21292,
+        21318
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:30451:map:530:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -3561.76,
+            "y": 388.4,
+            "z": 31.27
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19799,
+            19800,
+            19802,
+            21166,
+            21337
+          ],
+          "targetCount": 5
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "shadowmoon_valley_hub_29",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            21183
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -2810.28,
+            "y": 1257.7,
+            "z": 74.882
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_15",
+      "position": {
+        "mapId": 530,
+        "x": -3765.8,
+        "y": 1071.98,
+        "z": 58.318
+      },
+      "questGivers": [
+        21826
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:21827:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3749.31,
+            "y": 1033.3,
+            "z": 89.73
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21827
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_16",
+      "position": {
+        "mapId": 530,
+        "x": -3714.56,
+        "y": 1028.95,
+        "z": 56.038
+      },
+      "questGivers": [
+        21700
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:31307:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -3225.12,
+            "y": 246.82,
+            "z": 195.68
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            22006
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_17",
+      "position": {
+        "mapId": 530,
+        "x": -3600.15,
+        "y": 1904.57,
+        "z": 47.365
+      },
+      "questGivers": [
+        21024
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:21092:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3610.23,
+            "y": 1628.98,
+            "z": 42.91
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21092
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:21094:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3612.8,
+            "y": 1626.78,
+            "z": 43.05
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21094
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:21095:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3016.97,
+            "y": 1440.81,
+            "z": 18.92
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21095
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:21096:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -4118.16,
+            "y": 685.16,
+            "z": 3.21
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21096
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "shadowmoon_valley_hub_29",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            21183
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -2810.28,
+            "y": 1257.7,
+            "z": 74.882
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_18",
+      "position": {
+        "mapId": 530,
+        "x": -3559.68,
+        "y": 637.633,
+        "z": 4.242
+      },
+      "questGivers": [
+        18528
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_19",
+      "position": {
+        "mapId": 530,
+        "x": -3461.75,
+        "y": 2000.4,
+        "z": 96.9
+      },
+      "questGivers": [
+        21471
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 69,
+        "avg": 69
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "shadowmoon_valley_hub_13",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            21357,
+            22042
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -3935.71,
+            "y": 2091.78,
+            "z": 95.457
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_20",
+      "position": {
+        "mapId": 530,
+        "x": -3412.86,
+        "y": 2291.42,
+        "z": 63.116
+      },
+      "questGivers": [
+        22024
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 69,
+        "avg": 69
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:31316:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -4136.57,
+            "y": 1503.55,
+            "z": 105.11
+          },
+          "radius": 79.84,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19792,
+            19796,
+            19806
+          ],
+          "targetCount": 3
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_21",
+      "position": {
+        "mapId": 530,
+        "x": -3347.77,
+        "y": 2102.8,
+        "z": 102.442
+      },
+      "questGivers": [
+        21475
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 69,
+        "avg": 69
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "shadowmoon_valley_hub_22",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            19333,
+            21359
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -3136.0,
+            "y": 2550.0,
+            "z": 62.321
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_22",
+      "position": {
+        "mapId": 530,
+        "x": -3114.555,
+        "y": 2567.985,
+        "z": 62.385
+      },
+      "questGivers": [
+        19333,
+        21359
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 69,
+        "avg": 69
+      },
+      "faction": "Horde",
+      "totalQuests": 9,
+      "estimatedMinutes": 45,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "shadowmoon_valley_hub_21",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            21475
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -3347.77,
+            "y": 2102.8,
+            "z": 102.442
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "shadowmoon_valley_hub_31",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            21789
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -2725.63,
+            "y": 2712.66,
+            "z": 122.433
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "shadowmoon_valley_hub_33",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            21465
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -2389.1,
+            "y": 2895.6,
+            "z": -55.679
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_23",
+      "position": {
+        "mapId": 530,
+        "x": -3039.0,
+        "y": 2519.0,
+        "z": 62.503
+      },
+      "questGivers": [
+        22043
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 69,
+        "avg": 69
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "shadowmoon_valley_hub_20",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            22024
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -3412.86,
+            "y": 2291.42,
+            "z": 63.116
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_24",
+      "position": {
+        "mapId": 530,
+        "x": -3018.18,
+        "y": 859.831,
+        "z": -9.968
+      },
+      "questGivers": [
+        21822,
+        21860
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:21803:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3195.7,
+            "y": 1131.32,
+            "z": 73.24
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21803
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:21453:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3284.69,
+            "y": 1058.55,
+            "z": 52.47
+          },
+          "radius": 217.06,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21453
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:21803:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3313.16,
+            "y": 1048.53,
+            "z": 48.6
+          },
+          "radius": 193.16,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21803
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:22081:map:530:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3217.07,
+            "y": 472.97,
+            "z": 104.21
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            22081
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:22081:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3306.12,
+            "y": 391.07,
+            "z": 108.03
+          },
+          "radius": 213.46,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            22081
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:22084:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3306.4,
+            "y": 347.66,
+            "z": 114.58
+          },
+          "radius": 169.55,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            22084
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_25",
+      "position": {
+        "mapId": 530,
+        "x": -2988.39,
+        "y": 783.175,
+        "z": -7.972
+      },
+      "questGivers": [
+        21402
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:30649:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -3153.27,
+            "y": 1079.43,
+            "z": 75.47
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21663
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:30596:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -3172.53,
+            "y": 1127.91,
+            "z": 75.92
+          },
+          "radius": 47.41,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21455
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:30693:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2791.71,
+            "y": 1481.24,
+            "z": 10.18
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21416
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:30694:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -3396.21,
+            "y": 1568.68,
+            "z": 47.82
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21710
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:30692:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -3884.68,
+            "y": 1410.31,
+            "z": 43.98
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21709
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:30691:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -4648.44,
+            "y": 1085.26,
+            "z": 0.84
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21711
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "shadowmoon_valley_hub_15",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            21826
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -3765.8,
+            "y": 1071.98,
+            "z": 58.318
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_26",
+      "position": {
+        "mapId": 530,
+        "x": -2974.665,
+        "y": 2574.14,
+        "z": 76.648
+      },
+      "questGivers": [
+        21770,
+        21772
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 70,
+        "avg": 69
+      },
+      "faction": "Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:30851:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -3489.0,
+            "y": 1126.26,
+            "z": 10.85
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21897
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_27",
+      "position": {
+        "mapId": 530,
+        "x": -2921.355,
+        "y": 2660.72,
+        "z": 94.484
+      },
+      "questGivers": [
+        21769,
+        21938
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "shadowmoon_valley_hub_17",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            21024
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -3600.15,
+            "y": 1904.57,
+            "z": 47.365
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_28",
+      "position": {
+        "mapId": 530,
+        "x": -2815.42,
+        "y": 1771.03,
+        "z": 59.102
+      },
+      "questGivers": [
+        21291
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "shadowmoon_valley_hub_29",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            21183
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -2810.28,
+            "y": 1257.7,
+            "z": 74.882
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_29",
+      "position": {
+        "mapId": 530,
+        "x": -2810.28,
+        "y": 1257.7,
+        "z": 74.882
+      },
+      "questGivers": [
+        21183
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "shadowmoon_valley_hub_10",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            21293
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -4044.39,
+            "y": 1609.47,
+            "z": 94.724
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "shadowmoon_valley_hub_14",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            21292,
+            21318
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -3800.38,
+            "y": 2601.1,
+            "z": 90.143
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "shadowmoon_valley_hub_28",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            21291
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -2815.42,
+            "y": 1771.03,
+            "z": 59.102
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_30",
+      "position": {
+        "mapId": 530,
+        "x": -2764.22,
+        "y": 1980.79,
+        "z": 167.526
+      },
+      "questGivers": [
+        21790
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 70,
+        "avg": 69
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_31",
+      "position": {
+        "mapId": 530,
+        "x": -2725.63,
+        "y": 2712.66,
+        "z": 122.433
+      },
+      "questGivers": [
+        21789
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 70,
+        "avg": 69
+      },
+      "faction": "Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_32",
+      "position": {
+        "mapId": 530,
+        "x": -2616.36,
+        "y": 1372.07,
+        "z": 46.029
+      },
+      "questGivers": [
+        21027
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_33",
+      "position": {
+        "mapId": 530,
+        "x": -2389.1,
+        "y": 2895.6,
+        "z": -55.679
+      },
+      "questGivers": [
+        21465
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_34",
+      "position": {
+        "mapId": 530,
+        "x": -2083.83,
+        "y": 5299.95,
+        "z": -37.224
+      },
+      "questGivers": [
+        21411
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "shadowmoon_valley_hub_10",
+          "zoneId": 3520,
+          "zoneName": "Shadowmoon Valley",
+          "questGivers": [
+            21293
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -4044.39,
+            "y": 1609.47,
+            "z": 94.724
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "shadowmoon_valley_hub_35",
+      "position": {
+        "mapId": 530,
+        "x": -1831.95,
+        "y": 5298.3,
+        "z": -12.345
+      },
+      "questGivers": [
+        18940
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

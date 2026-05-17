@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "zoneId": 4987,
+  "zoneName": "The Ruby Sanctum",
+  "mapId": 724,
+  "hubCount": 1,
+  "hubs": [
+    {
+      "hubId": "the_ruby_sanctum_hub_01",
+      "position": {
+        "mapId": 724,
+        "x": 3155.54,
+        "y": 342.392,
+        "z": 84.597
+      },
+      "questGivers": [
+        40429
+      ],
+      "levelRange": {
+        "min": 80,
+        "max": 82,
+        "avg": 82
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:39863:map:724:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 724,
+            "x": 3156.0,
+            "y": 533.81,
+            "z": 72.99
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            39863
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    }
+  ]
+}

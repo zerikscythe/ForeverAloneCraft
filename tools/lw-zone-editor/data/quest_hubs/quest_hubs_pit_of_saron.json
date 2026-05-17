@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "zoneId": 4813,
+  "zoneName": "Pit of Saron",
+  "mapId": 658,
+  "hubCount": 1,
+  "hubs": [
+    {
+      "hubId": "pit_of_saron_hub_01",
+      "position": {
+        "mapId": 658,
+        "x": 424.46,
+        "y": 212.16,
+        "z": 528.8
+      },
+      "questGivers": [
+        36990
+      ],
+      "levelRange": {
+        "min": 78,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:36770:map:658:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 658,
+            "x": 585.72,
+            "y": 202.14,
+            "z": 511.44
+          },
+          "radius": 165.59,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            36770
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:36770:map:658:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 658,
+            "x": 689.82,
+            "y": -47.18,
+            "z": 502.4
+          },
+          "radius": 182.55,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            36770
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:36494:map:658:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 658,
+            "x": 712.14,
+            "y": -215.7,
+            "z": 527.07
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            36494
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    }
+  ]
+}

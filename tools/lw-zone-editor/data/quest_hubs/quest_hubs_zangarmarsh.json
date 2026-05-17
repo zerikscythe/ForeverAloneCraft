@@ -1,0 +1,1380 @@
+{
+  "version": 1,
+  "zoneId": 3521,
+  "zoneName": "Zangarmarsh",
+  "mapId": 530,
+  "hubCount": 16,
+  "hubs": [
+    {
+      "hubId": "zangarmarsh_hub_01",
+      "position": {
+        "mapId": 530,
+        "x": -1274.44,
+        "y": 9158.71,
+        "z": 216.662
+      },
+      "questGivers": [
+        22981
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "zangarmarsh_hub_02",
+      "position": {
+        "mapId": 530,
+        "x": -931.885,
+        "y": 5283.56,
+        "z": 23.981
+      },
+      "questGivers": [
+        17969
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 63,
+        "avg": 63
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "zangarmarsh_hub_03",
+      "position": {
+        "mapId": 530,
+        "x": -314.819,
+        "y": 4711.44,
+        "z": 18.42
+      },
+      "questGivers": [
+        16885
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 63,
+        "avg": 62
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "zangarmarsh_hub_04",
+      "position": {
+        "mapId": 530,
+        "x": -283.861,
+        "y": 8302.74,
+        "z": 19.711
+      },
+      "questGivers": [
+        17831
+      ],
+      "levelRange": {
+        "min": 61,
+        "max": 64,
+        "avg": 64
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:24238:map:530:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 712.59,
+            "y": 7764.21,
+            "z": 21.0
+          },
+          "radius": 91.66,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18117,
+            18118,
+            18159,
+            20443
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:24238:map:530:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 752.57,
+            "y": 7831.54,
+            "z": 22.6
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18117,
+            18118,
+            18159,
+            20443
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:24240:map:530:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 1044.28,
+            "y": 8477.67,
+            "z": 58.81
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18120,
+            18121,
+            18160,
+            18992,
+            20442,
+            20444
+          ],
+          "targetCount": 6
+        },
+        {
+          "taskAreaId": "item_source:24240:map:530:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 1168.31,
+            "y": 8421.72,
+            "z": 58.7
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18120,
+            18121,
+            18160,
+            18992,
+            20442,
+            20444
+          ],
+          "targetCount": 6
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "zangarmarsh_hub_05",
+      "position": {
+        "mapId": 530,
+        "x": -233.181,
+        "y": 5449.768,
+        "z": 31.467
+      },
+      "questGivers": [
+        17858,
+        17909,
+        17956,
+        18070,
+        22832
+      ],
+      "levelRange": {
+        "min": 59,
+        "max": 70,
+        "avg": 64
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 15,
+      "estimatedMinutes": 75,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:24401:map:530:cluster:28",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -34.6,
+            "y": 5343.39,
+            "z": 24.5
+          },
+          "radius": 195.59,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            17723,
+            17725,
+            18086,
+            18087,
+            18088,
+            18089
+          ],
+          "targetCount": 45
+        },
+        {
+          "taskAreaId": "item_source:24401:map:530:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -861.24,
+            "y": 5799.86,
+            "z": 21.24
+          },
+          "radius": 37.69,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            17723,
+            17725,
+            18086,
+            18087,
+            18088,
+            18089
+          ],
+          "targetCount": 45
+        },
+        {
+          "taskAreaId": "creature:17900:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -205.58,
+            "y": 5397.79,
+            "z": 22.81
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17900
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17901:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -325.37,
+            "y": 5505.15,
+            "z": 23.67
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17901
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18079:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -787.14,
+            "y": 5281.28,
+            "z": 17.98
+          },
+          "radius": 157.95,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18079
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18077:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -786.42,
+            "y": 5249.21,
+            "z": 20.75
+          },
+          "radius": 124.96,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18077
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "zangarmarsh_hub_06",
+      "position": {
+        "mapId": 530,
+        "x": -205.36,
+        "y": 8516.55,
+        "z": 22.803
+      },
+      "questGivers": [
+        17923
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 64,
+        "avg": 64
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:24291:map:530:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -151.64,
+            "y": 8339.3,
+            "z": 18.36
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            18124,
+            18125,
+            18127,
+            19402,
+            19519
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:24291:map:530:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -36.63,
+            "y": 8791.21,
+            "z": 18.78
+          },
+          "radius": 89.69,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            18124,
+            18125,
+            18127,
+            19402,
+            19519
+          ],
+          "targetCount": 5
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "zangarmarsh_hub_07",
+      "position": {
+        "mapId": 530,
+        "x": -162.416,
+        "y": 5530.455,
+        "z": 30.32
+      },
+      "questGivers": [
+        17834,
+        17841
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 70,
+        "avg": 65
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 11,
+      "estimatedMinutes": 55,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:18281:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -566.17,
+            "y": 5350.9,
+            "z": 17.54
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18281
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17998:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -755.97,
+            "y": 5925.65,
+            "z": 19.01
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17998
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17999:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -213.25,
+            "y": 6302.23,
+            "z": 21.71
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17999
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18000:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 566.55,
+            "y": 6359.52,
+            "z": 23.07
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18000
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18002:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 498.57,
+            "y": 8197.98,
+            "z": 21.54
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18002
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "zangarmarsh_hub_03",
+          "zoneId": 3521,
+          "zoneName": "Zangarmarsh",
+          "questGivers": [
+            16885
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -314.819,
+            "y": 4711.44,
+            "z": 18.42
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "zangarmarsh_hub_04",
+          "zoneId": 3521,
+          "zoneName": "Zangarmarsh",
+          "questGivers": [
+            17831
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -283.861,
+            "y": 8302.74,
+            "z": 19.711
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "zangarmarsh_hub_05",
+          "zoneId": 3521,
+          "zoneName": "Zangarmarsh",
+          "questGivers": [
+            17858,
+            17909,
+            17956,
+            18070,
+            22832
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -252.359,
+            "y": 5499.21,
+            "z": 66.683
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "zangarmarsh_hub_08",
+      "position": {
+        "mapId": 530,
+        "x": 112.757,
+        "y": 5208.707,
+        "z": 23.204
+      },
+      "questGivers": [
+        18011,
+        18012,
+        18016
+      ],
+      "levelRange": {
+        "min": 58,
+        "max": 62,
+        "avg": 62
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 9,
+      "estimatedMinutes": 45,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:18280:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 394.67,
+            "y": 5612.95,
+            "z": 18.5
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18280
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:24372:map:530:cluster:12",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 647.92,
+            "y": 5064.58,
+            "z": 11.14
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18132,
+            18133,
+            18283,
+            20197,
+            20198
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:24372:map:530:cluster:11",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 760.17,
+            "y": 5123.1,
+            "z": 18.19
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18132,
+            18133,
+            18283,
+            20197,
+            20198
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "creature:18130:map:530:cluster:10",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 797.95,
+            "y": 5171.43,
+            "z": 20.78
+          },
+          "radius": 89.23,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18130
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:24375:map:530:cluster:12",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 749.62,
+            "y": 5475.51,
+            "z": -3.46
+          },
+          "radius": 75.3,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18213,
+            18214,
+            20324
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "creature:18130:map:530:cluster:7",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 659.85,
+            "y": 5674.59,
+            "z": 23.22
+          },
+          "radius": 84.92,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18130
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "zangarmarsh_hub_14",
+          "zoneId": 3521,
+          "zoneName": "Zangarmarsh",
+          "questGivers": [
+            18035
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 719.491,
+            "y": 5415.51,
+            "z": -26.055
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "zangarmarsh_hub_11",
+      "position": {
+        "mapId": 530,
+        "x": 228.256,
+        "y": 7764.29,
+        "z": 17.54
+      },
+      "questGivers": [
+        17637
+      ],
+      "levelRange": {
+        "min": 58,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "zangarmarsh_hub_12",
+      "position": {
+        "mapId": 530,
+        "x": 229.687,
+        "y": 7929.76,
+        "z": 41.196
+      },
+      "questGivers": [
+        18013
+      ],
+      "levelRange": {
+        "min": 62,
+        "max": 65,
+        "avg": 64
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:18116:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 1155.19,
+            "y": 8017.35,
+            "z": 18.08
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18116
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18115:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 1143.26,
+            "y": 8208.52,
+            "z": 20.62
+          },
+          "radius": 213.6,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18115
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18116:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 1156.3,
+            "y": 8219.12,
+            "z": 21.88
+          },
+          "radius": 156.54,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18116
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18121:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 1543.14,
+            "y": 8607.46,
+            "z": -27.23
+          },
+          "radius": 95.25,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18121
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18160:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 1674.28,
+            "y": 8550.4,
+            "z": 2.69
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18160
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18120:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 1732.39,
+            "y": 8532.01,
+            "z": -6.63
+          },
+          "radius": 171.94,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18120
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "zangarmarsh_hub_09",
+      "position": {
+        "mapId": 530,
+        "x": 249.332,
+        "y": 8493.197,
+        "z": 23.816
+      },
+      "questGivers": [
+        17856,
+        17857,
+        17866,
+        17877,
+        17924,
+        17925
+      ],
+      "levelRange": {
+        "min": 62,
+        "max": 65,
+        "avg": 64
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 11,
+      "estimatedMinutes": 55,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:24449:map:530:cluster:23",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 653.52,
+            "y": 8625.15,
+            "z": 22.54
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            18128,
+            18129,
+            18134,
+            18135,
+            18280,
+            18281
+          ],
+          "targetCount": 6
+        },
+        {
+          "taskAreaId": "item_source:24449:map:530:cluster:49",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 447.84,
+            "y": 8068.62,
+            "z": 17.57
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            18128,
+            18129,
+            18134,
+            18135,
+            18280,
+            18281
+          ],
+          "targetCount": 6
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "zangarmarsh_hub_10",
+      "position": {
+        "mapId": 530,
+        "x": 258.821,
+        "y": 7854.7,
+        "z": 24.967
+      },
+      "questGivers": [
+        18014,
+        18015,
+        18017,
+        18018,
+        18091
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 64,
+        "avg": 64
+      },
+      "faction": "Horde",
+      "totalQuests": 10,
+      "estimatedMinutes": 50,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:24493:map:530:cluster:7",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 410.5,
+            "y": 7679.05,
+            "z": 22.74
+          },
+          "radius": 186.39,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18131,
+            18285
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:24493:map:530:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 10.96,
+            "y": 7653.47,
+            "z": 23.13
+          },
+          "radius": 77.79,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18131,
+            18285
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "creature:20477:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 400.72,
+            "y": 8353.38,
+            "z": 22.67
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20477
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18286:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 546.99,
+            "y": 7351.98,
+            "z": 6.03
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18286
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18133:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -426.91,
+            "y": 8267.66,
+            "z": 19.63
+          },
+          "radius": 90.45,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18133
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18133:map:530:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 1083.16,
+            "y": 7856.98,
+            "z": 22.44
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18133
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "zangarmarsh_hub_13",
+      "position": {
+        "mapId": 530,
+        "x": 290.306,
+        "y": 6043.467,
+        "z": 133.265
+      },
+      "questGivers": [
+        17634,
+        18003,
+        18004,
+        18005,
+        18006,
+        18007,
+        18295
+      ],
+      "levelRange": {
+        "min": 58,
+        "max": 64,
+        "avg": 62
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 17,
+      "estimatedMinutes": 85,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:24372:map:530:cluster:16",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 428.71,
+            "y": 6033.87,
+            "z": 22.12
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18132,
+            18133,
+            18283,
+            20197,
+            20198
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:24427:map:530:cluster:20",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 327.91,
+            "y": 6180.05,
+            "z": 17.45
+          },
+          "radius": 64.26,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18134
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:24426:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 315.26,
+            "y": 6190.39,
+            "z": 22.37
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18128,
+            18129,
+            20387
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "creature:18130:map:530:cluster:5",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 117.48,
+            "y": 5985.19,
+            "z": 22.46
+          },
+          "radius": 159.43,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18130
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:24427:map:530:cluster:11",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 49.29,
+            "y": 5920.16,
+            "z": 17.41
+          },
+          "radius": 43.97,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18134
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:24372:map:530:cluster:13",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 511.54,
+            "y": 5764.94,
+            "z": 23.43
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18132,
+            18133,
+            18283,
+            20197,
+            20198
+          ],
+          "targetCount": 5
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "zangarmarsh_hub_14",
+      "position": {
+        "mapId": 530,
+        "x": 719.491,
+        "y": 5415.51,
+        "z": -26.055
+      },
+      "questGivers": [
+        18035
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 62,
+        "avg": 62
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:24373:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 855.44,
+            "y": 5415.88,
+            "z": 1.28
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18124
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "zangarmarsh_hub_15",
+      "position": {
+        "mapId": 530,
+        "x": 729.38,
+        "y": 6846.44,
+        "z": -66.369
+      },
+      "questGivers": [
+        17884
+      ],
+      "levelRange": {
+        "min": 62,
+        "max": 70,
+        "avg": 68
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "zangarmarsh_hub_16",
+      "position": {
+        "mapId": 530,
+        "x": 1006.578,
+        "y": 7390.5,
+        "z": 34.911
+      },
+      "questGivers": [
+        18008,
+        18009,
+        18010
+      ],
+      "levelRange": {
+        "min": 62,
+        "max": 64,
+        "avg": 64
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 10,
+      "estimatedMinutes": 50,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:24485:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 1087.78,
+            "y": 7592.01,
+            "z": 22.17
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18133,
+            20198
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "creature:18118:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 999.97,
+            "y": 7702.47,
+            "z": 21.49
+          },
+          "radius": 91.06,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18118
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18286:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 546.99,
+            "y": 7351.98,
+            "z": 6.03
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18286
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:24485:map:530:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 1083.16,
+            "y": 7856.98,
+            "z": 22.44
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18133,
+            20198
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "creature:18117:map:530:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 712.59,
+            "y": 7764.21,
+            "z": 21.0
+          },
+          "radius": 91.66,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18117
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18117:map:530:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 752.57,
+            "y": 7831.54,
+            "z": 22.6
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18117
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    }
+  ]
+}

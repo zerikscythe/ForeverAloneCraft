@@ -1,0 +1,439 @@
+{
+  "version": 1,
+  "zoneId": 3703,
+  "zoneName": "Shattrath City",
+  "mapId": 530,
+  "hubCount": 17,
+  "hubs": [
+    {
+      "hubId": "shattrath_city_hub_01",
+      "position": {
+        "mapId": 530,
+        "x": -3408.26,
+        "y": 3622.71,
+        "z": 278.075
+      },
+      "questGivers": [
+        23038
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shattrath_city_hub_02",
+      "position": {
+        "mapId": 530,
+        "x": -3039.95,
+        "y": 800.17,
+        "z": -9.227
+      },
+      "questGivers": [
+        22214
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shattrath_city_hub_03",
+      "position": {
+        "mapId": 530,
+        "x": -2272.61,
+        "y": 5576.36,
+        "z": 80.037
+      },
+      "questGivers": [
+        18530
+      ],
+      "levelRange": {
+        "min": 64,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shattrath_city_hub_04",
+      "position": {
+        "mapId": 530,
+        "x": -2183.15,
+        "y": 5544.87,
+        "z": 64.156
+      },
+      "questGivers": [
+        18531
+      ],
+      "levelRange": {
+        "min": 62,
+        "max": 70,
+        "avg": 69
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shattrath_city_hub_05",
+      "position": {
+        "mapId": 530,
+        "x": -2076.886,
+        "y": 5271.826,
+        "z": -37.485
+      },
+      "questGivers": [
+        19227,
+        19678,
+        22208,
+        22212,
+        22213
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 70,
+        "avg": 69
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shattrath_city_hub_06",
+      "position": {
+        "mapId": 530,
+        "x": -2027.23,
+        "y": 5340.45,
+        "z": -9.268
+      },
+      "questGivers": [
+        23273
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 67,
+        "avg": 67
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shattrath_city_hub_07",
+      "position": {
+        "mapId": 530,
+        "x": -1954.98,
+        "y": 4752.3,
+        "z": -2.763
+      },
+      "questGivers": [
+        18482
+      ],
+      "levelRange": {
+        "min": 62,
+        "max": 63,
+        "avg": 63
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shattrath_city_hub_08",
+      "position": {
+        "mapId": 530,
+        "x": -1873.473,
+        "y": 5431.722,
+        "z": -7.585
+      },
+      "questGivers": [
+        18166,
+        18481,
+        18893,
+        22497
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 80,
+        "avg": 69
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 22,
+      "estimatedMinutes": 110,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shattrath_city_hub_09",
+      "position": {
+        "mapId": 530,
+        "x": -1842.58,
+        "y": 5294.96,
+        "z": -12.345
+      },
+      "questGivers": [
+        23449
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shattrath_city_hub_10",
+      "position": {
+        "mapId": 530,
+        "x": -1786.58,
+        "y": 5493.6,
+        "z": -12.328
+      },
+      "questGivers": [
+        19715
+      ],
+      "levelRange": {
+        "min": 64,
+        "max": 67,
+        "avg": 67
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shattrath_city_hub_11",
+      "position": {
+        "mapId": 530,
+        "x": -1775.42,
+        "y": 5733.84,
+        "z": 128.197
+      },
+      "questGivers": [
+        18537
+      ],
+      "levelRange": {
+        "min": 62,
+        "max": 70,
+        "avg": 68
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shattrath_city_hub_13",
+      "position": {
+        "mapId": 530,
+        "x": -1752.74,
+        "y": 5671.48,
+        "z": 129.142
+      },
+      "questGivers": [
+        23271
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 67,
+        "avg": 67
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shattrath_city_hub_12",
+      "position": {
+        "mapId": 530,
+        "x": -1746.87,
+        "y": 5148.85,
+        "z": -37.036
+      },
+      "questGivers": [
+        23272,
+        23948
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 70,
+        "avg": 68
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shattrath_city_hub_14",
+      "position": {
+        "mapId": 530,
+        "x": -1732.82,
+        "y": 5822.21,
+        "z": 148.741
+      },
+      "questGivers": [
+        18538
+      ],
+      "levelRange": {
+        "min": 62,
+        "max": 70,
+        "avg": 68
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shattrath_city_hub_15",
+      "position": {
+        "mapId": 530,
+        "x": -1681.25,
+        "y": 5529.24,
+        "z": -7.285
+      },
+      "questGivers": [
+        19052,
+        23270
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 70,
+        "avg": 68
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shattrath_city_hub_16",
+      "position": {
+        "mapId": 530,
+        "x": -1670.28,
+        "y": 5417.02,
+        "z": -38.763
+      },
+      "questGivers": [
+        18596
+      ],
+      "levelRange": {
+        "min": 62,
+        "max": 65,
+        "avg": 65
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:25744:map:530:cluster:8",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2022.82,
+            "y": 5046.19,
+            "z": 30.27
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            18461,
+            18463,
+            18648,
+            21854
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:25744:map:530:cluster:9",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -1770.09,
+            "y": 4883.38,
+            "z": 5.5
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            18461,
+            18463,
+            18648,
+            21854
+          ],
+          "targetCount": 4
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "shattrath_city_hub_17",
+      "position": {
+        "mapId": 530,
+        "x": -1629.563,
+        "y": 5263.791,
+        "z": -40.557
+      },
+      "questGivers": [
+        18597,
+        23461,
+        23462,
+        23463,
+        23464,
+        23465,
+        23466
+      ],
+      "levelRange": {
+        "min": 62,
+        "max": 70,
+        "avg": 68
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 9,
+      "estimatedMinutes": 45,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

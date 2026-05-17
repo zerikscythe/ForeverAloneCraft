@@ -1,0 +1,1774 @@
+{
+  "version": 1,
+  "zoneId": 3519,
+  "zoneName": "Terokkar Forest",
+  "mapId": 530,
+  "hubCount": 26,
+  "hubs": [
+    {
+      "hubId": "terokkar_forest_hub_02",
+      "position": {
+        "mapId": 530,
+        "x": -3742.69,
+        "y": 4398.95,
+        "z": -0.295
+      },
+      "questGivers": [
+        22462
+      ],
+      "levelRange": {
+        "min": 63,
+        "max": 65,
+        "avg": 65
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:18467:map:530:cluster:11",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3880.97,
+            "y": 4298.11,
+            "z": -5.77
+          },
+          "radius": 147.67,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18467
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18467:map:530:cluster:12",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3531.33,
+            "y": 4180.11,
+            "z": 1.8
+          },
+          "radius": 155.69,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18467
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:20682:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3945.56,
+            "y": 4152.5,
+            "z": 3.57
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20682
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "terokkar_forest_hub_01",
+      "position": {
+        "mapId": 530,
+        "x": -3740.182,
+        "y": 5401.1,
+        "z": -3.27
+      },
+      "questGivers": [
+        22364,
+        22446,
+        22456,
+        22458,
+        22481
+      ],
+      "levelRange": {
+        "min": 63,
+        "max": 66,
+        "avg": 65
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 9,
+      "estimatedMinutes": 45,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:21285:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3684.98,
+            "y": 5329.12,
+            "z": -16.31
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21285
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:21846:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3726.22,
+            "y": 5224.49,
+            "z": -19.74
+          },
+          "radius": 201.9,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21846
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:21284:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3586.77,
+            "y": 5210.97,
+            "z": -21.13
+          },
+          "radius": 191.57,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21284
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:21285:map:530:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3535.92,
+            "y": 5249.48,
+            "z": -19.51
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21285
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:21284:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3673.74,
+            "y": 5140.95,
+            "z": -21.51
+          },
+          "radius": 49.52,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21284
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:22441:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3400.86,
+            "y": 4665.3,
+            "z": 99.65
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            22441
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "terokkar_forest_hub_03",
+      "position": {
+        "mapId": 530,
+        "x": -3605.72,
+        "y": 4175.58,
+        "z": -0.032
+      },
+      "questGivers": [
+        22424
+      ],
+      "levelRange": {
+        "min": 63,
+        "max": 65,
+        "avg": 65
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "terokkar_forest_hub_04",
+      "position": {
+        "mapId": 530,
+        "x": -3599.88,
+        "y": 4923.8,
+        "z": -100.966
+      },
+      "questGivers": [
+        19496,
+        19542
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "terokkar_forest_hub_05",
+      "position": {
+        "mapId": 530,
+        "x": -3395.89,
+        "y": 3631.32,
+        "z": 280.391
+      },
+      "questGivers": [
+        23042,
+        23306,
+        23415
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "terokkar_forest_hub_06",
+      "position": {
+        "mapId": 530,
+        "x": -3358.123,
+        "y": 5187.407,
+        "z": -99.077
+      },
+      "questGivers": [
+        19417,
+        19697,
+        19698
+      ],
+      "levelRange": {
+        "min": 63,
+        "max": 67,
+        "avg": 66
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:16805:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3816.06,
+            "y": 4942.96,
+            "z": -29.37
+          },
+          "radius": 205.72,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16805
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18460:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3853.95,
+            "y": 4953.59,
+            "z": -36.22
+          },
+          "radius": 177.12,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18460
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16805:map:530:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3103.52,
+            "y": 4624.04,
+            "z": -19.96
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16805
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18460:map:530:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3717.84,
+            "y": 4489.85,
+            "z": -12.4
+          },
+          "radius": 99.62,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18460
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "terokkar_forest_hub_07",
+      "position": {
+        "mapId": 530,
+        "x": -3338.71,
+        "y": 4703.58,
+        "z": -100.968
+      },
+      "questGivers": [
+        18933
+      ],
+      "levelRange": {
+        "min": 65,
+        "max": 69,
+        "avg": 69
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "terokkar_forest_hub_08",
+      "position": {
+        "mapId": 530,
+        "x": -3276.79,
+        "y": 5999.96,
+        "z": -2.554
+      },
+      "questGivers": [
+        18262
+      ],
+      "levelRange": {
+        "min": 64,
+        "max": 65,
+        "avg": 65
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "terokkar_forest_hub_09",
+          "zoneId": 3519,
+          "zoneName": "Terokkar Forest",
+          "questGivers": [
+            18273
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -3190.64,
+            "y": 6015.76,
+            "z": 0.076
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "terokkar_forest_hub_09",
+      "position": {
+        "mapId": 530,
+        "x": -3190.64,
+        "y": 6015.76,
+        "z": 0.076
+      },
+      "questGivers": [
+        18273
+      ],
+      "levelRange": {
+        "min": 64,
+        "max": 65,
+        "avg": 65
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:18260:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3298.24,
+            "y": 6002.49,
+            "z": -1.31
+          },
+          "radius": 132.08,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18260
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "terokkar_forest_hub_08",
+          "zoneId": 3519,
+          "zoneName": "Terokkar Forest",
+          "questGivers": [
+            18262
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -3276.79,
+            "y": 5999.96,
+            "z": -2.554
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "terokkar_forest_hub_10",
+      "position": {
+        "mapId": 530,
+        "x": -3105.875,
+        "y": 4955.86,
+        "z": -100.39
+      },
+      "questGivers": [
+        19670,
+        19674
+      ],
+      "levelRange": {
+        "min": 64,
+        "max": 66,
+        "avg": 66
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "terokkar_forest_hub_11",
+      "position": {
+        "mapId": 530,
+        "x": -2965.206,
+        "y": 3961.784,
+        "z": 2.157
+      },
+      "questGivers": [
+        15991,
+        18252,
+        18387,
+        18389,
+        18390,
+        18459,
+        18704,
+        18713
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 65,
+        "avg": 64
+      },
+      "faction": "Alliance",
+      "totalQuests": 14,
+      "estimatedMinutes": 70,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:18595:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2863.81,
+            "y": 3496.38,
+            "z": -20.34
+          },
+          "radius": 209.83,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18595
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18464:map:530:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2499.0,
+            "y": 3419.29,
+            "z": -11.5
+          },
+          "radius": 116.22,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18464
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18464:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2691.01,
+            "y": 3281.26,
+            "z": 1.08
+          },
+          "radius": 71.81,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18464
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:25807:map:530:cluster:8",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2692.74,
+            "y": 3254.55,
+            "z": 0.34
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18476,
+            18477,
+            18670
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:25807:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2296.01,
+            "y": 4347.57,
+            "z": -1.3
+          },
+          "radius": 117.47,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18476,
+            18477,
+            18670
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:25837:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2255.64,
+            "y": 3470.46,
+            "z": -23.21
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18670
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "terokkar_forest_hub_15",
+          "zoneId": 3519,
+          "zoneName": "Terokkar Forest",
+          "questGivers": [
+            18565,
+            21006
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -2592.44,
+            "y": 3317.34,
+            "z": 0.681
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "terokkar_forest_hub_18",
+          "zoneId": 3519,
+          "zoneName": "Terokkar Forest",
+          "questGivers": [
+            18715
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -2301.67,
+            "y": 4898.39,
+            "z": 1.228
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "terokkar_forest_hub_24",
+          "zoneId": 3519,
+          "zoneName": "Terokkar Forest",
+          "questGivers": [
+            22292,
+            22373
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -1656.93,
+            "y": 5448.97,
+            "z": -40.323
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "terokkar_forest_hub_12",
+      "position": {
+        "mapId": 530,
+        "x": -2840.148,
+        "y": 5053.585,
+        "z": -16.961
+      },
+      "questGivers": [
+        18675,
+        22272,
+        22278,
+        22365,
+        22370,
+        22420
+      ],
+      "levelRange": {
+        "min": 62,
+        "max": 65,
+        "avg": 64
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 13,
+      "estimatedMinutes": 65,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:21661:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3071.19,
+            "y": 4940.8,
+            "z": -19.72
+          },
+          "radius": 155.44,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21661
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:21907:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3124.68,
+            "y": 4943.29,
+            "z": -18.83
+          },
+          "radius": 126.05,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21907
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:21902:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3130.41,
+            "y": 4933.62,
+            "z": -13.5
+          },
+          "radius": 162.43,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21902
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:21661:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2865.62,
+            "y": 5383.08,
+            "z": -20.28
+          },
+          "radius": 159.95,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21661
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:21324:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2787.7,
+            "y": 5450.62,
+            "z": 1.2
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21324
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:22314:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2535.23,
+            "y": 5414.39,
+            "z": 21.55
+          },
+          "radius": 107.69,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            22314
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "terokkar_forest_hub_06",
+          "zoneId": 3519,
+          "zoneName": "Terokkar Forest",
+          "questGivers": [
+            19417,
+            19697,
+            19698
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -3384.7,
+            "y": 5185.43,
+            "z": -95.317
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "terokkar_forest_hub_24",
+          "zoneId": 3519,
+          "zoneName": "Terokkar Forest",
+          "questGivers": [
+            22292,
+            22373
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -1656.93,
+            "y": 5448.97,
+            "z": -40.323
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "terokkar_forest_hub_13",
+      "position": {
+        "mapId": 530,
+        "x": -2766.1,
+        "y": 5430.2,
+        "z": -34.455
+      },
+      "questGivers": [
+        22377
+      ],
+      "levelRange": {
+        "min": 62,
+        "max": 64,
+        "avg": 64
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "terokkar_forest_hub_14",
+      "position": {
+        "mapId": 530,
+        "x": -2635.606,
+        "y": 4412.071,
+        "z": 36.108
+      },
+      "questGivers": [
+        18383,
+        18384,
+        18385,
+        18386,
+        18447,
+        18705,
+        18712
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 65,
+        "avg": 64
+      },
+      "faction": "Horde",
+      "totalQuests": 15,
+      "estimatedMinutes": 75,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:19606:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2630.94,
+            "y": 4391.65,
+            "z": 34.9
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19606
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18384:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2671.77,
+            "y": 4373.86,
+            "z": 35.98
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18384
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:25812:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2296.01,
+            "y": 4347.57,
+            "z": -1.3
+          },
+          "radius": 117.47,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18476,
+            18477
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "creature:18464:map:530:cluster:6",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2406.75,
+            "y": 5234.66,
+            "z": -1.57
+          },
+          "radius": 192.79,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18464
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:25812:map:530:cluster:11",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2645.65,
+            "y": 5306.71,
+            "z": 6.99
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18476,
+            18477
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "creature:18464:map:530:cluster:5",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2657.44,
+            "y": 5342.73,
+            "z": 8.06
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18464
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "terokkar_forest_hub_16",
+          "zoneId": 3519,
+          "zoneName": "Terokkar Forest",
+          "questGivers": [
+            18714
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -2574.84,
+            "y": 4975.56,
+            "z": 11.063
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "terokkar_forest_hub_17",
+          "zoneId": 3519,
+          "zoneName": "Terokkar Forest",
+          "questGivers": [
+            18566,
+            21007
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -2538.08,
+            "y": 3660.54,
+            "z": 1.941
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "terokkar_forest_hub_24",
+          "zoneId": 3519,
+          "zoneName": "Terokkar Forest",
+          "questGivers": [
+            22292,
+            22373
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -1656.93,
+            "y": 5448.97,
+            "z": -40.323
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "terokkar_forest_hub_15",
+      "position": {
+        "mapId": 530,
+        "x": -2590.345,
+        "y": 3318.425,
+        "z": 0.685
+      },
+      "questGivers": [
+        18565,
+        21006
+      ],
+      "levelRange": {
+        "min": 62,
+        "max": 65,
+        "avg": 64
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:21039:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2345.22,
+            "y": 3235.05,
+            "z": 3.36
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21039
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16769:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2342.65,
+            "y": 3228.28,
+            "z": -1.3
+          },
+          "radius": 119.81,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16769
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18583:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2918.13,
+            "y": 3419.44,
+            "z": 1.96
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18583
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16810:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2929.1,
+            "y": 3512.22,
+            "z": -9.35
+          },
+          "radius": 192.12,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16810
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16772:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2932.09,
+            "y": 3513.04,
+            "z": -11.12
+          },
+          "radius": 183.93,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16772
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "terokkar_forest_hub_16",
+      "position": {
+        "mapId": 530,
+        "x": -2574.84,
+        "y": 4975.56,
+        "z": 11.063
+      },
+      "questGivers": [
+        18714
+      ],
+      "levelRange": {
+        "min": 62,
+        "max": 65,
+        "avg": 65
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:16519:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2480.16,
+            "y": 4970.02,
+            "z": 31.28
+          },
+          "radius": 149.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16519
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17088:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2455.81,
+            "y": 4956.97,
+            "z": 30.28
+          },
+          "radius": 185.14,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17088
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18720:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2409.23,
+            "y": 4903.38,
+            "z": 35.39
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18720
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "terokkar_forest_hub_17",
+      "position": {
+        "mapId": 530,
+        "x": -2531.99,
+        "y": 3663.055,
+        "z": 1.804
+      },
+      "questGivers": [
+        18566,
+        21007
+      ],
+      "levelRange": {
+        "min": 62,
+        "max": 65,
+        "avg": 64
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:16810:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2929.1,
+            "y": 3512.22,
+            "z": -9.35
+          },
+          "radius": 192.12,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16810
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16772:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2932.09,
+            "y": 3513.04,
+            "z": -11.12
+          },
+          "radius": 183.93,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16772
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18583:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2918.13,
+            "y": 3419.44,
+            "z": 1.96
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18583
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:21039:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2345.22,
+            "y": 3235.05,
+            "z": 3.36
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21039
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16769:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2342.65,
+            "y": 3228.28,
+            "z": -1.3
+          },
+          "radius": 119.81,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16769
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "terokkar_forest_hub_18",
+      "position": {
+        "mapId": 530,
+        "x": -2301.67,
+        "y": 4898.39,
+        "z": 1.228
+      },
+      "questGivers": [
+        18715
+      ],
+      "levelRange": {
+        "min": 62,
+        "max": 65,
+        "avg": 65
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:18720:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2409.23,
+            "y": 4903.38,
+            "z": 35.39
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18720
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17088:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2455.81,
+            "y": 4956.97,
+            "z": 30.28
+          },
+          "radius": 185.14,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17088
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16519:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2480.16,
+            "y": 4970.02,
+            "z": 31.28
+          },
+          "radius": 149.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16519
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "terokkar_forest_hub_19",
+      "position": {
+        "mapId": 530,
+        "x": -2265.21,
+        "y": 3091.14,
+        "z": 13.912
+      },
+      "questGivers": [
+        18760
+      ],
+      "levelRange": {
+        "min": 62,
+        "max": 64,
+        "avg": 64
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "terokkar_forest_hub_20",
+      "position": {
+        "mapId": 530,
+        "x": -1935.485,
+        "y": 4685.74,
+        "z": -1.78
+      },
+      "questGivers": [
+        18424,
+        18446
+      ],
+      "levelRange": {
+        "min": 62,
+        "max": 64,
+        "avg": 64
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:25672:map:530:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2192.63,
+            "y": 4564.22,
+            "z": -8.1
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18468
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "terokkar_forest_hub_11",
+          "zoneId": 3519,
+          "zoneName": "Terokkar Forest",
+          "questGivers": [
+            15991,
+            18252,
+            18387,
+            18389,
+            18390,
+            18459,
+            18704,
+            18713
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -3016.63,
+            "y": 3963.4,
+            "z": 3.189
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "terokkar_forest_hub_14",
+          "zoneId": 3519,
+          "zoneName": "Terokkar Forest",
+          "questGivers": [
+            18383,
+            18384,
+            18385,
+            18386,
+            18447,
+            18705,
+            18712
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -2671.77,
+            "y": 4373.86,
+            "z": 35.978
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "terokkar_forest_hub_21",
+      "position": {
+        "mapId": 530,
+        "x": -1777.43,
+        "y": 5126.05,
+        "z": -35.673
+      },
+      "questGivers": [
+        18584
+      ],
+      "levelRange": {
+        "min": 66,
+        "max": 68,
+        "avg": 68
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:25769:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -3077.3,
+            "y": 5611.32,
+            "z": -7.21
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18588
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "terokkar_forest_hub_22",
+      "position": {
+        "mapId": 530,
+        "x": -1741.71,
+        "y": 5191.84,
+        "z": -40.126
+      },
+      "questGivers": [
+        18484
+      ],
+      "levelRange": {
+        "min": 62,
+        "max": 64,
+        "avg": 64
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:27861:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2507.88,
+            "y": 5402.05,
+            "z": 5.37
+          },
+          "radius": 159.88,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18452,
+            18453
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "terokkar_forest_hub_23",
+      "position": {
+        "mapId": 530,
+        "x": -1668.65,
+        "y": 5531.65,
+        "z": 2.335
+      },
+      "questGivers": [
+        22429
+      ],
+      "levelRange": {
+        "min": 62,
+        "max": 65,
+        "avg": 65
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:25719:map:530:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2510.99,
+            "y": 5402.08,
+            "z": 7.09
+          },
+          "radius": 156.76,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            18449,
+            18450,
+            18451,
+            18452,
+            18453,
+            18454
+          ],
+          "targetCount": 14
+        },
+        {
+          "taskAreaId": "item_source:25719:map:530:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -3613.55,
+            "y": 5754.9,
+            "z": -0.84
+          },
+          "radius": 141.94,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            18449,
+            18450,
+            18451,
+            18452,
+            18453,
+            18454
+          ],
+          "targetCount": 14
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "terokkar_forest_hub_24",
+      "position": {
+        "mapId": 530,
+        "x": -1656.12,
+        "y": 5454.155,
+        "z": -40.323
+      },
+      "questGivers": [
+        22292,
+        22373
+      ],
+      "levelRange": {
+        "min": 62,
+        "max": 70,
+        "avg": 65
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "terokkar_forest_hub_12",
+          "zoneId": 3519,
+          "zoneName": "Terokkar Forest",
+          "questGivers": [
+            18675,
+            22272,
+            22278,
+            22365,
+            22370,
+            22420
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -2866.16,
+            "y": 5039.95,
+            "z": -20.22
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "terokkar_forest_hub_26",
+      "position": {
+        "mapId": 530,
+        "x": -1605.95,
+        "y": 5377.85,
+        "z": -40.126
+      },
+      "questGivers": [
+        19045
+      ],
+      "levelRange": {
+        "min": 65,
+        "max": 69,
+        "avg": 69
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "terokkar_forest_hub_25",
+      "position": {
+        "mapId": 530,
+        "x": -1586.445,
+        "y": 5321.555,
+        "z": -14.311
+      },
+      "questGivers": [
+        18653,
+        19684
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 65,
+        "avg": 64
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

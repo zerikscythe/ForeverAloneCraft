@@ -1,0 +1,968 @@
+{
+  "version": 1,
+  "zoneId": 1,
+  "zoneName": "Dun Morogh",
+  "mapId": 0,
+  "hubCount": 16,
+  "hubs": [
+    {
+      "hubId": "dun_morogh_hub_01",
+      "position": {
+        "mapId": 0,
+        "x": -6367.065,
+        "y": 569.451,
+        "z": 385.839
+      },
+      "questGivers": [
+        786,
+        12738
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 5,
+        "avg": 5
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:2004:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6508.82,
+            "y": 300.76,
+            "z": 370.45
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            808
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dun_morogh_hub_02",
+      "position": {
+        "mapId": 0,
+        "x": -6242.355,
+        "y": 144.016,
+        "z": 430.036
+      },
+      "questGivers": [
+        1965,
+        6782
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 5,
+        "avg": 5
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dun_morogh_hub_03",
+      "position": {
+        "mapId": 0,
+        "x": -6226.635,
+        "y": 335.058,
+        "z": 383.183
+      },
+      "questGivers": [
+        658,
+        713
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 3,
+        "avg": 1
+      },
+      "faction": "Alliance",
+      "totalQuests": 12,
+      "estimatedMinutes": 60,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:750:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6189.35,
+            "y": 233.4,
+            "z": 392.83
+          },
+          "radius": 59.63,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            704,
+            705
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "creature:724:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -6371.5,
+            "y": 296.63,
+            "z": 388.68
+          },
+          "radius": 154.3,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            724
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:707:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -6367.76,
+            "y": 282.56,
+            "z": 389.15
+          },
+          "radius": 158.37,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            707
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:707:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -6318.58,
+            "y": 696.87,
+            "z": 391.18
+          },
+          "radius": 183.92,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            707
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dun_morogh_hub_04",
+      "position": {
+        "mapId": 0,
+        "x": -6222.47,
+        "y": 688.973,
+        "z": 385.002
+      },
+      "questGivers": [
+        714
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 4,
+        "avg": 4
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:708:map:0:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -6164.25,
+            "y": 493.21,
+            "z": 388.4
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            708
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:708:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -6190.52,
+            "y": 238.42,
+            "z": 393.42
+          },
+          "radius": 82.9,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            708
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dun_morogh_hub_05",
+      "position": {
+        "mapId": 0,
+        "x": -6075.75,
+        "y": 384.994,
+        "z": 394.238
+      },
+      "questGivers": [
+        836,
+        837,
+        895,
+        8416
+      ],
+      "levelRange": {
+        "min": 3,
+        "max": 5,
+        "avg": 4
+      },
+      "faction": "Alliance",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "dun_morogh_hub_07",
+          "zoneId": 1,
+          "zoneName": "Dun Morogh",
+          "questGivers": [
+            1226,
+            1228,
+            1229,
+            1231,
+            1232,
+            1234,
+            1252,
+            1267,
+            1373,
+            1872
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -5644.37,
+            "y": -499.163,
+            "z": 396.752
+          },
+          "weight": 2
+        }
+      ]
+    },
+    {
+      "hubId": "dun_morogh_hub_06",
+      "position": {
+        "mapId": 0,
+        "x": -5720.65,
+        "y": -1590.145,
+        "z": 384.686
+      },
+      "questGivers": [
+        1254,
+        1977
+      ],
+      "levelRange": {
+        "min": 5,
+        "max": 11,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dun_morogh_hub_07",
+      "position": {
+        "mapId": 0,
+        "x": -5601.329,
+        "y": -514.597,
+        "z": 400.588
+      },
+      "questGivers": [
+        1226,
+        1228,
+        1229,
+        1231,
+        1232,
+        1234,
+        1252,
+        1267,
+        1373,
+        1872
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 55,
+        "avg": 13
+      },
+      "faction": "Alliance",
+      "totalQuests": 18,
+      "estimatedMinutes": 90,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:12427:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -5668.69,
+            "y": -454.09,
+            "z": 394.47
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            12427
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1123:map:0:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -5316.35,
+            "y": -214.36,
+            "z": 440.96
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1123
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:2886:map:0:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -5064.33,
+            "y": -340.44,
+            "z": 397.12
+          },
+          "radius": 96.08,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1125,
+            1126,
+            1127,
+            1689
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "creature:1123:map:0:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -5054.89,
+            "y": -135.56,
+            "z": 428.5
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1123
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:2886:map:0:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -4852.14,
+            "y": -360.3,
+            "z": 392.37
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1125,
+            1126,
+            1127,
+            1689
+          ],
+          "targetCount": 4
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dun_morogh_hub_13",
+          "zoneId": 1,
+          "zoneName": "Dun Morogh",
+          "questGivers": [
+            1374,
+            1375
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -5378.4,
+            "y": 315.291,
+            "z": 394.289
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dun_morogh_hub_08",
+      "position": {
+        "mapId": 0,
+        "x": -5573.01,
+        "y": 99.332,
+        "z": 483.91
+      },
+      "questGivers": [
+        1266
+      ],
+      "levelRange": {
+        "min": 7,
+        "max": 12,
+        "avg": 12
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dun_morogh_hub_09",
+      "position": {
+        "mapId": 0,
+        "x": -5525.405,
+        "y": -1314.19,
+        "z": 401.884
+      },
+      "questGivers": [
+        1261,
+        1265
+      ],
+      "levelRange": {
+        "min": 6,
+        "max": 12,
+        "avg": 5
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:3627:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -5389.0,
+            "y": -1282.0,
+            "z": 445.99
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1388
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dun_morogh_hub_11",
+      "position": {
+        "mapId": 0,
+        "x": -5498.115,
+        "y": -456.855,
+        "z": 395.541
+      },
+      "questGivers": [
+        1268,
+        1269
+      ],
+      "levelRange": {
+        "min": 7,
+        "max": 30,
+        "avg": 22
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:3083:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -5201.67,
+            "y": 522.97,
+            "z": 397.91
+          },
+          "radius": 213.57,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1211,
+            8503
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:3084:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -5201.67,
+            "y": 522.97,
+            "z": 397.91
+          },
+          "radius": 213.57,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1211,
+            8503
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dun_morogh_hub_12",
+      "position": {
+        "mapId": 0,
+        "x": -5479.75,
+        "y": -2447.09,
+        "z": 400.675
+      },
+      "questGivers": [
+        1959
+      ],
+      "levelRange": {
+        "min": 8,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dun_morogh_hub_10",
+      "position": {
+        "mapId": 0,
+        "x": -5465.984,
+        "y": -645.238,
+        "z": 394.039
+      },
+      "questGivers": [
+        1377,
+        1378,
+        1694,
+        7955,
+        39386,
+        39675,
+        39678
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 75,
+        "avg": 23
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 12,
+      "estimatedMinutes": 60,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:7955:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -5451.6,
+            "y": -617.33,
+            "z": 394.55
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7955
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:6952:map:0:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -5516.15,
+            "y": -566.64,
+            "z": 402.56
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1128,
+            1196
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:6952:map:0:cluster:18",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -5293.4,
+            "y": -717.5,
+            "z": 388.46
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1128,
+            1196
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "creature:1268:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -5498.29,
+            "y": -457.87,
+            "z": 395.64
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1268
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:6119:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -5642.65,
+            "y": -529.14,
+            "z": 404.36
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6119
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:2671:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -5674.76,
+            "y": -282.94,
+            "z": 368.42
+          },
+          "radius": 64.86,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1134,
+            1135,
+            1137,
+            1271,
+            1388
+          ],
+          "targetCount": 5
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dun_morogh_hub_13",
+          "zoneId": 1,
+          "zoneName": "Dun Morogh",
+          "questGivers": [
+            1374,
+            1375
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -5378.4,
+            "y": 315.291,
+            "z": 394.289
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dun_morogh_hub_13",
+      "position": {
+        "mapId": 0,
+        "x": -5375.215,
+        "y": 315.36,
+        "z": 394.366
+      },
+      "questGivers": [
+        1374,
+        1375
+      ],
+      "levelRange": {
+        "min": 2,
+        "max": 10,
+        "avg": 8
+      },
+      "faction": "Alliance",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:1196:map:0:cluster:6",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -5163.65,
+            "y": 273.84,
+            "z": 396.97
+          },
+          "radius": 173.69,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1196
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1127:map:0:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -5666.88,
+            "y": 468.51,
+            "z": 385.64
+          },
+          "radius": 64.19,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1127
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1196:map:0:cluster:8",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -5675.63,
+            "y": 480.76,
+            "z": 388.63
+          },
+          "radius": 139.35,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1196
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:2676:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -5340.22,
+            "y": -235.93,
+            "z": 442.21
+          },
+          "radius": 110.99,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1397
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1201:map:0:cluster:5",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -4978.06,
+            "y": -83.99,
+            "z": 380.94
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1201
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:2676:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -5035.89,
+            "y": -263.54,
+            "z": 444.97
+          },
+          "radius": 98.52,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1397
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dun_morogh_hub_12",
+          "zoneId": 1,
+          "zoneName": "Dun Morogh",
+          "questGivers": [
+            1959
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -5479.75,
+            "y": -2447.09,
+            "z": 400.675
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dun_morogh_hub_14",
+      "position": {
+        "mapId": 0,
+        "x": -5336.66,
+        "y": 562.818,
+        "z": 395.897
+      },
+      "questGivers": [
+        6886
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dun_morogh_hub_15",
+      "position": {
+        "mapId": 0,
+        "x": -5334.86,
+        "y": 254.826,
+        "z": 388.26
+      },
+      "questGivers": [
+        11807
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "dun_morogh_hub_07",
+          "zoneId": 1,
+          "zoneName": "Dun Morogh",
+          "questGivers": [
+            1226,
+            1228,
+            1229,
+            1231,
+            1232,
+            1234,
+            1252,
+            1267,
+            1373,
+            1872
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -5644.37,
+            "y": -499.163,
+            "z": 396.752
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dun_morogh_hub_16",
+      "position": {
+        "mapId": 0,
+        "x": -5163.74,
+        "y": -2329.58,
+        "z": 400.675
+      },
+      "questGivers": [
+        1960
+      ],
+      "levelRange": {
+        "min": 8,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

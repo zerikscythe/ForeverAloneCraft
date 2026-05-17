@@ -1,0 +1,2841 @@
+{
+  "version": 1,
+  "zoneId": 3483,
+  "zoneName": "Hellfire Peninsula",
+  "mapId": 530,
+  "hubCount": 32,
+  "hubs": [
+    {
+      "hubId": "hellfire_peninsula_hub_01",
+      "position": {
+        "mapId": 530,
+        "x": -1331.033,
+        "y": 2364.617,
+        "z": 88.997
+      },
+      "questGivers": [
+        16858,
+        19682,
+        19683,
+        19736,
+        21279,
+        22107,
+        22231
+      ],
+      "levelRange": {
+        "min": 58,
+        "max": 63,
+        "avg": 61
+      },
+      "faction": "Horde",
+      "totalQuests": 14,
+      "estimatedMinutes": 70,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:22177:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1336.04,
+            "y": 2353.65,
+            "z": 90.05
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            22177
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:20816:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1151.66,
+            "y": 2066.4,
+            "z": 80.19
+          },
+          "radius": 42.58,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20816
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:28562:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -1402.4,
+            "y": 2707.9,
+            "z": -27.48
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16978
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16906:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1118.32,
+            "y": 2645.69,
+            "z": 12.95
+          },
+          "radius": 76.5,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16906
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16905:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1272.7,
+            "y": 2723.61,
+            "z": -5.52
+          },
+          "radius": 207.28,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16905
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16904:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1428.83,
+            "y": 2756.85,
+            "z": -45.8
+          },
+          "radius": 116.53,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16904
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "hellfire_peninsula_hub_28",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            16588
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 225.656,
+            "y": 2839.38,
+            "z": 131.424
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_02",
+      "position": {
+        "mapId": 530,
+        "x": -1137.73,
+        "y": 4272.1,
+        "z": 14.049
+      },
+      "questGivers": [
+        16993
+      ],
+      "levelRange": {
+        "min": 61,
+        "max": 63,
+        "avg": 63
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "hellfire_peninsula_hub_10",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            16789,
+            16790,
+            16791,
+            16792,
+            16793,
+            16794,
+            17015,
+            17226,
+            20159
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -689.583,
+            "y": 4167.8,
+            "z": 58.523
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_03",
+      "position": {
+        "mapId": 530,
+        "x": -1096.405,
+        "y": 2998.77,
+        "z": 8.276
+      },
+      "questGivers": [
+        19344,
+        19367
+      ],
+      "levelRange": {
+        "min": 58,
+        "max": 61,
+        "avg": 61
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_04",
+      "position": {
+        "mapId": 530,
+        "x": -1007.06,
+        "y": 4303.675,
+        "z": 68.103
+      },
+      "questGivers": [
+        16850,
+        16851
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 63,
+        "avg": 62
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:16967:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1005.24,
+            "y": 4187.17,
+            "z": 31.59
+          },
+          "radius": 95.9,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16967
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16934:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -955.31,
+            "y": 4411.29,
+            "z": 89.94
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16934
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16966:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1098.7,
+            "y": 4223.31,
+            "z": 20.07
+          },
+          "radius": 92.32,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16966
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16934:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -766.99,
+            "y": 4384.26,
+            "z": 72.19
+          },
+          "radius": 140.7,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16934
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16967:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1207.08,
+            "y": 4139.03,
+            "z": 57.01
+          },
+          "radius": 151.3,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16967
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16966:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1272.88,
+            "y": 4055.02,
+            "z": 95.27
+          },
+          "radius": 104.59,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16966
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_05",
+      "position": {
+        "mapId": 530,
+        "x": -810.61,
+        "y": 2615.635,
+        "z": 124.472
+      },
+      "questGivers": [
+        16819,
+        16839,
+        17479,
+        17557
+      ],
+      "levelRange": {
+        "min": 58,
+        "max": 70,
+        "avg": 63
+      },
+      "faction": "Alliance",
+      "totalQuests": 12,
+      "estimatedMinutes": 60,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:19312:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -456.88,
+            "y": 3061.48,
+            "z": -52.94
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19312
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19191:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 394.61,
+            "y": 3276.6,
+            "z": 74.63
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19191
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16951:map:530:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 321.51,
+            "y": 3431.27,
+            "z": 64.29
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16951
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16951:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 418.84,
+            "y": 3322.07,
+            "z": 68.27
+          },
+          "radius": 141.77,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16951
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "hellfire_peninsula_hub_15",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            16820,
+            16827,
+            21209
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -597.186,
+            "y": 2912.03,
+            "z": 59.297
+          },
+          "weight": 2
+        },
+        {
+          "hubId": "hellfire_peninsula_hub_14",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            19309
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -616.502,
+            "y": 2352.87,
+            "z": 36.792
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_06",
+      "position": {
+        "mapId": 530,
+        "x": -784.077,
+        "y": 2759.345,
+        "z": 121.468
+      },
+      "questGivers": [
+        16829,
+        18802
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_07",
+      "position": {
+        "mapId": 530,
+        "x": -760.262,
+        "y": 4699.16,
+        "z": 67.259
+      },
+      "questGivers": [
+        19361
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 62,
+        "avg": 62
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_08",
+      "position": {
+        "mapId": 530,
+        "x": -702.253,
+        "y": 2729.475,
+        "z": 96.769
+      },
+      "questGivers": [
+        16825,
+        16826,
+        19308,
+        22430
+      ],
+      "levelRange": {
+        "min": 55,
+        "max": 62,
+        "avg": 61
+      },
+      "faction": "Alliance",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:22432:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -710.21,
+            "y": 2754.36,
+            "z": 102.47
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            22432
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "hellfire_peninsula_hub_04",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            16850,
+            16851
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -1010.14,
+            "y": 4301.38,
+            "z": 68.134
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "hellfire_peninsula_hub_05",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            16819,
+            16839,
+            17479,
+            17557
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -815.609,
+            "y": 2614.2,
+            "z": 124.472
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_09",
+      "position": {
+        "mapId": 530,
+        "x": -683.931,
+        "y": 1860.517,
+        "z": 65.767
+      },
+      "questGivers": [
+        19310,
+        19409,
+        21133
+      ],
+      "levelRange": {
+        "min": 58,
+        "max": 62,
+        "avg": 60
+      },
+      "faction": "Alliance",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:30157:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -882.38,
+            "y": 1903.62,
+            "z": 66.53
+          },
+          "radius": 52.9,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16871,
+            16873,
+            16907,
+            19422,
+            19424,
+            19442
+          ],
+          "targetCount": 7
+        },
+        {
+          "taskAreaId": "creature:22401:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -825.25,
+            "y": 2026.35,
+            "z": 46.68
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            22401
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:22402:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -894.47,
+            "y": 1919.87,
+            "z": 93.71
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            22402
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:22403:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -979.37,
+            "y": 1876.67,
+            "z": 121.59
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            22403
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:30158:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -1173.46,
+            "y": 1920.36,
+            "z": 81.6
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16964
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19292:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -304.41,
+            "y": 1524.45,
+            "z": 37.97
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19292
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "hellfire_peninsula_hub_29",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            20232,
+            20234,
+            20235
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 279.397,
+            "y": 1489.76,
+            "z": -15.441
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_11",
+      "position": {
+        "mapId": 530,
+        "x": -682.099,
+        "y": 2620.307,
+        "z": 88.285
+      },
+      "questGivers": [
+        16830,
+        18266,
+        20206
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 70,
+        "avg": 63
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:19032:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -471.34,
+            "y": 3451.02,
+            "z": 36.03
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            19032
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19028:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -185.15,
+            "y": 3476.81,
+            "z": 39.59
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            19028
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19029:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -290.14,
+            "y": 3702.35,
+            "z": 58.23
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            19029
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_12",
+      "position": {
+        "mapId": 530,
+        "x": -673.345,
+        "y": 2853.22,
+        "z": 49.462
+      },
+      "questGivers": [
+        16837
+      ],
+      "levelRange": {
+        "min": 58,
+        "max": 61,
+        "avg": 61
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:18827:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -684.57,
+            "y": 2720.35,
+            "z": 19.43
+          },
+          "radius": 139.51,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18827
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18974:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -637.22,
+            "y": 2636.5,
+            "z": -3.06
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18974
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16857:map:530:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -775.95,
+            "y": 3070.9,
+            "z": 4.31
+          },
+          "radius": 176.65,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16857
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16857:map:530:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -867.36,
+            "y": 3219.07,
+            "z": 18.25
+          },
+          "radius": 63.52,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16857
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18827:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 414.78,
+            "y": 2789.0,
+            "z": 53.05
+          },
+          "radius": 108.58,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18827
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_13",
+      "position": {
+        "mapId": 530,
+        "x": -620.888,
+        "y": 4861.63,
+        "z": 41.501
+      },
+      "questGivers": [
+        20677
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 62,
+        "avg": 62
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "hellfire_peninsula_hub_07",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            19361
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -760.262,
+            "y": 4699.16,
+            "z": 67.259
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_14",
+      "position": {
+        "mapId": 530,
+        "x": -616.502,
+        "y": 2352.87,
+        "z": 36.792
+      },
+      "questGivers": [
+        19309
+      ],
+      "levelRange": {
+        "min": 58,
+        "max": 61,
+        "avg": 61
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:19261:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -503.57,
+            "y": 2070.78,
+            "z": 87.05
+          },
+          "radius": 170.85,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19261
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19136:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -491.51,
+            "y": 2068.11,
+            "z": 87.37
+          },
+          "radius": 160.37,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19136
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19261:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -577.06,
+            "y": 1988.3,
+            "z": 89.83
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19261
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19434:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -536.03,
+            "y": 1979.85,
+            "z": 86.18
+          },
+          "radius": 71.47,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19434
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19434:map:530:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 184.15,
+            "y": 2277.28,
+            "z": 49.13
+          },
+          "radius": 46.18,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19434
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "hellfire_peninsula_hub_09",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            19310,
+            19409,
+            21133
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -701.021,
+            "y": 1874.66,
+            "z": 63.457
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_10",
+      "position": {
+        "mapId": 530,
+        "x": -611.271,
+        "y": 4142.306,
+        "z": 77.289
+      },
+      "questGivers": [
+        16789,
+        16790,
+        16791,
+        16792,
+        16793,
+        16794,
+        17015,
+        17226,
+        20159
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 63,
+        "avg": 62
+      },
+      "faction": "Horde",
+      "totalQuests": 16,
+      "estimatedMinutes": 80,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:17226:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -657.81,
+            "y": 4137.41,
+            "z": 64.63
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17226
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:23387:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -406.03,
+            "y": 4022.74,
+            "z": 82.26
+          },
+          "radius": 98.56,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16973
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:23483:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -1061.04,
+            "y": 4215.28,
+            "z": 22.68
+          },
+          "radius": 153.78,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16966,
+            16967,
+            17084
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "creature:16927:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -916.18,
+            "y": 3718.48,
+            "z": 95.19
+          },
+          "radius": 41.47,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16927
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:23387:map:530:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -95.54,
+            "y": 4255.61,
+            "z": 82.71
+          },
+          "radius": 145.14,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16973
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16927:map:530:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 168.35,
+            "y": 3758.01,
+            "z": 195.17
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16927
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "hellfire_peninsula_hub_19",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            16888,
+            16991,
+            19293,
+            19294
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -315.264,
+            "y": 4716.16,
+            "z": 18.308
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_15",
+      "position": {
+        "mapId": 530,
+        "x": -594.718,
+        "y": 2907.163,
+        "z": 59.301
+      },
+      "questGivers": [
+        16820,
+        16827,
+        21209
+      ],
+      "levelRange": {
+        "min": 58,
+        "max": 70,
+        "avg": 62
+      },
+      "faction": "Alliance",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:19009:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -183.95,
+            "y": 2773.39,
+            "z": 50.27
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19009
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:21236:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -168.94,
+            "y": 2820.42,
+            "z": 43.09
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21236
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:21237:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -160.34,
+            "y": 2663.65,
+            "z": 62.3
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21237
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18818:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -160.54,
+            "y": 2518.76,
+            "z": 59.92
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18818
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16906:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1118.32,
+            "y": 2645.69,
+            "z": 12.95
+          },
+          "radius": 76.5,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16906
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16905:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1272.7,
+            "y": 2723.61,
+            "z": -5.52
+          },
+          "radius": 207.28,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16905
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_16",
+      "position": {
+        "mapId": 530,
+        "x": -541.787,
+        "y": 4734.32,
+        "z": 38.796
+      },
+      "questGivers": [
+        20678
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 62,
+        "avg": 62
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "hellfire_peninsula_hub_07",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            19361
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -760.262,
+            "y": 4699.16,
+            "z": 67.259
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_17",
+      "position": {
+        "mapId": 530,
+        "x": -530.683,
+        "y": 4867.86,
+        "z": 34.224
+      },
+      "questGivers": [
+        20679
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 62,
+        "avg": 62
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "hellfire_peninsula_hub_07",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            19361
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -760.262,
+            "y": 4699.16,
+            "z": 67.259
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_19",
+      "position": {
+        "mapId": 530,
+        "x": -308.367,
+        "y": 4723.203,
+        "z": 20.252
+      },
+      "questGivers": [
+        16888,
+        16991,
+        19293,
+        19294
+      ],
+      "levelRange": {
+        "min": 61,
+        "max": 63,
+        "avg": 63
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:23336:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -780.1,
+            "y": 4197.92,
+            "z": 48.85
+          },
+          "radius": 106.59,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16880,
+            16992
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:23336:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -1198.53,
+            "y": 3309.53,
+            "z": 88.63
+          },
+          "radius": 127.81,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16880,
+            16992
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_18",
+      "position": {
+        "mapId": 530,
+        "x": -249.88,
+        "y": 1028.317,
+        "z": 54.328
+      },
+      "questGivers": [
+        18930,
+        18931,
+        19229,
+        19253
+      ],
+      "levelRange": {
+        "min": 58,
+        "max": 61,
+        "avg": 61
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "hellfire_peninsula_hub_08",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            16825,
+            16826,
+            19308,
+            22430
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -710.679,
+            "y": 2734.28,
+            "z": 101.675
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "hellfire_peninsula_hub_27",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            3230,
+            16575,
+            17493,
+            17558,
+            19255,
+            21175,
+            21256
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 218.998,
+            "y": 2653.52,
+            "z": 87.936
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_21",
+      "position": {
+        "mapId": 530,
+        "x": -17.702,
+        "y": 3803.48,
+        "z": 94.163
+      },
+      "questGivers": [
+        17062
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 62,
+        "avg": 62
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "hellfire_peninsula_hub_27",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            3230,
+            16575,
+            17493,
+            17558,
+            19255,
+            21175,
+            21256
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 218.998,
+            "y": 2653.52,
+            "z": 87.936
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_20",
+      "position": {
+        "mapId": 530,
+        "x": -12.528,
+        "y": 2141.383,
+        "z": 115.625
+      },
+      "questGivers": [
+        16576,
+        19273,
+        19401,
+        21257
+      ],
+      "levelRange": {
+        "min": 58,
+        "max": 62,
+        "avg": 61
+      },
+      "faction": "Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:19397:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 665.16,
+            "y": 1830.1,
+            "z": 128.44
+          },
+          "radius": 59.48,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            19397
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19397:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 792.43,
+            "y": 1750.14,
+            "z": 110.84
+          },
+          "radius": 146.66,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            19397
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19291:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -145.55,
+            "y": 1511.28,
+            "z": 34.36
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19291
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19292:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -304.41,
+            "y": 1524.45,
+            "z": 37.97
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19292
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "hellfire_peninsula_hub_27",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            3230,
+            16575,
+            17493,
+            17558,
+            19255,
+            21175,
+            21256
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 218.998,
+            "y": 2653.52,
+            "z": 87.936
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_22",
+      "position": {
+        "mapId": 530,
+        "x": 59.898,
+        "y": 2536.76,
+        "z": 64.358
+      },
+      "questGivers": [
+        19256
+      ],
+      "levelRange": {
+        "min": 58,
+        "max": 61,
+        "avg": 61
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:19434:map:530:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 184.15,
+            "y": 2277.28,
+            "z": 49.13
+          },
+          "radius": 46.18,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19434
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19434:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 233.37,
+            "y": 2074.93,
+            "z": 39.22
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19434
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19136:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -491.51,
+            "y": 2068.11,
+            "z": 87.37
+          },
+          "radius": 160.37,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19136
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19261:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -503.57,
+            "y": 2070.78,
+            "z": 87.05
+          },
+          "radius": 170.85,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19261
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19261:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -577.06,
+            "y": 1988.3,
+            "z": 89.83
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19261
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "hellfire_peninsula_hub_20",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            16576,
+            19273,
+            19401,
+            21257
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -42.675,
+            "y": 2181.09,
+            "z": 108.602
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_23",
+      "position": {
+        "mapId": 530,
+        "x": 95.024,
+        "y": 4347.873,
+        "z": 102.488
+      },
+      "questGivers": [
+        16799,
+        16833,
+        16834
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 63,
+        "avg": 63
+      },
+      "faction": "Alliance",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:23589:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 409.58,
+            "y": 3733.75,
+            "z": 184.32
+          },
+          "radius": 177.06,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16846,
+            16847
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:23589:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 275.35,
+            "y": 3667.28,
+            "z": 184.93
+          },
+          "radius": 51.25,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16846,
+            16847
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:23687:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -759.98,
+            "y": 3816.24,
+            "z": 20.0
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17057
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "hellfire_peninsula_hub_25",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            16796,
+            16797,
+            17006
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 192.09,
+            "y": 4333.34,
+            "z": 116.444
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "hellfire_peninsula_hub_26",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            16852
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 192.146,
+            "y": 4150.55,
+            "z": 73.661
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_24",
+      "position": {
+        "mapId": 530,
+        "x": 150.816,
+        "y": 2712.832,
+        "z": 91.48
+      },
+      "questGivers": [
+        16574,
+        16577,
+        16583,
+        18267,
+        21283
+      ],
+      "levelRange": {
+        "min": 55,
+        "max": 70,
+        "avg": 63
+      },
+      "faction": "Horde",
+      "totalQuests": 10,
+      "estimatedMinutes": 50,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:19028:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -185.15,
+            "y": 3476.81,
+            "z": 39.59
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            19028
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19032:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -471.34,
+            "y": 3451.02,
+            "z": 36.03
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            19032
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19029:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -290.14,
+            "y": 3702.35,
+            "z": 58.23
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            19029
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19008:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -356.54,
+            "y": 2710.25,
+            "z": 44.27
+          },
+          "radius": 40.19,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19008
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18849:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -301.99,
+            "y": 2403.11,
+            "z": 58.04
+          },
+          "radius": 40.41,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18849
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:22574:map:530:cluster:8",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 768.51,
+            "y": 2479.58,
+            "z": 284.54
+          },
+          "radius": 159.75,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17870,
+            20514,
+            21061,
+            22286,
+            22298,
+            22311
+          ],
+          "targetCount": 7
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "hellfire_peninsula_hub_10",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            16789,
+            16790,
+            16791,
+            16792,
+            16793,
+            16794,
+            17015,
+            17226,
+            20159
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -689.583,
+            "y": 4167.8,
+            "z": 58.523
+          },
+          "weight": 2
+        },
+        {
+          "hubId": "hellfire_peninsula_hub_01",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            16858,
+            19682,
+            19683,
+            19736,
+            21279,
+            22107,
+            22231
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -1337.77,
+            "y": 2355.06,
+            "z": 89.038
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "hellfire_peninsula_hub_32",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            16845,
+            17123
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 504.592,
+            "y": 3882.13,
+            "z": 192.156
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_26",
+      "position": {
+        "mapId": 530,
+        "x": 192.146,
+        "y": 4150.55,
+        "z": 73.661
+      },
+      "questGivers": [
+        16852
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 62,
+        "avg": 62
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_25",
+      "position": {
+        "mapId": 530,
+        "x": 211.195,
+        "y": 4334.753,
+        "z": 118.375
+      },
+      "questGivers": [
+        16796,
+        16797,
+        17006
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 63,
+        "avg": 62
+      },
+      "faction": "Alliance",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:16927:map:530:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 168.35,
+            "y": 3758.01,
+            "z": 195.17
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16927
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16951:map:530:cluster:5",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 510.43,
+            "y": 3505.14,
+            "z": 73.02
+          },
+          "radius": 65.36,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16951
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16951:map:530:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 321.51,
+            "y": 3431.27,
+            "z": 64.29
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16951
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16927:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -916.18,
+            "y": 3718.48,
+            "z": 95.19
+          },
+          "radius": 41.47,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16927
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "hellfire_peninsula_hub_19",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            16888,
+            16991,
+            19293,
+            19294
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -315.264,
+            "y": 4716.16,
+            "z": 18.308
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_28",
+      "position": {
+        "mapId": 530,
+        "x": 225.656,
+        "y": 2839.38,
+        "z": 131.424
+      },
+      "questGivers": [
+        16588
+      ],
+      "levelRange": {
+        "min": 58,
+        "max": 70,
+        "avg": 66
+      },
+      "faction": "Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "hellfire_peninsula_hub_27",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            3230,
+            16575,
+            17493,
+            17558,
+            19255,
+            21175,
+            21256
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 218.998,
+            "y": 2653.52,
+            "z": 87.936
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_27",
+      "position": {
+        "mapId": 530,
+        "x": 234.799,
+        "y": 2689.639,
+        "z": 89.688
+      },
+      "questGivers": [
+        3230,
+        16575,
+        17493,
+        17558,
+        19255,
+        21175,
+        21256
+      ],
+      "levelRange": {
+        "min": 55,
+        "max": 70,
+        "avg": 63
+      },
+      "faction": "Horde",
+      "totalQuests": 19,
+      "estimatedMinutes": 95,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:22461:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 351.62,
+            "y": 2510.15,
+            "z": 159.09
+          },
+          "radius": 85.35,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            22461
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16947:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 370.65,
+            "y": 2503.62,
+            "z": 156.09
+          },
+          "radius": 102.95,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16947
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:30327:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 25.2,
+            "y": 2880.7,
+            "z": 41.82
+          },
+          "radius": 66.28,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16876,
+            16925,
+            18952,
+            19701
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "creature:22461:map:530:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 520.07,
+            "y": 2825.57,
+            "z": 209.57
+          },
+          "radius": 83.6,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            22461
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16947:map:530:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 545.57,
+            "y": 2804.56,
+            "z": 215.44
+          },
+          "radius": 100.14,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16947
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:29795:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 569.78,
+            "y": 2797.71,
+            "z": 218.62
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19298
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "hellfire_peninsula_hub_24",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            16574,
+            16577,
+            16583,
+            18267,
+            21283
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 131.192,
+            "y": 2649.86,
+            "z": 84.078
+          },
+          "weight": 2
+        },
+        {
+          "hubId": "hellfire_peninsula_hub_21",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            17062
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -17.702,
+            "y": 3803.48,
+            "z": 94.163
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "hellfire_peninsula_hub_22",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            19256
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 59.898,
+            "y": 2536.76,
+            "z": 64.358
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_29",
+      "position": {
+        "mapId": 530,
+        "x": 296.474,
+        "y": 1476.64,
+        "z": -9.644
+      },
+      "questGivers": [
+        20232,
+        20234,
+        20235
+      ],
+      "levelRange": {
+        "min": 58,
+        "max": 62,
+        "avg": 61
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:19397:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 665.16,
+            "y": 1830.1,
+            "z": 128.44
+          },
+          "radius": 59.48,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            19397
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19397:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 792.43,
+            "y": 1750.14,
+            "z": 110.84
+          },
+          "radius": 146.66,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            19397
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "hellfire_peninsula_hub_31",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            20793
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 497.948,
+            "y": 2012.61,
+            "z": 112.777
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_30",
+      "position": {
+        "mapId": 530,
+        "x": 430.101,
+        "y": 2886.58,
+        "z": 52.356
+      },
+      "questGivers": [
+        16915
+      ],
+      "levelRange": {
+        "min": 58,
+        "max": 61,
+        "avg": 61
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:18976:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 407.19,
+            "y": 2729.83,
+            "z": 51.96
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18976
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_31",
+      "position": {
+        "mapId": 530,
+        "x": 497.948,
+        "y": 2012.61,
+        "z": 112.777
+      },
+      "questGivers": [
+        20793
+      ],
+      "levelRange": {
+        "min": 58,
+        "max": 61,
+        "avg": 61
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:16947:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 376.72,
+            "y": 2179.03,
+            "z": 118.37
+          },
+          "radius": 135.86,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16947
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:20798:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 382.35,
+            "y": 2191.94,
+            "z": 118.39
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20798
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:22461:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 357.95,
+            "y": 2203.06,
+            "z": 117.94
+          },
+          "radius": 140.07,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            22461
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16947:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 370.65,
+            "y": 2503.62,
+            "z": 156.09
+          },
+          "radius": 102.95,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16947
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:22461:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 351.62,
+            "y": 2510.15,
+            "z": 159.09
+          },
+          "radius": 85.35,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            22461
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:29795:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 569.78,
+            "y": 2797.71,
+            "z": 218.62
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19298
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "hellfire_peninsula_hub_32",
+      "position": {
+        "mapId": 530,
+        "x": 514.43,
+        "y": 3884.665,
+        "z": 191.056
+      },
+      "questGivers": [
+        16845,
+        17123
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 63,
+        "avg": 63
+      },
+      "faction": "Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:16847:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 402.77,
+            "y": 3723.41,
+            "z": 185.77
+          },
+          "radius": 179.43,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16847
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "hellfire_peninsula_hub_27",
+          "zoneId": 3483,
+          "zoneName": "Hellfire Peninsula",
+          "questGivers": [
+            3230,
+            16575,
+            17493,
+            17558,
+            19255,
+            21175,
+            21256
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 218.998,
+            "y": 2653.52,
+            "z": 87.936
+          },
+          "weight": 1
+        }
+      ]
+    }
+  ]
+}

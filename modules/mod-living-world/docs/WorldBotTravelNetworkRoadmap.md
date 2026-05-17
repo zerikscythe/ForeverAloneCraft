@@ -191,6 +191,35 @@ So the intended model is:
   presence
 - route planning then carries those sessions across the world
 
+### 3.5 Add a derived quest-hub progression layer above broad zone questing
+
+Broad `quest_auto` / `quest_zone` resolution is a useful first pass, but it is
+still too coarse to make bots feel like they are following WoW's natural quest
+flow.
+
+Next direction:
+
+- derive a compact **quest-hub graph** from the richer extracted quest cache
+- represent hubs as:
+  - quest giver / hub anchor
+  - level/faction band
+  - approximate quest count / stay duration
+  - weighted follow-on branches to other hubs
+- let session composition choose:
+  - an initial quest hub
+  - then a weighted follow-on hub after a timed quest block ends
+
+Important boundary:
+
+- the editor/tooling owns the rich quest extraction source
+- runtime consumes a compact derived hub graph
+- travel planning remains the hidden "magic" that figures out how to reach the
+  chosen hub using roads, taxi, boat, zeppelin, portal, and ground travel
+
+Related design note:
+
+- see `WorldBotQuestHubProgressionDesign.md`
+
 ### 3.1 Reuse-first rule
 
 Before introducing new travel/runtime code, prefer this order:

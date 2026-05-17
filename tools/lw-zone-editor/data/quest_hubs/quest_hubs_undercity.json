@@ -1,0 +1,381 @@
+{
+  "version": 1,
+  "zoneId": 1497,
+  "zoneName": "Undercity",
+  "mapId": 0,
+  "hubCount": 11,
+  "hubs": [
+    {
+      "hubId": "undercity_hub_01",
+      "position": {
+        "mapId": 0,
+        "x": 1288.067,
+        "y": 323.57,
+        "z": -59.483
+      },
+      "questGivers": [
+        2227,
+        20406,
+        36273
+      ],
+      "levelRange": {
+        "min": 9,
+        "max": 52,
+        "avg": 37
+      },
+      "faction": "Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "undercity_hub_02",
+      "position": {
+        "mapId": 0,
+        "x": 1389.34,
+        "y": 347.315,
+        "z": -65.957
+      },
+      "questGivers": [
+        6522
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 52,
+        "avg": 32
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "undercity_hub_05",
+          "zoneId": 1497,
+          "zoneName": "Undercity",
+          "questGivers": [
+            4583,
+            6467
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 1419.8,
+            "y": 55.702,
+            "z": -62.195
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "undercity_hub_04",
+      "position": {
+        "mapId": 0,
+        "x": 1409.82,
+        "y": 150.423,
+        "z": -62.322
+      },
+      "questGivers": [
+        4586
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "undercity_hub_03",
+      "position": {
+        "mapId": 0,
+        "x": 1424.097,
+        "y": 405.321,
+        "z": -84.981
+      },
+      "questGivers": [
+        5204,
+        8390,
+        10136
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 60,
+        "avg": 49
+      },
+      "faction": "Horde",
+      "totalQuests": 11,
+      "estimatedMinutes": 55,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "undercity_hub_07",
+          "zoneId": 1497,
+          "zoneName": "Undercity",
+          "questGivers": [
+            2308,
+            2934,
+            4486,
+            4576,
+            5651,
+            6293,
+            6411,
+            6741,
+            7683,
+            7825,
+            10781,
+            10879,
+            14729
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 1527.93,
+            "y": 310.864,
+            "z": -62.062
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "undercity_hub_05",
+      "position": {
+        "mapId": 0,
+        "x": 1427.7,
+        "y": 63.837,
+        "z": -62.195
+      },
+      "questGivers": [
+        4583,
+        6467
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 52,
+        "avg": 19
+      },
+      "faction": "Horde",
+      "totalQuests": 9,
+      "estimatedMinutes": 45,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "undercity_hub_02",
+          "zoneId": 1497,
+          "zoneName": "Undercity",
+          "questGivers": [
+            6522
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 1389.34,
+            "y": 347.315,
+            "z": -65.957
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "undercity_hub_06",
+      "position": {
+        "mapId": 0,
+        "x": 1459.2,
+        "y": 318.665,
+        "z": -50.768
+      },
+      "questGivers": [
+        4488
+      ],
+      "levelRange": {
+        "min": 25,
+        "max": 36,
+        "avg": 34
+      },
+      "faction": "Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "undercity_hub_07",
+      "position": {
+        "mapId": 0,
+        "x": 1612.348,
+        "y": 229.482,
+        "z": -55.41
+      },
+      "questGivers": [
+        2308,
+        2934,
+        4486,
+        4576,
+        5651,
+        6293,
+        6411,
+        6741,
+        7683,
+        7825,
+        10781,
+        10879,
+        14729
+      ],
+      "levelRange": {
+        "min": 12,
+        "max": 60,
+        "avg": 46
+      },
+      "faction": "Horde",
+      "totalQuests": 24,
+      "estimatedMinutes": 120,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "undercity_hub_03",
+          "zoneId": 1497,
+          "zoneName": "Undercity",
+          "questGivers": [
+            5204,
+            8390,
+            10136
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 1408.45,
+            "y": 417.941,
+            "z": -84.882
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "undercity_hub_10",
+      "position": {
+        "mapId": 0,
+        "x": 1766.19,
+        "y": 768.038,
+        "z": 56.619
+      },
+      "questGivers": [
+        32376
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "undercity_hub_09",
+      "position": {
+        "mapId": 0,
+        "x": 1768.26,
+        "y": 414.701,
+        "z": -57.123
+      },
+      "questGivers": [
+        4593,
+        4595,
+        4606,
+        4608
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 52,
+        "avg": 44
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "undercity_hub_08",
+      "position": {
+        "mapId": 0,
+        "x": 1774.862,
+        "y": 50.506,
+        "z": -56.677
+      },
+      "questGivers": [
+        1498,
+        4563,
+        4564,
+        4565,
+        4567,
+        4568,
+        5675,
+        5693,
+        5753
+      ],
+      "levelRange": {
+        "min": 5,
+        "max": 52,
+        "avg": 31
+      },
+      "faction": "Horde",
+      "totalQuests": 22,
+      "estimatedMinutes": 110,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:2589:map:0:cluster:86",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 1308.2,
+            "y": 647.2,
+            "z": 30.96
+          },
+          "radius": 49.32,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3,
+            40,
+            60,
+            61,
+            79,
+            94
+          ],
+          "targetCount": 788
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "undercity_hub_11",
+      "position": {
+        "mapId": 0,
+        "x": 1945.11,
+        "y": 245.355,
+        "z": 44.026
+      },
+      "questGivers": [
+        31649
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

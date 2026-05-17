@@ -1,0 +1,620 @@
+{
+  "version": 1,
+  "zoneId": 618,
+  "zoneName": "Winterspring",
+  "mapId": 1,
+  "hubCount": 10,
+  "hubs": [
+    {
+      "hubId": "winterspring_hub_01",
+      "position": {
+        "mapId": 1,
+        "x": 5042.13,
+        "y": -4845.89,
+        "z": 869.815
+      },
+      "questGivers": [
+        10918
+      ],
+      "levelRange": {
+        "min": 55,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "winterspring_hub_02",
+      "position": {
+        "mapId": 1,
+        "x": 5717.89,
+        "y": -4794.96,
+        "z": 778.147
+      },
+      "questGivers": [
+        10300
+      ],
+      "levelRange": {
+        "min": 52,
+        "max": 59,
+        "avg": 59
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "winterspring_hub_03",
+      "position": {
+        "mapId": 1,
+        "x": 6109.63,
+        "y": -4189.44,
+        "z": 850.446
+      },
+      "questGivers": [
+        10929
+      ],
+      "levelRange": {
+        "min": 57,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "winterspring_hub_04",
+      "position": {
+        "mapId": 1,
+        "x": 6395.57,
+        "y": -2536.75,
+        "z": 541.548
+      },
+      "questGivers": [
+        9298
+      ],
+      "levelRange": {
+        "min": 47,
+        "max": 59,
+        "avg": 56
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 9,
+      "estimatedMinutes": 45,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:7440:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 6883.8,
+            "y": -5005.75,
+            "z": 694.64
+          },
+          "radius": 67.17,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7440
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7440:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 6890.01,
+            "y": -5142.96,
+            "z": 706.42
+          },
+          "radius": 101.6,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7440
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:12842:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 6725.09,
+            "y": -5277.69,
+            "z": 778.64
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            10738
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:10738:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 6725.09,
+            "y": -5277.69,
+            "z": 778.64
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            10738
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "winterspring_hub_05",
+      "position": {
+        "mapId": 1,
+        "x": 6433.67,
+        "y": -4302.5,
+        "z": 666.844
+      },
+      "questGivers": [
+        10684
+      ],
+      "levelRange": {
+        "min": 53,
+        "max": 58,
+        "avg": 58
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "winterspring_hub_08",
+          "zoneId": 618,
+          "zoneName": "Winterspring",
+          "questGivers": [
+            10301,
+            11079
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 7093.02,
+            "y": -4018.56,
+            "z": 744.888
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "winterspring_hub_06",
+      "position": {
+        "mapId": 1,
+        "x": 6652.99,
+        "y": -4560.46,
+        "z": 717.597
+      },
+      "questGivers": [
+        16416
+      ],
+      "levelRange": {
+        "min": 40,
+        "max": 40,
+        "avg": 40
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:14047:map:1:cluster:51",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 6479.05,
+            "y": -4330.69,
+            "z": 668.43
+          },
+          "radius": 63.88,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            466,
+            603,
+            853,
+            866,
+            868,
+            1410
+          ],
+          "targetCount": 1181
+        },
+        {
+          "taskAreaId": "item_source:14047:map:1:cluster:50",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 6539.49,
+            "y": -4130.9,
+            "z": 663.15
+          },
+          "radius": 65.01,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            466,
+            603,
+            853,
+            866,
+            868,
+            1410
+          ],
+          "targetCount": 1181
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "winterspring_hub_07",
+      "position": {
+        "mapId": 1,
+        "x": 6727.033,
+        "y": -4675.588,
+        "z": 722.18
+      },
+      "questGivers": [
+        10303,
+        10305,
+        10307,
+        10431,
+        10468,
+        10637,
+        11191,
+        11192,
+        11193,
+        11629,
+        11754,
+        11755
+      ],
+      "levelRange": {
+        "min": 49,
+        "max": 60,
+        "avg": 58
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 32,
+      "estimatedMinutes": 160,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:10978:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 6705.61,
+            "y": -4686.18,
+            "z": 721.97
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            10978
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:12433:map:1:cluster:22",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 6791.44,
+            "y": -4555.81,
+            "z": 727.99
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7450,
+            7451,
+            7452,
+            7453,
+            7454
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:12433:map:1:cluster:19",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 6949.05,
+            "y": -4573.57,
+            "z": 720.87
+          },
+          "radius": 211.09,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7450,
+            7451,
+            7452,
+            7453,
+            7454
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:12366:map:1:cluster:20",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 6653.26,
+            "y": -4908.68,
+            "z": 715.83
+          },
+          "radius": 79.91,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7457,
+            7458,
+            7459,
+            7460
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:12435:map:1:cluster:20",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 6653.26,
+            "y": -4908.68,
+            "z": 715.83
+          },
+          "radius": 79.91,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7457,
+            7458,
+            7459,
+            7460
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:12434:map:1:cluster:19",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 6534.92,
+            "y": -4487.86,
+            "z": 712.24
+          },
+          "radius": 210.33,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7447,
+            7448,
+            7449
+          ],
+          "targetCount": 3
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "winterspring_hub_04",
+          "zoneId": 618,
+          "zoneName": "Winterspring",
+          "questGivers": [
+            9298
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 6395.57,
+            "y": -2536.75,
+            "z": 541.548
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "winterspring_hub_08",
+      "position": {
+        "mapId": 1,
+        "x": 7093.98,
+        "y": -4012.62,
+        "z": 744.894
+      },
+      "questGivers": [
+        10301,
+        11079
+      ],
+      "levelRange": {
+        "min": 53,
+        "max": 59,
+        "avg": 57
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "winterspring_hub_09",
+      "position": {
+        "mapId": 1,
+        "x": 8067.48,
+        "y": -3862.44,
+        "z": 763.086
+      },
+      "questGivers": [
+        10618
+      ],
+      "levelRange": {
+        "min": 58,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:12622:map:1:cluster:34",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 7576.61,
+            "y": -4201.69,
+            "z": 668.9
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7443,
+            7444,
+            7445,
+            7446
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:12623:map:1:cluster:26",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 7508.12,
+            "y": -4230.9,
+            "z": 663.54
+          },
+          "radius": 87.49,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7447,
+            7448,
+            7449
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:12623:map:1:cluster:28",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 7839.44,
+            "y": -4499.69,
+            "z": 685.71
+          },
+          "radius": 140.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7447,
+            7448,
+            7449
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:12622:map:1:cluster:31",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 7851.04,
+            "y": -4615.31,
+            "z": 707.62
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7443,
+            7444,
+            7445,
+            7446
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "creature:7439:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 6798.87,
+            "y": -5000.19,
+            "z": 729.63
+          },
+          "radius": 88.72,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7439
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7439:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 6852.21,
+            "y": -5112.44,
+            "z": 694.57
+          },
+          "radius": 97.89,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7439
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "winterspring_hub_10",
+      "position": {
+        "mapId": 1,
+        "x": 8707.46,
+        "y": 988.88,
+        "z": 14.196
+      },
+      "questGivers": [
+        7916
+      ],
+      "levelRange": {
+        "min": 42,
+        "max": 57,
+        "avg": 54
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

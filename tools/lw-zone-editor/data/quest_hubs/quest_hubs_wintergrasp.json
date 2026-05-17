@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "zoneId": 4197,
+  "zoneName": "Wintergrasp",
+  "mapId": 571,
+  "hubCount": 4,
+  "hubs": [
+    {
+      "hubId": "wintergrasp_hub_01",
+      "position": {
+        "mapId": 571,
+        "x": 3766.99,
+        "y": 1658.78,
+        "z": 119.168
+      },
+      "questGivers": [
+        30373
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 1,
+        "avg": 1
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "wintergrasp_hub_02",
+      "position": {
+        "mapId": 571,
+        "x": 3768.18,
+        "y": 1489.1,
+        "z": 91.46
+      },
+      "questGivers": [
+        25994
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 1,
+        "avg": 1
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "wintergrasp_hub_03",
+      "position": {
+        "mapId": 571,
+        "x": 3817.91,
+        "y": 1541.91,
+        "z": 89.808
+      },
+      "questGivers": [
+        34654
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 80,
+        "avg": 1
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "wintergrasp_hub_04",
+      "position": {
+        "mapId": 571,
+        "x": 5440.31,
+        "y": 2870.63,
+        "z": 418.758
+      },
+      "questGivers": [
+        30368
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 1,
+        "avg": 1
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

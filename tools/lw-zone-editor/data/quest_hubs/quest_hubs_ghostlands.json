@@ -1,0 +1,992 @@
+{
+  "version": 1,
+  "zoneId": 3433,
+  "zoneName": "Ghostlands",
+  "mapId": 530,
+  "hubCount": 15,
+  "hubs": [
+    {
+      "hubId": "ghostlands_hub_01",
+      "position": {
+        "mapId": 530,
+        "x": 6769.657,
+        "y": -7611.817,
+        "z": 128.579
+      },
+      "questGivers": [
+        23559,
+        23761,
+        23858
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ghostlands_hub_02",
+      "position": {
+        "mapId": 530,
+        "x": 7025.41,
+        "y": -6814.6,
+        "z": 42.122
+      },
+      "questGivers": [
+        16480
+      ],
+      "levelRange": {
+        "min": 15,
+        "max": 18,
+        "avg": 18
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:16352:map:530:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 6927.02,
+            "y": -6987.66,
+            "z": 50.13
+          },
+          "radius": 88.89,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16352
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16352:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 7055.14,
+            "y": -6421.32,
+            "z": 32.09
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16352
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16349:map:530:cluster:5",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 6661.66,
+            "y": -7209.82,
+            "z": 49.95
+          },
+          "radius": 59.04,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16349
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16349:map:530:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 6865.99,
+            "y": -7328.34,
+            "z": 51.2
+          },
+          "radius": 69.01,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16349
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ghostlands_hub_03",
+      "position": {
+        "mapId": 530,
+        "x": 7198.013,
+        "y": -7095.697,
+        "z": 63.493
+      },
+      "questGivers": [
+        16204,
+        16239,
+        16240
+      ],
+      "levelRange": {
+        "min": 15,
+        "max": 21,
+        "avg": 20
+      },
+      "faction": "Horde",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:22653:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 6478.92,
+            "y": -6373.74,
+            "z": 27.21
+          },
+          "radius": 35.0,
+          "weight": 3,
+          "relatedQuestCount": 3,
+          "targetEntries": [
+            16329
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16320:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 6694.86,
+            "y": -6473.41,
+            "z": 29.34
+          },
+          "radius": 46.05,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16320
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16250:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 6521.35,
+            "y": -6516.06,
+            "z": 43.85
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16250
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16248:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 6628.6,
+            "y": -6342.53,
+            "z": 10.09
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16248
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16319:map:530:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 6582.43,
+            "y": -6217.38,
+            "z": 51.99
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16319
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16249:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 6305.88,
+            "y": -6463.66,
+            "z": 86.28
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16249
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "ghostlands_hub_06",
+          "zoneId": 3433,
+          "zoneName": "Ghostlands",
+          "questGivers": [
+            16187,
+            16189,
+            16197,
+            16198,
+            16199,
+            16200,
+            16205,
+            16213,
+            16224,
+            16231,
+            16251,
+            16252,
+            16253,
+            16268,
+            16289
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 7499.65,
+            "y": -6856.24,
+            "z": 85.478
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "ghostlands_hub_08",
+          "zoneId": 3433,
+          "zoneName": "Ghostlands",
+          "questGivers": [
+            16202,
+            16203,
+            16220,
+            16462,
+            16463,
+            16464
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 7548.63,
+            "y": -7657.9,
+            "z": 167.829
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "ghostlands_hub_04",
+      "position": {
+        "mapId": 530,
+        "x": 7203.48,
+        "y": -6320.68,
+        "z": 33.564
+      },
+      "questGivers": [
+        16293
+      ],
+      "levelRange": {
+        "min": 11,
+        "max": 14,
+        "avg": 14
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:22634:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 7095.12,
+            "y": -6225.98,
+            "z": 20.76
+          },
+          "radius": 152.24,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16334,
+            16335,
+            16337
+          ],
+          "targetCount": 3
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ghostlands_hub_05",
+      "position": {
+        "mapId": 530,
+        "x": 7484.22,
+        "y": -7273.52,
+        "z": 98.14
+      },
+      "questGivers": [
+        16237
+      ],
+      "levelRange": {
+        "min": 11,
+        "max": 16,
+        "avg": 16
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ghostlands_hub_07",
+      "position": {
+        "mapId": 530,
+        "x": 7544.91,
+        "y": -7359.97,
+        "z": 162.44
+      },
+      "questGivers": [
+        16295
+      ],
+      "levelRange": {
+        "min": 14,
+        "max": 17,
+        "avg": 17
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ghostlands_hub_06",
+      "position": {
+        "mapId": 530,
+        "x": 7568.678,
+        "y": -6813.251,
+        "z": 89.064
+      },
+      "questGivers": [
+        16187,
+        16189,
+        16197,
+        16198,
+        16199,
+        16200,
+        16205,
+        16213,
+        16224,
+        16231,
+        16251,
+        16252,
+        16253,
+        16268,
+        16289
+      ],
+      "levelRange": {
+        "min": 9,
+        "max": 20,
+        "avg": 14
+      },
+      "faction": "Horde",
+      "totalQuests": 32,
+      "estimatedMinutes": 160,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:22641:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 7508.82,
+            "y": -6577.16,
+            "z": 11.88
+          },
+          "radius": 181.89,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            16301,
+            16302
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:22642:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 7707.06,
+            "y": -6579.63,
+            "z": 13.81
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            16303,
+            16305,
+            16307,
+            16308
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:22642:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 7825.81,
+            "y": -6650.38,
+            "z": 30.33
+          },
+          "radius": 169.86,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            16303,
+            16305,
+            16307,
+            16308
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:2589:map:530:cluster:19",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 7688.48,
+            "y": -6607.1,
+            "z": 10.53
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3,
+            40,
+            60,
+            61,
+            79,
+            94
+          ],
+          "targetCount": 788
+        },
+        {
+          "taskAreaId": "creature:16301:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 7508.82,
+            "y": -6577.16,
+            "z": 11.88
+          },
+          "radius": 181.89,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16301
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:2589:map:530:cluster:18",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 7842.69,
+            "y": -6654.8,
+            "z": 31.39
+          },
+          "radius": 171.82,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3,
+            40,
+            60,
+            61,
+            79,
+            94
+          ],
+          "targetCount": 788
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "ghostlands_hub_03",
+          "zoneId": 3433,
+          "zoneName": "Ghostlands",
+          "questGivers": [
+            16204,
+            16239,
+            16240
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 7192.36,
+            "y": -7100.57,
+            "z": 57.145
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "ghostlands_hub_10",
+          "zoneId": 3433,
+          "zoneName": "Ghostlands",
+          "questGivers": [
+            16219
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 7932.62,
+            "y": -7573.55,
+            "z": 145.501
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "ghostlands_hub_15",
+          "zoneId": 3433,
+          "zoneName": "Ghostlands",
+          "questGivers": [
+            16191
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 9580.71,
+            "y": -7054.05,
+            "z": 18.727
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "ghostlands_hub_08",
+      "position": {
+        "mapId": 530,
+        "x": 7580.987,
+        "y": -7670.122,
+        "z": 157.824
+      },
+      "questGivers": [
+        16202,
+        16203,
+        16220,
+        16462,
+        16463,
+        16464
+      ],
+      "levelRange": {
+        "min": 9,
+        "max": 19,
+        "avg": 16
+      },
+      "faction": "Horde",
+      "totalQuests": 9,
+      "estimatedMinutes": 45,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:16354:map:530:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 7583.93,
+            "y": -7583.94,
+            "z": 148.79
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16354
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16348:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 7456.84,
+            "y": -7645.87,
+            "z": 128.9
+          },
+          "radius": 204.1,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16348
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16348:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 7553.83,
+            "y": -7814.83,
+            "z": 155.35
+          },
+          "radius": 190.16,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16348
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16327:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 7790.56,
+            "y": -7636.27,
+            "z": 131.88
+          },
+          "radius": 192.58,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16327
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16328:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 7815.48,
+            "y": -7675.49,
+            "z": 135.5
+          },
+          "radius": 169.71,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16328
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:23165:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 7378.95,
+            "y": -7840.01,
+            "z": 154.99
+          },
+          "radius": 216.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16344
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "ghostlands_hub_03",
+          "zoneId": 3433,
+          "zoneName": "Ghostlands",
+          "questGivers": [
+            16204,
+            16239,
+            16240
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 7192.36,
+            "y": -7100.57,
+            "z": 57.145
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "ghostlands_hub_09",
+      "position": {
+        "mapId": 530,
+        "x": 7846.54,
+        "y": -7668.93,
+        "z": 147.561
+      },
+      "questGivers": [
+        16201
+      ],
+      "levelRange": {
+        "min": 9,
+        "max": 13,
+        "avg": 12
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ghostlands_hub_10",
+      "position": {
+        "mapId": 530,
+        "x": 7932.62,
+        "y": -7573.55,
+        "z": 145.501
+      },
+      "questGivers": [
+        16219
+      ],
+      "levelRange": {
+        "min": 9,
+        "max": 12,
+        "avg": 12
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:22639:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 8012.52,
+            "y": -7787.32,
+            "z": 163.5
+          },
+          "radius": 129.7,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16340,
+            16341
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ghostlands_hub_11",
+      "position": {
+        "mapId": 530,
+        "x": 7938.38,
+        "y": -7182.34,
+        "z": 133.754
+      },
+      "questGivers": [
+        16601
+      ],
+      "levelRange": {
+        "min": 9,
+        "max": 11,
+        "avg": 11
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:16357:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 8022.02,
+            "y": -7250.67,
+            "z": 140.63
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16357
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ghostlands_hub_12",
+      "position": {
+        "mapId": 530,
+        "x": 8020.9,
+        "y": -6371.51,
+        "z": 59.966
+      },
+      "questGivers": [
+        17224
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 12,
+        "avg": 11
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ghostlands_hub_13",
+      "position": {
+        "mapId": 530,
+        "x": 8118.855,
+        "y": -6900.575,
+        "z": 70.635
+      },
+      "questGivers": [
+        16183,
+        16196
+      ],
+      "levelRange": {
+        "min": 9,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:22570:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 7841.78,
+            "y": -7437.38,
+            "z": 153.74
+          },
+          "radius": 153.83,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16347,
+            16348,
+            16349,
+            16350,
+            16351,
+            16353
+          ],
+          "targetCount": 8
+        },
+        {
+          "taskAreaId": "item_source:22570:map:530:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 7476.66,
+            "y": -6673.0,
+            "z": 25.1
+          },
+          "radius": 55.73,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16347,
+            16348,
+            16349,
+            16350,
+            16351,
+            16353
+          ],
+          "targetCount": 8
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ghostlands_hub_14",
+      "position": {
+        "mapId": 530,
+        "x": 9376.4,
+        "y": -7164.92,
+        "z": 9.019
+      },
+      "questGivers": [
+        16192
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ghostlands_hub_15",
+      "position": {
+        "mapId": 530,
+        "x": 9580.71,
+        "y": -7054.05,
+        "z": 18.727
+      },
+      "questGivers": [
+        16191
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "ghostlands_hub_14",
+          "zoneId": 3433,
+          "zoneName": "Ghostlands",
+          "questGivers": [
+            16192
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 9376.4,
+            "y": -7164.92,
+            "z": 9.019
+          },
+          "weight": 1
+        }
+      ]
+    }
+  ]
+}

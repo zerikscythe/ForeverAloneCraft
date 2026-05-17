@@ -1,0 +1,623 @@
+{
+  "version": 1,
+  "zoneId": 1537,
+  "zoneName": "Ironforge",
+  "mapId": 0,
+  "hubCount": 18,
+  "hubs": [
+    {
+      "hubId": "ironforge_hub_01",
+      "position": {
+        "mapId": 0,
+        "x": -7534.79,
+        "y": -1212.62,
+        "z": 285.44
+      },
+      "questGivers": [
+        16033
+      ],
+      "levelRange": {
+        "min": 58,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 22,
+      "estimatedMinutes": 110,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ironforge_hub_02",
+      "position": {
+        "mapId": 0,
+        "x": -5089.28,
+        "y": -782.95,
+        "z": 495.279
+      },
+      "questGivers": [
+        6181
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 22,
+        "avg": 22
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ironforge_hub_03",
+      "position": {
+        "mapId": 0,
+        "x": -5040.575,
+        "y": -1274.223,
+        "z": 506.764
+      },
+      "questGivers": [
+        2092,
+        5113,
+        5116,
+        5117,
+        6114,
+        8517
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 52,
+        "avg": 42
+      },
+      "faction": "Alliance",
+      "totalQuests": 12,
+      "estimatedMinutes": 60,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "ironforge_hub_13",
+          "zoneId": 1537,
+          "zoneName": "Ironforge",
+          "questGivers": [
+            5164,
+            6031,
+            11145,
+            11146
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -4799.05,
+            "y": -1111.48,
+            "z": 498.89
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "ironforge_hub_04",
+      "position": {
+        "mapId": 0,
+        "x": -5024.5,
+        "y": -1038.13,
+        "z": 505.355
+      },
+      "questGivers": [
+        2790,
+        6175
+      ],
+      "levelRange": {
+        "min": 12,
+        "max": 31,
+        "avg": 31
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "ironforge_hub_17",
+          "zoneId": 1537,
+          "zoneName": "Ironforge",
+          "questGivers": [
+            5141,
+            5142,
+            5144,
+            5145,
+            5149,
+            6178,
+            6179,
+            6826,
+            7312,
+            8507,
+            11406
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -4633.52,
+            "y": -932.023,
+            "z": 524.778
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "ironforge_hub_05",
+      "position": {
+        "mapId": 0,
+        "x": -4998.68,
+        "y": -1155.7,
+        "z": 501.76
+      },
+      "questGivers": [
+        10877
+      ],
+      "levelRange": {
+        "min": 50,
+        "max": 57,
+        "avg": 54
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ironforge_hub_06",
+      "position": {
+        "mapId": 0,
+        "x": -4924.32,
+        "y": -1215.65,
+        "z": 502.594
+      },
+      "questGivers": [
+        2695
+      ],
+      "levelRange": {
+        "min": 25,
+        "max": 30,
+        "avg": 30
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ironforge_hub_07",
+      "position": {
+        "mapId": 0,
+        "x": -4903.01,
+        "y": -968.237,
+        "z": 501.533
+      },
+      "questGivers": [
+        13843
+      ],
+      "levelRange": {
+        "min": 51,
+        "max": 51,
+        "avg": 51
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ironforge_hub_08",
+      "position": {
+        "mapId": 0,
+        "x": -4876.63,
+        "y": -1149.14,
+        "z": 512.52
+      },
+      "questGivers": [
+        5150
+      ],
+      "levelRange": {
+        "min": 35,
+        "max": 45,
+        "avg": 45
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ironforge_hub_09",
+      "position": {
+        "mapId": 0,
+        "x": -4857.917,
+        "y": -1032.457,
+        "z": 504.595
+      },
+      "questGivers": [
+        2784,
+        8879,
+        16013
+      ],
+      "levelRange": {
+        "min": 25,
+        "max": 60,
+        "avg": 59
+      },
+      "faction": "Alliance",
+      "totalQuests": 35,
+      "estimatedMinutes": 175,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "ironforge_hub_01",
+          "zoneId": 1537,
+          "zoneName": "Ironforge",
+          "questGivers": [
+            16033
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -7534.79,
+            "y": -1212.62,
+            "z": 285.44
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "ironforge_hub_04",
+          "zoneId": 1537,
+          "zoneName": "Ironforge",
+          "questGivers": [
+            2790,
+            6175
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -5033.81,
+            "y": -1022.23,
+            "z": 508.977
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "ironforge_hub_18",
+          "zoneId": 1537,
+          "zoneName": "Ironforge",
+          "questGivers": [
+            16016
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 3367.63,
+            "y": -3379.76,
+            "z": 145.08
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "ironforge_hub_11",
+      "position": {
+        "mapId": 0,
+        "x": -4841.535,
+        "y": -862.871,
+        "z": 501.997
+      },
+      "questGivers": [
+        5111,
+        14183
+      ],
+      "levelRange": {
+        "min": 47,
+        "max": 60,
+        "avg": 55
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ironforge_hub_10",
+      "position": {
+        "mapId": 0,
+        "x": -4824.934,
+        "y": -1266.902,
+        "z": 502.497
+      },
+      "questGivers": [
+        4081,
+        5174,
+        6169,
+        6569,
+        7937,
+        7944,
+        7950,
+        14724
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 60,
+        "avg": 37
+      },
+      "faction": "Alliance",
+      "totalQuests": 21,
+      "estimatedMinutes": 105,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ironforge_hub_13",
+      "position": {
+        "mapId": 0,
+        "x": -4793.812,
+        "y": -1110.17,
+        "z": 498.89
+      },
+      "questGivers": [
+        5164,
+        6031,
+        11145,
+        11146
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 50,
+        "avg": 26
+      },
+      "faction": "Alliance",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ironforge_hub_12",
+      "position": {
+        "mapId": 0,
+        "x": -4766.867,
+        "y": -1171.68,
+        "z": 504.735
+      },
+      "questGivers": [
+        5159,
+        15187,
+        23127
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 55,
+        "avg": 46
+      },
+      "faction": "Alliance",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ironforge_hub_14",
+      "position": {
+        "mapId": 0,
+        "x": -4735.8,
+        "y": -1055.28,
+        "z": 502.296
+      },
+      "questGivers": [
+        14723
+      ],
+      "levelRange": {
+        "min": 12,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ironforge_hub_15",
+      "position": {
+        "mapId": 0,
+        "x": -4654.423,
+        "y": -1294.341,
+        "z": 503.429
+      },
+      "questGivers": [
+        2916,
+        3979,
+        5387,
+        5637,
+        6294,
+        8256,
+        9616
+      ],
+      "levelRange": {
+        "min": 28,
+        "max": 54,
+        "avg": 46
+      },
+      "faction": "Alliance",
+      "totalQuests": 16,
+      "estimatedMinutes": 80,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "ironforge_hub_17",
+          "zoneId": 1537,
+          "zoneName": "Ironforge",
+          "questGivers": [
+            5141,
+            5142,
+            5144,
+            5145,
+            5149,
+            6178,
+            6179,
+            6826,
+            7312,
+            8507,
+            11406
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -4633.52,
+            "y": -932.023,
+            "z": 524.778
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "ironforge_hub_16",
+      "position": {
+        "mapId": 0,
+        "x": -4620.334,
+        "y": -1114.402,
+        "z": 506.235
+      },
+      "questGivers": [
+        5161,
+        5165,
+        5166,
+        5167,
+        5171,
+        5172,
+        5173,
+        6120,
+        6382
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 52,
+        "avg": 40
+      },
+      "faction": "Alliance",
+      "totalQuests": 11,
+      "estimatedMinutes": 55,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ironforge_hub_17",
+      "position": {
+        "mapId": 0,
+        "x": -4609.744,
+        "y": -926.038,
+        "z": 508.688
+      },
+      "questGivers": [
+        5141,
+        5142,
+        5144,
+        5145,
+        5149,
+        6178,
+        6179,
+        6826,
+        7312,
+        8507,
+        11406
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 52,
+        "avg": 41
+      },
+      "faction": "Alliance",
+      "totalQuests": 27,
+      "estimatedMinutes": 135,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "ironforge_hub_03",
+          "zoneId": 1537,
+          "zoneName": "Ironforge",
+          "questGivers": [
+            2092,
+            5113,
+            5116,
+            5117,
+            6114,
+            8517
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -5068.16,
+            "y": -1273.87,
+            "z": 502.047
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "ironforge_hub_04",
+          "zoneId": 1537,
+          "zoneName": "Ironforge",
+          "questGivers": [
+            2790,
+            6175
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -5033.81,
+            "y": -1022.23,
+            "z": 508.977
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "ironforge_hub_18",
+      "position": {
+        "mapId": 0,
+        "x": 3367.63,
+        "y": -3379.76,
+        "z": 145.08
+      },
+      "questGivers": [
+        16016
+      ],
+      "levelRange": {
+        "min": 58,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance",
+      "totalQuests": 21,
+      "estimatedMinutes": 105,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "ironforge_hub_09",
+          "zoneId": 1537,
+          "zoneName": "Ironforge",
+          "questGivers": [
+            2784,
+            8879,
+            16013
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -4865.73,
+            "y": -1022.67,
+            "z": 505.798
+          },
+          "weight": 9
+        }
+      ]
+    }
+  ]
+}

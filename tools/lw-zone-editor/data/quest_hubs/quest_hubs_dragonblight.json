@@ -1,0 +1,3440 @@
+{
+  "version": 1,
+  "zoneId": 65,
+  "zoneName": "Dragonblight",
+  "mapId": 571,
+  "hubCount": 44,
+  "hubs": [
+    {
+      "hubId": "dragonblight_hub_01",
+      "position": {
+        "mapId": 571,
+        "x": 400.47,
+        "y": -4542.25,
+        "z": 245.089
+      },
+      "questGivers": [
+        24155
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 72,
+        "avg": 72
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_12",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            27028,
+            27172,
+            27243,
+            27248,
+            27267,
+            27320,
+            27337
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3208.62,
+            "y": -678.667,
+            "z": 167.62
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_02",
+      "position": {
+        "mapId": 571,
+        "x": 743.706,
+        "y": -2884.84,
+        "z": 7.255
+      },
+      "questGivers": [
+        24810
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 72,
+        "avg": 72
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dragonblight_hub_03",
+      "position": {
+        "mapId": 571,
+        "x": 1343.75,
+        "y": -3287.78,
+        "z": 174.536
+      },
+      "questGivers": [
+        23859
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 72,
+        "avg": 72
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_29",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            27136,
+            27155,
+            27314
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3767.5,
+            "y": -775.048,
+            "z": 196.087
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_05",
+      "position": {
+        "mapId": 571,
+        "x": 2745.87,
+        "y": 870.908,
+        "z": 7.276
+      },
+      "questGivers": [
+        26595
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 72,
+        "avg": 72
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dragonblight_hub_04",
+      "position": {
+        "mapId": 571,
+        "x": 2763.762,
+        "y": 934.508,
+        "z": 17.022
+      },
+      "questGivers": [
+        26194,
+        26245,
+        26440,
+        26441
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 73,
+        "avg": 72
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:35802:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 2650.97,
+            "y": 939.22,
+            "z": -34.3
+          },
+          "radius": 134.53,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26511
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:35802:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 2672.57,
+            "y": 808.4,
+            "z": -37.62
+          },
+          "radius": 66.09,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26511
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:35686:map:571:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3096.46,
+            "y": 1064.61,
+            "z": 117.0
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26197,
+            26198,
+            26199,
+            26201
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:35686:map:571:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 2859.94,
+            "y": 1284.28,
+            "z": 149.72
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26197,
+            26198,
+            26199,
+            26201
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:35831:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 2586.94,
+            "y": 1273.6,
+            "z": 0.46
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26521
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_15",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            26673,
+            26837,
+            26881,
+            26973,
+            27060
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3439.4,
+            "y": 2016.05,
+            "z": 69.55
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "dragonblight_hub_28",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            26379,
+            26415,
+            26471,
+            26504,
+            26505,
+            26564,
+            26574,
+            26581,
+            26618,
+            26649,
+            26652,
+            26854
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3747.01,
+            "y": 1603.44,
+            "z": 86.988
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_06",
+      "position": {
+        "mapId": 571,
+        "x": 2791.96,
+        "y": 4693.6,
+        "z": 1.859
+      },
+      "questGivers": [
+        28382
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 72,
+        "avg": 72
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dragonblight_hub_07",
+      "position": {
+        "mapId": 571,
+        "x": 2824.73,
+        "y": -499.753,
+        "z": 118.737
+      },
+      "questGivers": [
+        27350
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 73,
+        "avg": 72
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:27445:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2827.53,
+            "y": -425.56,
+            "z": 119.99
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27445
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:37350:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 2707.02,
+            "y": -254.12,
+            "z": 143.54
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27246
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_12",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            27028,
+            27172,
+            27243,
+            27248,
+            27267,
+            27320,
+            27337
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3208.62,
+            "y": -678.667,
+            "z": 167.62
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_08",
+      "position": {
+        "mapId": 571,
+        "x": 2827.62,
+        "y": -20.497,
+        "z": 0.549
+      },
+      "questGivers": [
+        27255
+      ],
+      "levelRange": {
+        "min": 72,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:27244:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2815.51,
+            "y": 58.23,
+            "z": 18.14
+          },
+          "radius": 193.79,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27244
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:37880:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 2629.2,
+            "y": 8.13,
+            "z": 26.35
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27249
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dragonblight_hub_09",
+      "position": {
+        "mapId": 571,
+        "x": 3074.45,
+        "y": 1369.6,
+        "z": 130.074
+      },
+      "questGivers": [
+        26873
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 72,
+        "avg": 72
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:26887:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3056.53,
+            "y": 1400.98,
+            "z": 121.9
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            26887
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26889:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3028.4,
+            "y": 640.72,
+            "z": 81.19
+          },
+          "radius": 93.76,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            26889
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26889:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3190.92,
+            "y": 629.07,
+            "z": 83.16
+          },
+          "radius": 83.27,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            26889
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_15",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            26673,
+            26837,
+            26881,
+            26973,
+            27060
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3439.4,
+            "y": 2016.05,
+            "z": 69.55
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "dragonblight_hub_28",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            26379,
+            26415,
+            26471,
+            26504,
+            26505,
+            26564,
+            26574,
+            26581,
+            26618,
+            26649,
+            26652,
+            26854
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3747.01,
+            "y": 1603.44,
+            "z": 86.988
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_10",
+      "position": {
+        "mapId": 571,
+        "x": 3114.17,
+        "y": 3834.13,
+        "z": 22.845
+      },
+      "questGivers": [
+        26186
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 72,
+        "avg": 72
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_15",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            26673,
+            26837,
+            26881,
+            26973,
+            27060
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3439.4,
+            "y": 2016.05,
+            "z": 69.55
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_11",
+      "position": {
+        "mapId": 571,
+        "x": 3142.14,
+        "y": -823.002,
+        "z": 48.842
+      },
+      "questGivers": [
+        32599
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 72,
+        "avg": 72
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:27220:map:571:cluster:5",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3115.57,
+            "y": -865.59,
+            "z": 42.01
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27220
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27220:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2846.91,
+            "y": -734.13,
+            "z": 55.2
+          },
+          "radius": 76.48,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27220
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dragonblight_hub_12",
+      "position": {
+        "mapId": 571,
+        "x": 3226.79,
+        "y": -674.762,
+        "z": 167.244
+      },
+      "questGivers": [
+        27028,
+        27172,
+        27243,
+        27248,
+        27267,
+        27320,
+        27337
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 74,
+        "avg": 72
+      },
+      "faction": "Horde",
+      "totalQuests": 20,
+      "estimatedMinutes": 100,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:37121:map:571:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3095.76,
+            "y": -838.79,
+            "z": 31.47
+          },
+          "radius": 68.33,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27220,
+            27224,
+            27225,
+            27226,
+            27229
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "creature:27331:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3047.51,
+            "y": -470.0,
+            "z": 124.25
+          },
+          "radius": 53.88,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27331
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:37136:map:571:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 2949.43,
+            "y": -470.41,
+            "z": 127.5
+          },
+          "radius": 68.15,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27203,
+            27206
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "creature:27381:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2860.88,
+            "y": -446.5,
+            "z": 119.81
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27381
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:37137:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 2937.27,
+            "y": -336.21,
+            "z": 114.17
+          },
+          "radius": 49.26,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27207,
+            27234
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "creature:27376:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2875.87,
+            "y": -377.46,
+            "z": 112.88
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27376
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_07",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            27350
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 2824.73,
+            "y": -499.753,
+            "z": 118.737
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_13",
+      "position": {
+        "mapId": 571,
+        "x": 3328.2,
+        "y": 2270.39,
+        "z": 32.892
+      },
+      "questGivers": [
+        26501
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 73,
+        "avg": 72
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:26280:map:571:cluster:10",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3254.89,
+            "y": 2390.55,
+            "z": 32.19
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26280
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26370:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3344.87,
+            "y": 2504.08,
+            "z": -6.56
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26370
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26280:map:571:cluster:9",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3107.2,
+            "y": 2165.89,
+            "z": 15.21
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26280
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dragonblight_hub_14",
+      "position": {
+        "mapId": 571,
+        "x": 3426.88,
+        "y": -1263.825,
+        "z": 125.784
+      },
+      "questGivers": [
+        27347,
+        27348
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 74,
+        "avg": 72
+      },
+      "faction": "Alliance",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_29",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            27136,
+            27155,
+            27314
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3767.5,
+            "y": -775.048,
+            "z": 196.087
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "dragonblight_hub_38",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            28228
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4599.03,
+            "y": -1082.73,
+            "z": 165.566
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_15",
+      "position": {
+        "mapId": 571,
+        "x": 3482.976,
+        "y": 2001.6,
+        "z": 66.264
+      },
+      "questGivers": [
+        26673,
+        26837,
+        26881,
+        26973,
+        27060
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 74,
+        "avg": 72
+      },
+      "faction": "Alliance",
+      "totalQuests": 15,
+      "estimatedMinutes": 75,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:26655:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3715.42,
+            "y": 2007.22,
+            "z": 22.38
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26655
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26321:map:571:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3149.88,
+            "y": 1845.27,
+            "z": 130.83
+          },
+          "radius": 164.87,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26321
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26321:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3183.26,
+            "y": 1680.55,
+            "z": 151.74
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26321
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27135:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3345.68,
+            "y": 2502.27,
+            "z": -11.0
+          },
+          "radius": 36.98,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27135
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27853:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3338.13,
+            "y": 2517.36,
+            "z": 199.67
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27853
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:35801:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3401.72,
+            "y": 2532.42,
+            "z": 59.48
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26349
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_09",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            26873
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3074.45,
+            "y": 1369.6,
+            "z": 130.074
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "dragonblight_hub_16",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            26443,
+            27804
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3499.04,
+            "y": 368.367,
+            "z": 52.328
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "dragonblight_hub_29",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            27136,
+            27155,
+            27314
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3767.5,
+            "y": -775.048,
+            "z": 196.087
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_16",
+      "position": {
+        "mapId": 571,
+        "x": 3524.205,
+        "y": 373.859,
+        "z": 52.334
+      },
+      "questGivers": [
+        26443,
+        27804
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 75,
+        "avg": 74
+      },
+      "faction": "Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_17",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            26917,
+            26949,
+            26983,
+            27765,
+            27785,
+            27803,
+            27856,
+            27990
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3510.93,
+            "y": 260.856,
+            "z": 47.4
+          },
+          "weight": 3
+        },
+        {
+          "hubId": "dragonblight_hub_22",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            27763
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3671.93,
+            "y": 1216.94,
+            "z": 142.939
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_18",
+      "position": {
+        "mapId": 571,
+        "x": 3530.23,
+        "y": -1093.46,
+        "z": 81.923
+      },
+      "questGivers": [
+        27828
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 73,
+        "avg": 73
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:37910:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3568.04,
+            "y": -962.43,
+            "z": 75.37
+          },
+          "radius": 118.43,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27835,
+            27836
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:37911:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3568.04,
+            "y": -962.43,
+            "z": 75.37
+          },
+          "radius": 118.43,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27835,
+            27836
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:37912:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3568.04,
+            "y": -962.43,
+            "z": 75.37
+          },
+          "radius": 118.43,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27835,
+            27836
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:37913:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3568.04,
+            "y": -962.43,
+            "z": 75.37
+          },
+          "radius": 118.43,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27835,
+            27836
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_21",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            1293,
+            27319
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3666.78,
+            "y": -1188.16,
+            "z": 102.42
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_17",
+      "position": {
+        "mapId": 571,
+        "x": 3536.454,
+        "y": 270.409,
+        "z": 268.718
+      },
+      "questGivers": [
+        26917,
+        26949,
+        26983,
+        27765,
+        27785,
+        27803,
+        27856,
+        27990
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 82,
+        "avg": 76
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 20,
+      "estimatedMinutes": 100,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:27007:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3652.34,
+            "y": -84.01,
+            "z": 64.41
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27007
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:36854:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3390.81,
+            "y": 748.2,
+            "z": 82.29
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27006
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27008:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2927.11,
+            "y": -92.53,
+            "z": 79.26
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27008
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:37882:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 2843.37,
+            "y": 61.61,
+            "z": 3.39
+          },
+          "radius": 174.69,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27254
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27009:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4186.18,
+            "y": -165.67,
+            "z": 68.76
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27009
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28005:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4326.75,
+            "y": 446.45,
+            "z": -0.95
+          },
+          "radius": 148.6,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28005
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_26",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            27506
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3703.88,
+            "y": 699.021,
+            "z": 89.286
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_19",
+      "position": {
+        "mapId": 571,
+        "x": 3585.29,
+        "y": -806.83,
+        "z": 179.192
+      },
+      "questGivers": [
+        27318
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 73,
+        "avg": 72
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:27508:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3616.46,
+            "y": -781.03,
+            "z": 147.14
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27508
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_29",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            27136,
+            27155,
+            27314
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3767.5,
+            "y": -775.048,
+            "z": 196.087
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_20",
+      "position": {
+        "mapId": 571,
+        "x": 3641.49,
+        "y": 2912.02,
+        "z": 88.227
+      },
+      "questGivers": [
+        26156
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 72,
+        "avg": 72
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_27",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            26180,
+            26181
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3711.87,
+            "y": 2830.2,
+            "z": 89.476
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_21",
+      "position": {
+        "mapId": 571,
+        "x": 3669.785,
+        "y": -1190.505,
+        "z": 102.42
+      },
+      "questGivers": [
+        1293,
+        27319
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 73,
+        "avg": 73
+      },
+      "faction": "Alliance",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:27826:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3668.02,
+            "y": -1103.13,
+            "z": 92.27
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27826
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_18",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            27828
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3530.23,
+            "y": -1093.46,
+            "z": 81.923
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "dragonblight_hub_37",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            26978,
+            27844
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4530.59,
+            "y": -3.875,
+            "z": 72.514
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_22",
+      "position": {
+        "mapId": 571,
+        "x": 3671.93,
+        "y": 1216.94,
+        "z": 142.939
+      },
+      "questGivers": [
+        27763
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 75,
+        "avg": 74
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:27686:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3643.59,
+            "y": 1216.66,
+            "z": 133.96
+          },
+          "radius": 51.73,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27686
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27531:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3642.11,
+            "y": 1101.61,
+            "z": 75.52
+          },
+          "radius": 48.07,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27531
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27530:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3618.7,
+            "y": 1053.83,
+            "z": 59.01
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27530
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27530:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3793.94,
+            "y": 1060.13,
+            "z": 56.93
+          },
+          "radius": 71.94,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27530
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27539:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3722.28,
+            "y": 1010.26,
+            "z": 59.91
+          },
+          "radius": 147.19,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27539
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27680:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3743.79,
+            "y": 955.31,
+            "z": 53.85
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27680
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_16",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            26443,
+            27804
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3499.04,
+            "y": 368.367,
+            "z": 52.328
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_23",
+      "position": {
+        "mapId": 571,
+        "x": 3675.86,
+        "y": 2158.72,
+        "z": 35.32
+      },
+      "questGivers": [
+        26653
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 76,
+        "avg": 74
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dragonblight_hub_24",
+      "position": {
+        "mapId": 571,
+        "x": 3680.84,
+        "y": -925.339,
+        "z": 76.816
+      },
+      "questGivers": [
+        27857
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 73,
+        "avg": 73
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_29",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            27136,
+            27155,
+            27314
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3767.5,
+            "y": -775.048,
+            "z": 196.087
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_25",
+      "position": {
+        "mapId": 571,
+        "x": 3700.003,
+        "y": -716.693,
+        "z": 214.491
+      },
+      "questGivers": [
+        26878,
+        27156,
+        27159,
+        27317
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 73,
+        "avg": 72
+      },
+      "faction": "Alliance",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:37359:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3999.29,
+            "y": -871.57,
+            "z": 114.15
+          },
+          "radius": 146.88,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27401
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:37411:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3999.29,
+            "y": -871.57,
+            "z": 114.15
+          },
+          "radius": 146.88,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27401
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_29",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            27136,
+            27155,
+            27314
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3767.5,
+            "y": -775.048,
+            "z": 196.087
+          },
+          "weight": 2
+        },
+        {
+          "hubId": "dragonblight_hub_15",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            26673,
+            26837,
+            26881,
+            26973,
+            27060
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3439.4,
+            "y": 2016.05,
+            "z": 69.55
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "dragonblight_hub_33",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            27412
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3996.67,
+            "y": -945.023,
+            "z": 105.89
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_26",
+      "position": {
+        "mapId": 571,
+        "x": 3703.88,
+        "y": 699.021,
+        "z": 89.286
+      },
+      "questGivers": [
+        27506
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 75,
+        "avg": 74
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:27686:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3627.76,
+            "y": 833.64,
+            "z": 62.41
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27686
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27531:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3703.06,
+            "y": 858.83,
+            "z": 58.38
+          },
+          "radius": 113.64,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27531
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27530:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3830.38,
+            "y": 859.91,
+            "z": 65.91
+          },
+          "radius": 161.12,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27530
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27539:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3794.4,
+            "y": 916.98,
+            "z": 60.09
+          },
+          "radius": 85.1,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27539
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27680:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3743.79,
+            "y": 955.31,
+            "z": 53.85
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27680
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27539:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3722.28,
+            "y": 1010.26,
+            "z": 59.91
+          },
+          "radius": 147.19,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27539
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_16",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            26443,
+            27804
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3499.04,
+            "y": 368.367,
+            "z": 52.328
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_27",
+      "position": {
+        "mapId": 571,
+        "x": 3732.23,
+        "y": 2847.55,
+        "z": 91.264
+      },
+      "questGivers": [
+        26180,
+        26181
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 72,
+        "avg": 72
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:35726:map:571:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3679.11,
+            "y": 2458.35,
+            "z": 106.47
+          },
+          "radius": 76.37,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26402,
+            26413,
+            26616
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "creature:26402:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3679.11,
+            "y": 2458.35,
+            "z": 106.47
+          },
+          "radius": 76.37,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26402
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dragonblight_hub_29",
+      "position": {
+        "mapId": 571,
+        "x": 3783.953,
+        "y": -790.127,
+        "z": 196.836
+      },
+      "questGivers": [
+        27136,
+        27155,
+        27314
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 73,
+        "avg": 73
+      },
+      "faction": "Alliance",
+      "totalQuests": 15,
+      "estimatedMinutes": 75,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:27370:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3691.79,
+            "y": -868.63,
+            "z": 165.16
+          },
+          "radius": 147.74,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27370
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27359:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3683.71,
+            "y": -862.44,
+            "z": 167.93
+          },
+          "radius": 109.88,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27359
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:37931:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 4610.82,
+            "y": -512.32,
+            "z": 161.08
+          },
+          "radius": 160.99,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27330,
+            27332,
+            27333
+          ],
+          "targetCount": 3
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_25",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            26878,
+            27156,
+            27159,
+            27317
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3692.51,
+            "y": -736.212,
+            "z": 213.33
+          },
+          "weight": 2
+        },
+        {
+          "hubId": "dragonblight_hub_14",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            27347,
+            27348
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3425.19,
+            "y": -1261.94,
+            "z": 125.774
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "dragonblight_hub_19",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            27318
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3585.29,
+            "y": -806.83,
+            "z": 179.192
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "dragonblight_hub_31",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            27157
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3841.22,
+            "y": -1402.29,
+            "z": 144.478
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "dragonblight_hub_41",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            27872
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4699.7,
+            "y": 1506.85,
+            "z": 261.055
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_30",
+      "position": {
+        "mapId": 571,
+        "x": 3797.985,
+        "y": -679.013,
+        "z": 218.418
+      },
+      "questGivers": [
+        27316,
+        27784
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 73,
+        "avg": 73
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:37565:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 2662.55,
+            "y": -360.33,
+            "z": 144.32
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27210
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_29",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            27136,
+            27155,
+            27314
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3767.5,
+            "y": -775.048,
+            "z": 196.087
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_28",
+      "position": {
+        "mapId": 571,
+        "x": 3808.188,
+        "y": 1564.189,
+        "z": 89.311
+      },
+      "questGivers": [
+        26379,
+        26415,
+        26471,
+        26504,
+        26505,
+        26564,
+        26574,
+        26581,
+        26618,
+        26649,
+        26652,
+        26854
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 75,
+        "avg": 73
+      },
+      "faction": "Horde",
+      "totalQuests": 37,
+      "estimatedMinutes": 185,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:36800:map:571:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3660.31,
+            "y": 2704.74,
+            "z": 96.06
+          },
+          "radius": 122.09,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            26616,
+            26643
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:36741:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3715.42,
+            "y": 2007.22,
+            "z": 22.38
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26655
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:36803:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3743.79,
+            "y": 955.31,
+            "z": 53.85
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27680
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26321:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3183.26,
+            "y": 1680.55,
+            "z": 151.74
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26321
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26321:map:571:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3149.88,
+            "y": 1845.27,
+            "z": 130.83
+          },
+          "radius": 164.87,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26321
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26831:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2896.58,
+            "y": 1817.61,
+            "z": 135.33
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26831
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_12",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            27028,
+            27172,
+            27243,
+            27248,
+            27267,
+            27320,
+            27337
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3208.62,
+            "y": -678.667,
+            "z": 167.62
+          },
+          "weight": 2
+        },
+        {
+          "hubId": "dragonblight_hub_09",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            26873
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3074.45,
+            "y": 1369.6,
+            "z": 130.074
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "dragonblight_hub_16",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            26443,
+            27804
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3499.04,
+            "y": 368.367,
+            "z": 52.328
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "dragonblight_hub_27",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            26180,
+            26181
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3711.87,
+            "y": 2830.2,
+            "z": 89.476
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "dragonblight_hub_34",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            26733
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4014.54,
+            "y": 2359.66,
+            "z": 126.748
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "dragonblight_hub_35",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            26859,
+            26979
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4322.3,
+            "y": 1009.02,
+            "z": 95.691
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "dragonblight_hub_44",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            25257
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4899.52,
+            "y": 1343.81,
+            "z": 231.016
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_31",
+      "position": {
+        "mapId": 571,
+        "x": 3841.22,
+        "y": -1402.29,
+        "z": 144.478
+      },
+      "questGivers": [
+        27157
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 73,
+        "avg": 73
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_21",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            1293,
+            27319
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3666.78,
+            "y": -1188.16,
+            "z": 102.42
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_32",
+      "position": {
+        "mapId": 571,
+        "x": 3879.56,
+        "y": -798.472,
+        "z": 221.188
+      },
+      "questGivers": [
+        27158
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 74,
+        "avg": 73
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_25",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            26878,
+            27156,
+            27159,
+            27317
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3692.51,
+            "y": -736.212,
+            "z": 213.33
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_33",
+      "position": {
+        "mapId": 571,
+        "x": 3996.67,
+        "y": -945.023,
+        "z": 105.89
+      },
+      "questGivers": [
+        27412
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 72,
+        "avg": 72
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:27436:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3899.86,
+            "y": -883.61,
+            "z": 119.64
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27436
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27437:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3882.8,
+            "y": -868.2,
+            "z": 111.19
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27437
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_25",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            26878,
+            27156,
+            27159,
+            27317
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3692.51,
+            "y": -736.212,
+            "z": 213.33
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_34",
+      "position": {
+        "mapId": 571,
+        "x": 4014.54,
+        "y": 2359.66,
+        "z": 126.748
+      },
+      "questGivers": [
+        26733
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 73,
+        "avg": 72
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_28",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            26379,
+            26415,
+            26471,
+            26504,
+            26505,
+            26564,
+            26574,
+            26581,
+            26618,
+            26649,
+            26652,
+            26854
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3747.01,
+            "y": 1603.44,
+            "z": 86.988
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_35",
+      "position": {
+        "mapId": 571,
+        "x": 4331.12,
+        "y": 994.625,
+        "z": 93.835
+      },
+      "questGivers": [
+        26859,
+        26979
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 75,
+        "avg": 74
+      },
+      "faction": "Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:36793:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 4291.25,
+            "y": 758.5,
+            "z": 149.36
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26858
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27004:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4092.9,
+            "y": 1248.45,
+            "z": 57.14
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27004
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26705:map:571:cluster:5",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3777.76,
+            "y": 564.83,
+            "z": 66.55
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26705
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26481:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3768.3,
+            "y": 569.39,
+            "z": 67.71
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26481
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26705:map:571:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4196.18,
+            "y": 293.86,
+            "z": 63.58
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26705
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26481:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4203.43,
+            "y": 286.97,
+            "z": 63.75
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26481
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dragonblight_hub_36",
+      "position": {
+        "mapId": 571,
+        "x": 4451.42,
+        "y": 1652.29,
+        "z": 133.828
+      },
+      "questGivers": [
+        26593
+      ],
+      "levelRange": {
+        "min": 72,
+        "max": 75,
+        "avg": 74
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dragonblight_hub_37",
+      "position": {
+        "mapId": 571,
+        "x": 4549.135,
+        "y": 5.12,
+        "z": 75.325
+      },
+      "questGivers": [
+        26978,
+        27844
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 73,
+        "avg": 73
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:26481:map:571:cluster:8",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4296.16,
+            "y": 4.8,
+            "z": 63.32
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26481
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26705:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4478.71,
+            "y": -244.85,
+            "z": 90.3
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26705
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26481:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4462.68,
+            "y": -262.94,
+            "z": 92.27
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26481
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26705:map:571:cluster:6",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4118.34,
+            "y": 78.56,
+            "z": 55.49
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26705
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27005:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4481.23,
+            "y": -438.29,
+            "z": 78.81
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27005
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_29",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            27136,
+            27155,
+            27314
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3767.5,
+            "y": -775.048,
+            "z": 196.087
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_38",
+      "position": {
+        "mapId": 571,
+        "x": 4599.03,
+        "y": -1082.73,
+        "z": 165.566
+      },
+      "questGivers": [
+        28228
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 75,
+        "avg": 74
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dragonblight_hub_39",
+      "position": {
+        "mapId": 571,
+        "x": 4672.77,
+        "y": 909.34,
+        "z": 121.101
+      },
+      "questGivers": [
+        26896
+      ],
+      "levelRange": {
+        "min": 72,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_40",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            26647,
+            26660,
+            26661
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4691.45,
+            "y": 571.628,
+            "z": 119.784
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_40",
+      "position": {
+        "mapId": 571,
+        "x": 4698.713,
+        "y": 557.266,
+        "z": 121.467
+      },
+      "questGivers": [
+        26647,
+        26660,
+        26661
+      ],
+      "levelRange": {
+        "min": 72,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 9,
+      "estimatedMinutes": 45,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:36729:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 4680.92,
+            "y": 664.02,
+            "z": 111.98
+          },
+          "radius": 175.63,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26467,
+            26483
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "creature:26493:map:571:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4583.09,
+            "y": 449.51,
+            "z": 85.05
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26493
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:36727:map:571:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 4558.36,
+            "y": 467.93,
+            "z": 69.09
+          },
+          "radius": 65.83,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26492,
+            26493
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "creature:26492:map:571:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4554.24,
+            "y": 470.99,
+            "z": 66.43
+          },
+          "radius": 61.64,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26492
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26492:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4408.66,
+            "y": 723.24,
+            "z": 56.76
+          },
+          "radius": 93.05,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26492
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:36727:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 4406.44,
+            "y": 725.06,
+            "z": 56.83
+          },
+          "radius": 90.19,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26492,
+            26493
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_43",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            26473,
+            26659
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4895.23,
+            "y": 295.912,
+            "z": 131.721
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_41",
+      "position": {
+        "mapId": 571,
+        "x": 4699.7,
+        "y": 1506.85,
+        "z": 261.055
+      },
+      "questGivers": [
+        27872
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_17",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            26917,
+            26949,
+            26983,
+            27765,
+            27785,
+            27803,
+            27856,
+            27990
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3510.93,
+            "y": 260.856,
+            "z": 47.4
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_42",
+      "position": {
+        "mapId": 571,
+        "x": 4855.18,
+        "y": 1472.17,
+        "z": 209.657
+      },
+      "questGivers": [
+        31333
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dragonblight_hub_44",
+      "position": {
+        "mapId": 571,
+        "x": 4899.52,
+        "y": 1343.81,
+        "z": 231.016
+      },
+      "questGivers": [
+        25257
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "dragonblight_hub_17",
+          "zoneId": 65,
+          "zoneName": "Dragonblight",
+          "questGivers": [
+            26917,
+            26949,
+            26983,
+            27765,
+            27785,
+            27803,
+            27856,
+            27990
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3510.93,
+            "y": 260.856,
+            "z": 47.4
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dragonblight_hub_43",
+      "position": {
+        "mapId": 571,
+        "x": 4902.37,
+        "y": 307.655,
+        "z": 134.74
+      },
+      "questGivers": [
+        26473,
+        26659
+      ],
+      "levelRange": {
+        "min": 72,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

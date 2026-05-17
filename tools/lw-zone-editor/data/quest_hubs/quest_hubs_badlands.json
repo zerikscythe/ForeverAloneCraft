@@ -1,0 +1,862 @@
+{
+  "version": 1,
+  "zoneId": 3,
+  "zoneName": "Badlands",
+  "mapId": 0,
+  "hubCount": 10,
+  "hubs": [
+    {
+      "hubId": "badlands_hub_01",
+      "position": {
+        "mapId": 0,
+        "x": -7164.42,
+        "y": -3357.41,
+        "z": 244.933
+      },
+      "questGivers": [
+        2785
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 50,
+        "avg": 42
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:4518:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -7281.16,
+            "y": -3439.04,
+            "z": 305.32
+          },
+          "radius": 94.05,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2791
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:4519:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -7281.16,
+            "y": -3439.04,
+            "z": 305.32
+          },
+          "radius": 94.05,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2791
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:4520:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -7281.16,
+            "y": -3439.04,
+            "z": 305.32
+          },
+          "radius": 94.05,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2791
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "badlands_hub_10",
+          "zoneId": 3,
+          "zoneName": "Badlands",
+          "questGivers": [
+            2786
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -4598.87,
+            "y": -1115.45,
+            "z": 505.022
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "badlands_hub_02",
+      "position": {
+        "mapId": 0,
+        "x": -6815.47,
+        "y": -3629.345,
+        "z": 248.63
+      },
+      "questGivers": [
+        2888,
+        7867
+      ],
+      "levelRange": {
+        "min": 40,
+        "max": 55,
+        "avg": 49
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "badlands_hub_03",
+      "position": {
+        "mapId": 0,
+        "x": -6765.36,
+        "y": -3131.45,
+        "z": 241.029
+      },
+      "questGivers": [
+        2817,
+        4618
+      ],
+      "levelRange": {
+        "min": 28,
+        "max": 40,
+        "avg": 38
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:3404:map:0:cluster:38",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6884.8,
+            "y": -2935.63,
+            "z": 242.01
+          },
+          "radius": 170.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1809,
+            2578,
+            2579,
+            2580,
+            2829,
+            2830
+          ],
+          "targetCount": 21
+        },
+        {
+          "taskAreaId": "item_source:3404:map:0:cluster:33",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6914.85,
+            "y": -3372.05,
+            "z": 250.71
+          },
+          "radius": 162.75,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1809,
+            2578,
+            2579,
+            2580,
+            2829,
+            2830
+          ],
+          "targetCount": 21
+        },
+        {
+          "taskAreaId": "item_source:5797:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -7019.4,
+            "y": -3331.25,
+            "z": 244.28
+          },
+          "radius": 115.92,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2892,
+            2893,
+            2894,
+            4851,
+            4856,
+            6733
+          ],
+          "targetCount": 6
+        },
+        {
+          "taskAreaId": "item_source:5797:map:0:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -7082.39,
+            "y": -3291.11,
+            "z": 241.79
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2892,
+            2893,
+            2894,
+            4851,
+            4856,
+            6733
+          ],
+          "targetCount": 6
+        },
+        {
+          "taskAreaId": "item_source:4611:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6345.0,
+            "y": -3091.49,
+            "z": 310.89
+          },
+          "radius": 64.76,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            871,
+            873,
+            875,
+            877,
+            879,
+            2744
+          ],
+          "targetCount": 6
+        },
+        {
+          "taskAreaId": "item_source:8009:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6051.89,
+            "y": -3189.36,
+            "z": 281.25
+          },
+          "radius": 64.6,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4844,
+            4845,
+            4846,
+            4847,
+            4848,
+            4849
+          ],
+          "targetCount": 9
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "badlands_hub_04",
+      "position": {
+        "mapId": 0,
+        "x": -6679.35,
+        "y": -2234.385,
+        "z": 269.668
+      },
+      "questGivers": [
+        5394,
+        17097
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 40,
+        "avg": 40
+      },
+      "faction": "Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:6166:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6461.71,
+            "y": -3285.31,
+            "z": 241.79
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2727,
+            2728,
+            2729,
+            2730
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:6166:map:0:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6132.13,
+            "y": -3394.23,
+            "z": 258.76
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2727,
+            2728,
+            2729,
+            2730
+          ],
+          "targetCount": 4
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "badlands_hub_05",
+      "position": {
+        "mapId": 0,
+        "x": -6661.947,
+        "y": -2151.223,
+        "z": 247.179
+      },
+      "questGivers": [
+        1068,
+        6868,
+        9082
+      ],
+      "levelRange": {
+        "min": 36,
+        "max": 52,
+        "avg": 44
+      },
+      "faction": "Horde",
+      "totalQuests": 9,
+      "estimatedMinutes": 45,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:7848:map:0:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6620.89,
+            "y": -2609.79,
+            "z": 264.9
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            92,
+            2735,
+            2736,
+            2745,
+            2752,
+            2791
+          ],
+          "targetCount": 8
+        },
+        {
+          "taskAreaId": "item_source:7847:map:0:cluster:9",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -7099.49,
+            "y": -2752.36,
+            "z": 241.95
+          },
+          "radius": 81.14,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2829,
+            2830,
+            2831
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:7847:map:0:cluster:12",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6881.46,
+            "y": -2910.45,
+            "z": 242.69
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2829,
+            2830,
+            2831
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:7848:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -7134.66,
+            "y": -2973.23,
+            "z": 260.65
+          },
+          "radius": 59.01,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            92,
+            2735,
+            2736,
+            2745,
+            2752,
+            2791
+          ],
+          "targetCount": 8
+        },
+        {
+          "taskAreaId": "item_source:7846:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6461.71,
+            "y": -3285.31,
+            "z": 241.79
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2727,
+            2728,
+            2729,
+            2730
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:7846:map:0:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6132.13,
+            "y": -3394.23,
+            "z": 258.76
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2727,
+            2728,
+            2729,
+            2730
+          ],
+          "targetCount": 4
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "badlands_hub_06",
+      "position": {
+        "mapId": 0,
+        "x": -6628.425,
+        "y": -2723.045,
+        "z": 244.057
+      },
+      "questGivers": [
+        2920,
+        2921
+      ],
+      "levelRange": {
+        "min": 35,
+        "max": 58,
+        "avg": 42
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 11,
+      "estimatedMinutes": 55,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:4626:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6620.89,
+            "y": -2609.79,
+            "z": 264.9
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2735
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:929:map:0:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6368.56,
+            "y": -3126.34,
+            "z": 283.97
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            314,
+            334,
+            335,
+            412,
+            486,
+            522
+          ],
+          "targetCount": 75
+        },
+        {
+          "taskAreaId": "item_source:4627:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -7134.66,
+            "y": -2973.23,
+            "z": 260.65
+          },
+          "radius": 59.01,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            92
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:4627:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -7227.95,
+            "y": -3130.75,
+            "z": 290.58
+          },
+          "radius": 187.37,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            92
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "badlands_hub_07",
+      "position": {
+        "mapId": 0,
+        "x": -6608.425,
+        "y": -3412.75,
+        "z": 279.294
+      },
+      "questGivers": [
+        2860,
+        2910
+      ],
+      "levelRange": {
+        "min": 35,
+        "max": 45,
+        "avg": 39
+      },
+      "faction": "Alliance",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:4616:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6433.56,
+            "y": -3402.46,
+            "z": 235.82
+          },
+          "radius": 84.76,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2739,
+            2740,
+            2742,
+            2743
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:4616:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6377.53,
+            "y": -3128.93,
+            "z": 298.47
+          },
+          "radius": 147.47,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2739,
+            2740,
+            2742,
+            2743
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:4630:map:0:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6277.95,
+            "y": -3722.29,
+            "z": 245.8
+          },
+          "radius": 92.44,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2701,
+            2715,
+            2716,
+            2717,
+            2718,
+            2719
+          ],
+          "targetCount": 9
+        },
+        {
+          "taskAreaId": "item_source:4630:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -7040.4,
+            "y": -3632.78,
+            "z": 241.85
+          },
+          "radius": 53.14,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2701,
+            2715,
+            2716,
+            2717,
+            2718,
+            2719
+          ],
+          "targetCount": 9
+        },
+        {
+          "taskAreaId": "item_source:4612:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6884.4,
+            "y": -3897.67,
+            "z": 267.63
+          },
+          "radius": 181.43,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2725,
+            2726
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:4635:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6190.17,
+            "y": -3042.32,
+            "z": 220.49
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2932
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "badlands_hub_08",
+          "zoneId": 3,
+          "zoneName": "Badlands",
+          "questGivers": [
+            2909
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -6065.44,
+            "y": -3022.03,
+            "z": 230.348
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "badlands_hub_08",
+      "position": {
+        "mapId": 0,
+        "x": -6065.44,
+        "y": -3022.03,
+        "z": 230.348
+      },
+      "questGivers": [
+        2909
+      ],
+      "levelRange": {
+        "min": 35,
+        "max": 40,
+        "avg": 40
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:4635:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -6190.17,
+            "y": -3042.32,
+            "z": 220.49
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            2932
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "badlands_hub_07",
+          "zoneId": 3,
+          "zoneName": "Badlands",
+          "questGivers": [
+            2860,
+            2910
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -6609.19,
+            "y": -3408.01,
+            "z": 279.195
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "badlands_hub_09",
+      "position": {
+        "mapId": 0,
+        "x": -4620.49,
+        "y": -1325.07,
+        "z": 503.465
+      },
+      "questGivers": [
+        2918
+      ],
+      "levelRange": {
+        "min": 35,
+        "max": 45,
+        "avg": 42
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "badlands_hub_10",
+      "position": {
+        "mapId": 0,
+        "x": -4598.87,
+        "y": -1115.45,
+        "z": 505.022
+      },
+      "questGivers": [
+        2786
+      ],
+      "levelRange": {
+        "min": 19,
+        "max": 44,
+        "avg": 37
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "badlands_hub_01",
+          "zoneId": 3,
+          "zoneName": "Badlands",
+          "questGivers": [
+            2785
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -7164.42,
+            "y": -3357.41,
+            "z": 244.933
+          },
+          "weight": 1
+        }
+      ]
+    }
+  ]
+}

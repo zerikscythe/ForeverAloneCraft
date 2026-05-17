@@ -1,0 +1,1109 @@
+{
+  "version": 1,
+  "zoneId": 406,
+  "zoneName": "Stonetalon Mountains",
+  "mapId": 1,
+  "hubCount": 14,
+  "hubs": [
+    {
+      "hubId": "stonetalon_mountains_hub_01",
+      "position": {
+        "mapId": 1,
+        "x": -272.48,
+        "y": -394.084,
+        "z": 17.205
+      },
+      "questGivers": [
+        3995
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 26,
+        "avg": 26
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:5585:map:1:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 1748.46,
+            "y": 750.49,
+            "z": 140.98
+          },
+          "radius": 74.59,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4018,
+            4019
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:5585:map:1:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 1673.38,
+            "y": 962.59,
+            "z": 129.38
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4018,
+            4019
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:5582:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 1955.66,
+            "y": 961.04,
+            "z": 178.96
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4020
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:5583:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 2235.13,
+            "y": 1418.77,
+            "z": 281.77
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4016,
+            4017,
+            4066
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:5584:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 2339.08,
+            "y": 1313.63,
+            "z": 284.66
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4067
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:5583:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 2468.68,
+            "y": 1303.52,
+            "z": 277.25
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4016,
+            4017,
+            4066
+          ],
+          "targetCount": 3
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stonetalon_mountains_hub_02",
+      "position": {
+        "mapId": 1,
+        "x": -266.5,
+        "y": -947.0,
+        "z": 13.405
+      },
+      "questGivers": [
+        4049,
+        11857
+      ],
+      "levelRange": {
+        "min": 12,
+        "max": 23,
+        "avg": 19
+      },
+      "faction": "Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:11911:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -211.56,
+            "y": -701.87,
+            "z": 3.94
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11911
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:11912:map:1:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -11.1,
+            "y": -783.92,
+            "z": 1.23
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11912
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:11912:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 166.22,
+            "y": -900.46,
+            "z": 5.76
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11912
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:11911:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 181.59,
+            "y": -896.07,
+            "z": 7.16
+          },
+          "radius": 50.51,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11911
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:11858:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 112.52,
+            "y": -350.56,
+            "z": 4.5
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11858
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:3989:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 1103.27,
+            "y": -147.49,
+            "z": 4.18
+          },
+          "radius": 122.5,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3989
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stonetalon_mountains_hub_04",
+      "position": {
+        "mapId": 1,
+        "x": -177.568,
+        "y": -233.317,
+        "z": 8.88
+      },
+      "questGivers": [
+        12816
+      ],
+      "levelRange": {
+        "min": 13,
+        "max": 19,
+        "avg": 19
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:4005:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 474.32,
+            "y": 344.67,
+            "z": 56.11
+          },
+          "radius": 156.95,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4005
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4007:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 510.65,
+            "y": 644.85,
+            "z": 77.08
+          },
+          "radius": 115.28,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4007
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4007:map:1:cluster:5",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 903.32,
+            "y": 239.01,
+            "z": 24.39
+          },
+          "radius": 197.62,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4007
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stonetalon_mountains_hub_03",
+      "position": {
+        "mapId": 1,
+        "x": -177.062,
+        "y": -331.15,
+        "z": 9.783
+      },
+      "questGivers": [
+        4197,
+        11821
+      ],
+      "levelRange": {
+        "min": 17,
+        "max": 19,
+        "avg": 19
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stonetalon_mountains_hub_05",
+      "position": {
+        "mapId": 1,
+        "x": 129.705,
+        "y": -342.522,
+        "z": 3.68
+      },
+      "questGivers": [
+        11856
+      ],
+      "levelRange": {
+        "min": 12,
+        "max": 18,
+        "avg": 18
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "stonetalon_mountains_hub_02",
+          "zoneId": 406,
+          "zoneName": "Stonetalon Mountains",
+          "questGivers": [
+            4049,
+            11857
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -270.0,
+            "y": -951.0,
+            "z": 14.372
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "stonetalon_mountains_hub_06",
+      "position": {
+        "mapId": 1,
+        "x": 735.101,
+        "y": 330.142,
+        "z": 63.947
+      },
+      "questGivers": [
+        4077,
+        4080
+      ],
+      "levelRange": {
+        "min": 17,
+        "max": 28,
+        "avg": 23
+      },
+      "faction": "Alliance",
+      "totalQuests": 11,
+      "estimatedMinutes": 55,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:3989:map:1:cluster:8",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 1051.63,
+            "y": 52.05,
+            "z": 10.73
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3989
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:3991:map:1:cluster:5",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 1240.2,
+            "y": 290.34,
+            "z": 21.79
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3991
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:3991:map:1:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 1059.07,
+            "y": -68.1,
+            "z": 8.02
+          },
+          "radius": 86.3,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3991
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:3989:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 1103.27,
+            "y": -147.49,
+            "z": 4.18
+          },
+          "radius": 122.5,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3989
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:5659:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 948.34,
+            "y": 1422.38,
+            "z": 16.68
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4036,
+            4037,
+            4038
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:5659:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 1580.94,
+            "y": 1098.3,
+            "z": 143.78
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4036,
+            4037,
+            4038
+          ],
+          "targetCount": 3
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stonetalon_mountains_hub_07",
+      "position": {
+        "mapId": 1,
+        "x": 826.058,
+        "y": 939.226,
+        "z": 155.022
+      },
+      "questGivers": [
+        11861,
+        11862
+      ],
+      "levelRange": {
+        "min": 14,
+        "max": 25,
+        "avg": 21
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:16312:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 948.34,
+            "y": 1422.38,
+            "z": 16.68
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4036,
+            4037,
+            4038
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:16312:map:1:cluster:8",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 566.89,
+            "y": 1468.7,
+            "z": -1.97
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4036,
+            4037,
+            4038
+          ],
+          "targetCount": 3
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stonetalon_mountains_hub_08",
+      "position": {
+        "mapId": 1,
+        "x": 878.289,
+        "y": 365.192,
+        "z": 23.263
+      },
+      "questGivers": [
+        4201
+      ],
+      "levelRange": {
+        "min": 16,
+        "max": 27,
+        "avg": 23
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:5734:map:1:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 1190.61,
+            "y": 199.71,
+            "z": 18.82
+          },
+          "radius": 104.75,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3988
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:5734:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 1226.56,
+            "y": 8.09,
+            "z": -4.31
+          },
+          "radius": 76.66,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3988
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:5736:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 1605.99,
+            "y": 96.71,
+            "z": 98.67
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4202
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stonetalon_mountains_hub_09",
+      "position": {
+        "mapId": 1,
+        "x": 925.298,
+        "y": 940.918,
+        "z": 105.575
+      },
+      "questGivers": [
+        11860
+      ],
+      "levelRange": {
+        "min": 18,
+        "max": 28,
+        "avg": 27
+      },
+      "faction": "Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:4024:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 688.47,
+            "y": 1464.98,
+            "z": -11.23
+          },
+          "radius": 132.51,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4024
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4022:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 1318.12,
+            "y": 1421.49,
+            "z": 103.26
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4022
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4023:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 685.23,
+            "y": 1520.43,
+            "z": -17.78
+          },
+          "radius": 114.07,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4023
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4022:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 881.38,
+            "y": 1658.68,
+            "z": -19.05
+          },
+          "radius": 171.17,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4022
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:16190:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 900.68,
+            "y": 1743.99,
+            "z": -11.4
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            12579
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4025:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 908.11,
+            "y": 1745.24,
+            "z": -11.18
+          },
+          "radius": 152.42,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4025
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stonetalon_mountains_hub_10",
+      "position": {
+        "mapId": 1,
+        "x": 949.228,
+        "y": 1002.23,
+        "z": 103.836
+      },
+      "questGivers": [
+        4198
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 29,
+        "avg": 28
+      },
+      "faction": "Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:4053:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 2446.38,
+            "y": 1414.19,
+            "z": 269.52
+          },
+          "radius": 89.08,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4053
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4051:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 2478.38,
+            "y": 1488.23,
+            "z": 264.9
+          },
+          "radius": 107.13,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4051
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4057:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 2483.59,
+            "y": 1476.29,
+            "z": 267.04
+          },
+          "radius": 110.16,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4057
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4053:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 2523.51,
+            "y": 1502.8,
+            "z": 265.22
+          },
+          "radius": 84.53,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4053
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4057:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 2559.62,
+            "y": 1436.14,
+            "z": 255.02
+          },
+          "radius": 93.45,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4057
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stonetalon_mountains_hub_11",
+      "position": {
+        "mapId": 1,
+        "x": 962.967,
+        "y": -263.785,
+        "z": -5.318
+      },
+      "questGivers": [
+        4276
+      ],
+      "levelRange": {
+        "min": 17,
+        "max": 22,
+        "avg": 22
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stonetalon_mountains_hub_12",
+      "position": {
+        "mapId": 1,
+        "x": 1015.68,
+        "y": 928.041,
+        "z": 103.519
+      },
+      "questGivers": [
+        11864
+      ],
+      "levelRange": {
+        "min": 17,
+        "max": 25,
+        "avg": 24
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stonetalon_mountains_hub_13",
+      "position": {
+        "mapId": 1,
+        "x": 1914.65,
+        "y": -4226.58,
+        "z": 42.422
+      },
+      "questGivers": [
+        4047
+      ],
+      "levelRange": {
+        "min": 13,
+        "max": 40,
+        "avg": 28
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "stonetalon_mountains_hub_02",
+          "zoneId": 406,
+          "zoneName": "Stonetalon Mountains",
+          "questGivers": [
+            4049,
+            11857
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -270.0,
+            "y": -951.0,
+            "z": 14.372
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "stonetalon_mountains_hub_14",
+      "position": {
+        "mapId": 1,
+        "x": 2652.91,
+        "y": 1433.92,
+        "z": 226.773
+      },
+      "questGivers": [
+        3994
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 27,
+        "avg": 27
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:4022:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 1480.33,
+            "y": 1400.29,
+            "z": 141.12
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4022
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4022:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 1318.12,
+            "y": 1421.49,
+            "z": 103.26
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4022
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4025:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 908.11,
+            "y": 1745.24,
+            "z": -11.18
+          },
+          "radius": 152.42,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4025
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4024:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 688.47,
+            "y": 1464.98,
+            "z": -11.23
+          },
+          "radius": 132.51,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4024
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4023:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 685.23,
+            "y": 1520.43,
+            "z": -17.78
+          },
+          "radius": 114.07,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4023
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4023:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 660.22,
+            "y": 1789.18,
+            "z": -13.79
+          },
+          "radius": 83.9,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4023
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    }
+  ]
+}

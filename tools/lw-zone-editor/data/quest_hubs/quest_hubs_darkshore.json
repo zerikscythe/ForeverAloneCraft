@@ -1,0 +1,819 @@
+{
+  "version": 1,
+  "zoneId": 148,
+  "zoneName": "Darkshore",
+  "mapId": 1,
+  "hubCount": 16,
+  "hubs": [
+    {
+      "hubId": "darkshore_hub_01",
+      "position": {
+        "mapId": 1,
+        "x": 3185.46,
+        "y": 189.38,
+        "z": 4.752
+      },
+      "questGivers": [
+        3663
+      ],
+      "levelRange": {
+        "min": 13,
+        "max": 28,
+        "avg": 25
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "darkshore_hub_13",
+          "zoneId": 148,
+          "zoneName": "Darkshore",
+          "questGivers": [
+            3661
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 7246.63,
+            "y": -658.966,
+            "z": 34.622
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "darkshore_hub_02",
+      "position": {
+        "mapId": 1,
+        "x": 4390.68,
+        "y": -67.312,
+        "z": 86.718
+      },
+      "questGivers": [
+        11711
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 15,
+        "avg": 15
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "darkshore_hub_03",
+      "position": {
+        "mapId": 1,
+        "x": 4519.74,
+        "y": 410.481,
+        "z": 33.858
+      },
+      "questGivers": [
+        3584
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 18,
+        "avg": 18
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "darkshore_hub_04",
+      "position": {
+        "mapId": 1,
+        "x": 4608.44,
+        "y": -6.326,
+        "z": 69.747
+      },
+      "questGivers": [
+        3692
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 22,
+        "avg": 21
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "darkshore_hub_05",
+      "position": {
+        "mapId": 1,
+        "x": 4678.63,
+        "y": 601.614,
+        "z": 18.497
+      },
+      "questGivers": [
+        2917
+      ],
+      "levelRange": {
+        "min": 15,
+        "max": 20,
+        "avg": 20
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "darkshore_hub_10",
+          "zoneId": 148,
+          "zoneName": "Darkshore",
+          "questGivers": [
+            2913,
+            6301
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 6506.35,
+            "y": 489.304,
+            "z": 6.824
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "darkshore_hub_06",
+      "position": {
+        "mapId": 1,
+        "x": 4998.92,
+        "y": 61.191,
+        "z": 52.185
+      },
+      "questGivers": [
+        3616,
+        11218
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 20,
+        "avg": 14
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "darkshore_hub_07",
+      "position": {
+        "mapId": 1,
+        "x": 5725.03,
+        "y": 301.931,
+        "z": 21.041
+      },
+      "questGivers": [
+        3639
+      ],
+      "levelRange": {
+        "min": 9,
+        "max": 12,
+        "avg": 12
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "darkshore_hub_08",
+      "position": {
+        "mapId": 1,
+        "x": 6401.501,
+        "y": 534.73,
+        "z": 10.689
+      },
+      "questGivers": [
+        2930,
+        3583,
+        3644,
+        3666,
+        4200,
+        10216,
+        10219
+      ],
+      "levelRange": {
+        "min": 7,
+        "max": 17,
+        "avg": 14
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 13,
+      "estimatedMinutes": 65,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:5385:map:1:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 7443.01,
+            "y": 147.92,
+            "z": -2.01
+          },
+          "radius": 74.79,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2231,
+            2232,
+            2233,
+            2234,
+            2235,
+            2236
+          ],
+          "targetCount": 6
+        },
+        {
+          "taskAreaId": "item_source:12237:map:1:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 7418.37,
+            "y": -41.94,
+            "z": 0.74
+          },
+          "radius": 98.79,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2233,
+            2235
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:12237:map:1:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 7429.99,
+            "y": -219.89,
+            "z": 0.65
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2233,
+            2235
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:5385:map:1:cluster:10",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 7429.99,
+            "y": -219.89,
+            "z": 0.65
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2231,
+            2232,
+            2233,
+            2234,
+            2235,
+            2236
+          ],
+          "targetCount": 6
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "darkshore_hub_06",
+          "zoneId": 148,
+          "zoneName": "Darkshore",
+          "questGivers": [
+            3616,
+            11218
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 4995.83,
+            "y": 33.565,
+            "z": 51.592
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "darkshore_hub_09",
+      "position": {
+        "mapId": 1,
+        "x": 6434.523,
+        "y": 381.489,
+        "z": 16.409
+      },
+      "questGivers": [
+        3657,
+        3693,
+        3701
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 20,
+        "avg": 17
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 9,
+      "estimatedMinutes": 45,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:2164:map:1:cluster:8",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 7222.85,
+            "y": 76.88,
+            "z": 11.46
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2164
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:2164:map:1:cluster:16",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 7339.49,
+            "y": 124.66,
+            "z": 12.37
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2164
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:5386:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 7794.35,
+            "y": -1034.58,
+            "z": 32.72
+          },
+          "radius": 103.67,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2071,
+            2237
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:5386:map:1:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 8028.03,
+            "y": -1165.6,
+            "z": 41.83
+          },
+          "radius": 54.57,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2071,
+            2237
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "darkshore_hub_11",
+          "zoneId": 148,
+          "zoneName": "Darkshore",
+          "questGivers": [
+            3649
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 6580.97,
+            "y": 492.292,
+            "z": 8.317
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "darkshore_hub_13",
+          "zoneId": 148,
+          "zoneName": "Darkshore",
+          "questGivers": [
+            3661
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 7246.63,
+            "y": -658.966,
+            "z": 34.622
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "darkshore_hub_10",
+      "position": {
+        "mapId": 1,
+        "x": 6521.06,
+        "y": 467.428,
+        "z": 6.976
+      },
+      "questGivers": [
+        2913,
+        6301
+      ],
+      "levelRange": {
+        "min": 13,
+        "max": 20,
+        "avg": 19
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "darkshore_hub_11",
+      "position": {
+        "mapId": 1,
+        "x": 6580.97,
+        "y": 492.292,
+        "z": 8.317
+      },
+      "questGivers": [
+        3649
+      ],
+      "levelRange": {
+        "min": 7,
+        "max": 22,
+        "avg": 16
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "darkshore_hub_12",
+          "zoneId": 148,
+          "zoneName": "Darkshore",
+          "questGivers": [
+            3650
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 6748.64,
+            "y": 48.616,
+            "z": 48.718
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "darkshore_hub_12",
+      "position": {
+        "mapId": 1,
+        "x": 6748.64,
+        "y": 48.616,
+        "z": 48.718
+      },
+      "questGivers": [
+        3650
+      ],
+      "levelRange": {
+        "min": 7,
+        "max": 13,
+        "avg": 13
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "darkshore_hub_13",
+      "position": {
+        "mapId": 1,
+        "x": 7246.63,
+        "y": -658.966,
+        "z": 34.622
+      },
+      "questGivers": [
+        3661
+      ],
+      "levelRange": {
+        "min": 13,
+        "max": 31,
+        "avg": 24
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:5383:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 7183.49,
+            "y": -727.62,
+            "z": 94.21
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3660
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:5348:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 7169.27,
+            "y": -747.52,
+            "z": 51.43
+          },
+          "radius": 145.9,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2336
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "darkshore_hub_01",
+          "zoneId": 148,
+          "zoneName": "Darkshore",
+          "questGivers": [
+            3663
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 3185.46,
+            "y": 189.38,
+            "z": 4.752
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "darkshore_hub_14",
+      "position": {
+        "mapId": 1,
+        "x": 7744.51,
+        "y": -769.238,
+        "z": 5.445
+      },
+      "questGivers": [
+        6667
+      ],
+      "levelRange": {
+        "min": 14,
+        "max": 20,
+        "avg": 20
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:7500:map:1:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 7795.24,
+            "y": -766.81,
+            "z": 0.05
+          },
+          "radius": 75.31,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2233,
+            2236
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:7500:map:1:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 7643.16,
+            "y": -762.34,
+            "z": 5.85
+          },
+          "radius": 117.81,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2233,
+            2236
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:7499:map:1:cluster:11",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 7799.17,
+            "y": -663.16,
+            "z": -19.28
+          },
+          "radius": 67.7,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2201,
+            2202,
+            2203,
+            2204,
+            2205,
+            2206
+          ],
+          "targetCount": 9
+        },
+        {
+          "taskAreaId": "creature:6669:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 7534.7,
+            "y": -713.64,
+            "z": 3.36
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6669
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:7498:map:1:cluster:7",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 7786.92,
+            "y": -1029.11,
+            "z": 34.01
+          },
+          "radius": 206.43,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2323
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:7498:map:1:cluster:8",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 7929.43,
+            "y": -1160.12,
+            "z": 42.51
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2323
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "darkshore_hub_15",
+      "position": {
+        "mapId": 1,
+        "x": 8640.58,
+        "y": 841.118,
+        "z": 23.346
+      },
+      "questGivers": [
+        3838
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "darkshore_hub_08",
+          "zoneId": 148,
+          "zoneName": "Darkshore",
+          "questGivers": [
+            2930,
+            3583,
+            3644,
+            3666,
+            4200,
+            10216,
+            10219
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 6342.4,
+            "y": 543.005,
+            "z": 16.073
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "darkshore_hub_16",
+      "position": {
+        "mapId": 1,
+        "x": 8694.04,
+        "y": 950.259,
+        "z": 12.909
+      },
+      "questGivers": [
+        10118
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "darkshore_hub_15",
+          "zoneId": 148,
+          "zoneName": "Darkshore",
+          "questGivers": [
+            3838
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 8640.58,
+            "y": 841.118,
+            "z": 23.346
+          },
+          "weight": 1
+        }
+      ]
+    }
+  ]
+}

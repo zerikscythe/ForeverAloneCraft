@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "zoneId": 4228,
+  "zoneName": "The Oculus",
+  "mapId": 578,
+  "hubCount": 1,
+  "hubs": [
+    {
+      "hubId": "the_oculus_hub_01",
+      "position": {
+        "mapId": 578,
+        "x": 933.148,
+        "y": 1042.43,
+        "z": 360.219
+      },
+      "questGivers": [
+        27658
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:27641:map:578:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 578,
+            "x": 1056.62,
+            "y": 1047.61,
+            "z": 436.89
+          },
+          "radius": 205.74,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27641
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27447:map:578:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 578,
+            "x": 1285.6,
+            "y": 1070.36,
+            "z": 439.51
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27447
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    }
+  ]
+}

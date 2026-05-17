@@ -1,0 +1,551 @@
+{
+  "version": 1,
+  "zoneId": 1637,
+  "zoneName": "Orgrimmar",
+  "mapId": 1,
+  "hubCount": 20,
+  "hubs": [
+    {
+      "hubId": "orgrimmar_hub_01",
+      "position": {
+        "mapId": 1,
+        "x": -1178.41,
+        "y": 1869.98,
+        "z": 94.873
+      },
+      "questGivers": [
+        5641
+      ],
+      "levelRange": {
+        "min": 25,
+        "max": 40,
+        "avg": 35
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "orgrimmar_hub_02",
+      "position": {
+        "mapId": 1,
+        "x": 1463.939,
+        "y": -4201.31,
+        "z": 46.272
+      },
+      "questGivers": [
+        3373,
+        5883,
+        5885,
+        6014,
+        6018,
+        7311,
+        14727
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 60,
+        "avg": 44
+      },
+      "faction": "Horde",
+      "totalQuests": 16,
+      "estimatedMinutes": 80,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "orgrimmar_hub_04",
+      "position": {
+        "mapId": 1,
+        "x": 1568.96,
+        "y": -4207.38,
+        "z": 43.731
+      },
+      "questGivers": [
+        10880
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 57,
+        "avg": 46
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "orgrimmar_hub_03",
+      "position": {
+        "mapId": 1,
+        "x": 1611.543,
+        "y": -4377.037,
+        "z": 15.926
+      },
+      "questGivers": [
+        13842,
+        14392,
+        15188
+      ],
+      "levelRange": {
+        "min": 51,
+        "max": 60,
+        "avg": 58
+      },
+      "faction": "Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "orgrimmar_hub_05",
+      "position": {
+        "mapId": 1,
+        "x": 1633.99,
+        "y": -4439.37,
+        "z": 15.76
+      },
+      "questGivers": [
+        6929
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 50,
+        "avg": 30
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "orgrimmar_hub_06",
+      "position": {
+        "mapId": 1,
+        "x": 1717.78,
+        "y": -4200.11,
+        "z": 51.98
+      },
+      "questGivers": [
+        5910
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 20,
+        "avg": 20
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "orgrimmar_hub_08",
+      "position": {
+        "mapId": 1,
+        "x": 1769.16,
+        "y": -4485.63,
+        "z": 45.747
+      },
+      "questGivers": [
+        3399
+      ],
+      "levelRange": {
+        "min": 35,
+        "max": 45,
+        "avg": 45
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "orgrimmar_hub_07",
+      "position": {
+        "mapId": 1,
+        "x": 1771.395,
+        "y": -4285.153,
+        "z": 7.971
+      },
+      "questGivers": [
+        3328,
+        3401,
+        3402,
+        6446
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 52,
+        "avg": 22
+      },
+      "faction": "Horde",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "orgrimmar_hub_09",
+      "position": {
+        "mapId": 1,
+        "x": 1781.55,
+        "y": -3997.07,
+        "z": 53.491
+      },
+      "questGivers": [
+        5640
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 30,
+        "avg": 30
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "orgrimmar_hub_10",
+      "position": {
+        "mapId": 1,
+        "x": 1794.68,
+        "y": -4572.71,
+        "z": 23.106
+      },
+      "questGivers": [
+        14726
+      ],
+      "levelRange": {
+        "min": 12,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "orgrimmar_hub_12",
+      "position": {
+        "mapId": 1,
+        "x": 1837.27,
+        "y": -4469.65,
+        "z": 47.764
+      },
+      "questGivers": [
+        7010
+      ],
+      "levelRange": {
+        "min": 50,
+        "max": 54,
+        "avg": 54
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "orgrimmar_hub_11",
+      "position": {
+        "mapId": 1,
+        "x": 1842.719,
+        "y": -4360.26,
+        "z": -11.873
+      },
+      "questGivers": [
+        3324,
+        3325,
+        3326,
+        5639,
+        5815,
+        5875,
+        5909
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 52,
+        "avg": 42
+      },
+      "faction": "Horde",
+      "totalQuests": 13,
+      "estimatedMinutes": 65,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "orgrimmar_hub_06",
+          "zoneId": 1637,
+          "zoneName": "Orgrimmar",
+          "questGivers": [
+            5910
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 1717.78,
+            "y": -4200.11,
+            "z": 51.98
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "orgrimmar_hub_09",
+          "zoneId": 1637,
+          "zoneName": "Orgrimmar",
+          "questGivers": [
+            5640
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 1781.55,
+            "y": -3997.07,
+            "z": 53.491
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "orgrimmar_hub_13",
+      "position": {
+        "mapId": 1,
+        "x": 1922.356,
+        "y": -4176.949,
+        "z": 42.27
+      },
+      "questGivers": [
+        3144,
+        3344,
+        3403,
+        4949,
+        5892,
+        13417,
+        16012,
+        31412,
+        32363
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 74,
+        "avg": 54
+      },
+      "faction": "Horde",
+      "totalQuests": 53,
+      "estimatedMinutes": 265,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:14544:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 1480.04,
+            "y": -4761.2,
+            "z": 7.24
+          },
+          "radius": 146.11,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3197,
+            3198
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "orgrimmar_hub_14",
+      "position": {
+        "mapId": 1,
+        "x": 1930.055,
+        "y": -4516.1,
+        "z": 29.386
+      },
+      "questGivers": [
+        6986,
+        6987
+      ],
+      "levelRange": {
+        "min": 37,
+        "max": 48,
+        "avg": 44
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "orgrimmar_hub_15",
+      "position": {
+        "mapId": 1,
+        "x": 1953.59,
+        "y": -4735.77,
+        "z": 48.756
+      },
+      "questGivers": [
+        4485
+      ],
+      "levelRange": {
+        "min": 29,
+        "max": 53,
+        "avg": 40
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "orgrimmar_hub_20",
+          "zoneId": 1637,
+          "zoneName": "Orgrimmar",
+          "questGivers": [
+            8576
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 3601.08,
+            "y": -4405.69,
+            "z": 115.398
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "orgrimmar_hub_16",
+      "position": {
+        "mapId": 1,
+        "x": 1970.95,
+        "y": -4808.17,
+        "z": 57.092
+      },
+      "questGivers": [
+        3354
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 52,
+        "avg": 36
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "orgrimmar_hub_17",
+      "position": {
+        "mapId": 1,
+        "x": 2000.62,
+        "y": -4659.66,
+        "z": 26.739
+      },
+      "questGivers": [
+        3332
+      ],
+      "levelRange": {
+        "min": 35,
+        "max": 45,
+        "avg": 45
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "orgrimmar_hub_18",
+      "position": {
+        "mapId": 1,
+        "x": 2051.161,
+        "y": -4781.378,
+        "z": 24.765
+      },
+      "questGivers": [
+        3412,
+        3413,
+        7790,
+        7792,
+        7793,
+        11176,
+        11177,
+        11178,
+        14182
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 60,
+        "avg": 39
+      },
+      "faction": "Horde",
+      "totalQuests": 14,
+      "estimatedMinutes": 70,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "orgrimmar_hub_19",
+      "position": {
+        "mapId": 1,
+        "x": 2122.43,
+        "y": -4631.493,
+        "z": 55.999
+      },
+      "questGivers": [
+        3352,
+        3362,
+        3407
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 52,
+        "avg": 18
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "orgrimmar_hub_20",
+      "position": {
+        "mapId": 1,
+        "x": 3601.08,
+        "y": -4405.69,
+        "z": 115.398
+      },
+      "questGivers": [
+        8576
+      ],
+      "levelRange": {
+        "min": 44,
+        "max": 56,
+        "avg": 54
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

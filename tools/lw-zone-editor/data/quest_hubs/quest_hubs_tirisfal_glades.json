@@ -1,0 +1,614 @@
+{
+  "version": 1,
+  "zoneId": 85,
+  "zoneName": "Tirisfal Glades",
+  "mapId": 0,
+  "hubCount": 9,
+  "hubs": [
+    {
+      "hubId": "tirisfal_glades_hub_01",
+      "position": {
+        "mapId": 0,
+        "x": 1671.89,
+        "y": 1678.29,
+        "z": 120.802
+      },
+      "questGivers": [
+        1568
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 1,
+        "avg": 1
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "tirisfal_glades_hub_02",
+          "zoneId": 85,
+          "zoneName": "Tirisfal Glades",
+          "questGivers": [
+            1569,
+            1570,
+            1661,
+            1740,
+            2123
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 1843.32,
+            "y": 1639.9,
+            "z": 97.811
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "tirisfal_glades_hub_02",
+      "position": {
+        "mapId": 0,
+        "x": 1849.872,
+        "y": 1618.334,
+        "z": 96.324
+      },
+      "questGivers": [
+        1569,
+        1570,
+        1661,
+        1740,
+        2123
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 5,
+        "avg": 3
+      },
+      "faction": "Horde",
+      "totalQuests": 15,
+      "estimatedMinutes": 75,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:2885:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 1772.91,
+            "y": 1381.26,
+            "z": 91.04
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            1667
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:3265:map:0:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 1861.07,
+            "y": 1687.38,
+            "z": 94.02
+          },
+          "radius": 86.62,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1508,
+            1509
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "creature:1501:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 1922.83,
+            "y": 1556.79,
+            "z": 84.54
+          },
+          "radius": 142.41,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1501
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1502:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 1933.94,
+            "y": 1542.34,
+            "z": 85.42
+          },
+          "radius": 155.41,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1502
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1501:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 1969.0,
+            "y": 1611.12,
+            "z": 88.2
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1501
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1502:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 1966.83,
+            "y": 1579.96,
+            "z": 85.23
+          },
+          "radius": 100.61,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1502
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "tirisfal_glades_hub_03",
+      "position": {
+        "mapId": 0,
+        "x": 2022.33,
+        "y": 74.046,
+        "z": 36.53
+      },
+      "questGivers": [
+        1495
+      ],
+      "levelRange": {
+        "min": 6,
+        "max": 11,
+        "avg": 10
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "tirisfal_glades_hub_04",
+      "position": {
+        "mapId": 0,
+        "x": 2126.65,
+        "y": 1305.98,
+        "z": 53.989
+      },
+      "questGivers": [
+        6784
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 5,
+        "avg": 5
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "tirisfal_glades_hub_05",
+      "position": {
+        "mapId": 0,
+        "x": 2205.75,
+        "y": 1184.52,
+        "z": 32.328
+      },
+      "questGivers": [
+        1519
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 7,
+        "avg": 7
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "tirisfal_glades_hub_07",
+          "zoneId": 85,
+          "zoneName": "Tirisfal Glades",
+          "questGivers": [
+            1499,
+            1500,
+            1515,
+            1518,
+            1521,
+            1652
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 2249.06,
+            "y": 236.785,
+            "z": 41.298
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "tirisfal_glades_hub_06",
+      "position": {
+        "mapId": 0,
+        "x": 2242.45,
+        "y": 599.449,
+        "z": 33.334
+      },
+      "questGivers": [
+        10666
+      ],
+      "levelRange": {
+        "min": 5,
+        "max": 5,
+        "avg": 5
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "tirisfal_glades_hub_08",
+          "zoneId": 85,
+          "zoneName": "Tirisfal Glades",
+          "questGivers": [
+            1496,
+            10665
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 2287.66,
+            "y": 403.372,
+            "z": 34.005
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "tirisfal_glades_hub_07",
+      "position": {
+        "mapId": 0,
+        "x": 2270.842,
+        "y": 278.14,
+        "z": 36.754
+      },
+      "questGivers": [
+        1499,
+        1500,
+        1515,
+        1518,
+        1521,
+        1652
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 16,
+        "avg": 10
+      },
+      "faction": "Horde",
+      "totalQuests": 22,
+      "estimatedMinutes": 110,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:2858:map:0:cluster:11",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 2229.25,
+            "y": 534.2,
+            "z": 41.67
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1547,
+            1548,
+            1549
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "creature:1941:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 2553.9,
+            "y": 509.05,
+            "z": 26.54
+          },
+          "radius": 156.19,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1941
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:2876:map:0:cluster:16",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 1970.72,
+            "y": 495.05,
+            "z": 39.43
+          },
+          "radius": 69.84,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1553,
+            1554
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:2876:map:0:cluster:15",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 1915.02,
+            "y": 574.78,
+            "z": 47.65
+          },
+          "radius": 99.83,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1553,
+            1554
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:2858:map:0:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 2321.31,
+            "y": 777.74,
+            "z": 39.12
+          },
+          "radius": 151.63,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1547,
+            1548,
+            1549
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:2828:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 2742.71,
+            "y": 785.52,
+            "z": 119.13
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1655
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "tirisfal_glades_hub_03",
+          "zoneId": 85,
+          "zoneName": "Tirisfal Glades",
+          "questGivers": [
+            1495
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 2022.33,
+            "y": 74.046,
+            "z": 36.53
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "tirisfal_glades_hub_08",
+      "position": {
+        "mapId": 0,
+        "x": 2306.985,
+        "y": 401.095,
+        "z": 33.845
+      },
+      "questGivers": [
+        1496,
+        10665
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 10,
+        "avg": 8
+      },
+      "faction": "Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:2855:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 2180.27,
+            "y": 666.91,
+            "z": 34.21
+          },
+          "radius": 171.47,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1525,
+            1526
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:3163:map:0:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 2813.15,
+            "y": 728.14,
+            "z": 139.7
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1522
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:3163:map:0:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 2759.02,
+            "y": 861.01,
+            "z": 112.19
+          },
+          "radius": 88.29,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1522
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:3162:map:0:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 2637.76,
+            "y": 1049.97,
+            "z": 103.28
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1520,
+            1523
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:3162:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 2805.35,
+            "y": 949.79,
+            "z": 117.11
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1520,
+            1523
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "tirisfal_glades_hub_07",
+          "zoneId": 85,
+          "zoneName": "Tirisfal Glades",
+          "questGivers": [
+            1499,
+            1500,
+            1515,
+            1518,
+            1521,
+            1652
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 2249.06,
+            "y": 236.785,
+            "z": 41.298
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "tirisfal_glades_hub_09",
+      "position": {
+        "mapId": 0,
+        "x": 2574.63,
+        "y": -48.261,
+        "z": 33.797
+      },
+      "questGivers": [
+        1497
+      ],
+      "levelRange": {
+        "min": 5,
+        "max": 12,
+        "avg": 12
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

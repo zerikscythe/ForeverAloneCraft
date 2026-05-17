@@ -1,0 +1,516 @@
+{
+  "version": 1,
+  "zoneId": 130,
+  "zoneName": "Silverpine Forest",
+  "mapId": 0,
+  "hubCount": 9,
+  "hubs": [
+    {
+      "hubId": "silverpine_forest_hub_01",
+      "position": {
+        "mapId": 0,
+        "x": -416.182,
+        "y": 1496.91,
+        "z": 19.853
+      },
+      "questGivers": [
+        2058
+      ],
+      "levelRange": {
+        "min": 12,
+        "max": 15,
+        "avg": 15
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "silverpine_forest_hub_02",
+      "position": {
+        "mapId": 0,
+        "x": 430.385,
+        "y": 1881.86,
+        "z": 15.417
+      },
+      "questGivers": [
+        7007
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 20,
+        "avg": 20
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "silverpine_forest_hub_03",
+      "position": {
+        "mapId": 0,
+        "x": 473.939,
+        "y": 1533.95,
+        "z": 131.96
+      },
+      "questGivers": [
+        2226
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "silverpine_forest_hub_09",
+          "zoneId": 130,
+          "zoneName": "Silverpine Forest",
+          "questGivers": [
+            2050,
+            4551,
+            4556
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 1567.12,
+            "y": 266.345,
+            "z": -43.019
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "silverpine_forest_hub_04",
+      "position": {
+        "mapId": 0,
+        "x": 523.601,
+        "y": 1620.292,
+        "z": 122.667
+      },
+      "questGivers": [
+        1937,
+        1938,
+        1952,
+        2121,
+        6389
+      ],
+      "levelRange": {
+        "min": 9,
+        "max": 27,
+        "avg": 16
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 28,
+      "estimatedMinutes": 140,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:3253:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 283.57,
+            "y": 1553.07,
+            "z": 129.89
+          },
+          "radius": 146.58,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1778,
+            1797,
+            12432
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:3157:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 794.32,
+            "y": 1612.99,
+            "z": 32.23
+          },
+          "radius": 128.36,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1782
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1769:map:0:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 777.13,
+            "y": 1412.05,
+            "z": 61.19
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1769
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:3253:map:0:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 863.66,
+            "y": 1488.39,
+            "z": 48.35
+          },
+          "radius": 181.01,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1778,
+            1797,
+            12432
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:3156:map:0:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 872.59,
+            "y": 1491.45,
+            "z": 38.65
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1779
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:3156:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 962.23,
+            "y": 1783.82,
+            "z": 13.3
+          },
+          "radius": 157.68,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1779
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "silverpine_forest_hub_03",
+          "zoneId": 130,
+          "zoneName": "Silverpine Forest",
+          "questGivers": [
+            2226
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 473.939,
+            "y": 1533.95,
+            "z": 131.96
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "silverpine_forest_hub_05",
+          "zoneId": 130,
+          "zoneName": "Silverpine Forest",
+          "questGivers": [
+            1950
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 1290.69,
+            "y": 1204.7,
+            "z": 52.805
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "silverpine_forest_hub_08",
+          "zoneId": 130,
+          "zoneName": "Silverpine Forest",
+          "questGivers": [
+            2055
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 1434.48,
+            "y": 404.854,
+            "z": -85.175
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "silverpine_forest_hub_05",
+      "position": {
+        "mapId": 0,
+        "x": 1290.69,
+        "y": 1204.7,
+        "z": 52.805
+      },
+      "questGivers": [
+        1950
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 12,
+        "avg": 11
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:3621:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 1277.38,
+            "y": 1286.28,
+            "z": 52.99
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1971
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:3164:map:0:cluster:8",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 1235.91,
+            "y": 1376.55,
+            "z": 43.61
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1765,
+            1766,
+            1923,
+            12431
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:3164:map:0:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 1434.15,
+            "y": 1015.51,
+            "z": 52.33
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1765,
+            1766,
+            1923,
+            12431
+          ],
+          "targetCount": 4
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "silverpine_forest_hub_04",
+          "zoneId": 130,
+          "zoneName": "Silverpine Forest",
+          "questGivers": [
+            1937,
+            1938,
+            1952,
+            2121,
+            6389
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 499.653,
+            "y": 1626.22,
+            "z": 125.748
+          },
+          "weight": 2
+        }
+      ]
+    },
+    {
+      "hubId": "silverpine_forest_hub_06",
+      "position": {
+        "mapId": 0,
+        "x": 1298.25,
+        "y": 319.007,
+        "z": -58.37
+      },
+      "questGivers": [
+        16287
+      ],
+      "levelRange": {
+        "min": 15,
+        "max": 20,
+        "avg": 18
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "silverpine_forest_hub_07",
+      "position": {
+        "mapId": 0,
+        "x": 1409.68,
+        "y": 1090.26,
+        "z": 53.769
+      },
+      "questGivers": [
+        1978
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 11,
+        "avg": 11
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "silverpine_forest_hub_05",
+          "zoneId": 130,
+          "zoneName": "Silverpine Forest",
+          "questGivers": [
+            1950
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 1290.69,
+            "y": 1204.7,
+            "z": 52.805
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "silverpine_forest_hub_08",
+      "position": {
+        "mapId": 0,
+        "x": 1434.48,
+        "y": 404.854,
+        "z": -85.175
+      },
+      "questGivers": [
+        2055
+      ],
+      "levelRange": {
+        "min": 9,
+        "max": 33,
+        "avg": 26
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "silverpine_forest_hub_04",
+          "zoneId": 130,
+          "zoneName": "Silverpine Forest",
+          "questGivers": [
+            1937,
+            1938,
+            1952,
+            2121,
+            6389
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 499.653,
+            "y": 1626.22,
+            "z": 125.748
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "silverpine_forest_hub_09",
+      "position": {
+        "mapId": 0,
+        "x": 1593.963,
+        "y": 275.958,
+        "z": -47.099
+      },
+      "questGivers": [
+        2050,
+        4551,
+        4556
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 20,
+        "avg": 13
+      },
+      "faction": "Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:3613:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -704.94,
+            "y": 1574.82,
+            "z": 17.19
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2332
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    }
+  ]
+}

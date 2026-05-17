@@ -1,0 +1,662 @@
+{
+  "version": 1,
+  "zoneId": 440,
+  "zoneName": "Tanaris",
+  "mapId": 1,
+  "hubCount": 13,
+  "hubs": [
+    {
+      "hubId": "tanaris_hub_01",
+      "position": {
+        "mapId": 1,
+        "x": -10293.1,
+        "y": -4319.4,
+        "z": -37.254
+      },
+      "questGivers": [
+        15526
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "tanaris_hub_02",
+      "position": {
+        "mapId": 1,
+        "x": -9285.7,
+        "y": -2412.92,
+        "z": 8.998
+      },
+      "questGivers": [
+        5955
+      ],
+      "levelRange": {
+        "min": 40,
+        "max": 50,
+        "avg": 50
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "tanaris_hub_03",
+      "position": {
+        "mapId": 1,
+        "x": -8851.94,
+        "y": -4374.93,
+        "z": 44.646
+      },
+      "questGivers": [
+        7784
+      ],
+      "levelRange": {
+        "min": 43,
+        "max": 48,
+        "avg": 48
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "tanaris_hub_04",
+      "position": {
+        "mapId": 1,
+        "x": -8494.71,
+        "y": -4430.96,
+        "z": -215.567
+      },
+      "questGivers": [
+        19935
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 21,
+      "estimatedMinutes": 105,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "tanaris_hub_05",
+      "position": {
+        "mapId": 1,
+        "x": -8371.93,
+        "y": -4250.21,
+        "z": -204.377
+      },
+      "questGivers": [
+        20130
+      ],
+      "levelRange": {
+        "min": 66,
+        "max": 70,
+        "avg": 69
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "tanaris_hub_06",
+      "position": {
+        "mapId": 1,
+        "x": -8240.33,
+        "y": -4648.71,
+        "z": 0.334
+      },
+      "questGivers": [
+        15192
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 26,
+      "estimatedMinutes": 130,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "tanaris_hub_07",
+      "position": {
+        "mapId": 1,
+        "x": -8161.07,
+        "y": -4774.39,
+        "z": 35.261
+      },
+      "questGivers": [
+        20142
+      ],
+      "levelRange": {
+        "min": 66,
+        "max": 66,
+        "avg": 66
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "tanaris_hub_05",
+          "zoneId": 440,
+          "zoneName": "Tanaris",
+          "questGivers": [
+            20130
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -8371.93,
+            "y": -4250.21,
+            "z": -204.377
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "tanaris_hub_08",
+      "position": {
+        "mapId": 1,
+        "x": -7987.52,
+        "y": -3855.62,
+        "z": 17.816
+      },
+      "questGivers": [
+        7771
+      ],
+      "levelRange": {
+        "min": 43,
+        "max": 51,
+        "avg": 50
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "tanaris_hub_09",
+      "position": {
+        "mapId": 1,
+        "x": -7202.32,
+        "y": -3934.32,
+        "z": 9.228
+      },
+      "questGivers": [
+        28126
+      ],
+      "levelRange": {
+        "min": 66,
+        "max": 68,
+        "avg": 68
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "tanaris_hub_10",
+      "position": {
+        "mapId": 1,
+        "x": -7149.047,
+        "y": -3789.026,
+        "z": 9.81
+      },
+      "questGivers": [
+        5411,
+        5594,
+        7407,
+        7408,
+        7564,
+        7583,
+        7724,
+        7763,
+        7804,
+        7876,
+        8125,
+        8126,
+        11758,
+        14567,
+        16014,
+        16417
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 60,
+        "avg": 52
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 62,
+      "estimatedMinutes": 310,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:8483:map:1:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6942.89,
+            "y": -4359.62,
+            "z": 10.83
+          },
+          "radius": 104.64,
+          "weight": 4,
+          "relatedQuestCount": 4,
+          "targetEntries": [
+            5615,
+            5616,
+            5617,
+            5618,
+            5623,
+            7805
+          ],
+          "targetCount": 6
+        },
+        {
+          "taskAreaId": "item_source:8483:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -7581.14,
+            "y": -4746.19,
+            "z": 9.64
+          },
+          "radius": 35.0,
+          "weight": 4,
+          "relatedQuestCount": 4,
+          "targetEntries": [
+            5615,
+            5616,
+            5617,
+            5618,
+            5623,
+            7805
+          ],
+          "targetCount": 6
+        },
+        {
+          "taskAreaId": "item_source:12207:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -7223.11,
+            "y": -3621.16,
+            "z": 11.23
+          },
+          "radius": 131.58,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1809,
+            2927,
+            2928,
+            2929,
+            2931,
+            5428
+          ],
+          "targetCount": 30
+        },
+        {
+          "taskAreaId": "item_source:8150:map:1:cluster:39",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -7038.69,
+            "y": -4030.47,
+            "z": 10.63
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            92,
+            2258,
+            2359,
+            2551,
+            2592,
+            2611
+          ],
+          "targetCount": 80
+        },
+        {
+          "taskAreaId": "item_source:12207:map:1:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -7042.29,
+            "y": -4088.92,
+            "z": 9.2
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1809,
+            2927,
+            2928,
+            2929,
+            2931,
+            5428
+          ],
+          "targetCount": 30
+        },
+        {
+          "taskAreaId": "item_source:8150:map:1:cluster:38",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -7151.29,
+            "y": -3214.17,
+            "z": 12.88
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            92,
+            2258,
+            2359,
+            2551,
+            2592,
+            2611
+          ],
+          "targetCount": 80
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "tanaris_hub_13",
+          "zoneId": 440,
+          "zoneName": "Tanaris",
+          "questGivers": [
+            11811
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -6729.7,
+            "y": -4720.48,
+            "z": 21.7
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "tanaris_hub_11",
+      "position": {
+        "mapId": 1,
+        "x": -6978.012,
+        "y": -4843.318,
+        "z": 8.024
+      },
+      "questGivers": [
+        7881,
+        7882,
+        9706,
+        10460
+      ],
+      "levelRange": {
+        "min": 40,
+        "max": 58,
+        "avg": 52
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:7855:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -7889.26,
+            "y": -5116.45,
+            "z": 5.76
+          },
+          "radius": 131.83,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7855
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7858:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -8039.24,
+            "y": -5213.85,
+            "z": 3.66
+          },
+          "radius": 77.9,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7858
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7856:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -7964.73,
+            "y": -5470.72,
+            "z": 6.89
+          },
+          "radius": 55.22,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7856
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7857:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -8068.03,
+            "y": -5334.33,
+            "z": 6.82
+          },
+          "radius": 118.06,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7857
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "tanaris_hub_12",
+      "position": {
+        "mapId": 1,
+        "x": -6901.31,
+        "y": -4826.16,
+        "z": 8.607
+      },
+      "questGivers": [
+        8579,
+        15165
+      ],
+      "levelRange": {
+        "min": 40,
+        "max": 53,
+        "avg": 48
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:20519:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -7889.26,
+            "y": -5116.45,
+            "z": 5.76
+          },
+          "radius": 131.83,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7855,
+            7856,
+            7857,
+            7858,
+            7883,
+            8203
+          ],
+          "targetCount": 7
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "tanaris_hub_13",
+      "position": {
+        "mapId": 1,
+        "x": -6729.7,
+        "y": -4720.48,
+        "z": 21.7
+      },
+      "questGivers": [
+        11811
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:12361:map:1:cluster:12",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -7548.53,
+            "y": -4753.85,
+            "z": 9.91
+          },
+          "radius": 49.54,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1785,
+            1883,
+            2640,
+            2646,
+            2647,
+            4475
+          ],
+          "targetCount": 87
+        },
+        {
+          "taskAreaId": "item_source:12361:map:1:cluster:11",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -7624.65,
+            "y": -4311.91,
+            "z": 9.9
+          },
+          "radius": 161.55,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1785,
+            1883,
+            2640,
+            2646,
+            2647,
+            4475
+          ],
+          "targetCount": 87
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "tanaris_hub_06",
+          "zoneId": 440,
+          "zoneName": "Tanaris",
+          "questGivers": [
+            15192
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -8240.33,
+            "y": -4648.71,
+            "z": 0.334
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "tanaris_hub_10",
+          "zoneId": 440,
+          "zoneName": "Tanaris",
+          "questGivers": [
+            5411,
+            5594,
+            7407,
+            7408,
+            7564,
+            7583,
+            7724,
+            7763,
+            7804,
+            7876,
+            8125,
+            8126,
+            11758,
+            14567,
+            16014,
+            16417
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -7200.43,
+            "y": -3769.82,
+            "z": 8.759
+          },
+          "weight": 1
+        }
+      ]
+    }
+  ]
+}

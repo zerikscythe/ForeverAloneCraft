@@ -1,0 +1,1063 @@
+{
+  "version": 1,
+  "zoneId": 141,
+  "zoneName": "Teldrassil",
+  "mapId": 1,
+  "hubCount": 15,
+  "hubs": [
+    {
+      "hubId": "teldrassil_hub_01",
+      "position": {
+        "mapId": 1,
+        "x": 9506.92,
+        "y": 713.766,
+        "z": 1255.99
+      },
+      "questGivers": [
+        2080
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 12,
+        "avg": 8
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:5168:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 9308.91,
+            "y": 1147.11,
+            "z": 1255.03
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            2022,
+            2025,
+            2027,
+            2029,
+            2030,
+            2166
+          ],
+          "targetCount": 6
+        },
+        {
+          "taskAreaId": "item_source:5168:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 9384.88,
+            "y": 1263.82,
+            "z": 1250.84
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            2022,
+            2025,
+            2027,
+            2029,
+            2030,
+            2166
+          ],
+          "targetCount": 6
+        },
+        {
+          "taskAreaId": "item_source:8136:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 9281.99,
+            "y": 1077.28,
+            "z": 1253.43
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2166
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "teldrassil_hub_06",
+          "zoneId": 141,
+          "zoneName": "Teldrassil",
+          "questGivers": [
+            3517
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 10085.6,
+            "y": 2534.25,
+            "z": 1317.64
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "teldrassil_hub_03",
+      "position": {
+        "mapId": 1,
+        "x": 9740.98,
+        "y": 1526.17,
+        "z": 1280.4
+      },
+      "questGivers": [
+        7317
+      ],
+      "levelRange": {
+        "min": 3,
+        "max": 10,
+        "avg": 9
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:8363:map:1:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 9818.24,
+            "y": 1549.91,
+            "z": 1284.65
+          },
+          "radius": 139.2,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2009
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:8363:map:1:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 9699.66,
+            "y": 1255.69,
+            "z": 1286.43
+          },
+          "radius": 50.4,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2009
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "teldrassil_hub_02",
+      "position": {
+        "mapId": 1,
+        "x": 9823.507,
+        "y": 956.966,
+        "z": 1309.559
+      },
+      "questGivers": [
+        2078,
+        2081,
+        2083,
+        2151,
+        3515,
+        3567,
+        3598,
+        3599,
+        3600,
+        3601,
+        3602,
+        6286
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 16,
+        "avg": 8
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 24,
+      "estimatedMinutes": 120,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:12429:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 9675.8,
+            "y": 900.02,
+            "z": 1285.44
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            12429
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:5465:map:1:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 9647.86,
+            "y": 1102.43,
+            "z": 1276.1
+          },
+          "radius": 144.84,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30,
+            43,
+            471,
+            1184,
+            1185,
+            1195
+          ],
+          "targetCount": 18
+        },
+        {
+          "taskAreaId": "item_source:5465:map:1:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 9815.6,
+            "y": 1186.72,
+            "z": 1285.27
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30,
+            43,
+            471,
+            1184,
+            1185,
+            1195
+          ],
+          "targetCount": 18
+        },
+        {
+          "taskAreaId": "item_source:5221:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 10121.67,
+            "y": 1173.93,
+            "z": 1324.42
+          },
+          "radius": 84.38,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2038
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:2152:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 10022.21,
+            "y": 1445.67,
+            "z": 1283.98
+          },
+          "radius": 137.23,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2152
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7235:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 10040.1,
+            "y": 306.14,
+            "z": 1324.36
+          },
+          "radius": 128.8,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7235
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "teldrassil_hub_04",
+          "zoneId": 141,
+          "zoneName": "Teldrassil",
+          "questGivers": [
+            2107
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 9845.15,
+            "y": 440.93,
+            "z": 1317.27
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "teldrassil_hub_04",
+      "position": {
+        "mapId": 1,
+        "x": 9845.15,
+        "y": 440.93,
+        "z": 1317.27
+      },
+      "questGivers": [
+        2107
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 6,
+        "avg": 6
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "teldrassil_hub_02",
+          "zoneId": 141,
+          "zoneName": "Teldrassil",
+          "questGivers": [
+            2078,
+            2081,
+            2083,
+            2151,
+            3515,
+            3567,
+            3598,
+            3599,
+            3600,
+            3601,
+            3602,
+            6286
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 9736.91,
+            "y": 956.063,
+            "z": 1294.19
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "teldrassil_hub_05",
+      "position": {
+        "mapId": 1,
+        "x": 9920.41,
+        "y": 735.951,
+        "z": 1313.98
+      },
+      "questGivers": [
+        2150
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 5,
+        "avg": 5
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:3412:map:1:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 9922.82,
+            "y": 745.79,
+            "z": 1314.1
+          },
+          "radius": 148.29,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1998,
+            1999,
+            2000,
+            2001
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:3409:map:1:cluster:11",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 9797.05,
+            "y": 653.09,
+            "z": 1298.45
+          },
+          "radius": 95.04,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2033,
+            2034,
+            2042,
+            2043,
+            14430
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:3411:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 10045.28,
+            "y": 548.85,
+            "z": 1324.46
+          },
+          "radius": 209.36,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1995,
+            1996,
+            1997
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:3411:map:1:cluster:7",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 9648.21,
+            "y": 550.35,
+            "z": 1314.33
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1995,
+            1996,
+            1997
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:3409:map:1:cluster:7",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 10007.94,
+            "y": 412.02,
+            "z": 1314.87
+          },
+          "radius": 156.63,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2033,
+            2034,
+            2042,
+            2043,
+            14430
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:3412:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 9933.9,
+            "y": 1176.1,
+            "z": 1312.83
+          },
+          "radius": 122.84,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1998,
+            1999,
+            2000,
+            2001
+          ],
+          "targetCount": 4
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "teldrassil_hub_06",
+      "position": {
+        "mapId": 1,
+        "x": 10085.6,
+        "y": 2534.25,
+        "z": 1317.64
+      },
+      "questGivers": [
+        3517
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 9,
+        "avg": 9
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:5170:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 10381.7,
+            "y": 1652.35,
+            "z": 1291.75
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2027,
+            2029,
+            2030
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:5170:map:1:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 10929.8,
+            "y": 1522.2,
+            "z": 1278.36
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2027,
+            2029,
+            2030
+          ],
+          "targetCount": 3
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "teldrassil_hub_01",
+          "zoneId": 141,
+          "zoneName": "Teldrassil",
+          "questGivers": [
+            2080
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 9506.92,
+            "y": 713.766,
+            "z": 1255.99
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "teldrassil_hub_07",
+      "position": {
+        "mapId": 1,
+        "x": 10091.4,
+        "y": 1664.88,
+        "z": 1325.03
+      },
+      "questGivers": [
+        2155
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 7,
+        "avg": 7
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "teldrassil_hub_08",
+      "position": {
+        "mapId": 1,
+        "x": 10205.0,
+        "y": 1902.57,
+        "z": 1333.15
+      },
+      "questGivers": [
+        15624
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "teldrassil_hub_09",
+      "position": {
+        "mapId": 1,
+        "x": 10214.3,
+        "y": 700.553,
+        "z": 1360.68
+      },
+      "questGivers": [
+        6780
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 5,
+        "avg": 5
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "teldrassil_hub_10",
+      "position": {
+        "mapId": 1,
+        "x": 10305.45,
+        "y": 850.029,
+        "z": 1331.195
+      },
+      "questGivers": [
+        1992,
+        2079
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 3,
+        "avg": 2
+      },
+      "faction": "Alliance",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:2031:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 10305.3,
+            "y": 919.7,
+            "z": 1333.96
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2031
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1984:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 10266.6,
+            "y": 733.75,
+            "z": 1343.49
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1984
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:3297:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 10304.49,
+            "y": 998.01,
+            "z": 1340.06
+          },
+          "radius": 102.16,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1988,
+            1989
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:3297:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 10284.6,
+            "y": 684.56,
+            "z": 1336.81
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1988,
+            1989
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "creature:1985:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 10508.5,
+            "y": 718.23,
+            "z": 1316.99
+          },
+          "radius": 71.36,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1985
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1984:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 10400.23,
+            "y": 621.56,
+            "z": 1326.08
+          },
+          "radius": 68.1,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1984
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "teldrassil_hub_11",
+      "position": {
+        "mapId": 1,
+        "x": 10398.5,
+        "y": 738.635,
+        "z": 1321.015
+      },
+      "questGivers": [
+        2077,
+        8583
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 4,
+        "avg": 3
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:10639:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 10284.6,
+            "y": 684.56,
+            "z": 1336.81
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1988,
+            1989
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:10639:map:1:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 10426.1,
+            "y": 546.92,
+            "z": 1333.47
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1988,
+            1989
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "teldrassil_hub_10",
+          "zoneId": 141,
+          "zoneName": "Teldrassil",
+          "questGivers": [
+            1992,
+            2079
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 10296.9,
+            "y": 870.227,
+            "z": 1335.91
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "teldrassil_hub_14",
+          "zoneId": 141,
+          "zoneName": "Teldrassil",
+          "questGivers": [
+            8584
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 10711.6,
+            "y": 1034.91,
+            "z": 1347.34
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "teldrassil_hub_12",
+      "position": {
+        "mapId": 1,
+        "x": 10456.875,
+        "y": 826.991,
+        "z": 1361.175
+      },
+      "questGivers": [
+        2082,
+        3514,
+        3595,
+        3596
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 5,
+        "avg": 5
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 9,
+      "estimatedMinutes": 45,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "teldrassil_hub_02",
+          "zoneId": 141,
+          "zoneName": "Teldrassil",
+          "questGivers": [
+            2078,
+            2081,
+            2083,
+            2151,
+            3515,
+            3567,
+            3598,
+            3599,
+            3600,
+            3601,
+            3602,
+            6286
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 9736.91,
+            "y": 956.063,
+            "z": 1294.19
+          },
+          "weight": 2
+        }
+      ]
+    },
+    {
+      "hubId": "teldrassil_hub_13",
+      "position": {
+        "mapId": 1,
+        "x": 10665.1,
+        "y": 1863.57,
+        "z": 1324.51
+      },
+      "questGivers": [
+        3519
+      ],
+      "levelRange": {
+        "min": 6,
+        "max": 11,
+        "avg": 11
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:5204:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 10637.9,
+            "y": 2058.98,
+            "z": 1332.66
+          },
+          "radius": 64.23,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2015,
+            2017,
+            2018,
+            2019,
+            2020,
+            2021
+          ],
+          "targetCount": 7
+        },
+        {
+          "taskAreaId": "item_source:5204:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 10863.97,
+            "y": 2051.71,
+            "z": 1325.3
+          },
+          "radius": 172.61,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2015,
+            2017,
+            2018,
+            2019,
+            2020,
+            2021
+          ],
+          "targetCount": 7
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "teldrassil_hub_14",
+      "position": {
+        "mapId": 1,
+        "x": 10711.6,
+        "y": 1034.91,
+        "z": 1347.34
+      },
+      "questGivers": [
+        8584
+      ],
+      "levelRange": {
+        "min": 2,
+        "max": 4,
+        "avg": 4
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "teldrassil_hub_11",
+          "zoneId": 141,
+          "zoneName": "Teldrassil",
+          "questGivers": [
+            2077,
+            8583
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 10389.8,
+            "y": 763.477,
+            "z": 1320.33
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "teldrassil_hub_15",
+      "position": {
+        "mapId": 1,
+        "x": 10758.4,
+        "y": 2208.9,
+        "z": 1331.64
+      },
+      "questGivers": [
+        3568
+      ],
+      "levelRange": {
+        "min": 7,
+        "max": 12,
+        "avg": 12
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

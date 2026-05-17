@@ -125,6 +125,52 @@ living_world::service::WorldBotTaxiNetwork& GetWorldBotTaxiNetwork()
     return network;
 }
 
+struct SessionCompletionMetadata
+{
+    std::string   sourceKind;
+    std::string   sourceKey;
+    std::string   taskFamily;
+    std::uint32_t targetZoneId = 0;
+};
+
+SessionCompletionMetadata BuildSessionCompletionMetadata(
+    living_world::service::AmbientSession const& session,
+    std::size_t currentStep)
+{
+    SessionCompletionMetadata metadata;
+    metadata.sourceKind = session.sourceKind;
+    metadata.sourceKey = session.sourceKey.empty() ? session.activityKey : session.sourceKey;
+
+    if (session.steps.empty() || session.tasks.empty())
+        return metadata;
+
+    std::size_t stepIndex = session.steps.size() - 1;
+    if (currentStep < session.steps.size())
+        stepIndex = currentStep;
+
+    while (true)
+    {
+        living_world::service::AmbientStep const& step = session.steps[stepIndex];
+        if (step.taskIndex >= 0)
+        {
+            std::size_t const taskIndex = static_cast<std::size_t>(step.taskIndex);
+            if (taskIndex < session.tasks.size())
+            {
+                auto const& task = session.tasks[taskIndex];
+                metadata.taskFamily = task.taskFamily;
+                metadata.targetZoneId = task.targetZoneId;
+                break;
+            }
+        }
+
+        if (stepIndex == 0)
+            break;
+        --stepIndex;
+    }
+
+    return metadata;
+}
+
 std::vector<std::uint32_t> ParseDebugIdentityIdList(std::string const& value);
 
 struct SimpleJsonValue
@@ -3200,6 +3246,8 @@ private:
                 std::uint32_t const lastSeenZoneId = runtime.session.steps.empty()
                     ? runtime.identity.lastSeenZoneId
                     : ResolveStepZoneId(runtime.session, runtime.session.steps.size() - 1);
+                SessionCompletionMetadata const completionMetadata =
+                    BuildSessionCompletionMetadata(runtime.session, runtime.progress.currentStep);
 
                 living_world::integration::BotActivityLog::RecordAbstract(
                     runtime.identity.name,
@@ -3215,7 +3263,11 @@ private:
                 living_world::integration::SqlBotIdentityRepository().CompleteWorldSession(
                     runtime.identity.id,
                     lastSeenZoneId,
-                    runtime.worldOnlineMs);
+                    runtime.worldOnlineMs,
+                    completionMetadata.sourceKind,
+                    completionMetadata.sourceKey,
+                    completionMetadata.taskFamily,
+                    completionMetadata.targetZoneId);
                 itr = _abstractWorldBots.erase(itr);
                 continue;
             }
@@ -3312,6 +3364,12 @@ private:
             std::string const composeHomeBindPointKey = _debugForcedSessionZoneId != 0
                 ? std::string{}
                 : identity.homeBindPointKey;
+            living_world::service::AmbientSessionResumeHint const resumeHint{
+                identity.lastSessionSourceKind,
+                identity.lastSessionSourceKey,
+                identity.lastTaskFamily,
+                identity.lastTaskTargetZoneId
+            };
 
             std::uint32_t const composeAttempts = std::max<std::uint32_t>(1u, _debugForcedSessionComposeAttempts);
             for (std::uint32_t attempt = 0; attempt < composeAttempts; ++attempt)
@@ -3326,7 +3384,8 @@ private:
                     composeHomeZoneId,
                     composeHomeAnchorPointKey,
                     composeHomeBindPointKey,
-                    &composeExploredZones);
+                    &composeExploredZones,
+                    &resumeHint);
                 if (!candidate)
                     continue;
 

@@ -1,0 +1,299 @@
+{
+  "version": 1,
+  "zoneId": 493,
+  "zoneName": "Moonglade",
+  "mapId": 1,
+  "hubCount": 8,
+  "hubs": [
+    {
+      "hubId": "moonglade_hub_01",
+      "position": {
+        "mapId": 1,
+        "x": 7028.175,
+        "y": -2121.005,
+        "z": 586.987
+      },
+      "questGivers": [
+        11555,
+        11557
+      ],
+      "levelRange": {
+        "min": 45,
+        "max": 60,
+        "avg": 58
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:14047:map:1:cluster:70",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 7202.31,
+            "y": -2180.13,
+            "z": 566.1
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            466,
+            603,
+            853,
+            866,
+            868,
+            1410
+          ],
+          "targetCount": 1181
+        },
+        {
+          "taskAreaId": "item_source:14047:map:1:cluster:58",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 7331.54,
+            "y": -1577.61,
+            "z": 169.5
+          },
+          "radius": 142.12,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            466,
+            603,
+            853,
+            866,
+            868,
+            1410
+          ],
+          "targetCount": 1181
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "moonglade_hub_02",
+      "position": {
+        "mapId": 1,
+        "x": 7459.48,
+        "y": -3123.03,
+        "z": 438.398
+      },
+      "questGivers": [
+        22834
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:22916:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 7459.59,
+            "y": -3122.03,
+            "z": 438.37
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            22916
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "moonglade_hub_03",
+          "zoneId": 493,
+          "zoneName": "Moonglade",
+          "questGivers": [
+            22837
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 7517.58,
+            "y": -3054.21,
+            "z": 444.818
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "moonglade_hub_03",
+      "position": {
+        "mapId": 1,
+        "x": 7517.58,
+        "y": -3054.21,
+        "z": 444.818
+      },
+      "questGivers": [
+        22837
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "moonglade_hub_04",
+      "position": {
+        "mapId": 1,
+        "x": 7797.39,
+        "y": -2574.32,
+        "z": 488.562
+      },
+      "questGivers": [
+        11801
+      ],
+      "levelRange": {
+        "min": 54,
+        "max": 60,
+        "avg": 58
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "moonglade_hub_05",
+      "position": {
+        "mapId": 1,
+        "x": 7861.265,
+        "y": -2220.265,
+        "z": 470.024
+      },
+      "questGivers": [
+        11799,
+        11832
+      ],
+      "levelRange": {
+        "min": 16,
+        "max": 80,
+        "avg": 67
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "moonglade_hub_08",
+          "zoneId": 493,
+          "zoneName": "Moonglade",
+          "questGivers": [
+            11802
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 8020.0,
+            "y": -2678.74,
+            "z": 524.532
+          },
+          "weight": 2
+        }
+      ]
+    },
+    {
+      "hubId": "moonglade_hub_06",
+      "position": {
+        "mapId": 1,
+        "x": 7867.13,
+        "y": -2593.73,
+        "z": 486.92
+      },
+      "questGivers": [
+        12042
+      ],
+      "levelRange": {
+        "min": 50,
+        "max": 52,
+        "avg": 52
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "moonglade_hub_07",
+      "position": {
+        "mapId": 1,
+        "x": 7943.56,
+        "y": -2417.24,
+        "z": 494.155
+      },
+      "questGivers": [
+        11939
+      ],
+      "levelRange": {
+        "min": 54,
+        "max": 57,
+        "avg": 57
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "moonglade_hub_08",
+      "position": {
+        "mapId": 1,
+        "x": 8020.0,
+        "y": -2678.74,
+        "z": 524.532
+      },
+      "questGivers": [
+        11802
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 16,
+        "avg": 13
+      },
+      "faction": "Horde",
+      "totalQuests": 12,
+      "estimatedMinutes": 60,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "moonglade_hub_05",
+          "zoneId": 493,
+          "zoneName": "Moonglade",
+          "questGivers": [
+            11799,
+            11832
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 7848.3,
+            "y": -2216.35,
+            "z": 470.888
+          },
+          "weight": 2
+        }
+      ]
+    }
+  ]
+}

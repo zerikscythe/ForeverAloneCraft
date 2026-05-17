@@ -1,0 +1,180 @@
+{
+  "version": 1,
+  "zoneId": 2817,
+  "zoneName": "Crystalsong Forest",
+  "mapId": 571,
+  "hubCount": 6,
+  "hubs": [
+    {
+      "hubId": "crystalsong_forest_hub_01",
+      "position": {
+        "mapId": 571,
+        "x": 5689.76,
+        "y": 671.083,
+        "z": 646.255
+      },
+      "questGivers": [
+        37776
+      ],
+      "levelRange": {
+        "min": 78,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "crystalsong_forest_hub_02",
+      "position": {
+        "mapId": 571,
+        "x": 5714.02,
+        "y": 543.525,
+        "z": 652.941
+      },
+      "questGivers": [
+        31080
+      ],
+      "levelRange": {
+        "min": 75,
+        "max": 77,
+        "avg": 77
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "crystalsong_forest_hub_03",
+      "position": {
+        "mapId": 571,
+        "x": 5729.33,
+        "y": 750.382,
+        "z": 641.834
+      },
+      "questGivers": [
+        36506
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 73,
+        "avg": 73
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "crystalsong_forest_hub_04",
+      "position": {
+        "mapId": 571,
+        "x": 5783.645,
+        "y": 824.276,
+        "z": 763.942
+      },
+      "questGivers": [
+        16128,
+        19481
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 82,
+        "avg": 74
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "crystalsong_forest_hub_02",
+          "zoneId": 2817,
+          "zoneName": "Crystalsong Forest",
+          "questGivers": [
+            31080
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5714.02,
+            "y": 543.525,
+            "z": 652.941
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "crystalsong_forest_hub_05",
+      "position": {
+        "mapId": 571,
+        "x": 5888.456,
+        "y": 693.392,
+        "z": 637.681
+      },
+      "questGivers": [
+        28699,
+        28701,
+        28703,
+        32516,
+        37780
+      ],
+      "levelRange": {
+        "min": 65,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:28701:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5871.05,
+            "y": 714.89,
+            "z": 643.18
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28701
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "crystalsong_forest_hub_06",
+      "position": {
+        "mapId": 571,
+        "x": 5926.92,
+        "y": 548.957,
+        "z": 640.573
+      },
+      "questGivers": [
+        35471
+      ],
+      "levelRange": {
+        "min": 71,
+        "max": 73,
+        "avg": 73
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

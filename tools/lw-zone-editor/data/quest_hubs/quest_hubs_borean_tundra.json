@@ -1,0 +1,3973 @@
+{
+  "version": 1,
+  "zoneId": 3537,
+  "zoneName": "Borean Tundra",
+  "mapId": 571,
+  "hubCount": 48,
+  "hubs": [
+    {
+      "hubId": "borean_tundra_hub_01",
+      "position": {
+        "mapId": 571,
+        "x": 1802.59,
+        "y": 6057.35,
+        "z": 3.21
+      },
+      "questGivers": [
+        25450
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:26452:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1494.11,
+            "y": 5583.75,
+            "z": -64.58
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26452
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:35774:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 1490.38,
+            "y": 5403.6,
+            "z": 38.23
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26451
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "borean_tundra_hub_02",
+      "position": {
+        "mapId": 571,
+        "x": 1905.5,
+        "y": 6022.63,
+        "z": 7.685
+      },
+      "questGivers": [
+        25636
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "borean_tundra_hub_03",
+      "position": {
+        "mapId": 571,
+        "x": 1996.48,
+        "y": 5853.81,
+        "z": 36.03
+      },
+      "questGivers": [
+        25435
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:25522:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1943.62,
+            "y": 5888.74,
+            "z": 12.07
+          },
+          "radius": 144.55,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25522
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26449:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1890.87,
+            "y": 5895.02,
+            "z": -5.63
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26449
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25522:map:571:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1911.64,
+            "y": 5740.96,
+            "z": 6.91
+          },
+          "radius": 114.88,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25522
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25521:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 1880.69,
+            "y": 5746.55,
+            "z": 3.4
+          },
+          "radius": 144.65,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25521
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_01",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25450
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 1802.59,
+            "y": 6057.35,
+            "z": 3.21
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_04",
+      "position": {
+        "mapId": 571,
+        "x": 2123.306,
+        "y": 5281.321,
+        "z": 25.2
+      },
+      "questGivers": [
+        25250,
+        25285,
+        25301,
+        25395,
+        26989,
+        26997,
+        27001
+      ],
+      "levelRange": {
+        "min": 65,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:35122:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 2458.65,
+            "y": 5387.68,
+            "z": 26.65
+          },
+          "radius": 42.16,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            25651
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:35122:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 2530.15,
+            "y": 5451.84,
+            "z": 32.31
+          },
+          "radius": 132.58,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            25651
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:43013:map:571:cluster:62",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 2354.65,
+            "y": 5019.16,
+            "z": -20.21
+          },
+          "radius": 70.9,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18601,
+            18607,
+            18621,
+            23690,
+            23691,
+            23740
+          ],
+          "targetCount": 113
+        },
+        {
+          "taskAreaId": "item_source:43013:map:571:cluster:78",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 2178.14,
+            "y": 5726.43,
+            "z": 48.81
+          },
+          "radius": 186.14,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18601,
+            18607,
+            18621,
+            23690,
+            23691,
+            23740
+          ],
+          "targetCount": 113
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_03",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25435
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 1996.48,
+            "y": 5853.81,
+            "z": 36.03
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "borean_tundra_hub_05",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25816,
+            26155
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 2223.27,
+            "y": 5321.96,
+            "z": 10.658
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "borean_tundra_hub_06",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25235,
+            25245,
+            25249,
+            25251,
+            25299,
+            25302,
+            25307,
+            25737,
+            25826
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 2238.34,
+            "y": 5239.22,
+            "z": 21.588
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "borean_tundra_hub_22",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            26169
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3124.74,
+            "y": 4893.01,
+            "z": 1.928
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_05",
+      "position": {
+        "mapId": 571,
+        "x": 2224.675,
+        "y": 5310.125,
+        "z": 10.661
+      },
+      "questGivers": [
+        25816,
+        26155
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:25582:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2185.27,
+            "y": 5398.95,
+            "z": 30.6
+          },
+          "radius": 68.6,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25582
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25227:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2253.67,
+            "y": 5501.86,
+            "z": 5.14
+          },
+          "radius": 87.36,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25227
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25227:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2420.2,
+            "y": 5442.81,
+            "z": 15.71
+          },
+          "radius": 137.78,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25227
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26248:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2463.62,
+            "y": 5406.59,
+            "z": 20.81
+          },
+          "radius": 88.12,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26248
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26249:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2129.11,
+            "y": 5659.44,
+            "z": 30.2
+          },
+          "radius": 60.4,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26249
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_06",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25235,
+            25245,
+            25249,
+            25251,
+            25299,
+            25302,
+            25307,
+            25737,
+            25826
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 2238.34,
+            "y": 5239.22,
+            "z": 21.588
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "borean_tundra_hub_08",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            26083,
+            26084,
+            26085
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 2476.09,
+            "y": 5216.26,
+            "z": 31.509
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_07",
+      "position": {
+        "mapId": 571,
+        "x": 2248.83,
+        "y": 5400.18,
+        "z": 1.874
+      },
+      "questGivers": [
+        25825
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "borean_tundra_hub_06",
+      "position": {
+        "mapId": 571,
+        "x": 2285.282,
+        "y": 5212.492,
+        "z": 14.818
+      },
+      "questGivers": [
+        25235,
+        25245,
+        25249,
+        25251,
+        25299,
+        25302,
+        25307,
+        25737,
+        25826
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 10,
+      "estimatedMinutes": 50,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:25248:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2317.16,
+            "y": 5194.13,
+            "z": 12.58
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25248
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25827:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2257.9,
+            "y": 5161.69,
+            "z": 1.38
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25827
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25828:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2136.71,
+            "y": 5301.04,
+            "z": 15.5
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25828
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_04",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25250,
+            25285,
+            25301,
+            25395,
+            26989,
+            26997,
+            27001
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 2105.96,
+            "y": 5303.95,
+            "z": 34.091
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "borean_tundra_hub_08",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            26083,
+            26084,
+            26085
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 2476.09,
+            "y": 5216.26,
+            "z": 31.509
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "borean_tundra_hub_10",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25385
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 2767.97,
+            "y": 5339.93,
+            "z": 30.027
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "borean_tundra_hub_31",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            24795,
+            25262,
+            25291
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3571.12,
+            "y": 5957.59,
+            "z": 136.303
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "borean_tundra_hub_38",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25477,
+            25590,
+            25702,
+            25747,
+            25780
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4124.69,
+            "y": 5281.65,
+            "z": 25.14
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_08",
+      "position": {
+        "mapId": 571,
+        "x": 2481.493,
+        "y": 5214.13,
+        "z": 30.813
+      },
+      "questGivers": [
+        26083,
+        26084,
+        26085
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:25650:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2560.59,
+            "y": 5350.82,
+            "z": 29.34
+          },
+          "radius": 161.86,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25650
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26161:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2568.87,
+            "y": 5364.39,
+            "z": 33.58
+          },
+          "radius": 132.9,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26161
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25650:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2661.35,
+            "y": 5395.71,
+            "z": 31.81
+          },
+          "radius": 58.06,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25650
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_06",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25235,
+            25245,
+            25249,
+            25251,
+            25299,
+            25302,
+            25307,
+            25737,
+            25826
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 2238.34,
+            "y": 5239.22,
+            "z": 21.588
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_10",
+      "position": {
+        "mapId": 571,
+        "x": 2767.97,
+        "y": 5339.93,
+        "z": 30.027
+      },
+      "questGivers": [
+        25385
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_06",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25235,
+            25245,
+            25249,
+            25251,
+            25299,
+            25302,
+            25307,
+            25737,
+            25826
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 2238.34,
+            "y": 5239.22,
+            "z": 21.588
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_09",
+      "position": {
+        "mapId": 571,
+        "x": 2773.402,
+        "y": 6086.4,
+        "z": 77.659
+      },
+      "questGivers": [
+        25273,
+        25279,
+        25280,
+        25327,
+        25379,
+        25394
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 11,
+      "estimatedMinutes": 55,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:25403:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2716.02,
+            "y": 6020.79,
+            "z": 31.29
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25403
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25402:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2657.13,
+            "y": 6171.35,
+            "z": 38.95
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25402
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25405:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2962.16,
+            "y": 6187.47,
+            "z": 62.1
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25405
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25404:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2877.96,
+            "y": 6276.01,
+            "z": 60.94
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25404
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_13",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25237,
+            25247,
+            25256,
+            25272,
+            25273,
+            25289,
+            25978,
+            26969,
+            26972,
+            26982
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 2794.36,
+            "y": 6165.11,
+            "z": 85.156
+          },
+          "weight": 2
+        },
+        {
+          "hubId": "borean_tundra_hub_18",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25273,
+            25328
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 2896.08,
+            "y": 6263.66,
+            "z": 61.579
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "borean_tundra_hub_19",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25440
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 2904.37,
+            "y": 5497.64,
+            "z": 53.685
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_11",
+      "position": {
+        "mapId": 571,
+        "x": 2779.76,
+        "y": 5238.8,
+        "z": 38.43
+      },
+      "questGivers": [
+        25838
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 72,
+        "avg": 72
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:35222:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 2683.4,
+            "y": 5157.09,
+            "z": 22.69
+          },
+          "radius": 78.22,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25839,
+            25843
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "creature:25800:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2355.49,
+            "y": 4980.15,
+            "z": -33.28
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25800
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_23",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25809,
+            25810,
+            25811,
+            25812
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3194.39,
+            "y": 5282.06,
+            "z": 48.191
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_12",
+      "position": {
+        "mapId": 571,
+        "x": 2791.78,
+        "y": 4696.37,
+        "z": 1.962
+      },
+      "questGivers": [
+        26218
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 72,
+        "avg": 72
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:26266:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2711.48,
+            "y": 4684.87,
+            "z": 2.58
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26266
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "borean_tundra_hub_14",
+      "position": {
+        "mapId": 571,
+        "x": 2815.203,
+        "y": 6712.79,
+        "z": 10.301
+      },
+      "questGivers": [
+        25329,
+        25475,
+        25476
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 10,
+      "estimatedMinutes": 50,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:25512:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2877.12,
+            "y": 6853.79,
+            "z": 0.62
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25512
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:34814:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 2961.81,
+            "y": 6764.15,
+            "z": 8.65
+          },
+          "radius": 214.86,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25479,
+            25496
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:34813:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3013.09,
+            "y": 6764.47,
+            "z": 6.57
+          },
+          "radius": 168.48,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25479
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25511:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3016.04,
+            "y": 6780.37,
+            "z": 3.96
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25511
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25510:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3042.71,
+            "y": 6739.14,
+            "z": 4.29
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25510
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25513:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2525.72,
+            "y": 6835.78,
+            "z": 0.89
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25513
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_03",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25435
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 1996.48,
+            "y": 5853.81,
+            "z": 36.03
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_13",
+      "position": {
+        "mapId": 571,
+        "x": 2825.248,
+        "y": 6169.114,
+        "z": 105.113
+      },
+      "questGivers": [
+        25237,
+        25247,
+        25256,
+        25272,
+        25273,
+        25289,
+        25978,
+        26969,
+        26972,
+        26982
+      ],
+      "levelRange": {
+        "min": 65,
+        "max": 74,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 16,
+      "estimatedMinutes": 80,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:43013:map:571:cluster:81",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3218.67,
+            "y": 6163.61,
+            "z": 70.73
+          },
+          "radius": 86.41,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18601,
+            18607,
+            18621,
+            23690,
+            23691,
+            23740
+          ],
+          "targetCount": 113
+        },
+        {
+          "taskAreaId": "item_source:43013:map:571:cluster:83",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 2975.68,
+            "y": 6577.31,
+            "z": 60.63
+          },
+          "radius": 62.95,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18601,
+            18607,
+            18621,
+            23690,
+            23691,
+            23740
+          ],
+          "targetCount": 113
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_09",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25273,
+            25279,
+            25280,
+            25327,
+            25379,
+            25394
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 2738.55,
+            "y": 6141.26,
+            "z": 77.542
+          },
+          "weight": 4
+        },
+        {
+          "hubId": "borean_tundra_hub_14",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25329,
+            25475,
+            25476
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 2811.91,
+            "y": 6706.44,
+            "z": 10.329
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "borean_tundra_hub_16",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25437,
+            25438,
+            25607
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 2874.85,
+            "y": 6375.61,
+            "z": 95.077
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "borean_tundra_hub_25",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            24702,
+            24703,
+            24706,
+            24709,
+            24730,
+            25602,
+            25849,
+            25982,
+            25983,
+            26104,
+            26158
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3419.1,
+            "y": 4117.67,
+            "z": 17.38
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "borean_tundra_hub_31",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            24795,
+            25262,
+            25291
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3571.12,
+            "y": 5957.59,
+            "z": 136.303
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "borean_tundra_hub_46",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25326,
+            25339,
+            25374,
+            25736
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4491.25,
+            "y": 5710.38,
+            "z": 81.482
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_15",
+      "position": {
+        "mapId": 571,
+        "x": 2873.93,
+        "y": 5566.22,
+        "z": 56.436
+      },
+      "questGivers": [
+        25380,
+        25381
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:34980:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 2514.29,
+            "y": 5916.82,
+            "z": -25.9
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            25789,
+            25790
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:34974:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 2969.03,
+            "y": 5545.82,
+            "z": 50.62
+          },
+          "radius": 72.34,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25468
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:34976:map:571:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 2959.56,
+            "y": 5511.43,
+            "z": 56.13
+          },
+          "radius": 87.73,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25464,
+            25498
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:34976:map:571:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3002.85,
+            "y": 5616.52,
+            "z": 52.1
+          },
+          "radius": 68.78,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25464,
+            25498
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "borean_tundra_hub_16",
+      "position": {
+        "mapId": 571,
+        "x": 2879.267,
+        "y": 6381.92,
+        "z": 93.839
+      },
+      "questGivers": [
+        25437,
+        25438,
+        25607
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:25671:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2874.67,
+            "y": 6468.32,
+            "z": 79.22
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25671
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25610:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3003.88,
+            "y": 6445.69,
+            "z": 82.98
+          },
+          "radius": 212.85,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25610
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25600:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2813.85,
+            "y": 6539.66,
+            "z": 60.3
+          },
+          "radius": 126.12,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25600
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25610:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3036.92,
+            "y": 6289.71,
+            "z": 98.58
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25610
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25600:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3064.94,
+            "y": 6330.59,
+            "z": 96.02
+          },
+          "radius": 120.36,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25600
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25669:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2782.83,
+            "y": 6575.84,
+            "z": 49.06
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25669
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "borean_tundra_hub_17",
+      "position": {
+        "mapId": 571,
+        "x": 2886.78,
+        "y": 6732.96,
+        "z": 32.969
+      },
+      "questGivers": [
+        25504
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "borean_tundra_hub_18",
+      "position": {
+        "mapId": 571,
+        "x": 2899.84,
+        "y": 6255.04,
+        "z": 135.206
+      },
+      "questGivers": [
+        25273,
+        25328
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_09",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25273,
+            25279,
+            25280,
+            25327,
+            25379,
+            25394
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 2738.55,
+            "y": 6141.26,
+            "z": 77.542
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_19",
+      "position": {
+        "mapId": 571,
+        "x": 2904.37,
+        "y": 5497.64,
+        "z": 53.685
+      },
+      "questGivers": [
+        25440
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:25470:map:571:cluster:5",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2950.41,
+            "y": 5456.1,
+            "z": 57.42
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25470
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25468:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2969.03,
+            "y": 5545.82,
+            "z": 50.62
+          },
+          "radius": 72.34,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25468
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25470:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2688.64,
+            "y": 5456.37,
+            "z": 55.02
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25470
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25467:map:571:cluster:5",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2646.05,
+            "y": 5499.92,
+            "z": 48.95
+          },
+          "radius": 114.6,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25467
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25467:map:571:cluster:6",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2543.69,
+            "y": 5625.33,
+            "z": 43.13
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25467
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "borean_tundra_hub_20",
+      "position": {
+        "mapId": 571,
+        "x": 3113.42,
+        "y": 6576.81,
+        "z": 97.091
+      },
+      "questGivers": [
+        25729
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_13",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25237,
+            25247,
+            25256,
+            25272,
+            25273,
+            25289,
+            25978,
+            26969,
+            26972,
+            26982
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 2794.36,
+            "y": 6165.11,
+            "z": 85.156
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_21",
+      "position": {
+        "mapId": 571,
+        "x": 3113.86,
+        "y": 3843.32,
+        "z": 22.758
+      },
+      "questGivers": [
+        26187
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 72,
+        "avg": 72
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:26202:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3276.89,
+            "y": 3823.21,
+            "z": 26.83
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26202
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26202:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3301.52,
+            "y": 3718.9,
+            "z": 25.76
+          },
+          "radius": 175.87,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26202
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "borean_tundra_hub_22",
+      "position": {
+        "mapId": 571,
+        "x": 3124.74,
+        "y": 4893.01,
+        "z": 1.928
+      },
+      "questGivers": [
+        26169
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 72,
+        "avg": 72
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:25760:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3096.11,
+            "y": 4820.35,
+            "z": 3.6
+          },
+          "radius": 136.75,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25760
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25760:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2905.24,
+            "y": 4938.3,
+            "z": 3.09
+          },
+          "radius": 43.44,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25760
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_12",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            26218
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 2791.78,
+            "y": 4696.37,
+            "z": 1.962
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "borean_tundra_hub_21",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            26187
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3113.86,
+            "y": 3843.32,
+            "z": 22.758
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_23",
+      "position": {
+        "mapId": 571,
+        "x": 3201.752,
+        "y": 5284.675,
+        "z": 48.071
+      },
+      "questGivers": [
+        25809,
+        25810,
+        25811,
+        25812
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 72,
+        "avg": 72
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 11,
+      "estimatedMinutes": 55,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:35188:map:571:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3226.29,
+            "y": 5634.0,
+            "z": 44.23
+          },
+          "radius": 171.15,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            25800,
+            25806,
+            25836,
+            25839,
+            25843,
+            25880
+          ],
+          "targetCount": 7
+        },
+        {
+          "taskAreaId": "item_source:35188:map:571:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 2818.7,
+            "y": 5301.57,
+            "z": 63.83
+          },
+          "radius": 175.21,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            25800,
+            25806,
+            25836,
+            25839,
+            25843,
+            25880
+          ],
+          "targetCount": 7
+        },
+        {
+          "taskAreaId": "creature:25835:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3028.0,
+            "y": 5281.36,
+            "z": 60.34
+          },
+          "radius": 157.22,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25835
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25850:map:571:cluster:6",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3363.63,
+            "y": 5389.69,
+            "z": 49.93
+          },
+          "radius": 188.72,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25850
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25850:map:571:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3498.21,
+            "y": 5318.6,
+            "z": 36.02
+          },
+          "radius": 90.31,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25850
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25836:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3191.64,
+            "y": 5600.11,
+            "z": 38.46
+          },
+          "radius": 167.48,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25836
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_11",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25838
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 2779.76,
+            "y": 5238.8,
+            "z": 38.43
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "borean_tundra_hub_34",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25862
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3730.62,
+            "y": 5143.26,
+            "z": 24.625
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_24",
+      "position": {
+        "mapId": 571,
+        "x": 3295.89,
+        "y": 3682.7,
+        "z": 32.551
+      },
+      "questGivers": [
+        26170
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 72,
+        "avg": 72
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_33",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            26170
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3691.94,
+            "y": 3576.49,
+            "z": 473.405
+          },
+          "weight": 3
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_26",
+      "position": {
+        "mapId": 571,
+        "x": 3463.94,
+        "y": 5897.35,
+        "z": 145.632
+      },
+      "questGivers": [
+        25356
+      ],
+      "levelRange": {
+        "min": 69,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_32",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25480,
+            25785
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3635.46,
+            "y": 5900.23,
+            "z": 150.504
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_25",
+      "position": {
+        "mapId": 571,
+        "x": 3464.391,
+        "y": 4140.655,
+        "z": 17.172
+      },
+      "questGivers": [
+        24702,
+        24703,
+        24706,
+        24709,
+        24730,
+        25602,
+        25849,
+        25982,
+        25983,
+        26104,
+        26158
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 72,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 24,
+      "estimatedMinutes": 120,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:34774:map:571:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3503.46,
+            "y": 3945.8,
+            "z": 27.56
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25700,
+            25701,
+            26202
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:34774:map:571:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3364.15,
+            "y": 3946.77,
+            "z": 25.2
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25700,
+            25701,
+            26202
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "creature:25664:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3487.67,
+            "y": 4516.64,
+            "z": -15.0
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25664
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:34775:map:571:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3612.63,
+            "y": 3770.31,
+            "z": 36.61
+          },
+          "radius": 165.77,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25452
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25665:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3645.95,
+            "y": 4551.1,
+            "z": -15.0
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25665
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:34956:map:571:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3161.9,
+            "y": 3764.3,
+            "z": 46.1
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25715
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_36",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25604
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3988.36,
+            "y": 4266.55,
+            "z": 26.225
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_27",
+      "position": {
+        "mapId": 571,
+        "x": 3510.62,
+        "y": 5440.93,
+        "z": 54.807
+      },
+      "questGivers": [
+        25292
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 72,
+        "avg": 72
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:25442:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3567.48,
+            "y": 5531.07,
+            "z": 86.66
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25442
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25353:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3616.33,
+            "y": 5573.35,
+            "z": 43.88
+          },
+          "radius": 195.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25353
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25441:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3670.9,
+            "y": 5557.41,
+            "z": 64.36
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25441
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25443:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3589.69,
+            "y": 5633.59,
+            "z": 74.29
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25443
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25448:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3646.87,
+            "y": 5676.2,
+            "z": 66.24
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25448
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "borean_tundra_hub_28",
+      "position": {
+        "mapId": 571,
+        "x": 3521.55,
+        "y": 4876.76,
+        "z": 15.566
+      },
+      "questGivers": [
+        25984
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "borean_tundra_hub_29",
+      "position": {
+        "mapId": 571,
+        "x": 3522.35,
+        "y": 5015.53,
+        "z": -0.743
+      },
+      "questGivers": [
+        25807
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:25847:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3495.7,
+            "y": 4966.99,
+            "z": 6.91
+          },
+          "radius": 88.47,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25847
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25845:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3606.57,
+            "y": 5063.0,
+            "z": 15.17
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25845
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25846:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3374.27,
+            "y": 5092.81,
+            "z": 14.85
+          },
+          "radius": 81.09,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25846
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:35123:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3414.85,
+            "y": 5168.43,
+            "z": 13.04
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25792
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25845:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3739.39,
+            "y": 5047.41,
+            "z": -0.87
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25845
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:34983:map:571:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3334.89,
+            "y": 4842.41,
+            "z": 29.54
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25685,
+            25686,
+            25687,
+            25699,
+            25700,
+            25701
+          ],
+          "targetCount": 6
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "borean_tundra_hub_30",
+      "position": {
+        "mapId": 571,
+        "x": 3574.163,
+        "y": 6654.17,
+        "z": 195.235
+      },
+      "questGivers": [
+        25314,
+        26110,
+        26117
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 80,
+        "avg": 72
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 17,
+      "estimatedMinutes": 85,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:26175:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3572.18,
+            "y": 6651.81,
+            "z": 196.95
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26175
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:35492:map:571:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3735.54,
+            "y": 6573.86,
+            "z": 177.09
+          },
+          "radius": 77.61,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25707,
+            25717,
+            25722,
+            25728
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:35483:map:571:cluster:7",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3707.83,
+            "y": 6799.51,
+            "z": 161.54
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25709
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25722:map:571:cluster:7",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3777.35,
+            "y": 6685.19,
+            "z": 159.34
+          },
+          "radius": 162.51,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25722
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25722:map:571:cluster:8",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3643.8,
+            "y": 6857.33,
+            "z": 160.64
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25722
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:35484:map:571:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3775.86,
+            "y": 6560.07,
+            "z": 172.85
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25707
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_35",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            32548
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3944.48,
+            "y": 6870.9,
+            "z": 527.405
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_31",
+      "position": {
+        "mapId": 571,
+        "x": 3600.637,
+        "y": 5965.7,
+        "z": 136.301
+      },
+      "questGivers": [
+        24795,
+        25262,
+        25291
+      ],
+      "levelRange": {
+        "min": 69,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 10,
+      "estimatedMinutes": 50,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:34909:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3365.99,
+            "y": 6161.9,
+            "z": 73.22
+          },
+          "radius": 196.71,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            25585
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25308:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3797.1,
+            "y": 6042.27,
+            "z": -134.12
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25308
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25309:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4133.5,
+            "y": 6261.69,
+            "z": 28.85
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25309
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25310:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3277.52,
+            "y": 6594.09,
+            "z": -0.02
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25310
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_26",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25356
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3463.94,
+            "y": 5897.35,
+            "z": 145.632
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "borean_tundra_hub_32",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25480,
+            25785
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3635.46,
+            "y": 5900.23,
+            "z": 150.504
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_32",
+      "position": {
+        "mapId": 571,
+        "x": 3644.055,
+        "y": 5898.99,
+        "z": 162.572
+      },
+      "questGivers": [
+        25480,
+        25785
+      ],
+      "levelRange": {
+        "min": 69,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:25478:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3632.48,
+            "y": 5900.61,
+            "z": 150.52
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25478
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_31",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            24795,
+            25262,
+            25291
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3571.12,
+            "y": 5957.59,
+            "z": 136.303
+          },
+          "weight": 2
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_33",
+      "position": {
+        "mapId": 571,
+        "x": 3691.94,
+        "y": 3576.49,
+        "z": 473.405
+      },
+      "questGivers": [
+        26170
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 72,
+        "avg": 72
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "borean_tundra_hub_34",
+      "position": {
+        "mapId": 571,
+        "x": 3730.62,
+        "y": 5143.26,
+        "z": 24.625
+      },
+      "questGivers": [
+        25862
+      ],
+      "levelRange": {
+        "min": 70,
+        "max": 72,
+        "avg": 72
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_23",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25809,
+            25810,
+            25811,
+            25812
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3194.39,
+            "y": 5282.06,
+            "z": 48.191
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_35",
+      "position": {
+        "mapId": 571,
+        "x": 3944.48,
+        "y": 6870.9,
+        "z": 527.405
+      },
+      "questGivers": [
+        32548
+      ],
+      "levelRange": {
+        "min": 80,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:32534:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3899.25,
+            "y": 6967.54,
+            "z": 652.81
+          },
+          "radius": 151.86,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            32534
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "borean_tundra_hub_36",
+      "position": {
+        "mapId": 571,
+        "x": 3988.36,
+        "y": 4266.55,
+        "z": 26.225
+      },
+      "questGivers": [
+        25604
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:25615:map:571:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4216.31,
+            "y": 4344.39,
+            "z": 60.48
+          },
+          "radius": 167.07,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25615
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_44",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25658
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4416.82,
+            "y": 4549.14,
+            "z": 24.54
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_37",
+      "position": {
+        "mapId": 571,
+        "x": 4008.845,
+        "y": 6392.785,
+        "z": 29.408
+      },
+      "questGivers": [
+        25208,
+        28375
+      ],
+      "levelRange": {
+        "min": 69,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:34600:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 4029.03,
+            "y": 6312.86,
+            "z": 7.9
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25210
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "borean_tundra_hub_39",
+      "position": {
+        "mapId": 571,
+        "x": 4131.38,
+        "y": 3522.5,
+        "z": 109.094
+      },
+      "questGivers": [
+        25516
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 72,
+        "avg": 72
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "borean_tundra_hub_40",
+      "position": {
+        "mapId": 571,
+        "x": 4138.465,
+        "y": 5782.545,
+        "z": 60.484
+      },
+      "questGivers": [
+        25335,
+        25336
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 72,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:25342:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4002.89,
+            "y": 5740.31,
+            "z": 65.25
+          },
+          "radius": 163.42,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25342
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25351:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3993.49,
+            "y": 5742.08,
+            "z": 64.18
+          },
+          "radius": 190.53,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25351
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25342:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3860.15,
+            "y": 5774.23,
+            "z": 68.82
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25342
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25351:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3855.01,
+            "y": 5715.68,
+            "z": 63.98
+          },
+          "radius": 79.09,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25351
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "borean_tundra_hub_38",
+      "position": {
+        "mapId": 571,
+        "x": 4167.35,
+        "y": 5267.554,
+        "z": 28.802
+      },
+      "questGivers": [
+        25477,
+        25590,
+        25702,
+        25747,
+        25780
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 72,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 18,
+      "estimatedMinutes": 90,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:34787:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 4309.29,
+            "y": 5384.7,
+            "z": 51.66
+          },
+          "radius": 119.62,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25428,
+            25429,
+            25432
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "creature:25781:map:571:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3930.95,
+            "y": 5211.13,
+            "z": 8.27
+          },
+          "radius": 145.66,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25781
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:34977:map:571:cluster:7",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 4140.86,
+            "y": 5515.93,
+            "z": 33.92
+          },
+          "radius": 176.43,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24613,
+            24614,
+            25743
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "creature:25781:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4042.09,
+            "y": 4844.5,
+            "z": -12.69
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25781
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:34977:map:571:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3809.52,
+            "y": 5547.19,
+            "z": 42.85
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24613,
+            24614,
+            25743
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "creature:25666:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3649.17,
+            "y": 4744.34,
+            "z": -15.0
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25666
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_41",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25705
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4183.23,
+            "y": 4335.51,
+            "z": 36.558
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "borean_tundra_hub_43",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25197,
+            25199,
+            25205,
+            25211
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4361.05,
+            "y": 6063.24,
+            "z": 0.605
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_41",
+      "position": {
+        "mapId": 571,
+        "x": 4183.23,
+        "y": 4335.51,
+        "z": 36.558
+      },
+      "questGivers": [
+        25705
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Alliance",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:25615:map:571:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4216.31,
+            "y": 4344.39,
+            "z": 60.48
+          },
+          "radius": 167.07,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25615
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_42",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25714
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4330.35,
+            "y": 4539.88,
+            "z": 23.102
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_42",
+      "position": {
+        "mapId": 571,
+        "x": 4330.35,
+        "y": 4539.88,
+        "z": 23.102
+      },
+      "questGivers": [
+        25714
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 72,
+        "avg": 72
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "borean_tundra_hub_43",
+      "position": {
+        "mapId": 571,
+        "x": 4383.352,
+        "y": 6115.762,
+        "z": 0.607
+      },
+      "questGivers": [
+        25197,
+        25199,
+        25205,
+        25211
+      ],
+      "levelRange": {
+        "min": 69,
+        "max": 72,
+        "avg": 71
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 9,
+      "estimatedMinutes": 45,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:34618:map:571:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 4347.03,
+            "y": 6183.95,
+            "z": -54.0
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24899,
+            25203,
+            25204
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:34618:map:571:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 4304.08,
+            "y": 6143.51,
+            "z": -7.9
+          },
+          "radius": 137.36,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            24899,
+            25203,
+            25204
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "creature:25217:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4262.25,
+            "y": 6372.4,
+            "z": 0.67
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25217
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:25217:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3949.05,
+            "y": 6334.34,
+            "z": 10.24
+          },
+          "radius": 79.95,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25217
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:34597:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3970.08,
+            "y": 6421.4,
+            "z": 16.3
+          },
+          "radius": 112.03,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25215,
+            25216,
+            25217
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:34621:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3839.85,
+            "y": 6406.78,
+            "z": 23.63
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25209
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "borean_tundra_hub_44",
+      "position": {
+        "mapId": 571,
+        "x": 4416.82,
+        "y": 4549.14,
+        "z": 24.54
+      },
+      "questGivers": [
+        25658
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 72,
+        "avg": 72
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_36",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25604
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3988.36,
+            "y": 4266.55,
+            "z": 26.225
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_45",
+      "position": {
+        "mapId": 571,
+        "x": 4464.63,
+        "y": 5378.07,
+        "z": -15.274
+      },
+      "questGivers": [
+        25589
+      ],
+      "levelRange": {
+        "min": 69,
+        "max": 72,
+        "avg": 72
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "borean_tundra_hub_46",
+      "position": {
+        "mapId": 571,
+        "x": 4508.288,
+        "y": 5711.423,
+        "z": 81.548
+      },
+      "questGivers": [
+        25326,
+        25339,
+        25374,
+        25736
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:25428:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4309.29,
+            "y": 5384.7,
+            "z": 51.66
+          },
+          "radius": 119.62,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25428
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_43",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25197,
+            25199,
+            25205,
+            25211
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4361.05,
+            "y": 6063.24,
+            "z": 0.605
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "borean_tundra_hub_47",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25376
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4538.46,
+            "y": 5886.04,
+            "z": 62.534
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "borean_tundra_hub_48",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25425
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4547.75,
+            "y": 5333.09,
+            "z": -28.407
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_47",
+      "position": {
+        "mapId": 571,
+        "x": 4538.46,
+        "y": 5886.04,
+        "z": 62.534
+      },
+      "questGivers": [
+        25376
+      ],
+      "levelRange": {
+        "min": 69,
+        "max": 72,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:25416:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4301.87,
+            "y": 5644.16,
+            "z": 95.26
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            25416
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "borean_tundra_hub_46",
+          "zoneId": 3537,
+          "zoneName": "Borean Tundra",
+          "questGivers": [
+            25326,
+            25339,
+            25374,
+            25736
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4491.25,
+            "y": 5710.38,
+            "z": 81.482
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "borean_tundra_hub_48",
+      "position": {
+        "mapId": 571,
+        "x": 4547.75,
+        "y": 5333.09,
+        "z": -28.407
+      },
+      "questGivers": [
+        25425
+      ],
+      "levelRange": {
+        "min": 69,
+        "max": 72,
+        "avg": 72
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

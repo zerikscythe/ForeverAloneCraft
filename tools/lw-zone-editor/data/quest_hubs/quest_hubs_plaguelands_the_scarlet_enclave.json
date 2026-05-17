@@ -1,0 +1,647 @@
+{
+  "version": 1,
+  "zoneId": 4298,
+  "zoneName": "Plaguelands: The Scarlet Enclave",
+  "mapId": 609,
+  "hubCount": 9,
+  "hubs": [
+    {
+      "hubId": "plaguelands_the_scarlet_enclave_hub_01",
+      "position": {
+        "mapId": 609,
+        "x": 1320.41,
+        "y": -6124.41,
+        "z": 14.757
+      },
+      "questGivers": [
+        29077
+      ],
+      "levelRange": {
+        "min": 55,
+        "max": 55,
+        "avg": 55
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "plaguelands_the_scarlet_enclave_hub_03",
+          "zoneId": 4298,
+          "zoneName": "Plaguelands: The Scarlet Enclave",
+          "questGivers": [
+            28913,
+            28914
+          ],
+          "position": {
+            "mapId": 609,
+            "x": 1397.51,
+            "y": -5827.42,
+            "z": 137.271
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "plaguelands_the_scarlet_enclave_hub_02",
+      "position": {
+        "mapId": 609,
+        "x": 1380.47,
+        "y": -5711.57,
+        "z": 136.488
+      },
+      "questGivers": [
+        29053
+      ],
+      "levelRange": {
+        "min": 55,
+        "max": 55,
+        "avg": 55
+      },
+      "faction": "Horde",
+      "totalQuests": 11,
+      "estimatedMinutes": 55,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:29071:map:609:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 609,
+            "x": 1331.3,
+            "y": -5740.97,
+            "z": 137.66
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29071
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:29072:map:609:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 609,
+            "x": 1331.87,
+            "y": -5748.44,
+            "z": 137.49
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29072
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:29067:map:609:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 609,
+            "x": 1331.73,
+            "y": -5756.24,
+            "z": 137.58
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29067
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:29061:map:609:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 609,
+            "x": 1320.97,
+            "y": -5740.96,
+            "z": 137.56
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29061
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:29073:map:609:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 609,
+            "x": 1321.25,
+            "y": -5749.35,
+            "z": 137.45
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29073
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:29074:map:609:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 609,
+            "x": 1331.48,
+            "y": -5764.67,
+            "z": 137.9
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29074
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "plaguelands_the_scarlet_enclave_hub_03",
+      "position": {
+        "mapId": 609,
+        "x": 1400.725,
+        "y": -5827.02,
+        "z": 137.272
+      },
+      "questGivers": [
+        28913,
+        28914
+      ],
+      "levelRange": {
+        "min": 55,
+        "max": 55,
+        "avg": 55
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "plaguelands_the_scarlet_enclave_hub_01",
+          "zoneId": 4298,
+          "zoneName": "Plaguelands: The Scarlet Enclave",
+          "questGivers": [
+            29077
+          ],
+          "position": {
+            "mapId": 609,
+            "x": 1320.41,
+            "y": -6124.41,
+            "z": 14.757
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "plaguelands_the_scarlet_enclave_hub_04",
+          "zoneId": 4298,
+          "zoneName": "Plaguelands: The Scarlet Enclave",
+          "questGivers": [
+            28912
+          ],
+          "position": {
+            "mapId": 609,
+            "x": 1655.97,
+            "y": -6038.76,
+            "z": 128.758
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "plaguelands_the_scarlet_enclave_hub_04",
+      "position": {
+        "mapId": 609,
+        "x": 1655.97,
+        "y": -6038.76,
+        "z": 128.758
+      },
+      "questGivers": [
+        28912
+      ],
+      "levelRange": {
+        "min": 55,
+        "max": 55,
+        "avg": 55
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "plaguelands_the_scarlet_enclave_hub_03",
+          "zoneId": 4298,
+          "zoneName": "Plaguelands: The Scarlet Enclave",
+          "questGivers": [
+            28913,
+            28914
+          ],
+          "position": {
+            "mapId": 609,
+            "x": 1397.51,
+            "y": -5827.42,
+            "z": 137.271
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "plaguelands_the_scarlet_enclave_hub_05",
+      "position": {
+        "mapId": 609,
+        "x": 1877.92,
+        "y": -5771.12,
+        "z": 84.475
+      },
+      "questGivers": [
+        28910,
+        28911
+      ],
+      "levelRange": {
+        "min": 55,
+        "max": 55,
+        "avg": 55
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:28945:map:609:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 609,
+            "x": 1587.17,
+            "y": -5700.16,
+            "z": 123.12
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28945
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "plaguelands_the_scarlet_enclave_hub_03",
+          "zoneId": 4298,
+          "zoneName": "Plaguelands: The Scarlet Enclave",
+          "questGivers": [
+            28913,
+            28914
+          ],
+          "position": {
+            "mapId": 609,
+            "x": 1397.51,
+            "y": -5827.42,
+            "z": 137.271
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "plaguelands_the_scarlet_enclave_hub_06",
+      "position": {
+        "mapId": 609,
+        "x": 1982.74,
+        "y": -5815.54,
+        "z": 101.112
+      },
+      "questGivers": [
+        28919
+      ],
+      "levelRange": {
+        "min": 55,
+        "max": 55,
+        "avg": 55
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:39328:map:609:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 609,
+            "x": 1509.98,
+            "y": -5962.04,
+            "z": 152.24
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28529,
+            28530,
+            28559,
+            28594,
+            28610,
+            28936
+          ],
+          "targetCount": 15
+        },
+        {
+          "taskAreaId": "item_source:39328:map:609:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 609,
+            "x": 1386.99,
+            "y": -5711.89,
+            "z": 138.93
+          },
+          "radius": 50.17,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28529,
+            28530,
+            28559,
+            28594,
+            28610,
+            28936
+          ],
+          "targetCount": 15
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "plaguelands_the_scarlet_enclave_hub_07",
+      "position": {
+        "mapId": 609,
+        "x": 2345.96,
+        "y": -5725.351,
+        "z": 210.711
+      },
+      "questGivers": [
+        25462,
+        28377,
+        28510,
+        28647,
+        28653,
+        28658,
+        28907,
+        29047,
+        29110
+      ],
+      "levelRange": {
+        "min": 55,
+        "max": 55,
+        "avg": 55
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 17,
+      "estimatedMinutes": 85,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:39160:map:609:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 609,
+            "x": 1992.37,
+            "y": -5836.18,
+            "z": 100.85
+          },
+          "radius": 90.72,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28766
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28525:map:609:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 609,
+            "x": 1814.59,
+            "y": -5988.65,
+            "z": 125.5
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28525
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:29104:map:609:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 609,
+            "x": 1696.89,
+            "y": -5713.4,
+            "z": 104.0
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29104
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28542:map:609:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 609,
+            "x": 1651.21,
+            "y": -5994.67,
+            "z": 133.58
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28542
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28543:map:609:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 609,
+            "x": 1590.81,
+            "y": -5731.66,
+            "z": 143.87
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28543
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:29104:map:609:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 609,
+            "x": 1493.87,
+            "y": -5801.74,
+            "z": 131.5
+          },
+          "radius": 81.7,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29104
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "plaguelands_the_scarlet_enclave_hub_09",
+          "zoneId": 4298,
+          "zoneName": "Plaguelands: The Scarlet Enclave",
+          "questGivers": [
+            28357,
+            28444,
+            28472
+          ],
+          "position": {
+            "mapId": 609,
+            "x": 2460.5,
+            "y": -5593.47,
+            "z": 367.476
+          },
+          "weight": 3
+        },
+        {
+          "hubId": "plaguelands_the_scarlet_enclave_hub_05",
+          "zoneId": 4298,
+          "zoneName": "Plaguelands: The Scarlet Enclave",
+          "questGivers": [
+            28910,
+            28911
+          ],
+          "position": {
+            "mapId": 609,
+            "x": 1876.44,
+            "y": -5777.14,
+            "z": 85.09
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "plaguelands_the_scarlet_enclave_hub_08",
+      "position": {
+        "mapId": 609,
+        "x": 2439.76,
+        "y": -5131.195,
+        "z": 81.29
+      },
+      "questGivers": [
+        29173,
+        31082
+      ],
+      "levelRange": {
+        "min": 55,
+        "max": 55,
+        "avg": 55
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "plaguelands_the_scarlet_enclave_hub_09",
+      "position": {
+        "mapId": 609,
+        "x": 2495.433,
+        "y": -5578.643,
+        "z": 388.364
+      },
+      "questGivers": [
+        28357,
+        28444,
+        28472
+      ],
+      "levelRange": {
+        "min": 55,
+        "max": 55,
+        "avg": 55
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:29519:map:609:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 609,
+            "x": 2459.36,
+            "y": -5606.41,
+            "z": 415.2
+          },
+          "radius": 54.51,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29519
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "plaguelands_the_scarlet_enclave_hub_07",
+          "zoneId": 4298,
+          "zoneName": "Plaguelands: The Scarlet Enclave",
+          "questGivers": [
+            25462,
+            28377,
+            28510,
+            28647,
+            28653,
+            28658,
+            28907,
+            29047,
+            29110
+          ],
+          "position": {
+            "mapId": 609,
+            "x": 2310.27,
+            "y": -5742.21,
+            "z": 161.207
+          },
+          "weight": 4
+        }
+      ]
+    }
+  ]
+}

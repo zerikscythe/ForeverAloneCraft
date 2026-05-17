@@ -1,0 +1,1189 @@
+{
+  "version": 1,
+  "zoneId": 331,
+  "zoneName": "Ashenvale",
+  "mapId": 1,
+  "hubCount": 23,
+  "hubs": [
+    {
+      "hubId": "ashenvale_hub_01",
+      "position": {
+        "mapId": 1,
+        "x": 1046.54,
+        "y": -2104.31,
+        "z": 123.065
+      },
+      "questGivers": [
+        14754
+      ],
+      "levelRange": {
+        "min": 25,
+        "max": 70,
+        "avg": 49
+      },
+      "faction": "Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ashenvale_hub_02",
+      "position": {
+        "mapId": 1,
+        "x": 1449.63,
+        "y": -1845.65,
+        "z": 126.347
+      },
+      "questGivers": [
+        14753
+      ],
+      "levelRange": {
+        "min": 25,
+        "max": 70,
+        "avg": 49
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ashenvale_hub_03",
+      "position": {
+        "mapId": 1,
+        "x": 1778.68,
+        "y": -2241.09,
+        "z": 107.942
+      },
+      "questGivers": [
+        12858
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 24,
+        "avg": 24
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ashenvale_hub_04",
+      "position": {
+        "mapId": 1,
+        "x": 1787.09,
+        "y": -1231.98,
+        "z": 150.916
+      },
+      "questGivers": [
+        3897
+      ],
+      "levelRange": {
+        "min": 18,
+        "max": 30,
+        "avg": 30
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ashenvale_hub_05",
+      "position": {
+        "mapId": 1,
+        "x": 1914.83,
+        "y": -4123.96,
+        "z": 43.32
+      },
+      "questGivers": [
+        17098
+      ],
+      "levelRange": {
+        "min": 18,
+        "max": 20,
+        "avg": 20
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ashenvale_hub_06",
+      "position": {
+        "mapId": 1,
+        "x": 1937.83,
+        "y": -2337.02,
+        "z": 92.794
+      },
+      "questGivers": [
+        12718
+      ],
+      "levelRange": {
+        "min": 23,
+        "max": 30,
+        "avg": 30
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ashenvale_hub_07",
+      "position": {
+        "mapId": 1,
+        "x": 2057.76,
+        "y": -2404.84,
+        "z": 87.614
+      },
+      "questGivers": [
+        11820,
+        12862,
+        12867
+      ],
+      "levelRange": {
+        "min": 17,
+        "max": 27,
+        "avg": 24
+      },
+      "faction": "Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:16746:map:1:cluster:76",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 1950.23,
+            "y": -2551.23,
+            "z": 77.03
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            202,
+            1939,
+            1974,
+            2269,
+            2351,
+            2408
+          ],
+          "targetCount": 26
+        },
+        {
+          "taskAreaId": "creature:12856:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 1978.14,
+            "y": -2585.16,
+            "z": 93.99
+          },
+          "radius": 161.71,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            12856
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:16746:map:1:cluster:71",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 1874.03,
+            "y": -2254.69,
+            "z": 118.72
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            202,
+            1939,
+            1974,
+            2269,
+            2351,
+            2408
+          ],
+          "targetCount": 26
+        },
+        {
+          "taskAreaId": "creature:12856:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 1863.14,
+            "y": -2685.91,
+            "z": 93.27
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            12856
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:16743:map:1:cluster:7",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 2943.09,
+            "y": -83.88,
+            "z": 99.03
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3743,
+            3745,
+            3746,
+            3748,
+            3749,
+            3750
+          ],
+          "targetCount": 12
+        },
+        {
+          "taskAreaId": "item_source:16743:map:1:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3171.7,
+            "y": -169.28,
+            "z": 107.58
+          },
+          "radius": 102.6,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3743,
+            3745,
+            3746,
+            3748,
+            3749,
+            3750
+          ],
+          "targetCount": 12
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ashenvale_hub_08",
+      "position": {
+        "mapId": 1,
+        "x": 2089.5,
+        "y": -1171.56,
+        "z": 101.876
+      },
+      "questGivers": [
+        3885
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 25,
+        "avg": 24
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ashenvale_hub_09",
+      "position": {
+        "mapId": 1,
+        "x": 2334.62,
+        "y": -2534.802,
+        "z": 103.865
+      },
+      "questGivers": [
+        12696,
+        12724,
+        12737,
+        17355
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 32,
+        "avg": 27
+      },
+      "faction": "Horde",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:5481:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 2577.11,
+            "y": -2169.4,
+            "z": 198.74
+          },
+          "radius": 154.99,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3752,
+            3754,
+            3755,
+            3757,
+            3758,
+            3759
+          ],
+          "targetCount": 17
+        },
+        {
+          "taskAreaId": "creature:11697:map:1:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 2124.86,
+            "y": -2949.74,
+            "z": 113.58
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11697
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:6115:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 2045.2,
+            "y": -3068.26,
+            "z": 106.5
+          },
+          "radius": 187.49,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6115
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:11697:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 1983.6,
+            "y": -3146.79,
+            "z": 101.82
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11697
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ashenvale_hub_10",
+      "position": {
+        "mapId": 1,
+        "x": 2616.19,
+        "y": -3019.0,
+        "z": 161.171
+      },
+      "questGivers": [
+        12864
+      ],
+      "levelRange": {
+        "min": 17,
+        "max": 25,
+        "avg": 25
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:16746:map:1:cluster:47",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 2736.2,
+            "y": -2966.09,
+            "z": 149.85
+          },
+          "radius": 210.42,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            202,
+            1939,
+            1974,
+            2269,
+            2351,
+            2408
+          ],
+          "targetCount": 26
+        },
+        {
+          "taskAreaId": "item_source:16746:map:1:cluster:55",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 2217.39,
+            "y": -3020.65,
+            "z": 104.44
+          },
+          "radius": 65.32,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            202,
+            1939,
+            1974,
+            2269,
+            2351,
+            2408
+          ],
+          "targetCount": 26
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ashenvale_hub_11",
+      "position": {
+        "mapId": 1,
+        "x": 2682.14,
+        "y": -454.808,
+        "z": 109.333
+      },
+      "questGivers": [
+        3894
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 30,
+        "avg": 25
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ashenvale_hub_12",
+      "position": {
+        "mapId": 1,
+        "x": 2773.928,
+        "y": -339.558,
+        "z": 109.561
+      },
+      "questGivers": [
+        3691,
+        3845,
+        3996,
+        4079,
+        17106
+      ],
+      "levelRange": {
+        "min": 14,
+        "max": 29,
+        "avg": 23
+      },
+      "faction": "Alliance",
+      "totalQuests": 12,
+      "estimatedMinutes": 60,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:5463:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3027.13,
+            "y": 520.13,
+            "z": 5.23
+          },
+          "radius": 142.65,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3737,
+            3739,
+            3740,
+            3742
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:5463:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3124.44,
+            "y": 604.9,
+            "z": 4.36
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3737,
+            3739,
+            3740,
+            3742
+          ],
+          "targetCount": 4
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "ashenvale_hub_04",
+          "zoneId": 331,
+          "zoneName": "Ashenvale",
+          "questGivers": [
+            3897
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 1787.09,
+            "y": -1231.98,
+            "z": 150.916
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "ashenvale_hub_13",
+          "zoneId": 331,
+          "zoneName": "Ashenvale",
+          "questGivers": [
+            3916
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 2896.49,
+            "y": -1387.24,
+            "z": 208.145
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "ashenvale_hub_17",
+          "zoneId": 331,
+          "zoneName": "Ashenvale",
+          "questGivers": [
+            3891
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 3045.78,
+            "y": 528.706,
+            "z": 4.948
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "ashenvale_hub_13",
+      "position": {
+        "mapId": 1,
+        "x": 2896.49,
+        "y": -1387.24,
+        "z": 208.145
+      },
+      "questGivers": [
+        3916
+      ],
+      "levelRange": {
+        "min": 18,
+        "max": 28,
+        "avg": 28
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "ashenvale_hub_12",
+          "zoneId": 331,
+          "zoneName": "Ashenvale",
+          "questGivers": [
+            3691,
+            3845,
+            3996,
+            4079,
+            17106
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 2758.97,
+            "y": -312.097,
+            "z": 110.88
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "ashenvale_hub_14",
+      "position": {
+        "mapId": 1,
+        "x": 2919.09,
+        "y": -3154.22,
+        "z": 177.866
+      },
+      "questGivers": [
+        17310
+      ],
+      "levelRange": {
+        "min": 27,
+        "max": 30,
+        "avg": 30
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ashenvale_hub_15",
+      "position": {
+        "mapId": 1,
+        "x": 2950.1,
+        "y": -2816.79,
+        "z": 212.652
+      },
+      "questGivers": [
+        3920
+      ],
+      "levelRange": {
+        "min": 26,
+        "max": 32,
+        "avg": 32
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:5461:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3042.52,
+            "y": -2797.43,
+            "z": 196.59
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4619
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ashenvale_hub_16",
+      "position": {
+        "mapId": 1,
+        "x": 2970.982,
+        "y": -3275.587,
+        "z": 158.752
+      },
+      "questGivers": [
+        3848,
+        3880,
+        3901,
+        17287,
+        17291,
+        17303
+      ],
+      "levelRange": {
+        "min": 21,
+        "max": 32,
+        "avg": 30
+      },
+      "faction": "Alliance",
+      "totalQuests": 12,
+      "estimatedMinutes": 60,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:11684:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 2515.19,
+            "y": -3094.04,
+            "z": 126.71
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11684
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:11681:map:1:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 2458.12,
+            "y": -3136.32,
+            "z": 123.9
+          },
+          "radius": 56.12,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11681
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:11681:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 2369.56,
+            "y": -3191.11,
+            "z": 116.31
+          },
+          "radius": 210.19,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11681
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:11684:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 2299.5,
+            "y": -3198.57,
+            "z": 113.84
+          },
+          "radius": 62.59,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11684
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:11680:map:1:cluster:6",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 2287.35,
+            "y": -3093.87,
+            "z": 122.98
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11680
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:11697:map:1:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 2124.86,
+            "y": -2949.74,
+            "z": 113.58
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11697
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "ashenvale_hub_15",
+          "zoneId": 331,
+          "zoneName": "Ashenvale",
+          "questGivers": [
+            3920
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 2950.1,
+            "y": -2816.79,
+            "z": 212.652
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "ashenvale_hub_23",
+          "zoneId": 331,
+          "zoneName": "Ashenvale",
+          "questGivers": [
+            8026
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 9961.78,
+            "y": 2284.6,
+            "z": 1341.48
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "ashenvale_hub_17",
+      "position": {
+        "mapId": 1,
+        "x": 3045.78,
+        "y": 528.706,
+        "z": 4.948
+      },
+      "questGivers": [
+        3891
+      ],
+      "levelRange": {
+        "min": 18,
+        "max": 21,
+        "avg": 21
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:5463:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3027.13,
+            "y": 520.13,
+            "z": 5.23
+          },
+          "radius": 142.65,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3737,
+            3739,
+            3740,
+            3742
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:5463:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3124.44,
+            "y": 604.9,
+            "z": 4.36
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3737,
+            3739,
+            3740,
+            3742
+          ],
+          "targetCount": 4
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ashenvale_hub_18",
+      "position": {
+        "mapId": 1,
+        "x": 3184.055,
+        "y": 182.01,
+        "z": 4.316
+      },
+      "questGivers": [
+        3847,
+        4484
+      ],
+      "levelRange": {
+        "min": 19,
+        "max": 24,
+        "avg": 21
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ashenvale_hub_19",
+      "position": {
+        "mapId": 1,
+        "x": 3341.882,
+        "y": 1013.531,
+        "z": 4.957
+      },
+      "questGivers": [
+        12717,
+        12719,
+        12721,
+        12757,
+        12863
+      ],
+      "levelRange": {
+        "min": 14,
+        "max": 26,
+        "avg": 22
+      },
+      "faction": "Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:3925:map:1:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 3212.3,
+            "y": -130.29,
+            "z": 106.33
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3925
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:3924:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 3020.12,
+            "y": -99.44,
+            "z": 100.0
+          },
+          "radius": 135.87,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3924
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:3924:map:1:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 3165.08,
+            "y": -136.13,
+            "z": 103.0
+          },
+          "radius": 53.84,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3924
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:3925:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 3016.63,
+            "y": -139.18,
+            "z": 100.8
+          },
+          "radius": 182.87,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3925
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:16746:map:1:cluster:77",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 2935.42,
+            "y": -346.88,
+            "z": 107.59
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            202,
+            1939,
+            1974,
+            2269,
+            2351,
+            2408
+          ],
+          "targetCount": 26
+        },
+        {
+          "taskAreaId": "item_source:16746:map:1:cluster:53",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 1638.95,
+            "y": -1703.82,
+            "z": 86.3
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            202,
+            1939,
+            1974,
+            2269,
+            2351,
+            2408
+          ],
+          "targetCount": 26
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ashenvale_hub_20",
+      "position": {
+        "mapId": 1,
+        "x": 3347.35,
+        "y": -694.701,
+        "z": 159.926
+      },
+      "questGivers": [
+        12818
+      ],
+      "levelRange": {
+        "min": 19,
+        "max": 24,
+        "avg": 24
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ashenvale_hub_21",
+      "position": {
+        "mapId": 1,
+        "x": 3470.04,
+        "y": 847.092,
+        "z": 5.459
+      },
+      "questGivers": [
+        3846
+      ],
+      "levelRange": {
+        "min": 19,
+        "max": 25,
+        "avg": 22
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ashenvale_hub_22",
+      "position": {
+        "mapId": 1,
+        "x": 9664.36,
+        "y": 2528.67,
+        "z": 1360.08
+      },
+      "questGivers": [
+        17105
+      ],
+      "levelRange": {
+        "min": 18,
+        "max": 20,
+        "avg": 20
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "ashenvale_hub_23",
+      "position": {
+        "mapId": 1,
+        "x": 9961.78,
+        "y": 2284.6,
+        "z": 1341.48
+      },
+      "questGivers": [
+        8026
+      ],
+      "levelRange": {
+        "min": 25,
+        "max": 30,
+        "avg": 30
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

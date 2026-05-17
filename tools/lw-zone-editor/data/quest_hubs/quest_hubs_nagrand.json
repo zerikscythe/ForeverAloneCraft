@@ -1,0 +1,1945 @@
+{
+  "version": 1,
+  "zoneId": 3518,
+  "zoneName": "Nagrand",
+  "mapId": 530,
+  "hubCount": 28,
+  "hubs": [
+    {
+      "hubId": "nagrand_hub_01",
+      "position": {
+        "mapId": 530,
+        "x": -2825.48,
+        "y": 8335.65,
+        "z": -91.106
+      },
+      "questGivers": [
+        17545
+      ],
+      "levelRange": {
+        "min": 66,
+        "max": 68,
+        "avg": 68
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "nagrand_hub_02",
+      "position": {
+        "mapId": 530,
+        "x": -2588.23,
+        "y": 7272.168,
+        "z": 18.315
+      },
+      "questGivers": [
+        18222,
+        18223,
+        18224,
+        18353,
+        18408,
+        19137
+      ],
+      "levelRange": {
+        "min": 64,
+        "max": 68,
+        "avg": 66
+      },
+      "faction": "Alliance",
+      "totalQuests": 12,
+      "estimatedMinutes": 60,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:25433:map:530:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2031.73,
+            "y": 7486.45,
+            "z": -96.15
+          },
+          "radius": 196.66,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            17134,
+            17135,
+            17136,
+            17137,
+            17138,
+            18037
+          ],
+          "targetCount": 12
+        },
+        {
+          "taskAreaId": "creature:17137:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2044.91,
+            "y": 7470.19,
+            "z": -97.54
+          },
+          "radius": 196.45,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17137
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17136:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2017.53,
+            "y": 7503.95,
+            "z": -94.66
+          },
+          "radius": 185.55,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17136
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18411:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2228.97,
+            "y": 8474.81,
+            "z": -21.29
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18411
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18207:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1470.51,
+            "y": 8410.75,
+            "z": 0.27
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18207
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18207:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1554.72,
+            "y": 8511.84,
+            "z": -3.04
+          },
+          "radius": 175.2,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18207
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "nagrand_hub_08",
+          "zoneId": 3518,
+          "zoneName": "Nagrand",
+          "questGivers": [
+            18261
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -2264.14,
+            "y": 6217.8,
+            "z": 44.475
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "nagrand_hub_03",
+      "position": {
+        "mapId": 530,
+        "x": -2563.89,
+        "y": 6288.29,
+        "z": 15.295
+      },
+      "questGivers": [
+        18369
+      ],
+      "levelRange": {
+        "min": 64,
+        "max": 65,
+        "avg": 65
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "nagrand_hub_06",
+          "zoneId": 3518,
+          "zoneName": "Nagrand",
+          "questGivers": [
+            18183,
+            18233,
+            23268
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -2491.86,
+            "y": 7228.57,
+            "z": 16.321
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "nagrand_hub_04",
+      "position": {
+        "mapId": 530,
+        "x": -2552.39,
+        "y": 7337.85,
+        "z": 7.37
+      },
+      "questGivers": [
+        18416
+      ],
+      "levelRange": {
+        "min": 65,
+        "max": 68,
+        "avg": 68
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "nagrand_hub_15",
+          "zoneId": 3518,
+          "zoneName": "Nagrand",
+          "questGivers": [
+            18417
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -1545.36,
+            "y": 8785.48,
+            "z": 35.268
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "nagrand_hub_05",
+      "position": {
+        "mapId": 530,
+        "x": -2528.36,
+        "y": 7472.06,
+        "z": -4.5
+      },
+      "questGivers": [
+        18335
+      ],
+      "levelRange": {
+        "min": 64,
+        "max": 66,
+        "avg": 66
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "nagrand_hub_06",
+      "position": {
+        "mapId": 530,
+        "x": -2489.55,
+        "y": 7231.237,
+        "z": 16.293
+      },
+      "questGivers": [
+        18183,
+        18233,
+        23268
+      ],
+      "levelRange": {
+        "min": 64,
+        "max": 67,
+        "avg": 67
+      },
+      "faction": "Alliance",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:18204:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1518.47,
+            "y": 8591.76,
+            "z": 7.34
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18204
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "nagrand_hub_25",
+          "zoneId": 3518,
+          "zoneName": "Nagrand",
+          "questGivers": [
+            18445
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -918.143,
+            "y": 8663.94,
+            "z": 172.542
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "nagrand_hub_07",
+      "position": {
+        "mapId": 530,
+        "x": -2428.17,
+        "y": 6885.75,
+        "z": 4.196
+      },
+      "questGivers": [
+        19035
+      ],
+      "levelRange": {
+        "min": 64,
+        "max": 66,
+        "avg": 66
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:27807:map:530:cluster:13",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2198.49,
+            "y": 7092.14,
+            "z": -11.99
+          },
+          "radius": 53.75,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17158,
+            17159,
+            17160
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:27807:map:530:cluster:27",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2184.69,
+            "y": 7450.69,
+            "z": -34.42
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17158,
+            17159,
+            17160
+          ],
+          "targetCount": 3
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "nagrand_hub_08",
+      "position": {
+        "mapId": 530,
+        "x": -2264.14,
+        "y": 6217.8,
+        "z": 44.475
+      },
+      "questGivers": [
+        18261
+      ],
+      "levelRange": {
+        "min": 64,
+        "max": 66,
+        "avg": 66
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "nagrand_hub_20",
+          "zoneId": 3518,
+          "zoneName": "Nagrand",
+          "questGivers": [
+            18063,
+            18090,
+            18106,
+            18234,
+            18300,
+            18301,
+            18407,
+            19133
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -1357.49,
+            "y": 7232.74,
+            "z": 33.091
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "nagrand_hub_09",
+      "position": {
+        "mapId": 530,
+        "x": -2210.08,
+        "y": 8820.06,
+        "z": 16.32
+      },
+      "questGivers": [
+        18687
+      ],
+      "levelRange": {
+        "min": 66,
+        "max": 68,
+        "avg": 68
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:18043:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2183.19,
+            "y": 8826.94,
+            "z": 14.21
+          },
+          "radius": 127.9,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18043
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18840:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1541.78,
+            "y": 8516.86,
+            "z": 0.32
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18840
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "nagrand_hub_01",
+          "zoneId": 3518,
+          "zoneName": "Nagrand",
+          "questGivers": [
+            17545
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -2825.48,
+            "y": 8335.65,
+            "z": -91.106
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "nagrand_hub_24",
+          "zoneId": 3518,
+          "zoneName": "Nagrand",
+          "questGivers": [
+            18141,
+            18302
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -1222.05,
+            "y": 7162.91,
+            "z": 57.389
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "nagrand_hub_10",
+      "position": {
+        "mapId": 530,
+        "x": -2078.84,
+        "y": 8566.2,
+        "z": 21.998
+      },
+      "questGivers": [
+        18265,
+        18276,
+        18333
+      ],
+      "levelRange": {
+        "min": 64,
+        "max": 67,
+        "avg": 66
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:25463:map:530:cluster:10",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2213.04,
+            "y": 8684.12,
+            "z": -3.18
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            18334
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:25416:map:530:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2275.42,
+            "y": 8393.51,
+            "z": -33.16
+          },
+          "radius": 85.63,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            17149
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:25463:map:530:cluster:9",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2235.51,
+            "y": 8269.06,
+            "z": -10.25
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            18334
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:25416:map:530:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2427.87,
+            "y": 8254.22,
+            "z": -38.6
+          },
+          "radius": 65.48,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            17149
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:25433:map:530:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2031.73,
+            "y": 7486.45,
+            "z": -96.15
+          },
+          "radius": 196.66,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            17134,
+            17135,
+            17136,
+            17137,
+            17138,
+            18037
+          ],
+          "targetCount": 12
+        },
+        {
+          "taskAreaId": "creature:18298:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2664.54,
+            "y": 7954.71,
+            "z": -18.74
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18298
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "nagrand_hub_11",
+      "position": {
+        "mapId": 530,
+        "x": -2052.09,
+        "y": 7432.76,
+        "z": -24.965
+      },
+      "questGivers": [
+        19844
+      ],
+      "levelRange": {
+        "min": 64,
+        "max": 67,
+        "avg": 67
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:28668:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2893.61,
+            "y": 8029.39,
+            "z": -23.0
+          },
+          "radius": 56.74,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17133
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:28668:map:530:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2275.55,
+            "y": 8536.59,
+            "z": -22.56
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17133
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:28665:map:530:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -1800.63,
+            "y": 8785.26,
+            "z": 31.37
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19201
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:28665:map:530:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -1882.31,
+            "y": 8993.66,
+            "z": 38.4
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19201
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "nagrand_hub_12",
+      "position": {
+        "mapId": 530,
+        "x": -1733.15,
+        "y": 5565.36,
+        "z": -39.762
+      },
+      "questGivers": [
+        19720
+      ],
+      "levelRange": {
+        "min": 64,
+        "max": 67,
+        "avg": 67
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "nagrand_hub_11",
+          "zoneId": 3518,
+          "zoneName": "Nagrand",
+          "questGivers": [
+            19844
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -2052.09,
+            "y": 7432.76,
+            "z": -24.965
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "nagrand_hub_13",
+      "position": {
+        "mapId": 530,
+        "x": -1591.18,
+        "y": 8020.39,
+        "z": -22.204
+      },
+      "questGivers": [
+        18817
+      ],
+      "levelRange": {
+        "min": 64,
+        "max": 67,
+        "avg": 67
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:26043:map:530:cluster:28",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -1869.79,
+            "y": 8125.31,
+            "z": -23.59
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            16945,
+            17128,
+            17129,
+            17130,
+            17131,
+            17132
+          ],
+          "targetCount": 43
+        },
+        {
+          "taskAreaId": "item_source:26043:map:530:cluster:27",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -1958.08,
+            "y": 8120.26,
+            "z": -10.26
+          },
+          "radius": 184.97,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            16945,
+            17128,
+            17129,
+            17130,
+            17131,
+            17132
+          ],
+          "targetCount": 43
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "nagrand_hub_14",
+      "position": {
+        "mapId": 530,
+        "x": -1583.63,
+        "y": 8564.92,
+        "z": 2.084
+      },
+      "questGivers": [
+        18210
+      ],
+      "levelRange": {
+        "min": 64,
+        "max": 67,
+        "avg": 67
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "nagrand_hub_20",
+          "zoneId": 3518,
+          "zoneName": "Nagrand",
+          "questGivers": [
+            18063,
+            18090,
+            18106,
+            18234,
+            18300,
+            18301,
+            18407,
+            19133
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -1357.49,
+            "y": 7232.74,
+            "z": 33.091
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "nagrand_hub_15",
+      "position": {
+        "mapId": 530,
+        "x": -1545.36,
+        "y": 8785.48,
+        "z": 35.268
+      },
+      "questGivers": [
+        18417
+      ],
+      "levelRange": {
+        "min": 66,
+        "max": 70,
+        "avg": 69
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 12,
+      "estimatedMinutes": 60,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:25751:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -1812.27,
+            "y": 9327.11,
+            "z": 66.03
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            18567
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17151:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1518.37,
+            "y": 9092.61,
+            "z": 84.25
+          },
+          "radius": 42.43,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17151
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17152:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1518.92,
+            "y": 9109.22,
+            "z": 88.02
+          },
+          "radius": 55.22,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17152
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:21925:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1724.29,
+            "y": 9213.63,
+            "z": 82.56
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            21925
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17152:map:530:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1827.95,
+            "y": 9165.55,
+            "z": 72.62
+          },
+          "radius": 75.91,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17152
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19210:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1828.37,
+            "y": 9225.47,
+            "z": 72.93
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19210
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "nagrand_hub_16",
+      "position": {
+        "mapId": 530,
+        "x": -1523.92,
+        "y": 7951.76,
+        "z": -17.694
+      },
+      "questGivers": [
+        18816
+      ],
+      "levelRange": {
+        "min": 64,
+        "max": 67,
+        "avg": 67
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:26042:map:530:cluster:28",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -1869.79,
+            "y": 8125.31,
+            "z": -23.59
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            16945,
+            17128,
+            17129,
+            17130,
+            17131,
+            17132
+          ],
+          "targetCount": 45
+        },
+        {
+          "taskAreaId": "item_source:26042:map:530:cluster:29",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -1746.02,
+            "y": 7610.45,
+            "z": -10.65
+          },
+          "radius": 180.12,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            16945,
+            17128,
+            17129,
+            17130,
+            17131,
+            17132
+          ],
+          "targetCount": 45
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "nagrand_hub_17",
+      "position": {
+        "mapId": 530,
+        "x": -1516.63,
+        "y": 8462.39,
+        "z": -4.019
+      },
+      "questGivers": [
+        18209
+      ],
+      "levelRange": {
+        "min": 64,
+        "max": 67,
+        "avg": 67
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "nagrand_hub_18",
+      "position": {
+        "mapId": 530,
+        "x": -1455.767,
+        "y": 6345.983,
+        "z": 37.332
+      },
+      "questGivers": [
+        18180,
+        18200,
+        18218
+      ],
+      "levelRange": {
+        "min": 64,
+        "max": 68,
+        "avg": 66
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 10,
+      "estimatedMinutes": 50,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:17131:map:530:cluster:10",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1625.16,
+            "y": 7117.1,
+            "z": 2.98
+          },
+          "radius": 186.41,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17131
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17132:map:530:cluster:10",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1606.12,
+            "y": 7143.8,
+            "z": 5.07
+          },
+          "radius": 118.43,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17132
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17128:map:530:cluster:10",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1787.64,
+            "y": 7092.33,
+            "z": -19.19
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17128
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18205:map:530:cluster:12",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1801.26,
+            "y": 7089.44,
+            "z": -21.9
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18205
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17131:map:530:cluster:11",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1536.32,
+            "y": 7303.5,
+            "z": 3.11
+          },
+          "radius": 66.25,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17131
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17128:map:530:cluster:8",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1944.64,
+            "y": 7177.97,
+            "z": -100.05
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17128
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "nagrand_hub_19",
+      "position": {
+        "mapId": 530,
+        "x": -1422.333,
+        "y": 7273.51,
+        "z": 25.516
+      },
+      "questGivers": [
+        18066,
+        18067,
+        18068
+      ],
+      "levelRange": {
+        "min": 64,
+        "max": 67,
+        "avg": 67
+      },
+      "faction": "Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:24542:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -1564.69,
+            "y": 8519.42,
+            "z": -3.87
+          },
+          "radius": 187.47,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18202,
+            18203,
+            18204,
+            18207,
+            18211,
+            18238
+          ],
+          "targetCount": 6
+        },
+        {
+          "taskAreaId": "item_source:24543:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -1518.47,
+            "y": 8591.76,
+            "z": 7.34
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18204
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:24542:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -1918.63,
+            "y": 8724.41,
+            "z": 24.39
+          },
+          "radius": 45.02,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18202,
+            18203,
+            18204,
+            18207,
+            18211,
+            18238
+          ],
+          "targetCount": 6
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "nagrand_hub_21",
+          "zoneId": 3518,
+          "zoneName": "Nagrand",
+          "questGivers": [
+            18229,
+            18414,
+            18415
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -1291.87,
+            "y": 8507.99,
+            "z": 16.08
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "nagrand_hub_20",
+      "position": {
+        "mapId": 530,
+        "x": -1337.799,
+        "y": 7230.4,
+        "z": 34.238
+      },
+      "questGivers": [
+        18063,
+        18090,
+        18106,
+        18234,
+        18300,
+        18301,
+        18407,
+        19133
+      ],
+      "levelRange": {
+        "min": 64,
+        "max": 68,
+        "avg": 66
+      },
+      "faction": "Horde",
+      "totalQuests": 15,
+      "estimatedMinutes": 75,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:25433:map:530:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2031.73,
+            "y": 7486.45,
+            "z": -96.15
+          },
+          "radius": 196.66,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            17134,
+            17135,
+            17136,
+            17137,
+            17138,
+            18037
+          ],
+          "targetCount": 12
+        },
+        {
+          "taskAreaId": "creature:17136:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2017.53,
+            "y": 7503.95,
+            "z": -94.66
+          },
+          "radius": 185.55,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17136
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17137:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2044.91,
+            "y": 7470.19,
+            "z": -97.54
+          },
+          "radius": 196.45,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17137
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18411:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2228.97,
+            "y": 8474.81,
+            "z": -21.29
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18411
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "nagrand_hub_24",
+          "zoneId": 3518,
+          "zoneName": "Nagrand",
+          "questGivers": [
+            18141,
+            18302
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -1222.05,
+            "y": 7162.91,
+            "z": 57.389
+          },
+          "weight": 2
+        },
+        {
+          "hubId": "nagrand_hub_08",
+          "zoneId": 3518,
+          "zoneName": "Nagrand",
+          "questGivers": [
+            18261
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -2264.14,
+            "y": 6217.8,
+            "z": 44.475
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "nagrand_hub_15",
+          "zoneId": 3518,
+          "zoneName": "Nagrand",
+          "questGivers": [
+            18417
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -1545.36,
+            "y": 8785.48,
+            "z": 35.268
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "nagrand_hub_21",
+      "position": {
+        "mapId": 530,
+        "x": -1288.987,
+        "y": 8507.44,
+        "z": 16.621
+      },
+      "questGivers": [
+        18229,
+        18414,
+        18415
+      ],
+      "levelRange": {
+        "min": 64,
+        "max": 67,
+        "avg": 67
+      },
+      "faction": "Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:18207:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1470.51,
+            "y": 8410.75,
+            "z": 0.27
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18207
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18207:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1554.72,
+            "y": 8511.84,
+            "z": -3.04
+          },
+          "radius": 175.2,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18207
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18203:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1556.12,
+            "y": 8537.08,
+            "z": -2.09
+          },
+          "radius": 168.76,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18203
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "nagrand_hub_22",
+      "position": {
+        "mapId": 530,
+        "x": -1249.43,
+        "y": 6236.28,
+        "z": 52.67
+      },
+      "questGivers": [
+        18294
+      ],
+      "levelRange": {
+        "min": 64,
+        "max": 65,
+        "avg": 65
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "nagrand_hub_23",
+      "position": {
+        "mapId": 530,
+        "x": -1239.51,
+        "y": 7425.82,
+        "z": 23.582
+      },
+      "questGivers": [
+        18335
+      ],
+      "levelRange": {
+        "min": 64,
+        "max": 66,
+        "avg": 66
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "nagrand_hub_24",
+      "position": {
+        "mapId": 530,
+        "x": -1217.955,
+        "y": 7160.875,
+        "z": 57.389
+      },
+      "questGivers": [
+        18141,
+        18302
+      ],
+      "levelRange": {
+        "min": 65,
+        "max": 68,
+        "avg": 68
+      },
+      "faction": "Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "nagrand_hub_09",
+          "zoneId": 3518,
+          "zoneName": "Nagrand",
+          "questGivers": [
+            18687
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -2210.08,
+            "y": 8820.06,
+            "z": 16.32
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "nagrand_hub_20",
+          "zoneId": 3518,
+          "zoneName": "Nagrand",
+          "questGivers": [
+            18063,
+            18090,
+            18106,
+            18234,
+            18300,
+            18301,
+            18407,
+            19133
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -1357.49,
+            "y": 7232.74,
+            "z": 33.091
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "nagrand_hub_21",
+          "zoneId": 3518,
+          "zoneName": "Nagrand",
+          "questGivers": [
+            18229,
+            18414,
+            18415
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -1291.87,
+            "y": 8507.99,
+            "z": 16.08
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "nagrand_hub_25",
+      "position": {
+        "mapId": 530,
+        "x": -918.143,
+        "y": 8663.94,
+        "z": 172.542
+      },
+      "questGivers": [
+        18445
+      ],
+      "levelRange": {
+        "min": 65,
+        "max": 67,
+        "avg": 67
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "nagrand_hub_26",
+      "position": {
+        "mapId": 530,
+        "x": -872.607,
+        "y": 6907.52,
+        "z": 33.855
+      },
+      "questGivers": [
+        18099
+      ],
+      "levelRange": {
+        "min": 64,
+        "max": 67,
+        "avg": 66
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:24473:map:530:cluster:14",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -1469.51,
+            "y": 7711.65,
+            "z": -15.01
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18062
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:24473:map:530:cluster:13",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2363.32,
+            "y": 7202.16,
+            "z": -153.61
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18062
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17156:map:530:cluster:7",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2412.1,
+            "y": 7391.13,
+            "z": -168.62
+          },
+          "radius": 101.27,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17156
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18181:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2692.18,
+            "y": 7620.5,
+            "z": 9.29
+          },
+          "radius": 46.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18181
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "nagrand_hub_27",
+      "position": {
+        "mapId": 530,
+        "x": -785.903,
+        "y": 6944.753,
+        "z": 32.322
+      },
+      "questGivers": [
+        18071,
+        18073,
+        18074
+      ],
+      "levelRange": {
+        "min": 64,
+        "max": 67,
+        "avg": 66
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:17155:map:530:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1640.27,
+            "y": 8327.07,
+            "z": -40.01
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17155
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18202:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1639.99,
+            "y": 8485.79,
+            "z": -16.25
+          },
+          "radius": 130.81,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18202
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18145:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1831.78,
+            "y": 8471.38,
+            "z": -69.44
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18145
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17155:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1782.8,
+            "y": 8591.59,
+            "z": -31.68
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17155
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "nagrand_hub_26",
+          "zoneId": 3518,
+          "zoneName": "Nagrand",
+          "questGivers": [
+            18099
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -872.607,
+            "y": 6907.52,
+            "z": 33.855
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "nagrand_hub_28",
+      "position": {
+        "mapId": 530,
+        "x": -721.847,
+        "y": 7932.32,
+        "z": 58.988
+      },
+      "questGivers": [
+        18471
+      ],
+      "levelRange": {
+        "min": 65,
+        "max": 68,
+        "avg": 67
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

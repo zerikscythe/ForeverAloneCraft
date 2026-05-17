@@ -1,0 +1,1169 @@
+{
+  "version": 1,
+  "zoneId": 405,
+  "zoneName": "Desolace",
+  "mapId": 1,
+  "hubCount": 22,
+  "hubs": [
+    {
+      "hubId": "desolace_hub_01",
+      "position": {
+        "mapId": 1,
+        "x": -2145.71,
+        "y": 1966.42,
+        "z": 84.592
+      },
+      "questGivers": [
+        13717
+      ],
+      "levelRange": {
+        "min": 39,
+        "max": 48,
+        "avg": 48
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "desolace_hub_02",
+      "position": {
+        "mapId": 1,
+        "x": -1923.64,
+        "y": 2604.98,
+        "z": 64.889
+      },
+      "questGivers": [
+        5397
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 42,
+        "avg": 37
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:6072:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -1958.45,
+            "y": 1268.37,
+            "z": 91.69
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5601
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:6079:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -1111.87,
+            "y": 1151.47,
+            "z": 92.02
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4632,
+            4633,
+            4634,
+            4635,
+            4636,
+            4637
+          ],
+          "targetCount": 8
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "desolace_hub_03",
+      "position": {
+        "mapId": 1,
+        "x": -1876.34,
+        "y": 3025.16,
+        "z": 19.346
+      },
+      "questGivers": [
+        13699
+      ],
+      "levelRange": {
+        "min": 45,
+        "max": 51,
+        "avg": 51
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "desolace_hub_05",
+      "position": {
+        "mapId": 1,
+        "x": -1714.58,
+        "y": 3107.18,
+        "z": 33.583
+      },
+      "questGivers": [
+        11877
+      ],
+      "levelRange": {
+        "min": 28,
+        "max": 31,
+        "avg": 31
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "desolace_hub_04",
+      "position": {
+        "mapId": 1,
+        "x": -1708.58,
+        "y": 3203.41,
+        "z": 15.524
+      },
+      "questGivers": [
+        11317,
+        11823,
+        12031,
+        12340
+      ],
+      "levelRange": {
+        "min": 25,
+        "max": 47,
+        "avg": 36
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:13545:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -1678.05,
+            "y": 3334.33,
+            "z": -45.94
+          },
+          "radius": 73.2,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11562,
+            11563
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:15924:map:1:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -1678.05,
+            "y": 3334.33,
+            "z": -45.94
+          },
+          "radius": 73.2,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4687,
+            11562,
+            12347
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:13545:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -1865.8,
+            "y": 3405.43,
+            "z": -54.67
+          },
+          "radius": 196.93,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11562,
+            11563
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:15924:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -1961.05,
+            "y": 3143.39,
+            "z": -19.77
+          },
+          "radius": 192.35,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4687,
+            11562,
+            12347
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "creature:4711:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -265.15,
+            "y": 2761.62,
+            "z": -5.19
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4711
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4711:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -252.48,
+            "y": 2585.76,
+            "z": -18.25
+          },
+          "radius": 180.06,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4711
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "desolace_hub_06",
+      "position": {
+        "mapId": 1,
+        "x": -1620.605,
+        "y": 3074.41,
+        "z": 39.656
+      },
+      "questGivers": [
+        10182,
+        11624
+      ],
+      "levelRange": {
+        "min": 32,
+        "max": 60,
+        "avg": 49
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "desolace_hub_07",
+      "position": {
+        "mapId": 1,
+        "x": -1591.24,
+        "y": 862.924,
+        "z": 113.729
+      },
+      "questGivers": [
+        5398
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 42,
+        "avg": 36
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:4632:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -1111.87,
+            "y": 1151.47,
+            "z": 92.02
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4632
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4633:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -1005.0,
+            "y": 1106.67,
+            "z": 89.47
+          },
+          "radius": 130.06,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4633
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4634:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -893.38,
+            "y": 990.6,
+            "z": 90.48
+          },
+          "radius": 215.62,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4634
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4632:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -912.37,
+            "y": 1121.23,
+            "z": 90.42
+          },
+          "radius": 199.45,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4632
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4633:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -916.77,
+            "y": 1148.21,
+            "z": 92.46
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4633
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:6073:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -2410.73,
+            "y": 2412.8,
+            "z": 75.42
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5602
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "desolace_hub_08",
+      "position": {
+        "mapId": 1,
+        "x": -1458.87,
+        "y": 2797.62,
+        "z": 93.817
+      },
+      "questGivers": [
+        13697
+      ],
+      "levelRange": {
+        "min": 41,
+        "max": 49,
+        "avg": 49
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "desolace_hub_09",
+      "position": {
+        "mapId": 1,
+        "x": -1402.43,
+        "y": 1497.07,
+        "z": 61.373
+      },
+      "questGivers": [
+        11596
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 34,
+        "avg": 34
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "desolace_hub_10",
+      "position": {
+        "mapId": 1,
+        "x": -1401.4,
+        "y": 2082.97,
+        "z": 61.939
+      },
+      "questGivers": [
+        6019
+      ],
+      "levelRange": {
+        "min": 34,
+        "max": 39,
+        "avg": 39
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "desolace_hub_11",
+      "position": {
+        "mapId": 1,
+        "x": -1335.36,
+        "y": 1704.765,
+        "z": 89.986
+      },
+      "questGivers": [
+        5395,
+        5412
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 35,
+        "avg": 33
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:6067:map:1:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -1675.92,
+            "y": 1256.18,
+            "z": 90.89
+          },
+          "radius": 145.41,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4632,
+            4633,
+            4634,
+            4635,
+            4636,
+            4637
+          ],
+          "targetCount": 37
+        },
+        {
+          "taskAreaId": "item_source:6067:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -1111.87,
+            "y": 1151.47,
+            "z": 92.02
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4632,
+            4633,
+            4634,
+            4635,
+            4636,
+            4637
+          ],
+          "targetCount": 37
+        },
+        {
+          "taskAreaId": "item_source:6066:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -795.57,
+            "y": 934.17,
+            "z": 90.58
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5600
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "desolace_hub_02",
+          "zoneId": 405,
+          "zoneName": "Desolace",
+          "questGivers": [
+            5397
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -1923.64,
+            "y": 2604.98,
+            "z": 64.889
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "desolace_hub_07",
+          "zoneId": 405,
+          "zoneName": "Desolace",
+          "questGivers": [
+            5398
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -1591.24,
+            "y": 862.924,
+            "z": 113.729
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "desolace_hub_12",
+      "position": {
+        "mapId": 1,
+        "x": -1290.56,
+        "y": 1230.96,
+        "z": 109.39
+      },
+      "questGivers": [
+        11625
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 35,
+        "avg": 35
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "desolace_hub_13",
+      "position": {
+        "mapId": 1,
+        "x": -1221.01,
+        "y": 1742.1,
+        "z": 90.714
+      },
+      "questGivers": [
+        11259
+      ],
+      "levelRange": {
+        "min": 32,
+        "max": 37,
+        "avg": 37
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "desolace_hub_14",
+      "position": {
+        "mapId": 1,
+        "x": -1151.77,
+        "y": 2707.09,
+        "z": 111.197
+      },
+      "questGivers": [
+        12277
+      ],
+      "levelRange": {
+        "min": 34,
+        "max": 39,
+        "avg": 39
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "desolace_hub_15",
+      "position": {
+        "mapId": 1,
+        "x": -1150.1,
+        "y": 1884.43,
+        "z": 88.969
+      },
+      "questGivers": [
+        4498
+      ],
+      "levelRange": {
+        "min": 25,
+        "max": 35,
+        "avg": 34
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:6442:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -210.94,
+            "y": 2751.28,
+            "z": -1.84
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4718
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:6441:map:1:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -295.91,
+            "y": 801.73,
+            "z": 93.21
+          },
+          "radius": 154.35,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4674
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:6441:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -15.01,
+            "y": 1081.08,
+            "z": 113.58
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4674
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:6442:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -15.59,
+            "y": 2814.09,
+            "z": -30.86
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4718
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "desolace_hub_16",
+      "position": {
+        "mapId": 1,
+        "x": -726.265,
+        "y": 1434.185,
+        "z": 90.887
+      },
+      "questGivers": [
+        11438,
+        13656
+      ],
+      "levelRange": {
+        "min": 29,
+        "max": 47,
+        "avg": 40
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:17684:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -1359.63,
+            "y": 2624.12,
+            "z": 79.34
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11688,
+            11790,
+            11791,
+            11792,
+            11793,
+            11794
+          ],
+          "targetCount": 37
+        },
+        {
+          "taskAreaId": "item_source:17684:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -1350.19,
+            "y": 2910.62,
+            "z": 86.99
+          },
+          "radius": 130.68,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11688,
+            11790,
+            11791,
+            11792,
+            11793,
+            11794
+          ],
+          "targetCount": 37
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "desolace_hub_17",
+      "position": {
+        "mapId": 1,
+        "x": -362.255,
+        "y": 2485.14,
+        "z": 75.496
+      },
+      "questGivers": [
+        11863
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 38,
+        "avg": 36
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:15750:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -451.79,
+            "y": 1753.09,
+            "z": 153.57
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            13019
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "desolace_hub_18",
+      "position": {
+        "mapId": 1,
+        "x": -331.142,
+        "y": 1766.99,
+        "z": 139.6
+      },
+      "questGivers": [
+        5644
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 33,
+        "avg": 33
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:6767:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -419.61,
+            "y": 1850.15,
+            "z": 128.49
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5643
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "desolace_hub_20",
+      "position": {
+        "mapId": 1,
+        "x": 132.224,
+        "y": 1363.84,
+        "z": 199.158
+      },
+      "questGivers": [
+        13698
+      ],
+      "levelRange": {
+        "min": 45,
+        "max": 51,
+        "avg": 51
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "desolace_hub_19",
+      "position": {
+        "mapId": 1,
+        "x": 145.375,
+        "y": 1242.974,
+        "z": 170.925
+      },
+      "questGivers": [
+        1182,
+        5396,
+        5638,
+        5642,
+        5752
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 40,
+        "avg": 36
+      },
+      "faction": "Alliance",
+      "totalQuests": 14,
+      "estimatedMinutes": 70,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:6245:map:1:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -50.58,
+            "y": 2661.28,
+            "z": -103.42
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            4716,
+            4719
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:6245:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 157.62,
+            "y": 2844.0,
+            "z": -23.71
+          },
+          "radius": 202.49,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            4716,
+            4719
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:6246:map:1:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -46.98,
+            "y": 1044.72,
+            "z": 99.75
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4670,
+            4671,
+            4672,
+            4673,
+            4674,
+            4675
+          ],
+          "targetCount": 7
+        },
+        {
+          "taskAreaId": "item_source:6247:map:1:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -46.98,
+            "y": 1044.72,
+            "z": 99.75
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4670,
+            4671,
+            4672,
+            4673,
+            4674,
+            4675
+          ],
+          "targetCount": 7
+        },
+        {
+          "taskAreaId": "item_source:6246:map:1:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -88.87,
+            "y": 955.54,
+            "z": 91.94
+          },
+          "radius": 78.07,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4670,
+            4671,
+            4672,
+            4673,
+            4674,
+            4675
+          ],
+          "targetCount": 7
+        },
+        {
+          "taskAreaId": "item_source:6247:map:1:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -88.87,
+            "y": 955.54,
+            "z": 91.94
+          },
+          "radius": 78.07,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4670,
+            4671,
+            4672,
+            4673,
+            4674,
+            4675
+          ],
+          "targetCount": 7
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "desolace_hub_02",
+          "zoneId": 405,
+          "zoneName": "Desolace",
+          "questGivers": [
+            5397
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -1923.64,
+            "y": 2604.98,
+            "z": 64.889
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "desolace_hub_07",
+          "zoneId": 405,
+          "zoneName": "Desolace",
+          "questGivers": [
+            5398
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -1591.24,
+            "y": 862.924,
+            "z": 113.729
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "desolace_hub_18",
+          "zoneId": 405,
+          "zoneName": "Desolace",
+          "questGivers": [
+            5644
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -331.142,
+            "y": 1766.99,
+            "z": 139.6
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "desolace_hub_21",
+      "position": {
+        "mapId": 1,
+        "x": 185.94,
+        "y": 1153.64,
+        "z": 168.344
+      },
+      "questGivers": [
+        11715
+      ],
+      "levelRange": {
+        "min": 41,
+        "max": 47,
+        "avg": 47
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "desolace_hub_22",
+      "position": {
+        "mapId": 1,
+        "x": 1934.06,
+        "y": -4162.26,
+        "z": 41.239
+      },
+      "questGivers": [
+        10540
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 32,
+        "avg": 32
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

@@ -1,0 +1,457 @@
+{
+  "version": 1,
+  "zoneId": 36,
+  "zoneName": "Alterac Mountains",
+  "mapId": 0,
+  "hubCount": 11,
+  "hubs": [
+    {
+      "hubId": "alterac_mountains_hub_01",
+      "position": {
+        "mapId": 0,
+        "x": -843.952,
+        "y": -513.929,
+        "z": 13.648
+      },
+      "questGivers": [
+        2263,
+        2276,
+        2277
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 40,
+        "avg": 37
+      },
+      "faction": "Alliance",
+      "totalQuests": 11,
+      "estimatedMinutes": 55,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:2241:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -28.77,
+            "y": -554.88,
+            "z": 151.24
+          },
+          "radius": 70.24,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2241
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:2240:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -17.76,
+            "y": -557.5,
+            "z": 150.3
+          },
+          "radius": 74.82,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2240
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:2241:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 213.58,
+            "y": -852.22,
+            "z": 152.14
+          },
+          "radius": 58.87,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2241
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:3505:map:0:cluster:7",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 244.01,
+            "y": -844.85,
+            "z": 147.23
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2242,
+            2243,
+            2245,
+            2246,
+            2247,
+            2319
+          ],
+          "targetCount": 7
+        },
+        {
+          "taskAreaId": "creature:2240:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 246.05,
+            "y": -846.64,
+            "z": 146.84
+          },
+          "radius": 87.92,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2240
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:2843:map:0:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 484.36,
+            "y": -750.29,
+            "z": 150.84
+          },
+          "radius": 64.46,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2252,
+            2253,
+            2254,
+            2255,
+            2256,
+            2287
+          ],
+          "targetCount": 7
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "alterac_mountains_hub_03",
+      "position": {
+        "mapId": 0,
+        "x": -7.768,
+        "y": -916.058,
+        "z": 57.365
+      },
+      "questGivers": [
+        2391,
+        2393
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 31,
+        "avg": 31
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:3712:map:0:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 46.14,
+            "y": -1125.13,
+            "z": 35.67
+          },
+          "radius": 101.86,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2408,
+            2505,
+            4142,
+            4143,
+            4144,
+            4396
+          ],
+          "targetCount": 23
+        },
+        {
+          "taskAreaId": "item_source:3712:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -184.33,
+            "y": -1111.15,
+            "z": 35.59
+          },
+          "radius": 134.07,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2408,
+            2505,
+            4142,
+            4143,
+            4144,
+            4396
+          ],
+          "targetCount": 23
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "alterac_mountains_hub_02",
+      "position": {
+        "mapId": 0,
+        "x": -0.708,
+        "y": -338.297,
+        "z": 131.19
+      },
+      "questGivers": [
+        13816,
+        13841
+      ],
+      "levelRange": {
+        "min": 50,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance",
+      "totalQuests": 10,
+      "estimatedMinutes": 50,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "alterac_mountains_hub_04",
+      "position": {
+        "mapId": 0,
+        "x": 19.24,
+        "y": -1598.688,
+        "z": 197.748
+      },
+      "questGivers": [
+        6707,
+        6766,
+        6768
+      ],
+      "levelRange": {
+        "min": 24,
+        "max": 60,
+        "avg": 59
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "alterac_mountains_hub_05",
+      "position": {
+        "mapId": 0,
+        "x": 59.102,
+        "y": -246.024,
+        "z": 129.419
+      },
+      "questGivers": [
+        13777
+      ],
+      "levelRange": {
+        "min": 51,
+        "max": 51,
+        "avg": 51
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "alterac_mountains_hub_06",
+      "position": {
+        "mapId": 0,
+        "x": 202.499,
+        "y": -817.333,
+        "z": 151.174
+      },
+      "questGivers": [
+        2333
+      ],
+      "levelRange": {
+        "min": 29,
+        "max": 34,
+        "avg": 34
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:3703:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 221.59,
+            "y": -868.2,
+            "z": 152.61
+          },
+          "radius": 60.42,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2440
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "alterac_mountains_hub_07",
+      "position": {
+        "mapId": 0,
+        "x": 250.84,
+        "y": -1470.58,
+        "z": 55.449
+      },
+      "questGivers": [
+        6176
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 52,
+        "avg": 45
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:3357:map:0:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 888.14,
+            "y": -121.85,
+            "z": 38.49
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            764,
+            765,
+            1812,
+            1813,
+            2604,
+            3637
+          ],
+          "targetCount": 142
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "alterac_mountains_hub_08",
+      "position": {
+        "mapId": 0,
+        "x": 386.005,
+        "y": -982.123,
+        "z": 109.922
+      },
+      "questGivers": [
+        13817,
+        13840
+      ],
+      "levelRange": {
+        "min": 51,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Horde",
+      "totalQuests": 10,
+      "estimatedMinutes": 50,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "alterac_mountains_hub_09",
+      "position": {
+        "mapId": 0,
+        "x": 470.819,
+        "y": -1052.1,
+        "z": 108.386
+      },
+      "questGivers": [
+        13776
+      ],
+      "levelRange": {
+        "min": 51,
+        "max": 51,
+        "avg": 51
+      },
+      "faction": "Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "alterac_mountains_hub_10",
+      "position": {
+        "mapId": 0,
+        "x": 481.18,
+        "y": 346.337,
+        "z": 38.915
+      },
+      "questGivers": [
+        18165
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "alterac_mountains_hub_11",
+      "position": {
+        "mapId": 0,
+        "x": 979.659,
+        "y": -1821.63,
+        "z": 80.487
+      },
+      "questGivers": [
+        1854
+      ],
+      "levelRange": {
+        "min": 50,
+        "max": 52,
+        "avg": 52
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

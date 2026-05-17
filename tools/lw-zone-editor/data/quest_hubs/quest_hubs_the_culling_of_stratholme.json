@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "zoneId": 4100,
+  "zoneName": "The Culling of Stratholme",
+  "mapId": 595,
+  "hubCount": 1,
+  "hubs": [
+    {
+      "hubId": "the_culling_of_stratholme_hub_01",
+      "position": {
+        "mapId": 595,
+        "x": 1550.08,
+        "y": 574.412,
+        "z": 92.79
+      },
+      "questGivers": [
+        26527
+      ],
+      "levelRange": {
+        "min": 78,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:30996:map:595:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 595,
+            "x": 1602.25,
+            "y": 708.72,
+            "z": 108.89
+          },
+          "radius": 141.82,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30996
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:30996:map:595:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 595,
+            "x": 1674.39,
+            "y": 872.31,
+            "z": 120.39
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            30996
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    }
+  ]
+}

@@ -1,0 +1,1642 @@
+{
+  "version": 1,
+  "zoneId": 3523,
+  "zoneName": "Netherstorm",
+  "mapId": 530,
+  "hubCount": 26,
+  "hubs": [
+    {
+      "hubId": "netherstorm_hub_01",
+      "position": {
+        "mapId": 530,
+        "x": 2237.67,
+        "y": 2793.89,
+        "z": 128.813
+      },
+      "questGivers": [
+        19840
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 69,
+        "avg": 68
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:28637:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2334.53,
+            "y": 2791.84,
+            "z": 133.17
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18850,
+            20135
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:28636:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2413.01,
+            "y": 2774.3,
+            "z": 133.95
+          },
+          "radius": 78.48,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20136
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:29396:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2426.77,
+            "y": 2750.39,
+            "z": 133.24
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20397
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:28636:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2319.61,
+            "y": 2488.8,
+            "z": 125.94
+          },
+          "radius": 199.72,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20136
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "netherstorm_hub_09",
+          "zoneId": 3523,
+          "zoneName": "Netherstorm",
+          "questGivers": [
+            19466,
+            19467,
+            19468,
+            19469,
+            19570,
+            19617,
+            19645,
+            19880,
+            20162
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 3041.8,
+            "y": 3658.85,
+            "z": 143.406
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "netherstorm_hub_02",
+      "position": {
+        "mapId": 530,
+        "x": 2266.084,
+        "y": 2262.516,
+        "z": 104.342
+      },
+      "questGivers": [
+        19481,
+        19488,
+        19489,
+        20463,
+        20464
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 70,
+        "avg": 69
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 17,
+      "estimatedMinutes": 85,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:19866:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 2283.87,
+            "y": 2181.22,
+            "z": 92.49
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19866
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18866:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 2214.16,
+            "y": 2330.79,
+            "z": 91.54
+          },
+          "radius": 166.73,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18866
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19881:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 2212.57,
+            "y": 2169.86,
+            "z": 78.74
+          },
+          "radius": 173.5,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19881
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:19867:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 2375.25,
+            "y": 2285.94,
+            "z": 139.41
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19867
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:18867:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 2197.88,
+            "y": 2366.09,
+            "z": 93.47
+          },
+          "radius": 148.75,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18867
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:29331:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2185.22,
+            "y": 2115.88,
+            "z": 72.41
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19543
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "netherstorm_hub_03",
+      "position": {
+        "mapId": 530,
+        "x": 2528.0,
+        "y": 2185.68,
+        "z": 102.6
+      },
+      "questGivers": [
+        20415
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 69,
+        "avg": 69
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "netherstorm_hub_04",
+      "position": {
+        "mapId": 530,
+        "x": 2595.14,
+        "y": 3988.17,
+        "z": 131.618
+      },
+      "questGivers": [
+        19690
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 68,
+        "avg": 68
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "netherstorm_hub_05",
+      "position": {
+        "mapId": 530,
+        "x": 2923.39,
+        "y": 3577.39,
+        "z": 129.389
+      },
+      "questGivers": [
+        19634
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 68,
+        "avg": 68
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "netherstorm_hub_06",
+      "position": {
+        "mapId": 530,
+        "x": 2954.91,
+        "y": 1782.12,
+        "z": 139.204
+      },
+      "questGivers": [
+        22479
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 69,
+        "avg": 69
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:31815:map:530:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2911.4,
+            "y": 1858.99,
+            "z": 120.22
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18884
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:31815:map:530:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 3036.26,
+            "y": 1736.18,
+            "z": 134.43
+          },
+          "radius": 91.41,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18884
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "netherstorm_hub_07",
+      "position": {
+        "mapId": 530,
+        "x": 2974.39,
+        "y": 3675.3,
+        "z": 143.457
+      },
+      "questGivers": [
+        19709
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 68,
+        "avg": 68
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "netherstorm_hub_08",
+      "position": {
+        "mapId": 530,
+        "x": 2997.61,
+        "y": 3734.97,
+        "z": 144.078
+      },
+      "questGivers": [
+        19217
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 69,
+        "avg": 68
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "netherstorm_hub_09",
+      "position": {
+        "mapId": 530,
+        "x": 3067.643,
+        "y": 3672.111,
+        "z": 142.89
+      },
+      "questGivers": [
+        19466,
+        19467,
+        19468,
+        19469,
+        19570,
+        19617,
+        19645,
+        19880,
+        20162
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 70,
+        "avg": 69
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 40,
+      "estimatedMinutes": 200,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:29624:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 4473.89,
+            "y": 3468.09,
+            "z": 176.88
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            20800
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:29397:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 2910.09,
+            "y": 2138.74,
+            "z": 164.02
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            20435
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:29625:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 4729.85,
+            "y": 3204.72,
+            "z": 160.34
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            20801
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:28417:map:530:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 3187.84,
+            "y": 3354.89,
+            "z": 103.69
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18880
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:29464:map:530:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 3083.07,
+            "y": 3313.71,
+            "z": 109.85
+          },
+          "radius": 128.48,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20210
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:28417:map:530:cluster:12",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 3418.6,
+            "y": 3254.03,
+            "z": 95.1
+          },
+          "radius": 85.54,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18880
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "netherstorm_hub_12",
+          "zoneId": 3523,
+          "zoneName": "Netherstorm",
+          "questGivers": [
+            19728,
+            20066,
+            20810,
+            20921
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 3339.77,
+            "y": 2881.75,
+            "z": 144.381
+          },
+          "weight": 2
+        },
+        {
+          "hubId": "netherstorm_hub_01",
+          "zoneId": 3523,
+          "zoneName": "Netherstorm",
+          "questGivers": [
+            19840
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 2237.67,
+            "y": 2793.89,
+            "z": 128.813
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "netherstorm_hub_07",
+          "zoneId": 3523,
+          "zoneName": "Netherstorm",
+          "questGivers": [
+            19709
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 2974.39,
+            "y": 3675.3,
+            "z": 143.457
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "netherstorm_hub_10",
+          "zoneId": 3523,
+          "zoneName": "Netherstorm",
+          "questGivers": [
+            19832
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 3087.21,
+            "y": 3402.86,
+            "z": 105.326
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "netherstorm_hub_16",
+          "zoneId": 3523,
+          "zoneName": "Netherstorm",
+          "questGivers": [
+            20393,
+            20920
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 3885.0,
+            "y": 4013.07,
+            "z": 122.363
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "netherstorm_hub_19",
+          "zoneId": 3523,
+          "zoneName": "Netherstorm",
+          "questGivers": [
+            20112,
+            20341,
+            20780
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 4036.13,
+            "y": 3547.31,
+            "z": 121.384
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "netherstorm_hub_10",
+      "position": {
+        "mapId": 530,
+        "x": 3087.21,
+        "y": 3402.86,
+        "z": 105.326
+      },
+      "questGivers": [
+        19832
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 69,
+        "avg": 69
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "netherstorm_hub_11",
+      "position": {
+        "mapId": 530,
+        "x": 3096.17,
+        "y": 2801.15,
+        "z": 118.221
+      },
+      "questGivers": [
+        20281
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "netherstorm_hub_13",
+      "position": {
+        "mapId": 530,
+        "x": 3352.12,
+        "y": 3724.36,
+        "z": 141.454
+      },
+      "questGivers": [
+        19578,
+        19589
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 68,
+        "avg": 68
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "netherstorm_hub_12",
+      "position": {
+        "mapId": 530,
+        "x": 3357.05,
+        "y": 2887.802,
+        "z": 144.137
+      },
+      "questGivers": [
+        19728,
+        20066,
+        20810,
+        20921
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 70,
+        "avg": 69
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 12,
+      "estimatedMinutes": 60,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:20773:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 3497.04,
+            "y": 2890.73,
+            "z": 141.21
+          },
+          "radius": 111.49,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20773
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:28563:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 3330.86,
+            "y": 2657.39,
+            "z": 156.61
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            19738
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "netherstorm_hub_21",
+          "zoneId": 3523,
+          "zoneName": "Netherstorm",
+          "questGivers": [
+            20067,
+            20205,
+            20470,
+            20471,
+            20811,
+            22427
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 4090.48,
+            "y": 2988.86,
+            "z": 355.517
+          },
+          "weight": 2
+        },
+        {
+          "hubId": "netherstorm_hub_09",
+          "zoneId": 3523,
+          "zoneName": "Netherstorm",
+          "questGivers": [
+            19466,
+            19467,
+            19468,
+            19469,
+            19570,
+            19617,
+            19645,
+            19880,
+            20162
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 3041.8,
+            "y": 3658.85,
+            "z": 143.406
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "netherstorm_hub_11",
+          "zoneId": 3523,
+          "zoneName": "Netherstorm",
+          "questGivers": [
+            20281
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 3096.17,
+            "y": 2801.15,
+            "z": 118.221
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "netherstorm_hub_22",
+          "zoneId": 3523,
+          "zoneName": "Netherstorm",
+          "questGivers": [
+            20084,
+            22899
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 4107.49,
+            "y": 2930.08,
+            "z": 354.634
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "netherstorm_hub_14",
+      "position": {
+        "mapId": 530,
+        "x": 3389.06,
+        "y": 4296.1,
+        "z": 120.867
+      },
+      "questGivers": [
+        19569
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 68,
+        "avg": 68
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "netherstorm_hub_09",
+          "zoneId": 3523,
+          "zoneName": "Netherstorm",
+          "questGivers": [
+            19466,
+            19467,
+            19468,
+            19469,
+            19570,
+            19617,
+            19645,
+            19880,
+            20162
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 3041.8,
+            "y": 3658.85,
+            "z": 143.406
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "netherstorm_hub_15",
+      "position": {
+        "mapId": 530,
+        "x": 3782.49,
+        "y": 2170.66,
+        "z": 141.422
+      },
+      "questGivers": [
+        20551
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:20561:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 3857.79,
+            "y": 2098.8,
+            "z": 147.7
+          },
+          "radius": 181.46,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20561
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "netherstorm_hub_16",
+      "position": {
+        "mapId": 530,
+        "x": 3898.18,
+        "y": 4018.275,
+        "z": 156.116
+      },
+      "questGivers": [
+        20393,
+        20920
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "netherstorm_hub_09",
+          "zoneId": 3523,
+          "zoneName": "Netherstorm",
+          "questGivers": [
+            19466,
+            19467,
+            19468,
+            19469,
+            19570,
+            19617,
+            19645,
+            19880,
+            20162
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 3041.8,
+            "y": 3658.85,
+            "z": 143.406
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "netherstorm_hub_17",
+      "position": {
+        "mapId": 530,
+        "x": 3913.55,
+        "y": 2086.86,
+        "z": 138.728
+      },
+      "questGivers": [
+        20552
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:20554:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 3977.79,
+            "y": 2129.68,
+            "z": 162.23
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20554
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "netherstorm_hub_18",
+      "position": {
+        "mapId": 530,
+        "x": 4013.69,
+        "y": 1529.1,
+        "z": -113.535
+      },
+      "questGivers": [
+        20154
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "netherstorm_hub_23",
+          "zoneId": 3523,
+          "zoneName": "Netherstorm",
+          "questGivers": [
+            20110
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 4150.99,
+            "y": 1512.55,
+            "z": -108.061
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "netherstorm_hub_19",
+      "position": {
+        "mapId": 530,
+        "x": 4044.437,
+        "y": 3553.423,
+        "z": 121.405
+      },
+      "questGivers": [
+        20112,
+        20341,
+        20780
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:29026:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 4655.96,
+            "y": 2500.36,
+            "z": 242.26
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20138
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "netherstorm_hub_16",
+          "zoneId": 3523,
+          "zoneName": "Netherstorm",
+          "questGivers": [
+            20393,
+            20920
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 3885.0,
+            "y": 4013.07,
+            "z": 122.363
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "netherstorm_hub_20",
+      "position": {
+        "mapId": 530,
+        "x": 4054.57,
+        "y": 2288.79,
+        "z": 113.711
+      },
+      "questGivers": [
+        20763
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "netherstorm_hub_22",
+      "position": {
+        "mapId": 530,
+        "x": 4113.565,
+        "y": 2928.21,
+        "z": 355.15
+      },
+      "questGivers": [
+        20084,
+        22899
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "netherstorm_hub_24",
+          "zoneId": 3523,
+          "zoneName": "Netherstorm",
+          "questGivers": [
+            20071,
+            20092,
+            20448,
+            20449,
+            20450,
+            20907
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 4245.4,
+            "y": 2180.23,
+            "z": 137.783
+          },
+          "weight": 2
+        }
+      ]
+    },
+    {
+      "hubId": "netherstorm_hub_21",
+      "position": {
+        "mapId": 530,
+        "x": 4128.247,
+        "y": 3012.612,
+        "z": 340.073
+      },
+      "questGivers": [
+        20067,
+        20205,
+        20470,
+        20471,
+        20811,
+        22427
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 70,
+        "avg": 69
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 11,
+      "estimatedMinutes": 55,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:22293:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 4511.45,
+            "y": 3401.61,
+            "z": 161.8
+          },
+          "radius": 70.46,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            22293
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:22351:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 4671.05,
+            "y": 3128.65,
+            "z": 169.15
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            22351
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:29164:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 4672.65,
+            "y": 2833.64,
+            "z": 119.72
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20202
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:22350:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 4733.29,
+            "y": 3194.43,
+            "z": 163.95
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            22350
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:22348:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 4695.81,
+            "y": 3299.52,
+            "z": 181.13
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            22348
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:20473:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 4695.43,
+            "y": 2603.48,
+            "z": 209.94
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20473
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "netherstorm_hub_26",
+          "zoneId": 3523,
+          "zoneName": "Netherstorm",
+          "questGivers": [
+            20913
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 4914.74,
+            "y": 2991.92,
+            "z": 94.114
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "netherstorm_hub_23",
+      "position": {
+        "mapId": 530,
+        "x": 4150.99,
+        "y": 1512.55,
+        "z": -108.061
+      },
+      "questGivers": [
+        20110
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:20071:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 4279.62,
+            "y": 2232.24,
+            "z": 124.3
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20071
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "netherstorm_hub_25",
+      "position": {
+        "mapId": 530,
+        "x": 4245.92,
+        "y": 3124.08,
+        "z": 180.189
+      },
+      "questGivers": [
+        20871
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 69,
+        "avg": 69
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:29768:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 4400.11,
+            "y": 2999.19,
+            "z": 108.19
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20775
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:20982:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 4034.23,
+            "y": 3040.57,
+            "z": 145.78
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20982
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "netherstorm_hub_24",
+      "position": {
+        "mapId": 530,
+        "x": 4268.968,
+        "y": 2186.932,
+        "z": 133.196
+      },
+      "questGivers": [
+        20071,
+        20092,
+        20448,
+        20449,
+        20450,
+        20907
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 70,
+        "avg": 70
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 13,
+      "estimatedMinutes": 65,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:20985:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 4264.29,
+            "y": 2102.71,
+            "z": 140.84
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20985
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:20453:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 4168.37,
+            "y": 2281.63,
+            "z": 117.72
+          },
+          "radius": 113.74,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20453
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:29460:map:530:cluster:8",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 4361.1,
+            "y": 2038.16,
+            "z": 115.23
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            18309,
+            18311,
+            18312,
+            18313,
+            18315,
+            18331
+          ],
+          "targetCount": 44
+        },
+        {
+          "taskAreaId": "creature:20456:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 4129.57,
+            "y": 2295.12,
+            "z": 105.01
+          },
+          "radius": 67.81,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20456
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:20727:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 4131.08,
+            "y": 2301.65,
+            "z": 103.22
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20727
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:20452:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 4023.98,
+            "y": 2331.62,
+            "z": 113.39
+          },
+          "radius": 112.34,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20452
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "netherstorm_hub_19",
+          "zoneId": 3523,
+          "zoneName": "Netherstorm",
+          "questGivers": [
+            20112,
+            20341,
+            20780
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 4036.13,
+            "y": 3547.31,
+            "z": 121.384
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "netherstorm_hub_26",
+      "position": {
+        "mapId": 530,
+        "x": 4914.74,
+        "y": 2991.92,
+        "z": 94.114
+      },
+      "questGivers": [
+        20913
+      ],
+      "levelRange": {
+        "min": 67,
+        "max": 69,
+        "avg": 69
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:20634:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 5013.93,
+            "y": 2918.22,
+            "z": 96.67
+          },
+          "radius": 173.99,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20634
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:20634:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 5058.84,
+            "y": 2867.15,
+            "z": 73.57
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            20634
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    }
+  ]
+}

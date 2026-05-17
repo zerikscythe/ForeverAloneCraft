@@ -1,0 +1,2034 @@
+{
+  "version": 1,
+  "zoneId": 394,
+  "zoneName": "Grizzly Hills",
+  "mapId": 571,
+  "hubCount": 31,
+  "hubs": [
+    {
+      "hubId": "grizzly_hills_hub_01",
+      "position": {
+        "mapId": 571,
+        "x": 2710.95,
+        "y": -2319.22,
+        "z": 21.18
+      },
+      "questGivers": [
+        27495
+      ],
+      "levelRange": {
+        "min": 73,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "grizzly_hills_hub_02",
+      "position": {
+        "mapId": 571,
+        "x": 2834.92,
+        "y": -1697.09,
+        "z": 18.511
+      },
+      "questGivers": [
+        27565
+      ],
+      "levelRange": {
+        "min": 73,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "grizzly_hills_hub_03",
+      "position": {
+        "mapId": 571,
+        "x": 3257.428,
+        "y": -2285.142,
+        "z": 110.193
+      },
+      "questGivers": [
+        26868,
+        27037,
+        27262,
+        27266,
+        27719
+      ],
+      "levelRange": {
+        "min": 72,
+        "max": 75,
+        "avg": 74
+      },
+      "faction": "Horde",
+      "totalQuests": 19,
+      "estimatedMinutes": 95,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:37010:map:571:cluster:12",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3389.99,
+            "y": -2276.22,
+            "z": 122.79
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26592
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:37010:map:571:cluster:13",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3164.16,
+            "y": -2436.85,
+            "z": 72.73
+          },
+          "radius": 67.45,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26592
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:37185:map:571:cluster:32",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3422.58,
+            "y": -2379.36,
+            "z": 131.04
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26363
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:37185:map:571:cluster:29",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3138.55,
+            "y": -1891.2,
+            "z": 86.42
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26363
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:37020:map:571:cluster:16",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3505.43,
+            "y": -2642.98,
+            "z": 94.6
+          },
+          "radius": 83.68,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26644,
+            27131
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:37020:map:571:cluster:14",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3664.61,
+            "y": -2658.4,
+            "z": 148.48
+          },
+          "radius": 99.01,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26644,
+            27131
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "grizzly_hills_hub_09",
+          "zoneId": 394,
+          "zoneName": "Grizzly Hills",
+          "questGivers": [
+            26423,
+            26424,
+            26519,
+            26604
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3826.5,
+            "y": -1985.58,
+            "z": 208.376
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "grizzly_hills_hub_04",
+      "position": {
+        "mapId": 571,
+        "x": 3273.148,
+        "y": -2203.938,
+        "z": 117.288
+      },
+      "questGivers": [
+        26860,
+        27102,
+        27388
+      ],
+      "levelRange": {
+        "min": 73,
+        "max": 75,
+        "avg": 74
+      },
+      "faction": "Horde",
+      "totalQuests": 10,
+      "estimatedMinutes": 50,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:27377:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2966.52,
+            "y": -2530.98,
+            "z": 126.61
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27377
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27260:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2993.94,
+            "y": -2578.24,
+            "z": 91.78
+          },
+          "radius": 69.17,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27260
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27260:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 2757.06,
+            "y": -2410.56,
+            "z": 39.56
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27260
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:37229:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 2880.07,
+            "y": -2660.79,
+            "z": 87.68
+          },
+          "radius": 189.59,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27259
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:37229:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 2728.73,
+            "y": -2803.87,
+            "z": 84.6
+          },
+          "radius": 77.85,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27259
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27547:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3142.06,
+            "y": -3013.31,
+            "z": 134.29
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27547
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "grizzly_hills_hub_03",
+          "zoneId": 394,
+          "zoneName": "Grizzly Hills",
+          "questGivers": [
+            26868,
+            27037,
+            27262,
+            27266,
+            27719
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3200.55,
+            "y": -2301.47,
+            "z": 107.758
+          },
+          "weight": 2
+        },
+        {
+          "hubId": "grizzly_hills_hub_10",
+          "zoneId": 394,
+          "zoneName": "Grizzly Hills",
+          "questGivers": [
+            27581
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3836.79,
+            "y": -3421.57,
+            "z": 293.104
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "grizzly_hills_hub_05",
+      "position": {
+        "mapId": 571,
+        "x": 3386.21,
+        "y": -1805.46,
+        "z": 115.058
+      },
+      "questGivers": [
+        26500
+      ],
+      "levelRange": {
+        "min": 73,
+        "max": 75,
+        "avg": 74
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "grizzly_hills_hub_14",
+          "zoneId": 394,
+          "zoneName": "Grizzly Hills",
+          "questGivers": [
+            26543
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4244.1,
+            "y": -2025.0,
+            "z": 238.25
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "grizzly_hills_hub_06",
+      "position": {
+        "mapId": 571,
+        "x": 3420.648,
+        "y": -2784.015,
+        "z": 200.986
+      },
+      "questGivers": [
+        26875,
+        27277,
+        27295,
+        27391
+      ],
+      "levelRange": {
+        "min": 73,
+        "max": 75,
+        "avg": 74
+      },
+      "faction": "Alliance",
+      "totalQuests": 22,
+      "estimatedMinutes": 110,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:37200:map:571:cluster:16",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3505.43,
+            "y": -2642.98,
+            "z": 94.6
+          },
+          "radius": 83.68,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26644,
+            27131
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:37185:map:571:cluster:34",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3223.79,
+            "y": -2954.99,
+            "z": 145.91
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26363
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:37200:map:571:cluster:14",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3664.61,
+            "y": -2658.4,
+            "z": 148.48
+          },
+          "radius": 99.01,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26644,
+            27131
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "creature:26369:map:571:cluster:12",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3682.8,
+            "y": -2978.21,
+            "z": 252.86
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26369
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:37185:map:571:cluster:33",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3080.84,
+            "y": -2735.56,
+            "z": 98.36
+          },
+          "radius": 76.72,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26363
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26592:map:571:cluster:10",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3568.69,
+            "y": -2457.16,
+            "z": 141.05
+          },
+          "radius": 87.05,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26592
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "grizzly_hills_hub_07",
+          "zoneId": 394,
+          "zoneName": "Grizzly Hills",
+          "questGivers": [
+            27469
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3570.45,
+            "y": -2935.72,
+            "z": 235.808
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "grizzly_hills_hub_09",
+          "zoneId": 394,
+          "zoneName": "Grizzly Hills",
+          "questGivers": [
+            26423,
+            26424,
+            26519,
+            26604
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3826.5,
+            "y": -1985.58,
+            "z": 208.376
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "grizzly_hills_hub_24",
+          "zoneId": 394,
+          "zoneName": "Grizzly Hills",
+          "questGivers": [
+            26212,
+            26226,
+            26361,
+            26377,
+            27582
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4551.79,
+            "y": -4250.05,
+            "z": 170.576
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "grizzly_hills_hub_07",
+      "position": {
+        "mapId": 571,
+        "x": 3570.45,
+        "y": -2935.72,
+        "z": 235.808
+      },
+      "questGivers": [
+        27469
+      ],
+      "levelRange": {
+        "min": 73,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "grizzly_hills_hub_06",
+          "zoneId": 394,
+          "zoneName": "Grizzly Hills",
+          "questGivers": [
+            26875,
+            27277,
+            27295,
+            27391
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3410.84,
+            "y": -2781.71,
+            "z": 202.283
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "grizzly_hills_hub_08",
+      "position": {
+        "mapId": 571,
+        "x": 3817.59,
+        "y": -5154.475,
+        "z": 119.215
+      },
+      "questGivers": [
+        26883,
+        26885
+      ],
+      "levelRange": {
+        "min": 73,
+        "max": 75,
+        "avg": 75
+      },
+      "faction": "Alliance",
+      "totalQuests": 10,
+      "estimatedMinutes": 50,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:26885:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3821.11,
+            "y": -5151.58,
+            "z": 119.07
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26885
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27113:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3576.84,
+            "y": -5124.74,
+            "z": 167.2
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27113
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:37035:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3543.82,
+            "y": -5120.45,
+            "z": 202.05
+          },
+          "radius": 90.86,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27177
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:36857:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3524.7,
+            "y": -5042.13,
+            "z": 236.0
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26409
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27114:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3468.19,
+            "y": -5118.6,
+            "z": 237.03
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27114
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:36858:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3439.7,
+            "y": -5143.72,
+            "z": 235.89
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26410
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "grizzly_hills_hub_10",
+      "position": {
+        "mapId": 571,
+        "x": 3836.79,
+        "y": -3421.57,
+        "z": 293.104
+      },
+      "questGivers": [
+        27581
+      ],
+      "levelRange": {
+        "min": 73,
+        "max": 75,
+        "avg": 75
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:37662:map:571:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 4086.61,
+            "y": -3536.45,
+            "z": 254.81
+          },
+          "radius": 61.39,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27421
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:37662:map:571:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 4021.31,
+            "y": -3664.38,
+            "z": 216.29
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27421
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "grizzly_hills_hub_11",
+      "position": {
+        "mapId": 571,
+        "x": 3850.174,
+        "y": -4530.642,
+        "z": 209.744
+      },
+      "questGivers": [
+        26584,
+        26666,
+        26944,
+        27221,
+        27227
+      ],
+      "levelRange": {
+        "min": 73,
+        "max": 75,
+        "avg": 75
+      },
+      "faction": "Horde",
+      "totalQuests": 16,
+      "estimatedMinutes": 80,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:27221:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3853.87,
+            "y": -4536.55,
+            "z": 209.37
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27221
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:37104:map:571:cluster:13",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 4016.02,
+            "y": -4762.06,
+            "z": 121.22
+          },
+          "radius": 59.23,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27230
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:37104:map:571:cluster:9",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3571.51,
+            "y": -4386.36,
+            "z": 215.12
+          },
+          "radius": 114.38,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27230
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26484:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4113.11,
+            "y": -4738.28,
+            "z": 100.87
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26484
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:36740:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3457.83,
+            "y": -4607.1,
+            "z": 231.41
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26681
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:36857:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3524.7,
+            "y": -5042.13,
+            "z": 236.0
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26409
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "grizzly_hills_hub_29",
+          "zoneId": 394,
+          "zoneName": "Grizzly Hills",
+          "questGivers": [
+            26260
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4894.46,
+            "y": -4563.21,
+            "z": 347.919
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "grizzly_hills_hub_09",
+      "position": {
+        "mapId": 571,
+        "x": 3851.005,
+        "y": -1963.898,
+        "z": 208.643
+      },
+      "questGivers": [
+        26423,
+        26424,
+        26519,
+        26604
+      ],
+      "levelRange": {
+        "min": 72,
+        "max": 75,
+        "avg": 74
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 9,
+      "estimatedMinutes": 45,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:35795:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 4126.29,
+            "y": -1888.06,
+            "z": 192.27
+          },
+          "radius": 95.9,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27617
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:35782:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3372.51,
+            "y": -1793.16,
+            "z": 99.42
+          },
+          "radius": 173.53,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26446
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:35798:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3372.51,
+            "y": -1793.16,
+            "z": 99.42
+          },
+          "radius": 173.53,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26446,
+            29693
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "grizzly_hills_hub_05",
+          "zoneId": 394,
+          "zoneName": "Grizzly Hills",
+          "questGivers": [
+            26500
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3386.21,
+            "y": -1805.46,
+            "z": 115.058
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "grizzly_hills_hub_12",
+      "position": {
+        "mapId": 571,
+        "x": 4072.56,
+        "y": -4130.48,
+        "z": 211.73
+      },
+      "questGivers": [
+        26935
+      ],
+      "levelRange": {
+        "min": 73,
+        "max": 75,
+        "avg": 75
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:26389:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4044.56,
+            "y": -4363.63,
+            "z": 258.53
+          },
+          "radius": 178.27,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26389
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27580:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4540.02,
+            "y": -5622.39,
+            "z": 25.15
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27580
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27578:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4588.93,
+            "y": -5675.78,
+            "z": 106.34
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27578
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27018:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4590.02,
+            "y": -5712.43,
+            "z": 184.61
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27018
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "grizzly_hills_hub_13",
+      "position": {
+        "mapId": 571,
+        "x": 4113.11,
+        "y": -4738.28,
+        "z": 100.871
+      },
+      "questGivers": [
+        26484
+      ],
+      "levelRange": {
+        "min": 72,
+        "max": 75,
+        "avg": 75
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "grizzly_hills_hub_14",
+      "position": {
+        "mapId": 571,
+        "x": 4244.1,
+        "y": -2025.0,
+        "z": 238.25
+      },
+      "questGivers": [
+        26543
+      ],
+      "levelRange": {
+        "min": 73,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "grizzly_hills_hub_15",
+      "position": {
+        "mapId": 571,
+        "x": 4264.55,
+        "y": -2500.44,
+        "z": 231.658
+      },
+      "questGivers": [
+        27486
+      ],
+      "levelRange": {
+        "min": 73,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:27424:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4338.76,
+            "y": -2363.68,
+            "z": 220.62
+          },
+          "radius": 203.33,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27424
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "grizzly_hills_hub_21",
+          "zoneId": 394,
+          "zoneName": "Grizzly Hills",
+          "questGivers": [
+            27497
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4469.31,
+            "y": -2261.68,
+            "z": 181.176
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "grizzly_hills_hub_17",
+      "position": {
+        "mapId": 571,
+        "x": 4322.89,
+        "y": -3693.61,
+        "z": 263.91
+      },
+      "questGivers": [
+        26588
+      ],
+      "levelRange": {
+        "min": 73,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "grizzly_hills_hub_16",
+      "position": {
+        "mapId": 571,
+        "x": 4324.255,
+        "y": -4986.895,
+        "z": 20.461
+      },
+      "questGivers": [
+        26884,
+        26886
+      ],
+      "levelRange": {
+        "min": 73,
+        "max": 75,
+        "avg": 75
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:36819:map:571:cluster:9",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 4219.72,
+            "y": -4944.98,
+            "z": 28.49
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27408
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:36875:map:571:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 4176.44,
+            "y": -5134.58,
+            "z": 18.35
+          },
+          "radius": 70.7,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26418
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:36875:map:571:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 4312.4,
+            "y": -4751.18,
+            "z": 63.12
+          },
+          "radius": 189.85,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26418
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:36819:map:571:cluster:10",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 3902.72,
+            "y": -5094.44,
+            "z": 77.14
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27408
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "grizzly_hills_hub_28",
+          "zoneId": 394,
+          "zoneName": "Grizzly Hills",
+          "questGivers": [
+            26924
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4834.98,
+            "y": -4754.5,
+            "z": 32.569
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "grizzly_hills_hub_18",
+      "position": {
+        "mapId": 571,
+        "x": 4340.57,
+        "y": -5297.95,
+        "z": 1.663
+      },
+      "questGivers": [
+        26420
+      ],
+      "levelRange": {
+        "min": 72,
+        "max": 75,
+        "avg": 75
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:26855:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4118.13,
+            "y": -5251.49,
+            "z": 9.99
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26855
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26857:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 3969.44,
+            "y": -4999.99,
+            "z": 75.01
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26857
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26856:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4126.74,
+            "y": -4851.46,
+            "z": 75.84
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26856
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "grizzly_hills_hub_19",
+      "position": {
+        "mapId": 571,
+        "x": 4351.15,
+        "y": -2455.02,
+        "z": 239.175
+      },
+      "questGivers": [
+        27545
+      ],
+      "levelRange": {
+        "min": 73,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "grizzly_hills_hub_15",
+          "zoneId": 394,
+          "zoneName": "Grizzly Hills",
+          "questGivers": [
+            27486
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4264.55,
+            "y": -2500.44,
+            "z": 231.658
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "grizzly_hills_hub_20",
+      "position": {
+        "mapId": 571,
+        "x": 4405.76,
+        "y": -2499.23,
+        "z": 253.044
+      },
+      "questGivers": [
+        27499
+      ],
+      "levelRange": {
+        "min": 73,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "grizzly_hills_hub_06",
+          "zoneId": 394,
+          "zoneName": "Grizzly Hills",
+          "questGivers": [
+            26875,
+            27277,
+            27295,
+            27391
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3410.84,
+            "y": -2781.71,
+            "z": 202.283
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "grizzly_hills_hub_21",
+      "position": {
+        "mapId": 571,
+        "x": 4469.31,
+        "y": -2261.68,
+        "z": 181.176
+      },
+      "questGivers": [
+        27497
+      ],
+      "levelRange": {
+        "min": 73,
+        "max": 74,
+        "avg": 74
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "grizzly_hills_hub_22",
+      "position": {
+        "mapId": 571,
+        "x": 4524.31,
+        "y": -3472.71,
+        "z": 228.132
+      },
+      "questGivers": [
+        26701
+      ],
+      "levelRange": {
+        "min": 73,
+        "max": 75,
+        "avg": 75
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "grizzly_hills_hub_05",
+          "zoneId": 394,
+          "zoneName": "Grizzly Hills",
+          "questGivers": [
+            26500
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3386.21,
+            "y": -1805.46,
+            "z": 115.058
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "grizzly_hills_hub_23",
+      "position": {
+        "mapId": 571,
+        "x": 4550.15,
+        "y": -5493.45,
+        "z": 2.299
+      },
+      "questGivers": [
+        26935
+      ],
+      "levelRange": {
+        "min": 73,
+        "max": 75,
+        "avg": 75
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:27580:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4540.02,
+            "y": -5622.39,
+            "z": 25.15
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27580
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27578:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4588.93,
+            "y": -5675.78,
+            "z": 106.34
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27578
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27018:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4590.02,
+            "y": -5712.43,
+            "z": 184.61
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27018
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26389:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4044.56,
+            "y": -4363.63,
+            "z": 258.53
+          },
+          "radius": 178.27,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26389
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "grizzly_hills_hub_24",
+      "position": {
+        "mapId": 571,
+        "x": 4580.148,
+        "y": -4231.514,
+        "z": 175.457
+      },
+      "questGivers": [
+        26212,
+        26226,
+        26361,
+        26377,
+        27582
+      ],
+      "levelRange": {
+        "min": 73,
+        "max": 75,
+        "avg": 75
+      },
+      "faction": "Alliance",
+      "totalQuests": 11,
+      "estimatedMinutes": 55,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "grizzly_hills_hub_08",
+          "zoneId": 394,
+          "zoneName": "Grizzly Hills",
+          "questGivers": [
+            26883,
+            26885
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3814.07,
+            "y": -5157.37,
+            "z": 119.355
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "grizzly_hills_hub_10",
+          "zoneId": 394,
+          "zoneName": "Grizzly Hills",
+          "questGivers": [
+            27581
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 3836.79,
+            "y": -3421.57,
+            "z": 293.104
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "grizzly_hills_hub_26",
+          "zoneId": 394,
+          "zoneName": "Grizzly Hills",
+          "questGivers": [
+            26932
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4698.39,
+            "y": -4004.78,
+            "z": 212.355
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "grizzly_hills_hub_31",
+          "zoneId": 394,
+          "zoneName": "Grizzly Hills",
+          "questGivers": [
+            26514
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4982.14,
+            "y": -4653.88,
+            "z": 219.574
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "grizzly_hills_hub_25",
+      "position": {
+        "mapId": 571,
+        "x": 4620.66,
+        "y": -5685.28,
+        "z": 180.135
+      },
+      "questGivers": [
+        26935
+      ],
+      "levelRange": {
+        "min": 73,
+        "max": 75,
+        "avg": 75
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:27578:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4588.93,
+            "y": -5675.78,
+            "z": 106.34
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27578
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27018:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4590.02,
+            "y": -5712.43,
+            "z": 184.61
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27018
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27580:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4540.02,
+            "y": -5622.39,
+            "z": 25.15
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27580
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:26389:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4044.56,
+            "y": -4363.63,
+            "z": 258.53
+          },
+          "radius": 178.27,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26389
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "grizzly_hills_hub_26",
+      "position": {
+        "mapId": 571,
+        "x": 4698.39,
+        "y": -4004.78,
+        "z": 212.355
+      },
+      "questGivers": [
+        26932
+      ],
+      "levelRange": {
+        "min": 73,
+        "max": 75,
+        "avg": 75
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "grizzly_hills_hub_27",
+      "position": {
+        "mapId": 571,
+        "x": 4706.64,
+        "y": -4453.71,
+        "z": 195.048
+      },
+      "questGivers": [
+        26335
+      ],
+      "levelRange": {
+        "min": 72,
+        "max": 75,
+        "avg": 75
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "grizzly_hills_hub_29",
+          "zoneId": 394,
+          "zoneName": "Grizzly Hills",
+          "questGivers": [
+            26260
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4894.46,
+            "y": -4563.21,
+            "z": 347.919
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "grizzly_hills_hub_28",
+      "position": {
+        "mapId": 571,
+        "x": 4834.98,
+        "y": -4754.5,
+        "z": 32.569
+      },
+      "questGivers": [
+        26924
+      ],
+      "levelRange": {
+        "min": 73,
+        "max": 75,
+        "avg": 75
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "grizzly_hills_hub_16",
+          "zoneId": 394,
+          "zoneName": "Grizzly Hills",
+          "questGivers": [
+            26884,
+            26886
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4322.28,
+            "y": -4990.64,
+            "z": 20.461
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "grizzly_hills_hub_29",
+      "position": {
+        "mapId": 571,
+        "x": 4894.46,
+        "y": -4563.21,
+        "z": 347.919
+      },
+      "questGivers": [
+        26260
+      ],
+      "levelRange": {
+        "min": 72,
+        "max": 75,
+        "avg": 75
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "grizzly_hills_hub_18",
+          "zoneId": 394,
+          "zoneName": "Grizzly Hills",
+          "questGivers": [
+            26420
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 4340.57,
+            "y": -5297.95,
+            "z": 1.663
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "grizzly_hills_hub_30",
+      "position": {
+        "mapId": 571,
+        "x": 4905.26,
+        "y": -4758.71,
+        "z": 27.316
+      },
+      "questGivers": [
+        26814
+      ],
+      "levelRange": {
+        "min": 73,
+        "max": 75,
+        "avg": 75
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "grizzly_hills_hub_31",
+      "position": {
+        "mapId": 571,
+        "x": 4982.14,
+        "y": -4653.88,
+        "z": 219.574
+      },
+      "questGivers": [
+        26514
+      ],
+      "levelRange": {
+        "min": 73,
+        "max": 75,
+        "avg": 75
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

@@ -1,0 +1,1095 @@
+{
+  "version": 1,
+  "zoneId": 3525,
+  "zoneName": "Bloodmyst Isle",
+  "mapId": 530,
+  "hubCount": 16,
+  "hubs": [
+    {
+      "hubId": "bloodmyst_isle_hub_01",
+      "position": {
+        "mapId": 530,
+        "x": -4269.01,
+        "y": -11484.5,
+        "z": 8.91
+      },
+      "questGivers": [
+        17614
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 15,
+        "avg": 15
+      },
+      "faction": "Alliance",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "bloodmyst_isle_hub_02",
+      "position": {
+        "mapId": 530,
+        "x": -4057.15,
+        "y": -11788.6,
+        "z": 8.877
+      },
+      "questGivers": [
+        17555
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "bloodmyst_isle_hub_03",
+      "position": {
+        "mapId": 530,
+        "x": -3993.71,
+        "y": -11413.7,
+        "z": -122.136
+      },
+      "questGivers": [
+        17468
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 20,
+        "avg": 18
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "bloodmyst_isle_hub_08",
+          "zoneId": 3525,
+          "zoneName": "Bloodmyst Isle",
+          "questGivers": [
+            17424,
+            17433,
+            17553,
+            17554,
+            17642,
+            17663,
+            17684,
+            17703,
+            17825,
+            17843,
+            17844,
+            18024,
+            18804
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -2059.2,
+            "y": -11897.0,
+            "z": 45.742
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "bloodmyst_isle_hub_04",
+      "position": {
+        "mapId": 530,
+        "x": -3962.58,
+        "y": -11668.9,
+        "z": -138.778
+      },
+      "questGivers": [
+        16768
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "bloodmyst_isle_hub_02",
+          "zoneId": 3525,
+          "zoneName": "Bloodmyst Isle",
+          "questGivers": [
+            17555
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -4057.15,
+            "y": -11788.6,
+            "z": 8.877
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "bloodmyst_isle_hub_05",
+      "position": {
+        "mapId": 530,
+        "x": -2673.993,
+        "y": -12135.333,
+        "z": 16.429
+      },
+      "questGivers": [
+        17586,
+        17599,
+        17649
+      ],
+      "levelRange": {
+        "min": 8,
+        "max": 13,
+        "avg": 12
+      },
+      "faction": "Alliance",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:17525:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2672.63,
+            "y": -11974.68,
+            "z": 14.44
+          },
+          "radius": 190.45,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17525
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17701:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2240.85,
+            "y": -12318.6,
+            "z": 57.39
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17701
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "bloodmyst_isle_hub_06",
+      "position": {
+        "mapId": 530,
+        "x": -2519.77,
+        "y": -12301.9,
+        "z": 14.238
+      },
+      "questGivers": [
+        17682
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 13,
+        "avg": 13
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:17682:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2519.77,
+            "y": -12301.9,
+            "z": 14.24
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17682
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "bloodmyst_isle_hub_07",
+      "position": {
+        "mapId": 530,
+        "x": -2090.25,
+        "y": -11298.4,
+        "z": 63.465
+      },
+      "questGivers": [
+        17508
+      ],
+      "levelRange": {
+        "min": 15,
+        "max": 18,
+        "avg": 18
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:23873:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2075.24,
+            "y": -11332.4,
+            "z": 64.83
+          },
+          "radius": 153.02,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17606
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "bloodmyst_isle_hub_09",
+      "position": {
+        "mapId": 530,
+        "x": -2006.455,
+        "y": -11812.1,
+        "z": 54.343
+      },
+      "questGivers": [
+        17434,
+        17676
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 19,
+        "avg": 16
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:23869:map:530:cluster:8",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2170.51,
+            "y": -11936.3,
+            "z": 34.67
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17352
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:23869:map:530:cluster:9",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -1895.64,
+            "y": -12004.4,
+            "z": 17.62
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17352
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17683:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1581.99,
+            "y": -10667.8,
+            "z": 131.49
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17683
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "bloodmyst_isle_hub_07",
+          "zoneId": 3525,
+          "zoneName": "Bloodmyst Isle",
+          "questGivers": [
+            17508
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -2090.25,
+            "y": -11298.4,
+            "z": 63.465
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "bloodmyst_isle_hub_08",
+      "position": {
+        "mapId": 530,
+        "x": -1964.989,
+        "y": -11892.769,
+        "z": 49.088
+      },
+      "questGivers": [
+        17424,
+        17433,
+        17553,
+        17554,
+        17642,
+        17663,
+        17684,
+        17703,
+        17825,
+        17843,
+        17844,
+        18024,
+        18804
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 20,
+        "avg": 16
+      },
+      "faction": "Alliance",
+      "totalQuests": 28,
+      "estimatedMinutes": 140,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:23984:map:530:cluster:7",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -1837.5,
+            "y": -12107.43,
+            "z": 37.29
+          },
+          "radius": 63.92,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            17322,
+            17323,
+            17324,
+            17325,
+            17326,
+            17327
+          ],
+          "targetCount": 47
+        },
+        {
+          "taskAreaId": "item_source:24399:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -1769.82,
+            "y": -11653.53,
+            "z": 35.92
+          },
+          "radius": 157.49,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            17604,
+            17606,
+            17607,
+            17608,
+            17609
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:23984:map:530:cluster:8",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2294.76,
+            "y": -11951.8,
+            "z": 27.39
+          },
+          "radius": 89.98,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            17322,
+            17323,
+            17324,
+            17325,
+            17326,
+            17327
+          ],
+          "targetCount": 47
+        },
+        {
+          "taskAreaId": "item_source:24399:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2075.24,
+            "y": -11332.4,
+            "z": 64.83
+          },
+          "radius": 153.02,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            17604,
+            17606,
+            17607,
+            17608,
+            17609
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "creature:17604:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1769.82,
+            "y": -11653.53,
+            "z": 35.92
+          },
+          "radius": 157.49,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17604
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:24041:map:530:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -2171.26,
+            "y": -12144.87,
+            "z": 20.13
+          },
+          "radius": 95.93,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            731,
+            2433,
+            2447,
+            2601,
+            2624,
+            2726
+          ],
+          "targetCount": 69
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "bloodmyst_isle_hub_01",
+          "zoneId": 3525,
+          "zoneName": "Bloodmyst Isle",
+          "questGivers": [
+            17614
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -4269.01,
+            "y": -11484.5,
+            "z": 8.91
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "bloodmyst_isle_hub_03",
+          "zoneId": 3525,
+          "zoneName": "Bloodmyst Isle",
+          "questGivers": [
+            17468
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -3993.71,
+            "y": -11413.7,
+            "z": -122.136
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "bloodmyst_isle_hub_04",
+          "zoneId": 3525,
+          "zoneName": "Bloodmyst Isle",
+          "questGivers": [
+            16768
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -3962.58,
+            "y": -11668.9,
+            "z": -138.778
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "bloodmyst_isle_hub_10",
+          "zoneId": 3525,
+          "zoneName": "Bloodmyst Isle",
+          "questGivers": [
+            17423,
+            17658,
+            18020
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -1915.68,
+            "y": -11793.8,
+            "z": 64.605
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "bloodmyst_isle_hub_10",
+      "position": {
+        "mapId": 530,
+        "x": -1907.823,
+        "y": -11782.4,
+        "z": 62.732
+      },
+      "questGivers": [
+        17423,
+        17658,
+        18020
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 20,
+        "avg": 17
+      },
+      "faction": "Alliance",
+      "totalQuests": 10,
+      "estimatedMinutes": 50,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:17974:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1934.25,
+            "y": -11848.4,
+            "z": 51.63
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17974
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17346:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2062.32,
+            "y": -11123.7,
+            "z": 60.55
+          },
+          "radius": 81.95,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17346
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17346:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2061.1,
+            "y": -11017.38,
+            "z": 57.42
+          },
+          "radius": 205.63,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17346
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17358:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1567.49,
+            "y": -11061.35,
+            "z": 63.86
+          },
+          "radius": 158.74,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17358
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "bloodmyst_isle_hub_08",
+          "zoneId": 3525,
+          "zoneName": "Bloodmyst Isle",
+          "questGivers": [
+            17424,
+            17433,
+            17553,
+            17554,
+            17642,
+            17663,
+            17684,
+            17703,
+            17825,
+            17843,
+            17844,
+            18024,
+            18804
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -2059.2,
+            "y": -11897.0,
+            "z": 45.742
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "bloodmyst_isle_hub_11",
+          "zoneId": 3525,
+          "zoneName": "Bloodmyst Isle",
+          "questGivers": [
+            17926,
+            17927,
+            17982,
+            17986
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -1777.24,
+            "y": -11078.2,
+            "z": 76.514
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "bloodmyst_isle_hub_11",
+      "position": {
+        "mapId": 530,
+        "x": -1765.778,
+        "y": -11070.625,
+        "z": 77.078
+      },
+      "questGivers": [
+        17926,
+        17927,
+        17982,
+        17986
+      ],
+      "levelRange": {
+        "min": 16,
+        "max": 20,
+        "avg": 19
+      },
+      "faction": "Alliance",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:17346:map:530:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1809.31,
+            "y": -10929.8,
+            "z": 62.66
+          },
+          "radius": 112.95,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17346
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17358:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1567.49,
+            "y": -11061.35,
+            "z": 63.86
+          },
+          "radius": 158.74,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17358
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17527:map:530:cluster:5",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1537.82,
+            "y": -10945.0,
+            "z": 60.97
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17527
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17346:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2061.1,
+            "y": -11017.38,
+            "z": 57.42
+          },
+          "radius": 205.63,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17346
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17527:map:530:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -2096.21,
+            "y": -10893.8,
+            "z": 71.75
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17527
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17609:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1914.88,
+            "y": -10656.07,
+            "z": 133.55
+          },
+          "radius": 187.97,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17609
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "bloodmyst_isle_hub_12",
+      "position": {
+        "mapId": 530,
+        "x": -1507.09,
+        "y": -12525.4,
+        "z": 4.842
+      },
+      "questGivers": [
+        17674
+      ],
+      "levelRange": {
+        "min": 15,
+        "max": 21,
+        "avg": 19
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:17588:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1408.94,
+            "y": -12388.4,
+            "z": 6.64
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17588
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "bloodmyst_isle_hub_13",
+      "position": {
+        "mapId": 530,
+        "x": -1505.5,
+        "y": -10886.6,
+        "z": 64.921
+      },
+      "questGivers": [
+        17686
+      ],
+      "levelRange": {
+        "min": 16,
+        "max": 19,
+        "avg": 19
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "bloodmyst_isle_hub_14",
+      "position": {
+        "mapId": 530,
+        "x": -1251.07,
+        "y": -12657.3,
+        "z": 0.885
+      },
+      "questGivers": [
+        17712
+      ],
+      "levelRange": {
+        "min": 15,
+        "max": 19,
+        "avg": 18
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:17713:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1229.28,
+            "y": -12731.93,
+            "z": -14.48
+          },
+          "radius": 58.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17713
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17713:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -1144.87,
+            "y": -12719.03,
+            "z": -12.23
+          },
+          "radius": 214.38,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17713
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:24153:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -1265.91,
+            "y": -12796.27,
+            "z": -24.79
+          },
+          "radius": 184.82,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17714
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:24153:map:530:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -1172.23,
+            "y": -12933.62,
+            "z": -101.94
+          },
+          "radius": 117.95,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17714
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "bloodmyst_isle_hub_15",
+      "position": {
+        "mapId": 530,
+        "x": -1219.88,
+        "y": -11450.0,
+        "z": 1.081
+      },
+      "questGivers": [
+        17421
+      ],
+      "levelRange": {
+        "min": 13,
+        "max": 17,
+        "avg": 17
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:23833:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -1243.26,
+            "y": -11511.4,
+            "z": 1.72
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17328,
+            17329
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "bloodmyst_isle_hub_16",
+      "position": {
+        "mapId": 530,
+        "x": -1110.26,
+        "y": -11128.9,
+        "z": -78.383
+      },
+      "questGivers": [
+        17275
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 20,
+        "avg": 20
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:23744:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -1567.49,
+            "y": -11061.35,
+            "z": 63.86
+          },
+          "radius": 158.74,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17358
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    }
+  ]
+}

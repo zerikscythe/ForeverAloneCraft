@@ -1,0 +1,332 @@
+{
+  "version": 1,
+  "zoneId": 3557,
+  "zoneName": "The Exodar",
+  "mapId": 530,
+  "hubCount": 13,
+  "hubs": [
+    {
+      "hubId": "the_exodar_hub_01",
+      "position": {
+        "mapId": 530,
+        "x": -4274.81,
+        "y": -11495.3,
+        "z": 9.487
+      },
+      "questGivers": [
+        16721
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_exodar_hub_02",
+      "position": {
+        "mapId": 530,
+        "x": -4222.3,
+        "y": -11563.9,
+        "z": -125.935
+      },
+      "questGivers": [
+        16738
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 52,
+        "avg": 52
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_exodar_hub_03",
+      "position": {
+        "mapId": 530,
+        "x": -4194.145,
+        "y": -11651.2,
+        "z": -99.628
+      },
+      "questGivers": [
+        16771,
+        17120
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 52,
+        "avg": 36
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_exodar_hub_04",
+      "position": {
+        "mapId": 530,
+        "x": -4191.51,
+        "y": -11471.8,
+        "z": -130.79
+      },
+      "questGivers": [
+        17509
+      ],
+      "levelRange": {
+        "min": 12,
+        "max": 12,
+        "avg": 12
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_exodar_hub_05",
+      "position": {
+        "mapId": 530,
+        "x": -4087.02,
+        "y": -11737.5,
+        "z": -139.428
+      },
+      "questGivers": [
+        20604
+      ],
+      "levelRange": {
+        "min": 12,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_exodar_hub_06",
+      "position": {
+        "mapId": 530,
+        "x": -4053.89,
+        "y": -11560.6,
+        "z": -138.531
+      },
+      "questGivers": [
+        17513
+      ],
+      "levelRange": {
+        "min": 26,
+        "max": 52,
+        "avg": 39
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_exodar_hub_07",
+      "position": {
+        "mapId": 530,
+        "x": -3969.945,
+        "y": -11476.0,
+        "z": -135.145
+      },
+      "questGivers": [
+        16756,
+        17511
+      ],
+      "levelRange": {
+        "min": 50,
+        "max": 52,
+        "avg": 52
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_exodar_hub_08",
+      "position": {
+        "mapId": 530,
+        "x": -3942.54,
+        "y": -11652.1,
+        "z": -138.455
+      },
+      "questGivers": [
+        20722
+      ],
+      "levelRange": {
+        "min": 50,
+        "max": 57,
+        "avg": 54
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_exodar_hub_09",
+      "position": {
+        "mapId": 530,
+        "x": -3889.27,
+        "y": -11323.0,
+        "z": -126.291
+      },
+      "questGivers": [
+        17520
+      ],
+      "levelRange": {
+        "min": 50,
+        "max": 52,
+        "avg": 52
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_exodar_hub_10",
+      "position": {
+        "mapId": 530,
+        "x": -3791.2,
+        "y": -11402.05,
+        "z": -121.094
+      },
+      "questGivers": [
+        17204,
+        17219
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 52,
+        "avg": 41
+      },
+      "faction": "Alliance",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "the_exodar_hub_11",
+          "zoneId": 3557,
+          "zoneName": "The Exodar",
+          "questGivers": [
+            17431
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -3768.94,
+            "y": -11513.6,
+            "z": 315.69
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_exodar_hub_11",
+      "position": {
+        "mapId": 530,
+        "x": -3768.94,
+        "y": -11513.6,
+        "z": 315.69
+      },
+      "questGivers": [
+        17431
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 30,
+        "avg": 30
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "the_exodar_hub_13",
+          "zoneId": 3557,
+          "zoneName": "The Exodar",
+          "questGivers": [
+            17435,
+            17519
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -3677.45,
+            "y": -11408.4,
+            "z": 311.311
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_exodar_hub_12",
+      "position": {
+        "mapId": 530,
+        "x": -3746.37,
+        "y": -11696.1,
+        "z": -105.769
+      },
+      "questGivers": [
+        16739
+      ],
+      "levelRange": {
+        "min": 47,
+        "max": 50,
+        "avg": 50
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_exodar_hub_13",
+      "position": {
+        "mapId": 530,
+        "x": -3671.505,
+        "y": -11422.6,
+        "z": 96.628
+      },
+      "questGivers": [
+        17435,
+        17519
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 52,
+        "avg": 52
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

@@ -1,0 +1,445 @@
+{
+  "version": 1,
+  "zoneId": 3487,
+  "zoneName": "Silvermoon City",
+  "mapId": 530,
+  "hubCount": 13,
+  "hubs": [
+    {
+      "hubId": "silvermoon_city_hub_01",
+      "position": {
+        "mapId": 530,
+        "x": 9505.613,
+        "y": -6855.467,
+        "z": 21.29
+      },
+      "questGivers": [
+        16271,
+        16275,
+        16276
+      ],
+      "levelRange": {
+        "min": 5,
+        "max": 5,
+        "avg": 5
+      },
+      "faction": "Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:15938:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 9368.19,
+            "y": -6965.8,
+            "z": 17.99
+          },
+          "radius": 42.39,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15938
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "silvermoon_city_hub_07",
+          "zoneId": 3487,
+          "zoneName": "Silvermoon City",
+          "questGivers": [
+            16681,
+            17717,
+            17718,
+            25223
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 9840.6,
+            "y": -7515.86,
+            "z": -7.978
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "silvermoon_city_hub_02",
+      "position": {
+        "mapId": 530,
+        "x": 9631.35,
+        "y": -7119.37,
+        "z": 14.408
+      },
+      "questGivers": [
+        20724
+      ],
+      "levelRange": {
+        "min": 50,
+        "max": 57,
+        "avg": 54
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "silvermoon_city_hub_03",
+      "position": {
+        "mapId": 530,
+        "x": 9706.56,
+        "y": -7261.66,
+        "z": 16.617
+      },
+      "questGivers": [
+        16655
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "silvermoon_city_hub_04",
+      "position": {
+        "mapId": 530,
+        "x": 9730.46,
+        "y": -7086.01,
+        "z": 16.766
+      },
+      "questGivers": [
+        20612
+      ],
+      "levelRange": {
+        "min": 12,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "silvermoon_city_hub_05",
+      "position": {
+        "mapId": 530,
+        "x": 9743.53,
+        "y": -7368.855,
+        "z": 24.426
+      },
+      "questGivers": [
+        16684,
+        16685
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 52,
+        "avg": 26
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "silvermoon_city_hub_06",
+      "position": {
+        "mapId": 530,
+        "x": 9782.355,
+        "y": -7292.698,
+        "z": 14.648
+      },
+      "questGivers": [
+        16646,
+        16647,
+        16648,
+        16649
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 52,
+        "avg": 48
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "silvermoon_city_hub_08",
+      "position": {
+        "mapId": 530,
+        "x": 9841.98,
+        "y": -7362.39,
+        "z": 18.595
+      },
+      "questGivers": [
+        16669
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 23,
+        "avg": 23
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "silvermoon_city_hub_07",
+      "position": {
+        "mapId": 530,
+        "x": 9855.645,
+        "y": -7507.913,
+        "z": 4.723
+      },
+      "questGivers": [
+        16681,
+        17717,
+        17718,
+        25223
+      ],
+      "levelRange": {
+        "min": 12,
+        "max": 52,
+        "avg": 33
+      },
+      "faction": "Horde",
+      "totalQuests": 15,
+      "estimatedMinutes": 75,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:17768:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 9667.23,
+            "y": -7371.32,
+            "z": 22.95
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17768
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "silvermoon_city_hub_08",
+          "zoneId": 3487,
+          "zoneName": "Silvermoon City",
+          "questGivers": [
+            16669
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 9841.98,
+            "y": -7362.39,
+            "z": 18.595
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "silvermoon_city_hub_13",
+          "zoneId": 3487,
+          "zoneName": "Silvermoon City",
+          "questGivers": [
+            17807
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 10099.6,
+            "y": -6599.11,
+            "z": 3.739
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "silvermoon_city_hub_09",
+      "position": {
+        "mapId": 530,
+        "x": 9871.0,
+        "y": -6557.19,
+        "z": 10.387
+      },
+      "questGivers": [
+        17849
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 5,
+        "avg": 5
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "silvermoon_city_hub_12",
+          "zoneId": 3487,
+          "zoneName": "Silvermoon City",
+          "questGivers": [
+            15301
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 9984.04,
+            "y": -6478.02,
+            "z": 1.08
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "silvermoon_city_hub_11",
+      "position": {
+        "mapId": 530,
+        "x": 9943.71,
+        "y": -7423.08,
+        "z": 12.464
+      },
+      "questGivers": [
+        16673
+      ],
+      "levelRange": {
+        "min": 50,
+        "max": 52,
+        "avg": 52
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "silvermoon_city_hub_10",
+      "position": {
+        "mapId": 530,
+        "x": 9975.782,
+        "y": -7074.022,
+        "z": 47.324
+      },
+      "questGivers": [
+        16651,
+        16652,
+        16658,
+        16659,
+        16802
+      ],
+      "levelRange": {
+        "min": 15,
+        "max": 52,
+        "avg": 39
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "silvermoon_city_hub_12",
+      "position": {
+        "mapId": 530,
+        "x": 9984.04,
+        "y": -6478.02,
+        "z": 1.08
+      },
+      "questGivers": [
+        15301
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 5,
+        "avg": 5
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "silvermoon_city_hub_09",
+          "zoneId": 3487,
+          "zoneName": "Silvermoon City",
+          "questGivers": [
+            17849
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 9871.0,
+            "y": -6557.19,
+            "z": 10.387
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "silvermoon_city_hub_13",
+      "position": {
+        "mapId": 530,
+        "x": 10099.6,
+        "y": -6599.11,
+        "z": 3.739
+      },
+      "questGivers": [
+        17807
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 20,
+        "avg": 20
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "silvermoon_city_hub_07",
+          "zoneId": 3487,
+          "zoneName": "Silvermoon City",
+          "questGivers": [
+            16681,
+            17717,
+            17718,
+            25223
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 9840.6,
+            "y": -7515.86,
+            "z": -7.978
+          },
+          "weight": 1
+        }
+      ]
+    }
+  ]
+}

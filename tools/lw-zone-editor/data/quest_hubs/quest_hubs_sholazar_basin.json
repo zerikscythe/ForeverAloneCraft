@@ -1,0 +1,973 @@
+{
+  "version": 1,
+  "zoneId": 3711,
+  "zoneName": "Sholazar Basin",
+  "mapId": 571,
+  "hubCount": 13,
+  "hubs": [
+    {
+      "hubId": "sholazar_basin_hub_01",
+      "position": {
+        "mapId": 571,
+        "x": 5063.25,
+        "y": 4727.75,
+        "z": -132.109
+      },
+      "questGivers": [
+        28095
+      ],
+      "levelRange": {
+        "min": 76,
+        "max": 77,
+        "avg": 77
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "sholazar_basin_hub_02",
+          "zoneId": 3711,
+          "zoneName": "Sholazar Basin",
+          "questGivers": [
+            28082,
+            28138
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5263.77,
+            "y": 4511.33,
+            "z": -84.712
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "sholazar_basin_hub_02",
+      "position": {
+        "mapId": 571,
+        "x": 5272.15,
+        "y": 4522.525,
+        "z": -82.576
+      },
+      "questGivers": [
+        28082,
+        28138
+      ],
+      "levelRange": {
+        "min": 76,
+        "max": 77,
+        "avg": 77
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:28096:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5364.17,
+            "y": 4414.95,
+            "z": -132.29
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28096
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28085:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5118.64,
+            "y": 4480.4,
+            "z": -66.96
+          },
+          "radius": 36.49,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28085
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28098:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5174.91,
+            "y": 4386.55,
+            "z": -95.44
+          },
+          "radius": 205.69,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28098
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28096:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5299.05,
+            "y": 4353.14,
+            "z": -112.71
+          },
+          "radius": 100.08,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28096
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:38477:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 4975.34,
+            "y": 4447.26,
+            "z": -130.14
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28087
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28098:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5006.55,
+            "y": 4724.52,
+            "z": -101.18
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28098
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "sholazar_basin_hub_03",
+      "position": {
+        "mapId": 571,
+        "x": 5355.12,
+        "y": 5814.42,
+        "z": -74.043
+      },
+      "questGivers": [
+        28191
+      ],
+      "levelRange": {
+        "min": 76,
+        "max": 76,
+        "avg": 76
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:38505:map:571:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 5552.25,
+            "y": 5082.16,
+            "z": -134.63
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28011
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:38505:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 5671.94,
+            "y": 4663.37,
+            "z": -134.48
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28011
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "sholazar_basin_hub_04",
+      "position": {
+        "mapId": 571,
+        "x": 5491.92,
+        "y": 4741.605,
+        "z": -194.339
+      },
+      "questGivers": [
+        28568,
+        28746
+      ],
+      "levelRange": {
+        "min": 76,
+        "max": 78,
+        "avg": 77
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:38703:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 5044.78,
+            "y": 4728.17,
+            "z": -131.21
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28097
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "sholazar_basin_hub_10",
+          "zoneId": 3711,
+          "zoneName": "Sholazar Basin",
+          "questGivers": [
+            27801
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5876.06,
+            "y": 4116.53,
+            "z": -85.429
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "sholazar_basin_hub_05",
+      "position": {
+        "mapId": 571,
+        "x": 5535.28,
+        "y": 4094.13,
+        "z": 43.215
+      },
+      "questGivers": [
+        28464
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 78,
+        "avg": 78
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "sholazar_basin_hub_06",
+      "position": {
+        "mapId": 571,
+        "x": 5567.813,
+        "y": 5771.37,
+        "z": -74.334
+      },
+      "questGivers": [
+        27986,
+        28031,
+        28032,
+        28033,
+        28046,
+        28266,
+        28328,
+        28497,
+        29157
+      ],
+      "levelRange": {
+        "min": 76,
+        "max": 77,
+        "avg": 76
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 23,
+      "estimatedMinutes": 115,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:28566:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5545.45,
+            "y": 5767.53,
+            "z": -77.8
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28566
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:27986:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5584.49,
+            "y": 5748.84,
+            "z": -71.9
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27986
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28047:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5562.35,
+            "y": 5737.39,
+            "z": -74.58
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28047
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28002:map:571:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5509.66,
+            "y": 5854.72,
+            "z": -70.05
+          },
+          "radius": 217.49,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28002
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28009:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5545.38,
+            "y": 5664.53,
+            "z": -85.06
+          },
+          "radius": 52.8,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28009
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28002:map:571:cluster:5",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5445.09,
+            "y": 5649.16,
+            "z": -102.52
+          },
+          "radius": 69.76,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28002
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "sholazar_basin_hub_03",
+          "zoneId": 3711,
+          "zoneName": "Sholazar Basin",
+          "questGivers": [
+            28191
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5355.12,
+            "y": 5814.42,
+            "z": -74.043
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "sholazar_basin_hub_07",
+      "position": {
+        "mapId": 571,
+        "x": 5584.02,
+        "y": 5200.42,
+        "z": -129.298
+      },
+      "questGivers": [
+        27987
+      ],
+      "levelRange": {
+        "min": 76,
+        "max": 76,
+        "avg": 76
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "sholazar_basin_hub_08",
+      "position": {
+        "mapId": 571,
+        "x": 5650.8,
+        "y": 4551.02,
+        "z": -134.77
+      },
+      "questGivers": [
+        28027
+      ],
+      "levelRange": {
+        "min": 76,
+        "max": 77,
+        "avg": 77
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:28011:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5671.94,
+            "y": 4663.37,
+            "z": -134.48
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28011
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28358:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5767.67,
+            "y": 4452.68,
+            "z": -136.11
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28358
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28011:map:571:cluster:5",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5834.55,
+            "y": 4509.78,
+            "z": -133.66
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28011
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "sholazar_basin_hub_09",
+      "position": {
+        "mapId": 571,
+        "x": 5833.99,
+        "y": 483.519,
+        "z": 658.261
+      },
+      "questGivers": [
+        28160
+      ],
+      "levelRange": {
+        "min": 76,
+        "max": 76,
+        "avg": 76
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "sholazar_basin_hub_07",
+          "zoneId": 3711,
+          "zoneName": "Sholazar Basin",
+          "questGivers": [
+            27987
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5584.02,
+            "y": 5200.42,
+            "z": -129.298
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "sholazar_basin_hub_10",
+      "position": {
+        "mapId": 571,
+        "x": 5876.06,
+        "y": 4116.53,
+        "z": -85.429
+      },
+      "questGivers": [
+        27801
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 78,
+        "avg": 77
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 12,
+      "estimatedMinutes": 60,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:28443:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6006.05,
+            "y": 4023.68,
+            "z": -44.84
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28443
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28108:map:571:cluster:9",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5945.36,
+            "y": 3913.75,
+            "z": -39.48
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28108
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28108:map:571:cluster:5",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6098.24,
+            "y": 4100.66,
+            "z": -45.68
+          },
+          "radius": 94.3,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28108
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28101:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6146.81,
+            "y": 4036.91,
+            "z": -16.86
+          },
+          "radius": 71.34,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28101
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28373:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6106.39,
+            "y": 4412.78,
+            "z": -86.03
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28373
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28103:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6208.47,
+            "y": 3873.8,
+            "z": 132.4
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28103
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "sholazar_basin_hub_05",
+          "zoneId": 3711,
+          "zoneName": "Sholazar Basin",
+          "questGivers": [
+            28464
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5535.28,
+            "y": 4094.13,
+            "z": 43.215
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "sholazar_basin_hub_11",
+      "position": {
+        "mapId": 571,
+        "x": 5910.23,
+        "y": 5380.47,
+        "z": -98.811
+      },
+      "questGivers": [
+        28787
+      ],
+      "levelRange": {
+        "min": 76,
+        "max": 76,
+        "avg": 76
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "sholazar_basin_hub_12",
+      "position": {
+        "mapId": 571,
+        "x": 6165.0,
+        "y": 5092.98,
+        "z": -97.294
+      },
+      "questGivers": [
+        28114
+      ],
+      "levelRange": {
+        "min": 76,
+        "max": 77,
+        "avg": 77
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:28080:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6597.83,
+            "y": 5133.92,
+            "z": -43.19
+          },
+          "radius": 146.7,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28080
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28081:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6614.21,
+            "y": 5126.48,
+            "z": -37.15
+          },
+          "radius": 172.67,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28081
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28081:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6646.05,
+            "y": 5178.38,
+            "z": -26.91
+          },
+          "radius": 92.01,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28081
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "sholazar_basin_hub_08",
+          "zoneId": 3711,
+          "zoneName": "Sholazar Basin",
+          "questGivers": [
+            28027
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5650.8,
+            "y": 4551.02,
+            "z": -134.77
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "sholazar_basin_hub_13",
+      "position": {
+        "mapId": 571,
+        "x": 6452.44,
+        "y": 5092.023,
+        "z": -64.161
+      },
+      "questGivers": [
+        28374,
+        28376,
+        28771
+      ],
+      "levelRange": {
+        "min": 76,
+        "max": 77,
+        "avg": 77
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:28374:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6448.37,
+            "y": 5094.66,
+            "z": -63.98
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28374
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28771:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6455.09,
+            "y": 5096.63,
+            "z": -64.41
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28771
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28378:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6492.35,
+            "y": 4851.53,
+            "z": -46.28
+          },
+          "radius": 186.01,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28378
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28467:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6668.33,
+            "y": 4878.36,
+            "z": -10.88
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28467
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28003:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6144.84,
+            "y": 5185.18,
+            "z": -124.76
+          },
+          "radius": 55.99,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28003
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28003:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6150.03,
+            "y": 5334.02,
+            "z": -121.54
+          },
+          "radius": 126.04,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28003
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    }
+  ]
+}

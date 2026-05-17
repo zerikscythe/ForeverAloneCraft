@@ -1,0 +1,933 @@
+{
+  "version": 1,
+  "zoneId": 11,
+  "zoneName": "Wetlands",
+  "mapId": 0,
+  "hubCount": 12,
+  "hubs": [
+    {
+      "hubId": "wetlands_hub_01",
+      "position": {
+        "mapId": 0,
+        "x": -4678.5,
+        "y": -2695.41,
+        "z": 319.614
+      },
+      "questGivers": [
+        1342
+      ],
+      "levelRange": {
+        "min": 19,
+        "max": 21,
+        "avg": 21
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:2103:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -4272.73,
+            "y": -2409.56,
+            "z": 219.55
+          },
+          "radius": 153.21,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2103
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:2102:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -4278.47,
+            "y": -2376.23,
+            "z": 214.78
+          },
+          "radius": 190.68,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2102
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:2102:map:0:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -4252.03,
+            "y": -2404.59,
+            "z": 226.34
+          },
+          "radius": 163.87,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2102
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "wetlands_hub_02",
+      "position": {
+        "mapId": 0,
+        "x": -3849.96,
+        "y": -736.444,
+        "z": 8.664
+      },
+      "questGivers": [
+        5082
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 35,
+        "avg": 35
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "wetlands_hub_03",
+      "position": {
+        "mapId": 0,
+        "x": -3784.137,
+        "y": -851.783,
+        "z": 12.4
+      },
+      "questGivers": [
+        1239,
+        2111,
+        2911
+      ],
+      "levelRange": {
+        "min": 15,
+        "max": 30,
+        "avg": 26
+      },
+      "faction": "Alliance",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:3349:map:0:cluster:10",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -3585.61,
+            "y": -1271.04,
+            "z": 9.66
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1031,
+            1032,
+            1033
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:3349:map:0:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -3787.36,
+            "y": -1337.68,
+            "z": 24.9
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1031,
+            1032,
+            1033
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:5233:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -3742.15,
+            "y": -1342.31,
+            "z": 21.17
+          },
+          "radius": 111.21,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1020,
+            1021,
+            1022,
+            1023,
+            2091
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:3619:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -2979.71,
+            "y": -959.73,
+            "z": -7.19
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1159
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1157:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -2976.69,
+            "y": -960.69,
+            "z": 2.59
+          },
+          "radius": 68.45,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1157
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:5233:map:0:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -3429.17,
+            "y": -1608.77,
+            "z": 10.38
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1020,
+            1021,
+            1022,
+            1023,
+            2091
+          ],
+          "targetCount": 5
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "wetlands_hub_09",
+          "zoneId": 11,
+          "zoneName": "Wetlands",
+          "questGivers": [
+            1244
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -3261.47,
+            "y": -2720.74,
+            "z": 9.537
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "wetlands_hub_04",
+      "position": {
+        "mapId": 0,
+        "x": -3761.23,
+        "y": -733.229,
+        "z": 8.05
+      },
+      "questGivers": [
+        1242
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 25,
+        "avg": 24
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:3618:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -3245.94,
+            "y": -1136.65,
+            "z": 9.15
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1259
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1024:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -3230.16,
+            "y": -1152.2,
+            "z": 7.51
+          },
+          "radius": 86.61,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1024
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "wetlands_hub_05",
+      "position": {
+        "mapId": 0,
+        "x": -3712.39,
+        "y": -814.171,
+        "z": 16.031
+      },
+      "questGivers": [
+        2086,
+        2097,
+        2104
+      ],
+      "levelRange": {
+        "min": 23,
+        "max": 26,
+        "avg": 26
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:3337:map:0:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -3442.42,
+            "y": -2022.01,
+            "z": 108.65
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1034,
+            1035,
+            1036,
+            1037,
+            1038,
+            1057
+          ],
+          "targetCount": 7
+        },
+        {
+          "taskAreaId": "item_source:3337:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -3383.16,
+            "y": -2545.65,
+            "z": 20.92
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1034,
+            1035,
+            1036,
+            1037,
+            1038,
+            1057
+          ],
+          "targetCount": 7
+        },
+        {
+          "taskAreaId": "item_source:3339:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -3654.34,
+            "y": -2600.74,
+            "z": 52.02
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2091
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "wetlands_hub_06",
+      "position": {
+        "mapId": 0,
+        "x": -3684.2,
+        "y": -743.032,
+        "z": 10.249
+      },
+      "questGivers": [
+        2094
+      ],
+      "levelRange": {
+        "min": 18,
+        "max": 26,
+        "avg": 24
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:3397:map:0:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -3797.94,
+            "y": -986.41,
+            "z": -18.13
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1417
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:3397:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -3557.39,
+            "y": -1012.48,
+            "z": -8.3
+          },
+          "radius": 169.04,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1417
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "wetlands_hub_08",
+      "position": {
+        "mapId": 0,
+        "x": -3584.85,
+        "y": -865.268,
+        "z": 13.087
+      },
+      "questGivers": [
+        2096
+      ],
+      "levelRange": {
+        "min": 21,
+        "max": 24,
+        "avg": 24
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "wetlands_hub_07",
+          "zoneId": 11,
+          "zoneName": "Wetlands",
+          "questGivers": [
+            1076,
+            1077,
+            1078
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -3591.81,
+            "y": -1994.5,
+            "z": 116.97
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "wetlands_hub_07",
+      "position": {
+        "mapId": 0,
+        "x": -3577.623,
+        "y": -1987.18,
+        "z": 116.293
+      },
+      "questGivers": [
+        1076,
+        1077,
+        1078
+      ],
+      "levelRange": {
+        "min": 21,
+        "max": 29,
+        "avg": 26
+      },
+      "faction": "Alliance",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:1022:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -3486.61,
+            "y": -1793.81,
+            "z": 37.31
+          },
+          "radius": 174.6,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1022
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:3638:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -3567.61,
+            "y": -1765.01,
+            "z": 80.87
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1353
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1023:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -3472.65,
+            "y": -1781.87,
+            "z": 24.03
+          },
+          "radius": 114.75,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1023
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1022:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -3346.03,
+            "y": -1872.59,
+            "z": 26.13
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1022
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1020:map:0:cluster:5",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -3312.27,
+            "y": -1922.47,
+            "z": 34.57
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1020
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1020:map:0:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -3308.28,
+            "y": -1692.74,
+            "z": 9.68
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1020
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "wetlands_hub_09",
+      "position": {
+        "mapId": 0,
+        "x": -3261.47,
+        "y": -2720.74,
+        "z": 9.537
+      },
+      "questGivers": [
+        1244
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 26,
+        "avg": 23
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:1040:map:0:cluster:5",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -3204.71,
+            "y": -2625.05,
+            "z": 4.98
+          },
+          "radius": 118.41,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1040
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1040:map:0:cluster:6",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -3427.55,
+            "y": -2665.35,
+            "z": 5.93
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1040
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:2611:map:0:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -2944.54,
+            "y": -2548.01,
+            "z": 25.02
+          },
+          "radius": 106.08,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1009,
+            1010,
+            1011,
+            1012,
+            1013,
+            1014
+          ],
+          "targetCount": 7
+        },
+        {
+          "taskAreaId": "item_source:2611:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -3733.0,
+            "y": -2939.45,
+            "z": 12.67
+          },
+          "radius": 163.58,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1009,
+            1010,
+            1011,
+            1012,
+            1013,
+            1014
+          ],
+          "targetCount": 7
+        },
+        {
+          "taskAreaId": "creature:1008:map:0:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -3777.58,
+            "y": -2934.21,
+            "z": 13.22
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1008
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1007:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -3904.01,
+            "y": -2892.13,
+            "z": 9.99
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1007
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "wetlands_hub_10",
+      "position": {
+        "mapId": 0,
+        "x": -3232.96,
+        "y": -2453.78,
+        "z": 15.471
+      },
+      "questGivers": [
+        2093
+      ],
+      "levelRange": {
+        "min": 18,
+        "max": 21,
+        "avg": 21
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "wetlands_hub_11",
+      "position": {
+        "mapId": 0,
+        "x": -2650.553,
+        "y": -2448.85,
+        "z": 80.16
+      },
+      "questGivers": [
+        1071,
+        1074,
+        1075
+      ],
+      "levelRange": {
+        "min": 22,
+        "max": 31,
+        "avg": 30
+      },
+      "faction": "Alliance",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:1051:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -2612.97,
+            "y": -2381.85,
+            "z": 82.92
+          },
+          "radius": 87.09,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1051
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1052:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -2609.16,
+            "y": -2352.24,
+            "z": 84.27
+          },
+          "radius": 93.54,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1052
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1054:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -2620.42,
+            "y": -2330.92,
+            "z": 77.53
+          },
+          "radius": 106.48,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1054
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1053:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -2613.94,
+            "y": -2323.98,
+            "z": 84.41
+          },
+          "radius": 114.39,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1053
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1051:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -2812.63,
+            "y": -2870.44,
+            "z": 36.97
+          },
+          "radius": 69.02,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1051
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1053:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -2845.21,
+            "y": -2910.77,
+            "z": 34.36
+          },
+          "radius": 99.32,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1053
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "wetlands_hub_12",
+      "position": {
+        "mapId": 0,
+        "x": -2356.74,
+        "y": -2423.36,
+        "z": 74.873
+      },
+      "questGivers": [
+        2696
+      ],
+      "levelRange": {
+        "min": 28,
+        "max": 30,
+        "avg": 30
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

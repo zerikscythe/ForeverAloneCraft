@@ -1,0 +1,257 @@
+{
+  "version": 1,
+  "zoneId": 4742,
+  "zoneName": "Hrothgar's Landing",
+  "mapId": 571,
+  "hubCount": 3,
+  "hubs": [
+    {
+      "hubId": "hrothgar_s_landing_hub_01",
+      "position": {
+        "mapId": 571,
+        "x": 8407.72,
+        "y": 658.76,
+        "z": 550.388
+      },
+      "questGivers": [
+        33361,
+        33372,
+        33373,
+        33379,
+        33403,
+        33542,
+        33658,
+        33659
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Horde",
+      "totalQuests": 30,
+      "estimatedMinutes": 150,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:33974:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 8622.99,
+            "y": 853.17,
+            "z": 545.18
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            33974
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:33973:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 8620.39,
+            "y": 899.62,
+            "z": 545.18
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            33973
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:33972:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 8638.35,
+            "y": 887.02,
+            "z": 545.48
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            33972
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "hrothgar_s_landing_hub_02",
+      "position": {
+        "mapId": 571,
+        "x": 8467.915,
+        "y": 1082.895,
+        "z": 554.551
+      },
+      "questGivers": [
+        33417,
+        33817
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 13,
+      "estimatedMinutes": 65,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:47048:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 8484.16,
+            "y": 1582.35,
+            "z": 670.14
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            35113
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "hrothgar_s_landing_hub_01",
+          "zoneId": 4742,
+          "zoneName": "Hrothgar's Landing",
+          "questGivers": [
+            33361,
+            33372,
+            33373,
+            33379,
+            33403,
+            33542,
+            33658,
+            33659
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 8397.64,
+            "y": 664.995,
+            "z": 550.533
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "hrothgar_s_landing_hub_03",
+          "zoneId": 4742,
+          "zoneName": "Hrothgar's Landing",
+          "questGivers": [
+            33225,
+            33312,
+            33335,
+            33592,
+            33593,
+            33625,
+            33646,
+            33647
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 8598.2,
+            "y": 643.694,
+            "z": 551.474
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "hrothgar_s_landing_hub_03",
+      "position": {
+        "mapId": 571,
+        "x": 8618.125,
+        "y": 649.682,
+        "z": 550.475
+      },
+      "questGivers": [
+        33225,
+        33312,
+        33335,
+        33592,
+        33593,
+        33625,
+        33646,
+        33647
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance",
+      "totalQuests": 30,
+      "estimatedMinutes": 150,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:33974:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 8622.99,
+            "y": 853.17,
+            "z": 545.18
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            33974
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:33972:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 8638.35,
+            "y": 887.02,
+            "z": 545.48
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            33972
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:33973:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 8620.39,
+            "y": 899.62,
+            "z": 545.18
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            33973
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    }
+  ]
+}

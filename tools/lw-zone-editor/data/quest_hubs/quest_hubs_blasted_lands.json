@@ -1,0 +1,424 @@
+{
+  "version": 1,
+  "zoneId": 4,
+  "zoneName": "Blasted Lands",
+  "mapId": 0,
+  "hubCount": 6,
+  "hubs": [
+    {
+      "hubId": "blasted_lands_hub_01",
+      "position": {
+        "mapId": 0,
+        "x": -11816.25,
+        "y": -3191.715,
+        "z": -30.757
+      },
+      "questGivers": [
+        16841,
+        19254
+      ],
+      "levelRange": {
+        "min": 58,
+        "max": 61,
+        "avg": 61
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "blasted_lands_hub_02",
+      "position": {
+        "mapId": 0,
+        "x": -11686.4,
+        "y": -2384.94,
+        "z": -0.2
+      },
+      "questGivers": [
+        14463
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "blasted_lands_hub_03",
+      "position": {
+        "mapId": 0,
+        "x": -11362.8,
+        "y": -2982.84,
+        "z": 0.799
+      },
+      "questGivers": [
+        7363
+      ],
+      "levelRange": {
+        "min": 45,
+        "max": 55,
+        "avg": 55
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:10593:map:0:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -11159.5,
+            "y": -3342.99,
+            "z": 4.79
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            5974,
+            5975,
+            5976,
+            5977,
+            5978,
+            5979
+          ],
+          "targetCount": 44
+        },
+        {
+          "taskAreaId": "item_source:8244:map:0:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -11159.5,
+            "y": -3342.99,
+            "z": 4.79
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            5974,
+            5975,
+            5976,
+            5977,
+            5978,
+            5979
+          ],
+          "targetCount": 51
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "blasted_lands_hub_04",
+      "position": {
+        "mapId": 0,
+        "x": -10997.5,
+        "y": -3505.23,
+        "z": 103.211
+      },
+      "questGivers": [
+        7826
+      ],
+      "levelRange": {
+        "min": 50,
+        "max": 57,
+        "avg": 57
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "blasted_lands_hub_06",
+          "zoneId": 4,
+          "zoneName": "Blasted Lands",
+          "questGivers": [
+            7572,
+            7750
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -10632.3,
+            "y": -3009.37,
+            "z": 29.265
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "blasted_lands_hub_05",
+      "position": {
+        "mapId": 0,
+        "x": -10884.95,
+        "y": -2936.615,
+        "z": 13.077
+      },
+      "questGivers": [
+        7505,
+        7506
+      ],
+      "levelRange": {
+        "min": 45,
+        "max": 50,
+        "avg": 50
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 10,
+      "estimatedMinutes": 50,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:8392:map:0:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -11582.25,
+            "y": -3249.68,
+            "z": 8.1
+          },
+          "radius": 70.14,
+          "weight": 6,
+          "relatedQuestCount": 6,
+          "targetEntries": [
+            5992,
+            5993,
+            8303
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:8396:map:0:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -11602.1,
+            "y": -3310.36,
+            "z": 8.45
+          },
+          "radius": 35.0,
+          "weight": 6,
+          "relatedQuestCount": 6,
+          "targetEntries": [
+            5982,
+            5983,
+            8299
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:8392:map:0:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -11779.35,
+            "y": -2974.46,
+            "z": 13.96
+          },
+          "radius": 140.97,
+          "weight": 6,
+          "relatedQuestCount": 6,
+          "targetEntries": [
+            5992,
+            5993,
+            8303
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:8394:map:0:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -11669.7,
+            "y": -2818.97,
+            "z": 5.32
+          },
+          "radius": 35.0,
+          "weight": 4,
+          "relatedQuestCount": 4,
+          "targetEntries": [
+            5990,
+            5991,
+            8302
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:8394:map:0:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -11750.4,
+            "y": -2779.78,
+            "z": 8.46
+          },
+          "radius": 82.95,
+          "weight": 4,
+          "relatedQuestCount": 4,
+          "targetEntries": [
+            5990,
+            5991,
+            8302
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:8391:map:0:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -11844.9,
+            "y": -2996.68,
+            "z": 14.04
+          },
+          "radius": 35.0,
+          "weight": 4,
+          "relatedQuestCount": 4,
+          "targetEntries": [
+            5984,
+            5985,
+            8300
+          ],
+          "targetCount": 3
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "blasted_lands_hub_06",
+      "position": {
+        "mapId": 0,
+        "x": -10631.25,
+        "y": -2998.78,
+        "z": 29.07
+      },
+      "questGivers": [
+        7572,
+        7750
+      ],
+      "levelRange": {
+        "min": 45,
+        "max": 60,
+        "avg": 56
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 13,
+      "estimatedMinutes": 65,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:10755:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -11219.6,
+            "y": -3475.74,
+            "z": 9.85
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7666
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:6004:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -11286.44,
+            "y": -3449.45,
+            "z": 9.53
+          },
+          "radius": 116.5,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6004
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:6006:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -11269.88,
+            "y": -3479.33,
+            "z": 7.93
+          },
+          "radius": 158.87,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6006
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:6005:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -11255.3,
+            "y": -3500.92,
+            "z": 8.67
+          },
+          "radius": 68.82,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6005
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7670:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -11331.6,
+            "y": -3398.19,
+            "z": 7.59
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7670
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7670:map:0:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -11478.5,
+            "y": -3363.06,
+            "z": 7.39
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7670
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    }
+  ]
+}

@@ -1,0 +1,1738 @@
+{
+  "version": 1,
+  "zoneId": 66,
+  "zoneName": "Zul'Drak",
+  "mapId": 571,
+  "hubCount": 23,
+  "hubs": [
+    {
+      "hubId": "zul_drak_hub_01",
+      "position": {
+        "mapId": 571,
+        "x": 4599.71,
+        "y": -4876.9,
+        "z": 48.956
+      },
+      "questGivers": [
+        26787
+      ],
+      "levelRange": {
+        "min": 73,
+        "max": 75,
+        "avg": 75
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "zul_drak_hub_20",
+          "zoneId": 66,
+          "zoneName": "Zul'Drak",
+          "questGivers": [
+            28503
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 6131.88,
+            "y": -1951.97,
+            "z": 417.778
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "zul_drak_hub_02",
+      "position": {
+        "mapId": 571,
+        "x": 5042.04,
+        "y": -3036.95,
+        "z": 293.787
+      },
+      "questGivers": [
+        28042
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 76,
+        "avg": 76
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "zul_drak_hub_03",
+      "position": {
+        "mapId": 571,
+        "x": 5149.95,
+        "y": -2203.84,
+        "z": 236.626
+      },
+      "questGivers": [
+        29687,
+        29690,
+        29733
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 75,
+        "avg": 75
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:29692:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4917.41,
+            "y": -2329.77,
+            "z": 247.69
+          },
+          "radius": 132.25,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29692
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:29686:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4903.99,
+            "y": -2338.15,
+            "z": 240.97
+          },
+          "radius": 128.99,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29686
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "zul_drak_hub_05",
+          "zoneId": 66,
+          "zoneName": "Zul'Drak",
+          "questGivers": [
+            28518,
+            28532
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5203.73,
+            "y": -1313.08,
+            "z": 242.767
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "zul_drak_hub_10",
+          "zoneId": 66,
+          "zoneName": "Zul'Drak",
+          "questGivers": [
+            29688,
+            29689
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5539.37,
+            "y": -1862.18,
+            "z": 238.352
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "zul_drak_hub_04",
+      "position": {
+        "mapId": 571,
+        "x": 5156.95,
+        "y": -1591.64,
+        "z": 239.447
+      },
+      "questGivers": [
+        28589
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 75,
+        "avg": 75
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "zul_drak_hub_05",
+      "position": {
+        "mapId": 571,
+        "x": 5207.785,
+        "y": -1307.575,
+        "z": 242.626
+      },
+      "questGivers": [
+        28518,
+        28532
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 76,
+        "avg": 75
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 13,
+      "estimatedMinutes": 65,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:28532:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5203.73,
+            "y": -1313.08,
+            "z": 242.77
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            28532
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:38686:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 4969.46,
+            "y": -1493.66,
+            "z": 239.29
+          },
+          "radius": 91.83,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            28564
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:38686:map:571:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 5308.06,
+            "y": -1658.84,
+            "z": 238.86
+          },
+          "radius": 148.21,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            28564
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28523:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5329.92,
+            "y": -1377.57,
+            "z": 240.68
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28523
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28739:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6103.49,
+            "y": -1939.63,
+            "z": 239.71
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28739
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28739:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6169.38,
+            "y": -2136.74,
+            "z": 240.07
+          },
+          "radius": 134.55,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28739
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "zul_drak_hub_09",
+          "zoneId": 66,
+          "zoneName": "Zul'Drak",
+          "questGivers": [
+            28039,
+            28059,
+            28062,
+            28204
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5439.53,
+            "y": -2568.74,
+            "z": 304.036
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "zul_drak_hub_06",
+      "position": {
+        "mapId": 571,
+        "x": 5263.323,
+        "y": -3509.773,
+        "z": 291.714
+      },
+      "questGivers": [
+        28044,
+        28125,
+        28283,
+        28284
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 76,
+        "avg": 76
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 9,
+      "estimatedMinutes": 45,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:28352:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5352.01,
+            "y": -3409.56,
+            "z": 299.63
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28352
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:38521:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 5072.7,
+            "y": -3646.9,
+            "z": 397.76
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28255
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28352:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5337.91,
+            "y": -3274.15,
+            "z": 279.63
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28352
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28257:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5072.63,
+            "y": -3700.05,
+            "z": 343.17
+          },
+          "radius": 141.82,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28257
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:38514:map:571:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 4987.93,
+            "y": -3461.1,
+            "z": 293.29
+          },
+          "radius": 129.41,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28258
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28257:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 4928.02,
+            "y": -3507.16,
+            "z": 295.23
+          },
+          "radius": 74.36,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28257
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "zul_drak_hub_07",
+      "position": {
+        "mapId": 571,
+        "x": 5324.32,
+        "y": -3782.08,
+        "z": 371.423
+      },
+      "questGivers": [
+        28401
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 78,
+        "avg": 77
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 11,
+      "estimatedMinutes": 55,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:39150:map:571:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 5569.6,
+            "y": -3814.7,
+            "z": 369.38
+          },
+          "radius": 57.25,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28402,
+            28403
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:39150:map:571:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 5090.71,
+            "y": -4033.36,
+            "z": 356.61
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28402,
+            28403
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:39318:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 6577.23,
+            "y": -3904.09,
+            "z": 493.48
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28902
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "zul_drak_hub_13",
+          "zoneId": 66,
+          "zoneName": "Zul'Drak",
+          "questGivers": [
+            28401,
+            28479,
+            28480,
+            28484,
+            28527
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5736.14,
+            "y": -3571.37,
+            "z": 386.995
+          },
+          "weight": 3
+        },
+        {
+          "hubId": "zul_drak_hub_12",
+          "zoneId": 66,
+          "zoneName": "Zul'Drak",
+          "questGivers": [
+            28030
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5717.11,
+            "y": -4364.71,
+            "z": 385.885
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "zul_drak_hub_21",
+          "zoneId": 66,
+          "zoneName": "Zul'Drak",
+          "questGivers": [
+            28561
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 6369.9,
+            "y": -3265.91,
+            "z": 389.018
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "zul_drak_hub_22",
+          "zoneId": 66,
+          "zoneName": "Zul'Drak",
+          "questGivers": [
+            30671
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 6906.45,
+            "y": -4096.14,
+            "z": 467.448
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "zul_drak_hub_08",
+      "position": {
+        "mapId": 571,
+        "x": 5373.76,
+        "y": -2606.51,
+        "z": 304.037
+      },
+      "questGivers": [
+        28309
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 76,
+        "avg": 76
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:28303:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5236.62,
+            "y": -2700.23,
+            "z": 289.78
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28303
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "zul_drak_hub_09",
+      "position": {
+        "mapId": 571,
+        "x": 5468.882,
+        "y": -2616.822,
+        "z": 305.657
+      },
+      "questGivers": [
+        28039,
+        28059,
+        28062,
+        28204
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 77,
+        "avg": 76
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 12,
+      "estimatedMinutes": 60,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:28022:map:571:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5511.62,
+            "y": -2520.55,
+            "z": 292.54
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28022
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28022:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5379.14,
+            "y": -2525.29,
+            "z": 292.54
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28022
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:38326:map:571:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 5393.57,
+            "y": -2726.6,
+            "z": 288.29
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28145
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:38551:map:571:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 5509.48,
+            "y": -2380.71,
+            "z": 292.46
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16570,
+            28022,
+            28023,
+            28026,
+            28034,
+            28035
+          ],
+          "targetCount": 87
+        },
+        {
+          "taskAreaId": "item_source:38326:map:571:cluster:7",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 5310.89,
+            "y": -2877.92,
+            "z": 288.21
+          },
+          "radius": 66.54,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28145
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:38551:map:571:cluster:10",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 5835.76,
+            "y": -2657.86,
+            "z": 277.45
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16570,
+            28022,
+            28023,
+            28026,
+            28034,
+            28035
+          ],
+          "targetCount": 87
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "zul_drak_hub_13",
+          "zoneId": 66,
+          "zoneName": "Zul'Drak",
+          "questGivers": [
+            28401,
+            28479,
+            28480,
+            28484,
+            28527
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5736.14,
+            "y": -3571.37,
+            "z": 386.995
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "zul_drak_hub_19",
+          "zoneId": 66,
+          "zoneName": "Zul'Drak",
+          "questGivers": [
+            28056,
+            28099
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 6063.87,
+            "y": -2615.71,
+            "z": 302.847
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "zul_drak_hub_10",
+      "position": {
+        "mapId": 571,
+        "x": 5540.75,
+        "y": -1860.945,
+        "z": 238.352
+      },
+      "questGivers": [
+        29688,
+        29689
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 76,
+        "avg": 76
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:41504:map:571:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 5532.74,
+            "y": -1931.53,
+            "z": 251.06
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29646
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:41504:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 5575.84,
+            "y": -1750.68,
+            "z": 248.63
+          },
+          "radius": 172.34,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29646
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:41399:map:571:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 5603.15,
+            "y": -1745.05,
+            "z": 238.95
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29452
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:29928:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5789.56,
+            "y": -1592.34,
+            "z": 234.94
+          },
+          "radius": 47.43,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29928
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:41399:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 5548.79,
+            "y": -1472.1,
+            "z": 238.27
+          },
+          "radius": 214.8,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29452
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:29468:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5950.65,
+            "y": -1851.12,
+            "z": 248.39
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29468
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "zul_drak_hub_16",
+          "zoneId": 66,
+          "zoneName": "Zul'Drak",
+          "questGivers": [
+            29647
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5796.48,
+            "y": -1594.16,
+            "z": 235.111
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "zul_drak_hub_11",
+      "position": {
+        "mapId": 571,
+        "x": 5541.78,
+        "y": -3004.43,
+        "z": 278.475
+      },
+      "questGivers": [
+        28043
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 76,
+        "avg": 76
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "zul_drak_hub_12",
+      "position": {
+        "mapId": 571,
+        "x": 5717.11,
+        "y": -4364.71,
+        "z": 385.885
+      },
+      "questGivers": [
+        28030
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 77,
+        "avg": 77
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "zul_drak_hub_13",
+          "zoneId": 66,
+          "zoneName": "Zul'Drak",
+          "questGivers": [
+            28401,
+            28479,
+            28480,
+            28484,
+            28527
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5736.14,
+            "y": -3571.37,
+            "z": 386.995
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "zul_drak_hub_14",
+      "position": {
+        "mapId": 571,
+        "x": 5753.12,
+        "y": -1481.07,
+        "z": 236.346
+      },
+      "questGivers": [
+        29455
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 76,
+        "avg": 76
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "zul_drak_hub_13",
+      "position": {
+        "mapId": 571,
+        "x": 5762.274,
+        "y": -3579.044,
+        "z": 387.648
+      },
+      "questGivers": [
+        28401,
+        28479,
+        28480,
+        28484,
+        28527
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 78,
+        "avg": 77
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 29,
+      "estimatedMinutes": 145,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:38551:map:571:cluster:9",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 5603.33,
+            "y": -3062.44,
+            "z": 283.84
+          },
+          "radius": 92.1,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            16570,
+            28022,
+            28023,
+            28026,
+            28034,
+            28035
+          ],
+          "targetCount": 87
+        },
+        {
+          "taskAreaId": "item_source:38551:map:571:cluster:18",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 5084.4,
+            "y": -3679.76,
+            "z": 364.82
+          },
+          "radius": 130.85,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            16570,
+            28022,
+            28023,
+            28026,
+            28034,
+            28035
+          ],
+          "targetCount": 87
+        },
+        {
+          "taskAreaId": "item_source:38638:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 5601.8,
+            "y": -3460.85,
+            "z": 359.51
+          },
+          "radius": 168.16,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28388,
+            28496
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:38681:map:571:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 5988.42,
+            "y": -3514.64,
+            "z": 361.83
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28411
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28452:map:571:cluster:5",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5975.11,
+            "y": -3441.01,
+            "z": 363.4
+          },
+          "radius": 108.03,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28452
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:39540:map:571:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 6038.44,
+            "y": -3590.66,
+            "z": 367.48
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28597
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "zul_drak_hub_12",
+          "zoneId": 66,
+          "zoneName": "Zul'Drak",
+          "questGivers": [
+            28030
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5717.11,
+            "y": -4364.71,
+            "z": 385.885
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "zul_drak_hub_21",
+          "zoneId": 66,
+          "zoneName": "Zul'Drak",
+          "questGivers": [
+            28561
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 6369.9,
+            "y": -3265.91,
+            "z": 389.018
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "zul_drak_hub_22",
+          "zoneId": 66,
+          "zoneName": "Zul'Drak",
+          "questGivers": [
+            30671
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 6906.45,
+            "y": -4096.14,
+            "z": 467.448
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "zul_drak_hub_23",
+          "zoneId": 66,
+          "zoneName": "Zul'Drak",
+          "questGivers": [
+            30676,
+            33025
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 6970.98,
+            "y": -4094.88,
+            "z": 479.446
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "zul_drak_hub_15",
+      "position": {
+        "mapId": 571,
+        "x": 5792.44,
+        "y": -3018.4,
+        "z": 286.389
+      },
+      "questGivers": [
+        30007
+      ],
+      "levelRange": {
+        "min": 75,
+        "max": 78,
+        "avg": 77
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "zul_drak_hub_16",
+      "position": {
+        "mapId": 571,
+        "x": 5796.48,
+        "y": -1594.16,
+        "z": 235.111
+      },
+      "questGivers": [
+        29647
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 76,
+        "avg": 76
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:29872:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6234.94,
+            "y": -2034.97,
+            "z": 234.05
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29872
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:29821:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5543.87,
+            "y": -2221.51,
+            "z": 235.4
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29821
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "zul_drak_hub_10",
+          "zoneId": 66,
+          "zoneName": "Zul'Drak",
+          "questGivers": [
+            29688,
+            29689
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5539.37,
+            "y": -1862.18,
+            "z": 238.352
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "zul_drak_hub_17",
+      "position": {
+        "mapId": 571,
+        "x": 5816.14,
+        "y": 649.888,
+        "z": 609.886
+      },
+      "questGivers": [
+        30137
+      ],
+      "levelRange": {
+        "min": 75,
+        "max": 77,
+        "avg": 77
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "zul_drak_hub_15",
+          "zoneId": 66,
+          "zoneName": "Zul'Drak",
+          "questGivers": [
+            30007
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5792.44,
+            "y": -3018.4,
+            "z": 286.389
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "zul_drak_hub_18",
+      "position": {
+        "mapId": 571,
+        "x": 5931.93,
+        "y": -2363.78,
+        "z": 293.924
+      },
+      "questGivers": [
+        28045,
+        28205
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 76,
+        "avg": 76
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:38620:map:571:cluster:18",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 5999.04,
+            "y": -2323.57,
+            "z": 291.97
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28233
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:38610:map:571:cluster:10",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 5857.66,
+            "y": -2407.45,
+            "z": 293.2
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28221
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:38620:map:571:cluster:17",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 5860.63,
+            "y": -2460.14,
+            "z": 293.75
+          },
+          "radius": 176.64,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28233
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:38610:map:571:cluster:8",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 5801.61,
+            "y": -2452.88,
+            "z": 291.76
+          },
+          "radius": 160.58,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28221
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:40066:map:571:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 5646.74,
+            "y": -2461.8,
+            "z": 287.6
+          },
+          "radius": 158.12,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29129
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:40066:map:571:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 5665.38,
+            "y": -2557.05,
+            "z": 287.61
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            29129
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "zul_drak_hub_19",
+      "position": {
+        "mapId": 571,
+        "x": 6064.17,
+        "y": -2616.695,
+        "z": 302.903
+      },
+      "questGivers": [
+        28056,
+        28099
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 76,
+        "avg": 76
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:28041:map:571:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6232.8,
+            "y": -2505.85,
+            "z": 302.87
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28041
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28036:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6438.69,
+            "y": -2706.37,
+            "z": 305.92
+          },
+          "radius": 91.76,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28036
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:28041:map:571:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6473.25,
+            "y": -2628.55,
+            "z": 311.73
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28041
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "zul_drak_hub_20",
+      "position": {
+        "mapId": 571,
+        "x": 6131.88,
+        "y": -1951.97,
+        "z": 417.778
+      },
+      "questGivers": [
+        28503
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 75,
+        "avg": 75
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:28793:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 5969.27,
+            "y": -2135.94,
+            "z": 248.31
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28793
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "zul_drak_hub_21",
+      "position": {
+        "mapId": 571,
+        "x": 6369.9,
+        "y": -3265.91,
+        "z": 389.018
+      },
+      "questGivers": [
+        28561
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 77,
+        "avg": 77
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:28416:map:571:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 571,
+            "x": 6522.06,
+            "y": -3270.41,
+            "z": 408.32
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28416
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:38695:map:571:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 571,
+            "x": 6085.77,
+            "y": -3300.34,
+            "z": 340.06
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            28442
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "zul_drak_hub_13",
+          "zoneId": 66,
+          "zoneName": "Zul'Drak",
+          "questGivers": [
+            28401,
+            28479,
+            28480,
+            28484,
+            28527
+          ],
+          "position": {
+            "mapId": 571,
+            "x": 5736.14,
+            "y": -3571.37,
+            "z": 386.995
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "zul_drak_hub_22",
+      "position": {
+        "mapId": 571,
+        "x": 6906.45,
+        "y": -4096.14,
+        "z": 467.448
+      },
+      "questGivers": [
+        30671
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 78,
+        "avg": 78
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "zul_drak_hub_23",
+      "position": {
+        "mapId": 571,
+        "x": 6971.605,
+        "y": -4096.7,
+        "z": 479.475
+      },
+      "questGivers": [
+        30676,
+        33025
+      ],
+      "levelRange": {
+        "min": 74,
+        "max": 78,
+        "avg": 78
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

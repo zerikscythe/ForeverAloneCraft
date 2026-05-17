@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "zoneId": 4809,
+  "zoneName": "The Forge of Souls",
+  "mapId": 632,
+  "hubCount": 1,
+  "hubs": [
+    {
+      "hubId": "the_forge_of_souls_hub_01",
+      "position": {
+        "mapId": 632,
+        "x": 4899.915,
+        "y": 2207.03,
+        "z": 638.817
+      },
+      "questGivers": [
+        37596,
+        37779
+      ],
+      "levelRange": {
+        "min": 78,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:36497:map:632:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 632,
+            "x": 5297.31,
+            "y": 2506.46,
+            "z": 686.15
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            36497
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:36502:map:632:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 632,
+            "x": 5661.75,
+            "y": 2507.39,
+            "z": 708.91
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            36502
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    }
+  ]
+}

@@ -1,0 +1,770 @@
+{
+  "version": 1,
+  "zoneId": 16,
+  "zoneName": "Azshara",
+  "mapId": 1,
+  "hubCount": 13,
+  "hubs": [
+    {
+      "hubId": "azshara_hub_01",
+      "position": {
+        "mapId": 1,
+        "x": 1955.1,
+        "y": -4459.36,
+        "z": 55.021
+      },
+      "questGivers": [
+        8659
+      ],
+      "levelRange": {
+        "min": 45,
+        "max": 52,
+        "avg": 52
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "azshara_hub_02",
+      "position": {
+        "mapId": 1,
+        "x": 2373.58,
+        "y": -5968.04,
+        "z": 10.533
+      },
+      "questGivers": [
+        8380
+      ],
+      "levelRange": {
+        "min": 48,
+        "max": 57,
+        "avg": 57
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "azshara_hub_03",
+      "position": {
+        "mapId": 1,
+        "x": 2698.67,
+        "y": -3853.54,
+        "z": 102.836
+      },
+      "questGivers": [
+        11548
+      ],
+      "levelRange": {
+        "min": 45,
+        "max": 47,
+        "avg": 47
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:6116:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 2958.66,
+            "y": -4100.81,
+            "z": 109.41
+          },
+          "radius": 197.3,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6116
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:6127:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 3256.16,
+            "y": -4279.14,
+            "z": 119.78
+          },
+          "radius": 121.84,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6127
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:6126:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 3247.32,
+            "y": -4294.07,
+            "z": 119.87
+          },
+          "radius": 116.99,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6126
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:6125:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 3252.97,
+            "y": -4306.99,
+            "z": 121.34
+          },
+          "radius": 102.4,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6125
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "azshara_hub_04",
+      "position": {
+        "mapId": 1,
+        "x": 2849.59,
+        "y": -7297.15,
+        "z": 20.399
+      },
+      "questGivers": [
+        13278
+      ],
+      "levelRange": {
+        "min": 55,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "azshara_hub_05",
+      "position": {
+        "mapId": 1,
+        "x": 3098.16,
+        "y": -6361.3,
+        "z": 8.194
+      },
+      "questGivers": [
+        7783
+      ],
+      "levelRange": {
+        "min": 45,
+        "max": 58,
+        "avg": 58
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "azshara_hub_10",
+          "zoneId": 16,
+          "zoneName": "Azshara",
+          "questGivers": [
+            6134
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 3894.71,
+            "y": -7188.03,
+            "z": 50.885
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "azshara_hub_06",
+      "position": {
+        "mapId": 1,
+        "x": 3129.73,
+        "y": -5183.02,
+        "z": 138.337
+      },
+      "questGivers": [
+        7866
+      ],
+      "levelRange": {
+        "min": 40,
+        "max": 55,
+        "avg": 55
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:8165:map:1:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3247.17,
+            "y": -3723.5,
+            "z": 149.73
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            5317,
+            12477,
+            12478,
+            12498
+          ],
+          "targetCount": 4
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "azshara_hub_07",
+      "position": {
+        "mapId": 1,
+        "x": 3603.02,
+        "y": -4421.08,
+        "z": 112.075
+      },
+      "questGivers": [
+        8587
+      ],
+      "levelRange": {
+        "min": 45,
+        "max": 52,
+        "avg": 52
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "azshara_hub_01",
+          "zoneId": 16,
+          "zoneName": "Azshara",
+          "questGivers": [
+            8659
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 1955.1,
+            "y": -4459.36,
+            "z": 55.021
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "azshara_hub_12",
+          "zoneId": 16,
+          "zoneName": "Azshara",
+          "questGivers": [
+            8379
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 3982.08,
+            "y": -4760.25,
+            "z": 304.8
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "azshara_hub_08",
+      "position": {
+        "mapId": 1,
+        "x": 3648.01,
+        "y": -4702.71,
+        "z": 121.058
+      },
+      "questGivers": [
+        8395
+      ],
+      "levelRange": {
+        "min": 45,
+        "max": 55,
+        "avg": 55
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "azshara_hub_09",
+      "position": {
+        "mapId": 1,
+        "x": 3777.06,
+        "y": -4619.17,
+        "z": 227.405
+      },
+      "questGivers": [
+        8399
+      ],
+      "levelRange": {
+        "min": 45,
+        "max": 55,
+        "avg": 55
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "azshara_hub_10",
+      "position": {
+        "mapId": 1,
+        "x": 3894.71,
+        "y": -7188.03,
+        "z": 50.885
+      },
+      "questGivers": [
+        6134
+      ],
+      "levelRange": {
+        "min": 45,
+        "max": 58,
+        "avg": 58
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:10598:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3827.25,
+            "y": -6153.95,
+            "z": 4.55
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6140
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:10599:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3827.25,
+            "y": -6153.95,
+            "z": 4.55
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6140
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:10600:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3827.25,
+            "y": -6153.95,
+            "z": 4.55
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6140
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "azshara_hub_05",
+          "zoneId": 16,
+          "zoneName": "Azshara",
+          "questGivers": [
+            7783
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 3098.16,
+            "y": -6361.3,
+            "z": 8.194
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "azshara_hub_11",
+      "position": {
+        "mapId": 1,
+        "x": 3900.59,
+        "y": -5427.08,
+        "z": 154.49
+      },
+      "questGivers": [
+        8405
+      ],
+      "levelRange": {
+        "min": 50,
+        "max": 52,
+        "avg": 52
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:7972:map:1:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3781.73,
+            "y": -5319.41,
+            "z": 86.73
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1488,
+            1489,
+            1783,
+            1784,
+            1785,
+            1787
+          ],
+          "targetCount": 127
+        },
+        {
+          "taskAreaId": "item_source:7972:map:1:cluster:7",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3640.04,
+            "y": -5274.13,
+            "z": 91.09
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1488,
+            1489,
+            1783,
+            1784,
+            1785,
+            1787
+          ],
+          "targetCount": 127
+        },
+        {
+          "taskAreaId": "item_source:20087:map:1:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3917.03,
+            "y": -5982.91,
+            "z": -13.36
+          },
+          "radius": 76.65,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6347,
+            6348,
+            6349
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:20017:map:1:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 4225.17,
+            "y": -5919.21,
+            "z": 97.54
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            8761
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:20027:map:1:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 4225.17,
+            "y": -5919.21,
+            "z": 97.54
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            8761
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:20017:map:1:cluster:11",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3102.5,
+            "y": -5106.55,
+            "z": 137.67
+          },
+          "radius": 86.25,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            8761
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "azshara_hub_12",
+      "position": {
+        "mapId": 1,
+        "x": 3982.08,
+        "y": -4760.25,
+        "z": 304.8
+      },
+      "questGivers": [
+        8379
+      ],
+      "levelRange": {
+        "min": 45,
+        "max": 60,
+        "avg": 53
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:23250:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3547.77,
+            "y": -5357.27,
+            "z": 107.56
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            8408
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:20023:map:1:cluster:40",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3702.04,
+            "y": -4852.87,
+            "z": 130.9
+          },
+          "radius": 150.38,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6377,
+            6378,
+            6379,
+            6380,
+            8762,
+            8766
+          ],
+          "targetCount": 6
+        },
+        {
+          "taskAreaId": "item_source:20023:map:1:cluster:39",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3692.82,
+            "y": -4543.43,
+            "z": 128.13
+          },
+          "radius": 81.79,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6377,
+            6378,
+            6379,
+            6380,
+            8762,
+            8766
+          ],
+          "targetCount": 6
+        },
+        {
+          "taskAreaId": "item_source:20029:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3723.64,
+            "y": -5249.76,
+            "z": 84.85
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6195
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:20029:map:1:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3517.52,
+            "y": -5063.17,
+            "z": 84.12
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6195
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:20028:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 4359.84,
+            "y": -6098.01,
+            "z": 117.84
+          },
+          "radius": 123.54,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6198,
+            6199
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "azshara_hub_13",
+      "position": {
+        "mapId": 1,
+        "x": 4603.83,
+        "y": -5987.55,
+        "z": 169.724
+      },
+      "questGivers": [
+        8420
+      ],
+      "levelRange": {
+        "min": 47,
+        "max": 53,
+        "avg": 53
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:13815:map:1:cluster:8",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3997.68,
+            "y": -5629.81,
+            "z": 35.27
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6195,
+            6196,
+            7885,
+            7886
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:13815:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3869.6,
+            "y": -5546.74,
+            "z": 24.17
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6195,
+            6196,
+            7885,
+            7886
+          ],
+          "targetCount": 4
+        }
+      ],
+      "nextHubs": []
+    }
+  ]
+}

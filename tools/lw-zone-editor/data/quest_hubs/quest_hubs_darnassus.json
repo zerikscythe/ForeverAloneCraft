@@ -1,0 +1,293 @@
+{
+  "version": 1,
+  "zoneId": 1657,
+  "zoneName": "Darnassus",
+  "mapId": 1,
+  "hubCount": 9,
+  "hubs": [
+    {
+      "hubId": "darnassus_hub_01",
+      "position": {
+        "mapId": 1,
+        "x": 9649.098,
+        "y": 2540.638,
+        "z": 1349.82
+      },
+      "questGivers": [
+        2912,
+        4090,
+        4091,
+        7313,
+        7740,
+        11401
+      ],
+      "levelRange": {
+        "min": 5,
+        "max": 54,
+        "avg": 36
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "darnassus_hub_02",
+      "position": {
+        "mapId": 1,
+        "x": 9659.84,
+        "y": 2432.42,
+        "z": 1335.68
+      },
+      "questGivers": [
+        10878
+      ],
+      "levelRange": {
+        "min": 50,
+        "max": 57,
+        "avg": 54
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "darnassus_hub_07",
+          "zoneId": 1657,
+          "zoneName": "Darnassus",
+          "questGivers": [
+            3516,
+            4146,
+            4163,
+            4205,
+            4214,
+            4215,
+            4217,
+            4218,
+            4730
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 10055.3,
+            "y": 2573.02,
+            "z": 1282.55
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "darnassus_hub_03",
+      "position": {
+        "mapId": 1,
+        "x": 9915.08,
+        "y": 2632.12,
+        "z": 1316.87
+      },
+      "questGivers": [
+        7316
+      ],
+      "levelRange": {
+        "min": 5,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "darnassus_hub_01",
+          "zoneId": 1657,
+          "zoneName": "Darnassus",
+          "questGivers": [
+            2912,
+            4090,
+            4091,
+            7313,
+            7740,
+            11401
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 9631.88,
+            "y": 2550.45,
+            "z": 1354.89
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "darnassus_hub_04",
+      "position": {
+        "mapId": 1,
+        "x": 9918.03,
+        "y": 2308.6,
+        "z": 1330.87
+      },
+      "questGivers": [
+        6142
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 30,
+        "avg": 25
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "darnassus_hub_05",
+      "position": {
+        "mapId": 1,
+        "x": 9918.06,
+        "y": 2190.34,
+        "z": 1328.27
+      },
+      "questGivers": [
+        4241
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "darnassus_hub_06",
+      "position": {
+        "mapId": 1,
+        "x": 9991.47,
+        "y": 2323.25,
+        "z": 1330.87
+      },
+      "questGivers": [
+        4088,
+        7315
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 52,
+        "avg": 24
+      },
+      "faction": "Alliance",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "darnassus_hub_08",
+      "position": {
+        "mapId": 1,
+        "x": 10065.35,
+        "y": 2353.12,
+        "z": 1331.97
+      },
+      "questGivers": [
+        4784,
+        4786
+      ],
+      "levelRange": {
+        "min": 18,
+        "max": 25,
+        "avg": 24
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "darnassus_hub_09",
+      "position": {
+        "mapId": 1,
+        "x": 10095.133,
+        "y": 2247.437,
+        "z": 1335.093
+      },
+      "questGivers": [
+        6034,
+        6735,
+        14725
+      ],
+      "levelRange": {
+        "min": 8,
+        "max": 60,
+        "avg": 53
+      },
+      "faction": "Alliance",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "darnassus_hub_07",
+          "zoneId": 1657,
+          "zoneName": "Darnassus",
+          "questGivers": [
+            3516,
+            4146,
+            4163,
+            4205,
+            4214,
+            4215,
+            4217,
+            4218,
+            4730
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 10055.3,
+            "y": 2573.02,
+            "z": 1282.55
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "darnassus_hub_07",
+      "position": {
+        "mapId": 1,
+        "x": 10140.322,
+        "y": 2544.12,
+        "z": 1324.643
+      },
+      "questGivers": [
+        3516,
+        4146,
+        4163,
+        4205,
+        4214,
+        4215,
+        4217,
+        4218,
+        4730
+      ],
+      "levelRange": {
+        "min": 6,
+        "max": 55,
+        "avg": 37
+      },
+      "faction": "Alliance",
+      "totalQuests": 21,
+      "estimatedMinutes": 105,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

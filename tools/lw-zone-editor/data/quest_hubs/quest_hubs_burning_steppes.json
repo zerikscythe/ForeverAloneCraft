@@ -1,0 +1,412 @@
+{
+  "version": 1,
+  "zoneId": 46,
+  "zoneName": "Burning Steppes",
+  "mapId": 0,
+  "hubCount": 7,
+  "hubs": [
+    {
+      "hubId": "burning_steppes_hub_01",
+      "position": {
+        "mapId": 0,
+        "x": -8381.416,
+        "y": -2758.664,
+        "z": 189.72
+      },
+      "questGivers": [
+        9177,
+        9560,
+        9561,
+        9562,
+        9565
+      ],
+      "levelRange": {
+        "min": 48,
+        "max": 60,
+        "avg": 56
+      },
+      "faction": "Alliance",
+      "totalQuests": 12,
+      "estimatedMinutes": 60,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:11467:map:0:cluster:9",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -8214.5,
+            "y": -2729.06,
+            "z": 133.97
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7025,
+            7026,
+            7027,
+            7028,
+            7029,
+            7055
+          ],
+          "targetCount": 10
+        },
+        {
+          "taskAreaId": "creature:7033:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -8075.29,
+            "y": -2678.09,
+            "z": 141.06
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7033
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7035:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -7961.1,
+            "y": -2700.76,
+            "z": 159.51
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7035
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7033:map:0:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -7984.0,
+            "y": -2448.87,
+            "z": 131.91
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7033
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:11467:map:0:cluster:11",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -8221.29,
+            "y": -2263.31,
+            "z": 143.15
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7025,
+            7026,
+            7027,
+            7028,
+            7029,
+            7055
+          ],
+          "targetCount": 10
+        },
+        {
+          "taskAreaId": "creature:7035:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -7869.48,
+            "y": -2656.1,
+            "z": 176.29
+          },
+          "radius": 213.89,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7035
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "burning_steppes_hub_02",
+      "position": {
+        "mapId": 0,
+        "x": -7699.62,
+        "y": -1444.29,
+        "z": 139.871
+      },
+      "questGivers": [
+        9520
+      ],
+      "levelRange": {
+        "min": 52,
+        "max": 58,
+        "avg": 58
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "burning_steppes_hub_03",
+      "position": {
+        "mapId": 0,
+        "x": -7648.835,
+        "y": -634.593,
+        "z": 200.779
+      },
+      "questGivers": [
+        14436,
+        14437
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 9,
+      "estimatedMinutes": 45,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:15416:map:0:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -7939.74,
+            "y": -893.15,
+            "z": 132.28
+          },
+          "radius": 97.69,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7040,
+            7041,
+            7042,
+            7043,
+            7044,
+            7047
+          ],
+          "targetCount": 21
+        },
+        {
+          "taskAreaId": "item_source:15416:map:0:cluster:9",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -7978.58,
+            "y": -1324.77,
+            "z": 133.44
+          },
+          "radius": 77.4,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7040,
+            7041,
+            7042,
+            7043,
+            7044,
+            7047
+          ],
+          "targetCount": 21
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "burning_steppes_hub_04",
+      "position": {
+        "mapId": 0,
+        "x": -7647.31,
+        "y": -3051.95,
+        "z": 131.25
+      },
+      "questGivers": [
+        9459
+      ],
+      "levelRange": {
+        "min": 52,
+        "max": 58,
+        "avg": 55
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "burning_steppes_hub_05",
+      "position": {
+        "mapId": 0,
+        "x": -7596.0,
+        "y": -1115.0,
+        "z": 252.791
+      },
+      "questGivers": [
+        8888
+      ],
+      "levelRange": {
+        "min": 48,
+        "max": 52,
+        "avg": 52
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "burning_steppes_hub_06",
+      "position": {
+        "mapId": 0,
+        "x": -7496.48,
+        "y": -2174.393,
+        "z": 165.588
+      },
+      "questGivers": [
+        9536,
+        9836,
+        10267
+      ],
+      "levelRange": {
+        "min": 50,
+        "max": 60,
+        "avg": 56
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 12,
+      "estimatedMinutes": 60,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:11754:map:0:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -8087.78,
+            "y": -1898.13,
+            "z": 134.18
+          },
+          "radius": 35.0,
+          "weight": 5,
+          "relatedQuestCount": 5,
+          "targetEntries": [
+            7034,
+            7055,
+            8891,
+            8892,
+            8893,
+            8894
+          ],
+          "targetCount": 65
+        },
+        {
+          "taskAreaId": "item_source:11754:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -8141.71,
+            "y": -1683.5,
+            "z": 135.7
+          },
+          "radius": 148.01,
+          "weight": 5,
+          "relatedQuestCount": 5,
+          "targetEntries": [
+            7034,
+            7055,
+            8891,
+            8892,
+            8893,
+            8894
+          ],
+          "targetCount": 65
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "burning_steppes_hub_07",
+      "position": {
+        "mapId": 0,
+        "x": -6682.35,
+        "y": -2154.34,
+        "z": 244.195
+      },
+      "questGivers": [
+        9079
+      ],
+      "levelRange": {
+        "min": 52,
+        "max": 54,
+        "avg": 54
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:11266:map:0:cluster:7",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -7647.09,
+            "y": -2210.02,
+            "z": 131.84
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7032,
+            7039,
+            8981
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:11266:map:0:cluster:11",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -7611.25,
+            "y": -2585.78,
+            "z": 133.39
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7032,
+            7039,
+            8981
+          ],
+          "targetCount": 3
+        }
+      ],
+      "nextHubs": []
+    }
+  ]
+}

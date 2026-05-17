@@ -1,0 +1,1124 @@
+{
+  "version": 1,
+  "zoneId": 3524,
+  "zoneName": "Azuremyst Isle",
+  "mapId": 530,
+  "hubCount": 19,
+  "hubs": [
+    {
+      "hubId": "azuremyst_isle_hub_01",
+      "position": {
+        "mapId": 530,
+        "x": -5357.79,
+        "y": -11175.3,
+        "z": 6.432
+      },
+      "questGivers": [
+        17311
+      ],
+      "levelRange": {
+        "min": 6,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:23789:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -5153.24,
+            "y": -10865.93,
+            "z": 9.25
+          },
+          "radius": 103.17,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17186,
+            17187
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "azuremyst_isle_hub_02",
+      "position": {
+        "mapId": 530,
+        "x": -4781.36,
+        "y": -11054.6,
+        "z": 2.476
+      },
+      "questGivers": [
+        17312
+      ],
+      "levelRange": {
+        "min": 6,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "azuremyst_isle_hub_03",
+      "position": {
+        "mapId": 530,
+        "x": -4700.908,
+        "y": -12414.175,
+        "z": 11.798
+      },
+      "questGivers": [
+        17240,
+        17241,
+        17242,
+        17246
+      ],
+      "levelRange": {
+        "min": 5,
+        "max": 18,
+        "avg": 9
+      },
+      "faction": "Alliance",
+      "totalQuests": 10,
+      "estimatedMinutes": 50,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:23899:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -4691.14,
+            "y": -12527.5,
+            "z": 2.68
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            17243
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17243:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -4691.14,
+            "y": -12527.5,
+            "z": 2.68
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17243
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:23757:map:530:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -4960.05,
+            "y": -12093.65,
+            "z": 1.59
+          },
+          "radius": 78.89,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17216,
+            17217
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "creature:17298:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -4816.57,
+            "y": -11497.4,
+            "z": -33.77
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17298
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:23757:map:530:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -4883.17,
+            "y": -11440.55,
+            "z": -9.04
+          },
+          "radius": 111.01,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17216,
+            17217
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "azuremyst_isle_hub_04",
+      "position": {
+        "mapId": 530,
+        "x": -4636.21,
+        "y": -13069.5,
+        "z": -14.611
+      },
+      "questGivers": [
+        17363
+      ],
+      "levelRange": {
+        "min": 8,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "azuremyst_isle_hub_05",
+          "zoneId": 3524,
+          "zoneName": "Azuremyst Isle",
+          "questGivers": [
+            17364
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -4487.45,
+            "y": -11644.2,
+            "z": 11.335
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "azuremyst_isle_hub_05",
+      "position": {
+        "mapId": 530,
+        "x": -4487.45,
+        "y": -11644.2,
+        "z": 11.335
+      },
+      "questGivers": [
+        17364
+      ],
+      "levelRange": {
+        "min": 8,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:17375:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -4581.54,
+            "y": -11586.39,
+            "z": 17.36
+          },
+          "radius": 142.22,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17375
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "azuremyst_isle_hub_06",
+      "position": {
+        "mapId": 530,
+        "x": -4445.66,
+        "y": -13430.9,
+        "z": 51.337
+      },
+      "questGivers": [
+        16546
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 5,
+        "avg": 4
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:16521:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -4513.37,
+            "y": -13352.06,
+            "z": 65.41
+          },
+          "radius": 111.6,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16521
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16522:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -4579.39,
+            "y": -13319.9,
+            "z": 88.08
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16522
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "azuremyst_isle_hub_07",
+      "position": {
+        "mapId": 530,
+        "x": -4366.61,
+        "y": -12204.1,
+        "z": 6.784
+      },
+      "questGivers": [
+        17587
+      ],
+      "levelRange": {
+        "min": 5,
+        "max": 8,
+        "avg": 8
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "azuremyst_isle_hub_08",
+      "position": {
+        "mapId": 530,
+        "x": -4266.38,
+        "y": -12985.1,
+        "z": 2.29
+      },
+      "questGivers": [
+        17101
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 6,
+        "avg": 6
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "azuremyst_isle_hub_09",
+      "position": {
+        "mapId": 530,
+        "x": -4260.66,
+        "y": -13125.4,
+        "z": 37.133
+      },
+      "questGivers": [
+        16554
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 5,
+        "avg": 5
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "azuremyst_isle_hub_10",
+      "position": {
+        "mapId": 530,
+        "x": -4171.102,
+        "y": -12490.723,
+        "z": 44.638
+      },
+      "questGivers": [
+        17110,
+        17114,
+        17116,
+        17212,
+        17214,
+        17215,
+        17232,
+        17360,
+        17480,
+        17481,
+        17482,
+        17483,
+        17488
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 11,
+        "avg": 9
+      },
+      "faction": "Alliance",
+      "totalQuests": 21,
+      "estimatedMinutes": 105,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:23676:map:530:cluster:10",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -4335.18,
+            "y": -12353.1,
+            "z": 12.25
+          },
+          "radius": 52.19,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17200,
+            17201
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:23685:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -4303.78,
+            "y": -12296.62,
+            "z": 7.9
+          },
+          "radius": 154.97,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17196
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17551:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -4120.62,
+            "y": -12788.8,
+            "z": 9.44
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17551
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:23677:map:530:cluster:10",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -3920.1,
+            "y": -12231.16,
+            "z": 3.67
+          },
+          "radius": 200.53,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17201
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:23676:map:530:cluster:9",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -3851.25,
+            "y": -12295.51,
+            "z": 3.44
+          },
+          "radius": 193.19,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17200,
+            17201
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:23677:map:530:cluster:11",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -3742.72,
+            "y": -12420.0,
+            "z": -0.36
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17201
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "azuremyst_isle_hub_01",
+          "zoneId": 3524,
+          "zoneName": "Azuremyst Isle",
+          "questGivers": [
+            17311
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -5357.79,
+            "y": -11175.3,
+            "z": 6.432
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "azuremyst_isle_hub_03",
+          "zoneId": 3524,
+          "zoneName": "Azuremyst Isle",
+          "questGivers": [
+            17240,
+            17241,
+            17242,
+            17246
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -4708.59,
+            "y": -12400.3,
+            "z": 11.943
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "azuremyst_isle_hub_12",
+          "zoneId": 3524,
+          "zoneName": "Azuremyst Isle",
+          "questGivers": [
+            17584
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -3972.18,
+            "y": -11927.5,
+            "z": -0.67
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "azuremyst_isle_hub_14",
+          "zoneId": 3524,
+          "zoneName": "Azuremyst Isle",
+          "questGivers": [
+            17361
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -3924.22,
+            "y": -12748.4,
+            "z": 96.785
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "azuremyst_isle_hub_19",
+          "zoneId": 3524,
+          "zoneName": "Azuremyst Isle",
+          "questGivers": [
+            17205
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -3285.64,
+            "y": -12924.1,
+            "z": 11.771
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "azuremyst_isle_hub_11",
+      "position": {
+        "mapId": 530,
+        "x": -4116.696,
+        "y": -13740.718,
+        "z": 74.213
+      },
+      "questGivers": [
+        16477,
+        16499,
+        16500,
+        16501,
+        16502,
+        16503,
+        16514,
+        16535,
+        17071,
+        17089,
+        20233
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 5,
+        "avg": 3
+      },
+      "faction": "Alliance",
+      "totalQuests": 22,
+      "estimatedMinutes": 110,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:16516:map:530:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -4175.64,
+            "y": -13846.6,
+            "z": 73.51
+          },
+          "radius": 117.56,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16516
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16483:map:530:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -4149.65,
+            "y": -13885.1,
+            "z": 78.87
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16483
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16483:map:530:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3975.82,
+            "y": -13683.87,
+            "z": 66.15
+          },
+          "radius": 219.7,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16483
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:16516:map:530:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3952.55,
+            "y": -13742.88,
+            "z": 70.51
+          },
+          "radius": 113.63,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16516
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:22934:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -4159.36,
+            "y": -13484.28,
+            "z": 48.83
+          },
+          "radius": 147.82,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16517
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "azuremyst_isle_hub_06",
+          "zoneId": 3524,
+          "zoneName": "Azuremyst Isle",
+          "questGivers": [
+            16546
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -4445.66,
+            "y": -13430.9,
+            "z": 51.337
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "azuremyst_isle_hub_16",
+          "zoneId": 3524,
+          "zoneName": "Azuremyst Isle",
+          "questGivers": [
+            17087
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -3855.21,
+            "y": -13403.1,
+            "z": 77.232
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "azuremyst_isle_hub_12",
+      "position": {
+        "mapId": 530,
+        "x": -3972.18,
+        "y": -11927.5,
+        "z": -0.67
+      },
+      "questGivers": [
+        17584
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 11,
+        "avg": 11
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "azuremyst_isle_hub_13",
+      "position": {
+        "mapId": 530,
+        "x": -3962.0,
+        "y": -13926.3,
+        "z": 101.238
+      },
+      "questGivers": [
+        16475
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 1,
+        "avg": 1
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "azuremyst_isle_hub_11",
+          "zoneId": 3524,
+          "zoneName": "Azuremyst Isle",
+          "questGivers": [
+            16477,
+            16499,
+            16500,
+            16501,
+            16502,
+            16503,
+            16514,
+            16535,
+            17071,
+            17089,
+            20233
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -4195.09,
+            "y": -13735.8,
+            "z": 73.806
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "azuremyst_isle_hub_14",
+      "position": {
+        "mapId": 530,
+        "x": -3924.22,
+        "y": -12748.4,
+        "z": 96.785
+      },
+      "questGivers": [
+        17361
+      ],
+      "levelRange": {
+        "min": 8,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "azuremyst_isle_hub_15",
+          "zoneId": 3524,
+          "zoneName": "Azuremyst Isle",
+          "questGivers": [
+            17362
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -3873.31,
+            "y": -13124.5,
+            "z": 7.069
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "azuremyst_isle_hub_15",
+      "position": {
+        "mapId": 530,
+        "x": -3873.31,
+        "y": -13124.5,
+        "z": 7.069
+      },
+      "questGivers": [
+        17362
+      ],
+      "levelRange": {
+        "min": 8,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "azuremyst_isle_hub_04",
+          "zoneId": 3524,
+          "zoneName": "Azuremyst Isle",
+          "questGivers": [
+            17363
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -4636.21,
+            "y": -13069.5,
+            "z": -14.611
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "azuremyst_isle_hub_16",
+      "position": {
+        "mapId": 530,
+        "x": -3855.21,
+        "y": -13403.1,
+        "z": 77.232
+      },
+      "questGivers": [
+        17087
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 4,
+        "avg": 4
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:17179:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3785.23,
+            "y": -13356.07,
+            "z": 81.12
+          },
+          "radius": 81.35,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17179
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "azuremyst_isle_hub_17",
+      "position": {
+        "mapId": 530,
+        "x": -3436.925,
+        "y": -12319.35,
+        "z": 14.224
+      },
+      "questGivers": [
+        17441,
+        17442
+      ],
+      "levelRange": {
+        "min": 7,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "azuremyst_isle_hub_18",
+          "zoneId": 3524,
+          "zoneName": "Azuremyst Isle",
+          "questGivers": [
+            17440,
+            17443,
+            17445
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -3398.19,
+            "y": -12412.1,
+            "z": 19.115
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "azuremyst_isle_hub_18",
+      "position": {
+        "mapId": 530,
+        "x": -3373.24,
+        "y": -12407.333,
+        "z": 23.086
+      },
+      "questGivers": [
+        17440,
+        17443,
+        17445
+      ],
+      "levelRange": {
+        "min": 7,
+        "max": 12,
+        "avg": 11
+      },
+      "faction": "Alliance",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:23860:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -3141.51,
+            "y": -12533.5,
+            "z": -2.27
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            17447
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17448:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3177.01,
+            "y": -12429.4,
+            "z": 12.08
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17448
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:17189:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": -3169.7,
+            "y": -12452.97,
+            "z": 10.68
+          },
+          "radius": 141.88,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17189
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "azuremyst_isle_hub_19",
+      "position": {
+        "mapId": 530,
+        "x": -3285.64,
+        "y": -12924.1,
+        "z": 11.771
+      },
+      "questGivers": [
+        17205
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:23733:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": -3169.7,
+            "y": -12452.97,
+            "z": 10.68
+          },
+          "radius": 141.88,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17189
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "azuremyst_isle_hub_10",
+          "zoneId": 3524,
+          "zoneName": "Azuremyst Isle",
+          "questGivers": [
+            17110,
+            17114,
+            17116,
+            17212,
+            17214,
+            17215,
+            17232,
+            17360,
+            17480,
+            17481,
+            17482,
+            17483,
+            17488
+          ],
+          "position": {
+            "mapId": 530,
+            "x": -4203.65,
+            "y": -12526.5,
+            "z": 45.526
+          },
+          "weight": 1
+        }
+      ]
+    }
+  ]
+}

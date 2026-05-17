@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "zoneId": 4264,
+  "zoneName": "Halls of Stone",
+  "mapId": 599,
+  "hubCount": 1,
+  "hubs": [
+    {
+      "hubId": "halls_of_stone_hub_01",
+      "position": {
+        "mapId": 599,
+        "x": 1077.41,
+        "y": 474.16,
+        "z": 207.803
+      },
+      "questGivers": [
+        28070
+      ],
+      "levelRange": {
+        "min": 76,
+        "max": 78,
+        "avg": 78
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:27978:map:599:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 599,
+            "x": 1295.21,
+            "y": 667.16,
+            "z": 189.69
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            27978
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    }
+  ]
+}

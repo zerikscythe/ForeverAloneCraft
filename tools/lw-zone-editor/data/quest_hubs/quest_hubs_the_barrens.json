@@ -1,0 +1,959 @@
+{
+  "version": 1,
+  "zoneId": 17,
+  "zoneName": "The Barrens",
+  "mapId": 1,
+  "hubCount": 21,
+  "hubs": [
+    {
+      "hubId": "the_barrens_hub_01",
+      "position": {
+        "mapId": 1,
+        "x": -4217.54,
+        "y": -2341.56,
+        "z": 91.85
+      },
+      "questGivers": [
+        3421
+      ],
+      "levelRange": {
+        "min": 22,
+        "max": 30,
+        "avg": 30
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_barrens_hub_02",
+      "position": {
+        "mapId": 1,
+        "x": -3589.96,
+        "y": -2027.71,
+        "z": 91.792
+      },
+      "questGivers": [
+        3341
+      ],
+      "levelRange": {
+        "min": 17,
+        "max": 26,
+        "avg": 25
+      },
+      "faction": "Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_barrens_hub_03",
+      "position": {
+        "mapId": 1,
+        "x": -2387.19,
+        "y": -1906.89,
+        "z": 95.827
+      },
+      "questGivers": [
+        3387,
+        3430
+      ],
+      "levelRange": {
+        "min": 9,
+        "max": 30,
+        "avg": 22
+      },
+      "faction": "Horde",
+      "totalQuests": 16,
+      "estimatedMinutes": 80,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "the_barrens_hub_06",
+          "zoneId": 17,
+          "zoneName": "The Barrens",
+          "questGivers": [
+            3388
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -1350.74,
+            "y": -4048.38,
+            "z": 6.24
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_barrens_hub_04",
+      "position": {
+        "mapId": 1,
+        "x": -2284.69,
+        "y": -1947.39,
+        "z": 96.046
+      },
+      "questGivers": [
+        3433
+      ],
+      "levelRange": {
+        "min": 17,
+        "max": 29,
+        "avg": 26
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_barrens_hub_05",
+      "position": {
+        "mapId": 1,
+        "x": -2100.96,
+        "y": -3656.17,
+        "z": 61.939
+      },
+      "questGivers": [
+        3465
+      ],
+      "levelRange": {
+        "min": 13,
+        "max": 20,
+        "avg": 20
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_barrens_hub_06",
+      "position": {
+        "mapId": 1,
+        "x": -1350.74,
+        "y": -4048.38,
+        "z": 6.24
+      },
+      "questGivers": [
+        3388
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 27,
+        "avg": 27
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:5104:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -2025.94,
+            "y": -3814.75,
+            "z": -7.14
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3476
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_barrens_hub_07",
+      "position": {
+        "mapId": 1,
+        "x": -1217.665,
+        "y": 32.524,
+        "z": 152.09
+      },
+      "questGivers": [
+        2995,
+        8359
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_barrens_hub_09",
+      "position": {
+        "mapId": 1,
+        "x": -985.599,
+        "y": -3796.71,
+        "z": 5.209
+      },
+      "questGivers": [
+        3453
+      ],
+      "levelRange": {
+        "min": 9,
+        "max": 36,
+        "avg": 24
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "the_barrens_hub_12",
+          "zoneId": 17,
+          "zoneName": "The Barrens",
+          "questGivers": [
+            3391
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -835.563,
+            "y": -3728.66,
+            "z": 26.375
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_barrens_hub_08",
+      "position": {
+        "mapId": 1,
+        "x": -978.271,
+        "y": -3690.877,
+        "z": 13.589
+      },
+      "questGivers": [
+        3292,
+        3339,
+        3446
+      ],
+      "levelRange": {
+        "min": 9,
+        "max": 26,
+        "avg": 20
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:5055:map:1:cluster:12",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -1771.8,
+            "y": -3529.51,
+            "z": 93.13
+          },
+          "radius": 78.3,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3256,
+            3257,
+            5842
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:4894:map:1:cluster:27",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -1747.8,
+            "y": -3367.54,
+            "z": 94.02
+          },
+          "radius": 67.01,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3244,
+            3245,
+            3246
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:5055:map:1:cluster:23",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -1767.94,
+            "y": -3286.3,
+            "z": 91.85
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3256,
+            3257,
+            5842
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:4894:map:1:cluster:32",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -1888.81,
+            "y": -3289.7,
+            "z": 74.56
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3244,
+            3245,
+            3246
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:4896:map:1:cluster:10",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 282.46,
+            "y": -1819.85,
+            "z": 91.79
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3234,
+            3235,
+            3236,
+            3237,
+            3474,
+            5827
+          ],
+          "targetCount": 6
+        },
+        {
+          "taskAreaId": "item_source:4893:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 516.81,
+            "y": -1852.72,
+            "z": 93.07
+          },
+          "radius": 73.89,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3241,
+            3243,
+            3415,
+            3416,
+            3425,
+            5828
+          ],
+          "targetCount": 7
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_barrens_hub_10",
+      "position": {
+        "mapId": 1,
+        "x": -944.93,
+        "y": -3580.12,
+        "z": 27.584
+      },
+      "questGivers": [
+        16418
+      ],
+      "levelRange": {
+        "min": 15,
+        "max": 15,
+        "avg": 15
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:2589:map:1:cluster:108",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -235.02,
+            "y": -1662.62,
+            "z": 91.79
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3,
+            40,
+            60,
+            61,
+            79,
+            94
+          ],
+          "targetCount": 788
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_barrens_hub_11",
+      "position": {
+        "mapId": 1,
+        "x": -902.036,
+        "y": -3759.4,
+        "z": 11.614
+      },
+      "questGivers": [
+        3442
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 27,
+        "avg": 19
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "the_barrens_hub_17",
+          "zoneId": 17,
+          "zoneName": "The Barrens",
+          "questGivers": [
+            9316
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 858.144,
+            "y": -2347.64,
+            "z": 91.917
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_barrens_hub_12",
+      "position": {
+        "mapId": 1,
+        "x": -835.563,
+        "y": -3728.66,
+        "z": 26.375
+      },
+      "questGivers": [
+        3391
+      ],
+      "levelRange": {
+        "min": 9,
+        "max": 37,
+        "avg": 20
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "the_barrens_hub_09",
+          "zoneId": 17,
+          "zoneName": "The Barrens",
+          "questGivers": [
+            3453
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -985.599,
+            "y": -3796.71,
+            "z": 5.209
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_barrens_hub_13",
+      "position": {
+        "mapId": 1,
+        "x": -602.266,
+        "y": -2259.71,
+        "z": 211.579
+      },
+      "questGivers": [
+        8418
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 25,
+        "avg": 25
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_barrens_hub_14",
+      "position": {
+        "mapId": 1,
+        "x": -453.354,
+        "y": -2613.163,
+        "z": 100.552
+      },
+      "questGivers": [
+        3338,
+        3390,
+        3428,
+        3429,
+        3432,
+        3448,
+        3449,
+        3464,
+        3483,
+        3615
+      ],
+      "levelRange": {
+        "min": 9,
+        "max": 35,
+        "avg": 17
+      },
+      "faction": "Horde",
+      "totalQuests": 35,
+      "estimatedMinutes": 175,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:5062:map:1:cluster:37",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -151.3,
+            "y": -1868.93,
+            "z": 93.97
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3254,
+            3255,
+            3256,
+            3257,
+            5842
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:5086:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -243.38,
+            "y": -1800.47,
+            "z": 93.92
+          },
+          "radius": 159.6,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3242,
+            3426,
+            3466,
+            5831
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:5086:map:1:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -129.22,
+            "y": -1728.56,
+            "z": 93.4
+          },
+          "radius": 138.96,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3242,
+            3426,
+            3466,
+            5831
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:15852:map:1:cluster:10",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 282.46,
+            "y": -1819.85,
+            "z": 91.79
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3234,
+            3236
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:5062:map:1:cluster:62",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 559.92,
+            "y": -1801.74,
+            "z": 92.12
+          },
+          "radius": 79.96,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3254,
+            3255,
+            3256,
+            3257,
+            5842
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:5087:map:1:cluster:13",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 694.63,
+            "y": -1938.59,
+            "z": 91.79
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3244,
+            3245,
+            3246
+          ],
+          "targetCount": 3
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "the_barrens_hub_03",
+          "zoneId": 17,
+          "zoneName": "The Barrens",
+          "questGivers": [
+            3387,
+            3430
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -2391.57,
+            "y": -1891.09,
+            "z": 95.787
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "the_barrens_hub_07",
+          "zoneId": 17,
+          "zoneName": "The Barrens",
+          "questGivers": [
+            2995,
+            8359
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -1238.58,
+            "y": 38.971,
+            "z": 127.147
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "the_barrens_hub_19",
+          "zoneId": 17,
+          "zoneName": "The Barrens",
+          "questGivers": [
+            8582
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 1246.34,
+            "y": -2253.31,
+            "z": 108.372
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_barrens_hub_15",
+      "position": {
+        "mapId": 1,
+        "x": -403.68,
+        "y": -2709.34,
+        "z": 97.729
+      },
+      "questGivers": [
+        3489
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "the_barrens_hub_14",
+          "zoneId": 17,
+          "zoneName": "The Barrens",
+          "questGivers": [
+            3338,
+            3390,
+            3428,
+            3429,
+            3432,
+            3448,
+            3449,
+            3464,
+            3483,
+            3615
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -544.992,
+            "y": -2672.77,
+            "z": 95.871
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_barrens_hub_16",
+      "position": {
+        "mapId": 1,
+        "x": -307.136,
+        "y": -1971.95,
+        "z": 96.48
+      },
+      "questGivers": [
+        3389
+      ],
+      "levelRange": {
+        "min": 9,
+        "max": 32,
+        "avg": 20
+      },
+      "faction": "Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:5030:map:1:cluster:8",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -235.02,
+            "y": -1662.62,
+            "z": 91.79
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3272,
+            3273,
+            3274,
+            3275,
+            3394,
+            3395
+          ],
+          "targetCount": 14
+        },
+        {
+          "taskAreaId": "item_source:5022:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 23.49,
+            "y": -1714.62,
+            "z": 101.47
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3394
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_barrens_hub_17",
+      "position": {
+        "mapId": 1,
+        "x": 858.144,
+        "y": -2347.64,
+        "z": 91.917
+      },
+      "questGivers": [
+        9316
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 18,
+        "avg": 16
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "the_barrens_hub_21",
+          "zoneId": 17,
+          "zoneName": "The Barrens",
+          "questGivers": [
+            9317
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 2045.53,
+            "y": -4753.81,
+            "z": 29.487
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "the_barrens_hub_18",
+      "position": {
+        "mapId": 1,
+        "x": 1109.15,
+        "y": -3104.11,
+        "z": 82.411
+      },
+      "questGivers": [
+        3439
+      ],
+      "levelRange": {
+        "min": 13,
+        "max": 18,
+        "avg": 18
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_barrens_hub_19",
+      "position": {
+        "mapId": 1,
+        "x": 1246.34,
+        "y": -2253.31,
+        "z": 108.372
+      },
+      "questGivers": [
+        8582
+      ],
+      "levelRange": {
+        "min": 15,
+        "max": 29,
+        "avg": 24
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_barrens_hub_20",
+      "position": {
+        "mapId": 1,
+        "x": 1676.25,
+        "y": -4313.45,
+        "z": 61.894
+      },
+      "questGivers": [
+        3310
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "the_barrens_hub_21",
+      "position": {
+        "mapId": 1,
+        "x": 2045.53,
+        "y": -4753.81,
+        "z": 29.487
+      },
+      "questGivers": [
+        9317
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 19,
+        "avg": 19
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

@@ -1,0 +1,1476 @@
+{
+  "version": 1,
+  "zoneId": 15,
+  "zoneName": "Dustwallow Marsh",
+  "mapId": 1,
+  "hubCount": 23,
+  "hubs": [
+    {
+      "hubId": "dustwallow_marsh_hub_01",
+      "position": {
+        "mapId": 1,
+        "x": -5103.36,
+        "y": -3949.53,
+        "z": 41.493
+      },
+      "questGivers": [
+        10321
+      ],
+      "levelRange": {
+        "min": 55,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Horde",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dustwallow_marsh_hub_02",
+      "position": {
+        "mapId": 1,
+        "x": -4605.135,
+        "y": -3164.04,
+        "z": 34.936
+      },
+      "questGivers": [
+        23570,
+        23579
+      ],
+      "levelRange": {
+        "min": 35,
+        "max": 41,
+        "avg": 40
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:33175:map:1:cluster:12",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -3867.12,
+            "y": -3526.8,
+            "z": 32.0
+          },
+          "radius": 159.12,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4324,
+            4345
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dustwallow_marsh_hub_03",
+      "position": {
+        "mapId": 1,
+        "x": -4139.29,
+        "y": -4060.02,
+        "z": 2.123
+      },
+      "questGivers": [
+        12919
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 45,
+        "avg": 40
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "dustwallow_marsh_hub_07",
+          "zoneId": 15,
+          "zoneName": "Dustwallow Marsh",
+          "questGivers": [
+            23566,
+            23835,
+            23896,
+            23905
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -3849.32,
+            "y": -4610.16,
+            "z": 9.279
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dustwallow_marsh_hub_04",
+      "position": {
+        "mapId": 1,
+        "x": -4037.21,
+        "y": -3393.743,
+        "z": 38.781
+      },
+      "questGivers": [
+        6546,
+        23600,
+        23601
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 46,
+        "avg": 40
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 20,
+      "estimatedMinutes": 100,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:23753:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -3700.91,
+            "y": -3470.21,
+            "z": 37.51
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            23753
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23752:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -3662.1,
+            "y": -3455.62,
+            "z": 37.29
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            23752
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23751:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -3640.92,
+            "y": -3421.74,
+            "z": 37.41
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            23751
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23594:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -3674.81,
+            "y": -3426.76,
+            "z": 40.32
+          },
+          "radius": 155.65,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23594
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:33103:map:1:cluster:8",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -3242.68,
+            "y": -3281.28,
+            "z": 51.56
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4348,
+            4412
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:33103:map:1:cluster:9",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -3062.76,
+            "y": -3318.28,
+            "z": 51.07
+          },
+          "radius": 68.17,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4348,
+            4412
+          ],
+          "targetCount": 2
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dustwallow_marsh_hub_10",
+          "zoneId": 15,
+          "zoneName": "Dustwallow Marsh",
+          "questGivers": [
+            4944,
+            4948,
+            4964,
+            12939
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -3747.27,
+            "y": -4532.25,
+            "z": 11.993
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dustwallow_marsh_hub_05",
+      "position": {
+        "mapId": 1,
+        "x": -4025.4,
+        "y": -3787.59,
+        "z": 42.245
+      },
+      "questGivers": [
+        23797
+      ],
+      "levelRange": {
+        "min": 35,
+        "max": 40,
+        "avg": 39
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dustwallow_marsh_hub_06",
+      "position": {
+        "mapId": 1,
+        "x": -3934.05,
+        "y": -2869.68,
+        "z": 51.352
+      },
+      "questGivers": [
+        5089
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 38,
+        "avg": 38
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dustwallow_marsh_hub_07",
+      "position": {
+        "mapId": 1,
+        "x": -3833.698,
+        "y": -4592.247,
+        "z": 9.102
+      },
+      "questGivers": [
+        23566,
+        23835,
+        23896,
+        23905
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 37,
+        "avg": 36
+      },
+      "faction": "Alliance",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:23602:map:1:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -3774.07,
+            "y": -4629.68,
+            "z": 10.72
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23602
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23602:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -3814.34,
+            "y": -4502.3,
+            "z": 14.06
+          },
+          "radius": 150.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23602
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4979:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -3827.68,
+            "y": -4427.93,
+            "z": 11.76
+          },
+          "radius": 62.79,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4979
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:4979:map:1:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -3733.43,
+            "y": -4380.58,
+            "z": 11.36
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4979
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:23941:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -4026.57,
+            "y": -4975.82,
+            "z": 8.22
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23941
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dustwallow_marsh_hub_03",
+          "zoneId": 15,
+          "zoneName": "Dustwallow Marsh",
+          "questGivers": [
+            12919
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -4139.29,
+            "y": -4060.02,
+            "z": 2.123
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "dustwallow_marsh_hub_12",
+          "zoneId": 15,
+          "zoneName": "Dustwallow Marsh",
+          "questGivers": [
+            23892
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -3680.21,
+            "y": -4760.72,
+            "z": 1.388
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dustwallow_marsh_hub_08",
+      "position": {
+        "mapId": 1,
+        "x": -3798.24,
+        "y": -4374.62,
+        "z": 16.866
+      },
+      "questGivers": [
+        4941
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 35,
+        "avg": 35
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dustwallow_marsh_hub_09",
+      "position": {
+        "mapId": 1,
+        "x": -3753.58,
+        "y": -4458.215,
+        "z": 65.056
+      },
+      "questGivers": [
+        4967,
+        4968
+      ],
+      "levelRange": {
+        "min": 28,
+        "max": 42,
+        "avg": 38
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dustwallow_marsh_hub_10",
+      "position": {
+        "mapId": 1,
+        "x": -3734.452,
+        "y": -4545.525,
+        "z": 23.062
+      },
+      "questGivers": [
+        4944,
+        4948,
+        4964,
+        12939
+      ],
+      "levelRange": {
+        "min": 28,
+        "max": 40,
+        "avg": 37
+      },
+      "faction": "Alliance",
+      "totalQuests": 9,
+      "estimatedMinutes": 45,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "dustwallow_marsh_hub_06",
+          "zoneId": 15,
+          "zoneName": "Dustwallow Marsh",
+          "questGivers": [
+            5089
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -3934.05,
+            "y": -2869.68,
+            "z": 51.352
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "dustwallow_marsh_hub_08",
+          "zoneId": 15,
+          "zoneName": "Dustwallow Marsh",
+          "questGivers": [
+            4941
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -3798.24,
+            "y": -4374.62,
+            "z": 16.866
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "dustwallow_marsh_hub_09",
+          "zoneId": 15,
+          "zoneName": "Dustwallow Marsh",
+          "questGivers": [
+            4967,
+            4968
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -3757.47,
+            "y": -4462.28,
+            "z": 65.125
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dustwallow_marsh_hub_11",
+      "position": {
+        "mapId": 1,
+        "x": -3682.86,
+        "y": -4391.41,
+        "z": 10.731
+      },
+      "questGivers": [
+        23951
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 39,
+        "avg": 37
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "dustwallow_marsh_hub_14",
+          "zoneId": 15,
+          "zoneName": "Dustwallow Marsh",
+          "questGivers": [
+            5086
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -3469.49,
+            "y": -4107.24,
+            "z": 17.108
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dustwallow_marsh_hub_12",
+      "position": {
+        "mapId": 1,
+        "x": -3680.21,
+        "y": -4760.72,
+        "z": 1.388
+      },
+      "questGivers": [
+        23892
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 35,
+        "avg": 35
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:33126:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -3661.11,
+            "y": -4689.51,
+            "z": -39.21
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4388
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:33126:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -3670.99,
+            "y": -4850.18,
+            "z": -31.53
+          },
+          "radius": 99.37,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4388
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dustwallow_marsh_hub_07",
+          "zoneId": 15,
+          "zoneName": "Dustwallow Marsh",
+          "questGivers": [
+            23566,
+            23835,
+            23896,
+            23905
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -3849.32,
+            "y": -4610.16,
+            "z": 9.279
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dustwallow_marsh_hub_13",
+      "position": {
+        "mapId": 1,
+        "x": -3635.225,
+        "y": -4452.865,
+        "z": 14.527
+      },
+      "questGivers": [
+        4794,
+        4921
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 40,
+        "avg": 38
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:5883:map:1:cluster:9",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -3440.94,
+            "y": -4362.35,
+            "z": -0.17
+          },
+          "radius": 123.05,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4396,
+            4397,
+            4398,
+            4399,
+            4400
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:5883:map:1:cluster:7",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -2712.63,
+            "y": -4353.32,
+            "z": -9.87
+          },
+          "radius": 58.16,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4396,
+            4397,
+            4398,
+            4399,
+            4400
+          ],
+          "targetCount": 5
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dustwallow_marsh_hub_10",
+          "zoneId": 15,
+          "zoneName": "Dustwallow Marsh",
+          "questGivers": [
+            4944,
+            4948,
+            4964,
+            12939
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -3747.27,
+            "y": -4532.25,
+            "z": 11.993
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dustwallow_marsh_hub_14",
+      "position": {
+        "mapId": 1,
+        "x": -3469.49,
+        "y": -4107.24,
+        "z": 17.108
+      },
+      "questGivers": [
+        5086
+      ],
+      "levelRange": {
+        "min": 32,
+        "max": 37,
+        "avg": 37
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:33037:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -3050.21,
+            "y": -4329.64,
+            "z": 8.16
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            23679
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dustwallow_marsh_hub_22",
+          "zoneId": 15,
+          "zoneName": "Dustwallow Marsh",
+          "questGivers": [
+            23569
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -2629.72,
+            "y": -4321.5,
+            "z": -1.999
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dustwallow_marsh_hub_15",
+      "position": {
+        "mapId": 1,
+        "x": -3372.29,
+        "y": -2820.57,
+        "z": 33.524
+      },
+      "questGivers": [
+        4503
+      ],
+      "levelRange": {
+        "min": 32,
+        "max": 36,
+        "avg": 36
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:5847:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -2568.15,
+            "y": -3818.19,
+            "z": 2.87
+          },
+          "radius": 58.28,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4358,
+            4359,
+            4360,
+            4361,
+            4362,
+            4363
+          ],
+          "targetCount": 8
+        },
+        {
+          "taskAreaId": "item_source:5847:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -2291.73,
+            "y": -4275.83,
+            "z": 6.66
+          },
+          "radius": 190.66,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4358,
+            4359,
+            4360,
+            4361,
+            4362,
+            4363
+          ],
+          "targetCount": 8
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dustwallow_marsh_hub_16",
+      "position": {
+        "mapId": 1,
+        "x": -3317.64,
+        "y": -3125.36,
+        "z": 33.028
+      },
+      "questGivers": [
+        4983
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 37,
+        "avg": 37
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dustwallow_marsh_hub_17",
+      "position": {
+        "mapId": 1,
+        "x": -3138.154,
+        "y": -2886.209,
+        "z": 34.575
+      },
+      "questGivers": [
+        4500,
+        4501,
+        4502,
+        4791,
+        4926,
+        5087,
+        17095
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 45,
+        "avg": 38
+      },
+      "faction": "Horde",
+      "totalQuests": 23,
+      "estimatedMinutes": 115,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:4834:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -3235.8,
+            "y": -3107.14,
+            "z": 37.28
+          },
+          "radius": 68.7,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4834
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:33071:map:1:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -2973.35,
+            "y": -3138.91,
+            "z": 29.72
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4341,
+            4382,
+            23592,
+            23593,
+            23714
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:5959:map:1:cluster:11",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -3062.76,
+            "y": -3318.28,
+            "z": 51.07
+          },
+          "radius": 68.17,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4376,
+            4378,
+            4379,
+            4380,
+            4411,
+            4412
+          ],
+          "targetCount": 9
+        },
+        {
+          "taskAreaId": "item_source:5959:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -3308.05,
+            "y": -3299.78,
+            "z": 49.0
+          },
+          "radius": 199.73,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4376,
+            4378,
+            4379,
+            4380,
+            4411,
+            4412
+          ],
+          "targetCount": 9
+        },
+        {
+          "taskAreaId": "creature:17119:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -2889.8,
+            "y": -3423.24,
+            "z": 39.44
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            17119
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:33071:map:1:cluster:7",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -2534.47,
+            "y": -3179.12,
+            "z": 30.28
+          },
+          "radius": 51.38,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4341,
+            4382,
+            23592,
+            23593,
+            23714
+          ],
+          "targetCount": 5
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dustwallow_marsh_hub_04",
+          "zoneId": 15,
+          "zoneName": "Dustwallow Marsh",
+          "questGivers": [
+            6546,
+            23600,
+            23601
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -4043.43,
+            "y": -3395.4,
+            "z": 38.266
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "dustwallow_marsh_hub_18",
+          "zoneId": 15,
+          "zoneName": "Dustwallow Marsh",
+          "questGivers": [
+            4792,
+            23843
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -2952.76,
+            "y": -3885.41,
+            "z": 34.309
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "dustwallow_marsh_hub_23",
+          "zoneId": 15,
+          "zoneName": "Dustwallow Marsh",
+          "questGivers": [
+            4943
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -1412.01,
+            "y": -47.088,
+            "z": 156.902
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dustwallow_marsh_hub_18",
+      "position": {
+        "mapId": 1,
+        "x": -2950.56,
+        "y": -3889.29,
+        "z": 34.671
+      },
+      "questGivers": [
+        4792,
+        23843
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 36,
+        "avg": 36
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:33202:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -2921.43,
+            "y": -3900.24,
+            "z": 37.19
+          },
+          "radius": 168.44,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23979
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:33112:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -3049.76,
+            "y": -3913.09,
+            "z": 40.68
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23554,
+            23555
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:33202:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -3040.26,
+            "y": -3949.81,
+            "z": 37.86
+          },
+          "radius": 188.75,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23979
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:33112:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -2779.13,
+            "y": -3983.62,
+            "z": 37.06
+          },
+          "radius": 117.55,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23554,
+            23555
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:33110:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -2667.59,
+            "y": -4017.55,
+            "z": 1.8
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23841
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dustwallow_marsh_hub_19",
+      "position": {
+        "mapId": 1,
+        "x": -2895.49,
+        "y": -3350.66,
+        "z": 31.377
+      },
+      "questGivers": [
+        4966
+      ],
+      "levelRange": {
+        "min": 28,
+        "max": 38,
+        "avg": 38
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dustwallow_marsh_hub_20",
+      "position": {
+        "mapId": 1,
+        "x": -2867.31,
+        "y": -3423.465,
+        "z": 39.5
+      },
+      "questGivers": [
+        23568,
+        23723
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 39,
+        "avg": 38
+      },
+      "faction": "Alliance",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:23727:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -2445.71,
+            "y": -3153.67,
+            "z": 37.42
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            23727
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:33071:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -2766.62,
+            "y": -3620.73,
+            "z": 29.78
+          },
+          "radius": 146.05,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4341,
+            4382,
+            23592,
+            23593,
+            23714
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:33071:map:1:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -2973.35,
+            "y": -3138.91,
+            "z": 29.72
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4341,
+            4382,
+            23592,
+            23593,
+            23714
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "creature:23720:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -2456.3,
+            "y": -3147.25,
+            "z": 34.29
+          },
+          "radius": 89.47,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23720
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dustwallow_marsh_hub_04",
+          "zoneId": 15,
+          "zoneName": "Dustwallow Marsh",
+          "questGivers": [
+            6546,
+            23600,
+            23601
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -4043.43,
+            "y": -3395.4,
+            "z": 38.266
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dustwallow_marsh_hub_21",
+      "position": {
+        "mapId": 1,
+        "x": -2646.43,
+        "y": -3436.07,
+        "z": 35.373
+      },
+      "questGivers": [
+        4880
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 37,
+        "avg": 37
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "dustwallow_marsh_hub_22",
+      "position": {
+        "mapId": 1,
+        "x": -2629.72,
+        "y": -4321.5,
+        "z": -1.999
+      },
+      "questGivers": [
+        23569
+      ],
+      "levelRange": {
+        "min": 32,
+        "max": 37,
+        "avg": 37
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:33039:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -2700.96,
+            "y": -4260.39,
+            "z": 10.31
+          },
+          "radius": 120.4,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23589
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:33039:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -3007.71,
+            "y": -4319.67,
+            "z": 8.35
+          },
+          "radius": 150.15,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            23589
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "dustwallow_marsh_hub_09",
+          "zoneId": 15,
+          "zoneName": "Dustwallow Marsh",
+          "questGivers": [
+            4967,
+            4968
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -3757.47,
+            "y": -4462.28,
+            "z": 65.125
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "dustwallow_marsh_hub_23",
+      "position": {
+        "mapId": 1,
+        "x": -1412.01,
+        "y": -47.088,
+        "z": 156.902
+      },
+      "questGivers": [
+        4943
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 38,
+        "avg": 38
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

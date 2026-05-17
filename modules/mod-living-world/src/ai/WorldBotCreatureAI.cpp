@@ -119,6 +119,52 @@ constexpr std::uint32_t DebugManaGemItemId = 33312;
 constexpr float CrossMapTransitAbstractSourceDistanceYards = 300.0f;
 constexpr std::uint32_t CrossMapTransitAbstractMinElapsedMs = 20000u;
 
+struct SessionCompletionMetadata
+{
+    std::string   sourceKind;
+    std::string   sourceKey;
+    std::string   taskFamily;
+    std::uint32_t targetZoneId = 0;
+};
+
+SessionCompletionMetadata BuildSessionCompletionMetadata(
+    service::AmbientSession const& session,
+    std::size_t currentStep)
+{
+    SessionCompletionMetadata metadata;
+    metadata.sourceKind = session.sourceKind;
+    metadata.sourceKey = session.sourceKey.empty() ? session.activityKey : session.sourceKey;
+
+    if (session.steps.empty() || session.tasks.empty())
+        return metadata;
+
+    std::size_t stepIndex = session.steps.size() - 1;
+    if (currentStep < session.steps.size())
+        stepIndex = currentStep;
+
+    while (true)
+    {
+        service::AmbientStep const& step = session.steps[stepIndex];
+        if (step.taskIndex >= 0)
+        {
+            std::size_t const taskIndex = static_cast<std::size_t>(step.taskIndex);
+            if (taskIndex < session.tasks.size())
+            {
+                service::AmbientSessionTask const& task = session.tasks[taskIndex];
+                metadata.taskFamily = task.taskFamily;
+                metadata.targetZoneId = task.targetZoneId;
+                break;
+            }
+        }
+
+        if (stepIndex == 0)
+            break;
+        --stepIndex;
+    }
+
+    return metadata;
+}
+
 struct PhysicalTransitRouteSpec
 {
     char const* routeKey = "";
@@ -3400,7 +3446,16 @@ void WorldBotCreatureAI::CompletSession()
         "zone=" + std::to_string(zoneId) +
         " online_ms=" + std::to_string(_worldOnlineMs));
 
-    GetIdentityRepo().CompleteWorldSession(_identity.id, zoneId, _worldOnlineMs);
+    SessionCompletionMetadata const completionMetadata =
+        BuildSessionCompletionMetadata(_session, _currentStep);
+    GetIdentityRepo().CompleteWorldSession(
+        _identity.id,
+        zoneId,
+        _worldOnlineMs,
+        completionMetadata.sourceKind,
+        completionMetadata.sourceKey,
+        completionMetadata.taskFamily,
+        completionMetadata.targetZoneId);
 
     me->DespawnOrUnsummon(Milliseconds(1000));
 }
@@ -3420,10 +3475,16 @@ void WorldBotCreatureAI::JustDied(Unit* /*killer*/)
     // If the creature was forcibly removed (e.g. server shutdown), still release.
     if (!_sessionDone && _sessionReady)
     {
+        SessionCompletionMetadata const completionMetadata =
+            BuildSessionCompletionMetadata(_session, _currentStep);
         GetIdentityRepo().CompleteWorldSession(
             _identity.id,
             me ? me->GetZoneId() : 0,
-            _worldOnlineMs);
+            _worldOnlineMs,
+            completionMetadata.sourceKind,
+            completionMetadata.sourceKey,
+            completionMetadata.taskFamily,
+            completionMetadata.targetZoneId);
     }
 }
 

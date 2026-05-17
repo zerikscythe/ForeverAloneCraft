@@ -37,6 +37,10 @@ struct BotIdentityRecord
     std::uint64_t activeWorldSessionMs = 0;
     std::string   runtimeState;
     std::string   runtimeDetail;
+    std::string   lastSessionSourceKind;
+    std::string   lastSessionSourceKey;
+    std::string   lastTaskFamily;
+    std::uint32_t lastTaskTargetZoneId = 0;
     bool          gearRefreshPending = false;
     std::uint8_t  lastGearRefreshBand = 0;
     std::uint32_t lastSeenZoneId = 0;
@@ -90,7 +94,11 @@ public:
     void CompleteWorldSession(
         std::uint32_t id,
         std::uint32_t lastSeenZoneId,
-        std::uint64_t sessionWorldOnlineMs) const;
+        std::uint64_t sessionWorldOnlineMs,
+        std::string const& lastSessionSourceKind = "",
+        std::string const& lastSessionSourceKey = "",
+        std::string const& lastTaskFamily = "",
+        std::uint32_t lastTaskTargetZoneId = 0) const;
 
     // On worldserver startup, reset any stale active creature-bot sessions that
     // were left marked active by a prior shutdown/crash.

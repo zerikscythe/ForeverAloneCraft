@@ -1,0 +1,532 @@
+{
+  "version": 1,
+  "zoneId": 267,
+  "zoneName": "Hillsbrad Foothills",
+  "mapId": 0,
+  "hubCount": 9,
+  "hubs": [
+    {
+      "hubId": "hillsbrad_foothills_hub_01",
+      "position": {
+        "mapId": 0,
+        "x": -1426.54,
+        "y": -3034.25,
+        "z": 32.576
+      },
+      "questGivers": [
+        2712,
+        2713
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 37,
+        "avg": 36
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "hillsbrad_foothills_hub_02",
+      "position": {
+        "mapId": 0,
+        "x": -1215.47,
+        "y": -1884.28,
+        "z": 87.618
+      },
+      "questGivers": [
+        7869
+      ],
+      "levelRange": {
+        "min": 40,
+        "max": 55,
+        "avg": 55
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "hillsbrad_foothills_hub_03",
+      "position": {
+        "mapId": 0,
+        "x": -833.068,
+        "y": -582.49,
+        "z": 13.426
+      },
+      "questGivers": [
+        2228,
+        2357,
+        2382,
+        2430,
+        2711,
+        3980,
+        17218
+      ],
+      "levelRange": {
+        "min": 25,
+        "max": 40,
+        "avg": 32
+      },
+      "faction": "Alliance",
+      "totalQuests": 11,
+      "estimatedMinutes": 55,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:3712:map:0:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -784.32,
+            "y": -722.99,
+            "z": 6.25
+          },
+          "radius": 68.46,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2408,
+            2505,
+            4142,
+            4143,
+            4144,
+            4396
+          ],
+          "targetCount": 23
+        },
+        {
+          "taskAreaId": "creature:2369:map:0:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -1004.37,
+            "y": -604.23,
+            "z": -2.69
+          },
+          "radius": 52.75,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2369
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:2377:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -1011.59,
+            "y": -474.07,
+            "z": -0.55
+          },
+          "radius": 90.56,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2377
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:3716:map:0:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -1015.79,
+            "y": -478.53,
+            "z": -4.1
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2374,
+            2375,
+            2376,
+            2377,
+            14276
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "creature:2376:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -1015.79,
+            "y": -478.53,
+            "z": -4.1
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2376
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:3712:map:0:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -643.31,
+            "y": -744.82,
+            "z": 7.49
+          },
+          "radius": 71.66,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2408,
+            2505,
+            4142,
+            4143,
+            4144,
+            4396
+          ],
+          "targetCount": 23
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "hillsbrad_foothills_hub_01",
+          "zoneId": 267,
+          "zoneName": "Hillsbrad Foothills",
+          "questGivers": [
+            2712,
+            2713
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -1427.4,
+            "y": -3035.18,
+            "z": 32.268
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "hillsbrad_foothills_hub_04",
+      "position": {
+        "mapId": 0,
+        "x": -784.662,
+        "y": -515.103,
+        "z": 17.724
+      },
+      "questGivers": [
+        2438
+      ],
+      "levelRange": {
+        "min": 29,
+        "max": 34,
+        "avg": 34
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "hillsbrad_foothills_hub_05",
+      "position": {
+        "mapId": 0,
+        "x": -611.302,
+        "y": 401.456,
+        "z": 83.144
+      },
+      "questGivers": [
+        2214
+      ],
+      "levelRange": {
+        "min": 19,
+        "max": 20,
+        "avg": 20
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "hillsbrad_foothills_hub_06",
+      "position": {
+        "mapId": 0,
+        "x": -30.089,
+        "y": -928.049,
+        "z": 55.944
+      },
+      "questGivers": [
+        2215,
+        2216,
+        2229,
+        2278,
+        2410,
+        2418,
+        2419,
+        2429,
+        2437,
+        2770
+      ],
+      "levelRange": {
+        "min": 13,
+        "max": 55,
+        "avg": 32
+      },
+      "faction": "Horde",
+      "totalQuests": 38,
+      "estimatedMinutes": 190,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:3476:map:0:cluster:9",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -406.15,
+            "y": -994.22,
+            "z": 41.56
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2351,
+            2354,
+            2356,
+            14280
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:3496:map:0:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -462.07,
+            "y": -818.26,
+            "z": 47.23
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2384,
+            2385,
+            2406,
+            2407
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:5620:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -619.92,
+            "y": -1055.14,
+            "z": 62.51
+          },
+          "radius": 87.97,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2244
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:3692:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -622.9,
+            "y": -1060.03,
+            "z": 62.22
+          },
+          "radius": 101.53,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            232,
+            2244,
+            2260,
+            2261,
+            2264,
+            2265
+          ],
+          "targetCount": 30
+        },
+        {
+          "taskAreaId": "item_source:3692:map:0:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -422.14,
+            "y": -1436.65,
+            "z": 100.29
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            232,
+            2244,
+            2260,
+            2261,
+            2264,
+            2265
+          ],
+          "targetCount": 30
+        },
+        {
+          "taskAreaId": "item_source:5620:map:0:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -422.14,
+            "y": -1436.65,
+            "z": 100.29
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2244
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "hillsbrad_foothills_hub_08",
+          "zoneId": 267,
+          "zoneName": "Hillsbrad Foothills",
+          "questGivers": [
+            2316
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 683.518,
+            "y": -895.468,
+            "z": 171.889
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "hillsbrad_foothills_hub_09",
+          "zoneId": 267,
+          "zoneName": "Hillsbrad Foothills",
+          "questGivers": [
+            2317
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 1232.95,
+            "y": -317.007,
+            "z": 48.477
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "hillsbrad_foothills_hub_07",
+      "position": {
+        "mapId": 0,
+        "x": 347.076,
+        "y": -2119.98,
+        "z": 104.701
+      },
+      "questGivers": [
+        9660
+      ],
+      "levelRange": {
+        "min": 37,
+        "max": 48,
+        "avg": 48
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "hillsbrad_foothills_hub_08",
+      "position": {
+        "mapId": 0,
+        "x": 683.518,
+        "y": -895.468,
+        "z": 171.889
+      },
+      "questGivers": [
+        2316
+      ],
+      "levelRange": {
+        "min": 29,
+        "max": 36,
+        "avg": 36
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "hillsbrad_foothills_hub_06",
+          "zoneId": 267,
+          "zoneName": "Hillsbrad Foothills",
+          "questGivers": [
+            2215,
+            2216,
+            2229,
+            2278,
+            2410,
+            2418,
+            2419,
+            2429,
+            2437,
+            2770
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -46.569,
+            "y": -901.259,
+            "z": 57.344
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "hillsbrad_foothills_hub_09",
+      "position": {
+        "mapId": 0,
+        "x": 1232.95,
+        "y": -317.007,
+        "z": 48.477
+      },
+      "questGivers": [
+        2317
+      ],
+      "levelRange": {
+        "min": 29,
+        "max": 40,
+        "avg": 40
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

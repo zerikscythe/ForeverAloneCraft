@@ -1,0 +1,1334 @@
+{
+  "version": 1,
+  "zoneId": 361,
+  "zoneName": "Felwood",
+  "mapId": 1,
+  "hubCount": 17,
+  "hubs": [
+    {
+      "hubId": "felwood_hub_01",
+      "position": {
+        "mapId": 1,
+        "x": -1345.12,
+        "y": -4047.61,
+        "z": 5.972
+      },
+      "questGivers": [
+        5901
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 54,
+        "avg": 54
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "felwood_hub_06",
+          "zoneId": 361,
+          "zoneName": "Felwood",
+          "questGivers": [
+            9116,
+            10921,
+            10922,
+            10924,
+            11019
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 3985.84,
+            "y": -1303.03,
+            "z": 251.154
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "felwood_hub_02",
+      "position": {
+        "mapId": 1,
+        "x": 3355.07,
+        "y": 1033.14,
+        "z": 6.035
+      },
+      "questGivers": [
+        12736
+      ],
+      "levelRange": {
+        "min": 17,
+        "max": 27,
+        "avg": 25
+      },
+      "faction": "Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "felwood_hub_03",
+      "position": {
+        "mapId": 1,
+        "x": 3804.74,
+        "y": -1471.87,
+        "z": 210.565
+      },
+      "questGivers": [
+        9528
+      ],
+      "levelRange": {
+        "min": 48,
+        "max": 55,
+        "avg": 55
+      },
+      "faction": "Alliance",
+      "totalQuests": 11,
+      "estimatedMinutes": 55,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:11515:map:1:cluster:10",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3900.39,
+            "y": -1450.82,
+            "z": 218.18
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            7086,
+            7092,
+            7093,
+            7097,
+            7098,
+            7099
+          ],
+          "targetCount": 62
+        },
+        {
+          "taskAreaId": "item_source:11515:map:1:cluster:14",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3851.95,
+            "y": -1318.36,
+            "z": 215.18
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            7086,
+            7092,
+            7093,
+            7097,
+            7098,
+            7099
+          ],
+          "targetCount": 62
+        },
+        {
+          "taskAreaId": "item_source:11503:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 6377.36,
+            "y": -1681.74,
+            "z": 428.33
+          },
+          "radius": 214.22,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7100,
+            7101,
+            7104
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:11503:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 6439.8,
+            "y": -1509.12,
+            "z": 439.48
+          },
+          "radius": 95.2,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7100,
+            7101,
+            7104
+          ],
+          "targetCount": 3
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "felwood_hub_04",
+      "position": {
+        "mapId": 1,
+        "x": 3874.76,
+        "y": -1286.59,
+        "z": 220.49
+      },
+      "questGivers": [
+        11554
+      ],
+      "levelRange": {
+        "min": 45,
+        "max": 55,
+        "avg": 52
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:7154:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 3679.59,
+            "y": -1106.75,
+            "z": 215.2
+          },
+          "radius": 134.67,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            7154
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7153:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 3638.78,
+            "y": -1142.0,
+            "z": 214.87
+          },
+          "radius": 179.03,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            7153
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7155:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 3649.85,
+            "y": -1108.31,
+            "z": 217.91
+          },
+          "radius": 146.92,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            7155
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7154:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 3584.86,
+            "y": -1175.01,
+            "z": 219.84
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            7154
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7153:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 3602.08,
+            "y": -1134.46,
+            "z": 218.6
+          },
+          "radius": 130.18,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            7153
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7155:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 3688.21,
+            "y": -1011.26,
+            "z": 223.95
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            7155
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "felwood_hub_05",
+      "position": {
+        "mapId": 1,
+        "x": 3946.78,
+        "y": -1046.39,
+        "z": 246.118
+      },
+      "questGivers": [
+        9529
+      ],
+      "levelRange": {
+        "min": 48,
+        "max": 55,
+        "avg": 55
+      },
+      "faction": "Horde",
+      "totalQuests": 11,
+      "estimatedMinutes": 55,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:11515:map:1:cluster:9",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3772.93,
+            "y": -1030.35,
+            "z": 230.82
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            7086,
+            7092,
+            7093,
+            7097,
+            7098,
+            7099
+          ],
+          "targetCount": 62
+        },
+        {
+          "taskAreaId": "item_source:11515:map:1:cluster:15",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3995.97,
+            "y": -1222.51,
+            "z": 262.05
+          },
+          "radius": 85.83,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            7086,
+            7092,
+            7093,
+            7097,
+            7098,
+            7099
+          ],
+          "targetCount": 62
+        },
+        {
+          "taskAreaId": "item_source:11503:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 6377.36,
+            "y": -1681.74,
+            "z": 428.33
+          },
+          "radius": 214.22,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7100,
+            7101,
+            7104
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:11503:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 6439.8,
+            "y": -1509.12,
+            "z": 439.48
+          },
+          "radius": 95.2,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7100,
+            7101,
+            7104
+          ],
+          "targetCount": 3
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "felwood_hub_06",
+      "position": {
+        "mapId": 1,
+        "x": 3998.976,
+        "y": -1299.508,
+        "z": 253.614
+      },
+      "questGivers": [
+        9116,
+        10921,
+        10922,
+        10924,
+        11019
+      ],
+      "levelRange": {
+        "min": 47,
+        "max": 58,
+        "avg": 54
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 14,
+      "estimatedMinutes": 70,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:11172:map:1:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 4273.21,
+            "y": -1037.99,
+            "z": 311.57
+          },
+          "radius": 133.09,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            8956,
+            8957,
+            8958,
+            8959,
+            8960,
+            8961
+          ],
+          "targetCount": 8
+        },
+        {
+          "taskAreaId": "item_source:11172:map:1:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3808.07,
+            "y": -1696.86,
+            "z": 260.98
+          },
+          "radius": 41.76,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            8956,
+            8957,
+            8958,
+            8959,
+            8960,
+            8961
+          ],
+          "targetCount": 8
+        },
+        {
+          "taskAreaId": "creature:7110:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 4514.39,
+            "y": -509.1,
+            "z": 300.15
+          },
+          "radius": 104.28,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7110
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7106:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 4555.3,
+            "y": -497.27,
+            "z": 297.32
+          },
+          "radius": 134.9,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7106
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7109:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 4530.46,
+            "y": -448.45,
+            "z": 301.51
+          },
+          "radius": 211.43,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7109
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7115:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 4800.86,
+            "y": -517.73,
+            "z": 308.72
+          },
+          "radius": 214.02,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7115
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "felwood_hub_09",
+          "zoneId": 361,
+          "zoneName": "Felwood",
+          "questGivers": [
+            11020
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 5200.79,
+            "y": -572.024,
+            "z": 289.175
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "felwood_hub_07",
+      "position": {
+        "mapId": 1,
+        "x": 5007.17,
+        "y": -440.187,
+        "z": 319.142
+      },
+      "questGivers": [
+        11016
+      ],
+      "levelRange": {
+        "min": 49,
+        "max": 55,
+        "avg": 55
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "felwood_hub_06",
+          "zoneId": 361,
+          "zoneName": "Felwood",
+          "questGivers": [
+            9116,
+            10921,
+            10922,
+            10924,
+            11019
+          ],
+          "position": {
+            "mapId": 1,
+            "x": 3985.84,
+            "y": -1303.03,
+            "z": 251.154
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "felwood_hub_08",
+      "position": {
+        "mapId": 1,
+        "x": 5116.203,
+        "y": -346.53,
+        "z": 357.989
+      },
+      "questGivers": [
+        9620,
+        9996,
+        10306
+      ],
+      "levelRange": {
+        "min": 46,
+        "max": 59,
+        "avg": 56
+      },
+      "faction": "Horde",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:15879:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3519.21,
+            "y": -1131.52,
+            "z": 223.94
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            9464
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7450:map:1:cluster:14",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 6247.99,
+            "y": -2345.12,
+            "z": 575.18
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7450
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7450:map:1:cluster:18",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 6401.84,
+            "y": -2375.2,
+            "z": 573.92
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7450
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7451:map:1:cluster:7",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 6932.25,
+            "y": -3960.13,
+            "z": 739.4
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7451
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "felwood_hub_09",
+      "position": {
+        "mapId": 1,
+        "x": 5200.79,
+        "y": -572.024,
+        "z": 289.175
+      },
+      "questGivers": [
+        11020
+      ],
+      "levelRange": {
+        "min": 49,
+        "max": 57,
+        "avg": 57
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "felwood_hub_10",
+      "position": {
+        "mapId": 1,
+        "x": 5410.745,
+        "y": -737.169,
+        "z": 344.437
+      },
+      "questGivers": [
+        14469,
+        14470
+      ],
+      "levelRange": {
+        "min": 50,
+        "max": 52,
+        "avg": 52
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:20614:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 5282.37,
+            "y": -744.46,
+            "z": 342.05
+          },
+          "radius": 213.02,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7092
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:14256:map:1:cluster:19",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 5339.85,
+            "y": -589.34,
+            "z": 247.14
+          },
+          "radius": 38.26,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6011,
+            6200,
+            6201,
+            6202,
+            6652,
+            7106
+          ],
+          "targetCount": 43
+        },
+        {
+          "taskAreaId": "item_source:18622:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 5369.37,
+            "y": -466.87,
+            "z": 273.41
+          },
+          "radius": 93.98,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            9862
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:14256:map:1:cluster:18",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 5180.3,
+            "y": -581.64,
+            "z": 282.61
+          },
+          "radius": 138.54,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6011,
+            6200,
+            6201,
+            6202,
+            6652,
+            7106
+          ],
+          "targetCount": 43
+        },
+        {
+          "taskAreaId": "item_source:18622:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 5174.7,
+            "y": -588.6,
+            "z": 281.0
+          },
+          "radius": 137.47,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            9862
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:20614:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 5276.68,
+            "y": -342.89,
+            "z": 327.48
+          },
+          "radius": 54.51,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7092
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "felwood_hub_11",
+      "position": {
+        "mapId": 1,
+        "x": 5430.72,
+        "y": -424.11,
+        "z": 272.622
+      },
+      "questGivers": [
+        9516
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:18719:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 5277.13,
+            "y": -701.94,
+            "z": 268.77
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            14523
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "felwood_hub_13",
+      "position": {
+        "mapId": 1,
+        "x": 6192.75,
+        "y": -1919.04,
+        "z": 569.568
+      },
+      "questGivers": [
+        9465
+      ],
+      "levelRange": {
+        "min": 50,
+        "max": 52,
+        "avg": 52
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "felwood_hub_12",
+      "position": {
+        "mapId": 1,
+        "x": 6223.95,
+        "y": -1081.333,
+        "z": 378.459
+      },
+      "questGivers": [
+        14524,
+        14525,
+        14526
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "felwood_hub_14",
+      "position": {
+        "mapId": 1,
+        "x": 6453.96,
+        "y": 431.299,
+        "z": 13.731
+      },
+      "questGivers": [
+        8997
+      ],
+      "levelRange": {
+        "min": 18,
+        "max": 24,
+        "avg": 24
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:5952:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 4209.75,
+            "y": 717.28,
+            "z": -24.61
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            4788,
+            4789,
+            4798,
+            4799,
+            4802,
+            4803
+          ],
+          "targetCount": 9
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "felwood_hub_15",
+      "position": {
+        "mapId": 1,
+        "x": 6557.88,
+        "y": 472.97,
+        "z": 9.098
+      },
+      "questGivers": [
+        3702
+      ],
+      "levelRange": {
+        "min": 9,
+        "max": 12,
+        "avg": 12
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:5469:map:1:cluster:10",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 6592.76,
+            "y": 327.72,
+            "z": 30.56
+          },
+          "radius": 108.66,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2172,
+            2321,
+            2322,
+            2323,
+            3244,
+            3245
+          ],
+          "targetCount": 7
+        },
+        {
+          "taskAreaId": "item_source:5469:map:1:cluster:11",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 6790.23,
+            "y": 268.91,
+            "z": 21.76
+          },
+          "radius": 133.98,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2172,
+            2321,
+            2322,
+            2323,
+            3244,
+            3245
+          ],
+          "targetCount": 7
+        },
+        {
+          "taskAreaId": "item_source:2449:map:1:cluster:43",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 6178.53,
+            "y": -1054.62,
+            "z": 384.67
+          },
+          "radius": 115.34,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            634,
+            641,
+            657,
+            659,
+            764,
+            765
+          ],
+          "targetCount": 141
+        },
+        {
+          "taskAreaId": "item_source:2449:map:1:cluster:45",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 6017.84,
+            "y": -1223.8,
+            "z": 376.05
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            634,
+            641,
+            657,
+            659,
+            764,
+            765
+          ],
+          "targetCount": 141
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "felwood_hub_16",
+      "position": {
+        "mapId": 1,
+        "x": 6821.85,
+        "y": -2082.51,
+        "z": 623.27
+      },
+      "questGivers": [
+        15395
+      ],
+      "levelRange": {
+        "min": 45,
+        "max": 55,
+        "avg": 55
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:7158:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 6860.56,
+            "y": -1964.67,
+            "z": 556.08
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7158
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7157:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 6792.2,
+            "y": -1959.78,
+            "z": 550.65
+          },
+          "radius": 79.91,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7157
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7156:map:1:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 6799.43,
+            "y": -1925.46,
+            "z": 558.72
+          },
+          "radius": 214.77,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7156
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:7157:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 6915.95,
+            "y": -1824.02,
+            "z": 571.88
+          },
+          "radius": 45.92,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7157
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:21377:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3647.02,
+            "y": -1121.54,
+            "z": 216.35
+          },
+          "radius": 178.31,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7153,
+            7154,
+            7155,
+            7156,
+            7157,
+            7158
+          ],
+          "targetCount": 9
+        },
+        {
+          "taskAreaId": "item_source:21377:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 3602.08,
+            "y": -1134.46,
+            "z": 218.6
+          },
+          "radius": 130.18,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7153,
+            7154,
+            7155,
+            7156,
+            7157,
+            7158
+          ],
+          "targetCount": 9
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "felwood_hub_17",
+      "position": {
+        "mapId": 1,
+        "x": 6900.44,
+        "y": -2285.77,
+        "z": 586.148
+      },
+      "questGivers": [
+        11556
+      ],
+      "levelRange": {
+        "min": 45,
+        "max": 58,
+        "avg": 57
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:7440:map:1:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 6804.18,
+            "y": -2488.16,
+            "z": 553.79
+          },
+          "radius": 174.22,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7440
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:21383:map:1:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 6811.32,
+            "y": -2545.29,
+            "z": 559.16
+          },
+          "radius": 207.7,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7438,
+            7439,
+            7440,
+            7441,
+            7442,
+            10738
+          ],
+          "targetCount": 7
+        },
+        {
+          "taskAreaId": "creature:7440:map:1:cluster:6",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": 6797.2,
+            "y": -2672.43,
+            "z": 546.33
+          },
+          "radius": 53.47,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7440
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:21383:map:1:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": 6793.63,
+            "y": -2700.07,
+            "z": 554.69
+          },
+          "radius": 118.63,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            7438,
+            7439,
+            7440,
+            7441,
+            7442,
+            10738
+          ],
+          "targetCount": 7
+        }
+      ],
+      "nextHubs": []
+    }
+  ]
+}

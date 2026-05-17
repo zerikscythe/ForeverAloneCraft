@@ -7,6 +7,7 @@
 #include "integration/SqlZoneIndexRepository.h"
 
 #include <algorithm>
+#include <cctype>
 #include <chrono>
 #include <numeric>
 #include <random>
@@ -35,6 +36,51 @@ std::string EffectiveSubjectKind(model::TaskTemplateStepEntry const& step)
     if (step.stepType == "fish")        return "fish";
     if (step.stepType == "idle_city" || step.stepType == "idle_inn") return "city_service";
     return "";
+}
+
+std::string NormalizeLower(std::string value)
+{
+    std::transform(
+        value.begin(),
+        value.end(),
+        value.begin(),
+        [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return value;
+}
+
+bool IsQuestingTaskFamily(std::string const& taskFamily)
+{
+    std::string const normalized = NormalizeLower(taskFamily);
+    return normalized == "questing" || normalized == "quest";
+}
+
+bool IsQuestResumeLevelAppropriate(
+    std::uint8_t level,
+    model::ZoneEntry const& zone)
+{
+    std::int32_t const minAllowed = std::max<std::int32_t>(1, static_cast<std::int32_t>(zone.minLevel) - 3);
+    std::int32_t const maxAllowed = std::min<std::int32_t>(80, static_cast<std::int32_t>(zone.maxLevel) + 3);
+    std::int32_t const currentLevel = static_cast<std::int32_t>(level);
+    return currentLevel >= minAllowed && currentLevel <= maxAllowed;
+}
+
+bool TemplateSupportsQuestResume(
+    model::TaskTemplateEntry const& tmpl,
+    std::uint32_t resumeZoneId)
+{
+    for (model::TaskTemplateStepEntry const& step : tmpl.steps)
+    {
+        std::string const resolverKind = EffectiveResolverKind(step);
+        if (resolverKind == "quest_auto")
+            return true;
+        if (resolverKind == "quest_zone"
+            && (step.targetZoneId == 0 || step.targetZoneId == resumeZoneId))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 // Weighted random selection — picks an activity proportional to its weight.
@@ -718,6 +764,86 @@ std::optional<AmbientSession> BuildSessionFromPlaylist(
     return session;
 }
 
+std::optional<AmbientSession> TryBuildQuestResumeSession(
+    std::vector<model::TaskTemplateEntry> const& templates,
+    integration::SqlZoneIndexRepository& zoneRepo,
+    std::mt19937& rng,
+    std::uint8_t faction,
+    std::uint8_t level,
+    std::uint32_t startZoneId,
+    std::uint32_t homeZoneId,
+    std::string const& homeAnchorPointKey,
+    std::string const& homeBindPointKey,
+    std::unordered_set<std::uint32_t> const* exploredZoneIds,
+    AmbientSessionResumeHint const* resumeHint)
+{
+    if (!resumeHint
+        || !IsQuestingTaskFamily(resumeHint->lastTaskFamily)
+        || resumeHint->lastTaskTargetZoneId == 0)
+    {
+        return std::nullopt;
+    }
+
+    auto const zone = zoneRepo.Find(resumeHint->lastTaskTargetZoneId);
+    if (!zone || !IsQuestResumeLevelAppropriate(level, *zone))
+        return std::nullopt;
+
+    std::vector<model::TaskTemplateEntry const*> candidates;
+    for (model::TaskTemplateEntry const& tmpl : templates)
+    {
+        if (TemplateSupportsQuestResume(tmpl, resumeHint->lastTaskTargetZoneId))
+            candidates.push_back(&tmpl);
+    }
+
+    if (candidates.empty())
+        return std::nullopt;
+
+    std::uint32_t const totalWeight = std::accumulate(
+        candidates.begin(), candidates.end(), std::uint32_t{0},
+        [](std::uint32_t sum, model::TaskTemplateEntry const* tmpl)
+        {
+            return sum + std::max<std::uint32_t>(1u, tmpl ? tmpl->weight : 1u);
+        });
+
+    std::uniform_int_distribution<std::uint32_t> dist(1, totalWeight);
+    std::uint32_t roll = dist(rng);
+    for (model::TaskTemplateEntry const* tmpl : candidates)
+    {
+        std::uint32_t const effectiveWeight = std::max<std::uint32_t>(1u, tmpl ? tmpl->weight : 1u);
+        if (roll <= effectiveWeight)
+        {
+            auto session = BuildSessionFromTemplate(
+                *tmpl,
+                zoneRepo,
+                rng,
+                faction,
+                level,
+                resumeHint->lastTaskTargetZoneId,
+                homeZoneId,
+                homeAnchorPointKey,
+                homeBindPointKey,
+                exploredZoneIds);
+            if (!session)
+                return std::nullopt;
+
+            session->sourceKind = "quest_resume";
+            session->sourceKey =
+                (resumeHint->lastSessionSourceKey.empty()
+                    ? tmpl->templateKey
+                    : resumeHint->lastSessionSourceKey)
+                + ":zone_" + std::to_string(resumeHint->lastTaskTargetZoneId);
+            if (!session->displayName.empty())
+                session->displayName += " (Resume)";
+            (void)startZoneId;
+            return session;
+        }
+
+        roll -= effectiveWeight;
+    }
+
+    return std::nullopt;
+}
+
 // First realignment slice:
 // build a short chained session from the existing activity table rather than
 // selecting exactly one activity. This preserves the current schema/API while
@@ -853,7 +979,8 @@ std::optional<AmbientSession> BotActivitySessionComposer::Compose(
     std::uint32_t homeZoneId,
     std::string const& homeAnchorPointKey,
     std::string const& homeBindPointKey,
-    std::unordered_set<std::uint32_t> const* exploredZoneIds) const
+    std::unordered_set<std::uint32_t> const* exploredZoneIds,
+    AmbientSessionResumeHint const* resumeHint) const
 {
     AmbientProfessionCapabilities const professionCapabilities{
         hasHerbalism,
@@ -906,11 +1033,30 @@ std::optional<AmbientSession> BotActivitySessionComposer::Compose(
             }),
         playlists.end());
 
+    std::mt19937 rng(static_cast<std::uint32_t>(
+        std::chrono::steady_clock::now().time_since_epoch().count()));
+
+    if (!templates.empty())
+    {
+        if (auto session = TryBuildQuestResumeSession(
+                templates,
+                zoneRepo,
+                rng,
+                faction,
+                level,
+                startZoneId,
+                homeZoneId,
+                homeAnchorPointKey,
+                homeBindPointKey,
+                exploredZoneIds,
+                resumeHint))
+        {
+            return session;
+        }
+    }
+
     if (!playlists.empty() && !templates.empty())
     {
-        std::mt19937 rng(static_cast<std::uint32_t>(
-            std::chrono::steady_clock::now().time_since_epoch().count()));
-
         std::uint32_t const totalPlaylistWeight = std::accumulate(
             playlists.begin(), playlists.end(), std::uint32_t{0},
             [](std::uint32_t sum, model::PlaylistEntrySet const& playlist)
@@ -946,9 +1092,6 @@ std::optional<AmbientSession> BotActivitySessionComposer::Compose(
 
     if (!templates.empty())
     {
-        std::mt19937 rng(static_cast<std::uint32_t>(
-            std::chrono::steady_clock::now().time_since_epoch().count()));
-
         std::uint32_t const totalTemplateWeight = std::accumulate(
             templates.begin(), templates.end(), std::uint32_t{0},
             [](std::uint32_t sum, model::TaskTemplateEntry const& tmpl)
@@ -1000,10 +1143,6 @@ std::optional<AmbientSession> BotActivitySessionComposer::Compose(
 
     if (filtered.empty())
         return std::nullopt;
-
-    // Seed with time so each call is different.
-    std::mt19937 rng(static_cast<std::uint32_t>(
-        std::chrono::steady_clock::now().time_since_epoch().count()));
 
     std::uint32_t const requestedTaskCount = ChooseTaskCount(filtered.size(), rng);
     if (requestedTaskCount == 0)

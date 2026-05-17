@@ -1,0 +1,1186 @@
+{
+  "version": 1,
+  "zoneId": 1519,
+  "zoneName": "Stormwind City",
+  "mapId": 0,
+  "hubCount": 27,
+  "hubs": [
+    {
+      "hubId": "stormwind_city_hub_01",
+      "position": {
+        "mapId": 0,
+        "x": -10512.2,
+        "y": -1186.84,
+        "z": 28.267
+      },
+      "questGivers": [
+        840
+      ],
+      "levelRange": {
+        "min": 28,
+        "max": 30,
+        "avg": 30
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "stormwind_city_hub_10",
+          "zoneId": 1519,
+          "zoneName": "Stormwind City",
+          "questGivers": [
+            482,
+            1427,
+            1432,
+            6174
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8854.12,
+            "y": 575.652,
+            "z": 101.15
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "stormwind_city_hub_02",
+      "position": {
+        "mapId": 0,
+        "x": -9091.215,
+        "y": 828.933,
+        "z": 106.852
+      },
+      "questGivers": [
+        1141,
+        5081
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 40,
+        "avg": 38
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stormwind_city_hub_03",
+      "position": {
+        "mapId": 0,
+        "x": -9008.98,
+        "y": 552.875,
+        "z": 83.707
+      },
+      "questGivers": [
+        14394,
+        20407
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 60,
+        "avg": 47
+      },
+      "faction": "Alliance",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stormwind_city_hub_04",
+      "position": {
+        "mapId": 0,
+        "x": -8986.434,
+        "y": 832.615,
+        "z": 90.275
+      },
+      "questGivers": [
+        1309,
+        2708,
+        4078,
+        5497,
+        5498,
+        5566,
+        5694,
+        14722
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 60,
+        "avg": 36
+      },
+      "faction": "Alliance",
+      "totalQuests": 23,
+      "estimatedMinutes": 115,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:14047:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -8953.95,
+            "y": 521.02,
+            "z": 96.54
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            466,
+            603,
+            853,
+            866,
+            868,
+            1410
+          ],
+          "targetCount": 1181
+        },
+        {
+          "taskAreaId": "item_source:14047:map:0:cluster:7",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -8457.98,
+            "y": 377.17,
+            "z": 116.25
+          },
+          "radius": 145.74,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            466,
+            603,
+            853,
+            866,
+            868,
+            1410
+          ],
+          "targetCount": 1181
+        },
+        {
+          "taskAreaId": "item_source:2592:map:0:cluster:51",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -8334.0,
+            "y": 394.72,
+            "z": 122.37
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3,
+            48,
+            98,
+            122,
+            125,
+            127
+          ],
+          "targetCount": 779
+        },
+        {
+          "taskAreaId": "item_source:4306:map:0:cluster:74",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -8334.0,
+            "y": 394.72,
+            "z": 122.37
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3,
+            48,
+            202,
+            203,
+            206,
+            210
+          ],
+          "targetCount": 1049
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stormwind_city_hub_06",
+      "position": {
+        "mapId": 0,
+        "x": -8981.78,
+        "y": 397.36,
+        "z": 75.955
+      },
+      "questGivers": [
+        4959
+      ],
+      "levelRange": {
+        "min": 28,
+        "max": 28,
+        "avg": 28
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "stormwind_city_hub_10",
+          "zoneId": 1519,
+          "zoneName": "Stormwind City",
+          "questGivers": [
+            482,
+            1427,
+            1432,
+            6174
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8854.12,
+            "y": 575.652,
+            "z": 101.15
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "stormwind_city_hub_05",
+      "position": {
+        "mapId": 0,
+        "x": -8980.333,
+        "y": 1034.643,
+        "z": 101.504
+      },
+      "questGivers": [
+        461,
+        1435,
+        5495,
+        5496,
+        5520,
+        6122
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 52,
+        "avg": 39
+      },
+      "faction": "Alliance",
+      "totalQuests": 12,
+      "estimatedMinutes": 60,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stormwind_city_hub_07",
+      "position": {
+        "mapId": 0,
+        "x": -8874.87,
+        "y": -186.332,
+        "z": 82.121
+      },
+      "questGivers": [
+        951
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 24,
+        "avg": 24
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stormwind_city_hub_08",
+      "position": {
+        "mapId": 0,
+        "x": -8867.79,
+        "y": 673.673,
+        "z": 97.986
+      },
+      "questGivers": [
+        6740
+      ],
+      "levelRange": {
+        "min": 47,
+        "max": 50,
+        "avg": 50
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stormwind_city_hub_11",
+      "position": {
+        "mapId": 0,
+        "x": -8854.0,
+        "y": 743.15,
+        "z": 100.857
+      },
+      "questGivers": [
+        2198
+      ],
+      "levelRange": {
+        "min": 50,
+        "max": 57,
+        "avg": 54
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stormwind_city_hub_09",
+      "position": {
+        "mapId": 0,
+        "x": -8835.523,
+        "y": 827.152,
+        "z": 100.317
+      },
+      "questGivers": [
+        338,
+        1719,
+        5386
+      ],
+      "levelRange": {
+        "min": 16,
+        "max": 41,
+        "avg": 33
+      },
+      "faction": "Alliance",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "stormwind_city_hub_20",
+          "zoneId": 1519,
+          "zoneName": "Stormwind City",
+          "questGivers": [
+            1646,
+            10782
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8552.63,
+            "y": 729.489,
+            "z": 108.848
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "stormwind_city_hub_10",
+      "position": {
+        "mapId": 0,
+        "x": -8829.388,
+        "y": 611.132,
+        "z": 97.028
+      },
+      "questGivers": [
+        482,
+        1427,
+        1432,
+        6174
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 33,
+        "avg": 23
+      },
+      "faction": "Alliance",
+      "totalQuests": 9,
+      "estimatedMinutes": 45,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "stormwind_city_hub_01",
+          "zoneId": 1519,
+          "zoneName": "Stormwind City",
+          "questGivers": [
+            840
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -10512.2,
+            "y": -1186.84,
+            "z": 28.267
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "stormwind_city_hub_12",
+          "zoneId": 1519,
+          "zoneName": "Stormwind City",
+          "questGivers": [
+            332,
+            6946,
+            7207,
+            13283
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8819.92,
+            "y": 362.534,
+            "z": 109.604
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "stormwind_city_hub_15",
+          "zoneId": 1519,
+          "zoneName": "Stormwind City",
+          "questGivers": [
+            918,
+            1721,
+            4961
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8752.3,
+            "y": 377.572,
+            "z": 101.139
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "stormwind_city_hub_19",
+          "zoneId": 1519,
+          "zoneName": "Stormwind City",
+          "questGivers": [
+            376,
+            928,
+            1284,
+            4982,
+            5489,
+            5491,
+            6171,
+            6173,
+            7917,
+            12336
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8577.0,
+            "y": 881.698,
+            "z": 106.519
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "stormwind_city_hub_25",
+          "zoneId": 1519,
+          "zoneName": "Stormwind City",
+          "questGivers": [
+            7766,
+            24729
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8409.0,
+            "y": 450.793,
+            "z": 123.76
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "stormwind_city_hub_27",
+          "zoneId": 1519,
+          "zoneName": "Stormwind City",
+          "questGivers": [
+            4962,
+            4963
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -3822.89,
+            "y": -827.898,
+            "z": 10.298
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "stormwind_city_hub_12",
+      "position": {
+        "mapId": 0,
+        "x": -8807.737,
+        "y": 346.209,
+        "z": 104.394
+      },
+      "questGivers": [
+        332,
+        6946,
+        7207,
+        13283
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 60,
+        "avg": 31
+      },
+      "faction": "Alliance",
+      "totalQuests": 12,
+      "estimatedMinutes": 60,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "stormwind_city_hub_10",
+          "zoneId": 1519,
+          "zoneName": "Stormwind City",
+          "questGivers": [
+            482,
+            1427,
+            1432,
+            6174
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8854.12,
+            "y": 575.652,
+            "z": 101.15
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "stormwind_city_hub_20",
+          "zoneId": 1519,
+          "zoneName": "Stormwind City",
+          "questGivers": [
+            1646,
+            10782
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8552.63,
+            "y": 729.489,
+            "z": 108.848
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "stormwind_city_hub_23",
+          "zoneId": 1519,
+          "zoneName": "Stormwind City",
+          "questGivers": [
+            29611
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8441.42,
+            "y": 333.102,
+            "z": 122.679
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "stormwind_city_hub_14",
+      "position": {
+        "mapId": 0,
+        "x": -8777.6,
+        "y": 713.496,
+        "z": 99.617
+      },
+      "questGivers": [
+        1428
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 2,
+        "avg": 2
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stormwind_city_hub_13",
+      "position": {
+        "mapId": 0,
+        "x": -8765.667,
+        "y": 1096.283,
+        "z": 93.016
+      },
+      "questGivers": [
+        4984,
+        5504,
+        5505
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 52,
+        "avg": 43
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stormwind_city_hub_15",
+      "position": {
+        "mapId": 0,
+        "x": -8709.923,
+        "y": 400.506,
+        "z": 100.921
+      },
+      "questGivers": [
+        918,
+        1721,
+        4961
+      ],
+      "levelRange": {
+        "min": 22,
+        "max": 52,
+        "avg": 35
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "stormwind_city_hub_10",
+          "zoneId": 1519,
+          "zoneName": "Stormwind City",
+          "questGivers": [
+            482,
+            1427,
+            1432,
+            6174
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8854.12,
+            "y": 575.652,
+            "z": 101.15
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "stormwind_city_hub_16",
+      "position": {
+        "mapId": 0,
+        "x": -8688.94,
+        "y": 324.5,
+        "z": 109.521
+      },
+      "questGivers": [
+        5479,
+        5480
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 52,
+        "avg": 36
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "stormwind_city_hub_18",
+          "zoneId": 1519,
+          "zoneName": "Stormwind City",
+          "questGivers": [
+            2285,
+            6089,
+            6090
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8612.75,
+            "y": 382.771,
+            "z": 103.011
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "stormwind_city_hub_17",
+      "position": {
+        "mapId": 0,
+        "x": -8623.24,
+        "y": 766.655,
+        "z": 97.403
+      },
+      "questGivers": [
+        1444
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 24,
+        "avg": 24
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "stormwind_city_hub_26",
+          "zoneId": 1519,
+          "zoneName": "Stormwind City",
+          "questGivers": [
+            1440,
+            2504
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8347.0,
+            "y": 418.2,
+            "z": 122.374
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "stormwind_city_hub_18",
+      "position": {
+        "mapId": 0,
+        "x": -8589.04,
+        "y": 385.998,
+        "z": 104.835
+      },
+      "questGivers": [
+        2285,
+        6089,
+        6090
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 60,
+        "avg": 37
+      },
+      "faction": "Alliance",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stormwind_city_hub_20",
+      "position": {
+        "mapId": 0,
+        "x": -8551.435,
+        "y": 724.575,
+        "z": 105.325
+      },
+      "questGivers": [
+        1646,
+        10782
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 52,
+        "avg": 30
+      },
+      "faction": "Alliance",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "stormwind_city_hub_09",
+          "zoneId": 1519,
+          "zoneName": "Stormwind City",
+          "questGivers": [
+            338,
+            1719,
+            5386
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8856.0,
+            "y": 822.813,
+            "z": 98.4
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "stormwind_city_hub_12",
+          "zoneId": 1519,
+          "zoneName": "Stormwind City",
+          "questGivers": [
+            332,
+            6946,
+            7207,
+            13283
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8819.92,
+            "y": 362.534,
+            "z": 109.604
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "stormwind_city_hub_19",
+      "position": {
+        "mapId": 0,
+        "x": -8533.2,
+        "y": 853.122,
+        "z": 106.955
+      },
+      "questGivers": [
+        376,
+        928,
+        1284,
+        4982,
+        5489,
+        5491,
+        6171,
+        6173,
+        7917,
+        12336
+      ],
+      "levelRange": {
+        "min": 12,
+        "max": 60,
+        "avg": 43
+      },
+      "faction": "Alliance",
+      "totalQuests": 26,
+      "estimatedMinutes": 130,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "stormwind_city_hub_10",
+          "zoneId": 1519,
+          "zoneName": "Stormwind City",
+          "questGivers": [
+            482,
+            1427,
+            1432,
+            6174
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8854.12,
+            "y": 575.652,
+            "z": 101.15
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "stormwind_city_hub_21",
+          "zoneId": 1519,
+          "zoneName": "Stormwind City",
+          "questGivers": [
+            4960
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8507.0,
+            "y": 328.347,
+            "z": 120.986
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "stormwind_city_hub_21",
+      "position": {
+        "mapId": 0,
+        "x": -8507.0,
+        "y": 328.347,
+        "z": 120.986
+      },
+      "questGivers": [
+        4960
+      ],
+      "levelRange": {
+        "min": 28,
+        "max": 28,
+        "avg": 28
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "stormwind_city_hub_06",
+          "zoneId": 1519,
+          "zoneName": "Stormwind City",
+          "questGivers": [
+            4959
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8981.78,
+            "y": 397.36,
+            "z": 75.955
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "stormwind_city_hub_22",
+      "position": {
+        "mapId": 0,
+        "x": -8466.5,
+        "y": 508.736,
+        "z": 100.275
+      },
+      "questGivers": [
+        656,
+        5384
+      ],
+      "levelRange": {
+        "min": 14,
+        "max": 50,
+        "avg": 35
+      },
+      "faction": "Alliance",
+      "totalQuests": 5,
+      "estimatedMinutes": 25,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stormwind_city_hub_23",
+      "position": {
+        "mapId": 0,
+        "x": -8441.42,
+        "y": 333.102,
+        "z": 122.679
+      },
+      "questGivers": [
+        29611
+      ],
+      "levelRange": {
+        "min": 16,
+        "max": 74,
+        "avg": 60
+      },
+      "faction": "Alliance",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "stormwind_city_hub_12",
+          "zoneId": 1519,
+          "zoneName": "Stormwind City",
+          "questGivers": [
+            332,
+            6946,
+            7207,
+            13283
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8819.92,
+            "y": 362.534,
+            "z": 109.604
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "stormwind_city_hub_25",
+      "position": {
+        "mapId": 0,
+        "x": -8407.725,
+        "y": 466.673,
+        "z": 123.76
+      },
+      "questGivers": [
+        7766,
+        24729
+      ],
+      "levelRange": {
+        "min": 16,
+        "max": 70,
+        "avg": 44
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:4306:map:0:cluster:74",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -8334.0,
+            "y": 394.72,
+            "z": 122.37
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3,
+            48,
+            202,
+            203,
+            206,
+            210
+          ],
+          "targetCount": 1049
+        },
+        {
+          "taskAreaId": "creature:1754:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -8334.0,
+            "y": 394.72,
+            "z": 122.37
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1754
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "stormwind_city_hub_10",
+          "zoneId": 1519,
+          "zoneName": "Stormwind City",
+          "questGivers": [
+            482,
+            1427,
+            1432,
+            6174
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8854.12,
+            "y": 575.652,
+            "z": 101.15
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "stormwind_city_hub_24",
+      "position": {
+        "mapId": 0,
+        "x": -8401.167,
+        "y": 601.483,
+        "z": 95.418
+      },
+      "questGivers": [
+        5413,
+        5515,
+        5516,
+        5518,
+        6579,
+        7798
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 52,
+        "avg": 32
+      },
+      "faction": "Alliance",
+      "totalQuests": 16,
+      "estimatedMinutes": 80,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stormwind_city_hub_26",
+      "position": {
+        "mapId": 0,
+        "x": -8346.5,
+        "y": 401.064,
+        "z": 122.374
+      },
+      "questGivers": [
+        1440,
+        2504
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 38,
+        "avg": 21
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "stormwind_city_hub_07",
+          "zoneId": 1519,
+          "zoneName": "Stormwind City",
+          "questGivers": [
+            951
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8874.87,
+            "y": -186.332,
+            "z": 82.121
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "stormwind_city_hub_27",
+      "position": {
+        "mapId": 0,
+        "x": -3815.855,
+        "y": -826.755,
+        "z": 10.3
+      },
+      "questGivers": [
+        4962,
+        4963
+      ],
+      "levelRange": {
+        "min": 28,
+        "max": 33,
+        "avg": 33
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

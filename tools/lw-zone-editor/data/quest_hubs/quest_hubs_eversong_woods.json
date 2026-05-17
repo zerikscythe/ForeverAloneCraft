@@ -1,0 +1,1246 @@
+{
+  "version": 1,
+  "zoneId": 3430,
+  "zoneName": "Eversong Woods",
+  "mapId": 530,
+  "hubCount": 21,
+  "hubs": [
+    {
+      "hubId": "eversong_woods_hub_01",
+      "position": {
+        "mapId": 530,
+        "x": 8235.5,
+        "y": -6664.06,
+        "z": 84.558
+      },
+      "questGivers": [
+        16362
+      ],
+      "levelRange": {
+        "min": 8,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "eversong_woods_hub_02",
+      "position": {
+        "mapId": 530,
+        "x": 8414.19,
+        "y": -6165.0,
+        "z": 61.399
+      },
+      "questGivers": [
+        15398
+      ],
+      "levelRange": {
+        "min": 6,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "eversong_woods_hub_03",
+      "position": {
+        "mapId": 530,
+        "x": 8626.61,
+        "y": -6366.06,
+        "z": 55.433
+      },
+      "questGivers": [
+        16144
+      ],
+      "levelRange": {
+        "min": 7,
+        "max": 9,
+        "avg": 9
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "eversong_woods_hub_04",
+      "position": {
+        "mapId": 530,
+        "x": 8666.61,
+        "y": -7960.89,
+        "z": 151.876
+      },
+      "questGivers": [
+        15406
+      ],
+      "levelRange": {
+        "min": 8,
+        "max": 11,
+        "avg": 11
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:20760:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 8425.4,
+            "y": -7566.3,
+            "z": 174.68
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15407
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "eversong_woods_hub_05",
+      "position": {
+        "mapId": 530,
+        "x": 8684.63,
+        "y": -6798.71,
+        "z": 94.098
+      },
+      "questGivers": [
+        15942
+      ],
+      "levelRange": {
+        "min": 7,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "eversong_woods_hub_01",
+          "zoneId": 3430,
+          "zoneName": "Eversong Woods",
+          "questGivers": [
+            16362
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 8235.5,
+            "y": -6664.06,
+            "z": 84.558
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "eversong_woods_hub_07",
+      "position": {
+        "mapId": 530,
+        "x": 8711.23,
+        "y": -7160.89,
+        "z": 43.601
+      },
+      "questGivers": [
+        15402
+      ],
+      "levelRange": {
+        "min": 7,
+        "max": 9,
+        "avg": 9
+      },
+      "faction": "Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "eversong_woods_hub_06",
+      "position": {
+        "mapId": 530,
+        "x": 8718.9,
+        "y": -6648.018,
+        "z": 73.789
+      },
+      "questGivers": [
+        15397,
+        15417,
+        15939,
+        16210,
+        16397
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 10,
+        "avg": 9
+      },
+      "faction": "Horde",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:20772:map:530:cluster:12",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 8646.78,
+            "y": -6202.68,
+            "z": 45.43
+          },
+          "radius": 99.54,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15651,
+            15652
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:20772:map:530:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 8944.83,
+            "y": -6205.64,
+            "z": 9.49
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15651,
+            15652
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "creature:16162:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 8771.98,
+            "y": -6081.86,
+            "z": 14.98
+          },
+          "radius": 219.54,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16162
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:15645:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 8755.18,
+            "y": -6069.76,
+            "z": 23.16
+          },
+          "radius": 211.61,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15645
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "eversong_woods_hub_02",
+          "zoneId": 3430,
+          "zoneName": "Eversong Woods",
+          "questGivers": [
+            15398
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 8414.19,
+            "y": -6165.0,
+            "z": 61.399
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "eversong_woods_hub_03",
+          "zoneId": 3430,
+          "zoneName": "Eversong Woods",
+          "questGivers": [
+            16144
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 8626.61,
+            "y": -6366.06,
+            "z": 55.433
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "eversong_woods_hub_07",
+          "zoneId": 3430,
+          "zoneName": "Eversong Woods",
+          "questGivers": [
+            15402
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 8711.23,
+            "y": -7160.89,
+            "z": 43.601
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "eversong_woods_hub_09",
+          "zoneId": 3430,
+          "zoneName": "Eversong Woods",
+          "questGivers": [
+            15399,
+            15400,
+            15951
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 8980.84,
+            "y": -7458.36,
+            "z": 86.774
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "eversong_woods_hub_08",
+      "position": {
+        "mapId": 530,
+        "x": 8851.705,
+        "y": -6278.135,
+        "z": 7.947
+      },
+      "questGivers": [
+        15404,
+        15921
+      ],
+      "levelRange": {
+        "min": 5,
+        "max": 8,
+        "avg": 8
+      },
+      "faction": "Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:22487:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 8763.01,
+            "y": -6103.01,
+            "z": 73.16
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            16294
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:21771:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 8752.69,
+            "y": -5702.22,
+            "z": -0.96
+          },
+          "radius": 207.04,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15668,
+            15669,
+            15937
+          ],
+          "targetCount": 3
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "eversong_woods_hub_09",
+      "position": {
+        "mapId": 530,
+        "x": 8997.883,
+        "y": -7444.997,
+        "z": 93.211
+      },
+      "questGivers": [
+        15399,
+        15400,
+        15951
+      ],
+      "levelRange": {
+        "min": 7,
+        "max": 11,
+        "avg": 10
+      },
+      "faction": "Horde",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:15643:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 8857.26,
+            "y": -7679.81,
+            "z": 137.11
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15643
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:15641:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 8435.4,
+            "y": -7552.19,
+            "z": 162.85
+          },
+          "radius": 89.92,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15641
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:20759:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 8668.46,
+            "y": -7939.93,
+            "z": 153.41
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15408
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "eversong_woods_hub_10",
+      "position": {
+        "mapId": 530,
+        "x": 9037.79,
+        "y": -6697.62,
+        "z": 12.645
+      },
+      "questGivers": [
+        15945
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 6,
+        "avg": 6
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "eversong_woods_hub_15",
+          "zoneId": 3430,
+          "zoneName": "Eversong Woods",
+          "questGivers": [
+            15970
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 9251.98,
+            "y": -7230.74,
+            "z": 16.474
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "eversong_woods_hub_11",
+      "position": {
+        "mapId": 530,
+        "x": 9123.11,
+        "y": -5959.77,
+        "z": 32.695
+      },
+      "questGivers": [
+        15920
+      ],
+      "levelRange": {
+        "min": 5,
+        "max": 9,
+        "avg": 8
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:21757:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 9101.82,
+            "y": -5822.92,
+            "z": 0.24
+          },
+          "radius": 159.26,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15668,
+            15669,
+            15670,
+            15937,
+            15950
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:21770:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 8795.87,
+            "y": -5699.4,
+            "z": 0.42
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15937
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "eversong_woods_hub_12",
+      "position": {
+        "mapId": 530,
+        "x": 9155.78,
+        "y": -6294.84,
+        "z": 21.13
+      },
+      "questGivers": [
+        15401
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 6,
+        "avg": 6
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:15648:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 9084.58,
+            "y": -6218.12,
+            "z": 25.36
+          },
+          "radius": 127.83,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15648
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:15647:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 9068.59,
+            "y": -6189.8,
+            "z": 27.65
+          },
+          "radius": 151.06,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15647
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:15648:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 8979.27,
+            "y": -6131.83,
+            "z": 28.19
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15648
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "eversong_woods_hub_13",
+      "position": {
+        "mapId": 530,
+        "x": 9186.27,
+        "y": -7827.28,
+        "z": 98.295
+      },
+      "questGivers": [
+        15924
+      ],
+      "levelRange": {
+        "min": 8,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "eversong_woods_hub_18",
+          "zoneId": 3430,
+          "zoneName": "Eversong Woods",
+          "questGivers": [
+            15969
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 9500.11,
+            "y": -7871.48,
+            "z": 16.206
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "eversong_woods_hub_14",
+      "position": {
+        "mapId": 530,
+        "x": 9188.76,
+        "y": -6712.91,
+        "z": 25.997
+      },
+      "questGivers": [
+        15941
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 6,
+        "avg": 6
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "eversong_woods_hub_10",
+          "zoneId": 3430,
+          "zoneName": "Eversong Woods",
+          "questGivers": [
+            15945
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 9037.79,
+            "y": -6697.62,
+            "z": 12.645
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "eversong_woods_hub_15",
+      "position": {
+        "mapId": 530,
+        "x": 9251.98,
+        "y": -7230.74,
+        "z": 16.474
+      },
+      "questGivers": [
+        15970
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 10,
+        "avg": 9
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:23553:map:530:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 8952.34,
+            "y": -7653.97,
+            "z": 138.88
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15636
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:15941:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 9188.76,
+            "y": -6712.91,
+            "z": 26.0
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15941
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:15945:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 9037.79,
+            "y": -6697.62,
+            "z": 12.64
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15945
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:23553:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 9060.64,
+            "y": -7979.83,
+            "z": 137.52
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15636
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "eversong_woods_hub_16",
+      "position": {
+        "mapId": 530,
+        "x": 9297.13,
+        "y": -6685.43,
+        "z": 22.542
+      },
+      "questGivers": [
+        15405
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 5,
+        "avg": 5
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "eversong_woods_hub_12",
+          "zoneId": 3430,
+          "zoneName": "Eversong Woods",
+          "questGivers": [
+            15401
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 9155.78,
+            "y": -6294.84,
+            "z": 21.13
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "eversong_woods_hub_17",
+      "position": {
+        "mapId": 530,
+        "x": 9374.84,
+        "y": -6966.58,
+        "z": 18.161
+      },
+      "questGivers": [
+        15416
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 6,
+        "avg": 6
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:15654:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 9190.51,
+            "y": -6965.77,
+            "z": 8.47
+          },
+          "radius": 218.9,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15654
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:15654:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 8605.47,
+            "y": -6788.27,
+            "z": 102.3
+          },
+          "radius": 36.82,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15654
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "eversong_woods_hub_18",
+      "position": {
+        "mapId": 530,
+        "x": 9500.11,
+        "y": -7871.48,
+        "z": 16.206
+      },
+      "questGivers": [
+        15969
+      ],
+      "levelRange": {
+        "min": 8,
+        "max": 10,
+        "avg": 10
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:15966:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 9458.09,
+            "y": -7870.74,
+            "z": 39.13
+          },
+          "radius": 175.62,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15966
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:15967:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 9431.06,
+            "y": -7867.09,
+            "z": 63.71
+          },
+          "radius": 217.61,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15967
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "eversong_woods_hub_19",
+      "position": {
+        "mapId": 530,
+        "x": 9526.25,
+        "y": -6837.3,
+        "z": 17.682
+      },
+      "questGivers": [
+        15403,
+        15418
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 7,
+        "avg": 6
+      },
+      "faction": "Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:20764:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 9291.54,
+            "y": -6682.77,
+            "z": 22.54
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15420
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:15968:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 9060.0,
+            "y": -6190.93,
+            "z": 29.55
+          },
+          "radius": 144.62,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15968
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "eversong_woods_hub_06",
+          "zoneId": 3430,
+          "zoneName": "Eversong Woods",
+          "questGivers": [
+            15397,
+            15417,
+            15939,
+            16210,
+            16397
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 8700.38,
+            "y": -6638.36,
+            "z": 72.828
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "eversong_woods_hub_16",
+          "zoneId": 3430,
+          "zoneName": "Eversong Woods",
+          "questGivers": [
+            15405
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 9297.13,
+            "y": -6685.43,
+            "z": 22.542
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "eversong_woods_hub_20",
+      "position": {
+        "mapId": 530,
+        "x": 10302.3,
+        "y": -6229.3,
+        "z": 26.705
+      },
+      "questGivers": [
+        15281
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 5,
+        "avg": 5
+      },
+      "faction": "Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:15294:map:530:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 10339.48,
+            "y": -6030.93,
+            "z": 29.9
+          },
+          "radius": 167.69,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15294
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:15273:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 10150.09,
+            "y": -6008.31,
+            "z": 50.98
+          },
+          "radius": 128.09,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15273
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:20799:map:530:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 530,
+            "x": 10150.9,
+            "y": -6006.24,
+            "z": 110.24
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15367
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:15298:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 10132.35,
+            "y": -6016.28,
+            "z": 81.59
+          },
+          "radius": 87.11,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15298
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:15294:map:530:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 10474.8,
+            "y": -5851.93,
+            "z": 1.82
+          },
+          "radius": 72.28,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15294
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "eversong_woods_hub_21",
+      "position": {
+        "mapId": 530,
+        "x": 10377.45,
+        "y": -6394.776,
+        "z": 38.936
+      },
+      "questGivers": [
+        15278,
+        15279,
+        15280,
+        15283,
+        15284,
+        15285,
+        15295,
+        15296,
+        15297,
+        15513
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 4,
+        "avg": 2
+      },
+      "faction": "Horde",
+      "totalQuests": 19,
+      "estimatedMinutes": 95,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:15468:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 10323.0,
+            "y": -6404.01,
+            "z": 114.46
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15468
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:15274:map:530:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 530,
+            "x": 10322.78,
+            "y": -6275.11,
+            "z": 30.05
+          },
+          "radius": 189.45,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            15274
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "eversong_woods_hub_20",
+          "zoneId": 3430,
+          "zoneName": "Eversong Woods",
+          "questGivers": [
+            15281
+          ],
+          "position": {
+            "mapId": 530,
+            "x": 10302.3,
+            "y": -6229.3,
+            "z": 26.705
+          },
+          "weight": 1
+        }
+      ]
+    }
+  ]
+}

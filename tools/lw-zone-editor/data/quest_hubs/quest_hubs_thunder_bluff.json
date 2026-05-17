@@ -1,0 +1,368 @@
+{
+  "version": 1,
+  "zoneId": 1638,
+  "zoneName": "Thunder Bluff",
+  "mapId": 1,
+  "hubCount": 9,
+  "hubs": [
+    {
+      "hubId": "thunder_bluff_hub_01",
+      "position": {
+        "mapId": 1,
+        "x": -5483.62,
+        "y": -2463.44,
+        "z": 89.367
+      },
+      "questGivers": [
+        4722
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 29,
+        "avg": 29
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "thunder_bluff_hub_02",
+      "position": {
+        "mapId": 1,
+        "x": -1465.777,
+        "y": -85.319,
+        "z": 159.796
+      },
+      "questGivers": [
+        3038,
+        3039,
+        3041
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 52,
+        "avg": 41
+      },
+      "faction": "Horde",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "thunder_bluff_hub_03",
+      "position": {
+        "mapId": 1,
+        "x": -1413.06,
+        "y": -125.633,
+        "z": 159.018
+      },
+      "questGivers": [
+        3441
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 41,
+        "avg": 30
+      },
+      "faction": "Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "thunder_bluff_hub_04",
+      "position": {
+        "mapId": 1,
+        "x": -1300.28,
+        "y": 38.486,
+        "z": 129.292
+      },
+      "questGivers": [
+        6746
+      ],
+      "levelRange": {
+        "min": 47,
+        "max": 50,
+        "avg": 50
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "thunder_bluff_hub_08",
+          "zoneId": 1638,
+          "zoneName": "Thunder Bluff",
+          "questGivers": [
+            3033,
+            3034,
+            4046,
+            5769,
+            5770,
+            9087,
+            11833
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -1087.89,
+            "y": -225.033,
+            "z": 159.253
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "thunder_bluff_hub_05",
+      "position": {
+        "mapId": 1,
+        "x": -1235.7,
+        "y": 133.89,
+        "z": 132.412
+      },
+      "questGivers": [
+        2987,
+        3978,
+        4451,
+        6410,
+        10881
+      ],
+      "levelRange": {
+        "min": 7,
+        "max": 57,
+        "avg": 38
+      },
+      "faction": "Horde",
+      "totalQuests": 11,
+      "estimatedMinutes": 55,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:4753:map:1:cluster:7",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -1226.46,
+            "y": 431.05,
+            "z": 8.86
+          },
+          "radius": 93.39,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2965
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:4753:map:1:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -1109.28,
+            "y": 437.12,
+            "z": 17.61
+          },
+          "radius": 148.85,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2965
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:4752:map:1:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -1078.38,
+            "y": 483.26,
+            "z": 30.54
+          },
+          "radius": 203.62,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2964
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "thunder_bluff_hub_08",
+          "zoneId": 1638,
+          "zoneName": "Thunder Bluff",
+          "questGivers": [
+            3033,
+            3034,
+            4046,
+            5769,
+            5770,
+            9087,
+            11833
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -1087.89,
+            "y": -225.033,
+            "z": 159.253
+          },
+          "weight": 2
+        }
+      ]
+    },
+    {
+      "hubId": "thunder_bluff_hub_06",
+      "position": {
+        "mapId": 1,
+        "x": -1207.75,
+        "y": -57.039,
+        "z": 158.601
+      },
+      "questGivers": [
+        4721
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 29,
+        "avg": 27
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "thunder_bluff_hub_01",
+          "zoneId": 1638,
+          "zoneName": "Thunder Bluff",
+          "questGivers": [
+            4722
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -5483.62,
+            "y": -2463.44,
+            "z": 89.367
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "thunder_bluff_hub_07",
+      "position": {
+        "mapId": 1,
+        "x": -1154.155,
+        "y": 60.345,
+        "z": 145.913
+      },
+      "questGivers": [
+        3050,
+        14728
+      ],
+      "levelRange": {
+        "min": 4,
+        "max": 60,
+        "avg": 45
+      },
+      "faction": "Horde",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "thunder_bluff_hub_08",
+      "position": {
+        "mapId": 1,
+        "x": -1057.8,
+        "y": -257.361,
+        "z": 159.126
+      },
+      "questGivers": [
+        3033,
+        3034,
+        4046,
+        5769,
+        5770,
+        9087,
+        11833
+      ],
+      "levelRange": {
+        "min": 9,
+        "max": 55,
+        "avg": 38
+      },
+      "faction": "Horde",
+      "totalQuests": 20,
+      "estimatedMinutes": 100,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "thunder_bluff_hub_09",
+          "zoneId": 1638,
+          "zoneName": "Thunder Bluff",
+          "questGivers": [
+            3030,
+            3031,
+            3032,
+            3045,
+            3046,
+            3047,
+            3048,
+            3049,
+            3419,
+            5543,
+            5906
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -1033.71,
+            "y": 215.326,
+            "z": 110.899
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "thunder_bluff_hub_09",
+      "position": {
+        "mapId": 1,
+        "x": -988.83,
+        "y": 261.29,
+        "z": 118.16
+      },
+      "questGivers": [
+        3030,
+        3031,
+        3032,
+        3045,
+        3046,
+        3047,
+        3048,
+        3049,
+        3419,
+        5543,
+        5906
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 52,
+        "avg": 38
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 13,
+      "estimatedMinutes": 65,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

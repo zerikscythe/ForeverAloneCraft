@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "zoneId": 206,
+  "zoneName": "Utgarde Keep",
+  "mapId": 574,
+  "hubCount": 1,
+  "hubs": [
+    {
+      "hubId": "utgarde_keep_hub_01",
+      "position": {
+        "mapId": 574,
+        "x": 180.156,
+        "y": -77.658,
+        "z": 14.174
+      },
+      "questGivers": [
+        24137
+      ],
+      "levelRange": {
+        "min": 68,
+        "max": 71,
+        "avg": 71
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

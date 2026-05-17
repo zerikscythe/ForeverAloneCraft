@@ -69,6 +69,14 @@ struct AmbientSession
     std::vector<AmbientStep>       steps;    // each task contributes Travel -> Activity
 };
 
+struct AmbientSessionResumeHint
+{
+    std::string   lastSessionSourceKind;
+    std::string   lastSessionSourceKey;
+    std::string   lastTaskFamily;
+    std::uint32_t lastTaskTargetZoneId = 0;
+};
+
 // Builds a destination-first activity session for a bot.
 // Returns nullopt when no eligible activity exists.
 class BotActivitySessionComposer
@@ -84,7 +92,8 @@ public:
         std::uint32_t homeZoneId = 0,
         std::string const& homeAnchorPointKey = "",
         std::string const& homeBindPointKey = "",
-        std::unordered_set<std::uint32_t> const* exploredZoneIds = nullptr) const;
+        std::unordered_set<std::uint32_t> const* exploredZoneIds = nullptr,
+        AmbientSessionResumeHint const* resumeHint = nullptr) const;
 };
 
 } // namespace service

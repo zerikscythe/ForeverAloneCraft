@@ -1,0 +1,873 @@
+{
+  "version": 1,
+  "zoneId": 139,
+  "zoneName": "Eastern Plaguelands",
+  "mapId": 0,
+  "hubCount": 14,
+  "hubs": [
+    {
+      "hubId": "eastern_plaguelands_hub_01",
+      "position": {
+        "mapId": 0,
+        "x": 939.464,
+        "y": -1454.385,
+        "z": 62.691
+      },
+      "questGivers": [
+        11616,
+        12425
+      ],
+      "levelRange": {
+        "min": 48,
+        "max": 60,
+        "avg": 58
+      },
+      "faction": "Alliance",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "eastern_plaguelands_hub_02",
+      "position": {
+        "mapId": 0,
+        "x": 1114.2,
+        "y": -1697.44,
+        "z": 67.589
+      },
+      "questGivers": [
+        10927
+      ],
+      "levelRange": {
+        "min": 50,
+        "max": 56,
+        "avg": 56
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "eastern_plaguelands_hub_04",
+          "zoneId": 139,
+          "zoneName": "Eastern Plaguelands",
+          "questGivers": [
+            10926
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 1456.32,
+            "y": -3596.44,
+            "z": 86.963
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "eastern_plaguelands_hub_03",
+      "position": {
+        "mapId": 0,
+        "x": 1290.41,
+        "y": 316.247,
+        "z": -57.238
+      },
+      "questGivers": [
+        10181
+      ],
+      "levelRange": {
+        "min": 15,
+        "max": 60,
+        "avg": 45
+      },
+      "faction": "Horde",
+      "totalQuests": 6,
+      "estimatedMinutes": 30,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:15868:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 2814.72,
+            "y": -4466.88,
+            "z": 90.06
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            12337
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "eastern_plaguelands_hub_07",
+          "zoneId": 139,
+          "zoneName": "Eastern Plaguelands",
+          "questGivers": [
+            11878
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 1870.97,
+            "y": -3212.71,
+            "z": 125.243
+          },
+          "weight": 2
+        }
+      ]
+    },
+    {
+      "hubId": "eastern_plaguelands_hub_04",
+      "position": {
+        "mapId": 0,
+        "x": 1456.32,
+        "y": -3596.44,
+        "z": 86.963
+      },
+      "questGivers": [
+        10926
+      ],
+      "levelRange": {
+        "min": 50,
+        "max": 60,
+        "avg": 57
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "eastern_plaguelands_hub_02",
+          "zoneId": 139,
+          "zoneName": "Eastern Plaguelands",
+          "questGivers": [
+            10927
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 1114.2,
+            "y": -1697.44,
+            "z": 67.589
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "eastern_plaguelands_hub_09",
+          "zoneId": 139,
+          "zoneName": "Eastern Plaguelands",
+          "questGivers": [
+            11033,
+            11034,
+            11035,
+            11039,
+            11063,
+            11536,
+            16112,
+            16115,
+            16116,
+            16131,
+            16132,
+            16133,
+            16135,
+            16212,
+            16376,
+            17069,
+            17072
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 2251.3,
+            "y": -5344.98,
+            "z": 87.012
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "eastern_plaguelands_hub_05",
+      "position": {
+        "mapId": 0,
+        "x": 1651.43,
+        "y": -5492.02,
+        "z": 101.95
+      },
+      "questGivers": [
+        11898
+      ],
+      "levelRange": {
+        "min": 56,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "eastern_plaguelands_hub_07",
+          "zoneId": 139,
+          "zoneName": "Eastern Plaguelands",
+          "questGivers": [
+            11878
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 1870.97,
+            "y": -3212.71,
+            "z": 125.243
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "eastern_plaguelands_hub_06",
+      "position": {
+        "mapId": 0,
+        "x": 1658.37,
+        "y": -730.493,
+        "z": 59.248
+      },
+      "questGivers": [
+        11615
+      ],
+      "levelRange": {
+        "min": 48,
+        "max": 55,
+        "avg": 55
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "eastern_plaguelands_hub_07",
+      "position": {
+        "mapId": 0,
+        "x": 1870.97,
+        "y": -3212.71,
+        "z": 125.243
+      },
+      "questGivers": [
+        11878
+      ],
+      "levelRange": {
+        "min": 54,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 10,
+      "estimatedMinutes": 50,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:12339:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 1914.09,
+            "y": -3205.83,
+            "z": 124.89
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            12339
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:15850:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 1999.46,
+            "y": -3378.49,
+            "z": 107.31
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            11897
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:8601:map:0:cluster:7",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 2102.0,
+            "y": -3973.26,
+            "z": 135.07
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            8601
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:8601:map:0:cluster:5",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 2153.32,
+            "y": -4063.8,
+            "z": 93.61
+          },
+          "radius": 160.47,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            8601
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:8602:map:0:cluster:11",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 2744.37,
+            "y": -3419.93,
+            "z": 101.3
+          },
+          "radius": 126.9,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            8602
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:8602:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 2847.54,
+            "y": -2987.63,
+            "z": 101.71
+          },
+          "radius": 95.02,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            8602
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "eastern_plaguelands_hub_03",
+          "zoneId": 139,
+          "zoneName": "Eastern Plaguelands",
+          "questGivers": [
+            10181
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 1290.41,
+            "y": 316.247,
+            "z": -57.238
+          },
+          "weight": 2
+        },
+        {
+          "hubId": "eastern_plaguelands_hub_05",
+          "zoneId": 139,
+          "zoneName": "Eastern Plaguelands",
+          "questGivers": [
+            11898
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 1651.43,
+            "y": -5492.02,
+            "z": 101.95
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "eastern_plaguelands_hub_08",
+      "position": {
+        "mapId": 0,
+        "x": 2151.72,
+        "y": -5264.51,
+        "z": 95.873
+      },
+      "questGivers": [
+        11038
+      ],
+      "levelRange": {
+        "min": 50,
+        "max": 60,
+        "avg": 58
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:15785:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 1609.43,
+            "y": -3248.63,
+            "z": 68.05
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            12250
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "eastern_plaguelands_hub_12",
+          "zoneId": 139,
+          "zoneName": "Eastern Plaguelands",
+          "questGivers": [
+            11140,
+            12384
+          ],
+          "position": {
+            "mapId": 0,
+            "x": 2929.07,
+            "y": -2744.69,
+            "z": 109.697
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "eastern_plaguelands_hub_09",
+      "position": {
+        "mapId": 0,
+        "x": 2284.769,
+        "y": -5332.636,
+        "z": 87.585
+      },
+      "questGivers": [
+        11033,
+        11034,
+        11035,
+        11039,
+        11063,
+        11536,
+        16112,
+        16115,
+        16116,
+        16131,
+        16132,
+        16133,
+        16135,
+        16212,
+        16376,
+        17069,
+        17072
+      ],
+      "levelRange": {
+        "min": 50,
+        "max": 60,
+        "avg": 59
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 64,
+      "estimatedMinutes": 320,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:7080:map:0:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 2912.69,
+            "y": -4954.21,
+            "z": 99.81
+          },
+          "radius": 96.42,
+          "weight": 13,
+          "relatedQuestCount": 13,
+          "targetEntries": [
+            7132,
+            8519,
+            8520,
+            8521,
+            8522,
+            13279
+          ],
+          "targetCount": 19
+        },
+        {
+          "taskAreaId": "item_source:7080:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 1719.78,
+            "y": -4595.35,
+            "z": 61.51
+          },
+          "radius": 185.12,
+          "weight": 13,
+          "relatedQuestCount": 13,
+          "targetEntries": [
+            7132,
+            8519,
+            8520,
+            8521,
+            8522,
+            13279
+          ],
+          "targetCount": 19
+        },
+        {
+          "taskAreaId": "item_source:14227:map:0:cluster:10",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 1973.6,
+            "y": -2434.05,
+            "z": 62.77
+          },
+          "radius": 205.65,
+          "weight": 4,
+          "relatedQuestCount": 4,
+          "targetEntries": [
+            1821,
+            1822,
+            1824,
+            2707,
+            5857,
+            5858
+          ],
+          "targetCount": 25
+        },
+        {
+          "taskAreaId": "item_source:14227:map:0:cluster:15",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 1720.24,
+            "y": -2419.83,
+            "z": 61.89
+          },
+          "radius": 35.0,
+          "weight": 4,
+          "relatedQuestCount": 4,
+          "targetEntries": [
+            1821,
+            1822,
+            1824,
+            2707,
+            5857,
+            5858
+          ],
+          "targetCount": 25
+        },
+        {
+          "taskAreaId": "item_source:22526:map:0:cluster:24",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 2380.6,
+            "y": -5216.35,
+            "z": 76.09
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            1783,
+            1784,
+            1785,
+            1787,
+            1788,
+            1789
+          ],
+          "targetCount": 34
+        },
+        {
+          "taskAreaId": "item_source:22526:map:0:cluster:23",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 2498.69,
+            "y": -5132.56,
+            "z": 77.29
+          },
+          "radius": 91.96,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            1783,
+            1784,
+            1785,
+            1787,
+            1788,
+            1789
+          ],
+          "targetCount": 34
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "eastern_plaguelands_hub_10",
+      "position": {
+        "mapId": 0,
+        "x": 2375.38,
+        "y": -5650.72,
+        "z": 382.523
+      },
+      "questGivers": [
+        31084
+      ],
+      "levelRange": {
+        "min": 55,
+        "max": 55,
+        "avg": 55
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 4,
+      "estimatedMinutes": 20,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:31099:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 2457.06,
+            "y": -5592.09,
+            "z": 414.12
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            31099
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "eastern_plaguelands_hub_11",
+      "position": {
+        "mapId": 0,
+        "x": 2672.04,
+        "y": -2478.26,
+        "z": 72.698
+      },
+      "questGivers": [
+        1855
+      ],
+      "levelRange": {
+        "min": 52,
+        "max": 60,
+        "avg": 57
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:13853:map:0:cluster:21",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 2643.66,
+            "y": -2448.3,
+            "z": 65.29
+          },
+          "radius": 102.19,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            8603,
+            8605
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "creature:8596:map:0:cluster:10",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 2683.78,
+            "y": -2425.31,
+            "z": 62.87
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            8596
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:8596:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 2394.11,
+            "y": -2530.78,
+            "z": 80.4
+          },
+          "radius": 159.1,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            8596
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:13853:map:0:cluster:22",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": 2302.69,
+            "y": -2572.1,
+            "z": 74.03
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            8603,
+            8605
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "creature:8598:map:0:cluster:13",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 2884.78,
+            "y": -3095.78,
+            "z": 107.34
+          },
+          "radius": 70.01,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            8598
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:8598:map:0:cluster:8",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": 3149.47,
+            "y": -2966.23,
+            "z": 124.42
+          },
+          "radius": 99.54,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            8598
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "eastern_plaguelands_hub_12",
+      "position": {
+        "mapId": 0,
+        "x": 2932.405,
+        "y": -2744.665,
+        "z": 109.694
+      },
+      "questGivers": [
+        11140,
+        12384
+      ],
+      "levelRange": {
+        "min": 50,
+        "max": 60,
+        "avg": 58
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "eastern_plaguelands_hub_13",
+      "position": {
+        "mapId": 0,
+        "x": 3232.15,
+        "y": -4256.49,
+        "z": 98.206
+      },
+      "questGivers": [
+        10304
+      ],
+      "levelRange": {
+        "min": 53,
+        "max": 58,
+        "avg": 57
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "eastern_plaguelands_hub_14",
+      "position": {
+        "mapId": 0,
+        "x": 3321.2,
+        "y": -2995.84,
+        "z": 165.591
+      },
+      "questGivers": [
+        14494
+      ],
+      "levelRange": {
+        "min": 60,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}

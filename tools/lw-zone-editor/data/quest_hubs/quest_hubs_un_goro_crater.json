@@ -1,0 +1,826 @@
+{
+  "version": 1,
+  "zoneId": 490,
+  "zoneName": "Un'Goro Crater",
+  "mapId": 1,
+  "hubCount": 11,
+  "hubs": [
+    {
+      "hubId": "un_goro_crater_hub_01",
+      "position": {
+        "mapId": 1,
+        "x": -7812.3,
+        "y": -2109.275,
+        "z": -262.155
+      },
+      "questGivers": [
+        9619,
+        11701
+      ],
+      "levelRange": {
+        "min": 47,
+        "max": 56,
+        "avg": 53
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 11,
+      "estimatedMinutes": 55,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:22435:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -7981.28,
+            "y": -1221.51,
+            "z": -271.61
+          },
+          "radius": 68.63,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6551,
+            6552,
+            6553,
+            6554,
+            6555,
+            10040
+          ],
+          "targetCount": 7
+        },
+        {
+          "taskAreaId": "item_source:11478:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6451.92,
+            "y": -1783.8,
+            "z": -273.54
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6514
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:11479:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6396.19,
+            "y": -1990.66,
+            "z": -261.33
+          },
+          "radius": 66.23,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6513
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:11480:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6360.34,
+            "y": -1947.05,
+            "z": -263.67
+          },
+          "radius": 142.71,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6516
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:11479:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6385.61,
+            "y": -1785.24,
+            "z": -270.08
+          },
+          "radius": 159.09,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6513
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:11478:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6340.38,
+            "y": -1943.66,
+            "z": -264.79
+          },
+          "radius": 175.3,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6514
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "un_goro_crater_hub_02",
+      "position": {
+        "mapId": 1,
+        "x": -7210.81,
+        "y": -610.991,
+        "z": -269.081
+      },
+      "questGivers": [
+        10302
+      ],
+      "levelRange": {
+        "min": 51,
+        "max": 55,
+        "avg": 55
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:10541:map:1:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -7163.64,
+            "y": -1148.67,
+            "z": -265.2
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            10541
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:10541:map:1:cluster:4",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -7282.31,
+            "y": -1245.81,
+            "z": -246.85
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            10541
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "un_goro_crater_hub_03",
+      "position": {
+        "mapId": 1,
+        "x": -7196.18,
+        "y": -1387.11,
+        "z": -231.449
+      },
+      "questGivers": [
+        9999
+      ],
+      "levelRange": {
+        "min": 50,
+        "max": 55,
+        "avg": 55
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "un_goro_crater_hub_04",
+      "position": {
+        "mapId": 1,
+        "x": -6948.18,
+        "y": -3939.48,
+        "z": 31.488
+      },
+      "questGivers": [
+        9299
+      ],
+      "levelRange": {
+        "min": 47,
+        "max": 52,
+        "avg": 52
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "un_goro_crater_hub_05",
+      "position": {
+        "mapId": 1,
+        "x": -6380.13,
+        "y": -1970.0,
+        "z": -257.195
+      },
+      "questGivers": [
+        9623
+      ],
+      "levelRange": {
+        "min": 48,
+        "max": 53,
+        "avg": 53
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "un_goro_crater_hub_06",
+      "position": {
+        "mapId": 1,
+        "x": -6298.29,
+        "y": -1182.65,
+        "z": -269.101
+      },
+      "questGivers": [
+        9618
+      ],
+      "levelRange": {
+        "min": 48,
+        "max": 53,
+        "avg": 53
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "un_goro_crater_hub_05",
+          "zoneId": 490,
+          "zoneName": "Un'Goro Crater",
+          "questGivers": [
+            9623
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -6380.13,
+            "y": -1970.0,
+            "z": -257.195
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "un_goro_crater_hub_07",
+      "position": {
+        "mapId": 1,
+        "x": -6252.45,
+        "y": -1103.26,
+        "z": -218.343
+      },
+      "questGivers": [
+        9998
+      ],
+      "levelRange": {
+        "min": 49,
+        "max": 51,
+        "avg": 51
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:11831:map:1:cluster:10",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6233.83,
+            "y": -1322.07,
+            "z": -220.48
+          },
+          "radius": 51.7,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            9165,
+            9166,
+            9167
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:11830:map:1:cluster:17",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6457.48,
+            "y": -1345.65,
+            "z": -270.15
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            9162,
+            9163,
+            9164
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:11830:map:1:cluster:14",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6616.65,
+            "y": -1181.18,
+            "z": -265.92
+          },
+          "radius": 75.48,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            9162,
+            9163,
+            9164
+          ],
+          "targetCount": 3
+        },
+        {
+          "taskAreaId": "item_source:11831:map:1:cluster:15",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6211.66,
+            "y": -1576.51,
+            "z": -212.19
+          },
+          "radius": 98.89,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            9165,
+            9166,
+            9167
+          ],
+          "targetCount": 3
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "un_goro_crater_hub_09",
+      "position": {
+        "mapId": 1,
+        "x": -6193.86,
+        "y": -1219.55,
+        "z": -160.768
+      },
+      "questGivers": [
+        28092
+      ],
+      "levelRange": {
+        "min": 77,
+        "max": 78,
+        "avg": 78
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:38708:map:1:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6028.08,
+            "y": -1249.02,
+            "z": -146.76
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            28601
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "un_goro_crater_hub_08",
+      "position": {
+        "mapId": 1,
+        "x": -6163.754,
+        "y": -1093.345,
+        "z": -202.843
+      },
+      "questGivers": [
+        8737,
+        9118,
+        9119,
+        9270,
+        9271,
+        9272,
+        9274,
+        9997
+      ],
+      "levelRange": {
+        "min": 47,
+        "max": 56,
+        "avg": 53
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 14,
+      "estimatedMinutes": 70,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:11316:map:1:cluster:20",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6514.84,
+            "y": -1183.67,
+            "z": -271.11
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            6509,
+            6510,
+            6511,
+            6512
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "item_source:11316:map:1:cluster:39",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6541.2,
+            "y": -957.75,
+            "z": -272.14
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            6509,
+            6510,
+            6511,
+            6512
+          ],
+          "targetCount": 4
+        },
+        {
+          "taskAreaId": "creature:6510:map:1:cluster:14",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -6514.84,
+            "y": -1183.67,
+            "z": -271.11
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6510
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:11114:map:1:cluster:20",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6457.48,
+            "y": -1345.65,
+            "z": -270.15
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6501,
+            6502,
+            6503,
+            6504,
+            9162,
+            9163
+          ],
+          "targetCount": 7
+        },
+        {
+          "taskAreaId": "creature:6512:map:1:cluster:17",
+          "kind": "kill",
+          "position": {
+            "mapId": 1,
+            "x": -6541.2,
+            "y": -957.75,
+            "z": -272.14
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6512
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:11114:map:1:cluster:17",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6616.65,
+            "y": -1181.18,
+            "z": -265.92
+          },
+          "radius": 75.48,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6501,
+            6502,
+            6503,
+            6504,
+            9162,
+            9163
+          ],
+          "targetCount": 7
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "un_goro_crater_hub_11",
+          "zoneId": 490,
+          "zoneName": "Un'Goro Crater",
+          "questGivers": [
+            8496
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -1004.47,
+            "y": -3705.17,
+            "z": 4.642
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "un_goro_crater_hub_10",
+      "position": {
+        "mapId": 1,
+        "x": -6033.25,
+        "y": -1017.56,
+        "z": -217.055
+      },
+      "questGivers": [
+        9117
+      ],
+      "levelRange": {
+        "min": 47,
+        "max": 54,
+        "avg": 53
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:11184:map:1:cluster:18",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6514.84,
+            "y": -1183.67,
+            "z": -271.11
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6498,
+            6499,
+            6500,
+            6501,
+            6502,
+            6503
+          ],
+          "targetCount": 37
+        },
+        {
+          "taskAreaId": "item_source:11185:map:1:cluster:18",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6514.84,
+            "y": -1183.67,
+            "z": -271.11
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6498,
+            6499,
+            6500,
+            6501,
+            6502,
+            6503
+          ],
+          "targetCount": 36
+        },
+        {
+          "taskAreaId": "item_source:11186:map:1:cluster:18",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6514.84,
+            "y": -1183.67,
+            "z": -271.11
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6498,
+            6499,
+            6500,
+            6501,
+            6502,
+            6503
+          ],
+          "targetCount": 37
+        },
+        {
+          "taskAreaId": "item_source:11188:map:1:cluster:18",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6514.84,
+            "y": -1183.67,
+            "z": -271.11
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6498,
+            6499,
+            6500,
+            6501,
+            6502,
+            6503
+          ],
+          "targetCount": 37
+        },
+        {
+          "taskAreaId": "item_source:11184:map:1:cluster:17",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6611.1,
+            "y": -1062.2,
+            "z": -269.87
+          },
+          "radius": 160.69,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6498,
+            6499,
+            6500,
+            6501,
+            6502,
+            6503
+          ],
+          "targetCount": 37
+        },
+        {
+          "taskAreaId": "item_source:11185:map:1:cluster:17",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -6611.1,
+            "y": -1062.2,
+            "z": -269.87
+          },
+          "radius": 160.69,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6498,
+            6499,
+            6500,
+            6501,
+            6502,
+            6503
+          ],
+          "targetCount": 36
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "un_goro_crater_hub_08",
+          "zoneId": 490,
+          "zoneName": "Un'Goro Crater",
+          "questGivers": [
+            8737,
+            9118,
+            9119,
+            9270,
+            9271,
+            9272,
+            9274,
+            9997
+          ],
+          "position": {
+            "mapId": 1,
+            "x": -6204.39,
+            "y": -1055.46,
+            "z": -197.748
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "un_goro_crater_hub_11",
+      "position": {
+        "mapId": 1,
+        "x": -1004.47,
+        "y": -3705.17,
+        "z": 4.642
+      },
+      "questGivers": [
+        8496
+      ],
+      "levelRange": {
+        "min": 47,
+        "max": 55,
+        "avg": 54
+      },
+      "faction": "Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:11829:map:1:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 1,
+            "x": -7319.38,
+            "y": -1463.35,
+            "z": -241.12
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            6520,
+            6521,
+            9376,
+            14460,
+            14461
+          ],
+          "targetCount": 5
+        }
+      ],
+      "nextHubs": []
+    }
+  ]
+}

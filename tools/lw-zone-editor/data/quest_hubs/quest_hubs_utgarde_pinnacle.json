@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "zoneId": 1196,
+  "zoneName": "Utgarde Pinnacle",
+  "mapId": 575,
+  "hubCount": 1,
+  "hubs": [
+    {
+      "hubId": "utgarde_pinnacle_hub_01",
+      "position": {
+        "mapId": 575,
+        "x": 570.076,
+        "y": -323.938,
+        "z": 110.224
+      },
+      "questGivers": [
+        30871
+      ],
+      "levelRange": {
+        "min": 78,
+        "max": 80,
+        "avg": 80
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:26861:map:575:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 575,
+            "x": 392.83,
+            "y": -286.81,
+            "z": 109.28
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            26861
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    }
+  ]
+}

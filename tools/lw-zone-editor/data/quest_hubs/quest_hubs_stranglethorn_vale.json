@@ -1,0 +1,1165 @@
+{
+  "version": 1,
+  "zoneId": 33,
+  "zoneName": "Stranglethorn Vale",
+  "mapId": 0,
+  "hubCount": 17,
+  "hubs": [
+    {
+      "hubId": "stranglethorn_vale_hub_01",
+      "position": {
+        "mapId": 0,
+        "x": -15024.5,
+        "y": 269.352,
+        "z": 7.617
+      },
+      "questGivers": [
+        2546
+      ],
+      "levelRange": {
+        "min": 49,
+        "max": 60,
+        "avg": 58
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:2487:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -14444.8,
+            "y": 486.81,
+            "z": 28.81
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2487
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:2496:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -14439.0,
+            "y": 483.48,
+            "z": 28.93
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            2496
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stranglethorn_vale_hub_02",
+      "position": {
+        "mapId": 0,
+        "x": -14596.7,
+        "y": -237.967,
+        "z": 24.876
+      },
+      "questGivers": [
+        2634
+      ],
+      "levelRange": {
+        "min": 42,
+        "max": 42,
+        "avg": 42
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:4103:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -14737.8,
+            "y": -392.24,
+            "z": 8.25
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1559
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stranglethorn_vale_hub_03",
+      "position": {
+        "mapId": 0,
+        "x": -14439.217,
+        "y": 457.245,
+        "z": 20.843
+      },
+      "questGivers": [
+        737,
+        773,
+        2486,
+        2487,
+        2488,
+        2490,
+        2491,
+        2493,
+        2494,
+        2495,
+        2496,
+        2498,
+        2501,
+        2542,
+        2670,
+        7406,
+        7794,
+        7853
+      ],
+      "levelRange": {
+        "min": 10,
+        "max": 50,
+        "avg": 40
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 48,
+      "estimatedMinutes": 240,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:4027:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -14121.7,
+            "y": 473.52,
+            "z": 1.03
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            2545
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:4016:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -13643.67,
+            "y": -270.46,
+            "z": 8.42
+          },
+          "radius": 67.86,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            1488,
+            1489,
+            1490,
+            1491,
+            2534,
+            2536
+          ],
+          "targetCount": 8
+        },
+        {
+          "taskAreaId": "item_source:4016:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -13646.31,
+            "y": -327.6,
+            "z": 6.83
+          },
+          "radius": 172.19,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            1488,
+            1489,
+            1490,
+            1491,
+            2534,
+            2536
+          ],
+          "targetCount": 8
+        },
+        {
+          "taskAreaId": "creature:1563:map:0:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -14705.51,
+            "y": 494.11,
+            "z": 2.81
+          },
+          "radius": 116.29,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1563
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:3897:map:0:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -14540.77,
+            "y": 181.25,
+            "z": 2.91
+          },
+          "radius": 142.36,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1561,
+            1562,
+            1563,
+            1564,
+            1565,
+            1653
+          ],
+          "targetCount": 13
+        },
+        {
+          "taskAreaId": "item_source:3910:map:0:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -14540.77,
+            "y": 181.25,
+            "z": 2.91
+          },
+          "radius": 142.36,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1561,
+            1562,
+            1563,
+            1564,
+            1565,
+            1653
+          ],
+          "targetCount": 15
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "stranglethorn_vale_hub_04",
+          "zoneId": 33,
+          "zoneName": "Stranglethorn Vale",
+          "questGivers": [
+            2500,
+            2502,
+            2594,
+            3945,
+            4631
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -14320.3,
+            "y": 474.437,
+            "z": 8.615
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "stranglethorn_vale_hub_04",
+      "position": {
+        "mapId": 0,
+        "x": -14304.0,
+        "y": 511.173,
+        "z": 8.902
+      },
+      "questGivers": [
+        2500,
+        2502,
+        2594,
+        3945,
+        4631
+      ],
+      "levelRange": {
+        "min": 25,
+        "max": 42,
+        "avg": 40
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 8,
+      "estimatedMinutes": 40,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:3932:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -14135.3,
+            "y": -137.28,
+            "z": -8.33
+          },
+          "radius": 35.0,
+          "weight": 2,
+          "relatedQuestCount": 2,
+          "targetEntries": [
+            1492
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "stranglethorn_vale_hub_03",
+          "zoneId": 33,
+          "zoneName": "Stranglethorn Vale",
+          "questGivers": [
+            737,
+            773,
+            2486,
+            2487,
+            2488,
+            2490,
+            2491,
+            2493,
+            2494,
+            2495,
+            2496,
+            2498,
+            2501,
+            2542,
+            2670,
+            7406,
+            7794,
+            7853
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -14469.6,
+            "y": 415.382,
+            "z": 25.452
+          },
+          "weight": 2
+        }
+      ]
+    },
+    {
+      "hubId": "stranglethorn_vale_hub_05",
+      "position": {
+        "mapId": 0,
+        "x": -14184.4,
+        "y": 192.764,
+        "z": 20.691
+      },
+      "questGivers": [
+        16399
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 30,
+        "avg": 30
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:4306:map:0:cluster:66",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -14270.48,
+            "y": 135.94,
+            "z": 7.29
+          },
+          "radius": 92.04,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3,
+            48,
+            202,
+            203,
+            206,
+            210
+          ],
+          "targetCount": 1049
+        },
+        {
+          "taskAreaId": "item_source:4306:map:0:cluster:65",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -14135.3,
+            "y": -137.28,
+            "z": -8.33
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            3,
+            48,
+            202,
+            203,
+            206,
+            210
+          ],
+          "targetCount": 1049
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stranglethorn_vale_hub_06",
+      "position": {
+        "mapId": 0,
+        "x": -14121.7,
+        "y": 473.517,
+        "z": 1.033
+      },
+      "questGivers": [
+        2545
+      ],
+      "levelRange": {
+        "min": 55,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "stranglethorn_vale_hub_01",
+          "zoneId": 33,
+          "zoneName": "Stranglethorn Vale",
+          "questGivers": [
+            2546
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -15024.5,
+            "y": 269.352,
+            "z": 7.617
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "stranglethorn_vale_hub_07",
+      "position": {
+        "mapId": 0,
+        "x": -13738.5,
+        "y": -29.744,
+        "z": 44.639
+      },
+      "questGivers": [
+        1449
+      ],
+      "levelRange": {
+        "min": 32,
+        "max": 35,
+        "avg": 35
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:2799:map:0:cluster:10",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -13635.0,
+            "y": 151.88,
+            "z": 21.92
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1108,
+            1114,
+            1511,
+            1557,
+            1558,
+            1559
+          ],
+          "targetCount": 15
+        },
+        {
+          "taskAreaId": "item_source:2799:map:0:cluster:9",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -13751.0,
+            "y": 220.38,
+            "z": 20.15
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1108,
+            1114,
+            1511,
+            1557,
+            1558,
+            1559
+          ],
+          "targetCount": 15
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stranglethorn_vale_hub_08",
+      "position": {
+        "mapId": 0,
+        "x": -13650.9,
+        "y": -268.997,
+        "z": 8.3
+      },
+      "questGivers": [
+        2530
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 46,
+        "avg": 46
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stranglethorn_vale_hub_09",
+      "position": {
+        "mapId": 0,
+        "x": -13184.5,
+        "y": 332.671,
+        "z": 40.331
+      },
+      "questGivers": [
+        14508
+      ],
+      "levelRange": {
+        "min": 1,
+        "max": 55,
+        "avg": 55
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stranglethorn_vale_hub_10",
+      "position": {
+        "mapId": 0,
+        "x": -12619.0,
+        "y": -111.231,
+        "z": 18.5
+      },
+      "questGivers": [
+        7871
+      ],
+      "levelRange": {
+        "min": 40,
+        "max": 55,
+        "avg": 55
+      },
+      "faction": "Horde",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stranglethorn_vale_hub_11",
+      "position": {
+        "mapId": 0,
+        "x": -12378.5,
+        "y": 169.991,
+        "z": 3.112
+      },
+      "questGivers": [
+        2464,
+        2465,
+        2497,
+        2519,
+        17094
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 46,
+        "avg": 40
+      },
+      "faction": "Horde",
+      "totalQuests": 19,
+      "estimatedMinutes": 95,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:686:map:0:cluster:3",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -12158.2,
+            "y": 211.45,
+            "z": 10.14
+          },
+          "radius": 148.73,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            686
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:686:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -12322.77,
+            "y": -100.62,
+            "z": 25.12
+          },
+          "radius": 117.7,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            686
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1142:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -12486.92,
+            "y": -142.01,
+            "z": 12.1
+          },
+          "radius": 129.65,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1142
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:1144:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -12468.72,
+            "y": -151.17,
+            "z": 14.44
+          },
+          "radius": 117.54,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            1144
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:3863:map:0:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -12765.48,
+            "y": 120.75,
+            "z": 12.71
+          },
+          "radius": 106.04,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            687
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:23679:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -11983.75,
+            "y": 306.45,
+            "z": 5.81
+          },
+          "radius": 140.38,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            697
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stranglethorn_vale_hub_12",
+      "position": {
+        "mapId": 0,
+        "x": -12033.4,
+        "y": -1003.86,
+        "z": 49.88
+      },
+      "questGivers": [
+        7802
+      ],
+      "levelRange": {
+        "min": 40,
+        "max": 58,
+        "avg": 49
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:3864:map:0:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -12682.2,
+            "y": -217.21,
+            "z": 37.63
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            314,
+            412,
+            522,
+            731,
+            2417,
+            2433
+          ],
+          "targetCount": 105
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stranglethorn_vale_hub_13",
+      "position": {
+        "mapId": 0,
+        "x": -11834.583,
+        "y": 1255.372,
+        "z": 6.601
+      },
+      "questGivers": [
+        14902,
+        14903,
+        14904,
+        14910,
+        14921,
+        15070
+      ],
+      "levelRange": {
+        "min": 58,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 57,
+      "estimatedMinutes": 285,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stranglethorn_vale_hub_14",
+      "position": {
+        "mapId": 0,
+        "x": -11752.3,
+        "y": 1322.07,
+        "z": 5.203
+      },
+      "questGivers": [
+        14905
+      ],
+      "levelRange": {
+        "min": 58,
+        "max": 60,
+        "avg": 60
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 14,
+      "estimatedMinutes": 70,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stranglethorn_vale_hub_15",
+      "position": {
+        "mapId": 0,
+        "x": -11620.8,
+        "y": -52.326,
+        "z": 11.11
+      },
+      "questGivers": [
+        715,
+        716,
+        717,
+        718
+      ],
+      "levelRange": {
+        "min": 28,
+        "max": 43,
+        "avg": 37
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 19,
+      "estimatedMinutes": 95,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:683:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -11769.5,
+            "y": -92.93,
+            "z": 32.19
+          },
+          "radius": 167.95,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            683
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:2725:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -11796.65,
+            "y": 97.8,
+            "z": 24.74
+          },
+          "radius": 219.63,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            587,
+            588,
+            595,
+            597,
+            660,
+            667
+          ],
+          "targetCount": 78
+        },
+        {
+          "taskAreaId": "item_source:2728:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -11796.65,
+            "y": 97.8,
+            "z": 24.74
+          },
+          "radius": 219.63,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            587,
+            588,
+            595,
+            597,
+            660,
+            667
+          ],
+          "targetCount": 76
+        },
+        {
+          "taskAreaId": "item_source:2730:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -11796.65,
+            "y": 97.8,
+            "z": 24.74
+          },
+          "radius": 219.63,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            587,
+            588,
+            595,
+            597,
+            660,
+            667
+          ],
+          "targetCount": 77
+        },
+        {
+          "taskAreaId": "item_source:2732:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -11796.65,
+            "y": 97.8,
+            "z": 24.74
+          },
+          "radius": 219.63,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            587,
+            588,
+            595,
+            597,
+            660,
+            667
+          ],
+          "targetCount": 77
+        },
+        {
+          "taskAreaId": "item_source:2734:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -11796.65,
+            "y": 97.8,
+            "z": 24.74
+          },
+          "radius": 219.63,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            587,
+            588,
+            595,
+            597,
+            660,
+            667
+          ],
+          "targetCount": 75
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "stranglethorn_vale_hub_16",
+      "position": {
+        "mapId": 0,
+        "x": -11310.583,
+        "y": -196.323,
+        "z": 75.688
+      },
+      "questGivers": [
+        469,
+        733,
+        738,
+        739,
+        770,
+        1422
+      ],
+      "levelRange": {
+        "min": 30,
+        "max": 46,
+        "avg": 37
+      },
+      "faction": "Alliance",
+      "totalQuests": 12,
+      "estimatedMinutes": 60,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:937:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -11604.81,
+            "y": -646.6,
+            "z": 32.81
+          },
+          "radius": 165.78,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            937
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:2466:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -12567.3,
+            "y": -679.62,
+            "z": 39.46
+          },
+          "radius": 151.54,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            670,
+            780
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:2466:map:0:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -12679.2,
+            "y": -469.47,
+            "z": 30.34
+          },
+          "radius": 60.37,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            670,
+            780
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:3616:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -12342.7,
+            "y": -1156.72,
+            "z": 2.48
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            818
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "stranglethorn_vale_hub_03",
+          "zoneId": 33,
+          "zoneName": "Stranglethorn Vale",
+          "questGivers": [
+            737,
+            773,
+            2486,
+            2487,
+            2488,
+            2490,
+            2491,
+            2493,
+            2494,
+            2495,
+            2496,
+            2498,
+            2501,
+            2542,
+            2670,
+            7406,
+            7794,
+            7853
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -14469.6,
+            "y": 415.382,
+            "z": 25.452
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "stranglethorn_vale_hub_17",
+      "position": {
+        "mapId": 0,
+        "x": 34.885,
+        "y": 255.874,
+        "z": 42.035
+      },
+      "questGivers": [
+        2543
+      ],
+      "levelRange": {
+        "min": 32,
+        "max": 37,
+        "avg": 37
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "stranglethorn_vale_hub_03",
+          "zoneId": 33,
+          "zoneName": "Stranglethorn Vale",
+          "questGivers": [
+            737,
+            773,
+            2486,
+            2487,
+            2488,
+            2490,
+            2491,
+            2493,
+            2494,
+            2495,
+            2496,
+            2498,
+            2501,
+            2542,
+            2670,
+            7406,
+            7794,
+            7853
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -14469.6,
+            "y": 415.382,
+            "z": 25.452
+          },
+          "weight": 1
+        }
+      ]
+    }
+  ]
+}

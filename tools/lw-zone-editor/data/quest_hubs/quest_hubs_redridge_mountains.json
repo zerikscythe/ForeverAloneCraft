@@ -1,0 +1,758 @@
+{
+  "version": 1,
+  "zoneId": 44,
+  "zoneName": "Redridge Mountains",
+  "mapId": 0,
+  "hubCount": 10,
+  "hubs": [
+    {
+      "hubId": "redridge_mountains_hub_01",
+      "position": {
+        "mapId": 0,
+        "x": -9609.64,
+        "y": -1902.4,
+        "z": 59.886
+      },
+      "questGivers": [
+        464
+      ],
+      "levelRange": {
+        "min": 11,
+        "max": 16,
+        "avg": 16
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": [
+        {
+          "hubId": "redridge_mountains_hub_04",
+          "zoneId": 44,
+          "zoneName": "Redridge Mountains",
+          "questGivers": [
+            903,
+            1070
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -9443.69,
+            "y": -2238.0,
+            "z": 70.69
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "redridge_mountains_hub_08",
+          "zoneId": 44,
+          "zoneName": "Redridge Mountains",
+          "questGivers": [
+            342,
+            343
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -9245.81,
+            "y": -2045.33,
+            "z": 77.186
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "redridge_mountains_hub_02",
+      "position": {
+        "mapId": 0,
+        "x": -9553.08,
+        "y": -728.152,
+        "z": 99.252
+      },
+      "questGivers": [
+        313
+      ],
+      "levelRange": {
+        "min": 20,
+        "max": 26,
+        "avg": 24
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:3617:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -9291.54,
+            "y": -3309.94,
+            "z": 150.23
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            397
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "redridge_mountains_hub_03",
+      "position": {
+        "mapId": 0,
+        "x": -9456.65,
+        "y": 87.855,
+        "z": 58.427
+      },
+      "questGivers": [
+        514
+      ],
+      "levelRange": {
+        "min": 9,
+        "max": 18,
+        "avg": 16
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "redridge_mountains_hub_04",
+      "position": {
+        "mapId": 0,
+        "x": -9428.17,
+        "y": -2246.725,
+        "z": 69.147
+      },
+      "questGivers": [
+        903,
+        1070
+      ],
+      "levelRange": {
+        "min": 11,
+        "max": 25,
+        "avg": 21
+      },
+      "faction": "Alliance",
+      "totalQuests": 2,
+      "estimatedMinutes": 10,
+      "taskAreas": [
+        {
+          "taskAreaId": "creature:424:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -9608.26,
+            "y": -2498.57,
+            "z": 59.73
+          },
+          "radius": 66.52,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            424
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:423:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -9619.32,
+            "y": -2498.14,
+            "z": 61.03
+          },
+          "radius": 92.6,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            423
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:424:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -9764.27,
+            "y": -2254.72,
+            "z": 62.6
+          },
+          "radius": 114.14,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            424
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:423:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -9486.26,
+            "y": -1908.39,
+            "z": 80.15
+          },
+          "radius": 87.9,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            423
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:435:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -8744.42,
+            "y": -2214.52,
+            "z": 150.9
+          },
+          "radius": 161.29,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            435
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "creature:435:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -8685.82,
+            "y": -2345.84,
+            "z": 157.18
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            435
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "redridge_mountains_hub_05",
+      "position": {
+        "mapId": 0,
+        "x": -9337.557,
+        "y": -2189.113,
+        "z": 62.764
+      },
+      "questGivers": [
+        6966,
+        7009,
+        8965
+      ],
+      "levelRange": {
+        "min": 12,
+        "max": 22,
+        "avg": 19
+      },
+      "faction": "Alliance & Horde",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "redridge_mountains_hub_06",
+      "position": {
+        "mapId": 0,
+        "x": -9251.444,
+        "y": -2249.524,
+        "z": 66.682
+      },
+      "questGivers": [
+        341,
+        344,
+        382,
+        415,
+        900
+      ],
+      "levelRange": {
+        "min": 9,
+        "max": 25,
+        "avg": 19
+      },
+      "faction": "Alliance",
+      "totalQuests": 15,
+      "estimatedMinutes": 75,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:3014:map:0:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -9185.15,
+            "y": -2421.91,
+            "z": 104.14
+          },
+          "radius": 177.23,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            435,
+            436,
+            437,
+            440,
+            485,
+            615
+          ],
+          "targetCount": 11
+        },
+        {
+          "taskAreaId": "item_source:1221:map:0:cluster:6",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -9084.83,
+            "y": -2087.52,
+            "z": 128.79
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            441,
+            14272
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "creature:426:map:0:cluster:1",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -9100.65,
+            "y": -2068.41,
+            "z": 129.01
+          },
+          "radius": 180.16,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            426
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:1013:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -9042.11,
+            "y": -2427.48,
+            "z": 129.83
+          },
+          "radius": 79.09,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            426,
+            430,
+            446,
+            580,
+            14271
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "item_source:2856:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -9042.11,
+            "y": -2427.48,
+            "z": 129.83
+          },
+          "radius": 79.09,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            426,
+            430,
+            446,
+            580,
+            14271
+          ],
+          "targetCount": 5
+        },
+        {
+          "taskAreaId": "creature:426:map:0:cluster:2",
+          "kind": "kill",
+          "position": {
+            "mapId": 0,
+            "x": -9042.11,
+            "y": -2427.48,
+            "z": 129.83
+          },
+          "radius": 79.09,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            426
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "redridge_mountains_hub_03",
+          "zoneId": 44,
+          "zoneName": "Redridge Mountains",
+          "questGivers": [
+            514
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -9456.65,
+            "y": 87.855,
+            "z": 58.427
+          },
+          "weight": 1
+        },
+        {
+          "hubId": "redridge_mountains_hub_09",
+          "zoneId": 44,
+          "zoneName": "Redridge Mountains",
+          "questGivers": [
+            466
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -8953.95,
+            "y": 521.019,
+            "z": 96.54
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "redridge_mountains_hub_07",
+      "position": {
+        "mapId": 0,
+        "x": -9232.504,
+        "y": -2151.128,
+        "z": 64.208
+      },
+      "questGivers": [
+        346,
+        379,
+        381,
+        859,
+        6166
+      ],
+      "levelRange": {
+        "min": 12,
+        "max": 25,
+        "avg": 20
+      },
+      "faction": "Alliance",
+      "totalQuests": 7,
+      "estimatedMinutes": 35,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:1467:map:0:cluster:2",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -9301.81,
+            "y": -2480.06,
+            "z": 38.51
+          },
+          "radius": 138.72,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            422,
+            544,
+            545,
+            548,
+            578,
+            1083
+          ],
+          "targetCount": 7
+        },
+        {
+          "taskAreaId": "item_source:1468:map:0:cluster:13",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -9301.81,
+            "y": -2480.06,
+            "z": 38.51
+          },
+          "radius": 138.72,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            126,
+            127,
+            171,
+            285,
+            422,
+            456
+          ],
+          "targetCount": 36
+        },
+        {
+          "taskAreaId": "item_source:1467:map:0:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -9609.26,
+            "y": -2624.55,
+            "z": 58.42
+          },
+          "radius": 75.07,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            422,
+            544,
+            545,
+            548,
+            578,
+            1083
+          ],
+          "targetCount": 7
+        },
+        {
+          "taskAreaId": "item_source:1468:map:0:cluster:14",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -9609.26,
+            "y": -2624.55,
+            "z": 58.42
+          },
+          "radius": 75.07,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            126,
+            127,
+            171,
+            285,
+            422,
+            456
+          ],
+          "targetCount": 36
+        }
+      ],
+      "nextHubs": [
+        {
+          "hubId": "redridge_mountains_hub_01",
+          "zoneId": 44,
+          "zoneName": "Redridge Mountains",
+          "questGivers": [
+            464
+          ],
+          "position": {
+            "mapId": 0,
+            "x": -9609.64,
+            "y": -1902.4,
+            "z": 59.886
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "hubId": "redridge_mountains_hub_08",
+      "position": {
+        "mapId": 0,
+        "x": -9227.76,
+        "y": -2054.235,
+        "z": 77.734
+      },
+      "questGivers": [
+        342,
+        343
+      ],
+      "levelRange": {
+        "min": 12,
+        "max": 24,
+        "avg": 19
+      },
+      "faction": "Alliance",
+      "totalQuests": 3,
+      "estimatedMinutes": 15,
+      "taskAreas": [
+        {
+          "taskAreaId": "item_source:2296:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -9291.17,
+            "y": -1942.78,
+            "z": 78.59
+          },
+          "radius": 184.44,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            345,
+            547
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:3631:map:0:cluster:1",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -9288.95,
+            "y": -1911.28,
+            "z": 74.93
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            345
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:1081:map:0:cluster:10",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -9528.9,
+            "y": -2032.99,
+            "z": 75.43
+          },
+          "radius": 60.78,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            217,
+            442,
+            505,
+            539,
+            569,
+            574
+          ],
+          "targetCount": 35
+        },
+        {
+          "taskAreaId": "item_source:2296:map:0:cluster:4",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -9535.82,
+            "y": -2284.67,
+            "z": 76.06
+          },
+          "radius": 125.88,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            345,
+            547
+          ],
+          "targetCount": 2
+        },
+        {
+          "taskAreaId": "item_source:1080:map:0:cluster:3",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -9591.83,
+            "y": -2340.67,
+            "z": 60.89
+          },
+          "radius": 35.0,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            428
+          ],
+          "targetCount": 1
+        },
+        {
+          "taskAreaId": "item_source:1080:map:0:cluster:5",
+          "kind": "collect",
+          "position": {
+            "mapId": 0,
+            "x": -9068.69,
+            "y": -2525.16,
+            "z": 123.28
+          },
+          "radius": 81.4,
+          "weight": 1,
+          "relatedQuestCount": 1,
+          "targetEntries": [
+            428
+          ],
+          "targetCount": 1
+        }
+      ],
+      "nextHubs": []
+    },
+    {
+      "hubId": "redridge_mountains_hub_09",
+      "position": {
+        "mapId": 0,
+        "x": -8953.95,
+        "y": 521.019,
+        "z": 96.54
+      },
+      "questGivers": [
+        466
+      ],
+      "levelRange": {
+        "min": 14,
+        "max": 14,
+        "avg": 14
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    },
+    {
+      "hubId": "redridge_mountains_hub_10",
+      "position": {
+        "mapId": 0,
+        "x": -8756.77,
+        "y": -2187.12,
+        "z": 139.975
+      },
+      "questGivers": [
+        349
+      ],
+      "levelRange": {
+        "min": 19,
+        "max": 25,
+        "avg": 25
+      },
+      "faction": "Alliance",
+      "totalQuests": 1,
+      "estimatedMinutes": 10,
+      "taskAreas": [],
+      "nextHubs": []
+    }
+  ]
+}
