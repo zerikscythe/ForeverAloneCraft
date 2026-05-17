@@ -117,6 +117,8 @@ public:
     void JustDied(Unit* /*killer*/) override;
     void JustEngagedWith(Unit* who) override;
     void JustReachedHome() override;
+    void JustRespawned() override;
+    void CorpseRemoved(uint32& respawnDelay) override;
 
     bool BuildRuntimeSnapshot(RuntimeSnapshot& out) const;
     [[nodiscard]] bool HasShieldBaseline() const { return _hasShieldBaseline; }
@@ -222,6 +224,8 @@ private:
     std::uint32_t  _routeTravelLastZoneId = 0;
     std::uint64_t  _routeTravelLastReanchorWorldMs = 0;
     std::uint32_t  _syntheticGlobalCooldownRemainingMs = 0;
+    bool           _pendingCorpseRecovery = false;
+    std::uint8_t   _corpseRecoveryCount = 0;
     bool           _visibleTravelModeActive = false;
     std::uint32_t  _visibleTravelModeSpellId = 0;
     service::WorldBotTravelCapabilityTier _visibleTravelCapabilityTier = service::WorldBotTravelCapabilityTier::Foot;
@@ -240,6 +244,8 @@ private:
     static constexpr std::uint32_t TickIntervalMs  = 500;
     static constexpr float         ArrivalThreshold = 15.f;
     static constexpr std::uint32_t PositionSnapshotIntervalMs = 15000;
+    static constexpr std::uint32_t CorpseRecoveryCorpseDelaySec = 15;
+    static constexpr std::uint32_t CorpseRecoveryRunbackDelaySec = 10;
 };
 
 } // namespace ai

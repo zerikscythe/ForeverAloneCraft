@@ -1068,6 +1068,8 @@ void WorldBotCreatureAI::SetIdentityAndSession(
     _lastDebugCombatManaDrainWorldMs = 0;
     _debugCombatManaGemObserved = false;
     _syntheticGlobalCooldownRemainingMs = 0;
+    _pendingCorpseRecovery = false;
+    _corpseRecoveryCount = 0;
     _usedSimulatedItemsThisCombat.clear();
     ClearActiveTaxiTravel();
     ClearActivePhysicalTransit();
@@ -1477,6 +1479,8 @@ std::string WorldBotCreatureAI::DescribeRuntimeStateKey() const
 {
     if (!_sessionReady)
         return "session_loading";
+    if (_pendingCorpseRecovery || (me && !me->IsAlive()))
+        return "dead_pending_recovery";
     if (_sessionDone || _currentStep >= _session.steps.size())
         return "session_complete";
 
@@ -1527,6 +1531,14 @@ std::string WorldBotCreatureAI::DescribeRuntimeStateDetail() const
 {
     if (!_sessionReady)
         return "Preparing session";
+    if (_pendingCorpseRecovery || (me && !me->IsAlive()))
+    {
+        return "Downed - waiting "
+            + std::to_string(CorpseRecoveryCorpseDelaySec)
+            + "s for rez, then "
+            + std::to_string(CorpseRecoveryRunbackDelaySec)
+            + "s corpse run";
+    }
     if (_sessionDone || _currentStep >= _session.steps.size())
         return "Session complete";
 
@@ -2510,6 +2522,49 @@ void WorldBotCreatureAI::JustReachedHome()
 {
     if (_combatSuspendedStep && !me->IsInCombat() && !me->GetVictim())
         ResumeSuspendedStepAfterCombat();
+}
+
+void WorldBotCreatureAI::JustRespawned()
+{
+    ApplyIdentityToCreature();
+
+    if (!_pendingCorpseRecovery)
+        return;
+
+    _pendingCorpseRecovery = false;
+    _combatSuspendedStep = false;
+    _syntheticGlobalCooldownRemainingMs = 0;
+    _usedSimulatedItemsThisCombat.clear();
+    service::ResetSharedHazardEvaluationState(_hazardEvaluationState);
+    ClearVisibleTravelMode();
+    ClearActiveTaxiTravel();
+    ClearActivePhysicalTransit();
+
+    integration::BotActivityLog::Record(
+        me,
+        _identity.name,
+        _identity.id,
+        "status_change",
+        "Recovered after corpse run simulation; resuming session.");
+    PersistRuntimeLedgerState("Recovered after corpse run simulation");
+}
+
+void WorldBotCreatureAI::CorpseRemoved(uint32& respawnDelay)
+{
+    if (!_pendingCorpseRecovery || !me)
+        return;
+
+    Position const deathPosition = me->GetPosition();
+    me->SetHomePosition(deathPosition);
+    respawnDelay = CorpseRecoveryRunbackDelaySec;
+
+    integration::BotActivityLog::Record(
+        me,
+        _identity.name,
+        _identity.id,
+        "status_change",
+        "No rez arrived; simulating corpse run in "
+            + std::to_string(respawnDelay) + "s.");
 }
 
 std::string WorldBotCreatureAI::DescribeCurrentStep() const
@@ -3692,15 +3747,32 @@ void WorldBotCreatureAI::JustDied(Unit* /*killer*/)
     service::ResetSharedHazardEvaluationState(_hazardEvaluationState);
     ClearVisibleTravelMode();
     ClearActiveTaxiTravel();
+    ClearActivePhysicalTransit();
+    _syntheticGlobalCooldownRemainingMs = 0;
+    _usedSimulatedItemsThisCombat.clear();
+    _pendingCorpseRecovery = _sessionReady && !_sessionDone;
+    if (_pendingCorpseRecovery)
+    {
+        ++_corpseRecoveryCount;
+        me->SetCorpseDelay(CorpseRecoveryCorpseDelaySec);
+        me->SetRespawnDelay(CorpseRecoveryRunbackDelaySec);
+    }
 
     integration::BotActivityLog::Record(
         me, _identity.name, _identity.id,
         "status_change",
-        "was attacked - Died. waiting to respawn.");
+        _pendingCorpseRecovery
+            ? ("Died. Leaving corpse for "
+                + std::to_string(CorpseRecoveryCorpseDelaySec)
+                + "s; simulating corpse run in "
+                + std::to_string(CorpseRecoveryRunbackDelaySec)
+                + "s if no rez arrives.")
+            : "was attacked - Died. waiting to respawn.");
+    PersistRuntimeLedgerState();
 
     // Guard: if session ended cleanly this is already done.
     // If the creature was forcibly removed (e.g. server shutdown), still release.
-    if (!_sessionDone && _sessionReady)
+    if (!_sessionDone && _sessionReady && !_pendingCorpseRecovery)
     {
         SessionCompletionMetadata const completionMetadata =
             BuildSessionCompletionMetadata(_session, _currentStep);
