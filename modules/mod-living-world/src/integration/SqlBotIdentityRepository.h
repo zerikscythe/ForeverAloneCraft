@@ -29,6 +29,9 @@ struct BotIdentityRecord
     bool          hasFishing   = false;
     std::string   populationRole = "world";
     std::uint32_t reserveCityZoneId = 0;
+    std::uint32_t ambientGroupId = 0;
+    std::uint32_t ambientGroupLeaderIdentityId = 0;
+    std::string   ambientGroupRole;
     std::uint32_t homeZoneId   = 0;
     std::string   homeAnchorPointKey;
     std::string   homeBindPointKey;
@@ -74,6 +77,11 @@ public:
         std::uint32_t reserveCityZoneId,
         std::uint8_t faction,
         std::uint32_t limit) const;
+
+    // Returns all currently available members for one ambient group, ordered
+    // with the declared leader first when present.
+    std::vector<BotIdentityRecord> LoadAvailableAmbientGroup(
+        std::uint32_t ambientGroupId) const;
 
     // Marks the identity as active and increments session_count.
     // Call immediately after the creature is spawned.

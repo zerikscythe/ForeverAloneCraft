@@ -32,6 +32,9 @@ CREATE TABLE IF NOT EXISTS living_world_bot_identity (
     has_fishing     TINYINT(1)       NOT NULL DEFAULT 0,
     population_role VARCHAR(32)      NOT NULL DEFAULT 'world', -- world|city_reserve
     reserve_city_zone_id INT UNSIGNED NULL,                    -- reserved city pool owner when population_role='city_reserve'
+    ambient_group_id INT UNSIGNED NULL,                        -- optional ambient travel/combat group identifier
+    ambient_group_leader_identity_id INT UNSIGNED NULL,        -- leader ledger id for this ambient group
+    ambient_group_role VARCHAR(32) NOT NULL DEFAULT '',        -- tank|healer|melee_dps|ranged_dps|support
 
     -- Home-base / return routing
     home_zone_id          INT UNSIGNED     NULL,
@@ -58,6 +61,7 @@ CREATE TABLE IF NOT EXISTS living_world_bot_identity (
     UNIQUE KEY uq_name   (name),
     KEY idx_spawn        (faction, class_id, level, is_available),
     KEY idx_population_role (population_role, reserve_city_zone_id, faction, is_available, is_retired),
+    KEY idx_ambient_group (ambient_group_id, ambient_group_leader_identity_id, is_available, is_retired),
     KEY idx_last_seen    (last_seen_at),
     KEY idx_active       (is_available, is_retired),
     KEY idx_retired      (is_retired, retired_at)
