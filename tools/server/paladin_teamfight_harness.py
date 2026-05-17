@@ -2,7 +2,7 @@
 """Spawn a level-80 Paladin world-bot sandbox, force them into combat, and log the fight.
 
 The harness seeds exact reference loadouts for:
-- Alliance: Retribution / Protection / Holy
+- Alliance: Retribution / Protection (optional Holy)
 - Horde:    Retribution / Protection / Holy (+ optional extra Retribution pressure)
 
 It reuses the same assigned-gear + enchantment path as the single-bot Paladin
@@ -125,6 +125,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--spawn-y", type=float, default=-5131.1)
     parser.add_argument("--spawn-z", type=float, default=824.8)
     parser.add_argument("--force-spawn-count", type=int, default=6)
+    parser.add_argument(
+        "--include-alliance-healer",
+        action="store_true",
+        help="Include the Alliance Holy Paladin in the sandbox roster.",
+    )
     return parser.parse_args()
 
 
@@ -153,9 +158,12 @@ def ensure_team_identities(
     settings: dict[str, str | int],
     level: int,
     last_seen_zone: int,
+    include_alliance_healer: bool,
 ) -> list[dict[str, object]]:
     seeded: list[dict[str, object]] = []
     for entry in TEAM_BOTS:
+        if not include_alliance_healer and str(entry["name"]) == "Katielight":
+            continue
         if int(entry["faction"]) == 1:
             home_zone_id = 1519
             home_anchor = "stormwind_inn"
@@ -286,7 +294,12 @@ def main() -> int:
     args = parse_args()
     ensure_paths()
     settings = load_db_settings()
-    team = ensure_team_identities(settings, args.level, args.zone_id)
+    team = ensure_team_identities(
+        settings,
+        args.level,
+        args.zone_id,
+        args.include_alliance_healer,
+    )
     identity_ids = [int(entry["identity_id"]) for entry in team]
 
     timestamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
