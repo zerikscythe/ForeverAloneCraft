@@ -16,7 +16,7 @@ from PIL import Image, ImageDraw, ImageTk
 from .client_assets import load_area_table_names, load_world_map_area_records
 from .image_info import read_image_size
 from .marker_cache import MARKER_KIND_LABELS, MarkerRecord, load_marker_cache, marker_icon_crop_box
-from .paths import APP_ROOT, COMPOSITE_MAPS_DIR, PNG_ICONS_DIR, PNG_MAPS_DIR
+from .paths import APP_ROOT, COMPOSITE_MAPS_DIR, PNG_ICONS_DIR, PNG_MAPS_DIR, QUEST_HUBS_DIR
 from .settings import MARKER_DISPLAY_SETTINGS, ROUTE_SAMPLING_SETTINGS, ROUTE_STORAGE_SETTINGS
 
 COMPOSITE_FILENAME_RE = re.compile(r"^(?P<zone_name>.+) - (?P<zone_id>\d+)\.png$", re.IGNORECASE)
@@ -90,6 +90,9 @@ EDITOR_PATH_COLORS = (
     "#ab47bc",
     "#ef5350",
 )
+MODE_BROWSE = "browse"
+MODE_ROUTE_EDIT = "route_edit"
+MODE_TASK_EDIT = "task_edit"
 
 
 @dataclass(slots=True)
@@ -100,6 +103,7 @@ class EditorAnchor:
     handle_in_y: float | None = None
     handle_out_x: float | None = None
     handle_out_y: float | None = None
+    transition_target_zone_id: int | None = None
 
 
 @dataclass(slots=True)
@@ -231,6 +235,50 @@ class ZoneRenderState:
         canvas_x = self.draw_offset_x + local_x * self.draw_width
         canvas_y = self.draw_offset_y + local_y * self.draw_height
         return canvas_x, canvas_y
+
+
+@dataclass(frozen=True, slots=True)
+class TransitionNodeRecord:
+    map_id: int
+    zone_id: int
+    zone_name: str
+    path_key: str
+    anchor_index: int
+    target_zone_id: int
+    world_x: float
+    world_y: float
+    world_z: float
+
+
+@dataclass(frozen=True, slots=True)
+class GeneratedConnectorRecord:
+    connector_key: str
+    from_zone_id: int
+    to_zone_id: int
+    from_path_key: str
+    from_anchor_index: int
+    to_path_key: str
+    to_anchor_index: int
+    from_world_x: float
+    from_world_y: float
+    from_world_z: float
+    to_world_x: float
+    to_world_y: float
+    to_world_z: float
+
+
+@dataclass(frozen=True, slots=True)
+class TransitionGhostNode:
+    map_id: int
+    zone_id: int
+    zone_name: str
+    path_key: str
+    anchor_index: int
+    world_x: float
+    world_y: float
+    world_z: float
+    target_zone_id: int
+    source_path: Path
 
 
 def compute_render_state(
@@ -631,6 +679,11 @@ def _route_filename_base(zone_name: str, zone_id: int, map_id: int | None) -> st
     return f"{map_fragment}__zone_{zone_id}__{zone_slug}"
 
 
+def _default_route_group_key_for_asset(asset: ZoneCompositeAsset) -> str:
+    condensed = re.sub(r"[^A-Za-z0-9]+", "", asset.zone_name)
+    return condensed or f"Zone{asset.zone_id}"
+
+
 def _asset_world_bounds(asset: ZoneCompositeAsset) -> tuple[float, float, float, float] | None:
     transform = asset.coordinate_transform
     if transform is None:
@@ -737,6 +790,398 @@ def _route_export_preference(route_path: Path) -> tuple[int, float]:
     return (1 if is_canonical_runtime else 0, modified_time)
 
 
+def _transition_route_preference(route_path: Path) -> tuple[int, float]:
+    try:
+        modified_time = route_path.stat().st_mtime
+    except OSError:
+        modified_time = 0.0
+    is_editor_route = route_path.name.endswith("__editor.json")
+    is_runtime_route = route_path.name.endswith("__routes.json")
+    return (
+        2 if is_editor_route else 1 if is_runtime_route else 0,
+        modified_time,
+    )
+
+
+def _iter_preferred_transition_nodes(
+    *,
+    editor_routes_dir: Path,
+    exported_routes_dir: Path,
+) -> list[TransitionNodeRecord]:
+    candidate_paths: list[Path] = []
+    for root in (editor_routes_dir, exported_routes_dir):
+        if not root.exists():
+            continue
+        candidate_paths.extend(sorted(root.glob("*.json"), key=lambda candidate: candidate.name.lower()))
+
+    preferred_by_anchor: dict[tuple[int, int, str, int], tuple[Path, TransitionNodeRecord]] = {}
+    for route_path in candidate_paths:
+        if route_path.name.endswith("__connectors.json"):
+            continue
+        try:
+            payload = json.loads(route_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not isinstance(payload, dict) or not isinstance(payload.get("paths"), list):
+            continue
+
+        try:
+            map_id = int(payload.get("map_id"))
+            zone_id = int(payload.get("zone_id"))
+        except (TypeError, ValueError):
+            continue
+        zone_name = str(payload.get("zone_name", "") or "")
+        if not zone_name:
+            continue
+
+        for raw_path in payload.get("paths", []):
+            if not isinstance(raw_path, dict):
+                continue
+            path_key = str(raw_path.get("path_key", "") or "")
+            anchors = raw_path.get("anchors", [])
+            if not isinstance(anchors, list):
+                continue
+            for anchor_index, anchor in enumerate(anchors):
+                if not isinstance(anchor, dict):
+                    continue
+                transition = anchor.get("transition_node")
+                if not isinstance(transition, dict):
+                    continue
+                try:
+                    target_zone_id = int(transition.get("target_zone_id", 0))
+                    world_x = float(anchor.get("world_x"))
+                    world_y = float(anchor.get("world_y"))
+                except (TypeError, ValueError):
+                    continue
+                if target_zone_id <= 0:
+                    continue
+                try:
+                    world_z = float(anchor.get("world_z", 0.0))
+                except (TypeError, ValueError):
+                    world_z = 0.0
+
+                node = TransitionNodeRecord(
+                    map_id=map_id,
+                    zone_id=zone_id,
+                    zone_name=zone_name,
+                    path_key=path_key,
+                    anchor_index=anchor_index,
+                    target_zone_id=target_zone_id,
+                    world_x=world_x,
+                    world_y=world_y,
+                    world_z=world_z,
+                )
+                dedupe_key = (map_id, zone_id, path_key, anchor_index)
+                existing = preferred_by_anchor.get(dedupe_key)
+                if existing is not None and _transition_route_preference(existing[0]) >= _transition_route_preference(route_path):
+                    continue
+                preferred_by_anchor[dedupe_key] = (route_path, node)
+
+    return [entry[1] for entry in preferred_by_anchor.values()]
+
+
+def _build_generated_connector_record(
+    first: TransitionNodeRecord,
+    second: TransitionNodeRecord,
+    *,
+    ordinal: int,
+    desired_seam_distance_yards: float = 8.0,
+) -> GeneratedConnectorRecord:
+    from_node = first
+    to_node = second
+    if (first.zone_name.lower(), first.zone_id, first.path_key, first.anchor_index) > (
+        second.zone_name.lower(),
+        second.zone_id,
+        second.path_key,
+        second.anchor_index,
+    ):
+        from_node, to_node = second, first
+
+    from_x = from_node.world_x
+    from_y = from_node.world_y
+    to_x = to_node.world_x
+    to_y = to_node.world_y
+    delta_x = to_x - from_x
+    delta_y = to_y - from_y
+    distance = (delta_x * delta_x + delta_y * delta_y) ** 0.5
+    if distance > desired_seam_distance_yards and distance > 0.001:
+        trim = max(0.0, (distance - desired_seam_distance_yards) / 2.0)
+        unit_x = delta_x / distance
+        unit_y = delta_y / distance
+        from_x += unit_x * trim
+        from_y += unit_y * trim
+        to_x -= unit_x * trim
+        to_y -= unit_y * trim
+
+    connector_key = (
+        f"{_slugify_path_component(from_node.zone_name)}_"
+        f"{_slugify_path_component(to_node.zone_name)}_Border_{ordinal:02d}"
+    )
+    return GeneratedConnectorRecord(
+        connector_key=connector_key,
+        from_zone_id=from_node.zone_id,
+        to_zone_id=to_node.zone_id,
+        from_path_key=from_node.path_key,
+        from_anchor_index=from_node.anchor_index,
+        to_path_key=to_node.path_key,
+        to_anchor_index=to_node.anchor_index,
+        from_world_x=from_x,
+        from_world_y=from_y,
+        from_world_z=from_node.world_z,
+        to_world_x=to_x,
+        to_world_y=to_y,
+        to_world_z=to_node.world_z,
+    )
+
+
+def _connector_payload_from_generated_record(connector: GeneratedConnectorRecord) -> dict[str, object]:
+    return {
+        "connector_key": connector.connector_key,
+        "from_zone_id": connector.from_zone_id,
+        "to_zone_id": connector.to_zone_id,
+        "bidirectional": True,
+        "generated_from_transition_nodes": True,
+        "from_path_key": connector.from_path_key,
+        "from_anchor_index": connector.from_anchor_index,
+        "to_path_key": connector.to_path_key,
+        "to_anchor_index": connector.to_anchor_index,
+        "from": {
+            "world_x": round(connector.from_world_x, 4),
+            "world_y": round(connector.from_world_y, 4),
+            "world_z": round(connector.from_world_z, 4),
+        },
+        "to": {
+            "world_x": round(connector.to_world_x, 4),
+            "world_y": round(connector.to_world_y, 4),
+            "world_z": round(connector.to_world_z, 4),
+        },
+    }
+
+
+def _preserved_manual_connectors(existing_payload: object) -> list[dict[str, object]]:
+    if not isinstance(existing_payload, dict):
+        return []
+    connectors = existing_payload.get("connectors")
+    if not isinstance(connectors, list):
+        return []
+    preserved: list[dict[str, object]] = []
+    for connector in connectors:
+        if not isinstance(connector, dict):
+            continue
+        if bool(connector.get("generated_from_transition_nodes")):
+            continue
+        preserved.append(copy.deepcopy(connector))
+    return preserved
+
+
+def _regenerate_connector_manifests_from_transition_nodes(
+    *,
+    editor_routes_dir: Path,
+    exported_routes_dir: Path,
+) -> dict[int, int]:
+    transition_nodes = _iter_preferred_transition_nodes(
+        editor_routes_dir=editor_routes_dir,
+        exported_routes_dir=exported_routes_dir,
+    )
+    nodes_by_map: dict[int, list[TransitionNodeRecord]] = defaultdict(list)
+    for node in transition_nodes:
+        nodes_by_map[node.map_id].append(node)
+
+    existing_manifest_paths = sorted(exported_routes_dir.glob("map_*__connectors.json")) if exported_routes_dir.exists() else []
+    existing_map_ids: dict[int, Path] = {}
+    for manifest_path in existing_manifest_paths:
+        match = re.match(r"^map_(?P<map_id>\d+)__connectors\.json$", manifest_path.name, re.IGNORECASE)
+        if not match:
+            continue
+        try:
+            existing_map_ids[int(match.group("map_id"))] = manifest_path
+        except ValueError:
+            continue
+
+    touched_counts: dict[int, int] = {}
+    all_map_ids = set(nodes_by_map) | set(existing_map_ids)
+    for map_id in sorted(all_map_ids):
+        nodes = nodes_by_map.get(map_id, [])
+        candidates: list[tuple[float, int, int]] = []
+        for first_index, first in enumerate(nodes):
+            for second_index in range(first_index + 1, len(nodes)):
+                second = nodes[second_index]
+                if first.zone_id == second.zone_id:
+                    continue
+                if first.target_zone_id != second.zone_id or second.target_zone_id != first.zone_id:
+                    continue
+                distance = _distance_between_points(
+                    first.world_x,
+                    first.world_y,
+                    second.world_x,
+                    second.world_y,
+                )
+                candidates.append((distance, first_index, second_index))
+
+        candidates.sort(key=lambda entry: entry[0])
+        used: set[int] = set()
+        generated_connectors: list[GeneratedConnectorRecord] = []
+        ordinal = 1
+        for _distance, first_index, second_index in candidates:
+            if first_index in used or second_index in used:
+                continue
+            used.add(first_index)
+            used.add(second_index)
+            generated_connectors.append(
+                _build_generated_connector_record(nodes[first_index], nodes[second_index], ordinal=ordinal)
+            )
+            ordinal += 1
+
+        manifest_path = exported_routes_dir / f"map_{map_id:03d}__connectors.json"
+        existing_payload: object = {}
+        if manifest_path.exists():
+            try:
+                existing_payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                existing_payload = {}
+
+        preserved_manual = _preserved_manual_connectors(existing_payload)
+        connector_payloads = preserved_manual + [
+            _connector_payload_from_generated_record(connector) for connector in generated_connectors
+        ]
+
+        if not connector_payloads:
+            if manifest_path.exists():
+                try:
+                    manifest_path.unlink()
+                except OSError:
+                    pass
+            continue
+
+        manifest_payload = {
+            "map_id": map_id,
+            "z_baked": False,
+            "generated_from_transition_nodes": True,
+            "connectors": connector_payloads,
+        }
+        exported_routes_dir.mkdir(parents=True, exist_ok=True)
+        manifest_path.write_text(json.dumps(manifest_payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        touched_counts[map_id] = len(connector_payloads)
+
+    return touched_counts
+
+
+def _load_transition_ghost_nodes(
+    *,
+    current_asset: ZoneCompositeAsset | None,
+    editor_routes_dir: Path,
+    exported_routes_dir: Path,
+) -> list[TransitionGhostNode]:
+    if current_asset is None:
+        return []
+
+    candidate_paths: list[Path] = []
+    for root in (editor_routes_dir, exported_routes_dir):
+        if not root.exists():
+            continue
+        candidate_paths.extend(sorted(root.glob("*.json"), key=lambda candidate: candidate.name.lower()))
+
+    def _transition_ghost_preference(route_path: Path) -> tuple[int, float]:
+        try:
+            modified_time = route_path.stat().st_mtime
+        except OSError:
+            modified_time = 0.0
+        is_editor_route = route_path.name.endswith("__editor.json")
+        return (1 if is_editor_route else 0, modified_time)
+
+    preferred_by_anchor: dict[tuple[int, int, str, int], tuple[Path, dict[str, object]]] = {}
+    for route_path in candidate_paths:
+        if route_path.name.endswith("__connectors.json"):
+            continue
+        try:
+            payload = json.loads(route_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not isinstance(payload, dict) or not isinstance(payload.get("paths"), list):
+            continue
+
+        try:
+            map_id = int(payload.get("map_id"))
+            zone_id = int(payload.get("zone_id"))
+        except (TypeError, ValueError):
+            continue
+        zone_name = str(payload.get("zone_name", "") or "")
+        if not zone_name:
+            continue
+
+        for raw_path in payload.get("paths", []):
+            if not isinstance(raw_path, dict):
+                continue
+            path_key = str(raw_path.get("path_key", "") or "")
+            anchors = raw_path.get("anchors", [])
+            if not isinstance(anchors, list):
+                continue
+            for anchor_index, anchor in enumerate(anchors):
+                if not isinstance(anchor, dict):
+                    continue
+                transition = anchor.get("transition_node")
+                if not isinstance(transition, dict):
+                    continue
+                try:
+                    target_zone_id = int(transition.get("target_zone_id", 0))
+                    world_x = float(anchor.get("world_x"))
+                    world_y = float(anchor.get("world_y"))
+                except (TypeError, ValueError):
+                    continue
+                if target_zone_id <= 0:
+                    continue
+                try:
+                    world_z = float(anchor.get("world_z", 0.0))
+                except (TypeError, ValueError):
+                    world_z = 0.0
+
+                ghost_payload = {
+                    "map_id": map_id,
+                    "zone_id": zone_id,
+                    "zone_name": zone_name,
+                    "path_key": path_key,
+                    "anchor_index": anchor_index,
+                    "world_x": world_x,
+                    "world_y": world_y,
+                    "world_z": world_z,
+                    "target_zone_id": target_zone_id,
+                    "source_path": str(route_path),
+                }
+                dedupe_key = (map_id, zone_id, path_key, anchor_index)
+                existing = preferred_by_anchor.get(dedupe_key)
+                if existing is not None and _transition_ghost_preference(existing[0]) >= _transition_ghost_preference(route_path):
+                    continue
+                preferred_by_anchor[dedupe_key] = (route_path, ghost_payload)
+
+    ghosts: list[TransitionGhostNode] = []
+    current_zone_id = current_asset.zone_id
+    current_map_id = current_asset.map_id
+    for route_path, payload in preferred_by_anchor.values():
+        zone_id = int(payload["zone_id"])
+        map_id = int(payload["map_id"])
+        if current_map_id is not None and map_id != current_map_id:
+            continue
+        if zone_id == current_zone_id:
+            continue
+        ghosts.append(
+            TransitionGhostNode(
+                map_id=map_id,
+                zone_id=zone_id,
+                zone_name=str(payload["zone_name"]),
+                path_key=str(payload["path_key"]),
+                anchor_index=int(payload["anchor_index"]),
+                world_x=float(payload["world_x"]),
+                world_y=float(payload["world_y"]),
+                world_z=float(payload["world_z"]),
+                target_zone_id=int(payload["target_zone_id"]),
+                source_path=route_path,
+            )
+        )
+
+    ghosts.sort(key=lambda node: (node.zone_name.lower(), node.target_zone_id, node.path_key.lower(), node.anchor_index))
+    return ghosts
+
+
 def _route_point_to_asset_image_coords(
     point: dict[str, object],
     asset: ZoneCompositeAsset,
@@ -824,13 +1269,22 @@ class ZoneViewerApp(tk.Tk):
         self.active_objective_overlay_id: str | None = None
         self.properties_tree_payload_by_item: dict[str, dict] = {}
         self.edit_mode_enabled = False
+        self.task_edit_mode_enabled = False
         self.editor_handles_visible = True
         self.editor_path_state = EditorPathState()
         self.editor_undo_history: list[EditorPathState] = []
         self.editor_drag_target: tuple[str, int, int] | None = None
+        self.editor_selected_anchor_ref: tuple[int, int] | None = None
+        self.editor_transition_ghost_nodes: list[TransitionGhostNode] = []
         self.editor_path_name_var = tk.StringVar(value="route_001")
+        self.editor_transition_enabled_var = tk.BooleanVar(value=False)
+        self.editor_transition_target_zone_var = tk.StringVar(value="")
+        self.editor_transition_summary_var = tk.StringVar(value="Select an anchor to mark it as a zone transition.")
+        self._editor_transition_ui_syncing = False
         self.properties_header_var = tk.StringVar(value="Properties")
         self.properties_text_header_var = tk.StringVar(value="Quest Details")
+        self.task_mode_summary_var = tk.StringVar(value="Task Edit shows quest hubs, task areas, and PoI planning context.")
+        self.task_mode_selection_var = tk.StringVar(value="Select a marker or zone to inspect task-planning data.")
 
         self.search_var = tk.StringVar()
         self.tree_sort_var = tk.StringVar(value=TREE_SORT_ALPHA)
@@ -910,8 +1364,8 @@ class ZoneViewerApp(tk.Tk):
         self.properties_frame = ttk.Frame(container, padding=10)
         self.properties_frame.columnconfigure(0, weight=1)
         self.properties_frame.columnconfigure(1, weight=0)
-        self.properties_frame.rowconfigure(2, weight=1)
-        self.properties_frame.rowconfigure(4, weight=1)
+        self.properties_frame.rowconfigure(3, weight=1)
+        self.properties_frame.rowconfigure(5, weight=1)
         container.add(self.properties_frame, weight=0)
 
         ttk.Label(center_frame, textvariable=self.details_var, wraplength=900, justify=tk.LEFT).grid(
@@ -1008,14 +1462,44 @@ class ZoneViewerApp(tk.Tk):
         ttk.Label(coords_frame, textvariable=self.world_coords_var, anchor=tk.E).grid(row=0, column=1, sticky="e")
 
         ttk.Label(self.properties_frame, textvariable=self.properties_header_var, font=("Segoe UI", 11, "bold")).grid(row=0, column=0, sticky="w")
-        self.edit_mode_button = ttk.Button(self.properties_frame, text="Enter Edit Mode", command=self._toggle_edit_mode)
-        self.edit_mode_button.grid(row=0, column=1, sticky="e", padx=(8, 0))
+        self.mode_buttons_frame = ttk.Frame(self.properties_frame)
+        self.mode_buttons_frame.grid(row=0, column=1, sticky="e", padx=(8, 0))
+        self.route_edit_button = ttk.Button(self.mode_buttons_frame, text="Route Edit", command=self._toggle_route_edit_mode)
+        self.route_edit_button.grid(row=0, column=0, sticky="e")
+        self.task_edit_button = ttk.Button(self.mode_buttons_frame, text="Task Edit", command=self._toggle_task_edit_mode)
+        self.task_edit_button.grid(row=0, column=1, sticky="e", padx=(8, 0))
         ttk.Label(self.properties_frame, textvariable=self.marker_details_var, wraplength=300, justify=tk.LEFT).grid(
             row=1, column=0, sticky="ew", pady=(8, 8)
         )
 
+        self.task_toolbox_frame = ttk.LabelFrame(self.properties_frame, text="Task Toolbox", padding=8)
+        self.task_toolbox_frame.columnconfigure(0, weight=1)
+        ttk.Label(
+            self.task_toolbox_frame,
+            textvariable=self.task_mode_summary_var,
+            wraplength=280,
+            justify=tk.LEFT,
+        ).grid(row=0, column=0, sticky="ew")
+        ttk.Label(
+            self.task_toolbox_frame,
+            textvariable=self.task_mode_selection_var,
+            wraplength=280,
+            justify=tk.LEFT,
+        ).grid(row=1, column=0, sticky="ew", pady=(8, 0))
+        task_button_row = ttk.Frame(self.task_toolbox_frame)
+        task_button_row.grid(row=2, column=0, sticky="ew", pady=(10, 0))
+        task_button_row.columnconfigure(0, weight=1)
+        task_button_row.columnconfigure(1, weight=1)
+        ttk.Button(task_button_row, text="Zone Task Summary", command=self._show_zone_task_summary).grid(row=0, column=0, sticky="ew")
+        ttk.Button(task_button_row, text="Preview Task Area", command=self._preview_task_edit_area).grid(
+            row=0, column=1, sticky="ew", padx=(8, 0)
+        )
+        ttk.Button(self.task_toolbox_frame, text="Clear Task Overlay", command=lambda: self._set_active_objective_overlay(None)).grid(
+            row=3, column=0, sticky="ew", pady=(8, 0)
+        )
+
         self.property_tree_frame = ttk.Frame(self.properties_frame)
-        self.property_tree_frame.grid(row=2, column=0, columnspan=2, sticky="nsew")
+        self.property_tree_frame.grid(row=3, column=0, columnspan=2, sticky="nsew")
         self.property_tree_frame.columnconfigure(0, weight=1)
         self.property_tree_frame.rowconfigure(0, weight=1)
 
@@ -1035,11 +1519,36 @@ class ZoneViewerApp(tk.Tk):
         ttk.Button(self.editor_toolbox_frame, text="Undo Last Edit", command=self._undo_editor_anchor).grid(row=1, column=0, sticky="ew", pady=(10, 0))
         ttk.Button(self.editor_toolbox_frame, text="Clear Path", command=self._clear_editor_path).grid(row=1, column=1, sticky="ew", padx=(8, 0), pady=(10, 0))
         ttk.Button(self.editor_toolbox_frame, text="Save Route Files", command=self._save_editor_export_json).grid(row=2, column=0, columnspan=2, sticky="ew", pady=(8, 0))
+        transition_frame = ttk.LabelFrame(self.editor_toolbox_frame, text="Transition Node", padding=8)
+        transition_frame.grid(row=3, column=0, columnspan=2, sticky="ew", pady=(10, 0))
+        transition_frame.columnconfigure(1, weight=1)
+        ttk.Label(
+            transition_frame,
+            textvariable=self.editor_transition_summary_var,
+            wraplength=260,
+            justify=tk.LEFT,
+        ).grid(row=0, column=0, columnspan=2, sticky="ew")
+        ttk.Checkbutton(
+            transition_frame,
+            text="Mark selected node as transition",
+            variable=self.editor_transition_enabled_var,
+            command=self._on_editor_transition_toggle_changed,
+        ).grid(row=1, column=0, columnspan=2, sticky="w", pady=(8, 0))
+        ttk.Label(transition_frame, text="Neighbor Zone ID").grid(row=2, column=0, sticky="w", pady=(8, 0))
+        transition_entry = ttk.Entry(
+            transition_frame,
+            textvariable=self.editor_transition_target_zone_var,
+            width=12,
+        )
+        transition_entry.grid(row=2, column=1, sticky="ew", padx=(8, 0), pady=(8, 0))
+        transition_entry.bind("<FocusOut>", self._on_editor_transition_target_zone_committed)
+        transition_entry.bind("<Return>", self._on_editor_transition_target_zone_committed)
         ttk.Label(
             self.editor_toolbox_frame,
             text=(
                 "Left-click to add anchors. Drag white anchors to move them. Drag blue handle dots to shape curves. "
                 "Shift-click an existing anchor to start a branch from it, snap the current path onto it, or close a loop by snapping back to an earlier anchor on the same path. "
+                "Click an existing anchor to select it, then mark it as a transition node and enter the neighbor zone id if this road should cross a zone seam. "
                 f"Movement nodes are rebuilt on save with the smart adaptive sampler (base {int(DEFAULT_EDIT_SAMPLE_SPACING_YARDS)} yd). "
                 "Ctrl+Left-click a curve to insert an anchor there, and Ctrl+Right-click an anchor to delete it. "
                 "Middle-mouse drag pans while editing. Press Enter to finish the current path, Ctrl+Z to undo, "
@@ -1047,12 +1556,12 @@ class ZoneViewerApp(tk.Tk):
             ),
             wraplength=280,
             justify=tk.LEFT,
-        ).grid(row=3, column=0, columnspan=2, sticky="ew", pady=(10, 0))
+        ).grid(row=4, column=0, columnspan=2, sticky="ew", pady=(10, 0))
 
-        ttk.Label(self.properties_frame, textvariable=self.properties_text_header_var, font=("Segoe UI", 10, "bold")).grid(row=3, column=0, sticky="w", pady=(8, 4))
+        ttk.Label(self.properties_frame, textvariable=self.properties_text_header_var, font=("Segoe UI", 10, "bold")).grid(row=4, column=0, sticky="w", pady=(8, 4))
 
         self.text_frame = ttk.Frame(self.properties_frame)
-        self.text_frame.grid(row=4, column=0, columnspan=2, sticky="nsew")
+        self.text_frame.grid(row=5, column=0, columnspan=2, sticky="nsew")
         self.text_frame.columnconfigure(0, weight=1)
         self.text_frame.rowconfigure(0, weight=1)
 
@@ -1068,6 +1577,7 @@ class ZoneViewerApp(tk.Tk):
         properties_text_scrollbar.grid(row=0, column=1, sticky="ns")
         self.properties_text.configure(yscrollcommand=properties_text_scrollbar.set)
 
+        self.task_toolbox_frame.grid_remove()
         self.editor_toolbox_frame.grid_remove()
 
         status = ttk.Label(self, textvariable=self.status_var, anchor=tk.W, relief=tk.GROOVE)
@@ -1196,6 +1706,9 @@ class ZoneViewerApp(tk.Tk):
         self.active_objective_overlay_id = None
         self.editor_path_state = EditorPathState()
         self.editor_undo_history = []
+        self.editor_path_name_var.set(_default_route_group_key_for_asset(asset))
+        self.editor_selected_anchor_ref = None
+        self._refresh_editor_transition_controls()
         floor_suffix = f" | Floor: {asset.floor}" if asset.floor else ""
         world_map_area_suffix = f" | WorldMapArea: {asset.world_map_area_id}" if asset.world_map_area_id is not None else ""
         self.details_var.set(
@@ -1207,7 +1720,12 @@ class ZoneViewerApp(tk.Tk):
         loaded_view_route_summary = self._load_saved_view_route_overlay()
         if self.edit_mode_enabled:
             loaded_route_path = self._load_saved_editor_route(force=True)
+            if loaded_route_path is None:
+                self._reload_editor_transition_ghost_nodes()
             self._refresh_edit_mode_ui()
+        elif self.task_edit_mode_enabled:
+            self._refresh_edit_mode_ui()
+            self._show_zone_task_summary()
         else:
             self.marker_details_var.set(
                 f"Markers: {len(self.current_zone_markers)} cached in this zone. Click an icon to inspect it."
@@ -1266,13 +1784,16 @@ class ZoneViewerApp(tk.Tk):
         self.status_var.set(f"Curve handles {visibility_label}.")
         return "break"
 
-    def _toggle_edit_mode(self) -> None:
+    def _toggle_route_edit_mode(self) -> None:
         if self.current_asset is None:
-            self.status_var.set("Select a zone map before entering edit mode.")
+            self.status_var.set("Select a zone map before entering route edit.")
             return
+        if self.task_edit_mode_enabled:
+            self.task_edit_mode_enabled = False
         self.edit_mode_enabled = not self.edit_mode_enabled
         if not self.edit_mode_enabled:
             self.editor_drag_target = None
+            self.editor_selected_anchor_ref = None
             self.drag_state = None
             self.selected_marker = None
             self.image_canvas.configure(cursor="")
@@ -1280,6 +1801,26 @@ class ZoneViewerApp(tk.Tk):
             loaded_route_path = self._load_saved_editor_route(force=not self.editor_path_state.paths)
             if loaded_route_path is not None:
                 self.status_var.set(f"Loaded route {loaded_route_path.name} for {self.current_asset.label}.")
+            self._reload_editor_transition_ghost_nodes()
+        self._refresh_edit_mode_ui()
+        self._render_current_image()
+
+    def _toggle_edit_mode(self) -> None:
+        self._toggle_route_edit_mode()
+
+    def _toggle_task_edit_mode(self) -> None:
+        if self.current_asset is None:
+            self.status_var.set("Select a zone map before entering task edit.")
+            return
+        if self.edit_mode_enabled:
+            self.edit_mode_enabled = False
+            self.editor_drag_target = None
+            self.editor_selected_anchor_ref = None
+            self.drag_state = None
+            self.image_canvas.configure(cursor="")
+        self.task_edit_mode_enabled = not self.task_edit_mode_enabled
+        if self.task_edit_mode_enabled:
+            self.status_var.set(f"Task edit active for {self.current_asset.label}.")
         self._refresh_edit_mode_ui()
         self._render_current_image()
 
@@ -1328,7 +1869,10 @@ class ZoneViewerApp(tk.Tk):
         self.editor_path_state = path_state
         self.editor_undo_history = []
         self.editor_drag_target = None
+        self.editor_selected_anchor_ref = None
         self.editor_path_name_var.set(route_group_key)
+        self._reload_editor_transition_ghost_nodes()
+        self._refresh_editor_transition_controls()
         return route_path
 
     def _load_saved_view_route_overlay(self) -> str | None:
@@ -1385,22 +1929,41 @@ class ZoneViewerApp(tk.Tk):
         if self.edit_mode_enabled:
             self.properties_header_var.set("Path Toolbox")
             self.properties_text_header_var.set("Movement Path Export")
-            self.edit_mode_button.configure(text="Exit Edit Mode")
+            self.route_edit_button.configure(text="Exit Route Edit")
+            self.task_edit_button.configure(text="Task Edit")
+            self.task_toolbox_frame.grid_remove()
             self.property_tree_frame.grid_remove()
             self.editor_toolbox_frame.grid(row=2, column=0, columnspan=2, sticky="nsew")
             self.image_canvas.configure(cursor="crosshair")
             zone_label = self.current_asset.label if self.current_asset is not None else "No zone loaded"
             self.marker_details_var.set(
-                "Edit Mode active. Click the map to place anchors, drag white points to move anchors, "
+                "Route Edit active. Click the map to place anchors, drag white points to move anchors, "
                 f"drag blue handle dots to shape curves, and Shift-click an existing anchor to branch from it or close a loop. Current zone: {zone_label}."
             )
+            self._refresh_editor_transition_controls()
             self._rebuild_editor_export()
+        elif self.task_edit_mode_enabled:
+            self.properties_header_var.set("Task Toolbox")
+            self.properties_text_header_var.set("Task Planning")
+            self.route_edit_button.configure(text="Route Edit")
+            self.task_edit_button.configure(text="Exit Task Edit")
+            self.editor_toolbox_frame.grid_remove()
+            self.task_toolbox_frame.grid(row=2, column=0, columnspan=2, sticky="nsew")
+            self.property_tree_frame.grid(row=3, column=0, columnspan=2, sticky="nsew")
+            self.image_canvas.configure(cursor="")
+            zone_label = self.current_asset.label if self.current_asset is not None else "No zone loaded"
+            self.marker_details_var.set(
+                f"Task Edit active for {zone_label}. Select a quest giver, resource node, or other PoI to inspect task anchors, hub time, and nearby work areas."
+            )
+            self._refresh_task_mode_summary()
         else:
             self.properties_header_var.set("Properties")
             self.properties_text_header_var.set("Quest Details")
-            self.edit_mode_button.configure(text="Enter Edit Mode")
+            self.route_edit_button.configure(text="Route Edit")
+            self.task_edit_button.configure(text="Task Edit")
             self.editor_toolbox_frame.grid_remove()
-            self.property_tree_frame.grid(row=2, column=0, columnspan=2, sticky="nsew")
+            self.task_toolbox_frame.grid_remove()
+            self.property_tree_frame.grid(row=3, column=0, columnspan=2, sticky="nsew")
             self.image_canvas.configure(cursor="")
             if self.selected_marker is not None:
                 self.marker_details_var.set(self._format_marker_details(self.selected_marker))
@@ -1414,12 +1977,221 @@ class ZoneViewerApp(tk.Tk):
     def _editor_sample_spacing_yards(self) -> float:
         return DEFAULT_EDIT_SAMPLE_SPACING_YARDS
 
+    def _quest_hub_path_for_asset(self, asset: ZoneCompositeAsset) -> Path:
+        return QUEST_HUBS_DIR / f"quest_hubs_{_slugify_path_component(asset.zone_name)}.json"
+
+    def _load_task_hub_payload_for_asset(self, asset: ZoneCompositeAsset | None) -> dict[str, object] | None:
+        if asset is None:
+            return None
+        payload_path = self._quest_hub_path_for_asset(asset)
+        if not payload_path.exists():
+            return None
+        try:
+            payload = json.loads(payload_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return None
+        if not isinstance(payload, dict):
+            return None
+        return payload
+
+    def _nearest_task_hub_for_marker(self, marker: MarkerRecord) -> dict[str, object] | None:
+        if self.current_asset is None:
+            return None
+        payload = self._load_task_hub_payload_for_asset(self.current_asset)
+        if payload is None:
+            return None
+        hubs = payload.get("hubs", [])
+        if not isinstance(hubs, list):
+            return None
+        return _find_nearest_task_hub(hubs, marker.world_x, marker.world_y)
+
+    def _refresh_task_mode_summary(self) -> None:
+        asset = self.current_asset
+        if asset is None:
+            self.task_mode_summary_var.set("Task Edit shows quest hubs, task areas, and PoI planning context.")
+            self.task_mode_selection_var.set("Load a zone map to inspect task planning data.")
+            return
+        payload = self._load_task_hub_payload_for_asset(asset)
+        if payload is None:
+            self.task_mode_summary_var.set(
+                f"{asset.label}: no condensed quest-hub file yet. You can still inspect PoIs and quest markers here."
+            )
+            self.task_mode_selection_var.set("Generate quest_hubs data for this zone to preview hub timing and task areas.")
+            return
+        hub_count = int(payload.get("hubCount", 0))
+        zone_name = str(payload.get("zoneName", asset.zone_name))
+        self.task_mode_summary_var.set(
+            f"{zone_name}: {hub_count} quest hubs cached for task planning. Use this mode to inspect likely work pockets and branch destinations."
+        )
+        if self.selected_marker is None:
+            self.task_mode_selection_var.set("Select a quest giver or PoI to inspect its nearest hub, timing, and task area preview.")
+            return
+        nearest_hub = self._nearest_task_hub_for_marker(self.selected_marker)
+        if nearest_hub is None:
+            self.task_mode_selection_var.set(f"{self.selected_marker.label}: no nearby quest hub match found in this zone export.")
+            return
+        level_range = nearest_hub.get("levelRange", {})
+        level_min = _int_from_value(level_range.get("min"))
+        level_max = _int_from_value(level_range.get("max"))
+        task_area_count = len(list(nearest_hub.get("taskAreas", [])))
+        self.task_mode_selection_var.set(
+            f"{self.selected_marker.label} -> {nearest_hub.get('hubId', 'hub')} | "
+            f"quests {int(nearest_hub.get('totalQuests', 0))} | "
+            f"ETA block {int(nearest_hub.get('estimatedMinutes', 0))} min | "
+            f"level {level_min if level_min is not None else '?'}-{level_max if level_max is not None else '?'} | "
+            f"task areas {task_area_count}"
+        )
+
+    def _show_zone_task_summary(self) -> None:
+        if self.current_asset is None:
+            self.status_var.set("Load a zone map before inspecting task planning.")
+            return
+        payload = self._load_task_hub_payload_for_asset(self.current_asset)
+        if payload is None:
+            self._set_properties_text(
+                f"No quest hub export found for {self.current_asset.zone_name}.\n\n"
+                "Run export_quest_hubs.py for this zone if you want condensed hub/task-area planning data."
+            )
+            self.status_var.set(f"No task hub export found for {self.current_asset.label}.")
+            self._refresh_task_mode_summary()
+            return
+        self._set_properties_text(_format_zone_task_hub_summary(payload))
+        self.status_var.set(f"Loaded task hub summary for {self.current_asset.label}.")
+        self._refresh_task_mode_summary()
+
+    def _preview_task_edit_area(self) -> None:
+        if self.selected_marker is None:
+            self.status_var.set("Select a quest giver or task marker before previewing a task area.")
+            return
+        nearest_hub = self._nearest_task_hub_for_marker(self.selected_marker)
+        if nearest_hub is None:
+            self.status_var.set(f"No quest hub preview was found near {self.selected_marker.label}.")
+            return
+        for task_area in nearest_hub.get("taskAreas", []):
+            if not isinstance(task_area, dict):
+                continue
+            overlay_id = _task_area_overlay_id(task_area)
+            if overlay_id and overlay_id in self.objective_area_index:
+                self._set_active_objective_overlay(overlay_id)
+                self._set_properties_text(_format_task_area_details_text(nearest_hub, task_area))
+                self.status_var.set(f"Previewing task area {overlay_id} for {self.selected_marker.label}.")
+                return
+        self.status_var.set(f"No previewable task area overlay was found for {self.selected_marker.label}.")
+
     def _on_view_route_overlay_changed(self) -> None:
         if self.current_asset is not None and self.current_image is not None:
             self._render_current_image()
 
     def _editor_paths(self) -> list[EditorPath]:
         return self.editor_path_state.paths
+
+    def _reload_editor_transition_ghost_nodes(self) -> None:
+        self.editor_transition_ghost_nodes = _load_transition_ghost_nodes(
+            current_asset=self.current_asset,
+            editor_routes_dir=EDITOR_ROUTES_DIR,
+            exported_routes_dir=EXPORTED_ROUTES_DIR,
+        )
+
+    def _selected_editor_anchor(self) -> tuple[int, int, EditorAnchor] | None:
+        selection = self.editor_selected_anchor_ref
+        if selection is None:
+            return None
+        path_index, anchor_index = selection
+        if not (0 <= path_index < len(self.editor_path_state.paths)):
+            return None
+        path = self.editor_path_state.paths[path_index]
+        if not (0 <= anchor_index < len(path.anchors)):
+            return None
+        return path_index, anchor_index, path.anchors[anchor_index]
+
+    def _select_editor_anchor(self, path_index: int, anchor_index: int) -> None:
+        if not (0 <= path_index < len(self.editor_path_state.paths)):
+            return
+        path = self.editor_path_state.paths[path_index]
+        if not (0 <= anchor_index < len(path.anchors)):
+            return
+        self.editor_selected_anchor_ref = (path_index, anchor_index)
+        self._refresh_editor_transition_controls()
+
+    def _refresh_editor_transition_controls(self) -> None:
+        selected = self._selected_editor_anchor()
+        self._editor_transition_ui_syncing = True
+        try:
+            if selected is None:
+                self.editor_transition_enabled_var.set(False)
+                self.editor_transition_target_zone_var.set("")
+                self.editor_transition_summary_var.set("Select an anchor to mark it as a zone transition.")
+                return
+
+            path_index, anchor_index, anchor = selected
+            self.editor_transition_enabled_var.set(anchor.transition_target_zone_id is not None)
+            self.editor_transition_target_zone_var.set(
+                "" if anchor.transition_target_zone_id is None else str(anchor.transition_target_zone_id)
+            )
+            summary = f"Selected node P{path_index + 1}-A{anchor_index + 1}"
+            if anchor.transition_target_zone_id is not None:
+                summary += f" -> zone {anchor.transition_target_zone_id}"
+            self.editor_transition_summary_var.set(summary)
+        finally:
+            self._editor_transition_ui_syncing = False
+
+    def _apply_selected_anchor_transition_settings(self) -> bool:
+        selected = self._selected_editor_anchor()
+        if selected is None:
+            self.status_var.set("Select an anchor before editing transition-node settings.")
+            self._refresh_editor_transition_controls()
+            return False
+
+        _, _, anchor = selected
+        original_value = anchor.transition_target_zone_id
+        new_value: int | None = None
+        if self.editor_transition_enabled_var.get():
+            raw_value = self.editor_transition_target_zone_var.get().strip()
+            if not raw_value:
+                self.status_var.set("Enter a neighbor zone id for the selected transition node.")
+                self._refresh_editor_transition_controls()
+                return False
+            try:
+                parsed_value = int(raw_value)
+            except ValueError:
+                self.status_var.set("Transition node zone id must be a whole number.")
+                self._refresh_editor_transition_controls()
+                return False
+            if parsed_value <= 0:
+                self.status_var.set("Transition node zone id must be greater than zero.")
+                self._refresh_editor_transition_controls()
+                return False
+            new_value = parsed_value
+
+        if original_value == new_value:
+            self._refresh_editor_transition_controls()
+            return True
+
+        self._push_editor_undo_state()
+        anchor.transition_target_zone_id = new_value
+        self._rebuild_editor_export()
+        self._render_current_image()
+        self._refresh_editor_transition_controls()
+        if new_value is None:
+            self.status_var.set("Cleared transition-node flag from selected anchor.")
+        else:
+            self.status_var.set(f"Marked selected anchor as a transition node toward zone {new_value}.")
+        return True
+
+    def _on_editor_transition_toggle_changed(self) -> None:
+        if self._editor_transition_ui_syncing:
+            return
+        if not self.editor_transition_enabled_var.get():
+            self.editor_transition_target_zone_var.set("")
+        self._apply_selected_anchor_transition_settings()
+
+    def _on_editor_transition_target_zone_committed(self, _event: tk.Event | None = None) -> str:
+        if self._editor_transition_ui_syncing:
+            return "break"
+        if self.editor_transition_target_zone_var.get().strip():
+            self.editor_transition_enabled_var.set(True)
+        self._apply_selected_anchor_transition_settings()
+        return "break"
 
     def _push_editor_undo_state(self) -> None:
         snapshot = copy.deepcopy(self.editor_path_state)
@@ -1433,7 +2205,9 @@ class ZoneViewerApp(tk.Tk):
             return False
         self.editor_path_state = self.editor_undo_history.pop()
         self.editor_drag_target = None
+        self.editor_selected_anchor_ref = None
         self._rebuild_editor_export()
+        self._refresh_editor_transition_controls()
         self._render_current_image()
         return True
 
@@ -1489,8 +2263,11 @@ class ZoneViewerApp(tk.Tk):
         self._push_editor_undo_state()
         path = self._ensure_active_editor_path()
         self._append_editor_anchor_to_path(path, image_x, image_y)
-        self._rebuild_editor_export()
         active_index = self._active_editor_path_index()
+        if active_index is not None:
+            self.editor_selected_anchor_ref = (active_index, len(path.anchors) - 1)
+        self._rebuild_editor_export()
+        self._refresh_editor_transition_controls()
         path_label = f"path {active_index + 1}" if active_index is not None else "path"
         self.status_var.set(f"Added {path_label} anchor #{len(path.anchors)}")
         self._render_current_image()
@@ -1504,7 +2281,9 @@ class ZoneViewerApp(tk.Tk):
         )
         self.editor_path_state.paths.append(branch_path)
         self.editor_path_state.active_path_index = len(self.editor_path_state.paths) - 1
+        self.editor_selected_anchor_ref = (self.editor_path_state.active_path_index, 0)
         self._rebuild_editor_export()
+        self._refresh_editor_transition_controls()
         self.status_var.set(
             f"Started branch path {self.editor_path_state.active_path_index + 1} from P{source_path_index + 1}-A{source_anchor_index + 1}."
         )
@@ -1552,7 +2331,7 @@ class ZoneViewerApp(tk.Tk):
 
     def _undo_editor_anchor(self) -> None:
         if not self._restore_editor_undo_state():
-            self.status_var.set("No edit-mode changes to undo.")
+            self.status_var.set("No route-edit changes to undo.")
             return
         self.status_var.set("Undid last edit.")
 
@@ -1561,8 +2340,10 @@ class ZoneViewerApp(tk.Tk):
             self._push_editor_undo_state()
         self.editor_path_state = EditorPathState()
         self.editor_drag_target = None
+        self.editor_selected_anchor_ref = None
         self._rebuild_editor_export()
-        self.status_var.set("Cleared edit-mode path.")
+        self._refresh_editor_transition_controls()
+        self.status_var.set("Cleared route-edit path.")
         self._render_current_image()
 
     def _save_editor_export_json(self) -> None:
@@ -1604,11 +2385,20 @@ class ZoneViewerApp(tk.Tk):
         export_path = self._saved_runtime_route_path(self.current_asset)
         editor_path.write_text(json.dumps(editor_payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         export_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        connector_counts = _regenerate_connector_manifests_from_transition_nodes(
+            editor_routes_dir=EDITOR_ROUTES_DIR,
+            exported_routes_dir=EXPORTED_ROUTES_DIR,
+        )
         self.current_view_route_payload = payload
         self.current_view_route_path = export_path
+        self._reload_editor_transition_ghost_nodes()
         total_points = sum(len(path.sampled_points) for path in self.editor_path_state.paths)
+        connector_summary = ""
+        if connector_counts:
+            total_connectors = sum(connector_counts.values())
+            connector_summary = f" Updated {total_connectors} connector seam(s)."
         self.status_var.set(
-            f"Saved route source to {editor_path.name} and {total_points} movement points to {export_path.name}."
+            f"Saved route source to {editor_path.name} and {total_points} movement points to {export_path.name}.{connector_summary}"
         )
 
     def _finalize_active_editor_path(self) -> None:
@@ -1646,7 +2436,7 @@ class ZoneViewerApp(tk.Tk):
         if not self.editor_path_state.paths:
             self.editor_path_state.export_payload = None
             self._set_properties_text(
-                "Edit Mode\n\nLeft-click to add anchors. Press Enter to finish the current path.\n"
+                "Route Edit\n\nLeft-click to add anchors. Press Enter to finish the current path.\n"
                 "Each finished path is resampled into adaptive world-space movement points on save."
             )
             return
@@ -1695,7 +2485,7 @@ class ZoneViewerApp(tk.Tk):
         if complete_path_count == 0:
             self.editor_path_state.export_payload = None
             self._set_properties_text(
-                "Edit Mode\n\nAdd at least 2 anchors to a path before it can export movement points.\n"
+            "Route Edit\n\nAdd at least 2 anchors to a path before it can export movement points.\n"
                 "Press Enter to finish a path so the next left-click begins a new one."
             )
             return
@@ -1707,6 +2497,7 @@ class ZoneViewerApp(tk.Tk):
             "map_id": self.current_asset.map_id,
             "world_map_area_id": self.current_asset.world_map_area_id,
             "sample_spacing_yards": self._editor_sample_spacing_yards(),
+            "z_baked": False,
             "path_count": len(self.editor_path_state.paths),
             "movement_point_count": total_points,
             "paths": path_exports,
@@ -1742,6 +2533,53 @@ class ZoneViewerApp(tk.Tk):
                 anchor=tk.NW,
                 text=_asset_floor_tree_label(overlay_asset),
                 fill="#e3f2fd",
+                font=("Segoe UI", 9, "bold"),
+            )
+
+        for ghost_node in self.editor_transition_ghost_nodes:
+            ghost_payload = {
+                "world_x": ghost_node.world_x,
+                "world_y": ghost_node.world_y,
+            }
+            image_coords = _route_point_to_asset_image_coords(ghost_payload, self.current_asset)
+            if image_coords is None:
+                continue
+            ghost_canvas = self.current_render_state.image_to_canvas(*image_coords)
+            if ghost_canvas is None:
+                continue
+            canvas_x, canvas_y = ghost_canvas
+            self.image_canvas.create_oval(
+                canvas_x - 14,
+                canvas_y - 14,
+                canvas_x + 14,
+                canvas_y + 14,
+                outline="",
+                fill="#3b0a3a",
+            )
+            self.image_canvas.create_oval(
+                canvas_x - 11,
+                canvas_y - 11,
+                canvas_x + 11,
+                canvas_y + 11,
+                outline="#ff4fd8",
+                fill="#ff4fd8",
+                width=3,
+            )
+            self.image_canvas.create_oval(
+                canvas_x - 7,
+                canvas_y - 7,
+                canvas_x + 7,
+                canvas_y + 7,
+                outline="#fff2a8",
+                fill="#6f165c",
+                width=2,
+            )
+            self.image_canvas.create_text(
+                canvas_x + 14,
+                canvas_y - 14,
+                anchor=tk.NW,
+                text=f"{ghost_node.zone_name} -> {ghost_node.target_zone_id}",
+                fill="#fff4b8",
                 font=("Segoe UI", 9, "bold"),
             )
 
@@ -1796,9 +2634,26 @@ class ZoneViewerApp(tk.Tk):
                     canvas_x + EDIT_ANCHOR_HIT_RADIUS,
                     canvas_y + EDIT_ANCHOR_HIT_RADIUS,
                     fill="#ffffff",
-                    outline="#263238",
+                    outline="#fdd835" if self.editor_selected_anchor_ref == (path_index, anchor_index) else "#263238",
                     width=2,
                 )
+                if anchor.transition_target_zone_id is not None:
+                    self.image_canvas.create_oval(
+                        canvas_x - (EDIT_ANCHOR_HIT_RADIUS + 4.0),
+                        canvas_y - (EDIT_ANCHOR_HIT_RADIUS + 4.0),
+                        canvas_x + (EDIT_ANCHOR_HIT_RADIUS + 4.0),
+                        canvas_y + (EDIT_ANCHOR_HIT_RADIUS + 4.0),
+                        outline="#ff5cf4",
+                        width=2,
+                    )
+                    self.image_canvas.create_text(
+                        canvas_x,
+                        canvas_y + 16,
+                        text=f"-> {anchor.transition_target_zone_id}",
+                        fill="#ffb3f8",
+                        font=("Segoe UI", 8, "bold"),
+                        anchor=tk.N,
+                    )
                 self.image_canvas.create_text(
                     canvas_x + 12,
                     canvas_y - 10,
@@ -1890,6 +2745,8 @@ class ZoneViewerApp(tk.Tk):
         self.editor_path_state.active_path_index = path_index
         self.editor_path_state.paths[path_index].finalized = False
         if target_kind == "anchor":
+            self.editor_selected_anchor_ref = (path_index, anchor_index)
+        if target_kind == "anchor":
             _move_anchor_with_handles(anchor, image_x, image_y)
             _propagate_connected_anchor_position(self.editor_path_state, path_index, anchor_index)
         elif target_kind == "handle_in":
@@ -1954,7 +2811,9 @@ class ZoneViewerApp(tk.Tk):
 
         self.editor_path_state.active_path_index = path_index
         self.editor_path_state.paths[path_index].finalized = False
+        self.editor_selected_anchor_ref = (path_index, insert_after_anchor_index + 1)
         self._rebuild_editor_export()
+        self._refresh_editor_transition_controls()
         self.status_var.set(f"Inserted anchor into path {path_index + 1}.")
         self._render_current_image()
         return True
@@ -1972,7 +2831,15 @@ class ZoneViewerApp(tk.Tk):
         if 0 <= path_index < len(self.editor_path_state.paths):
             self.editor_path_state.active_path_index = path_index
             self.editor_path_state.paths[path_index].finalized = False
+            remaining_anchors = self.editor_path_state.paths[path_index].anchors
+            if remaining_anchors:
+                self.editor_selected_anchor_ref = (path_index, min(anchor_index, len(remaining_anchors) - 1))
+            else:
+                self.editor_selected_anchor_ref = None
+        else:
+            self.editor_selected_anchor_ref = None
         self._rebuild_editor_export()
+        self._refresh_editor_transition_controls()
         self.status_var.set("Deleted anchor.")
         self._render_current_image()
         return True
@@ -2158,6 +3025,8 @@ class ZoneViewerApp(tk.Tk):
             if hit_target is not None:
                 shift_pressed = bool(event.state & SHIFT_MASK)
                 target_kind, path_index, anchor_index = hit_target
+                if target_kind == "anchor":
+                    self._select_editor_anchor(path_index, anchor_index)
                 if shift_pressed and target_kind == "anchor":
                     if self._active_editor_path() is None:
                         self._start_branch_from_existing_anchor(path_index, anchor_index)
@@ -2452,6 +3321,8 @@ class ZoneViewerApp(tk.Tk):
         if self.selected_marker is not None:
             self.marker_details_var.set(self._format_marker_details(self.selected_marker))
             self._populate_properties_for_marker(self.selected_marker)
+        elif self.task_edit_mode_enabled:
+            self._refresh_task_mode_summary()
         self._render_current_image()
 
     def _select_marker_at_canvas(self, canvas_x: float, canvas_y: float) -> None:
@@ -2462,6 +3333,8 @@ class ZoneViewerApp(tk.Tk):
                 self._set_active_objective_overlay(None, rerender=False)
                 self.marker_details_var.set(self._format_marker_details(marker))
                 self._populate_properties_for_marker(marker)
+                if self.task_edit_mode_enabled:
+                    self._refresh_task_mode_summary()
                 return
         self.selected_marker = None
         self._set_active_objective_overlay(None)
@@ -2469,6 +3342,8 @@ class ZoneViewerApp(tk.Tk):
             f"Markers: {len(self.current_zone_markers)} cached in this zone. Click an icon to inspect it."
         )
         self._populate_properties_for_marker(None)
+        if self.task_edit_mode_enabled:
+            self._refresh_task_mode_summary()
 
     def _set_active_objective_overlay(self, overlay_id: str | None, rerender: bool = True) -> None:
         if overlay_id == self.active_objective_overlay_id:
@@ -3055,6 +3930,85 @@ class ZoneViewerApp(tk.Tk):
         return "\n".join(lines).strip()
 
 
+def _find_nearest_task_hub(hubs: Sequence[object], world_x: float, world_y: float) -> dict[str, object] | None:
+    best_hub: dict[str, object] | None = None
+    best_distance_sq: float | None = None
+    for candidate in hubs:
+        if not isinstance(candidate, dict):
+            continue
+        position = candidate.get("position")
+        if not isinstance(position, dict):
+            continue
+        hub_x = _float_from_value(position.get("x"))
+        hub_y = _float_from_value(position.get("y"))
+        if hub_x is None or hub_y is None:
+            continue
+        distance_sq = (hub_x - world_x) ** 2 + (hub_y - world_y) ** 2
+        if best_distance_sq is None or distance_sq < best_distance_sq:
+            best_distance_sq = distance_sq
+            best_hub = candidate
+    return best_hub
+
+
+def _task_area_overlay_id(task_area: dict[str, object]) -> str | None:
+    task_area_id = task_area.get("taskAreaId")
+    if not isinstance(task_area_id, str):
+        return None
+    normalized = task_area_id.strip()
+    return normalized or None
+
+
+def _format_zone_task_hub_summary(payload: dict[str, object]) -> str:
+    zone_name = str(payload.get("zoneName", "Unknown Zone"))
+    zone_id = _int_from_value(payload.get("zoneId"))
+    lines = [f"{zone_name} (zone {zone_id if zone_id is not None else '?'})", ""]
+    hubs = payload.get("hubs", [])
+    if not isinstance(hubs, list) or not hubs:
+        lines.append("No quest hubs are cached for this zone.")
+        return "\n".join(lines).strip()
+    lines.append(f"Quest hubs: {len(hubs)}")
+    lines.append("")
+    for hub in hubs[:12]:
+        if not isinstance(hub, dict):
+            continue
+        level_range = hub.get("levelRange", {})
+        level_min = _int_from_value(level_range.get("min"))
+        level_max = _int_from_value(level_range.get("max"))
+        quest_givers = list(hub.get("questGivers", []))
+        next_hubs = list(hub.get("nextHubs", []))
+        task_areas = list(hub.get("taskAreas", []))
+        lines.append(
+            f"- {hub.get('hubId', 'hub')} | givers {len(quest_givers)} | "
+            f"level {level_min if level_min is not None else '?'}-{level_max if level_max is not None else '?'} | "
+            f"quests {int(hub.get('totalQuests', 0))} | time {int(hub.get('estimatedMinutes', 0))} min | "
+            f"areas {len(task_areas)} | branches {len(next_hubs)}"
+        )
+    if len(hubs) > 12:
+        lines.append("")
+        lines.append(f"... plus {len(hubs) - 12} more hubs.")
+    return "\n".join(lines).strip()
+
+
+def _format_task_area_details_text(hub: dict[str, object], task_area: dict[str, object]) -> str:
+    position = task_area.get("position", {})
+    target_entries = list(task_area.get("targetEntries", []))
+    lines = [
+        f"Hub: {hub.get('hubId', 'hub')}",
+        f"Task Area: {task_area.get('taskAreaId', 'unknown')}",
+        f"Kind: {task_area.get('kind', 'unknown')}",
+        (
+            f"World: x={_float_from_value(position.get('x')) or 0.0:.2f}, "
+            f"y={_float_from_value(position.get('y')) or 0.0:.2f}, "
+            f"z={_float_from_value(position.get('z')) or 0.0:.2f}"
+        ),
+        f"Radius: {_float_from_value(task_area.get('radius')) or 0.0:.1f} yd",
+        f"Weight: {int(task_area.get('weight', 0))} | Related quests: {int(task_area.get('relatedQuestCount', 0))}",
+    ]
+    if target_entries:
+        lines.append(f"Target entries: {', '.join(str(entry) for entry in target_entries[:8])}")
+    return "\n".join(lines).strip()
+
+
 def _format_resource_loot_tree_label(loot: dict) -> str:
     item_name = str(loot.get("name", "") or f"Item #{int(loot.get('item_id', 0))}")
     min_count = max(1, int(loot.get("min_count", 1)))
@@ -3381,6 +4335,13 @@ def _int_from_value(value: object) -> int:
         return 0
 
 
+def _float_from_value(value: object) -> float | None:
+    try:
+        return float(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+
+
 def _default_curve_handles_between_points(
     start_x: float,
     start_y: float,
@@ -3625,6 +4586,10 @@ def _editor_anchor_payload(
         if anchor.handle_out_x is not None and anchor.handle_out_y is not None
         else None
     )
+    if anchor.transition_target_zone_id is not None:
+        payload["transition_node"] = {
+            "target_zone_id": anchor.transition_target_zone_id,
+        }
     return payload
 
 
@@ -3675,6 +4640,15 @@ def _editor_anchor_from_payload(payload: object) -> EditorAnchor | None:
 
     handle_in_x, handle_in_y = _handle_coords(handle_in)
     handle_out_x, handle_out_y = _handle_coords(handle_out)
+    transition_target_zone_id: int | None = None
+    transition_payload = payload.get("transition_node")
+    if isinstance(transition_payload, dict):
+        try:
+            parsed_zone_id = int(transition_payload.get("target_zone_id", 0))
+        except (TypeError, ValueError):
+            parsed_zone_id = 0
+        if parsed_zone_id > 0:
+            transition_target_zone_id = parsed_zone_id
     return EditorAnchor(
         image_x=image_x,
         image_y=image_y,
@@ -3682,6 +4656,7 @@ def _editor_anchor_from_payload(payload: object) -> EditorAnchor | None:
         handle_in_y=handle_in_y,
         handle_out_x=handle_out_x,
         handle_out_y=handle_out_y,
+        transition_target_zone_id=transition_target_zone_id,
     )
 
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -18,6 +19,7 @@ from lw_zone_editor.zone_viewer import (
     EditorPath,
     EditorPathConnection,
     EditorPathState,
+    TransitionGhostNode,
     ZoneCompositeAsset,
     ZoneCoordinateTransform,
     TREE_SORT_ZONE,
@@ -30,6 +32,7 @@ from lw_zone_editor.zone_viewer import (
     _build_route_runtime_filename,
     _deserialize_editor_path_state,
     _default_curve_handles_between_points,
+    _default_route_group_key_for_asset,
     _distance_between_points,
     _delete_anchor_from_path,
     _editor_path_connection_payload,
@@ -43,11 +46,16 @@ from lw_zone_editor.zone_viewer import (
     _find_related_quest_targets,
     _move_anchor_with_handles,
     _marker_icon_target_size,
+    _load_transition_ghost_nodes,
     _parse_optional_level_filter,
     _propagate_connected_anchor_position,
     _quest_filter_level_value,
     _quest_marker_icon_kind,
     _quest_matches_level_filter,
+    _find_nearest_task_hub,
+    _format_task_area_details_text,
+    _format_zone_task_hub_summary,
+    _regenerate_connector_manifests_from_transition_nodes,
     _remove_black_icon_background,
     _route_export_group_key,
     _route_export_preference,
@@ -55,6 +63,7 @@ from lw_zone_editor.zone_viewer import (
     _objective_area_canvas_radii,
     _project_overlay_asset_into_base_image,
     _related_overlay_assets_for_edit,
+    _task_area_overlay_id,
     _insert_anchor_into_path,
     _mark_complete_paths_finalized,
     _sample_bezier_polyline,
@@ -140,6 +149,7 @@ class ZoneViewerTests(unittest.TestCase):
         self.assertAlmostEqual(state.viewport_width, 512.0)
         self.assertAlmostEqual(state.viewport_height, 384.0)
         self.assertEqual(state.canvas_to_image(400, 300), (356.0, 242.0))
+        self.assertEqual(state.image_to_canvas(356.0, 242.0), (400.0, 300.0))
 
     def test_compute_render_state_clamps_zoomed_viewport_origin(self) -> None:
         state = compute_render_state(
@@ -154,6 +164,18 @@ class ZoneViewerTests(unittest.TestCase):
 
         self.assertAlmostEqual(state.viewport_x, 512.0)
         self.assertAlmostEqual(state.viewport_y, 384.0)
+
+    def test_default_route_group_key_for_asset_uses_zone_name(self) -> None:
+        asset = ZoneCompositeAsset(
+            source_zone_name="Elwynn Forest",
+            zone_name="Elwynn Forest",
+            zone_id=12,
+            path=Path("elwynn.png"),
+            width=32,
+            height=16,
+        )
+
+        self.assertEqual(_default_route_group_key_for_asset(asset), "ElwynnForest")
 
     def test_group_assets_for_tree_groups_by_expansion_then_category(self) -> None:
         assets = [
@@ -181,6 +203,360 @@ class ZoneViewerTests(unittest.TestCase):
         grouped = group_assets_for_tree(assets, sort_mode=TREE_SORT_ZONE)
 
         self.assertEqual([asset.zone_id for asset in grouped["Vanilla"]["Eastern Kingdoms"]], [12, 40])
+
+    def test_find_nearest_task_hub_prefers_closest_position(self) -> None:
+        hubs = [
+            {"hubId": "westfall_hub_01", "position": {"x": -10600.0, "y": 1000.0}},
+            {"hubId": "westfall_hub_02", "position": {"x": -10510.0, "y": 1045.0}},
+            {"hubId": "westfall_hub_03", "position": {"x": -9800.0, "y": 1500.0}},
+        ]
+
+        nearest = _find_nearest_task_hub(hubs, -10520.0, 1035.0)
+
+        self.assertIsNotNone(nearest)
+        self.assertEqual(nearest["hubId"], "westfall_hub_02")
+
+    def test_task_area_overlay_id_uses_task_area_id(self) -> None:
+        task_area = {"taskAreaId": "creature:517:map:0:cluster:3"}
+
+        self.assertEqual(_task_area_overlay_id(task_area), "creature:517:map:0:cluster:3")
+
+    def test_format_zone_task_hub_summary_mentions_hubs_and_counts(self) -> None:
+        payload = {
+            "zoneName": "Westfall",
+            "zoneId": 40,
+            "hubs": [
+                {
+                    "hubId": "westfall_hub_02",
+                    "questGivers": [392, 2357],
+                    "levelRange": {"min": 10, "max": 16},
+                    "totalQuests": 8,
+                    "estimatedMinutes": 40,
+                    "taskAreas": [{"taskAreaId": "creature:517:map:0:cluster:3"}],
+                    "nextHubs": [{"hubId": "redridge_hub_01", "weight": 1}],
+                }
+            ],
+        }
+
+        summary = _format_zone_task_hub_summary(payload)
+
+        self.assertIn("Westfall (zone 40)", summary)
+        self.assertIn("Quest hubs: 1", summary)
+        self.assertIn("westfall_hub_02", summary)
+        self.assertIn("quests 8", summary)
+
+    def test_format_task_area_details_text_mentions_radius_and_targets(self) -> None:
+        hub = {"hubId": "westfall_hub_02"}
+        task_area = {
+            "taskAreaId": "creature:517:map:0:cluster:3",
+            "kind": "kill",
+            "position": {"x": -11376.98, "y": 1823.3, "z": 5.39},
+            "radius": 73.03,
+            "weight": 1,
+            "relatedQuestCount": 1,
+            "targetEntries": [517],
+        }
+
+        details = _format_task_area_details_text(hub, task_area)
+
+        self.assertIn("Hub: westfall_hub_02", details)
+        self.assertIn("Radius: 73.0 yd", details)
+        self.assertIn("Target entries: 517", details)
+
+    def test_serialize_editor_path_state_keeps_transition_node_metadata(self) -> None:
+        transform = ZoneCoordinateTransform(
+            world_map_area_id=30,
+            map_id=0,
+            zone_id=12,
+            world_y1=-1000.0,
+            world_y2=1000.0,
+            world_x1=2000.0,
+            world_x2=1000.0,
+        )
+        asset = ZoneCompositeAsset(
+            source_zone_name="Elwynn Forest",
+            zone_name="Elwynn Forest",
+            zone_id=12,
+            path=Path("elwynn.png"),
+            width=512,
+            height=512,
+            map_id=0,
+            world_map_area_id=30,
+            coordinate_transform=transform,
+        )
+        path_state = EditorPathState(
+            paths=[
+                EditorPath(
+                    anchors=[
+                        EditorAnchor(image_x=128.0, image_y=256.0, transition_target_zone_id=40),
+                        EditorAnchor(image_x=256.0, image_y=256.0),
+                    ],
+                    finalized=True,
+                )
+            ]
+        )
+
+        payload = _serialize_editor_path_state(
+            path_state,
+            route_group_key="ElwynnForest",
+            sample_spacing_yards=25.0,
+            asset=asset,
+        )
+
+        anchor_payload = payload["paths"][0]["anchors"][0]
+        self.assertEqual(anchor_payload["transition_node"]["target_zone_id"], 40)
+
+    def test_deserialize_editor_path_state_restores_transition_node_metadata(self) -> None:
+        payload = {
+            "format": "lw_zone_editor_route",
+            "version": 1,
+            "route_group_key": "ElwynnForest",
+            "zone_name": "Elwynn Forest",
+            "zone_id": 12,
+            "map_id": 0,
+            "sample_spacing_yards": 25.0,
+            "paths": [
+                {
+                    "path_index": 0,
+                    "path_key": "ElwynnForest_01",
+                    "finalized": True,
+                    "start_connection": None,
+                    "end_connection": None,
+                    "anchors": [
+                        {
+                            "image_x": 128.0,
+                            "image_y": 256.0,
+                            "world_x": 1500.0,
+                            "world_y": 0.0,
+                            "transition_node": {"target_zone_id": 40},
+                        },
+                        {
+                            "image_x": 256.0,
+                            "image_y": 256.0,
+                            "world_x": 1250.0,
+                            "world_y": 0.0,
+                        },
+                    ],
+                }
+            ],
+        }
+
+        path_state, route_group_key, sample_spacing_yards = _deserialize_editor_path_state(payload)
+
+        self.assertEqual(route_group_key, "ElwynnForest")
+        self.assertEqual(sample_spacing_yards, 25.0)
+        self.assertEqual(path_state.paths[0].anchors[0].transition_target_zone_id, 40)
+        self.assertIsNone(path_state.paths[0].anchors[1].transition_target_zone_id)
+
+    def test_load_transition_ghost_nodes_prefers_editor_source_and_skips_current_zone(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            editor_dir = root / "editor_routes"
+            export_dir = root / "exported_routes"
+            editor_dir.mkdir()
+            export_dir.mkdir()
+
+            current_asset = ZoneCompositeAsset(
+                source_zone_name="Westfall",
+                zone_name="Westfall",
+                zone_id=40,
+                path=Path("westfall.png"),
+                width=512,
+                height=512,
+                map_id=0,
+                coordinate_transform=ZoneCoordinateTransform(
+                    world_map_area_id=40,
+                    map_id=0,
+                    zone_id=40,
+                    world_y1=1000.0,
+                    world_y2=0.0,
+                    world_x1=-11000.0,
+                    world_x2=-10000.0,
+                ),
+            )
+
+            shared_runtime = {
+                "map_id": 0,
+                "zone_id": 12,
+                "zone_name": "Elwynn Forest",
+                "paths": [
+                    {
+                        "path_key": "ElwynnForest_01",
+                        "anchors": [
+                            {
+                                "image_x": 10.0,
+                                "image_y": 20.0,
+                                "world_x": -10650.0,
+                                "world_y": 500.0,
+                                "world_z": 10.0,
+                                "transition_node": {"target_zone_id": 40},
+                            }
+                        ],
+                    }
+                ],
+            }
+            (export_dir / "map_000__zone_12__elwynn_forest__routes.json").write_text(
+                json.dumps(shared_runtime),
+                encoding="utf-8",
+            )
+
+            editor_override = copy.deepcopy(shared_runtime)
+            editor_override["paths"][0]["anchors"][0]["world_x"] = -10620.0
+            (editor_dir / "map_000__zone_12__elwynn_forest__editor.json").write_text(
+                json.dumps(editor_override),
+                encoding="utf-8",
+            )
+
+            current_zone_payload = {
+                "map_id": 0,
+                "zone_id": 40,
+                "zone_name": "Westfall",
+                "paths": [
+                    {
+                        "path_key": "Westfall_01",
+                        "anchors": [
+                            {
+                                "image_x": 12.0,
+                                "image_y": 18.0,
+                                "world_x": -10550.0,
+                                "world_y": 450.0,
+                                "world_z": 8.0,
+                                "transition_node": {"target_zone_id": 12},
+                            }
+                        ],
+                    }
+                ],
+            }
+            (editor_dir / "map_000__zone_40__westfall__editor.json").write_text(
+                json.dumps(current_zone_payload),
+                encoding="utf-8",
+            )
+
+            ghosts = _load_transition_ghost_nodes(
+                current_asset=current_asset,
+                editor_routes_dir=editor_dir,
+                exported_routes_dir=export_dir,
+            )
+
+            self.assertEqual(len(ghosts), 1)
+            self.assertIsInstance(ghosts[0], TransitionGhostNode)
+            self.assertEqual(ghosts[0].zone_id, 12)
+            self.assertEqual(ghosts[0].target_zone_id, 40)
+            self.assertAlmostEqual(ghosts[0].world_x, -10620.0)
+
+    def test_regenerate_connector_manifests_from_transition_nodes_builds_pairs_and_preserves_manual_entries(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            editor_dir = root / "editor_routes"
+            export_dir = root / "exported_routes"
+            editor_dir.mkdir()
+            export_dir.mkdir()
+
+            elwynn_payload = {
+                "format": "lw_zone_editor_route",
+                "version": 1,
+                "route_group_key": "ElwynnForest",
+                "zone_name": "Elwynn Forest",
+                "zone_id": 12,
+                "map_id": 0,
+                "paths": [
+                    {
+                        "path_index": 0,
+                        "path_key": "ElwynnForest_01",
+                        "anchors": [
+                            {
+                                "image_x": 10.0,
+                                "image_y": 20.0,
+                                "world_x": -9834.56,
+                                "world_y": 876.55,
+                                "world_z": 26.31,
+                                "transition_node": {"target_zone_id": 40},
+                            }
+                        ],
+                    }
+                ],
+            }
+            westfall_payload = {
+                "format": "lw_zone_editor_route",
+                "version": 1,
+                "route_group_key": "Westfall",
+                "zone_name": "Westfall",
+                "zone_id": 40,
+                "map_id": 0,
+                "paths": [
+                    {
+                        "path_index": 0,
+                        "path_key": "Westfall_01",
+                        "anchors": [
+                            {
+                                "image_x": 12.0,
+                                "image_y": 18.0,
+                                "world_x": -9831.21,
+                                "world_y": 876.04,
+                                "world_z": 17.18,
+                                "transition_node": {"target_zone_id": 12},
+                            }
+                        ],
+                    }
+                ],
+            }
+            (editor_dir / "map_000__zone_12__elwynn_forest__editor.json").write_text(
+                json.dumps(elwynn_payload),
+                encoding="utf-8",
+            )
+            (editor_dir / "map_000__zone_40__westfall__editor.json").write_text(
+                json.dumps(westfall_payload),
+                encoding="utf-8",
+            )
+
+            manifest_path = export_dir / "map_000__connectors.json"
+            manifest_path.write_text(
+                json.dumps(
+                    {
+                        "map_id": 0,
+                        "z_baked": True,
+                        "generated_from_transition_nodes": True,
+                        "connectors": [
+                            {
+                                "connector_key": "Manual_Keep_Me",
+                                "from_zone_id": 1,
+                                "to_zone_id": 2,
+                                "bidirectional": True,
+                                "from": {"world_x": 1.0, "world_y": 2.0, "world_z": 3.0},
+                                "to": {"world_x": 4.0, "world_y": 5.0, "world_z": 6.0},
+                            },
+                            {
+                                "connector_key": "Old_Generated",
+                                "generated_from_transition_nodes": True,
+                                "from_zone_id": 12,
+                                "to_zone_id": 40,
+                                "bidirectional": True,
+                                "from": {"world_x": 0.0, "world_y": 0.0, "world_z": 0.0},
+                                "to": {"world_x": 1.0, "world_y": 1.0, "world_z": 0.0},
+                            },
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            touched = _regenerate_connector_manifests_from_transition_nodes(
+                editor_routes_dir=editor_dir,
+                exported_routes_dir=export_dir,
+            )
+
+            self.assertEqual(touched, {0: 2})
+            rewritten = json.loads(manifest_path.read_text(encoding="utf-8"))
+            self.assertFalse(rewritten["z_baked"])
+            self.assertTrue(rewritten["generated_from_transition_nodes"])
+            self.assertEqual(len(rewritten["connectors"]), 2)
+            self.assertEqual(rewritten["connectors"][0]["connector_key"], "Manual_Keep_Me")
+            generated = rewritten["connectors"][1]
+            self.assertTrue(generated["generated_from_transition_nodes"])
+            self.assertEqual(generated["from_zone_id"], 12)
+            self.assertEqual(generated["to_zone_id"], 40)
+            self.assertEqual(generated["from_path_key"], "ElwynnForest_01")
+            self.assertEqual(generated["to_path_key"], "Westfall_01")
 
     def test_category_root_asset_uses_exact_match_and_eastern_kingdoms_fallback(self) -> None:
         kalimdor = ZoneCompositeAsset(source_zone_name="Kalimdor", zone_name="Kalimdor", zone_id=1, path=Path("kalimdor.png"), width=32, height=16, map_id=1, map_name="Kalimdor", map_type=MAP_COMMON, expansion_id=0, expansion_label="Vanilla", category_label="Kalimdor")
