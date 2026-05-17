@@ -96,6 +96,28 @@ bool StringConditionMatches(
     return actualLower == expectedLower;
 }
 
+bool IsHostileTargetKey(std::string const& targetKey)
+{
+    return targetKey.empty()
+        || targetKey == "enemy"
+        || targetKey == "enemy_primary"
+        || targetKey == "enemy_trash"
+        || targetKey == "enemy_primary_victim";
+}
+
+bool IsOffensiveAction(model::BotCombatActionDefinition const& action)
+{
+    return IsHostileTargetKey(action.targetKey);
+}
+
+bool IsOffensiveEntry(model::BotCombatEntryDefinition const& entry)
+{
+    if (IsOffensiveAction(entry.primaryAction))
+        return true;
+
+    return entry.secondaryAction && IsOffensiveAction(*entry.secondaryAction);
+}
+
 // Returns the remaining cooldown in milliseconds for the given spell on any Unit.
 // Dispatches to Player::GetSpellCooldownDelay or Creature::GetSpellCooldown.
 std::uint32_t GetSpellCooldownRemainingMs(Unit* bot, std::uint32_t spellId)
@@ -995,6 +1017,9 @@ BotCombatEvaluationResult BotCombatRuntimeEvaluator::EvaluateEntries(
 
     for (model::BotCombatEntryDefinition const& entry : entries)
     {
+        if (context.offenseSuppressed && IsOffensiveEntry(entry))
+            continue;
+
         if (!EvaluateEntryConditions(entry, context))
             continue;
 

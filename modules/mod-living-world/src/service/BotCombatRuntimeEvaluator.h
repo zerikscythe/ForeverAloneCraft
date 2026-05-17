@@ -27,6 +27,10 @@ struct BotCombatRuntimeContext
     std::uint8_t defaultAoEMinTargets = 2;
     float defaultAoEScanRadius = 10.0f;
     model::WorldBotCombatSituation situation;
+    model::BotCombatConservationMode conservationMode =
+        model::BotCombatConservationMode::FullForce;
+    bool conserving = false;
+    bool offenseSuppressed = false;
     // Spells available to this bot. For Player session bots this is built from
     // GetSpellMap() during PrepareForPlayer. For creature bots it is loaded from
     // living_world_bot_spell_list. Must not be empty when bot is a Creature.

@@ -120,6 +120,120 @@ constexpr std::uint32_t DebugManaGemItemId = 33312;
 constexpr float CrossMapTransitAbstractSourceDistanceYards = 300.0f;
 constexpr std::uint32_t CrossMapTransitAbstractMinElapsedMs = 20000u;
 
+char const* ToConservationModeKey(model::BotCombatConservationMode mode)
+{
+    switch (mode)
+    {
+        case model::BotCombatConservationMode::Reserve:
+            return "reserve";
+        case model::BotCombatConservationMode::Conservative:
+            return "conservative";
+        case model::BotCombatConservationMode::JitCasting:
+            return "jit";
+        case model::BotCombatConservationMode::FullForce:
+        default:
+            return "full_force";
+    }
+}
+
+bool IsOffenseSuppressed(
+    model::BotCombatConservationMode mode,
+    bool conserving)
+{
+    if (mode == model::BotCombatConservationMode::JitCasting)
+        return true;
+
+    return conserving &&
+        (mode == model::BotCombatConservationMode::Conservative ||
+         mode == model::BotCombatConservationMode::Reserve);
+}
+
+float GetUnitManaPct(Unit const* unit)
+{
+    if (!unit)
+        return 0.0f;
+
+    if (unit->GetMaxPower(POWER_MANA) == 0)
+        return 100.0f;
+
+    return 100.0f * static_cast<float>(unit->GetPower(POWER_MANA)) /
+        static_cast<float>(unit->GetMaxPower(POWER_MANA));
+}
+
+struct EffectiveConservationSettings
+{
+    model::BotCombatConservationMode mode = model::BotCombatConservationMode::FullForce;
+    std::uint8_t lowWater = 0;
+    std::uint8_t highWater = 100;
+};
+
+EffectiveConservationSettings ResolveEffectiveConservationSettings(
+    model::BotCombatProfileSettings const& settings,
+    model::WorldBotCombatSituation const& situation)
+{
+    EffectiveConservationSettings effective;
+    effective.mode = settings.conservationMode;
+    effective.lowWater = settings.resourceLowWater;
+    effective.highWater = settings.resourceHighWater;
+
+    // Open-world healers should contribute more freely than dungeon/raid healers.
+    // Keep the same doctrine family, but soften the floor outdoors so they
+    // still pressure targets and judge/holy-shock when the group is healthy.
+    if (situation.environment == model::WorldBotCombatEnvironment::OpenWorld &&
+        situation.isHealerStyle)
+    {
+        if (effective.mode == model::BotCombatConservationMode::Conservative)
+            effective.mode = model::BotCombatConservationMode::Reserve;
+
+        effective.lowWater = std::min<std::uint8_t>(effective.lowWater, 25);
+        effective.highWater = std::min<std::uint8_t>(effective.highWater, 45);
+    }
+
+    return effective;
+}
+
+void UpdateConservationState(
+    EffectiveConservationSettings const& settings,
+    Unit const* bot,
+    bool& conserving)
+{
+    if (!bot)
+    {
+        conserving = false;
+        return;
+    }
+
+    if (settings.mode == model::BotCombatConservationMode::FullForce ||
+        settings.mode == model::BotCombatConservationMode::JitCasting)
+    {
+        conserving = false;
+        return;
+    }
+
+    if (bot->GetMaxPower(POWER_MANA) == 0)
+    {
+        conserving = false;
+        return;
+    }
+
+    float const manaPct = GetUnitManaPct(bot);
+    if (settings.mode == model::BotCombatConservationMode::Reserve)
+    {
+        conserving = manaPct < static_cast<float>(settings.lowWater);
+        return;
+    }
+
+    if (conserving)
+    {
+        if (manaPct >= static_cast<float>(settings.highWater))
+            conserving = false;
+    }
+    else if (manaPct < static_cast<float>(settings.lowWater))
+    {
+        conserving = true;
+    }
+}
+
 struct SessionCompletionMetadata
 {
     std::string   sourceKind;
@@ -3463,6 +3577,14 @@ void WorldBotCreatureAI::TickCombat(uint32 diff)
     }
 
     EnsureCombatProfile();
+    EffectiveConservationSettings const effectiveConservation =
+        ResolveEffectiveConservationSettings(
+            _combatPreparedProfile.resolution.profile.settings,
+            situation);
+    UpdateConservationState(effectiveConservation, me, _combatConserving);
+    bool const offenseSuppressed =
+        IsOffenseSuppressed(effectiveConservation.mode, _combatConserving);
+
     if (IsDebugForcedCombatIdentity())
     {
         std::ostringstream profileTrace;
@@ -3472,6 +3594,10 @@ void WorldBotCreatureAI::TickCombat(uint32 diff)
             << "interrupt_entries=" << _combatPreparedProfile.interruptEntries.size() << " "
             << "rotation_entries=" << _combatPreparedProfile.rotationEntries.size() << " "
             << "available_spells=" << _combatPreparedProfile.availableSpells.size() << " "
+            << "conservation_mode='" << ToConservationModeKey(effectiveConservation.mode) << "' "
+            << "conserving=" << (_combatConserving ? 1 : 0) << " "
+            << "offense_suppressed=" << (offenseSuppressed ? 1 : 0) << " "
+            << "mana_pct=" << std::fixed << std::setprecision(1) << GetUnitManaPct(me) << " "
             << "victim=" << DescribeTraceUnit(target);
         RecordCombatTrace(profileTrace.str());
     }
@@ -3494,6 +3620,9 @@ void WorldBotCreatureAI::TickCombat(uint32 diff)
         context.defaultAoEMinTargets = _combatPreparedProfile.resolution.profile.settings.defaultAoEMinTargets;
         context.defaultAoEScanRadius = _combatPreparedProfile.resolution.profile.settings.defaultAoEScanRadius;
         context.situation = situation;
+        context.conservationMode = effectiveConservation.mode;
+        context.conserving = _combatConserving;
+        context.offenseSuppressed = offenseSuppressed;
         context.availableSpells = _combatPreparedProfile.availableSpells;
 
         auto const tryResult =

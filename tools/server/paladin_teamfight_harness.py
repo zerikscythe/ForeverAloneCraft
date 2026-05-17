@@ -143,6 +143,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Run the sandbox with only Aldricseal on the Alliance side.",
     )
+    parser.add_argument(
+        "--include-extra-horde-rets",
+        action="store_true",
+        help="Include Memecrusader and Lightbonker for uneven pressure tests.",
+    )
     return parser.parse_args()
 
 
@@ -173,12 +178,16 @@ def ensure_team_identities(
     last_seen_zone: int,
     include_alliance_healer: bool,
     alliance_solo: bool,
+    include_extra_horde_rets: bool,
 ) -> list[dict[str, object]]:
     seeded: list[dict[str, object]] = []
     for entry in TEAM_BOTS:
         if alliance_solo and int(entry["faction"]) == 1 and str(entry["name"]) != "Aldricseal":
             continue
         if not include_alliance_healer and str(entry["name"]) == "Katielight":
+            continue
+        if (not include_extra_horde_rets and
+            str(entry["name"]) in {"Memecrusader", "Lightbonker"}):
             continue
         if int(entry["faction"]) == 1:
             home_zone_id = 1519
@@ -362,6 +371,7 @@ def main() -> int:
         args.zone_id,
         args.include_alliance_healer,
         args.alliance_solo,
+        args.include_extra_horde_rets,
     )
     identity_ids = [int(entry["identity_id"]) for entry in team]
 

@@ -240,6 +240,7 @@ private:
     std::uint32_t  _routeTravelLastZoneId = 0;
     std::uint64_t  _routeTravelLastReanchorWorldMs = 0;
     std::uint32_t  _syntheticGlobalCooldownRemainingMs = 0;
+    bool           _combatConserving = false;
     std::uint32_t  _combatDisengageGraceMs = 0;
     bool           _pendingCorpseRecovery = false;
     std::uint8_t   _corpseRecoveryCount = 0;
