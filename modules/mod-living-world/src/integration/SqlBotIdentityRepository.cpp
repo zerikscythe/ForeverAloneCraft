@@ -37,6 +37,16 @@ std::string CanonicalizeWorldBotPersonalityKey(std::string value)
     return "uninterested";
 }
 
+std::string CanonicalizePopulationRole(std::string value)
+{
+    std::transform(value.begin(), value.end(), value.begin(),
+        [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+
+    if (value == "city_reserve")
+        return "city_reserve";
+    return "world";
+}
+
 bool IsPvPLoadoutKey(std::string const& loadoutKey)
 {
     if (loadoutKey.empty())
@@ -268,25 +278,27 @@ living_world::integration::BotIdentityRecord ReadBotIdentityRecord(Field const* 
     rec.hasHerbalism = f[12].Get<bool>();
     rec.hasMining    = f[13].Get<bool>();
     rec.hasFishing   = f[14].Get<bool>();
-    rec.homeZoneId   = f[15].IsNull() ? 0u : f[15].Get<std::uint32_t>();
-    rec.homeAnchorPointKey = f[16].IsNull() ? "" : f[16].Get<std::string>();
-    rec.homeBindPointKey   = f[17].IsNull() ? "" : f[17].Get<std::string>();
-    rec.sessionCount = f[18].Get<std::uint32_t>();
-    rec.totalWorldOnlineMs = f[19].Get<std::uint64_t>();
-    rec.worldOnlineMsSinceLevel = f[20].Get<std::uint64_t>();
-    rec.postMaxWorldOnlineMs = f[21].Get<std::uint64_t>();
-    rec.activeWorldSessionMs = f[22].Get<std::uint64_t>();
-    rec.runtimeState = f[23].IsNull() ? "" : f[23].Get<std::string>();
-    rec.runtimeDetail = f[24].IsNull() ? "" : f[24].Get<std::string>();
-    rec.lastSessionSourceKind = f[25].IsNull() ? "" : f[25].Get<std::string>();
-    rec.lastSessionSourceKey = f[26].IsNull() ? "" : f[26].Get<std::string>();
-    rec.lastTaskFamily = f[27].IsNull() ? "" : f[27].Get<std::string>();
-    rec.lastTaskTargetZoneId = f[28].IsNull() ? 0u : f[28].Get<std::uint32_t>();
-    rec.gearRefreshPending = f[29].Get<bool>();
-    rec.lastGearRefreshBand = f[30].Get<std::uint8_t>();
-    rec.lastSeenZoneId = f[31].IsNull() ? 0u : f[31].Get<std::uint32_t>();
-    rec.isRetired    = f[32].Get<bool>();
-    rec.isAvailable  = f[33].Get<bool>();
+    rec.populationRole = f[15].IsNull() ? "world" : CanonicalizePopulationRole(f[15].Get<std::string>());
+    rec.reserveCityZoneId = f[16].IsNull() ? 0u : f[16].Get<std::uint32_t>();
+    rec.homeZoneId   = f[17].IsNull() ? 0u : f[17].Get<std::uint32_t>();
+    rec.homeAnchorPointKey = f[18].IsNull() ? "" : f[18].Get<std::string>();
+    rec.homeBindPointKey   = f[19].IsNull() ? "" : f[19].Get<std::string>();
+    rec.sessionCount = f[20].Get<std::uint32_t>();
+    rec.totalWorldOnlineMs = f[21].Get<std::uint64_t>();
+    rec.worldOnlineMsSinceLevel = f[22].Get<std::uint64_t>();
+    rec.postMaxWorldOnlineMs = f[23].Get<std::uint64_t>();
+    rec.activeWorldSessionMs = f[24].Get<std::uint64_t>();
+    rec.runtimeState = f[25].IsNull() ? "" : f[25].Get<std::string>();
+    rec.runtimeDetail = f[26].IsNull() ? "" : f[26].Get<std::string>();
+    rec.lastSessionSourceKind = f[27].IsNull() ? "" : f[27].Get<std::string>();
+    rec.lastSessionSourceKey = f[28].IsNull() ? "" : f[28].Get<std::string>();
+    rec.lastTaskFamily = f[29].IsNull() ? "" : f[29].Get<std::string>();
+    rec.lastTaskTargetZoneId = f[30].IsNull() ? 0u : f[30].Get<std::uint32_t>();
+    rec.gearRefreshPending = f[31].Get<bool>();
+    rec.lastGearRefreshBand = f[32].Get<std::uint8_t>();
+    rec.lastSeenZoneId = f[33].IsNull() ? 0u : f[33].Get<std::uint32_t>();
+    rec.isRetired    = f[34].Get<bool>();
+    rec.isAvailable  = f[35].Get<bool>();
     return rec;
 }
 } // namespace
@@ -298,6 +310,22 @@ namespace integration
 
 void SqlBotIdentityRepository::EnsureSchema() const
 {
+    if (!CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_identity LIKE 'population_role'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD COLUMN population_role VARCHAR(32) NOT NULL DEFAULT 'world' AFTER has_fishing");
+    }
+
+    if (!CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_identity LIKE 'reserve_city_zone_id'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD COLUMN reserve_city_zone_id INT UNSIGNED NULL AFTER population_role");
+    }
+
     if (!CharacterDatabase.Query(
         "SHOW COLUMNS FROM living_world_bot_identity LIKE 'runtime_state'"))
     {
@@ -361,6 +389,14 @@ void SqlBotIdentityRepository::EnsureSchema() const
             "ALTER TABLE living_world_bot_identity "
             "ADD COLUMN last_gear_refresh_band TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER gear_refresh_pending");
     }
+
+    if (!CharacterDatabase.Query(
+        "SHOW INDEX FROM living_world_bot_identity WHERE Key_name = 'idx_population_role'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD INDEX idx_population_role (population_role, reserve_city_zone_id, faction, is_available, is_retired)");
+    }
 }
 
 std::optional<BotIdentityRecord> SqlBotIdentityRepository::FindById(std::uint32_t id) const
@@ -368,7 +404,7 @@ std::optional<BotIdentityRecord> SqlBotIdentityRepository::FindById(std::uint32_
     QueryResult result = CharacterDatabase.Query(
         "SELECT id, name, race_id, class_id, spec_key, loadout_key, faction, display_id, "
         "gender, level, gear_tier, personality_key, has_herbalism, has_mining, has_fishing, "
-        "home_zone_id, home_anchor_point_key, home_bind_point_key, "
+        "population_role, reserve_city_zone_id, home_zone_id, home_anchor_point_key, home_bind_point_key, "
         "session_count, total_world_online_ms, world_online_ms_since_level, "
         "post_max_world_online_ms, active_world_session_ms, runtime_state, runtime_detail, "
         "last_session_source_kind, last_session_source_key, last_task_family, last_task_target_zone, "
@@ -388,7 +424,7 @@ std::optional<BotIdentityRecord> SqlBotIdentityRepository::FindByName(std::strin
     QueryResult result = CharacterDatabase.Query(
         "SELECT id, name, race_id, class_id, spec_key, loadout_key, faction, display_id, "
         "gender, level, gear_tier, personality_key, has_herbalism, has_mining, has_fishing, "
-        "home_zone_id, home_anchor_point_key, home_bind_point_key, "
+        "population_role, reserve_city_zone_id, home_zone_id, home_anchor_point_key, home_bind_point_key, "
         "session_count, total_world_online_ms, world_online_ms_since_level, "
         "post_max_world_online_ms, active_world_session_ms, runtime_state, runtime_detail, "
         "last_session_source_kind, last_session_source_key, last_task_family, last_task_target_zone, "
@@ -421,13 +457,14 @@ std::vector<BotIdentityRecord> SqlBotIdentityRepository::LoadAvailable(
         result = CharacterDatabase.Query(
             "SELECT id, name, race_id, class_id, spec_key, loadout_key, faction, display_id, "
             "gender, level, gear_tier, personality_key, has_herbalism, has_mining, has_fishing, "
-            "home_zone_id, home_anchor_point_key, home_bind_point_key, "
+            "population_role, reserve_city_zone_id, home_zone_id, home_anchor_point_key, home_bind_point_key, "
             "session_count, total_world_online_ms, world_online_ms_since_level, "
             "post_max_world_online_ms, active_world_session_ms, runtime_state, runtime_detail, "
             "last_session_source_kind, last_session_source_key, last_task_family, last_task_target_zone, "
             "gear_refresh_pending, last_gear_refresh_band, last_seen_zone, is_retired, is_available "
             "FROM living_world_bot_identity "
             "WHERE is_available = 1 AND is_retired = 0 "
+            "AND population_role = 'world' "
             "ORDER BY RAND() LIMIT {}",
             candidateLimit);
     }
@@ -436,15 +473,77 @@ std::vector<BotIdentityRecord> SqlBotIdentityRepository::LoadAvailable(
         result = CharacterDatabase.Query(
             "SELECT id, name, race_id, class_id, spec_key, loadout_key, faction, display_id, "
             "gender, level, gear_tier, personality_key, has_herbalism, has_mining, has_fishing, "
-            "home_zone_id, home_anchor_point_key, home_bind_point_key, "
+            "population_role, reserve_city_zone_id, home_zone_id, home_anchor_point_key, home_bind_point_key, "
             "session_count, total_world_online_ms, world_online_ms_since_level, "
             "post_max_world_online_ms, active_world_session_ms, runtime_state, runtime_detail, "
             "last_session_source_kind, last_session_source_key, last_task_family, last_task_target_zone, "
             "gear_refresh_pending, last_gear_refresh_band, last_seen_zone, is_retired, is_available "
             "FROM living_world_bot_identity "
             "WHERE is_available = 1 AND is_retired = 0 AND faction = {} "
+            "AND population_role = 'world' "
             "ORDER BY RAND() LIMIT {}",
             faction, candidateLimit);
+    }
+
+    if (!result)
+        return results;
+
+    do
+    {
+        BotIdentityRecord rec = ReadBotIdentityRecord(result->Fetch());
+        results.push_back(std::move(rec));
+    } while (result->NextRow());
+
+    ApplyLoadoutSelectionBias(results, limit);
+
+    return results;
+}
+
+std::vector<BotIdentityRecord> SqlBotIdentityRepository::LoadAvailableReserveForCity(
+    std::uint32_t reserveCityZoneId,
+    std::uint8_t  faction,
+    std::uint32_t limit) const
+{
+    std::vector<BotIdentityRecord> results;
+    if (limit == 0 || reserveCityZoneId == 0)
+        return results;
+
+    std::uint32_t const candidateLimit = std::min<std::uint32_t>(
+        std::max<std::uint32_t>(limit, limit * 4),
+        256u);
+
+    QueryResult result;
+    if (faction == 0)
+    {
+        result = CharacterDatabase.Query(
+            "SELECT id, name, race_id, class_id, spec_key, loadout_key, faction, display_id, "
+            "gender, level, gear_tier, personality_key, has_herbalism, has_mining, has_fishing, "
+            "population_role, reserve_city_zone_id, home_zone_id, home_anchor_point_key, home_bind_point_key, "
+            "session_count, total_world_online_ms, world_online_ms_since_level, "
+            "post_max_world_online_ms, active_world_session_ms, runtime_state, runtime_detail, "
+            "last_session_source_kind, last_session_source_key, last_task_family, last_task_target_zone, "
+            "gear_refresh_pending, last_gear_refresh_band, last_seen_zone, is_retired, is_available "
+            "FROM living_world_bot_identity "
+            "WHERE is_available = 1 AND is_retired = 0 "
+            "AND population_role = 'city_reserve' AND reserve_city_zone_id = {} "
+            "ORDER BY RAND() LIMIT {}",
+            reserveCityZoneId, candidateLimit);
+    }
+    else
+    {
+        result = CharacterDatabase.Query(
+            "SELECT id, name, race_id, class_id, spec_key, loadout_key, faction, display_id, "
+            "gender, level, gear_tier, personality_key, has_herbalism, has_mining, has_fishing, "
+            "population_role, reserve_city_zone_id, home_zone_id, home_anchor_point_key, home_bind_point_key, "
+            "session_count, total_world_online_ms, world_online_ms_since_level, "
+            "post_max_world_online_ms, active_world_session_ms, runtime_state, runtime_detail, "
+            "last_session_source_kind, last_session_source_key, last_task_family, last_task_target_zone, "
+            "gear_refresh_pending, last_gear_refresh_band, last_seen_zone, is_retired, is_available "
+            "FROM living_world_bot_identity "
+            "WHERE is_available = 1 AND is_retired = 0 AND faction = {} "
+            "AND population_role = 'city_reserve' AND reserve_city_zone_id = {} "
+            "ORDER BY RAND() LIMIT {}",
+            faction, reserveCityZoneId, candidateLimit);
     }
 
     if (!result)

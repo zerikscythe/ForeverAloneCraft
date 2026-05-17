@@ -30,6 +30,8 @@ CREATE TABLE IF NOT EXISTS living_world_bot_identity (
     has_herbalism   TINYINT(1)       NOT NULL DEFAULT 0,
     has_mining      TINYINT(1)       NOT NULL DEFAULT 0,
     has_fishing     TINYINT(1)       NOT NULL DEFAULT 0,
+    population_role VARCHAR(32)      NOT NULL DEFAULT 'world', -- world|city_reserve
+    reserve_city_zone_id INT UNSIGNED NULL,                    -- reserved city pool owner when population_role='city_reserve'
 
     -- Home-base / return routing
     home_zone_id          INT UNSIGNED     NULL,
@@ -55,6 +57,7 @@ CREATE TABLE IF NOT EXISTS living_world_bot_identity (
 
     UNIQUE KEY uq_name   (name),
     KEY idx_spawn        (faction, class_id, level, is_available),
+    KEY idx_population_role (population_role, reserve_city_zone_id, faction, is_available, is_retired),
     KEY idx_last_seen    (last_seen_at),
     KEY idx_active       (is_available, is_retired),
     KEY idx_retired      (is_retired, retired_at)

@@ -27,6 +27,8 @@ struct BotIdentityRecord
     bool          hasHerbalism = false;
     bool          hasMining    = false;
     bool          hasFishing   = false;
+    std::string   populationRole = "world";
+    std::uint32_t reserveCityZoneId = 0;
     std::uint32_t homeZoneId   = 0;
     std::string   homeAnchorPointKey;
     std::string   homeBindPointKey;
@@ -60,8 +62,16 @@ public:
     std::optional<BotIdentityRecord> FindByName(std::string const& name) const;
 
     // Returns up to `limit` available identities for the given faction.
-    // faction=0 returns any faction.
+    // faction=0 returns any faction. This call excludes dedicated reserve
+    // populations such as city-only reserve pools.
     std::vector<BotIdentityRecord> LoadAvailable(
+        std::uint8_t faction,
+        std::uint32_t limit) const;
+
+    // Returns up to `limit` available city-reserve identities for the given
+    // city zone and faction. faction=0 returns any faction.
+    std::vector<BotIdentityRecord> LoadAvailableReserveForCity(
+        std::uint32_t reserveCityZoneId,
         std::uint8_t faction,
         std::uint32_t limit) const;
 

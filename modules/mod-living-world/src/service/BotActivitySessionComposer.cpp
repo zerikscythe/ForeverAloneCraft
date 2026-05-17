@@ -83,6 +83,71 @@ bool TemplateSupportsQuestResume(
     return false;
 }
 
+bool MatchesPreferredTaskFamily(
+    std::string const& taskFamily,
+    AmbientSessionComposeBias const* composeBias)
+{
+    if (!composeBias || composeBias->preferredTaskFamily.empty())
+        return true;
+
+    return NormalizeLower(taskFamily) == NormalizeLower(composeBias->preferredTaskFamily);
+}
+
+bool TemplateMatchesComposeBias(
+    model::TaskTemplateEntry const& tmpl,
+    AmbientSessionComposeBias const* composeBias)
+{
+    if (!MatchesPreferredTaskFamily(tmpl.taskFamily, composeBias))
+        return false;
+
+    if (!composeBias || composeBias->preferredZoneId == 0)
+        return true;
+
+    return std::any_of(
+        tmpl.steps.begin(),
+        tmpl.steps.end(),
+        [&](model::TaskTemplateStepEntry const& step)
+        {
+            return step.targetZoneId == 0 || step.targetZoneId == composeBias->preferredZoneId;
+        });
+}
+
+bool PlaylistMatchesComposeBias(
+    model::PlaylistEntrySet const& playlist,
+    AmbientSessionComposeBias const* composeBias,
+    std::unordered_set<std::uint32_t> const& allowedTemplateIds)
+{
+    if (!MatchesPreferredTaskFamily(playlist.taskFamily, composeBias))
+        return false;
+
+    if (!composeBias || composeBias->preferredZoneId == 0)
+        return true;
+
+    if (playlist.entries.empty())
+        return false;
+
+    return std::all_of(
+        playlist.entries.begin(),
+        playlist.entries.end(),
+        [&](model::PlaylistEntryRef const& entry)
+        {
+            return allowedTemplateIds.find(entry.taskTemplateId) != allowedTemplateIds.end();
+        });
+}
+
+bool ActivityMatchesComposeBias(
+    model::ActivityEntry const& activity,
+    AmbientSessionComposeBias const* composeBias)
+{
+    if (!MatchesPreferredTaskFamily(activity.taskFamily, composeBias))
+        return false;
+
+    if (!composeBias || composeBias->preferredZoneId == 0)
+        return true;
+
+    return activity.targetZoneId == 0 || activity.targetZoneId == composeBias->preferredZoneId;
+}
+
 // Weighted random selection — picks an activity proportional to its weight.
 std::size_t WeightedPickIndex(
     std::vector<model::ActivityEntry> const& pool,
@@ -980,7 +1045,8 @@ std::optional<AmbientSession> BotActivitySessionComposer::Compose(
     std::string const& homeAnchorPointKey,
     std::string const& homeBindPointKey,
     std::unordered_set<std::uint32_t> const* exploredZoneIds,
-    AmbientSessionResumeHint const* resumeHint) const
+    AmbientSessionResumeHint const* resumeHint,
+    AmbientSessionComposeBias const* composeBias) const
 {
     AmbientProfessionCapabilities const professionCapabilities{
         hasHerbalism,
@@ -1032,6 +1098,35 @@ std::optional<AmbientSession> BotActivitySessionComposer::Compose(
                 return !MeetsProfessionRequirements(entry, professionCapabilities);
             }),
         playlists.end());
+
+    if (composeBias
+        && (!composeBias->preferredTaskFamily.empty() || composeBias->preferredZoneId != 0))
+    {
+        templates.erase(
+            std::remove_if(
+                templates.begin(),
+                templates.end(),
+                [&](model::TaskTemplateEntry const& entry)
+                {
+                    return !TemplateMatchesComposeBias(entry, composeBias);
+                }),
+            templates.end());
+
+        std::unordered_set<std::uint32_t> allowedTemplateIds;
+        allowedTemplateIds.reserve(templates.size());
+        for (model::TaskTemplateEntry const& entry : templates)
+            allowedTemplateIds.insert(entry.templateId);
+
+        playlists.erase(
+            std::remove_if(
+                playlists.begin(),
+                playlists.end(),
+                [&](model::PlaylistEntrySet const& entry)
+                {
+                    return !PlaylistMatchesComposeBias(entry, composeBias, allowedTemplateIds);
+                }),
+            playlists.end());
+    }
 
     std::mt19937 rng(static_cast<std::uint32_t>(
         std::chrono::steady_clock::now().time_since_epoch().count()));
@@ -1128,6 +1223,9 @@ std::optional<AmbientSession> BotActivitySessionComposer::Compose(
     filtered.reserve(eligible.size());
     for (model::ActivityEntry const& candidate : eligible)
     {
+        if (!ActivityMatchesComposeBias(candidate, composeBias))
+            continue;
+
         auto const zone = zoneRepo.Find(candidate.targetZoneId);
         if (!zone)
             continue;

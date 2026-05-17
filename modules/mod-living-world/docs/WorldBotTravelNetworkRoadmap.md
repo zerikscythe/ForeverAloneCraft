@@ -220,6 +220,30 @@ Related design note:
 
 - see `WorldBotQuestHubProgressionDesign.md`
 
+### 3.6 Add city reserve pools without breaking "bots have history"
+
+Normal world bots should continue to:
+
+- resume from their own last known place
+- keep their own task/session continuity
+- naturally drift around the world through travel and content
+
+But major cities need a small amount of deliberate support so they do not feel
+empty when a player approaches.
+
+Direction:
+
+- keep a dedicated `city_reserve` pool for cities like Stormwind and Orgrimmar
+- let the population controller pull from those reserves when a hot city is
+  underfilled
+- bias those reserve bots toward city chores / city idles / short city walks
+- release them back to the ledger after city heat drops and a linger window
+  expires
+
+Related design note:
+
+- see `WorldBotCityReservePopulationDesign.md`
+
 ### 3.1 Reuse-first rule
 
 Before introducing new travel/runtime code, prefer this order:

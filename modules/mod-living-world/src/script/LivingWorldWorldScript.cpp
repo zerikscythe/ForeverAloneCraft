@@ -1981,6 +1981,14 @@ private:
         ObjectGuid guid;
     };
 
+    struct CityReservePolicy
+    {
+        std::uint32_t zoneId = 0;
+        std::uint32_t mapId = 0;
+        std::uint8_t  faction = 0;
+        std::uint32_t targetVisible = 0;
+    };
+
     std::uint32_t _populationTimer   = 0;
     std::uint32_t _targetAmbientPop  = 3;
     std::uint32_t _populationTickMs  = 15 * 1000;
@@ -2041,6 +2049,12 @@ private:
     static std::uint32_t GetHubZoneIdForIdentity(
         living_world::integration::BotIdentityRecord const& identity)
     {
+        if (identity.populationRole == "city_reserve"
+            && identity.reserveCityZoneId != 0)
+        {
+            return identity.reserveCityZoneId;
+        }
+
         if (identity.homeZoneId != 0)
             return identity.homeZoneId;
 
@@ -2068,6 +2082,16 @@ private:
             {
                 return !requiredMapId || zone.mapId == *requiredMapId;
             };
+
+        if (identity.populationRole == "city_reserve"
+            && identity.reserveCityZoneId != 0)
+        {
+            if (auto const zone = zoneRepo.Find(identity.reserveCityZoneId))
+            {
+                if (matchesRequiredMap(*zone))
+                    return ToSpawnPoint(*zone);
+            }
+        }
 
         if (identity.lastSeenZoneId != 0)
         {
@@ -2102,6 +2126,75 @@ private:
         if (!qr)
             return 0;
         return qr->Fetch()[0].Get<std::uint32_t>();
+    }
+
+    static std::vector<CityReservePolicy> GetCityReservePolicies()
+    {
+        return {
+            CityReservePolicy{ 1519u, 0u, 1u, 50u },
+            CityReservePolicy{ 1637u, 1u, 2u, 50u }
+        };
+    }
+
+    std::uint32_t CountMaterializedWorldBotsInZone(std::uint32_t zoneId) const
+    {
+        if (zoneId == 0)
+            return 0;
+
+        std::uint32_t count = 0;
+        for (auto const& [identityId, handle] : _materializedWorldBots)
+        {
+            (void)identityId;
+            Map* map = sMapMgr->FindMap(handle.mapId, 0);
+            if (!map)
+                continue;
+
+            Creature* creature = map->GetCreature(handle.guid);
+            if (!creature || !creature->IsInWorld())
+                continue;
+
+            if (creature->GetZoneId() == zoneId)
+                ++count;
+        }
+
+        return count;
+    }
+
+    std::vector<living_world::integration::BotIdentityRecord> LoadReserveCityCandidates(
+        living_world::integration::SqlBotIdentityRepository& identityRepo,
+        std::uint32_t limit) const
+    {
+        std::vector<living_world::integration::BotIdentityRecord> results;
+        if (limit == 0)
+            return results;
+
+        for (CityReservePolicy const& policy : GetCityReservePolicies())
+        {
+            if (!IsZoneHotOrInterested(policy.mapId, policy.zoneId))
+                continue;
+
+            std::uint32_t const visible = CountMaterializedWorldBotsInZone(policy.zoneId);
+            if (visible >= policy.targetVisible)
+                continue;
+
+            std::uint32_t const remaining = limit - static_cast<std::uint32_t>(results.size());
+            if (remaining == 0)
+                break;
+
+            std::uint32_t const deficit = policy.targetVisible - visible;
+            auto cityReserve = identityRepo.LoadAvailableReserveForCity(
+                policy.zoneId,
+                policy.faction,
+                std::min(remaining, deficit));
+            for (auto& record : cityReserve)
+            {
+                results.push_back(std::move(record));
+                if (results.size() >= limit)
+                    return results;
+            }
+        }
+
+        return results;
     }
 
     static void LogActiveWorldBotRoster()
@@ -3327,7 +3420,16 @@ private:
         }
         else
         {
-            identities = identityRepo.LoadAvailable(0, toSpawn);
+            identities = LoadReserveCityCandidates(identityRepo, toSpawn);
+
+            if (identities.size() < toSpawn)
+            {
+                auto general = identityRepo.LoadAvailable(
+                    0,
+                    toSpawn - static_cast<std::uint32_t>(identities.size()));
+                for (auto& record : general)
+                    identities.push_back(std::move(record));
+            }
         }
 
         if (identities.empty())
@@ -3352,12 +3454,17 @@ private:
 
             // Compose a session for this identity.
             std::optional<living_world::service::AmbientSession> session;
+            std::uint32_t const reserveCityZoneId = identity.populationRole == "city_reserve"
+                ? identity.reserveCityZoneId
+                : 0u;
             std::uint32_t const composeStartZoneId = _debugForcedSessionZoneId != 0
                 ? _debugForcedSessionZoneId
-                : (identity.lastSeenZoneId != 0 ? identity.lastSeenZoneId : GetHubZoneIdForIdentity(identity));
+                : (reserveCityZoneId != 0
+                    ? reserveCityZoneId
+                    : (identity.lastSeenZoneId != 0 ? identity.lastSeenZoneId : GetHubZoneIdForIdentity(identity)));
             std::uint32_t const composeHomeZoneId = _debugForcedSessionZoneId != 0
                 ? _debugForcedSessionZoneId
-                : identity.homeZoneId;
+                : (reserveCityZoneId != 0 ? reserveCityZoneId : identity.homeZoneId);
             std::string const composeHomeAnchorPointKey = _debugForcedSessionZoneId != 0
                 ? std::string{}
                 : identity.homeAnchorPointKey;
@@ -3369,6 +3476,10 @@ private:
                 identity.lastSessionSourceKey,
                 identity.lastTaskFamily,
                 identity.lastTaskTargetZoneId
+            };
+            living_world::service::AmbientSessionComposeBias const composeBias{
+                reserveCityZoneId != 0 ? std::string("city_errand") : std::string{},
+                reserveCityZoneId
             };
 
             std::uint32_t const composeAttempts = std::max<std::uint32_t>(1u, _debugForcedSessionComposeAttempts);
@@ -3385,7 +3496,8 @@ private:
                     composeHomeAnchorPointKey,
                     composeHomeBindPointKey,
                     &composeExploredZones,
-                    &resumeHint);
+                    &resumeHint,
+                    reserveCityZoneId != 0 ? &composeBias : nullptr);
                 if (!candidate)
                     continue;
 

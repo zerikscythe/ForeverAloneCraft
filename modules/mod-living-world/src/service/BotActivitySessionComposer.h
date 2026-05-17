@@ -77,6 +77,12 @@ struct AmbientSessionResumeHint
     std::uint32_t lastTaskTargetZoneId = 0;
 };
 
+struct AmbientSessionComposeBias
+{
+    std::string   preferredTaskFamily;
+    std::uint32_t preferredZoneId = 0;
+};
+
 // Builds a destination-first activity session for a bot.
 // Returns nullopt when no eligible activity exists.
 class BotActivitySessionComposer
@@ -93,7 +99,8 @@ public:
         std::string const& homeAnchorPointKey = "",
         std::string const& homeBindPointKey = "",
         std::unordered_set<std::uint32_t> const* exploredZoneIds = nullptr,
-        AmbientSessionResumeHint const* resumeHint = nullptr) const;
+        AmbientSessionResumeHint const* resumeHint = nullptr,
+        AmbientSessionComposeBias const* composeBias = nullptr) const;
 };
 
 } // namespace service
