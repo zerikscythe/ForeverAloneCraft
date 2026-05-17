@@ -20,7 +20,7 @@ enum class AmbientStepType : std::uint8_t
     Fish       = 4,  // Simulate fishing
     Idle       = 5,  // Stand at location for duration
     Patrol     = 6,  // Walk between anchor and nearby waypoints
-    TaxiFlight = 7,  // Timed fake-flight between authored taxi nodes
+    Transit    = 7,  // Timed scripted transit: taxi|boat|zeppelin|portal
 };
 
 struct AmbientStep
@@ -37,6 +37,9 @@ struct AmbientStep
     std::string     subjectKey;
     std::string     returnAnchorRole;
     std::uint8_t    cycleCount  = 1;
+    std::string     transitType;
+    std::string     transitSourceLabel;
+    std::string     transitDestLabel;
     std::string     label;
 };
 

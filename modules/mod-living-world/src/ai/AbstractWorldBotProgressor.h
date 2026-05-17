@@ -204,7 +204,7 @@ inline std::uint32_t ComputeAbstractWorldBotStepDurationMs(
     AbstractWorldBotProgressState const& state,
     AbstractWorldBotProgressConfig const& config = {})
 {
-    if (step.type == service::AmbientStepType::TaxiFlight)
+    if (step.type == service::AmbientStepType::Transit)
         return std::max(config.minStepDurationMs, step.durationSec * 1000u);
 
     if (step.type == service::AmbientStepType::Travel)
@@ -265,6 +265,37 @@ inline AbstractWorldBotInterpolatedPosition ComputeAbstractWorldBotInterpolatedP
 
     service::AmbientStep const& step = session.steps[state.currentStep];
     pos.mapId = step.mapId;
+
+    if (step.type == service::AmbientStepType::Transit)
+    {
+        if (!state.stepStartKnown)
+        {
+            pos.x = step.x;
+            pos.y = step.y;
+            pos.z = step.z;
+            return pos;
+        }
+
+        std::uint32_t const durationMs = ComputeAbstractWorldBotStepDurationMs(step, state, config);
+        float const progress = durationMs == 0
+            ? 1.0f
+            : std::clamp(static_cast<float>(state.stepElapsedMs) / static_cast<float>(durationMs), 0.0f, 1.0f);
+
+        if (state.stepStartMapId != step.mapId)
+        {
+            pos.mapId = progress >= 1.0f ? step.mapId : state.stepStartMapId;
+            pos.x = progress >= 1.0f ? step.x : state.stepStartX;
+            pos.y = progress >= 1.0f ? step.y : state.stepStartY;
+            pos.z = progress >= 1.0f ? step.z : state.stepStartZ;
+            return pos;
+        }
+
+        pos.mapId = state.stepStartMapId;
+        pos.x = state.stepStartX + ((step.x - state.stepStartX) * progress);
+        pos.y = state.stepStartY + ((step.y - state.stepStartY) * progress);
+        pos.z = state.stepStartZ + ((step.z - state.stepStartZ) * progress);
+        return pos;
+    }
 
     if (step.type != service::AmbientStepType::Travel || !state.stepStartKnown || state.stepStartMapId != step.mapId)
     {

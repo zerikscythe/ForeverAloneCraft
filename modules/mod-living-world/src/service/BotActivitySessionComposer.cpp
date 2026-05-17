@@ -120,7 +120,7 @@ void AppendTravelStep(
     session.steps.push_back(travelStep);
 }
 
-void AppendTaxiFlightStep(
+void AppendTransitStep(
     AmbientSession& session,
     std::int32_t taskIndex,
     std::uint16_t mapId,
@@ -128,16 +128,22 @@ void AppendTaxiFlightStep(
     float y,
     float z,
     std::uint32_t durationSec,
-    std::string const& label)
+    std::string const& label,
+    std::string const& transitType,
+    std::string const& sourceLabel,
+    std::string const& destLabel)
 {
     AmbientStep flightStep;
-    flightStep.type        = AmbientStepType::TaxiFlight;
+    flightStep.type        = AmbientStepType::Transit;
     flightStep.mapId       = mapId;
     flightStep.x           = x;
     flightStep.y           = y;
     flightStep.z           = z;
     flightStep.durationSec = durationSec;
     flightStep.taskIndex   = taskIndex;
+    flightStep.transitType = transitType;
+    flightStep.transitSourceLabel = sourceLabel;
+    flightStep.transitDestLabel = destLabel;
     flightStep.label       = label;
     session.steps.push_back(flightStep);
 }
@@ -194,7 +200,7 @@ bool AppendDynamicTaxiTransit(
         candidate->sourceNode.y,
         candidate->sourceNode.z,
         "Travel to flight master " + candidate->sourceNode.name);
-    AppendTaxiFlightStep(
+    AppendTransitStep(
         session,
         taskIndex,
         candidate->destinationNode.mapId,
@@ -202,7 +208,10 @@ bool AppendDynamicTaxiTransit(
         candidate->destinationNode.y,
         candidate->destinationNode.z,
         std::max<std::uint32_t>(15u, (candidate->route.totalEtaMs + 999u) / 1000u),
-        "Taxi via " + candidate->sourceNode.name + " -> " + candidate->destinationNode.name);
+        "Taxi via " + candidate->sourceNode.name + " -> " + candidate->destinationNode.name,
+        "taxi",
+        candidate->sourceNode.name,
+        candidate->destinationNode.name);
 
     if (candidate->destinationNode.mapId != targetMapId
         || candidate->destinationNode.x != targetX
@@ -480,7 +489,27 @@ std::optional<AmbientSession> BuildSessionFromTemplate(
                         return route.transitType == "taxi";
                     });
 
-                if (!pathUsesOnlyTaxi)
+                if (pathUsesOnlyTaxi
+                    && AppendDynamicTaxiTransit(
+                        session,
+                        taskIndex,
+                        faction,
+                        exploredZoneIds,
+                        currentLocationResolved,
+                        currentMapId,
+                        currentZoneId,
+                        currentX,
+                        currentY,
+                        currentZ,
+                        mapId,
+                        targetX,
+                        targetY,
+                        targetZ,
+                        templateStep.label))
+                {
+                    addedTransitRoute = true;
+                }
+                else
                 {
                     for (model::TaskTransitRouteEntry const& route : transitPath)
                     {
@@ -492,7 +521,7 @@ std::optional<AmbientSession> BuildSessionFromTemplate(
                             route.sourceY,
                             route.sourceZ,
                             "Travel to " + route.sourcePointName);
-                        AppendTaxiFlightStep(
+                        AppendTransitStep(
                             session,
                             taskIndex,
                             route.destMapId,
@@ -500,7 +529,10 @@ std::optional<AmbientSession> BuildSessionFromTemplate(
                             route.destY,
                             route.destZ,
                             std::max<std::uint32_t>(15u, route.durationSec),
-                            route.displayName);
+                            route.displayName,
+                            route.transitType,
+                            route.sourcePointName,
+                            route.destPointName);
                     }
 
                     if (transitPath.back().destPointKey != templateStep.targetPointKey)

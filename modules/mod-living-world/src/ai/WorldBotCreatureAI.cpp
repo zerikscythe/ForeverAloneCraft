@@ -49,6 +49,7 @@
 #include "model/BotSpecKey.h"
 
 #include <algorithm>
+#include <cctype>
 #include <chrono>
 #include <filesystem>
 #include <limits>
@@ -318,6 +319,9 @@ std::string DescribeSessionOrigin(service::AmbientSession const& session)
         + "' session='" + session.displayName + "'";
 }
 
+std::string NormalizeTransitType(std::string transitType);
+std::string DescribeScriptedTransitDetail(service::AmbientStep const& step);
+
 std::string DescribeSessionBlueprint(service::AmbientSession const& session)
 {
     std::ostringstream oss;
@@ -348,8 +352,10 @@ std::string DescribeSessionBlueprint(service::AmbientSession const& session)
             case service::AmbientStepType::Fish:
                 oss << "fish";
                 break;
-            case service::AmbientStepType::TaxiFlight:
-                oss << "taxi";
+            case service::AmbientStepType::Transit:
+                oss << "transit";
+                if (!step.transitType.empty())
+                    oss << ":" << NormalizeTransitType(step.transitType);
                 break;
             default:
                 oss << "other";
@@ -396,11 +402,33 @@ char const* DescribeAmbientStepTypeKey(service::AmbientStepType type)
             return "idle";
         case service::AmbientStepType::Patrol:
             return "patrol";
-        case service::AmbientStepType::TaxiFlight:
-            return "taxi_flight_scripted";
+        case service::AmbientStepType::Transit:
+            return "transit";
         default:
             return "unknown";
     }
+}
+
+std::string NormalizeTransitType(std::string transitType)
+{
+    if (transitType.empty())
+        return "transit";
+
+    std::transform(
+        transitType.begin(),
+        transitType.end(),
+        transitType.begin(),
+        [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return transitType;
+}
+
+std::string DescribeScriptedTransitDetail(service::AmbientStep const& step)
+{
+    std::string const transitType = NormalizeTransitType(step.transitType);
+    std::string const sourceLabel = step.transitSourceLabel.empty() ? "source" : step.transitSourceLabel;
+    std::string const destLabel = step.transitDestLabel.empty() ? "destination" : step.transitDestLabel;
+
+    return transitType + " " + sourceLabel + " -> " + destLabel;
 }
 
 std::uint32_t ResolveStepZoneId(
@@ -1232,6 +1260,11 @@ void WorldBotCreatureAI::UpdateAI(uint32 diff)
                 _session.steps[_currentStep],
                 DescribeActiveTravelTarget(_session.steps[_currentStep]));
         }
+        else if (_currentStep < _session.steps.size()
+            && _session.steps[_currentStep].type == service::AmbientStepType::Transit)
+        {
+            detail = DescribeRuntimeStateDetail();
+        }
 
         RecordPositionSnapshot("position_tick", detail);
     }
@@ -1263,6 +1296,9 @@ std::string WorldBotCreatureAI::DescribeRuntimeStateKey() const
         }
     }
 
+    if (step.type == service::AmbientStepType::Transit)
+        return std::string("travel_transit_") + NormalizeTransitType(step.transitType);
+
     return std::string("activity_") + DescribeAmbientStepTypeKey(step.type);
 }
 
@@ -1280,6 +1316,14 @@ std::string WorldBotCreatureAI::DescribeRuntimeStateDetail() const
             return BuildTravelNarrative(_session, step, DescribeActiveTravelTarget(step));
 
         return BuildTravelNarrative(_session, step, "planning route");
+    }
+
+    if (step.type == service::AmbientStepType::Transit)
+    {
+        std::string detail = DescribeScriptedTransitDetail(step);
+        if (!step.label.empty() && step.label != detail)
+            detail += " | " + step.label;
+        return detail;
     }
 
     if (!step.label.empty())
@@ -2769,19 +2813,20 @@ void WorldBotCreatureAI::TickStep(uint32 /*diff*/)
         return;
     }
 
-    if (step.type == service::AmbientStepType::TaxiFlight)
+    if (step.type == service::AmbientStepType::Transit)
     {
         if (_activityTimer == 0)
         {
             ClearVisibleTravelMode();
             integration::BotActivityLog::Record(
                 me, _identity.name, _identity.id,
-                "travel_taxi_start", step.label);
+                "travel_transit_start",
+                DescribeRuntimeStateDetail());
 
             integration::BotActivityLog::Record(
                 me, _identity.name, _identity.id,
                 "status_change",
-                "In transit -> " + step.label);
+                "In transit -> " + DescribeRuntimeStateDetail());
 
             PersistRuntimeLedgerState();
         }
@@ -2797,12 +2842,13 @@ void WorldBotCreatureAI::TickStep(uint32 /*diff*/)
 
             integration::BotActivityLog::Record(
                 me, _identity.name, _identity.id,
-                "travel_taxi_arrive", step.label);
+                "travel_transit_arrive",
+                DescribeRuntimeStateDetail());
 
             integration::BotActivityLog::Record(
                 me, _identity.name, _identity.id,
                 "status_change",
-                "Taxi complete -> " + DescribeNextTask(_session, _currentStep + 1));
+                "Transit complete -> " + DescribeNextTask(_session, _currentStep + 1));
 
             _activityTimer = 0;
             AdvanceStep();

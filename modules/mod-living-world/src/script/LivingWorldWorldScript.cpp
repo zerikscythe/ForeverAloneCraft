@@ -2284,6 +2284,19 @@ private:
         return "current objective";
     }
 
+    static std::string NormalizeRuntimeTransitType(std::string transitType)
+    {
+        if (transitType.empty())
+            return "transit";
+
+        std::transform(
+            transitType.begin(),
+            transitType.end(),
+            transitType.begin(),
+            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        return transitType;
+    }
+
     void TickSyntheticInterestBeacon(std::uint32_t diff)
     {
         if (!_debugSyntheticInterestEnabled || _debugSyntheticInterestMapId == 0)
@@ -2388,6 +2401,8 @@ private:
             return false;
 
         living_world::service::AmbientStep const& step = runtime.session.steps[runtime.progress.currentStep];
+        if (step.type == living_world::service::AmbientStepType::Transit)
+            return false;
         if (step.type == living_world::service::AmbientStepType::Travel
             && (!runtime.progress.stepStartKnown || runtime.progress.stepStartMapId != step.mapId))
         {
@@ -2463,8 +2478,8 @@ private:
                 return "activity_patrol";
             case living_world::service::AmbientStepType::Idle:
                 return "activity_idle";
-            case living_world::service::AmbientStepType::TaxiFlight:
-                return "travel_taxi_flight";
+            case living_world::service::AmbientStepType::Transit:
+                return std::string("travel_transit_") + NormalizeRuntimeTransitType(step.transitType);
             case living_world::service::AmbientStepType::Travel:
             default:
                 return "activity_unknown";
@@ -2524,6 +2539,21 @@ private:
             }
 
             return prefix + " | planning route";
+        }
+
+        if (step.type == living_world::service::AmbientStepType::Transit)
+        {
+            std::string const transitType = NormalizeRuntimeTransitType(step.transitType);
+            std::string const sourceLabel = step.transitSourceLabel.empty()
+                ? std::string("source")
+                : step.transitSourceLabel;
+            std::string const destLabel = step.transitDestLabel.empty()
+                ? std::string("destination")
+                : step.transitDestLabel;
+            std::string detail = transitType + " " + sourceLabel + " -> " + destLabel + " offscreen";
+            if (!step.label.empty() && step.label != detail)
+                detail += " | " + step.label;
+            return detail;
         }
 
         if (!objective.empty())

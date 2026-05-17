@@ -201,8 +201,8 @@ private:
             case T::Travel:
                 TickTravel(bot, step);
                 break;
-            case T::TaxiFlight:
-                TickTaxiFlight(bot, step);
+            case T::Transit:
+                TickTransit(bot, step);
                 break;
             case T::GatherHerb:
             case T::GatherOre:
@@ -291,7 +291,7 @@ private:
         Reschedule(bot, 500ms);
     }
 
-    void TickTaxiFlight(Player* bot, service::AmbientStep const& step)
+    void TickTransit(Player* bot, service::AmbientStep const& step)
     {
         if (_stepElapsedSec == 0)
         {
@@ -302,7 +302,7 @@ private:
             }
 
             integration::BotActivityLog::Record(
-                bot, "travel_taxi_start", DescribeStep(_session, _currentStep, step));
+                bot, "travel_transit_start", DescribeStep(_session, _currentStep, step));
         }
 
         _stepElapsedSec += 1;
@@ -322,7 +322,7 @@ private:
         }
 
         integration::BotActivityLog::Record(
-            bot, "travel_taxi_arrive", DescribeStep(_session, _currentStep, step));
+            bot, "travel_transit_arrive", DescribeStep(_session, _currentStep, step));
         AdvanceAndReschedule(bot, 500ms);
     }
 

@@ -290,5 +290,38 @@ TEST(AbstractWorldBotProgressorTest, MapZeroCanBeKnownSameMapTravel)
     EXPECT_EQ(ComputeAbstractWorldBotStepDurationMs(step, state, cfg), 10000u);
 }
 
+TEST(AbstractWorldBotProgressorTest, ScriptedTransitUsesDurationAndInterpolation)
+{
+    service::AmbientSession session;
+    service::AmbientStep step;
+    step.type = service::AmbientStepType::Transit;
+    step.mapId = 1;
+    step.x = 100.0f;
+    step.y = 0.0f;
+    step.z = 0.0f;
+    step.durationSec = 20;
+    step.transitType = "boat";
+    step.transitSourceLabel = "Menethil Harbor";
+    step.transitDestLabel = "Theramore";
+    session.steps.push_back(step);
+
+    AbstractWorldBotProgressState state;
+    state.stepStartKnown = true;
+    state.stepStartMapId = 1;
+    state.stepStartX = 0.0f;
+    state.stepStartY = 0.0f;
+    state.stepStartZ = 0.0f;
+
+    AbstractWorldBotProgressConfig cfg;
+    EXPECT_EQ(ComputeAbstractWorldBotStepDurationMs(step, state, cfg), 20000u);
+
+    state.stepElapsedMs = 10000u;
+    auto pos = ComputeAbstractWorldBotInterpolatedPosition(session, state, cfg);
+    EXPECT_EQ(pos.mapId, 1u);
+    EXPECT_FLOAT_EQ(pos.x, 50.0f);
+    EXPECT_FLOAT_EQ(pos.y, 0.0f);
+    EXPECT_FLOAT_EQ(pos.z, 0.0f);
+}
+
 } // namespace ai
 } // namespace living_world
