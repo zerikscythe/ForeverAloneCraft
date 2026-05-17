@@ -20,6 +20,18 @@ public:
         bool hasHerbalism,
         bool hasMining,
         bool hasFishing) const;
+
+    // Load activities for a specific zone while relaxing only the upper level cap.
+    // This is used as a zone-local fallback so overleveled bots can continue
+    // believable old-world activity, while underleveled bots are still blocked
+    // from content whose minimum level exceeds their own.
+    std::vector<model::ActivityEntry> LoadZoneFallbackEligible(
+        std::uint32_t zoneId,
+        std::uint8_t faction,
+        std::uint8_t level,
+        bool hasHerbalism,
+        bool hasMining,
+        bool hasFishing) const;
 };
 
 } // namespace integration

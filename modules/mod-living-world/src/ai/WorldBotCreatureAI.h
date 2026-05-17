@@ -221,6 +221,7 @@ private:
     std::size_t    _routeTravelWaypointIndex = 0;
     std::uint32_t  _routeTravelLastZoneId = 0;
     std::uint64_t  _routeTravelLastReanchorWorldMs = 0;
+    std::uint32_t  _syntheticGlobalCooldownRemainingMs = 0;
     bool           _visibleTravelModeActive = false;
     std::uint32_t  _visibleTravelModeSpellId = 0;
     service::WorldBotTravelCapabilityTier _visibleTravelCapabilityTier = service::WorldBotTravelCapabilityTier::Foot;

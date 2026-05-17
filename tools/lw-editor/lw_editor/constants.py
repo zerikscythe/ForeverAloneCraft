@@ -33,11 +33,11 @@ AOE_OPTS          = list(AOE_MODES.values())
 
 TARGET_KEYS   = [
     "enemy", "enemy_primary", "enemy_trash", "enemy_primary_victim",
-    "self", "owner", "lowest_hp_party",
+    "self", "owner", "ally_tank", "lowest_hp_party", "lowest_hp_ally",
 ]
 SUBJECT_KEYS  = [
     "enemy", "enemy_primary", "enemy_trash", "enemy_primary_victim",
-    "self", "owner", "lowest_hp_party",
+    "self", "owner", "ally_tank", "lowest_hp_party", "lowest_hp_ally",
 ]
 STAT_KEYS     = [
     "exists",

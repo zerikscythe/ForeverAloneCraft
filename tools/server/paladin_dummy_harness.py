@@ -58,7 +58,53 @@ REFERENCE_LOADOUTS = {
             {"slot": 15, "entry": 47285, "name": "Dual-blade Butcher"},
             {"slot": 17, "entry": 47661, "name": "Libram of Valiance"},
         ],
-    }
+    },
+    "holy_toc": {
+        "display_name": "Paladin Holy ToC Reference",
+        "notes": "Passive summary excludes tinker actives and trinket procs; buckle is tracked only as authored metadata.",
+        "items": [
+            {"slot": 0, "entry": 47686, "name": "Helm of Inner Warmth", "enchant": "Arcanum of Burning Mysteries"},
+            {"slot": 1, "entry": 47468, "name": "Cry of the Val'kyr"},
+            {"slot": 2, "entry": 46044, "name": "Observer's Mantle", "enchant": "Greater Inscription of the Storm"},
+            {"slot": 14, "entry": 47095, "name": "Cloak of Displacement", "enchant": "Enchant Cloak - Greater Speed"},
+            {"slot": 4, "entry": 47603, "name": "Merlin's Robe", "enchant": "Enchant Chest - Powerful Stats"},
+            {"slot": 8, "entry": 47585, "name": "Bejeweled Wizard's Bracers", "enchant": "Enchant Bracers - Exceptional Intellect"},
+            {"slot": 9, "entry": 48583, "name": "Turalyon's Gloves of Triumph", "enchant": "Hyperspeed Accelerators"},
+            {"slot": 5, "entry": 50314, "name": "Strip of Remorse"},
+            {"slot": 6, "entry": 49891, "name": "Leggings of Woven Death", "enchant": "Sapphire Spellthread"},
+            {"slot": 7, "entry": 49896, "name": "Earthsoul Boots", "enchant": "Nitro Boosts"},
+            {"slot": 10, "entry": 47224, "name": "Ring of the Darkmender"},
+            {"slot": 11, "entry": 46046, "name": "Nebula Band"},
+            {"slot": 12, "entry": 37111, "name": "Soul Preserver"},
+            {"slot": 13, "entry": 46051, "name": "Meteorite Crystal"},
+            {"slot": 15, "entry": 47206, "name": "Misery's End", "enchant": "Enchant Weapon - Major Intellect"},
+            {"slot": 16, "entry": 47085, "name": "Bastion of Purity", "enchant": "Enchant Shield - Greater Intellect"},
+            {"slot": 17, "entry": 40705, "name": "Libram of Renewal"},
+        ],
+    },
+    "prot_toc": {
+        "display_name": "Paladin Protection ToC Reference",
+        "notes": "Passive summary excludes active trinket/proc behavior; engineering plate/glove effects are included only when they grant passive stats.",
+        "items": [
+            {"slot": 0, "entry": 48644, "name": "Turalyon's Faceguard of Triumph", "enchant": "Arcanum of the Stalwart Protector"},
+            {"slot": 1, "entry": 45485, "name": "Bronze Pendant of the Vanir"},
+            {"slot": 2, "entry": 48646, "name": "Turalyon's Shoulderguards of Triumph", "enchant": "Greater Inscription of the Gladiator"},
+            {"slot": 14, "entry": 45496, "name": "Titanskin Cloak", "enchant": "Enchant Cloak - Mighty Armor"},
+            {"slot": 4, "entry": 48642, "name": "Turalyon's Breastplate of Triumph", "enchant": "Enchant Chest - Greater Defense"},
+            {"slot": 8, "entry": 47570, "name": "Saronite Swordbreakers", "enchant": "Enchant Bracers - Major Stamina"},
+            {"slot": 9, "entry": 48643, "name": "Turalyon's Handguards of Triumph", "enchant": "Reticulated Armor Webbing"},
+            {"slot": 5, "entry": 47076, "name": "Girdle of Bloodied Scars"},
+            {"slot": 6, "entry": 49904, "name": "Pillars of Might", "enchant": "Frosthide Leg Armor"},
+            {"slot": 7, "entry": 49907, "name": "Boots of Kingly Upheaval", "enchant": "Nitro Boosts"},
+            {"slot": 10, "entry": 40718, "name": "Signet of the Impregnable Fortress"},
+            {"slot": 11, "entry": 47157, "name": "Signet of the Traitor King"},
+            {"slot": 12, "entry": 47088, "name": "Satrina's Impeding Scarab"},
+            {"slot": 13, "entry": 46021, "name": "Royal Seal of King Llane"},
+            {"slot": 15, "entry": 47156, "name": "Stormpike Cleaver", "enchant": "Enchant Weapon - Blood Draining"},
+            {"slot": 16, "entry": 46964, "name": "Crystal Plated Vanguard", "enchant": "Titanium Plating"},
+            {"slot": 17, "entry": 47661, "name": "Libram of Valiance"},
+        ],
+    },
 }
 
 
@@ -77,7 +123,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dummy-entry", type=int, default=31144, help="Grandmaster's Training Dummy by default")
     parser.add_argument("--dummy-radius", type=float, default=30.0)
     parser.add_argument("--force-spawn-count", type=int, default=1)
-    parser.add_argument("--reference-loadout", choices=["none", "ret_toc"], default="ret_toc")
+    parser.add_argument("--reference-loadout", choices=["none", *REFERENCE_LOADOUTS.keys()], default="ret_toc")
     return parser.parse_args()
 
 
@@ -196,11 +242,25 @@ def rewrite_module_config(original_text: str, updates: dict[str, str]) -> str:
     return "\n".join(rewritten) + "\n"
 
 
-def ensure_identity(settings: dict[str, str | int], args: argparse.Namespace) -> int:
+def ensure_identity_record(
+    settings: dict[str, str | int],
+    *,
+    name: str,
+    spec_key: str,
+    level: int,
+    faction: int,
+    race_id: int,
+    display_id: int,
+    gender: int,
+    home_zone_id: int,
+    home_anchor_point_key: str,
+    home_bind_point_key: str,
+    last_seen_zone: int,
+) -> int:
     rows = run_mysql_query(
         settings,
         str(settings["characters_db"]),
-        f"SELECT id FROM living_world_bot_identity WHERE name = {sql_quote(args.name)} LIMIT 1",
+        f"SELECT id FROM living_world_bot_identity WHERE name = {sql_quote(name)} LIMIT 1",
     )
 
     if rows:
@@ -210,16 +270,16 @@ def ensure_identity(settings: dict[str, str | int], args: argparse.Namespace) ->
             str(settings["characters_db"]),
             (
                 "UPDATE living_world_bot_identity SET "
-                f"race_id=1, class_id=2, spec_key={sql_quote(args.spec)}, loadout_key='', "
-                f"faction=1, display_id=49, gender=0, level={args.level}, gear_tier=3, "
-                "population_role='world', reserve_city_zone_id=NULL, home_zone_id=1519, "
-                "home_anchor_point_key='stormwind_inn', home_bind_point_key='stormwind_inn', "
+                f"race_id={race_id}, class_id=2, spec_key={sql_quote(spec_key)}, loadout_key='', "
+                f"faction={faction}, display_id={display_id}, gender={gender}, level={level}, gear_tier=3, "
+                f"population_role='world', reserve_city_zone_id=NULL, home_zone_id={home_zone_id}, "
+                f"home_anchor_point_key={sql_quote(home_anchor_point_key)}, home_bind_point_key={sql_quote(home_bind_point_key)}, "
                 "is_available=1, session_count=0, total_world_online_ms=0, "
                 "world_online_ms_since_level=0, post_max_world_online_ms=0, active_world_session_ms=0, "
                 "runtime_state='', runtime_detail='', last_session_source_kind='', last_session_source_key='', "
                 "last_task_family='', last_task_target_zone=NULL, gear_refresh_pending=1, last_gear_refresh_band=0, "
                 "active_world_session_start=NULL, is_retired=0, successor_spawned=0, retired_at=NULL, "
-                "last_seen_zone=1519, last_seen_at=NULL "
+                f"last_seen_zone={last_seen_zone}, last_seen_at=NULL "
                 f"WHERE id={identity_id}"
             ),
         )
@@ -232,18 +292,35 @@ def ensure_identity(settings: dict[str, str | int], args: argparse.Namespace) ->
             "INSERT INTO living_world_bot_identity "
             "(name, race_id, class_id, spec_key, loadout_key, faction, display_id, gender, level, gear_tier, "
             "population_role, home_zone_id, home_anchor_point_key, home_bind_point_key, is_available, is_retired, last_seen_zone) VALUES "
-            f"({sql_quote(args.name)}, 1, 2, {sql_quote(args.spec)}, '', 1, 49, 0, {args.level}, 3, "
-            "'world', 1519, 'stormwind_inn', 'stormwind_inn', 1, 0, 1519)"
+            f"({sql_quote(name)}, {race_id}, 2, {sql_quote(spec_key)}, '', {faction}, {display_id}, {gender}, {level}, 3, "
+            f"'world', {home_zone_id}, {sql_quote(home_anchor_point_key)}, {sql_quote(home_bind_point_key)}, 1, 0, {last_seen_zone})"
         ),
     )
     rows = run_mysql_query(
         settings,
         str(settings["characters_db"]),
-        f"SELECT id FROM living_world_bot_identity WHERE name = {sql_quote(args.name)} LIMIT 1",
+        f"SELECT id FROM living_world_bot_identity WHERE name = {sql_quote(name)} LIMIT 1",
     )
     if not rows:
         raise RuntimeError("Failed to create harness identity")
     return int(rows[0][0])
+
+
+def ensure_identity(settings: dict[str, str | int], args: argparse.Namespace) -> int:
+    return ensure_identity_record(
+        settings,
+        name=args.name,
+        spec_key=args.spec,
+        level=args.level,
+        faction=1,
+        race_id=1,
+        display_id=49,
+        gender=0,
+        home_zone_id=1519,
+        home_anchor_point_key="stormwind_inn",
+        home_bind_point_key="stormwind_inn",
+        last_seen_zone=1519,
+    )
 
 
 def load_enchantment_cache() -> list[dict[str, object]]:

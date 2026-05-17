@@ -1240,6 +1240,37 @@ std::optional<AmbientSession> BotActivitySessionComposer::Compose(
     }
 
     if (filtered.empty())
+    {
+        std::uint32_t const fallbackZoneId = composeBias && composeBias->preferredZoneId != 0
+            ? composeBias->preferredZoneId
+            : startZoneId;
+
+        if (fallbackZoneId != 0)
+        {
+            for (model::ActivityEntry const& candidate : actRepo.LoadZoneFallbackEligible(
+                     fallbackZoneId,
+                     faction,
+                     level,
+                     hasHerbalism,
+                     hasMining,
+                     hasFishing))
+            {
+                if (!ActivityMatchesComposeBias(candidate, composeBias))
+                    continue;
+
+                auto const zone = zoneRepo.Find(candidate.targetZoneId);
+                if (!zone)
+                    continue;
+
+                if (!MatchesRequiredZoneType(candidate, *zone))
+                    continue;
+
+                filtered.push_back(candidate);
+            }
+        }
+    }
+
+    if (filtered.empty())
         return std::nullopt;
 
     std::uint32_t const requestedTaskCount = ChooseTaskCount(filtered.size(), rng);

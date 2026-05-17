@@ -59,6 +59,9 @@ struct BestAoEPointResult
     std::size_t hits = 0;
 };
 
+static constexpr std::uint32_t WorldBotEntry = 9900001;
+static constexpr float AmbientSupportScanRadius = 45.0f;
+
 // Returns the remaining cooldown in milliseconds for the given spell on any Unit.
 // Dispatches to Player::GetSpellCooldownDelay or Creature::GetSpellCooldown.
 std::uint32_t GetSpellCooldownRemainingMs(Unit* bot, std::uint32_t spellId)
@@ -677,7 +680,7 @@ std::uint32_t CountPartyMembersBelowHealthPctImpl(
 {
     std::uint32_t count = 0;
 
-    auto consider = [&](Player* candidate)
+    auto consider = [&](Unit* candidate)
     {
         if (!candidate || !candidate->IsAlive())
             return;
@@ -687,7 +690,46 @@ std::uint32_t CountPartyMembersBelowHealthPctImpl(
     };
 
     consider(owner);
-    consider(bot ? bot->ToPlayer() : nullptr);
+    consider(bot);
+
+    auto isAmbientWorldBot = [](Unit* unit) -> bool
+    {
+        Creature* creature = unit ? unit->ToCreature() : nullptr;
+        return creature && creature->GetEntry() == WorldBotEntry;
+    };
+
+    auto collectNearbyAmbientAllies = [&](bool includeSelf) -> std::vector<Unit*>
+    {
+        std::vector<Unit*> allies;
+        if (!bot)
+            return allies;
+
+        if (includeSelf)
+            allies.push_back(bot);
+
+        Acore::AnyFriendlyUnitInObjectRangeCheck check(bot, bot, AmbientSupportScanRadius);
+        Acore::UnitListSearcher<Acore::AnyFriendlyUnitInObjectRangeCheck> searcher(bot, allies, check);
+        Cell::VisitObjects(bot, searcher, AmbientSupportScanRadius);
+
+        allies.erase(
+            std::remove_if(
+                allies.begin(),
+                allies.end(),
+                [&](Unit* candidate)
+                {
+                    if (!candidate || !candidate->IsAlive() || !candidate->IsInWorld())
+                        return true;
+                    if (candidate == bot)
+                        return !includeSelf;
+                    if (!isAmbientWorldBot(candidate))
+                        return true;
+                    return !bot->IsFriendlyTo(candidate);
+                }),
+            allies.end());
+        std::sort(allies.begin(), allies.end());
+        allies.erase(std::unique(allies.begin(), allies.end()), allies.end());
+        return allies;
+    };
 
     if (owner)
     {
@@ -703,23 +745,73 @@ std::uint32_t CountPartyMembersBelowHealthPctImpl(
             }
         }
     }
+    else if (bot && bot->ToCreature() && isAmbientWorldBot(bot))
+    {
+        for (Unit* ally : collectNearbyAmbientAllies(false))
+            consider(ally);
+    }
 
     return count;
 }
 
-Player* FindLowestHealthPartyTarget(Unit* bot, Player* owner)
+std::vector<Unit*> CollectNearbyFriendlyAmbientWorldBots(Unit* bot, float radius, bool includeSelf)
 {
-    Player* lowest = nullptr;
-    auto consider = [&](Player* candidate)
+    std::vector<Unit*> allies;
+    if (!bot || radius <= 0.0f)
+        return allies;
+
+    if (includeSelf)
+        allies.push_back(bot);
+
+    Acore::AnyFriendlyUnitInObjectRangeCheck check(bot, bot, radius);
+    Acore::UnitListSearcher<Acore::AnyFriendlyUnitInObjectRangeCheck> searcher(bot, allies, check);
+    Cell::VisitObjects(bot, searcher, radius);
+
+    allies.erase(
+        std::remove_if(
+            allies.begin(),
+            allies.end(),
+            [&](Unit* candidate)
+            {
+                if (!candidate || !candidate->IsAlive() || !candidate->IsInWorld())
+                    return true;
+                if (candidate == bot)
+                    return !includeSelf;
+
+                Creature* creature = candidate->ToCreature();
+                if (!creature || creature->GetEntry() != WorldBotEntry)
+                    return true;
+
+                return !bot->IsFriendlyTo(candidate);
+            }),
+        allies.end());
+
+    std::sort(allies.begin(), allies.end());
+    allies.erase(std::unique(allies.begin(), allies.end()), allies.end());
+    return allies;
+}
+
+std::uint64_t ComputeSupportTankAnchorScore(Unit* candidate)
+{
+    if (!candidate)
+        return 0;
+
+    return candidate->GetMaxHealth();
+}
+
+Unit* FindSupportTankAnchor(Unit* bot, Player* owner)
+{
+    Unit* best = nullptr;
+    auto consider = [&](Unit* candidate)
     {
         if (!candidate || !candidate->IsAlive() || !candidate->IsInWorld())
             return;
-        if (!lowest || candidate->GetHealthPct() < lowest->GetHealthPct())
-            lowest = candidate;
+
+        if (!best || ComputeSupportTankAnchorScore(candidate) > ComputeSupportTankAnchorScore(best))
+            best = candidate;
     };
 
     consider(owner);
-    consider(bot->ToPlayer());
 
     if (owner)
     {
@@ -730,6 +822,42 @@ Player* FindLowestHealthPartyTarget(Unit* bot, Player* owner)
                 consider(ObjectAccessor::FindConnectedPlayer(slot.guid));
             }
         }
+    }
+    else
+    {
+        for (Unit* ally : CollectNearbyFriendlyAmbientWorldBots(bot, AmbientSupportScanRadius, false))
+            consider(ally);
+    }
+
+    return best;
+}
+
+Unit* FindLowestHealthPartyTarget(Unit* bot, Player* owner)
+{
+    Unit* lowest = nullptr;
+    auto consider = [&](Unit* candidate)
+    {
+        if (!candidate || !candidate->IsAlive() || !candidate->IsInWorld())
+            return;
+        if (!lowest || candidate->GetHealthPct() < lowest->GetHealthPct())
+            lowest = candidate;
+    };
+
+    consider(owner);
+    consider(bot);
+
+    if (owner)
+    {
+        if (Group const* group = owner->GetGroup())
+        {
+            for (Group::MemberSlot const& slot : group->GetMemberSlots())
+                consider(ObjectAccessor::FindConnectedPlayer(slot.guid));
+        }
+    }
+    else
+    {
+        for (Unit* ally : CollectNearbyFriendlyAmbientWorldBots(bot, AmbientSupportScanRadius, false))
+            consider(ally);
     }
 
     return lowest;
@@ -810,6 +938,17 @@ BotCombatEvaluationResult BotCombatRuntimeEvaluator::EvaluateEntries(
     std::vector<model::BotCombatEntryDefinition> const& sourceEntries,
     BotCombatRuntimeContext const& context)
 {
+    if (context.syntheticGlobalCooldownRemainingMs > 0)
+    {
+        BotCombatEvaluationResult result;
+        result.disposition = BotCombatEvaluationDisposition::Wait;
+        result.waitMs = std::min(
+            context.syntheticGlobalCooldownRemainingMs,
+            std::max<std::uint32_t>(context.rotationWaitMs, 1u));
+        result.traceReason = "synthetic_gcd";
+        return result;
+    }
+
     std::vector<model::BotCombatEntryDefinition> entries = sourceEntries;
     std::stable_sort(
         entries.begin(),
@@ -1261,7 +1400,12 @@ std::optional<BotCombatEvaluatedAction> BotCombatRuntimeEvaluator::EvaluateActio
     if (entry.isInterrupt && !HasInterruptibleEnemyCast(target))
         return std::nullopt;
 
-    if (!CanExecuteSpell(context.bot, target, spellId, context.allowHardCasts))
+    if (!CanExecuteSpell(
+            context.bot,
+            target,
+            spellId,
+            context.allowHardCasts,
+            context.syntheticGlobalCooldownRemainingMs))
         return std::nullopt;
 
     BotCombatEvaluatedAction evaluated;
@@ -1322,7 +1466,9 @@ std::uint32_t BotCombatRuntimeEvaluator::GetActionWaitMs(
     if (!aoeTargeting.valid)
         return 0;
 
-    std::uint32_t const waitMs = GetSpellWaitMs(context.bot, target, spellId);
+    std::uint32_t const waitMs = std::max(
+        GetSpellWaitMs(context.bot, target, spellId),
+        context.syntheticGlobalCooldownRemainingMs);
     if (waitMs == 0 || waitMs > context.rotationWaitMs)
         return 0;
 
@@ -1369,7 +1515,8 @@ std::uint32_t BotCombatRuntimeEvaluator::GetCurrentCastHoldWaitMs(
     if (context.bot->HasSpellCooldown(spellId))
         return 0;
 
-    if (GetGlobalCooldownRemainingMs(context.bot, spellInfo) > 0)
+    if (GetGlobalCooldownRemainingMs(context.bot, spellInfo) > 0
+        || context.syntheticGlobalCooldownRemainingMs > 0)
         return 0;
 
     float const maxRange = context.bot->GetSpellMaxRangeForTarget(target, spellInfo);
@@ -1404,7 +1551,13 @@ Unit* BotCombatRuntimeEvaluator::ResolveActionTarget(
     if (targetKey == "owner")
         return context.owner;
 
+    if (targetKey == "ally_tank")
+        return FindSupportTankAnchor(context.bot, context.owner);
+
     if (targetKey == "lowest_hp_party")
+        return FindLowestHealthPartyTarget(context.bot, context.owner);
+
+    if (targetKey == "lowest_hp_ally")
         return FindLowestHealthPartyTarget(context.bot, context.owner);
 
     if (targetKey == "enemy_trash")
@@ -1420,7 +1573,8 @@ bool BotCombatRuntimeEvaluator::CanExecuteSpell(
     Unit* bot,
     Unit* target,
     std::uint32_t spellId,
-    bool allowHardCasts)
+    bool allowHardCasts,
+    std::uint32_t syntheticGlobalCooldownRemainingMs)
 {
     if (!bot || !target || spellId == 0)
         return false;
@@ -1467,7 +1621,8 @@ bool BotCombatRuntimeEvaluator::CanExecuteSpell(
     if (bot->HasSpellCooldown(spellId))
         return false;
 
-    if (GetGlobalCooldownRemainingMs(bot, spellInfo) > 0)
+    if (GetGlobalCooldownRemainingMs(bot, spellInfo) > 0
+        || syntheticGlobalCooldownRemainingMs > 0)
         return false;
 
     float const maxRange = bot->GetSpellMaxRangeForTarget(target, spellInfo);

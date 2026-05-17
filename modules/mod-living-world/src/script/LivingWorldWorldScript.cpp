@@ -1669,6 +1669,17 @@ std::optional<living_world::service::AmbientSession> BuildForcedZoneSandboxSessi
         eligible.end());
 
     if (eligible.empty())
+    {
+        eligible = activityRepo.LoadZoneFallbackEligible(
+            targetZoneId,
+            identity.faction,
+            identity.level,
+            identity.hasHerbalism,
+            identity.hasMining,
+            identity.hasFishing);
+    }
+
+    if (eligible.empty())
         return std::nullopt;
 
     auto const picked = std::min_element(

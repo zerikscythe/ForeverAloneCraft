@@ -19,6 +19,7 @@ struct BotCombatRuntimeContext
     Player* owner = nullptr;  // Always a real player or nullptr
     Unit* primaryTarget = nullptr;
     bool allowHardCasts = true;
+    std::uint32_t syntheticGlobalCooldownRemainingMs = 0;
     std::unordered_set<std::uint32_t> const* usedSimulatedItemsThisCombat = nullptr;
     std::uint32_t rotationWaitMs = 500;
     model::BotCombatAoEMode defaultAoEMode = model::BotCombatAoEMode::Centroid;
@@ -129,7 +130,8 @@ private:
         Unit* bot,
         Unit* target,
         std::uint32_t spellId,
-        bool allowHardCasts);
+        bool allowHardCasts,
+        std::uint32_t syntheticGlobalCooldownRemainingMs = 0);
 
     static std::uint32_t GetSpellWaitMs(
         Unit* bot,

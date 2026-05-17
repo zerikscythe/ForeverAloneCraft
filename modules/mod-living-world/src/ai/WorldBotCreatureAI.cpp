@@ -653,6 +653,38 @@ std::string DescribeSpellForTrace(std::uint32_t spellId)
     return std::string(name) + "(" + std::to_string(spellId) + ")";
 }
 
+std::uint32_t ComputeSyntheticCreatureGlobalCooldownMs(Unit* bot, SpellInfo const* spellInfo)
+{
+    if (!bot || !spellInfo)
+        return 0;
+
+    if (!bot->ToCreature())
+        return 0;
+
+    std::uint32_t gcdMs = spellInfo->StartRecoveryTime;
+    if (gcdMs == 0)
+        return 0;
+
+    constexpr std::uint32_t MinGcdMs = 1000u;
+    constexpr std::uint32_t MaxGcdMs = 1500u;
+    if (gcdMs >= MinGcdMs && gcdMs <= MaxGcdMs)
+    {
+        if (spellInfo->StartRecoveryCategory == 133
+            && spellInfo->StartRecoveryTime == 1500
+            && spellInfo->DmgClass != SPELL_DAMAGE_CLASS_MELEE
+            && spellInfo->DmgClass != SPELL_DAMAGE_CLASS_RANGED
+            && !spellInfo->HasAttribute(SPELL_ATTR0_USES_RANGED_SLOT)
+            && !spellInfo->HasAttribute(SPELL_ATTR0_IS_ABILITY))
+        {
+            gcdMs = static_cast<std::uint32_t>(float(gcdMs) * bot->GetFloatValue(UNIT_MOD_CAST_SPEED));
+        }
+
+        gcdMs = std::clamp(gcdMs, MinGcdMs, MaxGcdMs);
+    }
+
+    return gcdMs;
+}
+
 std::string DescribeCombatActionForTrace(service::BotCombatEvaluatedAction const& action)
 {
     if (action.actionType == model::BotCombatActionType::Item)
@@ -1035,6 +1067,7 @@ void WorldBotCreatureAI::SetIdentityAndSession(
     InvalidateCombatProfile();
     _lastDebugCombatManaDrainWorldMs = 0;
     _debugCombatManaGemObserved = false;
+    _syntheticGlobalCooldownRemainingMs = 0;
     _usedSimulatedItemsThisCombat.clear();
     ClearActiveTaxiTravel();
     ClearActivePhysicalTransit();
@@ -2949,19 +2982,47 @@ void WorldBotCreatureAI::TickGatherStep(service::AmbientStep const& step)
             + "/" + std::to_string(requiredCycles));
 }
 
-void WorldBotCreatureAI::TickCombat(uint32 /*diff*/)
+void WorldBotCreatureAI::TickCombat(uint32 diff)
 {
     if (!me)
         return;
 
+    if (_syntheticGlobalCooldownRemainingMs > 0)
+        _syntheticGlobalCooldownRemainingMs =
+            (_syntheticGlobalCooldownRemainingMs > diff)
+                ? (_syntheticGlobalCooldownRemainingMs - diff)
+                : 0u;
+
+    auto const recordDebugCombatFlowTrace =
+        [&](std::string const& reason, Unit* traceTarget = nullptr)
+        {
+            if (!IsDebugForcedCombatIdentity())
+                return;
+
+            Unit* targetForTrace = traceTarget ? traceTarget : me->GetVictim();
+            std::ostringstream oss;
+            oss << "phase='combat' decision='flow' "
+                << "reason='" << reason << "' "
+                << "bot_in_combat=" << (me->IsInCombat() ? 1 : 0) << " "
+                << "bot_casting=" << (me->IsNonMeleeSpellCast(false) ? 1 : 0) << " "
+                << "victim=" << DescribeTraceUnit(targetForTrace);
+            RecordCombatTrace(oss.str());
+        };
+
     SuspendCurrentStepForCombat(me->GetVictim());
 
     if (!UpdateVictim())
+    {
+        recordDebugCombatFlowTrace("update_victim_false");
         return;
+    }
 
     Unit* target = me->GetVictim();
     if (!target)
+    {
+        recordDebugCombatFlowTrace("missing_victim_after_update");
         return;
+    }
 
     model::WorldBotHazardSnapshot const hazard = BuildWorldBotHazardSnapshot(me, _hazardEvaluationState);
     std::vector<service::WorldBotNearbyHostileSnapshot> const nearbyHostiles =
@@ -3049,9 +3110,23 @@ void WorldBotCreatureAI::TickCombat(uint32 /*diff*/)
     }
 
     EnsureCombatProfile();
+    if (IsDebugForcedCombatIdentity())
+    {
+        std::ostringstream profileTrace;
+        profileTrace << "phase='combat' decision='profile_state' "
+            << "prepared=" << (_combatProfilePrepared ? 1 : 0) << " "
+            << "build_ready=" << (_preparedBuildReady ? 1 : 0) << " "
+            << "interrupt_entries=" << _combatPreparedProfile.interruptEntries.size() << " "
+            << "rotation_entries=" << _combatPreparedProfile.rotationEntries.size() << " "
+            << "available_spells=" << _combatPreparedProfile.availableSpells.size() << " "
+            << "victim=" << DescribeTraceUnit(target);
+        RecordCombatTrace(profileTrace.str());
+    }
     MaybeApplyDebugCombatManaDrain(target);
 
     bool acted = false;
+    service::BotCombatEvaluationResult interruptResult;
+    service::BotCombatEvaluationResult rotationResult;
     if (!_combatPreparedProfile.interruptEntries.empty() || !_combatPreparedProfile.rotationEntries.empty())
     {
         service::BotCombatRuntimeContext context;
@@ -3059,6 +3134,7 @@ void WorldBotCreatureAI::TickCombat(uint32 /*diff*/)
         context.owner = nullptr;
         context.primaryTarget = target;
         context.allowHardCasts = movementDecision.allowHardCasts;
+        context.syntheticGlobalCooldownRemainingMs = _syntheticGlobalCooldownRemainingMs;
         context.usedSimulatedItemsThisCombat = &_usedSimulatedItemsThisCombat;
         context.rotationWaitMs = _combatPreparedProfile.resolution.profile.settings.rotationWaitMs;
         context.defaultAoEMode = _combatPreparedProfile.resolution.profile.settings.defaultAoEMode;
@@ -3093,6 +3169,7 @@ void WorldBotCreatureAI::TickCombat(uint32 /*diff*/)
                         << "dispatched=" << (casted ? 1 : 0) << " "
                         << "reason='" << dispatchResult.reason << "' "
                         << "resolved_spell=" << dispatchResult.resolvedSpellId << " "
+                        << "synthetic_gcd_ms=" << _syntheticGlobalCooldownRemainingMs << " "
                         << "breaks_cast=" << (action.breaksCurrentCast ? 1 : 0) << " "
                         << "bot_casting=" << (me->IsNonMeleeSpellCast(false) ? 1 : 0);
                     RecordCombatTrace(castTrace.str());
@@ -3104,6 +3181,8 @@ void WorldBotCreatureAI::TickCombat(uint32 /*diff*/)
                     {
                         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(action.spellId))
                         {
+                            _syntheticGlobalCooldownRemainingMs =
+                                ComputeSyntheticCreatureGlobalCooldownMs(me, spellInfo);
                             std::uint32_t const cooldownMs = std::max<std::uint32_t>(
                                 spellInfo->RecoveryTime,
                                 spellInfo->CategoryRecoveryTime);
@@ -3129,16 +3208,14 @@ void WorldBotCreatureAI::TickCombat(uint32 /*diff*/)
                 return casted;
             };
 
-        service::BotCombatEvaluationResult const interruptResult =
-            GetRuntimeEvaluator().EvaluateInterrupts(_combatPreparedProfile, context);
+        interruptResult = GetRuntimeEvaluator().EvaluateInterrupts(_combatPreparedProfile, context);
         if (interruptResult.disposition != service::BotCombatEvaluationDisposition::None)
             RecordCombatTrace(BuildCombatTraceDetail("interrupt", interruptResult, target));
 
         acted = tryResult(interruptResult);
         if (!acted)
         {
-            service::BotCombatEvaluationResult const rotationResult =
-                GetRuntimeEvaluator().EvaluateRotation(_combatPreparedProfile, context);
+            rotationResult = GetRuntimeEvaluator().EvaluateRotation(_combatPreparedProfile, context);
             if (rotationResult.disposition != service::BotCombatEvaluationDisposition::None)
                 RecordCombatTrace(BuildCombatTraceDetail("rotation", rotationResult, target));
             acted = tryResult(rotationResult);
@@ -3151,6 +3228,19 @@ void WorldBotCreatureAI::TickCombat(uint32 /*diff*/)
 
     if (!acted)
     {
+        if (IsDebugForcedCombatIdentity())
+        {
+            std::ostringstream noActionTrace;
+            noActionTrace << "phase='combat' decision='no_action' "
+                << "interrupt_disposition=" << static_cast<int>(interruptResult.disposition) << " "
+                << "rotation_disposition=" << static_cast<int>(rotationResult.disposition) << " "
+                << "movement_plan='" << DescribeMovementPlanKind(movementPlan.kind) << "' "
+                << "hard_casts=" << (movementDecision.allowHardCasts ? 1 : 0) << " "
+                << "distance=" << me->GetDistance(target) << " "
+                << "victim=" << DescribeTraceUnit(target);
+            RecordCombatTrace(noActionTrace.str());
+        }
+
         if (movementPlan.kind != service::WorldBotMovementPlanKind::None && me->IsNonMeleeSpellCast(false) && !movementDecision.allowHardCasts)
             me->InterruptNonMeleeSpells(false);
 

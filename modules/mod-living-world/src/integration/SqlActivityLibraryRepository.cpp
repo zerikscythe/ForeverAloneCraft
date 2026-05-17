@@ -68,5 +68,43 @@ std::vector<model::ActivityEntry> SqlActivityLibraryRepository::LoadEligible(
     return result;
 }
 
+std::vector<model::ActivityEntry> SqlActivityLibraryRepository::LoadZoneFallbackEligible(
+    std::uint32_t zoneId,
+    std::uint8_t faction,
+    std::uint8_t level,
+    bool hasHerbalism,
+    bool hasMining,
+    bool hasFishing) const
+{
+    QueryResult qr = WorldDatabase.Query(
+        "SELECT activity_id, activity_key, display_name, activity_type, "
+        "task_family, required_zone_type, max_per_session, "
+        "opener_bias, followup_bias, target_zone_id, required_faction, min_level, max_level, "
+        "requires_herbalism, requires_mining, requires_fishing, "
+        "weight, duration_min_sec, duration_max_sec "
+        "FROM living_world_activity_library "
+        "WHERE target_zone_id = {} "
+        "  AND (required_faction = 0 OR required_faction = {}) "
+        "  AND min_level <= {} "
+        "  AND (requires_herbalism = 0 OR {} = 1) "
+        "  AND (requires_mining    = 0 OR {} = 1) "
+        "  AND (requires_fishing   = 0 OR {} = 1)",
+        zoneId,
+        faction,
+        level,
+        static_cast<int>(hasHerbalism),
+        static_cast<int>(hasMining),
+        static_cast<int>(hasFishing));
+
+    std::vector<model::ActivityEntry> result;
+    if (!qr)
+        return result;
+    do
+    {
+        result.push_back(BuildActivityEntry(qr->Fetch()));
+    } while (qr->NextRow());
+    return result;
+}
+
 } // namespace integration
 } // namespace living_world
