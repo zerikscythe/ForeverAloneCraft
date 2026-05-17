@@ -1,6 +1,8 @@
 #include "service/WorldBotAssignedGearService.h"
 
+#include "DataStores/DBCStores.h"
 #include "Globals/ObjectMgr.h"
+#include "Item.h"
 #include "ItemTemplate.h"
 #include "Log.h"
 #include "Player.h"
@@ -14,6 +16,8 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <cctype>
+#include <cstdlib>
 #include <limits>
 #include <optional>
 #include <random>
@@ -604,6 +608,93 @@ std::optional<model::WorldBotAssignedGearEntry> ChooseItemForSlot(
     entry.quality = static_cast<std::uint8_t>(picked->Quality);
     return entry;
 }
+
+std::vector<std::uint32_t> ParseItemEnchantmentValues(std::string const& text)
+{
+    std::vector<std::uint32_t> values;
+    std::size_t cursor = 0;
+
+    while (cursor < text.size())
+    {
+        while (cursor < text.size()
+            && std::isspace(static_cast<unsigned char>(text[cursor])))
+        {
+            ++cursor;
+        }
+
+        if (cursor >= text.size())
+            break;
+
+        char* end = nullptr;
+        unsigned long const parsed = std::strtoul(text.c_str() + cursor, &end, 10);
+        if (end == text.c_str() + cursor)
+        {
+            values.push_back(0u);
+            ++cursor;
+            continue;
+        }
+
+        values.push_back(static_cast<std::uint32_t>(parsed));
+        cursor = static_cast<std::size_t>(end - text.c_str());
+    }
+
+    return values;
+}
+
+void AccumulateWorldBotEnchantmentEntry(
+    model::WorldBotAssignedGearSummary& summary,
+    SpellItemEnchantmentEntry const* enchantEntry)
+{
+    if (!enchantEntry)
+        return;
+
+    for (std::size_t effectIndex = 0;
+         effectIndex < MAX_SPELL_ITEM_ENCHANTMENT_EFFECTS;
+         ++effectIndex)
+    {
+        std::uint32_t const effectType = enchantEntry->type[effectIndex];
+        std::int32_t const amount = static_cast<std::int32_t>(enchantEntry->amount[effectIndex]);
+        std::uint32_t const effectArg = enchantEntry->spellid[effectIndex];
+
+        switch (effectType)
+        {
+            case ITEM_ENCHANTMENT_TYPE_RESISTANCE:
+                AccumulateWorldBotAssignedGearResistance(
+                    summary,
+                    static_cast<SpellSchools>(effectArg),
+                    amount);
+                break;
+            case ITEM_ENCHANTMENT_TYPE_STAT:
+                AccumulateWorldBotAssignedGearStat(summary, effectArg, amount);
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+void AccumulateWorldBotEntryEnchantments(
+    model::WorldBotAssignedGearSummary& summary,
+    model::WorldBotAssignedGearEntry const& entry)
+{
+    if (entry.enchantments.empty())
+        return;
+
+    std::vector<std::uint32_t> const values = ParseItemEnchantmentValues(entry.enchantments);
+    if (values.empty())
+        return;
+
+    for (std::size_t base = 0; base < values.size(); base += MAX_ENCHANTMENT_OFFSET)
+    {
+        std::uint32_t const enchantId = values[base];
+        if (enchantId == 0)
+            continue;
+
+        AccumulateWorldBotEnchantmentEntry(
+            summary,
+            sSpellItemEnchantmentStore.LookupEntry(enchantId));
+    }
+}
 } // namespace
 
 WorldBotAssignedGearService::WorldBotAssignedGearService(
@@ -769,6 +860,8 @@ model::WorldBotAssignedGearSummary WorldBotAssignedGearService::SummarizeAssigne
             _ItemStat const& stat = itemTemplate->ItemStat[i];
             AccumulateWorldBotAssignedGearStat(summary, stat.ItemStatType, stat.ItemStatValue);
         }
+
+        AccumulateWorldBotEntryEnchantments(summary, entry);
     }
 
     return summary;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 
 namespace living_world
 {
@@ -12,6 +13,7 @@ struct WorldBotAssignedGearEntry
     std::uint32_t itemId = 0;
     std::uint32_t itemLevel = 0;
     std::uint8_t quality = 0;
+    std::string enchantments;
 };
 
 struct WorldBotAssignedGearSummary

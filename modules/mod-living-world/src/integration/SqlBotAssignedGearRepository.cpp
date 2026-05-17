@@ -17,9 +17,20 @@ void SqlBotAssignedGearRepository::EnsureSchema() const
         " item_id INT UNSIGNED NOT NULL,"
         " item_level SMALLINT UNSIGNED NOT NULL DEFAULT 0,"
         " quality TINYINT UNSIGNED NOT NULL DEFAULT 0,"
+        " enchantments VARCHAR(512) NOT NULL DEFAULT '',"
         " PRIMARY KEY (identity_id, slot_id),"
         " KEY idx_lwbag_item (item_id)"
         ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    QueryResult hasEnchantmentsColumn = CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_assigned_gear LIKE 'enchantments'");
+    if (!hasEnchantmentsColumn)
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_assigned_gear "
+            "ADD COLUMN enchantments VARCHAR(512) NOT NULL DEFAULT '' "
+            "AFTER quality");
+    }
 }
 
 std::vector<model::WorldBotAssignedGearEntry> SqlBotAssignedGearRepository::LoadAssignments(
@@ -28,7 +39,7 @@ std::vector<model::WorldBotAssignedGearEntry> SqlBotAssignedGearRepository::Load
     std::vector<model::WorldBotAssignedGearEntry> entries;
 
     QueryResult result = CharacterDatabase.Query(
-        "SELECT slot_id, item_id, item_level, quality "
+        "SELECT slot_id, item_id, item_level, quality, enchantments "
         "FROM living_world_bot_assigned_gear "
         "WHERE identity_id = {} "
         "ORDER BY slot_id ASC",
@@ -45,6 +56,7 @@ std::vector<model::WorldBotAssignedGearEntry> SqlBotAssignedGearRepository::Load
         entry.itemId = fields[1].Get<std::uint32_t>();
         entry.itemLevel = fields[2].Get<std::uint32_t>();
         entry.quality = fields[3].Get<std::uint8_t>();
+        entry.enchantments = fields[4].Get<std::string>();
         entries.push_back(entry);
     } while (result->NextRow());
 
@@ -66,17 +78,20 @@ void SqlBotAssignedGearRepository::ReplaceAssignments(
 
     for (model::WorldBotAssignedGearEntry const& entry : entries)
     {
+        std::string enchantments = entry.enchantments;
+        CharacterDatabase.EscapeString(enchantments);
         CharacterDatabase.ExecuteOrAppend(
             trans,
             Acore::StringFormat(
                 "INSERT INTO living_world_bot_assigned_gear "
-                "(identity_id, slot_id, item_id, item_level, quality) "
-                "VALUES ({}, {}, {}, {}, {})",
+                "(identity_id, slot_id, item_id, item_level, quality, enchantments) "
+                "VALUES ({}, {}, {}, {}, {}, '{}')",
                 identityId,
                 static_cast<std::uint32_t>(entry.slot),
                 entry.itemId,
                 entry.itemLevel,
-                static_cast<std::uint32_t>(entry.quality)));
+                static_cast<std::uint32_t>(entry.quality),
+                enchantments));
     }
 
     CharacterDatabase.ExecuteOrAppend(
