@@ -199,13 +199,43 @@ def read_tail(path: pathlib.Path, max_chars: int = 5000) -> str:
     return text[-max_chars:]
 
 
-def wait_for_server_ready(process: subprocess.Popen[str], stdout_path: pathlib.Path, stderr_path: pathlib.Path, timeout_seconds: int) -> None:
+def wait_for_server_ready(
+    process: subprocess.Popen[str],
+    stdout_path: pathlib.Path,
+    stderr_path: pathlib.Path,
+    timeout_seconds: int,
+    settings: dict[str, str | int] | None = None,
+    args: argparse.Namespace | None = None,
+) -> None:
     deadline = time.time() + timeout_seconds
     markers = ["WORLD: World Initialized", "AzerothCore 3.3.5a is ready."]
     while time.time() < deadline:
         if stdout_path.exists():
             text = stdout_path.read_text(encoding="utf-8", errors="ignore")
             if any(marker in text for marker in markers):
+                return
+
+        if settings is not None and args is not None:
+            active_rows = run_mysql_query(
+                settings,
+                str(settings["characters_db"]),
+                "SELECT COUNT(*) FROM living_world_bot_identity "
+                f"WHERE population_role = 'city_reserve' AND reserve_city_zone_id = {args.city_zone_id} "
+                f"AND faction = {args.faction} AND is_available = 0",
+            )
+            if active_rows and int(active_rows[0][0]) > 0:
+                return
+
+            activity_rows = run_mysql_query(
+                settings,
+                str(settings["characters_db"]),
+                "SELECT COUNT(*) "
+                "FROM living_world_bot_activity_log a "
+                "JOIN living_world_bot_identity i ON i.id = a.bot_guid "
+                f"WHERE i.population_role = 'city_reserve' AND i.reserve_city_zone_id = {args.city_zone_id} "
+                f"AND i.faction = {args.faction}",
+            )
+            if activity_rows and int(activity_rows[0][0]) > 0:
                 return
         if process.poll() is not None:
             raise RuntimeError(
@@ -458,7 +488,7 @@ def main() -> int:
                 stderr=stderr_handle,
                 text=True,
             )
-            wait_for_server_ready(process, stdout_path, stderr_path, args.startup_timeout)
+            wait_for_server_ready(process, stdout_path, stderr_path, args.startup_timeout, settings, args)
             active_count = wait_for_reserve_activation(settings, args, max(30, args.startup_timeout // 2))
             time.sleep(args.runtime_seconds)
     finally:

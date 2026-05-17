@@ -2117,12 +2117,15 @@ private:
         return std::nullopt;
     }
 
-    // Count currently active creature world bots in identity ledger.
+    // Count currently active roaming world bots in the identity ledger.
+    // Dedicated reserve populations such as city_reserve are accounted for
+    // separately and do not count against the global ambient cap.
     static std::uint32_t CountOnlineWorldBots()
     {
         QueryResult qr = CharacterDatabase.Query(
             "SELECT COUNT(*) FROM living_world_bot_identity "
-            "WHERE is_available = 0 AND is_retired = 0");
+            "WHERE is_available = 0 AND is_retired = 0 "
+            "AND population_role = 'world'");
         if (!qr)
             return 0;
         return qr->Fetch()[0].Get<std::uint32_t>();
@@ -2195,6 +2198,24 @@ private:
         }
 
         return results;
+    }
+
+    std::uint32_t CountPendingReserveCityDemand() const
+    {
+        std::uint32_t demand = 0;
+        for (CityReservePolicy const& policy : GetCityReservePolicies())
+        {
+            if (!IsZoneHotOrInterested(policy.mapId, policy.zoneId))
+                continue;
+
+            std::uint32_t const visible = CountMaterializedWorldBotsInZone(policy.zoneId);
+            if (visible >= policy.targetVisible)
+                continue;
+
+            demand += (policy.targetVisible - visible);
+        }
+
+        return demand;
     }
 
     static void LogActiveWorldBotRoster()
@@ -3372,9 +3393,13 @@ private:
     void TickAmbientPopulation()
     {
         std::uint32_t const online = CountOnlineWorldBots();
+        std::uint32_t const reserveDemand = CountPendingReserveCityDemand();
+        std::uint32_t const generalToSpawn = online >= _targetAmbientPop
+            ? 0u
+            : (_targetAmbientPop - online);
         LOG_INFO("server.worldserver",
-            "[LivingWorld] AmbientPopulationTick: online={} target={} tick_ms={}",
-            online, _targetAmbientPop, _populationTickMs);
+            "[LivingWorld] AmbientPopulationTick: world_online={} world_target={} reserve_demand={} tick_ms={}",
+            online, _targetAmbientPop, reserveDemand, _populationTickMs);
 
         if (HasForcedSpawnOverride())
         {
@@ -3389,17 +3414,19 @@ private:
 
         LogActiveWorldBotRoster();
 
-        if (online >= _targetAmbientPop)
+        if (generalToSpawn == 0 && reserveDemand == 0)
         {
             LOG_INFO("server.worldserver",
                 "[LivingWorld] AmbientPopulationTick: population already satisfied.");
             return;
         }
 
-        std::uint32_t const toSpawn = _targetAmbientPop - online;
+        std::uint32_t const toSpawn = generalToSpawn + reserveDemand;
         LOG_INFO("server.worldserver",
-            "[LivingWorld] AmbientPopulationTick: requesting up to {} new world bots.",
-            toSpawn);
+            "[LivingWorld] AmbientPopulationTick: requesting up to {} new bots (general={} reserve={}).",
+            toSpawn,
+            generalToSpawn,
+            reserveDemand);
 
         // Load available identities — mix of factions.
         living_world::integration::SqlBotIdentityRepository identityRepo;
@@ -3420,13 +3447,13 @@ private:
         }
         else
         {
-            identities = LoadReserveCityCandidates(identityRepo, toSpawn);
+            identities = LoadReserveCityCandidates(identityRepo, reserveDemand);
 
-            if (identities.size() < toSpawn)
+            if (generalToSpawn != 0)
             {
                 auto general = identityRepo.LoadAvailable(
                     0,
-                    toSpawn - static_cast<std::uint32_t>(identities.size()));
+                    generalToSpawn);
                 for (auto& record : general)
                     identities.push_back(std::move(record));
             }

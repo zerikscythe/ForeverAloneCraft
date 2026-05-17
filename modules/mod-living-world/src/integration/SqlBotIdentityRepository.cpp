@@ -644,7 +644,7 @@ void SqlBotIdentityRepository::CompleteWorldSession(
     QueryResult result = CharacterDatabase.Query(
         "SELECT name, level, total_world_online_ms, world_online_ms_since_level, "
         "post_max_world_online_ms, is_retired, successor_spawned, race_id, class_id, spec_key, loadout_key, personality_key, faction, display_id, gender, gear_refresh_pending, "
-        "home_zone_id, home_anchor_point_key, home_bind_point_key "
+        "home_zone_id, home_anchor_point_key, home_bind_point_key, population_role "
         "FROM living_world_bot_identity WHERE id = {}",
         id);
 
@@ -671,6 +671,7 @@ void SqlBotIdentityRepository::CompleteWorldSession(
     std::uint32_t homeZoneId = f[16].IsNull() ? 0u : f[16].Get<std::uint32_t>();
     std::string homeAnchorPointKey = f[17].IsNull() ? "" : f[17].Get<std::string>();
     std::string homeBindPointKey = f[18].IsNull() ? "" : f[18].Get<std::string>();
+    std::string const populationRole = f[19].IsNull() ? "world" : CanonicalizePopulationRole(f[19].Get<std::string>());
 
     if (isRetired)
     {
@@ -681,6 +682,32 @@ void SqlBotIdentityRepository::CompleteWorldSession(
             "runtime_state = '', runtime_detail = '' "
             "WHERE id = {}",
             lastSeenZoneId, id);
+        return;
+    }
+
+    if (populationRole == "city_reserve")
+    {
+        std::string const normalizedSourceKind =
+            QuoteCharactersString(NormalizeRuntimeLedgerText(lastSessionSourceKind, 64));
+        std::string const normalizedSourceKey =
+            QuoteCharactersString(NormalizeRuntimeLedgerText(lastSessionSourceKey, 128));
+        std::string const normalizedTaskFamily =
+            QuoteCharactersString(NormalizeRuntimeLedgerText(lastTaskFamily, 32));
+
+        CharacterDatabase.Execute(
+            "UPDATE living_world_bot_identity "
+            "SET is_available = 1, last_seen_zone = {}, last_seen_at = NOW(), "
+            "last_session_source_kind = {}, last_session_source_key = {}, "
+            "last_task_family = {}, last_task_target_zone = {}, "
+            "active_world_session_ms = 0, active_world_session_start = NULL, "
+            "runtime_state = '', runtime_detail = '' "
+            "WHERE id = {}",
+            lastSeenZoneId,
+            normalizedSourceKind,
+            normalizedSourceKey,
+            normalizedTaskFamily,
+            lastTaskTargetZoneId == 0 ? std::string("NULL") : std::to_string(lastTaskTargetZoneId),
+            id);
         return;
     }
 
