@@ -2504,7 +2504,6 @@ private:
 
         if (!_debugSyntheticInterestSwitched
             && _debugSyntheticInterestSwitchMs != 0
-            && _debugSyntheticInterestSwitchMapId != 0
             && _debugSyntheticInterestElapsedMs >= _debugSyntheticInterestSwitchMs)
         {
             living_world::script::SetSyntheticWorldBotInterest(
