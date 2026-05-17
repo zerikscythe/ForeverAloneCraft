@@ -90,7 +90,7 @@ PROFESSION_COMBOS = [
 ]
 
 
-NAMES = {
+RACE_FANTASY_NAMES = {
     1: ["Marcus", "Elena", "Thomas", "Claire", "Roland", "Sera", "Aldric", "Mira", "Gareth", "Lena", "Oswin", "Tara", "Bram", "Nessa", "Hugo", "Alys", "Corwin", "Delia", "Emric", "Fiona", "Hadwin", "Isolde", "Joric", "Kira", "Lewin"],
     2: ["Grak", "Thruk", "Morg", "Draka", "Vorn", "Kurg", "Raka", "Thok", "Brolgur", "Darkjaw", "Gorefist", "Ironscar", "Krom", "Lukar", "Malgok", "Narak"],
     3: ["Bronk", "Thora", "Gimble", "Dugal", "Bera", "Thordin", "Kelga", "Rimdar", "Agna", "Borik", "Gunda", "Ulfar", "Snorra", "Dvallin", "Frika", "Hegir"],
@@ -104,12 +104,65 @@ NAMES = {
 }
 
 
+CASUAL_GIVEN_NAMES = [
+    "Alex", "Andy", "Ash", "Ben", "Bobby", "Brad", "Bree", "Casey", "Chris", "Cody",
+    "Dan", "Danny", "Dave", "Derek", "Eli", "Evan", "Finn", "Frank", "Greg", "Jake",
+    "Jamie", "Jess", "Jimmy", "Joe", "John", "Josh", "Katie", "Kelly", "Kevin", "Kyle",
+    "Liam", "Lucy", "Maddie", "Mason", "Matt", "Max", "Mia", "Mike", "Milo", "Nick",
+    "Nina", "Noah", "Owen", "Ryan", "Sam", "Scott", "Sean", "Steve", "Tara", "Tony",
+    "Tyler", "Vince", "Zack",
+]
+
+
+CASUAL_PREFIXES = [
+    "Big", "Chill", "Cold", "Dark", "Fast", "Lucky", "Mad", "Mellow", "Old", "Quick",
+    "Rusty", "Shadow", "Sleepy", "Slow", "Sneaky", "Storm", "Tiny", "Wild",
+]
+
+
+CASUAL_SUFFIXES = [
+    "blade", "brew", "bro", "buddy", "burn", "caller", "claw", "craft", "dude", "guy",
+    "hammer", "hunter", "jack", "lad", "lord", "mane", "runner", "shot", "spark",
+    "ster", "stone", "walker", "ward", "weaver", "wolf",
+]
+
+
+MEME_PREFIXES = [
+    "Bad", "Bonk", "Bonked", "Crusty", "Dirty", "Dumb", "Grumpy", "Lil", "Moist",
+    "Moldy", "Nasty", "Salty", "Shifty", "Silly", "Smelly", "Sneaky", "Spicy",
+    "Stinky", "Thicc", "Trashy", "Weird",
+]
+
+
+MEME_CORES = [
+    "alfred", "bacon", "beans", "bert", "blob", "bob", "bonk", "boots", "burt", "cheese",
+    "chunk", "dave", "dong", "fred", "gary", "george", "goober", "gravy", "greg", "jim",
+    "joe", "larry", "lump", "mike", "mop", "nugget", "pickle", "randy", "ron", "scrub",
+    "socks", "spud", "steve", "terry", "tim", "toes", "walter",
+]
+
+
+MEME_SUFFIXES = [
+    "banger", "beard", "belly", "boi", "brain", "bucket", "cakes", "cheeks", "chonk",
+    "crank", "fang", "feet", "fist", "goblin", "juice", "lad", "lord", "mage", "man",
+    "master", "munch", "pants", "picker", "runner", "snack", "sneak", "spank", "tank",
+    "totem", "wagon", "wizard",
+]
+
+
 NAME_SUFFIXES = [
     "ash", "bane", "beam", "blade", "bloom", "brook", "crest", "dawn",
     "fall", "flame", "forge", "gaze", "glow", "guard", "heart", "mane",
     "root", "scar", "shade", "song", "spark", "spire", "stone", "strike",
     "thorn", "vale", "ward", "weave", "whisper", "wind", "wing", "wrath",
 ]
+
+
+NAME_STYLE_WEIGHTS = (
+    ("fantasy", 0.55),
+    ("casual", 0.25),
+    ("meme", 0.20),
+)
 
 
 def gear_tier_for_level(level: int) -> int:
@@ -183,9 +236,41 @@ def connect_characters_db(cfg: configparser.ConfigParser):
 
 
 def apply_schema(conn, wipe: bool) -> None:
-    with conn.cursor() as cur:
-        for _ in cur.execute(SCHEMA_PATH.read_text(encoding="utf-8"), multi=True):
-            pass
+    schema_sql = SCHEMA_PATH.read_text(encoding="utf-8")
+    statements: list[str] = []
+    buffer: list[str] = []
+    for line in schema_sql.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("--"):
+            continue
+        buffer.append(line)
+        if stripped.endswith(";"):
+            statements.append("\n".join(buffer))
+            buffer = []
+    if buffer:
+        statements.append("\n".join(buffer))
+
+    with conn.cursor(buffered=True) as cur:
+        for statement in statements:
+            cur.execute(statement)
+        cur.execute("SHOW COLUMNS FROM living_world_bot_identity LIKE 'population_role'")
+        if cur.fetchone() is None:
+            cur.execute(
+                "ALTER TABLE living_world_bot_identity "
+                "ADD COLUMN population_role VARCHAR(32) NOT NULL DEFAULT 'world' AFTER has_fishing"
+            )
+        cur.execute("SHOW COLUMNS FROM living_world_bot_identity LIKE 'reserve_city_zone_id'")
+        if cur.fetchone() is None:
+            cur.execute(
+                "ALTER TABLE living_world_bot_identity "
+                "ADD COLUMN reserve_city_zone_id INT UNSIGNED NULL AFTER population_role"
+            )
+        cur.execute("SHOW INDEX FROM living_world_bot_identity WHERE Key_name = 'idx_population_role'")
+        if cur.fetchone() is None:
+            cur.execute(
+                "ALTER TABLE living_world_bot_identity "
+                "ADD INDEX idx_population_role (population_role, reserve_city_zone_id, faction, is_available, is_retired)"
+            )
         if wipe:
             cur.execute("DELETE FROM living_world_bot_identity")
 
@@ -230,8 +315,13 @@ class NameGenerator:
         self.base_usage: Counter[str] = Counter()
 
     def pick(self, race_id: int, rng: random.Random) -> str:
-        pool = NAMES.get(race_id, NAMES[1])
-        base = rng.choice(pool)
+        style = self._choose_style(rng)
+        if style == "fantasy":
+            base = self._build_fantasy_name(race_id, rng)
+        elif style == "casual":
+            base = self._build_casual_name(rng)
+        else:
+            base = self._build_meme_name(rng)
 
         if base not in self.used:
             self.used.add(base)
@@ -250,8 +340,60 @@ class NameGenerator:
                 self.base_usage[base] = usage
                 return candidate
 
+    def _choose_style(self, rng: random.Random) -> str:
+        roll = rng.random()
+        threshold = 0.0
+        for style, weight in NAME_STYLE_WEIGHTS:
+            threshold += weight
+            if roll <= threshold:
+                return style
+        return NAME_STYLE_WEIGHTS[-1][0]
 
-def generate_identity(faction: int, level: int, rng: random.Random, name_gen: NameGenerator) -> dict:
+    def _build_fantasy_name(self, race_id: int, rng: random.Random) -> str:
+        pool = RACE_FANTASY_NAMES.get(race_id, RACE_FANTASY_NAMES[1])
+        if rng.random() < 0.75:
+            return rng.choice(pool)
+
+        left = rng.choice(pool)
+        right = rng.choice(NAME_SUFFIXES).capitalize()
+        return f"{left}{right}"[:32]
+
+    def _build_casual_name(self, rng: random.Random) -> str:
+        given = rng.choice(CASUAL_GIVEN_NAMES)
+        roll = rng.random()
+        if roll < 0.40:
+            return given
+        if roll < 0.75:
+            prefix = rng.choice(CASUAL_PREFIXES)
+            return f"{prefix}{given}"[:32]
+
+        suffix = rng.choice(CASUAL_SUFFIXES).capitalize()
+        return f"{given}{suffix}"[:32]
+
+    def _build_meme_name(self, rng: random.Random) -> str:
+        roll = rng.random()
+        if roll < 0.45:
+            prefix = rng.choice(MEME_PREFIXES)
+            core = rng.choice(MEME_CORES).capitalize()
+            return f"{prefix}{core}"[:32]
+        if roll < 0.80:
+            core = rng.choice(MEME_CORES).capitalize()
+            suffix = rng.choice(MEME_SUFFIXES).capitalize()
+            return f"{core}{suffix}"[:32]
+
+        prefix = rng.choice(MEME_PREFIXES)
+        core = rng.choice(MEME_CORES).capitalize()
+        suffix = rng.choice(MEME_SUFFIXES).capitalize()
+        return f"{prefix}{core}{suffix}"[:32]
+
+
+def generate_identity(
+    faction: int,
+    level: int,
+    rng: random.Random,
+    name_gen: NameGenerator,
+    overrides: dict | None = None,
+) -> dict:
     valid_races = [race_id for race_id, (race_faction, *_rest) in RACE_DATA.items() if race_faction == faction]
     race_id = rng.choice(valid_races)
 
@@ -267,7 +409,7 @@ def generate_identity(faction: int, level: int, rng: random.Random, name_gen: Na
     name = name_gen.pick(race_id, rng)
     home_zone_id, home_anchor_point_key, home_bind_point_key = resolve_home_base(faction, level)
 
-    return {
+    identity = {
         "name": name,
         "race_id": race_id,
         "class_id": class_id,
@@ -284,6 +426,9 @@ def generate_identity(faction: int, level: int, rng: random.Random, name_gen: Na
         "home_anchor_point_key": home_anchor_point_key,
         "home_bind_point_key": home_bind_point_key,
     }
+    if overrides:
+        identity.update({key: value for key, value in overrides.items() if value is not None})
+    return identity
 
 
 def row_to_tuple(identity: dict) -> tuple:
@@ -291,6 +436,7 @@ def row_to_tuple(identity: dict) -> tuple:
         identity["name"], identity["race_id"], identity["class_id"], identity["spec_key"],
         identity["faction"], identity["display_id"], identity["gender"], identity["level"],
         identity["gear_tier"], identity["has_herbalism"], identity["has_mining"], identity["has_fishing"],
+        identity["population_role"], identity["reserve_city_zone_id"],
         identity["home_zone_id"], identity["home_anchor_point_key"], identity["home_bind_point_key"],
     )
 
@@ -300,12 +446,21 @@ def row_to_sql(identity: dict) -> str:
         f"('{identity['name']}', {identity['race_id']}, {identity['class_id']}, '{identity['spec_key']}', "
         f"{identity['faction']}, {identity['display_id']}, {identity['gender']}, {identity['level']}, "
         f"{identity['gear_tier']}, {identity['has_herbalism']}, {identity['has_mining']}, {identity['has_fishing']}, "
+        f"'{identity['population_role']}', "
+        f"{'NULL' if identity['reserve_city_zone_id'] is None else identity['reserve_city_zone_id']}, "
         f"{identity['home_zone_id']}, '{identity['home_anchor_point_key']}', '{identity['home_bind_point_key']}')"
     )
 
 
-def generate_population(alliance_count: int, horde_count: int, rng: random.Random,
-                        center: float, sigma: float, floor: float) -> list[dict]:
+def generate_population(
+    alliance_count: int,
+    horde_count: int,
+    rng: random.Random,
+    center: float,
+    sigma: float,
+    floor: float,
+    identity_overrides: dict | None = None,
+) -> list[dict]:
     weights = build_level_weights(center=center, sigma=sigma, floor=floor)
     name_gen = NameGenerator()
     identities: list[dict] = []
@@ -314,7 +469,7 @@ def generate_population(alliance_count: int, horde_count: int, rng: random.Rando
         per_level = allocate_levels(count, weights)
         for level in range(LEVEL_MIN, LEVEL_MAX + 1):
             for _ in range(per_level[level]):
-                identities.append(generate_identity(faction, level, rng, name_gen))
+                identities.append(generate_identity(faction, level, rng, name_gen, identity_overrides))
 
     return identities
 
@@ -353,6 +508,7 @@ def build_insert_sql(identities: list[dict]) -> str:
     columns = (
         "name, race_id, class_id, spec_key, faction, display_id, gender, "
         "level, gear_tier, has_herbalism, has_mining, has_fishing, "
+        "population_role, reserve_city_zone_id, "
         "home_zone_id, home_anchor_point_key, home_bind_point_key"
     )
     values_sql = ",\n    ".join(row_to_sql(identity) for identity in identities)
@@ -366,8 +522,8 @@ def build_insert_sql(identities: list[dict]) -> str:
 def insert_identities(conn, identities: list[dict], batch_size: int) -> None:
     sql = (
         "INSERT IGNORE INTO living_world_bot_identity "
-        "(name, race_id, class_id, spec_key, faction, display_id, gender, level, gear_tier, has_herbalism, has_mining, has_fishing, home_zone_id, home_anchor_point_key, home_bind_point_key) "
-        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        "(name, race_id, class_id, spec_key, faction, display_id, gender, level, gear_tier, has_herbalism, has_mining, has_fishing, population_role, reserve_city_zone_id, home_zone_id, home_anchor_point_key, home_bind_point_key) "
+        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
     )
     rows = [row_to_tuple(identity) for identity in identities]
     with conn.cursor() as cur:
@@ -380,11 +536,11 @@ def resolve_counts(args: argparse.Namespace) -> tuple[int, int, int]:
         if args.alliance_count is None or args.horde_count is None:
             raise ValueError("If either --alliance-count or --horde-count is supplied, both are required")
         total = args.alliance_count + args.horde_count
-        if args.count is not None and args.count != total:
+        if args.count not in (None, total):
             raise ValueError("--count must equal alliance+horde when per-faction counts are provided")
         return total, args.alliance_count, args.horde_count
 
-    total = args.count
+    total = args.count if args.count is not None else DEFAULT_TOTAL_COUNT
     if total % 2 != 0:
         raise ValueError("--count must be even when automatically split between factions")
     return total, total // 2, total // 2
@@ -392,7 +548,7 @@ def resolve_counts(args: argparse.Namespace) -> tuple[int, int, int]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Seed world bot identities")
-    parser.add_argument("--count", type=int, default=DEFAULT_TOTAL_COUNT,
+    parser.add_argument("--count", type=int, default=None,
                         help=f"Total identities to generate (default: {DEFAULT_TOTAL_COUNT})")
     parser.add_argument("--alliance-count", type=int, default=None,
                         help="Explicit Alliance count (requires --horde-count)")
@@ -414,6 +570,16 @@ def main() -> int:
                         help="When used with --dry-run, also print full SQL")
     parser.add_argument("--wipe", action="store_true",
                         help="Delete existing ledger rows before inserting")
+    parser.add_argument("--population-role", default="world",
+                        help="Value for living_world_bot_identity.population_role (default: world)")
+    parser.add_argument("--reserve-city-zone-id", type=int, default=None,
+                        help="Optional reserve city zone id for city_reserve pools")
+    parser.add_argument("--home-zone-id", type=int, default=None,
+                        help="Override generated home_zone_id")
+    parser.add_argument("--home-anchor-point-key", default=None,
+                        help="Override generated home_anchor_point_key")
+    parser.add_argument("--home-bind-point-key", default=None,
+                        help="Override generated home_bind_point_key")
     args = parser.parse_args()
 
     try:
@@ -423,6 +589,13 @@ def main() -> int:
         return 2
 
     rng = random.Random(args.seed)
+    identity_overrides = {
+        "population_role": args.population_role,
+        "reserve_city_zone_id": args.reserve_city_zone_id,
+        "home_zone_id": args.home_zone_id,
+        "home_anchor_point_key": args.home_anchor_point_key,
+        "home_bind_point_key": args.home_bind_point_key,
+    }
     identities = generate_population(
         alliance_count=alliance_count,
         horde_count=horde_count,
@@ -430,6 +603,7 @@ def main() -> int:
         center=args.curve_center,
         sigma=args.curve_sigma,
         floor=args.curve_floor,
+        identity_overrides=identity_overrides,
     )
 
     summary = summarize_identities(identities)
