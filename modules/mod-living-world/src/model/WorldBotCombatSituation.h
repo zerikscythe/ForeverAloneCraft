@@ -8,6 +8,12 @@ namespace living_world
 {
 namespace model
 {
+enum class WorldBotCombatEnvironment : std::uint8_t
+{
+    OpenWorld = 0,
+    DungeonOrRaid = 1,
+};
+
 struct WorldBotHazardSnapshot
 {
     bool active = false;
@@ -21,6 +27,7 @@ struct WorldBotHazardSnapshot
 
 struct WorldBotCombatSituation
 {
+    WorldBotCombatEnvironment environment = WorldBotCombatEnvironment::OpenWorld;
     WorldBotMovementStyle movementStyle = WorldBotMovementStyle::Unknown;
     float targetDistance = 0.0f;
     float healthPct = 100.0f;

@@ -36,6 +36,18 @@ inline model::WorldBotMovementStyle ResolveWorldBotMovementStyle(
     return model::WorldBotMovementStyle::StickyMelee;
 }
 
+inline model::WorldBotCombatEnvironment ResolveWorldBotCombatEnvironment(Unit const* unit)
+{
+    if (!unit || !unit->GetMap())
+        return model::WorldBotCombatEnvironment::OpenWorld;
+
+    Map const* map = unit->GetMap();
+    if (map->IsDungeon() || map->IsRaid())
+        return model::WorldBotCombatEnvironment::DungeonOrRaid;
+
+    return model::WorldBotCombatEnvironment::OpenWorld;
+}
+
 inline bool ResolveWorldBotCastSafety(
     model::WorldBotMovementStyle movementStyle,
     float targetDistance,
@@ -53,6 +65,7 @@ inline bool ResolveWorldBotCastSafety(
 
 inline model::WorldBotCombatSituation BuildWorldBotCombatSituation(
     model::WorldBotPreparedBuild const& build,
+    Unit const* unit,
     bool hasVictim,
     float targetDistance,
     float healthPct,
@@ -61,6 +74,7 @@ inline model::WorldBotCombatSituation BuildWorldBotCombatSituation(
     model::WorldBotHazardSnapshot const& hazard = {})
 {
     model::WorldBotCombatSituation situation;
+    situation.environment = ResolveWorldBotCombatEnvironment(unit);
     situation.movementStyle = ResolveWorldBotMovementStyle(build);
     situation.hasVictim = hasVictim;
     situation.targetDistance = targetDistance;

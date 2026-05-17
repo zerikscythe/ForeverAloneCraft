@@ -11,7 +11,17 @@ inline model::WorldBotMovementDecision EvaluateWorldBotMovementDoctrine(
 {
     model::WorldBotMovementDecision decision;
 
-    if (situation.hazard.active)
+    bool const strictHazardContext =
+        situation.environment == model::WorldBotCombatEnvironment::DungeonOrRaid;
+    bool const worldRepeatedDamageEscapeAllowed =
+        situation.isHealerStyle || situation.isRangedStyle;
+    bool const shouldHonorHazardOverride =
+        situation.hazard.active
+        && (strictHazardContext
+            || situation.hazard.explicitAuraTriggered
+            || (situation.hazard.repeatedDamageTriggered && worldRepeatedDamageEscapeAllowed));
+
+    if (shouldHonorHazardOverride)
     {
         decision.source = model::WorldBotMovementDecisionSource::HazardOverride;
         decision.posture = model::WorldBotCombatPosture::HazardEscape;

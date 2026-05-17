@@ -889,6 +889,18 @@ char const* DescribeTravelCapabilityTier(service::WorldBotTravelCapabilityTier t
     }
 }
 
+char const* DescribeCombatEnvironment(model::WorldBotCombatEnvironment environment)
+{
+    switch (environment)
+    {
+        case model::WorldBotCombatEnvironment::DungeonOrRaid:
+            return "dungeon_or_raid";
+        case model::WorldBotCombatEnvironment::OpenWorld:
+        default:
+            return "open_world";
+    }
+}
+
 model::WorldBotHazardSnapshot BuildWorldBotHazardSnapshot(
     Unit* bot,
     service::SharedHazardEvaluationState& hazardState)
@@ -911,6 +923,17 @@ model::WorldBotHazardSnapshot BuildWorldBotHazardSnapshot(
     }
 
     Position const currentPosition = bot->GetPosition();
+    model::HazardTuning tuning = GetHazardConfigService().GetTuning();
+    if (Map const* map = bot->GetMap())
+    {
+        if (!map->IsDungeon() && !map->IsRaid())
+        {
+            tuning.damageThresholdPct = std::max(5.0f, tuning.damageThresholdPct * 2.5f);
+            tuning.consecutiveDamageTicks = std::max(4, tuning.consecutiveDamageTicks + 2);
+            tuning.commitWindowMs = std::min(1000, tuning.commitWindowMs);
+        }
+    }
+
     service::SharedHazardEvaluationResult const evaluation =
         service::EvaluateSharedHazard(
             hazardState,
@@ -920,7 +943,7 @@ model::WorldBotHazardSnapshot BuildWorldBotHazardSnapshot(
             hasKnownAura,
             hazardSpellId,
             hasKnownAura ? 1.0f : 0.0f,
-            GetHazardConfigService().GetTuning());
+            tuning);
 
     snapshot.active = evaluation.dangerDetectedNow || evaluation.commitWindowActive;
     snapshot.explicitAuraTriggered = evaluation.explicitAuraTriggered;
@@ -3340,6 +3363,7 @@ void WorldBotCreatureAI::TickCombat(uint32 diff)
         CollectNearbyHostileSnapshots(me, target, 30.0f);
     model::WorldBotCombatSituation const situation = service::BuildWorldBotCombatSituation(
         _preparedBuild,
+        me,
         true,
         me->GetDistance(target),
         me->GetHealthPct(),
@@ -3365,6 +3389,7 @@ void WorldBotCreatureAI::TickCombat(uint32 diff)
         {
             std::ostringstream movementTrace;
             movementTrace << BuildCombatMovementTraceDetail("movement_doctrine", target)
+                << " environment='" << DescribeCombatEnvironment(situation.environment) << "'"
                 << " style='" << DescribeMovementStyle(situation.movementStyle) << "'"
                 << " posture='" << DescribeCombatPosture(movementDecision.posture) << "'"
                 << " source='" << DescribeMovementDecisionSource(movementDecision.source) << "'"
