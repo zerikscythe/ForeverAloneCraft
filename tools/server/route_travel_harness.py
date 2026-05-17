@@ -336,7 +336,9 @@ def fetch_identity_rows(
         settings,
         str(settings["characters_db"]),
         "SELECT name, level, is_available, session_count, active_world_session_ms, "
-        "last_seen_zone, runtime_state, runtime_detail "
+        "last_seen_zone, "
+        "COALESCE(NULLIF(runtime_state, ''), '-') AS runtime_state, "
+        "COALESCE(NULLIF(runtime_detail, ''), '-') AS runtime_detail "
         "FROM living_world_bot_identity "
         f"WHERE name IN ({name_list}) "
         "ORDER BY name ASC",
@@ -373,11 +375,13 @@ def build_report(
     if identity_rows:
         lines.append("[identities]")
         for row in identity_rows:
+            runtime_state = row[6] if len(row) > 6 else "-"
+            runtime_detail = row[7] if len(row) > 7 else "-"
             lines.append(
                 "  "
                 f"name={row[0]} level={row[1]} is_available={row[2]} "
                 f"session_count={row[3]} active_world_session_ms={row[4]} last_seen_zone={row[5]}"
-                f" runtime_state={row[6]} runtime_detail={row[7]}"
+                f" runtime_state={runtime_state} runtime_detail={runtime_detail}"
             )
         lines.append("")
 

@@ -230,6 +230,31 @@ inline std::optional<WorldBotKnownTransportRoute> ResolveKnownWorldBotTransportR
         }
     }
 
+    if (entry == 164871u)
+    {
+        if (mapId == 1u && zoneId == 1637u)
+        {
+            return WorldBotKnownTransportRoute{
+                "orgrimmar_to_tirisfal_zeppelin",
+                entry,
+                1u,
+                1637u,
+                0u,
+                1497u };
+        }
+
+        if (mapId == 0u && zoneId == 1497u)
+        {
+            return WorldBotKnownTransportRoute{
+                "undercity_to_durotar_zeppelin",
+                entry,
+                0u,
+                1497u,
+                1u,
+                1637u };
+        }
+    }
+
     if (priorState
         && priorState->transportEntry == entry
         && !priorState->transportRouteKey.empty()

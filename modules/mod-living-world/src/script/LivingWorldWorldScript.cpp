@@ -2385,11 +2385,19 @@ private:
     static bool IsKnownPhysicalTransitRoute(living_world::service::AmbientStep const& step)
     {
         std::string const transitType = NormalizeRuntimeTransitType(step.transitType);
-        if (transitType != "boat")
-            return false;
+        if (transitType == "boat")
+        {
+            return step.transitRouteKey == "ratchet_to_booty_bay"
+                || step.transitRouteKey == "booty_bay_to_ratchet";
+        }
 
-        return step.transitRouteKey == "ratchet_to_booty_bay"
-            || step.transitRouteKey == "booty_bay_to_ratchet";
+        if (transitType == "zeppelin")
+        {
+            return step.transitRouteKey == "orgrimmar_to_tirisfal_zeppelin"
+                || step.transitRouteKey == "undercity_to_durotar_zeppelin";
+        }
+
+        return false;
     }
 
     static std::uint32_t ResolveKnownPhysicalTransitTransportEntry(
@@ -2398,7 +2406,12 @@ private:
         if (!IsKnownPhysicalTransitRoute(step))
             return 0;
 
-        return 20808u;
+        std::string const transitType = NormalizeRuntimeTransitType(step.transitType);
+        if (transitType == "boat")
+            return 20808u;
+        if (transitType == "zeppelin")
+            return 164871u;
+        return 0u;
     }
 
     static std::optional<SpawnPoint> ResolveAbstractPhysicalTransitAnchorPosition(

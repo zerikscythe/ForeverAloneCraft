@@ -146,7 +146,7 @@ std::optional<PhysicalTransitRouteSpec> ResolvePhysicalTransitRouteSpec(
         transitType.end(),
         transitType.begin(),
         [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-    if (transitType != "boat")
+    if (transitType != "boat" && transitType != "zeppelin")
         return std::nullopt;
 
     if (step.transitRouteKey == "ratchet_to_booty_bay"
@@ -161,6 +161,22 @@ std::optional<PhysicalTransitRouteSpec> ResolvePhysicalTransitRouteSpec(
             110.0f,
             8.0f,
             85.0f,
+        };
+    }
+
+    if (step.transitRouteKey == "orgrimmar_to_tirisfal_zeppelin"
+        || step.transitRouteKey == "undercity_to_durotar_zeppelin")
+    {
+        // The Thundercaller transport-local passenger positions sampled from
+        // the transport map so bots stand on the gondola instead of clustering
+        // at a single guessed point.
+        return PhysicalTransitRouteSpec{
+            step.transitRouteKey.c_str(),
+            "zeppelin",
+            164871u,
+            55.0f,
+            60.0f,
+            90.0f,
         };
     }
 
@@ -179,6 +195,20 @@ PhysicalTransitDeckSpot PickPhysicalTransitDeckSpot(PhysicalTransitRouteSpec con
             {  9.39981f, 9.17899f, 11.5941f,  1.52083f },
             { -11.4014f, 6.67999f,  6.09785f, 2.93715f },
             {  6.20811f, 0.005208f, 14.0554f, 2.54813f },
+        }};
+        return spots[urand(0u, static_cast<std::uint32_t>(spots.size() - 1u))];
+    }
+
+    if (routeSpec.transportEntry == 164871u)
+    {
+        // The Thundercaller transport-local passenger positions from map 591.
+        static constexpr std::array<PhysicalTransitDeckSpot, 6> spots{{
+            { -9.40787f, -8.02398f, -17.1578f, 3.1765f  },
+            {  7.24887f, -5.48033f, -17.6859f, 4.81711f },
+            {  8.00807f, -10.7134f, -17.6737f, 1.16937f },
+            {  5.02375f, -7.69781f, -17.7888f, 5.98648f },
+            { -5.1094f,  -11.1466f, -17.606f,  4.4855f  },
+            { -5.2125f,  -4.92702f, -17.5966f, 1.43117f },
         }};
         return spots[urand(0u, static_cast<std::uint32_t>(spots.size() - 1u))];
     }
@@ -2076,7 +2106,9 @@ bool WorldBotCreatureAI::TickPhysicalTransit(service::AmbientStep const& step)
         transport->CalculatePassengerPosition(boardX, boardY, boardZ, &boardO);
 
         _activeTransitExecutionPhase = ActiveTransitExecutionPhase::Boarding;
-        if (me->GetDistance(boardX, boardY, boardZ) > _activePhysicalTransit.boardArriveRadius)
+        bool const directBoard = _activePhysicalTransit.transitType == "zeppelin";
+        if (!directBoard
+            && me->GetDistance(boardX, boardY, boardZ) > _activePhysicalTransit.boardArriveRadius)
         {
             me->GetMotionMaster()->MovePoint(
                 static_cast<uint32>(_currentStep),
