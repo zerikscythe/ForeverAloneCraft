@@ -115,6 +115,7 @@ service::WorldBotTaxiNetwork& GetWorldBotTaxiNetwork()
 constexpr float GatherSearchRadius = 200.0f;
 constexpr float GatherInteractRange = 6.0f;
 constexpr float GatherAnchorReturnDistance = 60.0f;
+constexpr std::uint32_t WorldBotEntry = 9900001u;
 constexpr std::uint32_t DebugManaGemItemId = 33312;
 constexpr float CrossMapTransitAbstractSourceDistanceYards = 300.0f;
 constexpr std::uint32_t CrossMapTransitAbstractMinElapsedMs = 20000u;
@@ -604,6 +605,43 @@ std::uint32_t CountNearbyHostileUnits(Unit* subject, float radius)
     Acore::UnitListSearcher<Acore::AnyUnfriendlyUnitInObjectRangeCheck> searcher(subject, targets, check);
     Cell::VisitObjects(subject, searcher, radius);
     return static_cast<std::uint32_t>(targets.size());
+}
+
+std::vector<Unit*> CollectNearbyFriendlyAmbientWorldBots(Unit* bot, float radius, bool includeSelf)
+{
+    std::vector<Unit*> allies;
+    if (!bot || radius <= 0.0f)
+        return allies;
+
+    if (includeSelf)
+        allies.push_back(bot);
+
+    Acore::AnyFriendlyUnitInObjectRangeCheck check(bot, bot, radius);
+    Acore::UnitListSearcher<Acore::AnyFriendlyUnitInObjectRangeCheck> searcher(bot, allies, check);
+    Cell::VisitObjects(bot, searcher, radius);
+
+    allies.erase(
+        std::remove_if(
+            allies.begin(),
+            allies.end(),
+            [&](Unit* candidate)
+            {
+                if (!candidate || !candidate->IsAlive() || !candidate->IsInWorld())
+                    return true;
+                if (candidate == bot)
+                    return !includeSelf;
+
+                Creature* creature = candidate->ToCreature();
+                if (!creature || creature->GetEntry() != WorldBotEntry)
+                    return true;
+
+                return !bot->IsFriendlyTo(candidate);
+            }),
+        allies.end());
+
+    std::sort(allies.begin(), allies.end());
+    allies.erase(std::unique(allies.begin(), allies.end()), allies.end());
+    return allies;
 }
 
 std::vector<service::WorldBotNearbyHostileSnapshot> CollectNearbyHostileSnapshots(
@@ -1444,7 +1482,32 @@ void WorldBotCreatureAI::UpdateAI(uint32 diff)
     }
 
     if (_combatSuspendedStep)
+    {
+        if (TrySustainAmbientCombat("combat_resume_from_nearby_ally"))
+        {
+            TickCombat(TickIntervalMs);
+            return;
+        }
+
+        _combatDisengageGraceMs = std::min(
+            CombatDisengageGraceMs,
+            _combatDisengageGraceMs + TickIntervalMs);
+        if (_combatDisengageGraceMs < CombatDisengageGraceMs)
+        {
+            if (IsDebugForcedCombatIdentity())
+            {
+                std::ostringstream graceTrace;
+                graceTrace << "phase='combat' decision='hold_resume' "
+                           << "reason='disengage_grace' "
+                           << "grace_ms=" << _combatDisengageGraceMs << " "
+                           << "victim=" << DescribeTraceUnit(nullptr);
+                RecordCombatTrace(graceTrace.str());
+            }
+            return;
+        }
+
         ResumeSuspendedStepAfterCombat();
+    }
 
     TickStep(TickIntervalMs);
 
@@ -2534,11 +2597,13 @@ void WorldBotCreatureAI::JustRespawned()
     _pendingCorpseRecovery = false;
     _combatSuspendedStep = false;
     _syntheticGlobalCooldownRemainingMs = 0;
+    _combatDisengageGraceMs = 0;
     _usedSimulatedItemsThisCombat.clear();
     service::ResetSharedHazardEvaluationState(_hazardEvaluationState);
     ClearVisibleTravelMode();
     ClearActiveTaxiTravel();
     ClearActivePhysicalTransit();
+    ResetCombatMetricsSegment();
 
     integration::BotActivityLog::Record(
         me,
@@ -2780,6 +2845,8 @@ void WorldBotCreatureAI::SuspendCurrentStepForCombat(Unit* target)
         return;
 
     _combatSuspendedStep = true;
+    _combatDisengageGraceMs = 0;
+    ResetCombatMetricsSegment();
     service::ResetSharedHazardEvaluationState(_hazardEvaluationState);
     _lastDebugCombatManaDrainWorldMs = 0;
     _debugCombatManaGemObserved = false;
@@ -2812,7 +2879,9 @@ void WorldBotCreatureAI::ResumeSuspendedStepAfterCombat()
     if (!_combatSuspendedStep)
         return;
 
+    RecordCombatSummary("combat_exit");
     _combatSuspendedStep = false;
+    _combatDisengageGraceMs = 0;
     _traveling = false;
     ClearVisibleTravelMode();
     ClearActiveRouteTravelPlan();
@@ -2829,6 +2898,183 @@ void WorldBotCreatureAI::ResumeSuspendedStepAfterCombat()
         _identity.id,
         "combat_exit",
         "resume_step='" + DescribeCurrentStep() + "'");
+}
+
+void WorldBotCreatureAI::ResetCombatMetricsSegment()
+{
+    _combatMetricsCurrent = {};
+}
+
+void WorldBotCreatureAI::RecordCombatDamageDone(std::uint32_t amount)
+{
+    if (amount == 0)
+        return;
+
+    _combatMetricsCurrent.outgoingDamage += amount;
+    _combatMetricsSession.outgoingDamage += amount;
+}
+
+void WorldBotCreatureAI::RecordCombatDamageTaken(std::uint32_t amount)
+{
+    if (amount == 0)
+        return;
+
+    _combatMetricsCurrent.incomingDamage += amount;
+    _combatMetricsSession.incomingDamage += amount;
+}
+
+void WorldBotCreatureAI::RecordCombatHealingDone(std::uint32_t amount)
+{
+    if (amount == 0)
+        return;
+
+    _combatMetricsCurrent.outgoingHealing += amount;
+    _combatMetricsSession.outgoingHealing += amount;
+}
+
+void WorldBotCreatureAI::RecordCombatHealingTaken(std::uint32_t amount)
+{
+    if (amount == 0)
+        return;
+
+    _combatMetricsCurrent.incomingHealing += amount;
+    _combatMetricsSession.incomingHealing += amount;
+}
+
+void WorldBotCreatureAI::RecordCombatSummary(char const* reason)
+{
+    if (!me || !_combatSuspendedStep)
+        return;
+
+    if (_combatMetricsCurrent.outgoingDamage == 0
+        && _combatMetricsCurrent.incomingDamage == 0
+        && _combatMetricsCurrent.outgoingHealing == 0
+        && _combatMetricsCurrent.incomingHealing == 0)
+    {
+        return;
+    }
+
+    std::ostringstream detail;
+    detail << "reason='" << (reason ? reason : "unknown") << "' "
+           << "step='" << DescribeCurrentStep() << "' "
+           << "outgoing_damage=" << _combatMetricsCurrent.outgoingDamage << " "
+           << "incoming_damage=" << _combatMetricsCurrent.incomingDamage << " "
+           << "outgoing_healing=" << _combatMetricsCurrent.outgoingHealing << " "
+           << "incoming_healing=" << _combatMetricsCurrent.incomingHealing << " "
+           << "session_outgoing_damage=" << _combatMetricsSession.outgoingDamage << " "
+           << "session_incoming_damage=" << _combatMetricsSession.incomingDamage << " "
+           << "session_outgoing_healing=" << _combatMetricsSession.outgoingHealing << " "
+           << "session_incoming_healing=" << _combatMetricsSession.incomingHealing;
+
+    integration::BotActivityLog::Record(
+        me,
+        _identity.name,
+        _identity.id,
+        "combat_summary",
+        detail.str());
+}
+
+Unit* WorldBotCreatureAI::FindNearbyAmbientCombatTarget(float radius) const
+{
+    if (!me || radius <= 0.0f)
+        return nullptr;
+
+    auto const isViableTarget =
+        [&](Unit* candidate) -> bool
+        {
+            if (!candidate || candidate == me || !candidate->IsAlive() || !candidate->IsInWorld())
+                return false;
+            if (me->IsFriendlyTo(candidate))
+                return false;
+            if (!candidate->isTargetableForAttack(false, me))
+                return false;
+            return true;
+        };
+
+    auto const considerClosest =
+        [&](std::vector<Unit*> const& candidates) -> Unit*
+        {
+            Unit* best = nullptr;
+            float bestDistance = std::numeric_limits<float>::max();
+            for (Unit* candidate : candidates)
+            {
+                if (!isViableTarget(candidate))
+                    continue;
+
+                float const distance = me->GetDistance(candidate);
+                if (!best || distance < bestDistance)
+                {
+                    best = candidate;
+                    bestDistance = distance;
+                }
+            }
+
+            return best;
+        };
+
+    std::vector<Unit*> allyTargets;
+    for (Unit* ally : CollectNearbyFriendlyAmbientWorldBots(me, radius, false))
+    {
+        if (!ally || !ally->IsAlive())
+            continue;
+
+        if (Unit* victim = ally->GetVictim())
+            allyTargets.push_back(victim);
+
+        for (Unit* attacker : ally->getAttackers())
+            allyTargets.push_back(attacker);
+    }
+
+    if (Unit* best = considerClosest(allyTargets))
+        return best;
+
+    std::vector<Unit*> nearbyHostiles;
+    Acore::AnyUnfriendlyUnitInObjectRangeCheck check(me, me, radius);
+    Acore::UnitListSearcher<Acore::AnyUnfriendlyUnitInObjectRangeCheck> searcher(me, nearbyHostiles, check);
+    Cell::VisitObjects(me, searcher, radius);
+
+    nearbyHostiles.erase(
+        std::remove_if(
+            nearbyHostiles.begin(),
+            nearbyHostiles.end(),
+            [&](Unit* candidate)
+            {
+                if (!isViableTarget(candidate))
+                    return true;
+                return !candidate->IsInCombat() && !candidate->GetVictim();
+            }),
+        nearbyHostiles.end());
+
+    return considerClosest(nearbyHostiles);
+}
+
+bool WorldBotCreatureAI::TrySustainAmbientCombat(char const* reason)
+{
+    if (!me || !_combatSuspendedStep)
+        return false;
+
+    Unit* target = FindNearbyAmbientCombatTarget(AmbientCombatAssistRadius);
+    if (!target)
+        return false;
+
+    _combatDisengageGraceMs = 0;
+    me->SetInCombatWith(target);
+    target->SetInCombatWith(me);
+    AttackStart(target);
+
+    integration::BotActivityLog::Record(
+        me,
+        _identity.name,
+        _identity.id,
+        "combat_reassist",
+        std::string("reason='") + (reason ? reason : "unknown")
+            + "' target_guid=" + std::to_string(target->GetGUID().GetCounter())
+            + " target='" + target->GetName() + "'");
+
+    if (IsDebugForcedCombatIdentity())
+        RecordCombatTrace(BuildCombatMovementTraceDetail(reason ? reason : "combat_reassist", target));
+
+    return true;
 }
 
 GameObject* WorldBotCreatureAI::ResolveGatherTarget() const
@@ -3068,6 +3314,10 @@ void WorldBotCreatureAI::TickCombat(uint32 diff)
 
     if (!UpdateVictim())
     {
+        if (TrySustainAmbientCombat("update_victim_false_reassist"))
+            return;
+
+        _combatDisengageGraceMs = std::min(CombatDisengageGraceMs, _combatDisengageGraceMs + diff);
         recordDebugCombatFlowTrace("update_victim_false");
         return;
     }
@@ -3075,9 +3325,15 @@ void WorldBotCreatureAI::TickCombat(uint32 diff)
     Unit* target = me->GetVictim();
     if (!target)
     {
+        if (TrySustainAmbientCombat("missing_victim_reassist"))
+            return;
+
+        _combatDisengageGraceMs = std::min(CombatDisengageGraceMs, _combatDisengageGraceMs + diff);
         recordDebugCombatFlowTrace("missing_victim_after_update");
         return;
     }
+
+    _combatDisengageGraceMs = 0;
 
     model::WorldBotHazardSnapshot const hazard = BuildWorldBotHazardSnapshot(me, _hazardEvaluationState);
     std::vector<service::WorldBotNearbyHostileSnapshot> const nearbyHostiles =
@@ -3769,11 +4025,15 @@ void WorldBotCreatureAI::CompletSession()
 
 void WorldBotCreatureAI::JustDied(Unit* /*killer*/)
 {
+    if (_combatSuspendedStep)
+        RecordCombatSummary("death");
+
     service::ResetSharedHazardEvaluationState(_hazardEvaluationState);
     ClearVisibleTravelMode();
     ClearActiveTaxiTravel();
     ClearActivePhysicalTransit();
     _syntheticGlobalCooldownRemainingMs = 0;
+    _combatDisengageGraceMs = 0;
     _usedSimulatedItemsThisCombat.clear();
     _pendingCorpseRecovery = _sessionReady && !_sessionDone;
     if (_pendingCorpseRecovery)
@@ -3794,6 +4054,7 @@ void WorldBotCreatureAI::JustDied(Unit* /*killer*/)
                 + "s if no rez arrives.")
             : "was attacked - Died. waiting to respawn.");
     PersistRuntimeLedgerState();
+    ResetCombatMetricsSegment();
 
     // Guard: if session ended cleanly this is already done.
     // If the creature was forcibly removed (e.g. server shutdown), still release.

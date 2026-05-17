@@ -16,6 +16,7 @@ import argparse
 import datetime as dt
 import os
 import pathlib
+import re
 import subprocess
 import sys
 import time
@@ -112,6 +113,13 @@ TEAM_BOTS = [
         "gender": 0,
     },
 ]
+
+COMBAT_SUMMARY_RE = re.compile(
+    r"outgoing_damage=(?P<outgoing_damage>\d+)\s+"
+    r"incoming_damage=(?P<incoming_damage>\d+)\s+"
+    r"outgoing_healing=(?P<outgoing_healing>\d+)\s+"
+    r"incoming_healing=(?P<incoming_healing>\d+)"
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -246,6 +254,17 @@ def build_report(
             "ORDER BY id DESC LIMIT 300"
         ),
     )
+    combat_summary_rows = run_mysql_query(
+        settings,
+        str(settings["characters_db"]),
+        (
+            "SELECT id, bot_name, event_type, zone_id, detail "
+            "FROM living_world_bot_activity_log "
+            f"WHERE id > {baseline_id} AND bot_guid IN ({placeholders}) "
+            "AND event_type = 'combat_summary' "
+            "ORDER BY id DESC LIMIT 180"
+        ),
+    )
     identity_rows = run_mysql_query(
         settings,
         str(settings["characters_db"]),
@@ -255,6 +274,25 @@ def build_report(
             f"WHERE id IN ({placeholders}) ORDER BY faction ASC, id ASC"
         ),
     )
+
+    faction_by_name = {str(entry["name"]): int(entry["faction"]) for entry in team}
+    side_totals = {
+        1: {"outgoing_damage": 0, "incoming_damage": 0, "outgoing_healing": 0, "incoming_healing": 0},
+        2: {"outgoing_damage": 0, "incoming_damage": 0, "outgoing_healing": 0, "incoming_healing": 0},
+    }
+    for row in combat_summary_rows:
+        if len(row) < 5:
+            continue
+        bot_name = row[1]
+        detail = row[4]
+        match = COMBAT_SUMMARY_RE.search(detail)
+        if not match:
+            continue
+        faction = faction_by_name.get(bot_name)
+        if faction not in side_totals:
+            continue
+        for key, value in match.groupdict().items():
+            side_totals[faction][key] += int(value)
 
     with report_path.open("w", encoding="utf-8") as handle:
         handle.write("=== CONFIG ===\n")
@@ -288,8 +326,24 @@ def build_report(
             handle.write("\t".join(str(value) for value in row) + "\n")
         handle.write("\n")
 
+        handle.write("=== SIDE_TOTALS ===\n")
+        for faction, totals in sorted(side_totals.items()):
+            label = "alliance" if faction == 1 else "horde"
+            handle.write(
+                f"{label}\toutgoing_damage={totals['outgoing_damage']}\t"
+                f"incoming_damage={totals['incoming_damage']}\t"
+                f"outgoing_healing={totals['outgoing_healing']}\t"
+                f"incoming_healing={totals['incoming_healing']}\n"
+            )
+        handle.write("\n")
+
         handle.write("=== BUILD_AND_COMBAT_ROWS ===\n")
         for row in build_rows:
+            handle.write("\t".join(str(value) for value in row) + "\n")
+        handle.write("\n")
+
+        handle.write("=== COMBAT_SUMMARY_ROWS ===\n")
+        for row in combat_summary_rows:
             handle.write("\t".join(str(value) for value in row) + "\n")
         handle.write("\n")
 

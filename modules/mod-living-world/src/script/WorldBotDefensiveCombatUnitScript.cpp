@@ -45,6 +45,15 @@ ai::WorldBotCreatureAI const* GetWorldBotCreatureAI(Unit const* victim)
     return static_cast<ai::WorldBotCreatureAI const*>(creature->AI());
 }
 
+ai::WorldBotCreatureAI* GetMutableWorldBotCreatureAI(Unit* unit)
+{
+    Creature* creature = unit ? unit->ToCreature() : nullptr;
+    if (!creature || creature->GetScriptId() != GetWorldBotScriptId() || !creature->AI())
+        return nullptr;
+
+    return static_cast<ai::WorldBotCreatureAI*>(creature->AI());
+}
+
 bool IsWorldBotArmorPenetrationAuraApplicable(AuraEffect const* auraEffect, SpellInfo const* spellInfo)
 {
     if (!auraEffect || !auraEffect->GetSpellInfo())
@@ -127,6 +136,24 @@ public:
     WorldBotDefensiveCombatUnitScript()
         : UnitScript("WorldBotDefensiveCombatUnitScript")
     {
+    }
+
+    void OnHeal(Unit* healer, Unit* receiver, uint32& gain) override
+    {
+        if (ai::WorldBotCreatureAI* worldBotAI = GetMutableWorldBotCreatureAI(healer))
+            worldBotAI->RecordCombatHealingDone(gain);
+
+        if (ai::WorldBotCreatureAI* worldBotAI = GetMutableWorldBotCreatureAI(receiver))
+            worldBotAI->RecordCombatHealingTaken(gain);
+    }
+
+    void OnDamage(Unit* attacker, Unit* victim, uint32& damage) override
+    {
+        if (ai::WorldBotCreatureAI* worldBotAI = GetMutableWorldBotCreatureAI(attacker))
+            worldBotAI->RecordCombatDamageDone(damage);
+
+        if (ai::WorldBotCreatureAI* worldBotAI = GetMutableWorldBotCreatureAI(victim))
+            worldBotAI->RecordCombatDamageTaken(damage);
     }
 
     bool OnCalculateSpellDoneCritChance(
