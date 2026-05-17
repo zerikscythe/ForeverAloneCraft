@@ -1389,6 +1389,8 @@ void WorldBotCreatureAI::UpdateAI(uint32 diff)
 
     ObserveCurrentZoneExploration();
 
+    MaybeStartDebugForcedCombat();
+
     if (me->IsInCombat() || me->GetVictim())
     {
         TickCombat(TickIntervalMs);
@@ -2512,6 +2514,110 @@ bool WorldBotCreatureAI::IsDebugCombatManaDrainIdentity() const
     std::uint32_t const drainIdentityId =
         sConfigMgr->GetOption<std::uint32_t>("LivingWorld.DebugCombatManaDrainIdentityId", 0);
     return drainIdentityId != 0 && drainIdentityId == _identity.id;
+}
+
+bool WorldBotCreatureAI::IsDebugForcedCombatIdentity() const
+{
+    if (_identity.id == 0)
+        return false;
+
+    std::uint32_t const forcedIdentityId =
+        sConfigMgr->GetOption<std::uint32_t>("LivingWorld.DebugForceCombatTargetIdentityId", 0);
+    return forcedIdentityId != 0 && forcedIdentityId == _identity.id;
+}
+
+namespace
+{
+
+bool IsTrainingDummyTarget(Creature const* creature)
+{
+    if (!creature)
+        return false;
+
+    switch (creature->GetEntry())
+    {
+        case 31144u: // Grandmaster's Training Dummy
+        case 31146u: // Heroic Training Dummy
+        case 32666u: // Expert's Training Dummy
+        case 32667u: // Master's Training Dummy
+            return true;
+        default:
+            break;
+    }
+
+    return creature->GetScriptName() == "npc_training_dummy";
+}
+
+} // namespace
+
+void WorldBotCreatureAI::MaybeStartDebugForcedCombat()
+{
+    if (!me || !IsDebugForcedCombatIdentity() || me->IsInCombat() || me->GetVictim())
+        return;
+
+    std::uint32_t const targetEntry =
+        sConfigMgr->GetOption<std::uint32_t>("LivingWorld.DebugForceCombatTargetEntry", 0);
+    if (targetEntry == 0)
+        return;
+
+    float const searchRadius = std::max(
+        5.0f,
+        sConfigMgr->GetOption<float>("LivingWorld.DebugForceCombatTargetSearchRadius", 40.0f));
+
+    Creature* target = me->FindNearestCreature(targetEntry, searchRadius, true);
+    if (!target)
+    {
+        RecordCombatTrace(
+            std::string("phase='debug' decision='force_target_scan' result='no_target' target_entry=")
+            + std::to_string(targetEntry)
+            + " radius=" + std::to_string(searchRadius));
+        return;
+    }
+
+    bool canStartAttack = me->CanStartAttack(target, true);
+    if (!canStartAttack && IsTrainingDummyTarget(target))
+    {
+        target->SetFaction(14u); // hostile monster faction for harness sparring
+        canStartAttack = me->CanStartAttack(target, true);
+
+        if (!canStartAttack)
+        {
+            RecordCombatTrace(
+                std::string("phase='debug' decision='force_target_override' result='bypass_can_start_attack' target='")
+                + target->GetName()
+                + "' target_entry=" + std::to_string(target->GetEntry())
+                + " target_guid=" + std::to_string(target->GetGUID().GetCounter())
+                + " target_faction=" + std::to_string(target->GetFaction())
+                + " distance=" + std::to_string(me->GetDistance(target)));
+            canStartAttack = true;
+        }
+    }
+
+    if (!canStartAttack)
+    {
+        RecordCombatTrace(
+            std::string("phase='debug' decision='force_target_scan' result='invalid_target' target='")
+            + target->GetName()
+            + "' target_entry=" + std::to_string(target->GetEntry())
+            + " target_guid=" + std::to_string(target->GetGUID().GetCounter())
+            + " target_faction=" + std::to_string(target->GetFaction())
+            + " distance=" + std::to_string(me->GetDistance(target)));
+        return;
+    }
+
+    RecordCombatTrace(
+        std::string("phase='debug' decision='force_target' target='")
+        + target->GetName()
+        + "' target_entry=" + std::to_string(targetEntry)
+        + " target_guid=" + std::to_string(target->GetGUID().GetCounter())
+        + " distance=" + std::to_string(me->GetDistance(target)));
+
+    me->SetInCombatWith(target);
+    target->SetInCombatWith(me);
+    AttackStart(target);
+
+    if (me->GetVictim() == target || me->IsInCombat())
+        TickCombat(0);
 }
 
 bool WorldBotCreatureAI::ApplyDebugCombatManaTarget(Unit* target, char const* traceDecision, bool logAttempt)

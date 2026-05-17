@@ -137,6 +137,8 @@ private:
     void EnsureCombatProfile();
     void InvalidateCombatProfile();
     bool IsDebugCombatManaDrainIdentity() const;
+    bool IsDebugForcedCombatIdentity() const;
+    void MaybeStartDebugForcedCombat();
     bool ApplyDebugCombatManaTarget(Unit* target, char const* traceDecision, bool logAttempt = false);
     void MaybeApplyDebugCombatManaDrain(Unit* target);
     void ResetGatherState();

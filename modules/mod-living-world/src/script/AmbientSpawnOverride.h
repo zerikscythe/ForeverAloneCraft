@@ -15,7 +15,7 @@ struct AmbientSpawnOverrideConfig
 
 inline bool HasForcedSpawnOverride(AmbientSpawnOverrideConfig const& config)
 {
-    return config.forcedSpawnCount > 0 && config.forcedMapId != 0;
+    return config.forcedSpawnCount > 0;
 }
 
 inline bool ShouldUseForcedSpawn(
