@@ -8,6 +8,30 @@ reconstructing the plan from chat history.
 
 ---
 
+## Current status
+
+This is still primarily a design-direction document, not a "fully landed live
+system" description.
+
+Today the broader world-bot stack already has:
+
+- persistent identity
+- virtual/assigned loadouts
+- player-like stat baseline work
+- growing travel realism
+
+But combat depth is still behind travel/system depth.
+
+In practice that means:
+
+- many world-bot class/spec behaviors remain shallow
+- this combat-profile/doctrine direction is still one of the largest future
+  realism tracks
+- it is important, but it is not currently the nearest shipping slice compared
+  with city-presence and quest-hub runtime work
+
+---
+
 ## 1. Problem Statement
 
 The current bot combat logic in `CompanionAI.cpp` is class/role driven and

@@ -1788,15 +1788,31 @@ Preferred implementation order remains:
 ## Status summary
 
 - overall system: `In Progress`
-- completed slices: `Slices 1-5`
-- in-progress slices:
-  - `Slice 6 - Route-followed session travel integration`
-  - `Slice 7 - Transit and mount policy integration`
-  - `Slice 8 - Cross-zone route connectors`
-- current active implementation focus: `explored-zone memory and taxi eligibility`
+- completed live capability groups:
+  - route-followed session travel
+  - explored-zone memory and taxi eligibility
+  - authored connector / seam support
+  - dynamic taxi planning and execution
+  - first physical cross-map boat seam
+  - first physical cross-map zeppelin seam
+  - quest-hub export tooling
+  - quest resume memory
+- in-progress capability groups:
+  - city reserve population behavior
+  - quest-hub runtime integration
+  - local task-area behavior after hub arrival
+- current active implementation focus:
+  - `city reserve population scaffolding -> linger/release behavior`
 - next recommended engineering slice:
-  - persist explored zones
-  - unlock explored zones on abstract/materialized zone entry
-  - derive taxi knowledge from explored zones
-  - compare taxi vs ground travel in the planner
-- next content-oriented slice after that: `Slice 6.1 - Quest-derived activity composition`
+  - finish city reserve linger/cooldown behavior
+  - validate Stormwind / Orgrimmar reserve fill
+  - keep reserve bots biased toward believable city errands
+- next major realism slice after that:
+  - server-side quest-hub runtime loading
+  - hub-driven `quest_auto`
+  - weighted hub continuation
+  - local task-area loops
+
+Related status note:
+
+- see `WorldBotSystemAssessment.md`

@@ -40,6 +40,34 @@ That is the missing layer.
 
 ---
 
+## Current implementation status
+
+Status today:
+
+- the export/tooling side is real
+- the runtime/server side is only partially integrated
+
+What already exists:
+
+- extracted quest data cache in tooling
+- per-zone compact quest-hub JSON export
+- filtering of event/holiday/daily/weekly/monthly quest noise
+- quest resume memory in the bot ledger/session composer
+
+What does **not** yet fully exist:
+
+- runtime loading of the exported quest-hub JSON graph
+- direct `quest_auto` resolution against hub entries
+- local hub `taskAreas` driving "go here and look busy" loops
+- weighted hub-to-hub continuation as the default quest flow
+
+So today the project is in a good transition state:
+
+- broad quest-zone travel is live
+- hub-derived runtime quest flow is the next major questing slice
+
+---
+
 ## Desired behavior
 
 The intended questing loop is:
