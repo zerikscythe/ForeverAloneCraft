@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Spawn six level-80 Paladin world bots, force them into a sandbox, and log the fight.
+"""Spawn a level-80 Paladin world-bot sandbox, force them into combat, and log the fight.
 
 The harness seeds exact reference loadouts for:
 - Alliance: Retribution / Protection / Holy
-- Horde:    Retribution / Protection / Holy
+- Horde:    Retribution / Protection / Holy (+ optional extra Retribution pressure)
 
 It reuses the same assigned-gear + enchantment path as the single-bot Paladin
 dummy harness, but skips the training dummy entirely and lets real world bots
@@ -92,6 +92,24 @@ TEAM_BOTS = [
         "race_id": 10,
         "display_id": 15477,
         "gender": 1,
+    },
+    {
+        "name": "Memecrusader",
+        "spec_key": "paladin_ret",
+        "loadout_key": "ret_toc",
+        "faction": 2,
+        "race_id": 10,
+        "display_id": 15476,
+        "gender": 0,
+    },
+    {
+        "name": "Lightbonker",
+        "spec_key": "paladin_ret",
+        "loadout_key": "ret_toc",
+        "faction": 2,
+        "race_id": 10,
+        "display_id": 15476,
+        "gender": 0,
     },
 ]
 
