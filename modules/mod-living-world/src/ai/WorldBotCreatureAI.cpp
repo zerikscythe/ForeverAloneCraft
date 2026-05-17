@@ -3149,8 +3149,64 @@ Unit* WorldBotCreatureAI::FindNearbyAmbientCombatTarget(float radius) const
             return best;
         };
 
+    enum class PvPTargetRole : std::uint8_t
+    {
+        Unknown = 0,
+        Tank = 1,
+        Healer = 2,
+        Damage = 3,
+    };
+
+    auto const classifyWorldBotRole =
+        [&](Unit* candidate) -> PvPTargetRole
+        {
+            if (!candidate)
+                return PvPTargetRole::Unknown;
+
+            if (candidate == me)
+            {
+                if (_preparedBuild.resolvedRoleKey == "TANK")
+                    return PvPTargetRole::Tank;
+                if (_preparedBuild.resolvedRoleKey == "HEAL")
+                    return PvPTargetRole::Healer;
+                if (_preparedBuild.resolvedRoleKey == "DPS")
+                    return PvPTargetRole::Damage;
+                return PvPTargetRole::Unknown;
+            }
+
+            Creature* creature = candidate->ToCreature();
+            if (!creature || creature->GetEntry() != WorldBotEntry || !creature->AI())
+                return PvPTargetRole::Unknown;
+
+            auto* worldBotAi = static_cast<WorldBotCreatureAI*>(creature->AI());
+            if (!worldBotAi->_preparedBuild.IsReady())
+                return PvPTargetRole::Unknown;
+
+            if (worldBotAi->_preparedBuild.resolvedRoleKey == "TANK")
+                return PvPTargetRole::Tank;
+            if (worldBotAi->_preparedBuild.resolvedRoleKey == "HEAL")
+                return PvPTargetRole::Healer;
+            if (worldBotAi->_preparedBuild.resolvedRoleKey == "DPS")
+                return PvPTargetRole::Damage;
+
+            return PvPTargetRole::Unknown;
+        };
+
+    auto const isPvPLikeTarget =
+        [&](Unit* candidate) -> bool
+        {
+            if (!candidate)
+                return false;
+            if (candidate->ToPlayer())
+                return true;
+
+            Creature* creature = candidate->ToCreature();
+            return creature && creature->GetEntry() == WorldBotEntry;
+        };
+
     std::vector<Unit*> allyTargets;
-    for (Unit* ally : CollectNearbyFriendlyAmbientWorldBots(me, radius, false))
+    std::vector<Unit*> friendlyAllies = CollectNearbyFriendlyAmbientWorldBots(me, radius, false);
+    for (Unit* ally : friendlyAllies)
     {
         if (!ally || !ally->IsAlive())
             continue;
@@ -3182,7 +3238,133 @@ Unit* WorldBotCreatureAI::FindNearbyAmbientCombatTarget(float radius) const
             }),
         nearbyHostiles.end());
 
-    return considerClosest(nearbyHostiles);
+    std::vector<Unit*> candidates = allyTargets;
+    candidates.insert(candidates.end(), nearbyHostiles.begin(), nearbyHostiles.end());
+    std::sort(candidates.begin(), candidates.end());
+    candidates.erase(std::unique(candidates.begin(), candidates.end()), candidates.end());
+
+    bool const pvpLikeFight = std::any_of(
+        candidates.begin(),
+        candidates.end(),
+        [&](Unit* candidate) { return isPvPLikeTarget(candidate); });
+    if (!pvpLikeFight)
+        return considerClosest(candidates);
+
+    bool const hasEnemyHealer = std::any_of(
+        candidates.begin(),
+        candidates.end(),
+        [&](Unit* candidate) { return classifyWorldBotRole(candidate) == PvPTargetRole::Healer; });
+    bool const hasEnemyDamage = std::any_of(
+        candidates.begin(),
+        candidates.end(),
+        [&](Unit* candidate) { return classifyWorldBotRole(candidate) == PvPTargetRole::Damage; });
+
+    PvPTargetRole const selfRole = classifyWorldBotRole(me);
+    auto const scoreCandidate =
+        [&](Unit* candidate) -> float
+        {
+            if (!isViableTarget(candidate))
+                return -100000.0f;
+
+            float score = 0.0f;
+            float const distance = me->GetDistance(candidate);
+            PvPTargetRole const candidateRole = classifyWorldBotRole(candidate);
+
+            score += std::max(0.0f, 120.0f - distance * 4.0f);
+            score += std::clamp(100.0f - candidate->GetHealthPct(), 0.0f, 100.0f) * 3.0f;
+
+            if (candidate == me->GetVictim())
+                score += 80.0f;
+
+            if (candidateRole == PvPTargetRole::Healer && candidate->GetHealthPct() <= 55.0f)
+                score += 120.0f;
+
+            switch (selfRole)
+            {
+                case PvPTargetRole::Tank:
+                    switch (candidateRole)
+                    {
+                        case PvPTargetRole::Damage: score += 340.0f; break;
+                        case PvPTargetRole::Healer: score += 220.0f; break;
+                        case PvPTargetRole::Tank:   score += 20.0f; break;
+                        case PvPTargetRole::Unknown:score += 140.0f; break;
+                    }
+                    if (hasEnemyDamage && candidateRole == PvPTargetRole::Tank)
+                        score -= 220.0f;
+                    break;
+                case PvPTargetRole::Healer:
+                    switch (candidateRole)
+                    {
+                        case PvPTargetRole::Damage: score += 140.0f; break;
+                        case PvPTargetRole::Healer: score += 70.0f; break;
+                        case PvPTargetRole::Tank:   score += 40.0f; break;
+                        case PvPTargetRole::Unknown:score += 90.0f; break;
+                    }
+                    break;
+                case PvPTargetRole::Damage:
+                case PvPTargetRole::Unknown:
+                default:
+                    switch (candidateRole)
+                    {
+                        case PvPTargetRole::Healer: score += 460.0f; break;
+                        case PvPTargetRole::Damage: score += 220.0f; break;
+                        case PvPTargetRole::Tank:   score += 10.0f; break;
+                        case PvPTargetRole::Unknown:score += 120.0f; break;
+                    }
+                    if (hasEnemyHealer && candidateRole != PvPTargetRole::Healer)
+                        score -= 160.0f;
+                    else if (!hasEnemyHealer && hasEnemyDamage && candidateRole == PvPTargetRole::Tank)
+                        score -= 120.0f;
+                    break;
+            }
+
+            Unit* victim = candidate->GetVictim();
+            if (victim && me->IsFriendlyTo(victim))
+            {
+                PvPTargetRole const victimRole = classifyWorldBotRole(victim);
+                if (victim == me)
+                    score += (selfRole == PvPTargetRole::Healer) ? 260.0f : 160.0f;
+
+                switch (victimRole)
+                {
+                    case PvPTargetRole::Healer: score += 240.0f; break;
+                    case PvPTargetRole::Damage: score += 170.0f; break;
+                    case PvPTargetRole::Tank:   score += 110.0f; break;
+                    case PvPTargetRole::Unknown:score += 90.0f; break;
+                }
+            }
+
+            std::uint32_t alliedFocusCount = 0;
+            for (Unit* ally : friendlyAllies)
+            {
+                if (!ally || !ally->IsAlive())
+                    continue;
+                if (ally->GetVictim() == candidate)
+                    ++alliedFocusCount;
+            }
+            if (me->GetVictim() == candidate)
+                ++alliedFocusCount;
+
+            score += static_cast<float>(alliedFocusCount) * 55.0f;
+            return score;
+        };
+
+    Unit* best = nullptr;
+    float bestScore = -100000.0f;
+    for (Unit* candidate : candidates)
+    {
+        float const score = scoreCandidate(candidate);
+        if (!best || score > bestScore)
+        {
+            best = candidate;
+            bestScore = score;
+        }
+    }
+
+    if (best)
+        return best;
+
+    return considerClosest(candidates);
 }
 
 bool WorldBotCreatureAI::TrySustainAmbientCombat(char const* reason)
