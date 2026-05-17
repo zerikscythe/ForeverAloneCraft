@@ -2849,12 +2849,60 @@ bool IsTrainingDummyTarget(Creature const* creature)
     return creature->GetScriptName() == "npc_training_dummy";
 }
 
+bool ShouldBypassDebugForcedAttack(Creature* me, Creature* target)
+{
+    if (!me || !target || !target->IsAlive())
+        return false;
+
+    if (IsTrainingDummyTarget(target))
+    {
+        target->SetFaction(14u); // hostile monster faction for harness sparring
+        return true;
+    }
+
+    return !target->IsFriendlyTo(me);
+}
+
+std::size_t StartDebugForcedCreaturePack(Creature* me, Creature* primaryTarget, std::uint32_t entry, float radius)
+{
+    if (!me || !primaryTarget || entry == 0u)
+        return 0u;
+
+    std::list<Creature*> nearbyCreatures;
+    me->GetCreatureListWithEntryInGrid(nearbyCreatures, entry, radius);
+
+    std::size_t engagedCount = 0u;
+    for (Creature* creature : nearbyCreatures)
+    {
+        if (!creature || !creature->IsAlive() || creature == primaryTarget)
+            continue;
+
+        me->SetInCombatWith(creature);
+        creature->SetInCombatWith(me);
+        me->AddThreat(creature, 1.0f);
+        creature->AddThreat(me, 1.0f);
+
+        if (creature->IsAIEnabled)
+            creature->AI()->AttackStart(me);
+
+        ++engagedCount;
+    }
+
+    return engagedCount;
+}
+
 } // namespace
 
 void WorldBotCreatureAI::MaybeStartDebugForcedCombat()
 {
     if (!me || !IsDebugForcedCombatIdentity() || me->IsInCombat() || me->GetVictim())
         return;
+    if (_sessionReady && !_sessionDone && _currentStep < _session.steps.size())
+    {
+        service::AmbientStep const& currentStep = _session.steps[_currentStep];
+        if (currentStep.type == service::AmbientStepType::Travel)
+            return;
+    }
 
     std::uint32_t const targetEntry =
         sConfigMgr->GetOption<std::uint32_t>("LivingWorld.DebugForceCombatTargetEntry", 0);
@@ -2876,22 +2924,18 @@ void WorldBotCreatureAI::MaybeStartDebugForcedCombat()
     }
 
     bool canStartAttack = me->CanStartAttack(target, true);
-    if (!canStartAttack && IsTrainingDummyTarget(target))
+    bool usedBypass = false;
+    if (!canStartAttack && ShouldBypassDebugForcedAttack(me, target))
     {
-        target->SetFaction(14u); // hostile monster faction for harness sparring
-        canStartAttack = me->CanStartAttack(target, true);
-
-        if (!canStartAttack)
-        {
-            RecordCombatTrace(
-                std::string("phase='debug' decision='force_target_override' result='bypass_can_start_attack' target='")
-                + target->GetName()
-                + "' target_entry=" + std::to_string(target->GetEntry())
-                + " target_guid=" + std::to_string(target->GetGUID().GetCounter())
-                + " target_faction=" + std::to_string(target->GetFaction())
-                + " distance=" + std::to_string(me->GetDistance(target)));
-            canStartAttack = true;
-        }
+        RecordCombatTrace(
+            std::string("phase='debug' decision='force_target_override' result='bypass_can_start_attack' target='")
+            + target->GetName()
+            + "' target_entry=" + std::to_string(target->GetEntry())
+            + " target_guid=" + std::to_string(target->GetGUID().GetCounter())
+            + " target_faction=" + std::to_string(target->GetFaction())
+            + " distance=" + std::to_string(me->GetDistance(target)));
+        canStartAttack = true;
+        usedBypass = true;
     }
 
     if (!canStartAttack)
@@ -2916,6 +2960,21 @@ void WorldBotCreatureAI::MaybeStartDebugForcedCombat()
     me->SetInCombatWith(target);
     target->SetInCombatWith(me);
     AttackStart(target);
+    me->AddThreat(target, 1.0f);
+    target->AddThreat(me, 1.0f);
+
+    if (usedBypass && target->IsAIEnabled)
+        target->AI()->AttackStart(me);
+
+    std::size_t const packAssistCount = StartDebugForcedCreaturePack(me, target, targetEntry, 18.0f);
+    if (packAssistCount > 0u)
+    {
+        RecordCombatTrace(
+            std::string("phase='debug' decision='force_target_pack' target='")
+            + target->GetName()
+            + "' target_entry=" + std::to_string(targetEntry)
+            + " pack_assist_count=" + std::to_string(packAssistCount));
+    }
 
     if (me->GetVictim() == target || me->IsInCombat())
         TickCombat(0);
@@ -3433,8 +3492,14 @@ Unit* WorldBotCreatureAI::FindNearbyAmbientCombatTarget(float radius) const
                         case PvPTargetRole::Tank:   score += 20.0f; break;
                         case PvPTargetRole::Unknown:score += dpsBias; break;
                     }
+                    if (hasEnemyDamage && candidateRole == PvPTargetRole::Healer)
+                        score -= healerBias * 0.35f;
                     if (hasEnemyDamage && candidateRole == PvPTargetRole::Tank)
+                    {
                         score -= tankPenalty * 1.5f;
+                        if (candidate == me->GetVictim())
+                            score -= targetingSettings.currentTargetBias * 0.9f;
+                    }
                     break;
                 case PvPTargetRole::Healer:
                     switch (candidateRole)
@@ -3515,6 +3580,11 @@ bool WorldBotCreatureAI::TrySustainAmbientCombat(char const* reason)
     me->SetInCombatWith(target);
     target->SetInCombatWith(me);
     AttackStart(target);
+    me->AddThreat(target, 1.0f);
+    target->AddThreat(me, 1.0f);
+
+    if (target->IsCreature() && target->ToCreature()->IsAIEnabled)
+        target->ToCreature()->AI()->AttackStart(me);
 
     integration::BotActivityLog::Record(
         me,
