@@ -44,6 +44,7 @@ STAT_KEYS     = [
     "hp_pct", "mana_pct", "power", "power_pct",
     "runic_power", "runic_power_pct",
     "distance",
+    "creature_type",
     "aura", "aura_remaining_secs", "aura_stacks",
     "combo_points",
     "threat_pct", "is_aggro_holder",
@@ -51,6 +52,22 @@ STAT_KEYS     = [
     "nearby_enemies", "party_members_below_hp_pct",
 ]
 BOOL_STAT_KEYS = {"is_aggro_holder"}
+STRING_STAT_KEYS = {"creature_type"}
+CREATURE_TYPE_OPTS = [
+    "Beast",
+    "Dragonkin",
+    "Demon",
+    "Elemental",
+    "Giant",
+    "Undead",
+    "Humanoid",
+    "Critter",
+    "Mechanical",
+    "NotSpecified",
+    "Totem",
+    "NonCombatPet",
+    "GasCloud",
+]
 
 WOW_CLASSES = {
     1: "Warrior", 2: "Paladin", 3: "Hunter", 4: "Rogue",

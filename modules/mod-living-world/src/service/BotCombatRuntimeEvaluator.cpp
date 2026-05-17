@@ -181,6 +181,79 @@ std::string ToLowerCopy(std::string value)
     return value;
 }
 
+std::string CreatureTypeToKey(Unit* unit)
+{
+    if (!unit)
+        return "";
+
+    switch (unit->GetCreatureType())
+    {
+        case CREATURE_TYPE_BEAST:
+            return "beast";
+        case CREATURE_TYPE_DRAGONKIN:
+            return "dragonkin";
+        case CREATURE_TYPE_DEMON:
+            return "demon";
+        case CREATURE_TYPE_ELEMENTAL:
+            return "elemental";
+        case CREATURE_TYPE_GIANT:
+            return "giant";
+        case CREATURE_TYPE_UNDEAD:
+            return "undead";
+        case CREATURE_TYPE_HUMANOID:
+            return "humanoid";
+        case CREATURE_TYPE_CRITTER:
+            return "critter";
+        case CREATURE_TYPE_MECHANICAL:
+            return "mechanical";
+        case CREATURE_TYPE_NOT_SPECIFIED:
+            return "notspecified";
+        case CREATURE_TYPE_TOTEM:
+            return "totem";
+        case CREATURE_TYPE_NON_COMBAT_PET:
+            return "noncombatpet";
+        case CREATURE_TYPE_GAS_CLOUD:
+            return "gascloud";
+        default:
+            return "";
+    }
+}
+
+bool CreatureTypeMatches(std::string const& actualType, std::string expectedValue)
+{
+    if (actualType.empty())
+        return false;
+
+    expectedValue = ToLowerCopy(expectedValue);
+    expectedValue.erase(
+        std::remove_if(
+            expectedValue.begin(),
+            expectedValue.end(),
+            [](unsigned char c)
+            {
+                return std::isspace(c) || c == '_' || c == '-';
+            }),
+        expectedValue.end());
+
+    if (expectedValue.empty())
+        return false;
+
+    std::size_t start = 0;
+    while (start <= expectedValue.size())
+    {
+        std::size_t const end = expectedValue.find('|', start);
+        std::string token = expectedValue.substr(start, end == std::string::npos ? std::string::npos : end - start);
+        if (token == actualType)
+            return true;
+
+        if (end == std::string::npos)
+            break;
+        start = end + 1;
+    }
+
+    return false;
+}
+
 bool TryParseRuneType(
     std::string const& value,
     std::optional<RuneType>& runeType)
@@ -926,6 +999,31 @@ bool BotCombatRuntimeEvaluator::EvaluateCondition(
             condition.comparison,
             context.bot->GetDistance(subject),
             condition.numericValue);
+    }
+
+    if (condition.statKey == "creature_type")
+    {
+        std::string const actualType = CreatureTypeToKey(subject);
+        bool const matches = CreatureTypeMatches(actualType, condition.stringValue);
+        switch (condition.comparison)
+        {
+            case model::BotCombatConditionOperator::Equal:
+            case model::BotCombatConditionOperator::Has:
+                return matches;
+            case model::BotCombatConditionOperator::NotEqual:
+            case model::BotCombatConditionOperator::NotHas:
+                return !matches;
+            case model::BotCombatConditionOperator::Exists:
+                return !actualType.empty();
+            case model::BotCombatConditionOperator::LessThan:
+            case model::BotCombatConditionOperator::LessThanOrEqual:
+            case model::BotCombatConditionOperator::GreaterThan:
+            case model::BotCombatConditionOperator::GreaterThanOrEqual:
+                return CompareNumeric(
+                    condition.comparison,
+                    matches ? 1.0f : 0.0f,
+                    condition.numericValue);
+        }
     }
 
     if (condition.statKey == "aura" || condition.statKey == "has_aura")

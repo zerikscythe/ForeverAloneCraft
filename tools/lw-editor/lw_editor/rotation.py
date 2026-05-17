@@ -10,7 +10,8 @@ from .constants import (
     RANK_MODES, RANK_INV, RANK_OPTS,
     COND_LOGIC, COND_LOGIC_INV, COND_LOGIC_OPTS,
     COND_OPS, COND_OPS_INV, COND_OPS_OPTS,
-    TARGET_KEYS, SUBJECT_KEYS, STAT_KEYS, BOOL_STAT_KEYS,
+    TARGET_KEYS, SUBJECT_KEYS, STAT_KEYS, BOOL_STAT_KEYS, STRING_STAT_KEYS,
+    CREATURE_TYPE_OPTS,
     AOE_MODES, AOE_INV, AOE_OPTS,
     SPEC_TO_CLASS, SPEC_ALIAS_TO_CLASS,
 )
@@ -44,6 +45,7 @@ class RotationEditor(ttk.Frame):
         self._sel_entry    = None        # currently selected entry dict
         self._actions      = {}          # slot -> action dict (may be empty)
         self._conditions   = []          # list of condition dicts
+        self._editing_condition_id = None
         self._class_id     = None        # current WoW class_id for spell list
         self._class_spells = []          # [{"id": int, "display": str}]
         self._build()
@@ -265,6 +267,8 @@ class RotationEditor(ttk.Frame):
                 value_text = "True" if int(float(numeric_value or 0)) else "False"
             except (TypeError, ValueError):
                 value_text = str(numeric_value)
+        elif stat_key in STRING_STAT_KEYS:
+            value_text = string_value or str(numeric_value)
         else:
             value_text = str(numeric_value)
             if string_value:
@@ -276,11 +280,14 @@ class RotationEditor(ttk.Frame):
         aura_mode = self.v_stat.get() == "aura"
         aura_numeric_mode = self.v_stat.get() in {"aura_remaining_secs", "aura_stacks"}
         bool_mode = self.v_stat.get() in BOOL_STAT_KEYS
+        string_mode = self.v_stat.get() in STRING_STAT_KEYS
         if aura_mode:
             self._cond_value_label.pack_forget()
             self._cond_nval_entry.pack_forget()
             self._cond_string_label.pack_forget()
             self._cond_sval_entry.pack_forget()
+            self._cond_creature_type_label.pack_forget()
+            self._cond_creature_type_combo.pack_forget()
             self._cond_bool_label.pack_forget()
             self._cond_bool_combo.pack_forget()
             self._cond_aura_label.pack(side=tk.LEFT)
@@ -288,15 +295,30 @@ class RotationEditor(ttk.Frame):
         elif aura_numeric_mode:
             self._cond_bool_label.pack_forget()
             self._cond_bool_combo.pack_forget()
+            self._cond_creature_type_label.pack_forget()
+            self._cond_creature_type_combo.pack_forget()
             self._cond_aura_label.pack(side=tk.LEFT)
             self._cond_spell_combo.pack(side=tk.LEFT, padx=2)
             self._cond_value_label.pack(side=tk.LEFT)
             self._cond_nval_entry.pack(side=tk.LEFT, padx=2)
             self._cond_string_label.pack_forget()
             self._cond_sval_entry.pack_forget()
+        elif string_mode:
+            self._cond_aura_label.pack_forget()
+            self._cond_spell_combo.pack_forget()
+            self._cond_bool_label.pack_forget()
+            self._cond_bool_combo.pack_forget()
+            self._cond_value_label.pack_forget()
+            self._cond_nval_entry.pack_forget()
+            self._cond_string_label.pack_forget()
+            self._cond_sval_entry.pack_forget()
+            self._cond_creature_type_label.pack(side=tk.LEFT)
+            self._cond_creature_type_combo.pack(side=tk.LEFT, padx=2)
         elif bool_mode:
             self._cond_aura_label.pack_forget()
             self._cond_spell_combo.pack_forget()
+            self._cond_creature_type_label.pack_forget()
+            self._cond_creature_type_combo.pack_forget()
             self._cond_value_label.pack_forget()
             self._cond_nval_entry.pack_forget()
             self._cond_string_label.pack_forget()
@@ -306,6 +328,8 @@ class RotationEditor(ttk.Frame):
         else:
             self._cond_aura_label.pack_forget()
             self._cond_spell_combo.pack_forget()
+            self._cond_creature_type_label.pack_forget()
+            self._cond_creature_type_combo.pack_forget()
             self._cond_bool_label.pack_forget()
             self._cond_bool_combo.pack_forget()
             self._cond_value_label.pack(side=tk.LEFT)
@@ -320,6 +344,8 @@ class RotationEditor(ttk.Frame):
         elif self.v_stat.get() in {"aura_remaining_secs", "aura_stacks"}:
             raw_value = self.v_sval.get().strip()
             self.v_cond_spell.set(self._condition_spell_display(raw_value))
+        elif self.v_stat.get() in STRING_STAT_KEYS:
+            self.v_cond_creature_type.set(self.v_sval.get().strip())
         elif self.v_stat.get() in BOOL_STAT_KEYS:
             try:
                 self.v_cond_bool.set("True" if int(float(self.v_nval.get() or 0)) else "False")
@@ -330,6 +356,10 @@ class RotationEditor(ttk.Frame):
     def _on_cond_bool_changed(self, _=None):
         self.v_nval.set("1" if self.v_cond_bool.get() == "True" else "0")
         self.v_sval.set("")
+
+    def _on_cond_string_changed(self, _=None):
+        self.v_nval.set("0")
+        self.v_sval.set(self.v_cond_creature_type.get().strip())
 
     def _on_cond_spell_pick(self, _=None):
         sid = self._parse_id_from_display(self.v_cond_spell.get())
@@ -458,6 +488,7 @@ class RotationEditor(ttk.Frame):
         self.v_sval  = tk.StringVar()
         self.v_cond_spell = tk.StringVar()
         self.v_cond_bool = tk.StringVar(value="False")
+        self.v_cond_creature_type = tk.StringVar()
 
         ttk.Label(edit, text="Subject:").pack(side=tk.LEFT)
         ttk.Combobox(edit, textvariable=self.v_subj, values=SUBJECT_KEYS,
@@ -490,16 +521,25 @@ class RotationEditor(ttk.Frame):
             edit, textvariable=self.v_cond_bool, values=["True", "False"],
             state="readonly", width=7)
         self._cond_bool_combo.bind("<<ComboboxSelected>>", self._on_cond_bool_changed)
+        self._cond_creature_type_label = ttk.Label(edit, text="Type:")
+        self._cond_creature_type_combo = ttk.Combobox(
+            edit, textvariable=self.v_cond_creature_type, values=CREATURE_TYPE_OPTS,
+            width=16)
+        self._cond_creature_type_combo.bind("<<ComboboxSelected>>", self._on_cond_string_changed)
+        self._cond_creature_type_combo.bind("<Return>", self._on_cond_string_changed)
+        self._cond_creature_type_combo.bind("<FocusOut>", self._on_cond_string_changed)
         self._sync_condition_value_editor()
 
         list_f = ttk.Frame(parent)
         list_f.pack(fill=tk.BOTH, expand=True, pady=(0, 4))
 
-        cols = ("seq", "desc")
+        cols = ("join", "seq", "desc")
         self._cond_tv = ttk.Treeview(list_f, columns=cols, show="headings",
                                      height=8, selectmode="browse")
+        self._cond_tv.heading("join", text="Join")
         self._cond_tv.heading("seq",  text="#")
         self._cond_tv.heading("desc", text="Condition")
+        self._cond_tv.column("join", width=44, anchor="center")
         self._cond_tv.column("seq",  width=25, anchor="center")
         self._cond_tv.column("desc", width=300)
         self._cond_tv.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -511,8 +551,14 @@ class RotationEditor(ttk.Frame):
 
         btn_row = ttk.Frame(parent)
         btn_row.pack(fill=tk.X)
-        ttk.Button(btn_row, text="+ Save cond",
+        ttk.Button(btn_row, text="+ New",
+                   command=self._new_condition).pack(side=tk.LEFT, padx=(0, 4))
+        ttk.Button(btn_row, text="Save cond",
                    command=self._save_condition).pack(side=tk.LEFT, padx=(0, 4))
+        ttk.Button(btn_row, text="↑",
+                   command=lambda: self._move_condition(-1)).pack(side=tk.LEFT, padx=(0, 4))
+        ttk.Button(btn_row, text="↓",
+                   command=lambda: self._move_condition(1)).pack(side=tk.LEFT, padx=(0, 4))
         ttk.Button(btn_row, text="✕ Remove",
                    command=self._del_condition).pack(side=tk.LEFT)
 
@@ -604,13 +650,18 @@ class RotationEditor(ttk.Frame):
 
         self._conditions = self._cbs["load_conditions"](eid) if eid else []
         self._refresh_cond_list()
+        self._new_condition()
 
     def _refresh_cond_list(self):
         self._cond_tv.delete(*self._cond_tv.get_children())
-        for c in self._conditions:
+        join_text = COND_LOGIC.get(self._sel_entry.get("condition_logic", 0), "All (AND)") if self._sel_entry else "All (AND)"
+        join_word = "OR" if "OR" in join_text else "AND"
+        for index, c in enumerate(self._conditions):
             self._cond_tv.insert("", "end",
                                  iid=str(c.get("condition_id", id(c))),
-                                 values=(c.get("sequence", 0), self._condition_desc(c)))
+                                 values=("" if index == 0 else join_word,
+                                         c.get("sequence", 0),
+                                         self._condition_desc(c)))
 
     def _on_cond_select(self, _=None):
         sel = self._cond_tv.selection()
@@ -620,6 +671,7 @@ class RotationEditor(ttk.Frame):
         c = next((x for x in self._conditions
                   if str(x.get("condition_id", id(x))) == iid), None)
         if c:
+            self._editing_condition_id = c.get("condition_id")
             self.v_subj.set(c.get("subject_key", SUBJECT_KEYS[0]))
             self.v_stat.set(c.get("stat_key", STAT_KEYS[0]))
             self.v_op.set(COND_OPS.get(c.get("comparison", 4), ">="))
@@ -632,6 +684,11 @@ class RotationEditor(ttk.Frame):
             elif c.get("stat_key") in {"aura_remaining_secs", "aura_stacks"}:
                 self.v_cond_spell.set(self._condition_spell_display(c.get("string_value", "") or ""))
                 self.v_cond_bool.set("False")
+                self.v_cond_creature_type.set("")
+            elif c.get("stat_key") in STRING_STAT_KEYS:
+                self.v_cond_creature_type.set(c.get("string_value", "") or "")
+                self.v_cond_bool.set("False")
+                self.v_cond_spell.set("")
             elif c.get("stat_key") in BOOL_STAT_KEYS:
                 try:
                     self.v_cond_bool.set(
@@ -639,9 +696,11 @@ class RotationEditor(ttk.Frame):
                 except (TypeError, ValueError):
                     self.v_cond_bool.set("False")
                 self.v_cond_spell.set("")
+                self.v_cond_creature_type.set("")
             else:
                 self.v_cond_spell.set("")
                 self.v_cond_bool.set("False")
+                self.v_cond_creature_type.set("")
             self._sync_condition_value_editor()
 
     def _set_detail_enabled(self, on: bool):
@@ -753,15 +812,7 @@ class RotationEditor(ttk.Frame):
         if not eid:
             messagebox.showwarning("Save entry first", "Save the entry before adding conditions.")
             return
-        # Find if editing existing
-        sel = self._cond_tv.selection()
-        existing_id = None
-        if sel:
-            iid = sel[0]
-            matched = next((c for c in self._conditions
-                            if str(c.get("condition_id", id(c))) == iid), None)
-            if matched:
-                existing_id = matched.get("condition_id")
+        existing_id = self._editing_condition_id
 
         seq = (max((c.get("sequence", 0) for c in self._conditions), default=-1) + 1
                if not existing_id else
@@ -779,6 +830,10 @@ class RotationEditor(ttk.Frame):
         elif self.v_stat.get() in {"aura_remaining_secs", "aura_stacks"}:
             self._on_cond_spell_typed()
             string_value = self.v_sval.get().strip()
+        elif self.v_stat.get() in STRING_STAT_KEYS:
+            self._on_cond_string_changed()
+            numeric_value = 0.0
+            string_value = self.v_sval.get().strip()
         elif self.v_stat.get() in BOOL_STAT_KEYS:
             self._on_cond_bool_changed()
             numeric_value = float(self.v_nval.get() or 0)
@@ -792,6 +847,7 @@ class RotationEditor(ttk.Frame):
         self._cbs["upsert_condition"](c, eid)
         self._conditions = self._cbs["load_conditions"](eid)
         self._refresh_cond_list()
+        self._new_condition()
 
     def _del_condition(self):
         sel = self._cond_tv.selection()
@@ -804,6 +860,43 @@ class RotationEditor(ttk.Frame):
             self._cbs["delete_condition"](c["condition_id"])
             self._conditions.remove(c)
             self._refresh_cond_list()
+            self._new_condition()
+
+    def _new_condition(self):
+        self._editing_condition_id = None
+        self._cond_tv.selection_remove(*self._cond_tv.selection())
+        self.v_subj.set(SUBJECT_KEYS[0])
+        self.v_stat.set(STAT_KEYS[0])
+        self.v_op.set(COND_OPS[4])
+        self.v_nval.set("0")
+        self.v_sval.set("")
+        self.v_cond_spell.set("")
+        self.v_cond_bool.set("False")
+        self.v_cond_creature_type.set("")
+        self._sync_condition_value_editor()
+
+    def _move_condition(self, direction: int):
+        sel = self._cond_tv.selection()
+        if not sel or not self._sel_entry:
+            return
+        iid = sel[0]
+        idx = next((i for i, c in enumerate(self._conditions)
+                    if str(c.get("condition_id", id(c))) == iid), None)
+        if idx is None:
+            return
+        new_idx = idx + direction
+        if new_idx < 0 or new_idx >= len(self._conditions):
+            return
+        self._conditions[idx], self._conditions[new_idx] = self._conditions[new_idx], self._conditions[idx]
+        eid = self._sel_entry.get("entry_id")
+        for seq, cond in enumerate(self._conditions):
+            cond["sequence"] = seq
+            self._cbs["upsert_condition"](cond, eid)
+        self._conditions = self._cbs["load_conditions"](eid)
+        self._refresh_cond_list()
+        moved = self._conditions[new_idx]
+        self._cond_tv.selection_set(str(moved.get("condition_id", id(moved))))
+        self._on_cond_select()
 
 
 def _class_from_spec(*texts: str) -> int | None:
@@ -820,5 +913,3 @@ def _class_from_spec(*texts: str) -> int | None:
         if alias in normalized:
             return cid
     return None
-
-
