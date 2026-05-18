@@ -219,6 +219,7 @@ private:
     bool TryStartGrindCombat(service::AmbientStep const& step);
     bool IsCombatAreaStep(service::AmbientStep const& step) const;
     std::uint32_t ResolveCombatResumeDelayMs() const;
+    bool CanInterruptCurrentStepForCombat() const;
 
     // Apply identity fields (level, display_id) to the creature.
     void ApplyIdentityToCreature();
@@ -246,6 +247,7 @@ private:
     std::uint64_t  _lastCombatTraceWorldMs = 0;
     std::uint64_t  _lastDebugCombatManaDrainWorldMs = 0;
     bool           _debugCombatManaGemObserved = false;
+    bool           _debugForcedCombatProbeLogged = false;
     bool           _hasShieldBaseline = false;
     ActiveTravelExecutionPhase _activeTravelExecutionPhase = ActiveTravelExecutionPhase::None;
     service::WorldBotTravelOptionMode _activeTravelOptionMode = service::WorldBotTravelOptionMode::Ground;

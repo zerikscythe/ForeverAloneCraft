@@ -1680,7 +1680,46 @@ std::optional<living_world::service::AmbientSession> BuildForcedZoneSandboxSessi
     }
 
     if (eligible.empty())
-        return std::nullopt;
+    {
+        living_world::service::AmbientSession session;
+        living_world::service::AmbientSessionTask task;
+        task.activityId = 0;
+        task.activityKey = "debug_patrol_zone";
+        task.displayName = "Patrol " + zone->zoneName;
+        task.activityType = "patrol";
+        task.taskFamily = "patrol";
+        task.targetZoneId = targetZoneId;
+        session.tasks.push_back(std::move(task));
+
+        living_world::service::AmbientStep travelStep;
+        travelStep.type = living_world::service::AmbientStepType::Travel;
+        travelStep.mapId = zone->mapId;
+        travelStep.x = zone->anchorX;
+        travelStep.y = zone->anchorY;
+        travelStep.z = zone->anchorZ;
+        travelStep.durationSec = 0;
+        travelStep.taskIndex = 0;
+        travelStep.label = "Travel to " + zone->zoneName;
+        session.steps.push_back(std::move(travelStep));
+
+        living_world::service::AmbientStep patrolStep;
+        patrolStep.type = living_world::service::AmbientStepType::Patrol;
+        patrolStep.mapId = zone->mapId;
+        patrolStep.x = zone->anchorX;
+        patrolStep.y = zone->anchorY;
+        patrolStep.z = zone->anchorZ;
+        patrolStep.durationSec = 600;
+        patrolStep.taskIndex = 0;
+        patrolStep.label = "Patrol " + zone->zoneName;
+        session.steps.push_back(std::move(patrolStep));
+
+        session.activityId = 0;
+        session.activityKey = "debug_patrol_zone";
+        session.displayName = "Patrol " + zone->zoneName;
+        session.sourceKind = "debug_zone_forced";
+        session.sourceKey = "zone_" + std::to_string(targetZoneId) + ":activity_debug_patrol_zone";
+        return session;
+    }
 
     auto const picked = std::min_element(
         eligible.begin(),

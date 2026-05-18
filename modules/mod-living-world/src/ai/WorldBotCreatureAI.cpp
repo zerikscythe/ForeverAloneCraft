@@ -1616,6 +1616,24 @@ void WorldBotCreatureAI::UpdateAI(uint32 diff)
 
     ObserveCurrentZoneExploration();
 
+    if (!_debugForcedCombatProbeLogged)
+    {
+        std::uint32_t const forcedIdentityId =
+            sConfigMgr->GetOption<std::uint32_t>("LivingWorld.DebugForceCombatTargetIdentityId", 0);
+        if (forcedIdentityId != 0 && forcedIdentityId == _identity.id)
+        {
+            std::ostringstream probe;
+            probe << "phase='debug' decision='force_target_probe' "
+                  << "self_identity=" << _identity.id << " "
+                  << "forced_identity=" << forcedIdentityId << " "
+                  << "target_entry=" << sConfigMgr->GetOption<std::uint32_t>("LivingWorld.DebugForceCombatTargetEntry", 0) << " "
+                  << "can_interrupt=" << (CanInterruptCurrentStepForCombat() ? 1 : 0) << " "
+                  << "runtime_state='" << DescribeRuntimeStateKey() << "'";
+            RecordCombatTrace(probe.str());
+            _debugForcedCombatProbeLogged = true;
+        }
+    }
+
     MaybeStartDebugForcedCombat();
 
     if (me->IsInCombat() || me->GetVictim())
@@ -2840,6 +2858,35 @@ bool WorldBotCreatureAI::IsDebugForcedCombatIdentity() const
 namespace
 {
 
+std::string DescribeTraceUnit(Unit const* unit);
+
+std::string DescribeThreatStateForTrace(Unit* actor, Unit* currentVictim)
+{
+    std::ostringstream oss;
+    Unit* threatVictim = actor && actor->CanHaveThreatList() ? actor->GetThreatMgr().GetCurrentVictim() : nullptr;
+    oss << "actor_in_combat=" << ((actor && actor->IsInCombat()) ? 1 : 0) << " "
+        << "actor_is_engaged=" << ((actor && actor->IsEngaged()) ? 1 : 0) << " "
+        << "actor_victim=" << DescribeTraceUnit(currentVictim) << " "
+        << "actor_threat_victim=" << DescribeTraceUnit(threatVictim) << " "
+        << "actor_threat_list_size=" << ((actor && actor->CanHaveThreatList()) ? actor->GetThreatMgr().GetThreatListSize() : 0);
+    return oss.str();
+}
+
+void EnsureMutualThreatEngagement(Creature* attacker, Unit* victim)
+{
+    if (!attacker || !victim)
+        return;
+
+    if (attacker->IsAIEnabled)
+        attacker->AI()->JustStartedThreateningMe(victim);
+
+    if (Creature* victimCreature = victim->ToCreature())
+    {
+        if (victimCreature->IsAIEnabled)
+            victimCreature->AI()->JustStartedThreateningMe(attacker);
+    }
+}
+
 bool IsTrainingDummyTarget(Creature const* creature)
 {
     if (!creature)
@@ -2912,10 +2959,13 @@ std::size_t StartDebugForcedCreaturePack(Creature* me, Creature* primaryTarget, 
         if (!creature || !creature->IsAlive() || creature == primaryTarget)
             continue;
 
-        me->SetInCombatWith(creature);
-        creature->SetInCombatWith(me);
+        me->EngageWithTarget(creature);
+        creature->EngageWithTarget(me);
         me->AddThreat(creature, 1.0f);
         creature->AddThreat(me, 1.0f);
+        EnsureMutualThreatEngagement(me, creature);
+        if (me->IsAIEnabled)
+            me->AI()->AttackStart(creature);
 
         if (creature->IsAIEnabled)
             creature->AI()->AttackStart(me);
@@ -2932,11 +2982,11 @@ void WorldBotCreatureAI::MaybeStartDebugForcedCombat()
 {
     if (!me || !IsDebugForcedCombatIdentity() || me->IsInCombat() || me->GetVictim())
         return;
-    if (_sessionReady && !_sessionDone && _currentStep < _session.steps.size())
+
+    if (!CanInterruptCurrentStepForCombat())
     {
-        service::AmbientStep const& currentStep = _session.steps[_currentStep];
-        if (currentStep.type == service::AmbientStepType::Travel)
-            return;
+        RecordCombatTrace("phase='debug' decision='force_target_scan' result='travel_not_interruptible'");
+        return;
     }
 
     std::uint32_t const targetEntry =
@@ -2992,11 +3042,12 @@ void WorldBotCreatureAI::MaybeStartDebugForcedCombat()
         + " target_guid=" + std::to_string(target->GetGUID().GetCounter())
         + " distance=" + std::to_string(me->GetDistance(target)));
 
-    me->SetInCombatWith(target);
-    target->SetInCombatWith(me);
-    AttackStart(target);
+    me->EngageWithTarget(target);
+    target->EngageWithTarget(me);
     me->AddThreat(target, 1.0f);
     target->AddThreat(me, 1.0f);
+    EnsureMutualThreatEngagement(me, target);
+    AttackStart(target);
 
     if (usedBypass && target->IsAIEnabled)
         target->AI()->AttackStart(me);
@@ -3009,6 +3060,15 @@ void WorldBotCreatureAI::MaybeStartDebugForcedCombat()
             + target->GetName()
             + "' target_entry=" + std::to_string(targetEntry)
             + " pack_assist_count=" + std::to_string(packAssistCount));
+    }
+
+    if (IsDebugForcedCombatIdentity())
+    {
+        std::ostringstream stateTrace;
+        stateTrace << "phase='debug' decision='force_target_state' "
+                   << "bot_" << DescribeThreatStateForTrace(me, me->GetVictim()) << " "
+                   << "target_" << DescribeThreatStateForTrace(target, target->GetVictim());
+        RecordCombatTrace(stateTrace.str());
     }
 
     if (me->GetVictim() == target || me->IsInCombat())
@@ -3073,6 +3133,9 @@ bool WorldBotCreatureAI::ApplyDebugCombatManaTarget(Unit* target, char const* tr
 void WorldBotCreatureAI::SuspendCurrentStepForCombat(Unit* target)
 {
     if (_combatInterrupt.active || !_sessionReady || _sessionDone)
+        return;
+
+    if (!CanInterruptCurrentStepForCombat())
         return;
 
     _combatInterrupt.active = true;
@@ -3624,6 +3687,33 @@ std::uint32_t WorldBotCreatureAI::ResolveCombatResumeDelayMs() const
         : ReactiveCombatResumeDelayMs;
 }
 
+bool WorldBotCreatureAI::CanInterruptCurrentStepForCombat() const
+{
+    if (!_sessionReady || _sessionDone || _currentStep >= _session.steps.size())
+        return true;
+
+    service::AmbientStep const& step = _session.steps[_currentStep];
+    if (step.type == service::AmbientStepType::Transit)
+        return false;
+
+    if (step.type != service::AmbientStepType::Travel)
+        return true;
+
+    switch (_activeTravelExecutionPhase)
+    {
+        case ActiveTravelExecutionPhase::TaxiApproach:
+        case ActiveTravelExecutionPhase::TaxiTransit:
+        case ActiveTravelExecutionPhase::TaxiFinalLeg:
+            return false;
+        case ActiveTravelExecutionPhase::GroundOnly:
+        case ActiveTravelExecutionPhase::None:
+        default:
+            break;
+    }
+
+    return _activeTransitExecutionPhase == ActiveTransitExecutionPhase::None;
+}
+
 Creature* WorldBotCreatureAI::FindNearestGrindTarget(service::AmbientStep const& step) const
 {
     if (!me)
@@ -3672,10 +3762,11 @@ bool WorldBotCreatureAI::TryStartGrindCombat(service::AmbientStep const& step)
         return false;
 
     SuspendCurrentStepForCombat(target);
-    me->SetInCombatWith(target);
-    target->SetInCombatWith(me);
+    me->EngageWithTarget(target);
+    target->EngageWithTarget(me);
     me->AddThreat(target, 1.0f);
     target->AddThreat(me, 1.0f);
+    EnsureMutualThreatEngagement(me, target);
     AttackStart(target);
 
     if (target->IsAIEnabled)
@@ -3702,11 +3793,12 @@ bool WorldBotCreatureAI::TrySustainAmbientCombat(char const* reason)
 
     _combatDisengageGraceMs = 0;
     _combatInterrupt.allClearElapsedMs = 0;
-    me->SetInCombatWith(target);
-    target->SetInCombatWith(me);
+    me->EngageWithTarget(target);
+    target->EngageWithTarget(me);
     AttackStart(target);
     me->AddThreat(target, 1.0f);
     target->AddThreat(me, 1.0f);
+    EnsureMutualThreatEngagement(me, target);
 
     if (target->IsCreature() && target->ToCreature()->IsAIEnabled)
         target->ToCreature()->AI()->AttackStart(me);
@@ -3721,7 +3813,15 @@ bool WorldBotCreatureAI::TrySustainAmbientCombat(char const* reason)
             + " target='" + target->GetName() + "'");
 
     if (IsDebugForcedCombatIdentity())
+    {
+        std::ostringstream stateTrace;
+        stateTrace << "phase='combat' decision='reassist_state' "
+                   << "reason='" << (reason ? reason : "unknown") << "' "
+                   << "bot_" << DescribeThreatStateForTrace(me, me->GetVictim()) << " "
+                   << "target_" << DescribeThreatStateForTrace(target, target->GetVictim());
+        RecordCombatTrace(stateTrace.str());
         RecordCombatTrace(BuildCombatMovementTraceDetail(reason ? reason : "combat_reassist", target));
+    }
 
     return true;
 }
@@ -3992,12 +4092,16 @@ void WorldBotCreatureAI::TickCombat(uint32 diff)
                 return;
 
             Unit* targetForTrace = traceTarget ? traceTarget : me->GetVictim();
+            Unit* threatVictim = me->CanHaveThreatList() ? me->GetThreatMgr().GetCurrentVictim() : nullptr;
             std::ostringstream oss;
             oss << "phase='combat' decision='flow' "
                 << "reason='" << reason << "' "
                 << "bot_in_combat=" << (me->IsInCombat() ? 1 : 0) << " "
+                << "bot_is_engaged=" << (me->IsEngaged() ? 1 : 0) << " "
                 << "bot_casting=" << (me->IsNonMeleeSpellCast(false) ? 1 : 0) << " "
-                << "victim=" << DescribeTraceUnit(targetForTrace);
+                << "victim=" << DescribeTraceUnit(targetForTrace) << " "
+                << "threat_victim=" << DescribeTraceUnit(threatVictim) << " "
+                << "threat_list_size=" << (me->CanHaveThreatList() ? me->GetThreatMgr().GetThreatListSize() : 0);
             RecordCombatTrace(oss.str());
         };
 
