@@ -123,9 +123,23 @@ constexpr float CrossMapTransitAbstractSourceDistanceYards = 300.0f;
 constexpr std::uint32_t CrossMapTransitAbstractMinElapsedMs = 20000u;
 constexpr std::uint32_t ConsecrationBaseSpellId = 20116u;
 constexpr std::uint32_t JudgementOfWisdomBaseSpellId = 20186u;
+constexpr std::uint32_t MechanoKickSpellId = 61110u;
 constexpr std::uint32_t ConsecrationLifetimeMs = 8000u;
 constexpr std::uint32_t GroupCombatHandoffRefreshMs = 1500u;
 constexpr float ConsecrationRecenterDistanceYards = 10.0f;
+constexpr float TerrainProbeNearYards = 3.0f;
+constexpr float TerrainProbeFarYards = 6.0f;
+constexpr float TerrainDangerBackDropYards = 5.0f;
+constexpr float TerrainPuntAwareBackDropYards = 2.5f;
+constexpr float TerrainImprovementRequiredYards = 1.5f;
+constexpr float TerrainPuntAwareImprovementRequiredYards = 0.75f;
+constexpr float TerrainRearSupportProbeYards = 4.0f;
+constexpr float TerrainPreferredRearSupportYards = 1.0f;
+constexpr float TerrainSurveyRadiusYards = 30.0f;
+constexpr float TerrainRelaxedProjectionMinMoveYards = 0.5f;
+constexpr float HalfPi = 1.57079632679f;
+constexpr float QuarterPi = 0.78539816339f;
+constexpr float Pi = 3.14159265359f;
 
 char const* ToConservationModeKey(model::BotCombatConservationMode mode)
 {
@@ -185,6 +199,579 @@ bool IsJudgementOfWisdomSpell(std::uint32_t spellId)
 
     std::uint32_t const firstRank = sSpellMgr->GetFirstSpellInChain(spellId);
     return (firstRank != 0 ? firstRank : spellId) == JudgementOfWisdomBaseSpellId;
+}
+
+bool CreatureHasKnownSpell(Creature const* creature, std::uint32_t spellId)
+{
+    if (!creature || spellId == 0)
+        return false;
+
+    for (uint32 i = 0; i < MAX_CREATURE_SPELLS; ++i)
+    {
+        if (creature->m_spells[i] == spellId)
+            return true;
+    }
+
+    return false;
+}
+
+struct TerrainFootingSample
+{
+    enum class RejectReason : std::uint8_t
+    {
+        None = 0,
+        NoMap = 1,
+        NoHeight = 2,
+        ReachFailed = 3,
+        ProjectionStuck = 4,
+    };
+
+    enum class ValidationMode : std::uint8_t
+    {
+        StrictReach = 0,
+        RelaxedProjection = 1,
+    };
+
+    bool valid = false;
+    float x = 0.0f;
+    float y = 0.0f;
+    float z = 0.0f;
+    float backDrop = 0.0f;
+    float sideDrop = 0.0f;
+    float rearSupportDistance = TerrainRearSupportProbeYards;
+    float travelDelta = 0.0f;
+    RejectReason rejectReason = RejectReason::None;
+    ValidationMode validationMode = ValidationMode::StrictReach;
+};
+
+struct TerrainSurveyDiagnostics
+{
+    std::uint32_t attempted = 0;
+    std::uint32_t valid = 0;
+    std::uint32_t tooFar = 0;
+    std::uint32_t noMap = 0;
+    std::uint32_t noHeight = 0;
+    std::uint32_t reachFailed = 0;
+    std::uint32_t projectionStuck = 0;
+    std::uint32_t relaxedProjection = 0;
+};
+
+char const* DescribeTerrainRejectReason(TerrainFootingSample::RejectReason reason)
+{
+    switch (reason)
+    {
+        case TerrainFootingSample::RejectReason::NoMap:
+            return "no_map";
+        case TerrainFootingSample::RejectReason::NoHeight:
+            return "no_height";
+        case TerrainFootingSample::RejectReason::ReachFailed:
+            return "reach_failed";
+        case TerrainFootingSample::RejectReason::ProjectionStuck:
+            return "projection_stuck";
+        case TerrainFootingSample::RejectReason::None:
+        default:
+            return "none";
+    }
+}
+
+void RecordTerrainSampleReject(
+    TerrainSurveyDiagnostics* diagnostics,
+    TerrainFootingSample::RejectReason reason)
+{
+    if (!diagnostics)
+        return;
+
+    switch (reason)
+    {
+        case TerrainFootingSample::RejectReason::NoMap:
+            ++diagnostics->noMap;
+            break;
+        case TerrainFootingSample::RejectReason::NoHeight:
+            ++diagnostics->noHeight;
+            break;
+        case TerrainFootingSample::RejectReason::ReachFailed:
+            ++diagnostics->reachFailed;
+            break;
+        case TerrainFootingSample::RejectReason::ProjectionStuck:
+            ++diagnostics->projectionStuck;
+            break;
+        case TerrainFootingSample::RejectReason::None:
+        default:
+            break;
+    }
+}
+
+std::string DescribeTerrainDiagnostics(TerrainSurveyDiagnostics const& diagnostics)
+{
+    std::ostringstream oss;
+    oss << " attempted=" << diagnostics.attempted
+        << " valid=" << diagnostics.valid
+        << " too_far=" << diagnostics.tooFar
+        << " no_map=" << diagnostics.noMap
+        << " no_height=" << diagnostics.noHeight
+        << " reach_failed=" << diagnostics.reachFailed
+        << " projection_stuck=" << diagnostics.projectionStuck
+        << " relaxed_projection=" << diagnostics.relaxedProjection;
+    return oss.str();
+}
+
+TerrainFootingSample EvaluateCombatFootingAt(
+    Creature* mover,
+    Unit const* target,
+    float candidateX,
+    float candidateY,
+    float facingAngle)
+{
+    TerrainFootingSample sample;
+    if (!mover || !target || !mover->GetMap())
+    {
+        sample.rejectReason = TerrainFootingSample::RejectReason::NoMap;
+        return sample;
+    }
+
+    float const candidateZ = mover->GetMapHeight(
+        candidateX,
+        candidateY,
+        std::max(mover->GetPositionZ(), target->GetPositionZ()) + 5.0f,
+        true,
+        25.0f);
+    if (!std::isfinite(candidateZ))
+    {
+        sample.rejectReason = TerrainFootingSample::RejectReason::NoHeight;
+        return sample;
+    }
+
+    float reachX = candidateX;
+    float reachY = candidateY;
+    float reachZ = candidateZ;
+    if (!mover->GetMap()->CanReachPositionAndGetValidCoords(mover, reachX, reachY, reachZ, true, true))
+    {
+        Position projected = mover->GetPosition();
+        float const stepDistance = std::clamp(
+            std::hypot(candidateX - mover->GetPositionX(), candidateY - mover->GetPositionY()),
+            0.0f,
+            8.0f);
+        if (stepDistance < TerrainRelaxedProjectionMinMoveYards)
+        {
+            sample.rejectReason = TerrainFootingSample::RejectReason::ProjectionStuck;
+            return sample;
+        }
+
+        mover->MovePositionToFirstCollision(projected, stepDistance, mover->GetAngle(candidateX, candidateY));
+        float const projectedMoveDistance = std::hypot(
+            projected.GetPositionX() - mover->GetPositionX(),
+            projected.GetPositionY() - mover->GetPositionY());
+        if (projectedMoveDistance < TerrainRelaxedProjectionMinMoveYards)
+        {
+            sample.rejectReason = TerrainFootingSample::RejectReason::ProjectionStuck;
+            return sample;
+        }
+
+        reachX = projected.GetPositionX();
+        reachY = projected.GetPositionY();
+        reachZ = projected.GetPositionZ();
+        sample.validationMode = TerrainFootingSample::ValidationMode::RelaxedProjection;
+    }
+
+    float worstBackDrop = 0.0f;
+    for (float const backOffset : { 0.0f, QuarterPi, -QuarterPi })
+    {
+        float const backAngle = facingAngle + backOffset;
+        for (float const probeDistance : { TerrainProbeNearYards, TerrainProbeFarYards })
+        {
+            float const probeX = reachX + (std::cos(backAngle) * probeDistance);
+            float const probeY = reachY + (std::sin(backAngle) * probeDistance);
+            float const probeZ = mover->GetMapHeight(probeX, probeY, reachZ + 5.0f, true, 25.0f);
+            if (!std::isfinite(probeZ))
+                continue;
+
+            worstBackDrop = std::max(worstBackDrop, std::max(0.0f, reachZ - probeZ));
+        }
+    }
+
+    float worstSideDrop = 0.0f;
+    for (float const sideOffset : { HalfPi, -HalfPi })
+    {
+        float const sideAngle = facingAngle + sideOffset;
+        for (float const probeDistance : { TerrainProbeNearYards, TerrainProbeFarYards })
+        {
+            float const probeX = reachX + (std::cos(sideAngle) * probeDistance);
+            float const probeY = reachY + (std::sin(sideAngle) * probeDistance);
+            float const probeZ = mover->GetMapHeight(probeX, probeY, reachZ + 5.0f, true, 25.0f);
+            if (!std::isfinite(probeZ))
+                continue;
+
+            worstSideDrop = std::max(worstSideDrop, std::max(0.0f, reachZ - probeZ));
+        }
+    }
+
+    sample.valid = true;
+    sample.x = reachX;
+    sample.y = reachY;
+    sample.z = reachZ;
+    sample.backDrop = worstBackDrop;
+    sample.sideDrop = worstSideDrop;
+    Position rearProbe;
+    rearProbe.Relocate(reachX, reachY, reachZ, 0.0f);
+    mover->MovePositionToFirstCollision(rearProbe, TerrainRearSupportProbeYards, facingAngle + Pi);
+    sample.rearSupportDistance = std::hypot(
+        rearProbe.GetPositionX() - reachX,
+        rearProbe.GetPositionY() - reachY);
+    sample.travelDelta = std::hypot(reachX - mover->GetPositionX(), reachY - mover->GetPositionY());
+    sample.rejectReason = TerrainFootingSample::RejectReason::None;
+    return sample;
+}
+
+struct TerrainSurveyCandidate
+{
+    bool valid = false;
+    float x = 0.0f;
+    float y = 0.0f;
+    float z = 0.0f;
+    float facingAngle = 0.0f;
+    float orbitOffset = 0.0f;
+    float orbitRadius = 0.0f;
+    float backDrop = 1000.0f;
+    float sideDrop = 1000.0f;
+    float rearSupportDistance = TerrainRearSupportProbeYards;
+    float travelDelta = 0.0f;
+    float score = std::numeric_limits<float>::max();
+};
+
+bool CanReuseTerrainSurveyCache(
+    WorldBotCreatureAI::TerrainSurveyCacheSnapshot const& cache,
+    Creature const* mover,
+    Unit const* target,
+    float preferredRange,
+    bool puntAwareTarget,
+    float maxTravelDistance)
+{
+    if (!cache.valid || !mover || !target)
+        return false;
+
+    if (cache.targetGuid != target->GetGUID())
+        return false;
+
+    if (cache.puntAwareTarget != puntAwareTarget)
+        return false;
+
+    if (std::fabs(cache.preferredRange - preferredRange) > 2.0f)
+        return false;
+
+    if (std::fabs(cache.maxTravelDistance - maxTravelDistance) > 4.0f)
+        return false;
+
+    if (std::hypot(cache.moverX - mover->GetPositionX(), cache.moverY - mover->GetPositionY()) > 2.0f)
+        return false;
+
+    if (std::hypot(cache.targetX - target->GetPositionX(), cache.targetY - target->GetPositionY()) > 2.0f)
+        return false;
+
+    return true;
+}
+
+float ScoreTerrainSurveyCandidate(
+    TerrainFootingSample const& sample,
+    bool puntAwareTarget,
+    float radiusAdjust,
+    float angleOffset)
+{
+    float const desiredRearSupport = puntAwareTarget
+        ? TerrainPreferredRearSupportYards
+        : TerrainRearSupportProbeYards;
+    float const rearSupportPenalty = std::fabs(sample.rearSupportDistance - desiredRearSupport) * 0.5f;
+    float const orbitPenalty = std::fabs(angleOffset) * 0.15f;
+    float const radiusPenalty = std::fabs(radiusAdjust - 2.0f) * 0.1f;
+
+    return (sample.backDrop * 8.0f)
+        + (sample.sideDrop * 2.0f)
+        + rearSupportPenalty
+        + (sample.travelDelta * 0.2f)
+        + orbitPenalty
+        + radiusPenalty;
+}
+
+TerrainSurveyCandidate FindBestCombatFootingSurveyAroundTarget(
+    Creature* mover,
+    Unit const* target,
+    float preferredRange,
+    bool puntAwareTarget,
+    float maxTravelDistance,
+    std::initializer_list<float> orbitRadii,
+    std::initializer_list<float> orbitOffsets,
+    TerrainSurveyDiagnostics* diagnostics = nullptr)
+{
+    TerrainSurveyCandidate best;
+    if (!mover || !target || !mover->GetMap())
+        return best;
+
+    for (float const radiusAdjust : orbitRadii)
+    {
+        float const orbitRadius = std::max(1.25f, preferredRange + radiusAdjust);
+        for (float const angleOffset : orbitOffsets)
+        {
+            float const angle = target->GetAngle(mover) + angleOffset;
+            float const candidateX = target->GetPositionX() + (std::cos(angle) * orbitRadius);
+            float const candidateY = target->GetPositionY() + (std::sin(angle) * orbitRadius);
+            if (std::hypot(candidateX - mover->GetPositionX(), candidateY - mover->GetPositionY()) > maxTravelDistance)
+            {
+                if (diagnostics)
+                    ++diagnostics->tooFar;
+                continue;
+            }
+
+            if (diagnostics)
+                ++diagnostics->attempted;
+
+            TerrainFootingSample const sample =
+                EvaluateCombatFootingAt(mover, target, candidateX, candidateY, angle);
+            if (!sample.valid)
+            {
+                RecordTerrainSampleReject(diagnostics, sample.rejectReason);
+                continue;
+            }
+
+            if (diagnostics)
+            {
+                ++diagnostics->valid;
+                if (sample.validationMode == TerrainFootingSample::ValidationMode::RelaxedProjection)
+                    ++diagnostics->relaxedProjection;
+            }
+
+            TerrainSurveyCandidate candidate;
+            candidate.valid = true;
+            candidate.x = sample.x;
+            candidate.y = sample.y;
+            candidate.z = sample.z;
+            candidate.facingAngle = angle;
+            candidate.orbitOffset = angleOffset;
+            candidate.orbitRadius = orbitRadius;
+            candidate.backDrop = sample.backDrop;
+            candidate.sideDrop = sample.sideDrop;
+            candidate.rearSupportDistance = sample.rearSupportDistance;
+            candidate.travelDelta = sample.travelDelta;
+            candidate.score = ScoreTerrainSurveyCandidate(
+                sample,
+                puntAwareTarget,
+                radiusAdjust,
+                angleOffset);
+
+            if (!best.valid || candidate.score < best.score)
+                best = candidate;
+        }
+    }
+
+    return best;
+}
+
+void ConsiderTerrainSurveyCandidate(
+    TerrainSurveyCandidate& best,
+    Creature* mover,
+    Unit const* target,
+    bool puntAwareTarget,
+    float anchorX,
+    float anchorY,
+    float orbitRadius,
+    float angleOffset,
+    float scoreRadiusAdjust = 0.0f,
+    TerrainSurveyDiagnostics* diagnostics = nullptr)
+{
+    if (!mover || !target)
+        return;
+
+    float const angle = target->GetAngle(anchorX, anchorY);
+    if (diagnostics)
+        ++diagnostics->attempted;
+
+    TerrainFootingSample const sample =
+        EvaluateCombatFootingAt(mover, target, anchorX, anchorY, angle);
+    if (!sample.valid)
+    {
+        RecordTerrainSampleReject(diagnostics, sample.rejectReason);
+        return;
+    }
+
+    if (diagnostics)
+    {
+        ++diagnostics->valid;
+        if (sample.validationMode == TerrainFootingSample::ValidationMode::RelaxedProjection)
+            ++diagnostics->relaxedProjection;
+    }
+
+    TerrainSurveyCandidate candidate;
+    candidate.valid = true;
+    candidate.x = sample.x;
+    candidate.y = sample.y;
+    candidate.z = sample.z;
+    candidate.facingAngle = angle;
+    candidate.orbitOffset = angleOffset;
+    candidate.orbitRadius = orbitRadius;
+    candidate.backDrop = sample.backDrop;
+    candidate.sideDrop = sample.sideDrop;
+    candidate.rearSupportDistance = sample.rearSupportDistance;
+    candidate.travelDelta = sample.travelDelta;
+    candidate.score = ScoreTerrainSurveyCandidate(
+        sample,
+        puntAwareTarget,
+        scoreRadiusAdjust,
+        angleOffset);
+
+    if (!best.valid || candidate.score < best.score)
+        best = candidate;
+}
+
+TerrainSurveyCandidate FindBestCombatFootingSurveyNearFight(
+    Creature* mover,
+    Unit const* target,
+    bool puntAwareTarget,
+    float maxTravelDistance,
+    TerrainSurveyDiagnostics* diagnostics = nullptr)
+{
+    TerrainSurveyCandidate best;
+    if (!mover || !target)
+        return best;
+
+    float const moverX = mover->GetPositionX();
+    float const moverY = mover->GetPositionY();
+    float const targetX = target->GetPositionX();
+    float const targetY = target->GetPositionY();
+    float const midpointX = (moverX + targetX) * 0.5f;
+    float const midpointY = (moverY + targetY) * 0.5f;
+
+    auto const samplePatch =
+        [&](float centerX, float centerY, std::initializer_list<float> radii)
+        {
+            for (float const radius : radii)
+            {
+                if (radius <= 0.001f)
+                {
+                    if (std::hypot(centerX - moverX, centerY - moverY) <= maxTravelDistance)
+                    {
+                        ConsiderTerrainSurveyCandidate(
+                            best,
+                            mover,
+                            target,
+                            puntAwareTarget,
+                            centerX,
+                            centerY,
+                            0.0f,
+                            0.0f,
+                            0.0f,
+                            diagnostics);
+                    }
+                    else if (diagnostics)
+                    {
+                        ++diagnostics->tooFar;
+                    }
+                    continue;
+                }
+
+                for (float const angleOffset : {
+                         0.0f,
+                         QuarterPi,
+                         -QuarterPi,
+                         HalfPi,
+                         -HalfPi,
+                         HalfPi + QuarterPi,
+                         -(HalfPi + QuarterPi),
+                         Pi })
+                {
+                    float const candidateX = centerX + (std::cos(angleOffset) * radius);
+                    float const candidateY = centerY + (std::sin(angleOffset) * radius);
+                    if (std::hypot(candidateX - moverX, candidateY - moverY) > maxTravelDistance)
+                    {
+                        if (diagnostics)
+                            ++diagnostics->tooFar;
+                        continue;
+                    }
+
+                    ConsiderTerrainSurveyCandidate(
+                        best,
+                        mover,
+                        target,
+                        puntAwareTarget,
+                        candidateX,
+                        candidateY,
+                        radius,
+                        angleOffset,
+                        radius,
+                        diagnostics);
+                }
+            }
+        };
+
+    samplePatch(moverX, moverY, { 0.0f, 3.0f, 6.0f, 9.0f });
+    samplePatch(midpointX, midpointY, { 0.0f, 3.0f, 6.0f });
+
+    if (mover->GetDistance2d(target) > 12.0f)
+    {
+        float const corridorFractions[] = { 0.25f, 0.5f, 0.75f };
+        for (float const t : corridorFractions)
+        {
+            float const cx = moverX + ((targetX - moverX) * t);
+            float const cy = moverY + ((targetY - moverY) * t);
+            samplePatch(cx, cy, { 0.0f, 2.5f, 5.0f });
+        }
+    }
+
+    return best;
+}
+
+TerrainSurveyCandidate MakeTerrainSurveyCandidateFromCache(
+    WorldBotCreatureAI::TerrainSurveyCacheSnapshot const& cache)
+{
+    TerrainSurveyCandidate candidate;
+    if (!cache.valid)
+        return candidate;
+
+    candidate.valid = true;
+    candidate.x = cache.bestX;
+    candidate.y = cache.bestY;
+    candidate.z = cache.bestZ;
+    candidate.facingAngle = cache.bestFacingAngle;
+    candidate.orbitOffset = cache.bestOrbitOffset;
+    candidate.orbitRadius = cache.bestOrbitRadius;
+    candidate.backDrop = cache.bestBackDrop;
+    candidate.sideDrop = cache.bestSideDrop;
+    candidate.rearSupportDistance = cache.bestRearSupportDistance;
+    candidate.travelDelta = cache.bestTravelDelta;
+    candidate.score = cache.bestScore;
+    return candidate;
+}
+
+void StoreTerrainSurveyCache(
+    WorldBotCreatureAI::TerrainSurveyCacheSnapshot& cache,
+    Creature const* mover,
+    Unit const* target,
+    float preferredRange,
+    bool puntAwareTarget,
+    float maxTravelDistance,
+    TerrainSurveyCandidate const& candidate)
+{
+    cache.Reset();
+    if (!mover || !target || !candidate.valid)
+        return;
+
+    cache.valid = true;
+    cache.targetGuid = target->GetGUID();
+    cache.puntAwareTarget = puntAwareTarget;
+    cache.moverX = mover->GetPositionX();
+    cache.moverY = mover->GetPositionY();
+    cache.targetX = target->GetPositionX();
+    cache.targetY = target->GetPositionY();
+    cache.preferredRange = preferredRange;
+    cache.maxTravelDistance = maxTravelDistance;
+    cache.bestX = candidate.x;
+    cache.bestY = candidate.y;
+    cache.bestZ = candidate.z;
+    cache.bestFacingAngle = candidate.facingAngle;
+    cache.bestOrbitOffset = candidate.orbitOffset;
+    cache.bestOrbitRadius = candidate.orbitRadius;
+    cache.bestBackDrop = candidate.backDrop;
+    cache.bestSideDrop = candidate.sideDrop;
+    cache.bestRearSupportDistance = candidate.rearSupportDistance;
+    cache.bestTravelDelta = candidate.travelDelta;
+    cache.bestScore = candidate.score;
 }
 
 struct EffectiveConservationSettings
@@ -2008,12 +2595,14 @@ std::string WorldBotCreatureAI::BuildCombatMovementTraceDetail(
 {
     std::ostringstream oss;
     float const distance = (me && target) ? me->GetDistance(target) : 0.0f;
+    float const zDelta = (me && target) ? std::fabs(me->GetPositionZ() - target->GetPositionZ()) : 0.0f;
     oss << "phase='movement' decision='" << decision << "' "
         << "target='" << (target ? target->GetName() : "none") << "' "
         << "target_guid=" << (target ? target->GetGUID().GetCounter() : 0) << " "
         << "target_hp_pct=" << (target ? target->GetHealthPct() : 0.0f) << " "
         << "self_hp_pct=" << (me ? me->GetHealthPct() : 0.0f) << " "
         << "distance=" << distance << " "
+        << "z_delta=" << zDelta << " "
         << "hostiles_10yd=" << CountNearbyHostileUnits(me, 10.0f) << " "
         << "hostiles_30yd=" << CountNearbyHostileUnits(me, 30.0f);
     return oss.str();
@@ -2965,6 +3554,9 @@ std::string DescribeThreatStateForTrace(Unit* actor, Unit* currentVictim)
     Unit* threatVictim = actor && actor->CanHaveThreatList() ? actor->GetThreatMgr().GetCurrentVictim() : nullptr;
     oss << "actor_in_combat=" << ((actor && actor->IsInCombat()) ? 1 : 0) << " "
         << "actor_is_engaged=" << ((actor && actor->IsEngaged()) ? 1 : 0) << " "
+        << "actor_alive=" << ((actor && actor->IsAlive()) ? 1 : 0) << " "
+        << "actor_evade=" << ((actor && actor->ToCreature() && actor->ToCreature()->IsInEvadeMode()) ? 1 : 0) << " "
+        << "actor_hp_pct=" << (actor ? actor->GetHealthPct() : 0.0f) << " "
         << "actor_victim=" << DescribeTraceUnit(currentVictim) << " "
         << "actor_threat_victim=" << DescribeTraceUnit(threatVictim) << " "
         << "actor_threat_list_size=" << ((actor && actor->CanHaveThreatList()) ? actor->GetThreatMgr().GetThreatListSize() : 0);
@@ -2975,6 +3567,12 @@ void EnsureMutualThreatEngagement(Creature* attacker, Unit* victim)
 {
     if (!attacker || !victim)
         return;
+
+    if (attacker->IsAlive() && victim->IsAlive())
+    {
+        attacker->SetInCombatWith(victim);
+        victim->SetInCombatWith(attacker);
+    }
 
     if (attacker->IsAIEnabled)
         attacker->AI()->JustStartedThreateningMe(victim);
@@ -3140,6 +3738,122 @@ void WorldBotCreatureAI::MaybeStartDebugForcedCombat()
         + "' target_entry=" + std::to_string(targetEntry)
         + " target_guid=" + std::to_string(target->GetGUID().GetCounter())
         + " distance=" + std::to_string(me->GetDistance(target)));
+
+    auto const maybeRepositionForSaferPull =
+        [&]() -> bool
+        {
+            Creature* const targetCreature = target->ToCreature();
+            if (!me || !targetCreature || !me->GetMap())
+                return false;
+
+            if (!CreatureHasKnownSpell(targetCreature, MechanoKickSpellId))
+                return false;
+
+            float const currentAngle = target->GetAngle(me);
+            TerrainFootingSample const current = EvaluateCombatFootingAt(
+                me,
+                target,
+                me->GetPositionX(),
+                me->GetPositionY(),
+                currentAngle);
+            if (!current.valid)
+                return false;
+
+            float const preferredRange = std::max(18.0f, me->GetDistance(target));
+            TerrainSurveyCandidate best;
+            TerrainSurveyDiagnostics diagnostics;
+            bool reusedCache = false;
+            if (CanReuseTerrainSurveyCache(
+                    _terrainSurveyCache,
+                    me,
+                    target,
+                    preferredRange,
+                    true,
+                    TerrainSurveyRadiusYards))
+            {
+                best = MakeTerrainSurveyCandidateFromCache(_terrainSurveyCache);
+                reusedCache = true;
+            }
+            else
+            {
+                best = FindBestCombatFootingSurveyAroundTarget(
+                    me,
+                    target,
+                    preferredRange,
+                    true,
+                    TerrainSurveyRadiusYards,
+                    { 0.0f, 4.0f, 8.0f, 12.0f },
+                    { Pi, Pi + QuarterPi, Pi - QuarterPi, Pi + HalfPi, Pi - HalfPi, 0.0f },
+                    &diagnostics);
+                if (!best.valid)
+                {
+                    best = FindBestCombatFootingSurveyNearFight(
+                        me,
+                        target,
+                        true,
+                        TerrainSurveyRadiusYards,
+                        &diagnostics);
+                }
+                StoreTerrainSurveyCache(
+                    _terrainSurveyCache,
+                    me,
+                    target,
+                    preferredRange,
+                    true,
+                    TerrainSurveyRadiusYards,
+                    best);
+            }
+
+            float const currentScore = ScoreTerrainSurveyCandidate(current, true, 0.0f, 0.0f);
+            float const scoreGain = currentScore - best.score;
+            if (!best.valid || scoreGain < 0.35f)
+            {
+                if (IsDebugForcedCombatIdentity())
+                {
+                    std::ostringstream skip;
+                    skip << BuildCombatMovementTraceDetail("terrain_survey_skip", target)
+                         << " stage='pre_pull' reason='" << (!best.valid ? "no_candidate" : "insufficient_gain") << "'"
+                         << " reused_cache=" << (reusedCache ? 1 : 0)
+                         << DescribeTerrainDiagnostics(diagnostics)
+                         << " current_back_drop=" << current.backDrop
+                         << " current_side_drop=" << current.sideDrop
+                         << " current_rear_support=" << current.rearSupportDistance
+                         << " current_score=" << currentScore;
+                    if (best.valid)
+                    {
+                        skip << " best_back_drop=" << best.backDrop
+                             << " best_side_drop=" << best.sideDrop
+                             << " best_rear_support=" << best.rearSupportDistance
+                             << " best_score=" << best.score
+                             << " score_gain=" << scoreGain;
+                    }
+                    RecordCombatTrace(skip.str());
+                }
+                return false;
+            }
+
+            me->GetMotionMaster()->MovePoint(0, best.x, best.y, best.z);
+
+            std::ostringstream oss;
+            oss << BuildCombatMovementTraceDetail("pre_pull_reposition", target)
+                << " current_back_drop=" << current.backDrop
+                << " current_side_drop=" << current.sideDrop
+                << " current_rear_support=" << current.rearSupportDistance
+                << " best_back_drop=" << best.backDrop
+                << " best_side_drop=" << best.sideDrop
+                << " best_rear_support=" << best.rearSupportDistance
+                << " orbit_radius=" << best.orbitRadius
+                << " angle_offset=" << best.orbitOffset
+                << " reused_cache=" << (reusedCache ? 1 : 0)
+                << " current_score=" << currentScore
+                << " best_score=" << best.score
+                << " destination=(" << best.x << "," << best.y << "," << best.z << ")";
+            RecordCombatTrace(oss.str());
+            return true;
+        };
+
+    if (maybeRepositionForSaferPull())
+        return;
 
     SuspendCurrentStepForCombat(target);
     me->EngageWithTarget(target);
@@ -4789,6 +5503,22 @@ void WorldBotCreatureAI::TickCombat(uint32 diff)
 
     if (!UpdateVictim())
     {
+        if (IsDebugForcedCombatIdentity() && (preTickInCombat || preTickVictim))
+        {
+            std::ostringstream edge;
+            edge << "phase='combat' decision='combat_edge' "
+                 << "reason='update_victim_false' "
+                 << "pre_tick_victim=" << DescribeTraceUnit(preTickVictim) << " "
+                 << "pre_tick_victim_alive=" << ((preTickVictim && preTickVictim->IsAlive()) ? 1 : 0) << " "
+                 << "pre_tick_victim_evade=" << ((preTickVictim && preTickVictim->ToCreature() && preTickVictim->ToCreature()->IsInEvadeMode()) ? 1 : 0) << " "
+                 << "pre_tick_distance=" << ((preTickVictim && me) ? me->GetDistance(preTickVictim) : 0.0f) << " "
+                 << "bot_in_combat=" << (me->IsInCombat() ? 1 : 0) << " "
+                 << "bot_is_engaged=" << (me->IsEngaged() ? 1 : 0) << " "
+                 << "bot_attackers=" << me->getAttackers().size() << " "
+                 << "threat_list_size=" << (me->CanHaveThreatList() ? me->GetThreatMgr().GetThreatListSize() : 0);
+            RecordCombatTrace(edge.str());
+        }
+
         if (TryAdoptGroupedCombatTarget("group_target_request_update_victim_false"))
             return;
 
@@ -4803,6 +5533,22 @@ void WorldBotCreatureAI::TickCombat(uint32 diff)
     Unit* target = me->GetVictim();
     if (!target)
     {
+        if (IsDebugForcedCombatIdentity() && (preTickInCombat || preTickVictim))
+        {
+            std::ostringstream edge;
+            edge << "phase='combat' decision='combat_edge' "
+                 << "reason='missing_victim_after_update' "
+                 << "pre_tick_victim=" << DescribeTraceUnit(preTickVictim) << " "
+                 << "pre_tick_victim_alive=" << ((preTickVictim && preTickVictim->IsAlive()) ? 1 : 0) << " "
+                 << "pre_tick_victim_evade=" << ((preTickVictim && preTickVictim->ToCreature() && preTickVictim->ToCreature()->IsInEvadeMode()) ? 1 : 0) << " "
+                 << "pre_tick_distance=" << ((preTickVictim && me) ? me->GetDistance(preTickVictim) : 0.0f) << " "
+                 << "bot_in_combat=" << (me->IsInCombat() ? 1 : 0) << " "
+                 << "bot_is_engaged=" << (me->IsEngaged() ? 1 : 0) << " "
+                 << "bot_attackers=" << me->getAttackers().size() << " "
+                 << "threat_list_size=" << (me->CanHaveThreatList() ? me->GetThreatMgr().GetThreatListSize() : 0);
+            RecordCombatTrace(edge.str());
+        }
+
         if (TryAdoptGroupedCombatTarget("group_target_request_missing_victim"))
             return;
 
@@ -4843,11 +5589,13 @@ void WorldBotCreatureAI::TickCombat(uint32 diff)
     model::WorldBotHazardSnapshot const hazard = BuildWorldBotHazardSnapshot(me, _hazardEvaluationState);
     std::vector<service::WorldBotNearbyHostileSnapshot> const nearbyHostiles =
         CollectNearbyHostileSnapshots(me, target, 30.0f);
+    bool const inEffectiveMeleeRange = me->IsWithinMeleeRange(target);
     model::WorldBotCombatSituation const situation = service::BuildWorldBotCombatSituation(
         _preparedBuild,
         me,
         true,
         me->GetDistance(target),
+        inEffectiveMeleeRange,
         me->GetHealthPct(),
         GetManaPct(me),
         CountNearbyHostileUnits(me, 10.0f),
@@ -4878,6 +5626,7 @@ void WorldBotCreatureAI::TickCombat(uint32 diff)
                 << " plan='" << DescribeMovementPlanKind(movementPlan.kind) << "'"
                 << " hard_casts=" << (movementDecision.allowHardCasts ? 1 : 0)
                 << " cast_safe=" << (situation.canCastSafely ? 1 : 0)
+                << " effective_melee=" << (situation.inEffectiveMeleeRange ? 1 : 0)
                 << " hazard_active=" << (situation.hazard.active ? 1 : 0)
                 << " hazard_aura=" << (situation.hazard.explicitAuraTriggered ? 1 : 0)
                 << " hazard_repeat=" << (situation.hazard.repeatedDamageTriggered ? 1 : 0)
@@ -4907,14 +5656,301 @@ void WorldBotCreatureAI::TickCombat(uint32 diff)
     auto const applyMovementDoctrinePlan =
         [&]()
         {
+            constexpr float RiskyVerticalChaseDelta = 8.0f;
+            constexpr float RiskyVerticalChase2dWindow = 12.0f;
+            constexpr float SafeChaseProbeStepYards = 3.0f;
+            constexpr float StickyMeleeCloseProbeStartYards = 4.0f;
+            constexpr float StickyMeleeCloseProbeMaxYards = 12.0f;
+
+            auto const tryIssueLedgeSafeMeleeAnchor =
+                [&]() -> bool
+                {
+                    if (!me || !target || !me->GetMap())
+                        return false;
+
+                    if (situation.movementStyle != model::WorldBotMovementStyle::FrontlineTank
+                        && situation.movementStyle != model::WorldBotMovementStyle::StickyMelee)
+                        return false;
+
+                    if (movementDecision.posture != model::WorldBotCombatPosture::Hold
+                        && movementDecision.posture != model::WorldBotCombatPosture::Close)
+                        return false;
+
+                    float const targetDistance2d = me->GetExactDist2d(target);
+                    if (targetDistance2d > 8.0f)
+                        return false;
+
+                    float const desiredRange = service::ResolveWorldBotDesiredRange(
+                        situation.movementStyle,
+                        movementDecision.posture);
+                    if (desiredRange <= 0.0f)
+                        return false;
+
+                    bool puntAwareTarget = false;
+                    if (Creature* targetCreature = target->ToCreature())
+                        puntAwareTarget = CreatureHasKnownSpell(targetCreature, MechanoKickSpellId);
+
+                    struct LedgeAnchorCandidate
+                    {
+                        bool valid = false;
+                        float x = 0.0f;
+                        float y = 0.0f;
+                        float z = 0.0f;
+                        float backDrop = 1000.0f;
+                        float sideDrop = 0.0f;
+                        float rearSupportDistance = TerrainRearSupportProbeYards;
+                        float orbitOffset = 0.0f;
+                        float orbitRadius = 0.0f;
+                        float travelDelta = 0.0f;
+                        float score = std::numeric_limits<float>::max();
+                    };
+
+                    auto const evaluatePosition =
+                        [&](float candidateX, float candidateY, float facingAngle, float orbitOffset = 0.0f, float orbitRadius = 0.0f) -> LedgeAnchorCandidate
+                        {
+                            LedgeAnchorCandidate candidate;
+                            TerrainFootingSample const sample =
+                                EvaluateCombatFootingAt(me, target, candidateX, candidateY, facingAngle);
+                            if (!sample.valid)
+                                return candidate;
+
+                            candidate.valid = true;
+                            candidate.x = sample.x;
+                            candidate.y = sample.y;
+                            candidate.z = sample.z;
+                            candidate.backDrop = sample.backDrop;
+                            candidate.sideDrop = sample.sideDrop;
+                            candidate.rearSupportDistance = sample.rearSupportDistance;
+                            candidate.orbitOffset = orbitOffset;
+                            candidate.orbitRadius = orbitRadius;
+                            candidate.travelDelta = sample.travelDelta;
+                            candidate.score = ScoreTerrainSurveyCandidate(
+                                sample,
+                                puntAwareTarget,
+                                orbitRadius,
+                                orbitOffset);
+                            return candidate;
+                        };
+
+                    float const currentAngle = target->GetAngle(me);
+                    LedgeAnchorCandidate const current = evaluatePosition(
+                        me->GetPositionX(),
+                        me->GetPositionY(),
+                        currentAngle);
+
+                    float const dangerThreshold = puntAwareTarget
+                        ? TerrainPuntAwareBackDropYards
+                        : TerrainDangerBackDropYards;
+                    bool const currentRisky =
+                        current.valid
+                        && (current.backDrop >= dangerThreshold
+                            || current.sideDrop >= TerrainDangerBackDropYards
+                            || (puntAwareTarget && current.rearSupportDistance > TerrainRearSupportProbeYards - 0.5f));
+
+                    TerrainSurveyCandidate surveyedBest;
+                    TerrainSurveyDiagnostics diagnostics;
+                    bool reusedCache = false;
+                    if (CanReuseTerrainSurveyCache(
+                            _terrainSurveyCache,
+                            me,
+                            target,
+                            desiredRange,
+                            puntAwareTarget,
+                            12.0f))
+                    {
+                        surveyedBest = MakeTerrainSurveyCandidateFromCache(_terrainSurveyCache);
+                        reusedCache = true;
+                    }
+                    else
+                    {
+                        surveyedBest = FindBestCombatFootingSurveyAroundTarget(
+                            me,
+                            target,
+                            desiredRange,
+                            puntAwareTarget,
+                            12.0f,
+                            { -0.5f, 0.0f, 0.75f, 1.5f },
+                            { 0.0f, QuarterPi, -QuarterPi, HalfPi, -HalfPi, HalfPi + QuarterPi, -(HalfPi + QuarterPi), Pi },
+                            &diagnostics);
+                        if (!surveyedBest.valid)
+                        {
+                            surveyedBest = FindBestCombatFootingSurveyNearFight(
+                                me,
+                                target,
+                                puntAwareTarget,
+                                12.0f,
+                                &diagnostics);
+                        }
+                        StoreTerrainSurveyCache(
+                            _terrainSurveyCache,
+                            me,
+                            target,
+                            desiredRange,
+                            puntAwareTarget,
+                            12.0f,
+                            surveyedBest);
+                    }
+
+                    float const requiredScoreGain = puntAwareTarget ? 0.25f : 1.0f;
+                    if (!surveyedBest.valid)
+                    {
+                        if (IsDebugForcedCombatIdentity())
+                        {
+                            std::ostringstream skip;
+                            skip << BuildCombatMovementTraceDetail("terrain_survey_skip", target)
+                                 << " stage='combat_anchor' reason='no_candidate'"
+                                 << " punt_aware=" << (puntAwareTarget ? 1 : 0)
+                                 << " reused_cache=" << (reusedCache ? 1 : 0)
+                                 << DescribeTerrainDiagnostics(diagnostics)
+                                 << " current_back_drop=" << current.backDrop
+                                 << " current_side_drop=" << current.sideDrop
+                                 << " current_rear_support=" << current.rearSupportDistance
+                                 << " current_score=" << current.score;
+                            RecordCombatTrace(skip.str());
+                        }
+                        return false;
+                    }
+
+                    LedgeAnchorCandidate best = evaluatePosition(
+                        surveyedBest.x,
+                        surveyedBest.y,
+                        surveyedBest.facingAngle,
+                        surveyedBest.orbitOffset,
+                        surveyedBest.orbitRadius);
+                    if (!best.valid)
+                        return false;
+
+                    bool const shouldUseSurveyedAnchor =
+                        puntAwareTarget
+                            ? (best.score + requiredScoreGain < current.score)
+                            : (currentRisky && best.score + requiredScoreGain < current.score);
+                    if (!shouldUseSurveyedAnchor)
+                    {
+                        if (IsDebugForcedCombatIdentity())
+                        {
+                            std::ostringstream skip;
+                            skip << BuildCombatMovementTraceDetail("terrain_survey_skip", target)
+                                 << " stage='combat_anchor' reason='insufficient_gain'"
+                                 << " punt_aware=" << (puntAwareTarget ? 1 : 0)
+                                 << " reused_cache=" << (reusedCache ? 1 : 0)
+                                 << " current_risky=" << (currentRisky ? 1 : 0)
+                                 << " current_back_drop=" << current.backDrop
+                                 << " current_side_drop=" << current.sideDrop
+                                 << " current_rear_support=" << current.rearSupportDistance
+                                 << " best_back_drop=" << best.backDrop
+                                 << " best_side_drop=" << best.sideDrop
+                                 << " best_rear_support=" << best.rearSupportDistance
+                                 << " current_score=" << current.score
+                                 << " best_score=" << best.score;
+                            RecordCombatTrace(skip.str());
+                        }
+                        return false;
+                    }
+
+                    me->GetMotionMaster()->MovePoint(0, best.x, best.y, best.z);
+
+                    std::ostringstream ledgeTrace;
+                    ledgeTrace << BuildCombatMovementTraceDetail("ledge_anchor", target)
+                               << " current_back_drop=" << current.backDrop
+                               << " current_side_drop=" << current.sideDrop
+                               << " current_rear_support=" << current.rearSupportDistance
+                               << " best_back_drop=" << best.backDrop
+                               << " best_side_drop=" << best.sideDrop
+                               << " best_rear_support=" << best.rearSupportDistance
+                               << " punt_aware=" << (puntAwareTarget ? 1 : 0)
+                               << " orbit_offset=" << best.orbitOffset
+                               << " orbit_radius=" << best.orbitRadius
+                               << " reused_cache=" << (reusedCache ? 1 : 0)
+                               << " current_score=" << current.score
+                               << " best_score=" << best.score
+                               << " destination=(" << best.x << "," << best.y << "," << best.z << ")";
+                    RecordCombatTrace(ledgeTrace.str());
+                    return true;
+                };
+
             switch (movementPlan.kind)
             {
                 case service::WorldBotMovementPlanKind::MovePoint:
                     me->GetMotionMaster()->MovePoint(0, movementPlan.pointX, movementPlan.pointY, movementPlan.pointZ);
                     break;
                 case service::WorldBotMovementPlanKind::Chase:
+                {
+                    if (tryIssueLedgeSafeMeleeAnchor())
+                        break;
+
+                    float const targetZDelta = std::fabs(me->GetPositionZ() - target->GetPositionZ());
+                    float const targetDistance2d = me->GetExactDist2d(target);
+
+                    bool const stickyMeleeStyle =
+                        situation.movementStyle == model::WorldBotMovementStyle::FrontlineTank
+                        || situation.movementStyle == model::WorldBotMovementStyle::StickyMelee;
+
+                    if (stickyMeleeStyle
+                        && movementDecision.posture == model::WorldBotCombatPosture::Close
+                        && targetDistance2d >= StickyMeleeCloseProbeStartYards
+                        && targetDistance2d <= StickyMeleeCloseProbeMaxYards)
+                    {
+                        Position dest = me->GetPosition();
+                        float const probeStep = std::clamp(
+                            targetDistance2d - 2.0f,
+                            1.5f,
+                            4.0f);
+
+                        me->MovePositionToFirstCollision(dest, probeStep, me->GetAngle(target));
+
+                        float destX = dest.GetPositionX();
+                        float destY = dest.GetPositionY();
+                        float destZ = dest.GetPositionZ();
+                        bool usedValidatedDestination = false;
+                        if (me->GetMap()
+                            && me->GetMap()->CanReachPositionAndGetValidCoords(me, destX, destY, destZ, true, true))
+                        {
+                            usedValidatedDestination = true;
+                        }
+
+                        me->GetMotionMaster()->MovePoint(0, destX, destY, destZ);
+
+                        std::ostringstream closeTrace;
+                        closeTrace << BuildCombatMovementTraceDetail("close_probe", target)
+                                   << " probe_step=" << probeStep
+                                   << " validated=" << (usedValidatedDestination ? 1 : 0)
+                                   << " destination=(" << destX << "," << destY << "," << destZ << ")";
+                        RecordCombatTrace(closeTrace.str());
+                        break;
+                    }
+
+                    // If the target suddenly diverges vertically at close range,
+                    // treat it as a risky ledge break and advance with a short,
+                    // collision-safe probe instead of blindly full-chasing.
+                    if (targetZDelta >= RiskyVerticalChaseDelta
+                        && targetDistance2d <= RiskyVerticalChase2dWindow)
+                    {
+                        Position dest = me->GetPosition();
+                        float const probeStep = std::clamp(
+                            std::max(movementPlan.chaseDistance + 0.5f, SafeChaseProbeStepYards),
+                            1.5f,
+                            std::max(1.5f, std::min(targetDistance2d, 4.0f)));
+
+                        me->MovePositionToFirstCollision(dest, probeStep, me->GetAngle(target));
+
+                        float destX = dest.GetPositionX();
+                        float destY = dest.GetPositionY();
+                        float destZ = dest.GetPositionZ();
+                        if (me->GetMap()
+                            && me->GetMap()->CanReachPositionAndGetValidCoords(me, destX, destY, destZ, true, true))
+                        {
+                            me->GetMotionMaster()->MovePoint(0, destX, destY, destZ);
+                        }
+                        else
+                        {
+                            me->GetMotionMaster()->MovePoint(0, dest.GetPositionX(), dest.GetPositionY(), dest.GetPositionZ());
+                        }
+                        break;
+                    }
+
                     me->GetMotionMaster()->MoveChase(target, movementPlan.chaseDistance);
                     break;
+                }
                 case service::WorldBotMovementPlanKind::None:
                 default:
                     break;
@@ -5122,6 +6158,46 @@ void WorldBotCreatureAI::TickCombat(uint32 diff)
                 applyMovementDoctrinePlan();
                 break;
             case service::WorldBotMovementPlanKind::None:
+            {
+                bool const stickyMeleeStyle =
+                    situation.movementStyle == model::WorldBotMovementStyle::FrontlineTank
+                    || situation.movementStyle == model::WorldBotMovementStyle::StickyMelee;
+                float const targetDistance2d = me->GetExactDist2d(target);
+
+                if (stickyMeleeStyle
+                    && movementDecision.posture == model::WorldBotCombatPosture::Hold
+                    && targetDistance2d >= 2.75f
+                    && targetDistance2d <= 6.0f
+                    && me->isAttackReady(BASE_ATTACK))
+                {
+                    Position dest = me->GetPosition();
+                    float const probeStep = std::clamp(targetDistance2d - 2.0f, 0.5f, 1.5f);
+                    me->MovePositionToFirstCollision(dest, probeStep, me->GetAngle(target));
+
+                    float destX = dest.GetPositionX();
+                    float destY = dest.GetPositionY();
+                    float destZ = dest.GetPositionZ();
+                    bool usedValidatedDestination = false;
+                    if (me->GetMap()
+                        && me->GetMap()->CanReachPositionAndGetValidCoords(me, destX, destY, destZ, true, true))
+                    {
+                        usedValidatedDestination = true;
+                    }
+
+                    me->GetMotionMaster()->MovePoint(0, destX, destY, destZ);
+
+                    std::ostringstream probeTrace;
+                    probeTrace << BuildCombatMovementTraceDetail("contact_probe", target)
+                               << " probe_step=" << probeStep
+                               << " validated=" << (usedValidatedDestination ? 1 : 0)
+                               << " destination=(" << destX << "," << destY << "," << destZ << ")";
+                    RecordCombatTrace(probeTrace.str());
+                    break;
+                }
+
+                recordMovementDoctrineTrace();
+                break;
+            }
             default:
                 recordMovementDoctrineTrace();
                 break;

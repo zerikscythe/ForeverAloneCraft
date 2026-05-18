@@ -161,7 +161,8 @@ inline WorldBotMovementExecutionPlan BuildWorldBotMovementExecutionPlan(
 
     if (decision.posture == model::WorldBotCombatPosture::Close)
     {
-        if (desiredRange > 0.0f && situation.targetDistance <= desiredRange + 0.5f)
+        if (situation.inEffectiveMeleeRange
+            || (desiredRange > 0.0f && situation.targetDistance <= desiredRange + 0.5f))
             return plan;
 
         plan.kind = WorldBotMovementPlanKind::Chase;

@@ -339,6 +339,9 @@ def main() -> int:
         "LivingWorld.DebugForceCombatTargetIdentityId": str(pull_identity_id),
         "LivingWorld.DebugForceCombatTargetEntry": str(args.elite_entry),
         "LivingWorld.DebugForceCombatTargetSearchRadius": str(args.target_search_radius),
+        "LivingWorld.DebugCombatManaDrainIdentityId": "0",
+        "LivingWorld.DebugCombatManaDrainTargetManaPct": "60",
+        "LivingWorld.DebugCombatManaDrainIntervalMs": "1500",
     }
 
     baseline_id = query_scalar(

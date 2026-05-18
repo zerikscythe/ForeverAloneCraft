@@ -34,6 +34,7 @@ struct WorldBotCombatSituation
     float manaPct = 100.0f;
     std::uint32_t nearbyHostiles = 0;
     bool hasVictim = false;
+    bool inEffectiveMeleeRange = false;
     bool canCastSafely = true;
     bool isRangedStyle = false;
     bool isHealerStyle = false;

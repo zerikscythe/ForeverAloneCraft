@@ -68,6 +68,7 @@ inline model::WorldBotCombatSituation BuildWorldBotCombatSituation(
     Unit const* unit,
     bool hasVictim,
     float targetDistance,
+    bool inEffectiveMeleeRange,
     float healthPct,
     float manaPct,
     std::uint32_t nearbyHostiles,
@@ -78,6 +79,7 @@ inline model::WorldBotCombatSituation BuildWorldBotCombatSituation(
     situation.movementStyle = ResolveWorldBotMovementStyle(build);
     situation.hasVictim = hasVictim;
     situation.targetDistance = targetDistance;
+    situation.inEffectiveMeleeRange = inEffectiveMeleeRange;
     situation.healthPct = healthPct;
     situation.manaPct = manaPct;
     situation.nearbyHostiles = nearbyHostiles;

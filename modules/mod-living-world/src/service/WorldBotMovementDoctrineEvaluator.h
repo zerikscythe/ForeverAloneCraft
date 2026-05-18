@@ -40,9 +40,18 @@ inline model::WorldBotMovementDecision EvaluateWorldBotMovementDoctrine(
 
     if (situation.isTankStyle)
     {
-        decision.posture = situation.targetDistance > 4.0f
-            ? model::WorldBotCombatPosture::Close
-            : model::WorldBotCombatPosture::Hold;
+        decision.posture = (situation.inEffectiveMeleeRange || situation.targetDistance <= 4.0f)
+            ? model::WorldBotCombatPosture::Hold
+            : model::WorldBotCombatPosture::Close;
+        decision.allowHardCasts = true;
+        return decision;
+    }
+
+    if (!situation.isRangedStyle && !situation.isHealerStyle)
+    {
+        decision.posture = (situation.inEffectiveMeleeRange || situation.targetDistance <= 4.0f)
+            ? model::WorldBotCombatPosture::Hold
+            : model::WorldBotCombatPosture::Close;
         decision.allowHardCasts = true;
         return decision;
     }
@@ -91,9 +100,7 @@ inline model::WorldBotMovementDecision EvaluateWorldBotMovementDoctrine(
         return decision;
     }
 
-    decision.posture = situation.targetDistance > 4.0f
-        ? model::WorldBotCombatPosture::Close
-        : model::WorldBotCombatPosture::Hold;
+    decision.posture = model::WorldBotCombatPosture::Hold;
     decision.allowHardCasts = true;
     return decision;
 }

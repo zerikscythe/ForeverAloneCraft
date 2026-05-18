@@ -192,6 +192,54 @@ public:
         }
     };
 
+    struct TerrainSurveyCacheSnapshot
+    {
+        bool valid = false;
+        ObjectGuid targetGuid;
+        bool puntAwareTarget = false;
+        float moverX = 0.0f;
+        float moverY = 0.0f;
+        float targetX = 0.0f;
+        float targetY = 0.0f;
+        float preferredRange = 0.0f;
+        float maxTravelDistance = 0.0f;
+        float bestX = 0.0f;
+        float bestY = 0.0f;
+        float bestZ = 0.0f;
+        float bestFacingAngle = 0.0f;
+        float bestOrbitOffset = 0.0f;
+        float bestOrbitRadius = 0.0f;
+        float bestBackDrop = 1000.0f;
+        float bestSideDrop = 1000.0f;
+        float bestRearSupportDistance = 0.0f;
+        float bestTravelDelta = 0.0f;
+        float bestScore = 0.0f;
+
+        void Reset()
+        {
+            valid = false;
+            targetGuid.Clear();
+            puntAwareTarget = false;
+            moverX = 0.0f;
+            moverY = 0.0f;
+            targetX = 0.0f;
+            targetY = 0.0f;
+            preferredRange = 0.0f;
+            maxTravelDistance = 0.0f;
+            bestX = 0.0f;
+            bestY = 0.0f;
+            bestZ = 0.0f;
+            bestFacingAngle = 0.0f;
+            bestOrbitOffset = 0.0f;
+            bestOrbitRadius = 0.0f;
+            bestBackDrop = 1000.0f;
+            bestSideDrop = 1000.0f;
+            bestRearSupportDistance = 0.0f;
+            bestTravelDelta = 0.0f;
+            bestScore = 0.0f;
+        }
+    };
+
     struct GroupCombatTargetReply
     {
         Unit* target = nullptr;
@@ -365,6 +413,7 @@ private:
     std::uint64_t  _routeTravelLastReanchorWorldMs = 0;
     std::uint32_t  _syntheticGlobalCooldownRemainingMs = 0;
     JudgementOfWisdomSnapshot _judgementOfWisdomSnapshot;
+    TerrainSurveyCacheSnapshot _terrainSurveyCache;
     bool           _combatConserving = false;
     std::uint32_t  _combatDisengageGraceMs = 0;
     bool           _pendingCorpseRecovery = false;
@@ -391,10 +440,10 @@ private:
     static constexpr std::uint32_t PositionSnapshotIntervalMs = 15000;
     static constexpr std::uint32_t CorpseRecoveryCorpseDelaySec = 15;
     static constexpr std::uint32_t CorpseRecoveryRunbackDelaySec = 10;
-    static constexpr std::uint32_t CombatDisengageGraceMs = 3000;
-    static constexpr std::uint32_t ReactiveCombatResumeDelayMs = 3000;
-    static constexpr std::uint32_t AuthoredCombatResumeDelayMs = 1000;
-    static constexpr std::uint32_t JudgementOfWisdomCooldownMs = 20000;
+    static constexpr std::uint32_t CombatDisengageGraceMs = 5000;
+    static constexpr std::uint32_t ReactiveCombatResumeDelayMs = 5000;
+    static constexpr std::uint32_t AuthoredCombatResumeDelayMs = 5000;
+    static constexpr std::uint32_t JudgementOfWisdomCooldownMs = 30000;
     static constexpr float AmbientCombatAssistRadius = 60.0f;
 };
 
