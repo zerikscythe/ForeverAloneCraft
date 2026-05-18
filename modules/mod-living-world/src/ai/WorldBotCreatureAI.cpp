@@ -1642,6 +1642,12 @@ void WorldBotCreatureAI::UpdateAI(uint32 diff)
         return;
     }
 
+    if (TryJoinNearbyAmbientCombat("nearby_group_assist"))
+    {
+        TickCombat(TickIntervalMs);
+        return;
+    }
+
     if (_combatInterrupt.active)
     {
         if (TrySustainAmbientCombat("combat_resume_from_nearby_ally"))
@@ -3672,6 +3678,22 @@ Unit* WorldBotCreatureAI::FindNearbyAmbientCombatTarget(float radius) const
     return considerClosest(candidates);
 }
 
+bool WorldBotCreatureAI::IsAmbientGroupedWith(Unit const* ally) const
+{
+    if (!me || !ally || ally == me)
+        return false;
+
+    Creature const* creature = ally->ToCreature();
+    if (!creature || creature->GetEntry() != WorldBotEntry || !creature->AI())
+        return false;
+
+    auto const* allyAi = static_cast<WorldBotCreatureAI const*>(creature->AI());
+    if (_identity.ambientGroupId == 0 || allyAi->_identity.ambientGroupId == 0)
+        return false;
+
+    return _identity.ambientGroupId == allyAi->_identity.ambientGroupId;
+}
+
 bool WorldBotCreatureAI::IsCombatAreaStep(service::AmbientStep const& step) const
 {
     return step.type == service::AmbientStepType::Grind;
@@ -3779,6 +3801,83 @@ bool WorldBotCreatureAI::TryStartGrindCombat(service::AmbientStep const& step)
         "combat_pull",
         "authored_grind target_guid=" + std::to_string(target->GetGUID().GetCounter())
             + " target='" + target->GetName() + "'");
+    return true;
+}
+
+bool WorldBotCreatureAI::TryJoinNearbyAmbientCombat(char const* reason)
+{
+    if (!me || me->IsInCombat() || me->GetVictim() || !CanInterruptCurrentStepForCombat())
+        return false;
+
+    std::vector<Unit*> friendlyAllies = CollectNearbyFriendlyAmbientWorldBots(me, AmbientCombatAssistRadius, false);
+    Unit* preferredTarget = nullptr;
+    std::size_t groupedCombatAllyCount = 0;
+    for (Unit* ally : friendlyAllies)
+    {
+        if (!IsAmbientGroupedWith(ally))
+            continue;
+
+        if (ally->IsInCombat() || ally->GetVictim() || !ally->getAttackers().empty())
+            ++groupedCombatAllyCount;
+
+        Creature* allyCreature = ally->ToCreature();
+        if (!allyCreature || allyCreature->GetEntry() != WorldBotEntry || !allyCreature->AI())
+            continue;
+
+        auto const* allyAi = static_cast<WorldBotCreatureAI const*>(allyCreature->AI());
+        if (_identity.ambientGroupLeaderIdentityId != 0
+            && allyAi->_identity.id == _identity.ambientGroupLeaderIdentityId
+            && ally->GetVictim()
+            && ally->GetVictim()->IsAlive()
+            && ally->GetVictim()->IsInWorld()
+            && !me->IsFriendlyTo(ally->GetVictim())
+            && ally->GetVictim()->isTargetableForAttack(false, me))
+        {
+            preferredTarget = ally->GetVictim();
+        }
+    }
+
+    if (groupedCombatAllyCount == 0)
+        return false;
+
+    Unit* target = preferredTarget ? preferredTarget : FindNearbyAmbientCombatTarget(AmbientCombatAssistRadius);
+    if (!target)
+        return false;
+
+    SuspendCurrentStepForCombat(target);
+    _combatDisengageGraceMs = 0;
+    _combatInterrupt.allClearElapsedMs = 0;
+    me->EngageWithTarget(target);
+    target->EngageWithTarget(me);
+    AttackStart(target);
+    me->AddThreat(target, 1.0f);
+    target->AddThreat(me, 1.0f);
+    EnsureMutualThreatEngagement(me, target);
+
+    if (target->IsCreature() && target->ToCreature()->IsAIEnabled)
+        target->ToCreature()->AI()->AttackStart(me);
+
+    integration::BotActivityLog::Record(
+        me,
+        _identity.name,
+        _identity.id,
+        "combat_assist",
+        std::string("reason='") + (reason ? reason : "unknown")
+            + "' grouped_allies=" + std::to_string(groupedCombatAllyCount)
+            + " target_guid=" + std::to_string(target->GetGUID().GetCounter())
+            + " target='" + target->GetName() + "'");
+
+    if (IsDebugForcedCombatIdentity())
+    {
+        std::ostringstream assistTrace;
+        assistTrace << "phase='combat' decision='group_assist' "
+                    << "reason='" << (reason ? reason : "unknown") << "' "
+                    << "grouped_allies=" << groupedCombatAllyCount << " "
+                    << "target=" << DescribeTraceUnit(target);
+        RecordCombatTrace(assistTrace.str());
+        RecordCombatTrace(BuildCombatMovementTraceDetail("group_assist", target));
+    }
+
     return true;
 }
 

@@ -133,6 +133,32 @@ def ensure_alliance_team(
                 "seeded_loadout": loadout,
             }
         )
+
+    leader_identity_id = next(
+        int(entry["identity_id"]) for entry in seeded if str(entry["spec_key"]) == "paladin_prot"
+    )
+    ambient_group_id = leader_identity_id
+    role_by_spec = {
+        "paladin_prot": "tank",
+        "paladin_holy": "healer",
+        "paladin_ret": "melee_dps",
+    }
+
+    for entry in seeded:
+        identity_id = int(entry["identity_id"])
+        spec_key = str(entry["spec_key"])
+        ambient_group_role = role_by_spec.get(spec_key, "support")
+        run_mysql_query(
+            settings,
+            str(settings["characters_db"]),
+            (
+                "UPDATE living_world_bot_identity "
+                f"SET ambient_group_id = {ambient_group_id}, "
+                f"ambient_group_leader_identity_id = {leader_identity_id}, "
+                f"ambient_group_role = '{ambient_group_role}' "
+                f"WHERE id = {identity_id}"
+            ),
+        )
     return seeded
 
 

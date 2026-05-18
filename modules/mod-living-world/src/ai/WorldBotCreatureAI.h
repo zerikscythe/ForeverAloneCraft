@@ -214,6 +214,8 @@ private:
     void ResetCombatMetricsSegment();
     void RecordCombatSummary(char const* reason);
     [[nodiscard]] Unit* FindNearbyAmbientCombatTarget(float radius) const;
+    [[nodiscard]] bool IsAmbientGroupedWith(Unit const* ally) const;
+    bool TryJoinNearbyAmbientCombat(char const* reason);
     bool TrySustainAmbientCombat(char const* reason);
     [[nodiscard]] Creature* FindNearestGrindTarget(service::AmbientStep const& step) const;
     bool TryStartGrindCombat(service::AmbientStep const& step);
