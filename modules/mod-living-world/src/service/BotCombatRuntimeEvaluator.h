@@ -3,6 +3,7 @@
 #include "service/BotCombatProfilePreparationService.h"
 #include "model/WorldBotCombatSituation.h"
 
+#include <functional>
 #include <optional>
 #include <string>
 #include <unordered_set>
@@ -31,6 +32,9 @@ struct BotCombatRuntimeContext
         model::BotCombatConservationMode::FullForce;
     bool conserving = false;
     bool offenseSuppressed = false;
+    bool enableDownRank = false;
+    std::uint8_t downRankFloor = 1;
+    std::function<std::uint32_t(std::uint32_t spellId)> customSpellWaitResolver;
     // Spells available to this bot. For Player session bots this is built from
     // GetSpellMap() during PrepareForPlayer. For creature bots it is loaded from
     // living_world_bot_spell_list. Must not be empty when bot is a Creature.
@@ -137,12 +141,13 @@ private:
         Unit* target,
         std::uint32_t spellId,
         bool allowHardCasts,
-        std::uint32_t syntheticGlobalCooldownRemainingMs = 0);
+        BotCombatRuntimeContext const& context);
 
     static std::uint32_t GetSpellWaitMs(
         Unit* bot,
         Unit* target,
-        std::uint32_t spellId);
+        std::uint32_t spellId,
+        BotCombatRuntimeContext const& context);
 
     static bool CanBreakCurrentCast(
         Unit* bot,

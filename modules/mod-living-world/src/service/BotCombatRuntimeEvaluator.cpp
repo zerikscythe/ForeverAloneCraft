@@ -1,3 +1,4 @@
+#include "ai/WorldBotCreatureAI.h"
 #include "service/BotCombatRuntimeEvaluator.h"
 
 #include "service/BotCombatSimulatedItemUse.h"
@@ -116,6 +117,62 @@ bool IsOffensiveEntry(model::BotCombatEntryDefinition const& entry)
         return true;
 
     return entry.secondaryAction && IsOffensiveAction(*entry.secondaryAction);
+}
+
+std::uint32_t ResolveRankAwareSpellForAction(
+    model::BotCombatActionDefinition const& action,
+    BotCombatRuntimeContext const& context)
+{
+    std::uint32_t const resolvedSpellId =
+        BotCombatProfilePreparationService::ResolveKnownSpellForAction(
+            context.availableSpells,
+            action);
+    if (resolvedSpellId == 0)
+        return 0;
+
+    if (!context.enableDownRank
+        || !context.conserving
+        || action.actionType != model::BotCombatActionType::Spell
+        || action.rankMode != model::BotCombatRankMode::BestKnown
+        || !context.bot
+        || context.bot->GetMaxPower(POWER_MANA) == 0)
+    {
+        return resolvedSpellId;
+    }
+
+    std::uint32_t const currentMana = context.bot->GetPower(POWER_MANA);
+    std::uint8_t const floorRank = std::max<std::uint8_t>(1u, context.downRankFloor);
+
+    std::vector<std::pair<std::uint32_t, std::uint8_t>> knownChain;
+    std::uint32_t candidate = sSpellMgr->GetFirstSpellInChain(action.spellBaseId);
+    if (!candidate)
+        candidate = action.spellBaseId;
+
+    for (std::uint8_t rank = 1; candidate; ++rank)
+    {
+        if (context.availableSpells.count(candidate))
+            knownChain.emplace_back(candidate, rank);
+        candidate = sSpellMgr->GetNextSpellInChain(candidate);
+    }
+
+    if (knownChain.size() <= 1)
+        return resolvedSpellId;
+
+    for (auto it = knownChain.rbegin(); it != knownChain.rend(); ++it)
+    {
+        if (it->second < floorRank)
+            continue;
+
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(it->first);
+        if (!spellInfo)
+            continue;
+
+        int32 const powerCost = spellInfo->CalcPowerCost(context.bot, spellInfo->GetSchoolMask());
+        if (powerCost <= 0 || currentMana >= static_cast<std::uint32_t>(powerCost))
+            return it->first;
+    }
+
+    return resolvedSpellId;
 }
 
 // Returns the remaining cooldown in milliseconds for the given spell on any Unit.
@@ -855,6 +912,43 @@ std::uint64_t ComputeSupportTankAnchorScore(Unit* candidate)
     return candidate->GetMaxHealth();
 }
 
+std::uint64_t ComputeAmbientGroupedTankAnchorScore(Unit* bot, Unit* candidate)
+{
+    if (!bot || !candidate)
+        return 0;
+
+    Creature* botCreature = bot->ToCreature();
+    Creature* candidateCreature = candidate->ToCreature();
+    if (!botCreature || !candidateCreature || !botCreature->AI() || !candidateCreature->AI())
+        return 0;
+
+    auto const* botAi = dynamic_cast<ai::WorldBotCreatureAI const*>(botCreature->AI());
+    auto const* candidateAi = dynamic_cast<ai::WorldBotCreatureAI const*>(candidateCreature->AI());
+    if (!botAi || !candidateAi)
+        return 0;
+
+    integration::BotIdentityRecord const& botIdentity = botAi->GetIdentityRecord();
+    integration::BotIdentityRecord const& candidateIdentity = candidateAi->GetIdentityRecord();
+    if (botIdentity.ambientGroupId == 0
+        || candidateIdentity.ambientGroupId == 0
+        || botIdentity.ambientGroupId != candidateIdentity.ambientGroupId)
+    {
+        return 0;
+    }
+
+    std::uint64_t score = 1'000'000'000ull;
+    if (candidateIdentity.ambientGroupRole == "tank")
+        score += 1'000'000'000ull;
+    if (candidateIdentity.ambientGroupLeaderIdentityId != 0
+        && candidateIdentity.id == candidateIdentity.ambientGroupLeaderIdentityId)
+    {
+        score += 250'000'000ull;
+    }
+
+    score += candidate->GetMaxHealth();
+    return score;
+}
+
 Unit* FindSupportTankAnchor(Unit* bot, Player* owner)
 {
     Unit* best = nullptr;
@@ -863,7 +957,11 @@ Unit* FindSupportTankAnchor(Unit* bot, Player* owner)
         if (!candidate || !candidate->IsAlive() || !candidate->IsInWorld())
             return;
 
-        if (!best || ComputeSupportTankAnchorScore(candidate) > ComputeSupportTankAnchorScore(best))
+        std::uint64_t const groupedScore = ComputeAmbientGroupedTankAnchorScore(bot, candidate);
+        std::uint64_t const bestGroupedScore = ComputeAmbientGroupedTankAnchorScore(bot, best);
+        std::uint64_t const candidateScore = groupedScore > 0 ? groupedScore : ComputeSupportTankAnchorScore(candidate);
+        std::uint64_t const currentBestScore = bestGroupedScore > 0 ? bestGroupedScore : ComputeSupportTankAnchorScore(best);
+        if (!best || candidateScore > currentBestScore)
             best = candidate;
     };
 
@@ -1505,10 +1603,7 @@ std::optional<BotCombatEvaluatedAction> BotCombatRuntimeEvaluator::EvaluateActio
     if (action.actionType != model::BotCombatActionType::Spell)
         return std::nullopt;
 
-    std::uint32_t const spellId =
-        BotCombatProfilePreparationService::ResolveKnownSpellForAction(
-            context.availableSpells,
-            action);
+    std::uint32_t const spellId = ResolveRankAwareSpellForAction(action, context);
     if (spellId == 0)
         return std::nullopt;
 
@@ -1529,7 +1624,7 @@ std::optional<BotCombatEvaluatedAction> BotCombatRuntimeEvaluator::EvaluateActio
             target,
             spellId,
             context.allowHardCasts,
-            context.syntheticGlobalCooldownRemainingMs))
+            context))
         return std::nullopt;
 
     BotCombatEvaluatedAction evaluated;
@@ -1570,10 +1665,7 @@ std::uint32_t BotCombatRuntimeEvaluator::GetActionWaitMs(
     if (action.actionType != model::BotCombatActionType::Spell)
         return 0;
 
-    std::uint32_t const spellId =
-        BotCombatProfilePreparationService::ResolveKnownSpellForAction(
-            context.availableSpells,
-            action);
+    std::uint32_t const spellId = ResolveRankAwareSpellForAction(action, context);
     if (spellId == 0)
         return 0;
 
@@ -1591,7 +1683,7 @@ std::uint32_t BotCombatRuntimeEvaluator::GetActionWaitMs(
         return 0;
 
     std::uint32_t const waitMs = std::max(
-        GetSpellWaitMs(context.bot, target, spellId),
+        GetSpellWaitMs(context.bot, target, spellId, context),
         context.syntheticGlobalCooldownRemainingMs);
     if (waitMs == 0 || waitMs > context.rotationWaitMs)
         return 0;
@@ -1613,10 +1705,7 @@ std::uint32_t BotCombatRuntimeEvaluator::GetCurrentCastHoldWaitMs(
     if (action.actionType != model::BotCombatActionType::Spell)
         return 0;
 
-    std::uint32_t const spellId =
-        BotCombatProfilePreparationService::ResolveKnownSpellForAction(
-            context.availableSpells,
-            action);
+    std::uint32_t const spellId = ResolveRankAwareSpellForAction(action, context);
     if (spellId == 0)
         return 0;
 
@@ -1698,7 +1787,7 @@ bool BotCombatRuntimeEvaluator::CanExecuteSpell(
     Unit* target,
     std::uint32_t spellId,
     bool allowHardCasts,
-    std::uint32_t syntheticGlobalCooldownRemainingMs)
+    BotCombatRuntimeContext const& context)
 {
     if (!bot || !target || spellId == 0)
         return false;
@@ -1709,6 +1798,12 @@ bool BotCombatRuntimeEvaluator::CanExecuteSpell(
 
     if (!allowHardCasts && spellInfo->CalcCastTime(bot) > 0)
         return false;
+
+    if (context.customSpellWaitResolver)
+    {
+        if (context.customSpellWaitResolver(spellId) > 0)
+            return false;
+    }
 
     if (bot->isMoving() &&
         spellInfo->CalcCastTime(bot) > 0 &&
@@ -1746,7 +1841,7 @@ bool BotCombatRuntimeEvaluator::CanExecuteSpell(
         return false;
 
     if (GetGlobalCooldownRemainingMs(bot, spellInfo) > 0
-        || syntheticGlobalCooldownRemainingMs > 0)
+        || context.syntheticGlobalCooldownRemainingMs > 0)
         return false;
 
     float const maxRange = bot->GetSpellMaxRangeForTarget(target, spellInfo);
@@ -1759,7 +1854,8 @@ bool BotCombatRuntimeEvaluator::CanExecuteSpell(
 std::uint32_t BotCombatRuntimeEvaluator::GetSpellWaitMs(
     Unit* bot,
     Unit* target,
-    std::uint32_t spellId)
+    std::uint32_t spellId,
+    BotCombatRuntimeContext const& context)
 {
     if (!bot || !target || spellId == 0)
         return 0;
@@ -1774,7 +1870,11 @@ std::uint32_t BotCombatRuntimeEvaluator::GetSpellWaitMs(
 
     std::uint32_t const spellCooldownMs = GetSpellCooldownRemainingMs(bot, spellId);
     std::uint32_t const globalCooldownMs = GetGlobalCooldownRemainingMs(bot, spellInfo);
-    std::uint32_t const waitMs = std::max(spellCooldownMs, globalCooldownMs);
+    std::uint32_t customWaitMs = 0;
+    if (context.customSpellWaitResolver)
+        customWaitMs = context.customSpellWaitResolver(spellId);
+
+    std::uint32_t const waitMs = std::max(std::max(spellCooldownMs, globalCooldownMs), customWaitMs);
     if (waitMs == 0)
         return 0;
 

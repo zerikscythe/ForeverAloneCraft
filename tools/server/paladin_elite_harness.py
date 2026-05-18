@@ -78,28 +78,39 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--session-zone-id",
         type=int,
-        default=210,
-        help="Forced session compose zone id; can differ from the physical spawn zone for combat-only tests",
+        default=67,
+        help="Forced session compose zone id; defaults to the local sandbox zone so the trio materializes into the combat test instead of staying abstract on a distant travel route",
     )
     parser.add_argument("--map-id", type=int, default=571, help="Sandbox map id")
-    parser.add_argument("--spawn-x", type=float, default=8386.5)
+    parser.add_argument(
+        "--spawn-x",
+        type=float,
+        default=8428.5,
+        help="Harness trio + temp-pack sandbox X. Defaults away from the native elite so the forced pull only sees the controlled pack.",
+    )
     parser.add_argument("--spawn-y", type=float, default=-1189.1)
     parser.add_argument("--spawn-z", type=float, default=927.5)
     parser.add_argument("--force-spawn-count", type=int, default=3)
-    parser.add_argument("--elite-guid", type=int, default=152010, help="Existing hostile elite creature guid")
-    parser.add_argument("--elite-entry", type=int, default=32500, help="Creature entry for report context")
-    parser.add_argument("--elite-name", default="Dirkee")
+    parser.add_argument("--elite-guid", type=int, default=98455, help="Existing hostile creature guid used as the source/template for the controlled pack")
+    parser.add_argument("--elite-entry", type=int, default=29724, help="Creature entry for report context")
+    parser.add_argument("--elite-name", default="Library Guardian")
     parser.add_argument(
         "--temp-pack-source-guid",
         type=int,
         default=0,
-        help="Existing creature guid to clone into a temporary nearby pack for multi-target threat tests",
+        help="Existing creature guid to clone into a temporary nearby pack for multi-target threat tests (defaults to --elite-guid)",
     )
     parser.add_argument(
         "--temp-pack-count",
         type=int,
-        default=0,
-        help="How many temporary pack members to create from the source guid",
+        default=2,
+        help="How many temporary extra pack members to create from the source guid (2 means a 3-mob total pack)",
+    )
+    parser.add_argument(
+        "--target-search-radius",
+        type=float,
+        default=22.0,
+        help="Forced combat search radius. Keep this tight so the harness prefers the temporary controlled pack over native nearby spawns.",
     )
     return parser.parse_args()
 
@@ -261,6 +272,18 @@ def build_elite_report(
         handle.write("=== TEMP_PACK ===\n")
         if temp_pack_guids:
             handle.write(f"guids={','.join(str(guid) for guid in temp_pack_guids)}\n")
+            temp_rows = run_mysql_query(
+                settings,
+                "acore_world",
+                (
+                    "SELECT guid, id1, map, position_x, position_y, position_z "
+                    "FROM creature "
+                    f"WHERE guid IN ({','.join(str(g) for g in temp_pack_guids)}) "
+                    "ORDER BY guid"
+                ),
+            )
+            for row in temp_rows:
+                handle.write("\t".join(str(value) for value in row) + "\n")
         else:
             handle.write("guids=\n")
         handle.write("\n")
@@ -269,6 +292,8 @@ def build_elite_report(
 
 def main() -> int:
     args = parse_args()
+    if args.temp_pack_source_guid <= 0:
+        args.temp_pack_source_guid = args.elite_guid
     ensure_paths()
     settings = load_db_settings()
     team = ensure_alliance_team(settings, args.level, args.zone_id)
@@ -302,7 +327,7 @@ def main() -> int:
         "LivingWorld.AmbientForceSpawnZ": str(args.spawn_z),
         "LivingWorld.DebugSyntheticInterestEnabled": "1",
         "LivingWorld.DebugSyntheticInterestMapId": str(args.map_id),
-        "LivingWorld.DebugSyntheticInterestZoneId": str(args.zone_id),
+        "LivingWorld.DebugSyntheticInterestZoneId": str(args.session_zone_id),
         "LivingWorld.DebugSyntheticInterestSwitchMapId": "0",
         "LivingWorld.DebugSyntheticInterestSwitchZoneId": "0",
         "LivingWorld.DebugSyntheticInterestSwitchMs": "0",
@@ -313,7 +338,7 @@ def main() -> int:
         "LivingWorld.DebugForceSessionComposeAttempts": "128",
         "LivingWorld.DebugForceCombatTargetIdentityId": str(pull_identity_id),
         "LivingWorld.DebugForceCombatTargetEntry": str(args.elite_entry),
-        "LivingWorld.DebugForceCombatTargetSearchRadius": "45",
+        "LivingWorld.DebugForceCombatTargetSearchRadius": str(args.target_search_radius),
     }
 
     baseline_id = query_scalar(

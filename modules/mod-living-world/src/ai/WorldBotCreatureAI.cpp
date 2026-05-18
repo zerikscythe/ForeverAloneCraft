@@ -19,6 +19,7 @@
 #include "SpellInfo.h"
 #include "SpellMgr.h"
 #include "DataStores/DBCStores.h"
+#include "Time/GameTime.h"
 #include "integration/SqlAccountAltRuntimeRepository.h"
 #include "integration/SqlBotCombatDefaultProfileRepository.h"
 #include "integration/SqlBotCombatProfileRepository.h"
@@ -120,6 +121,11 @@ constexpr std::uint32_t WorldBotEntry = 9900001u;
 constexpr std::uint32_t DebugManaGemItemId = 33312;
 constexpr float CrossMapTransitAbstractSourceDistanceYards = 300.0f;
 constexpr std::uint32_t CrossMapTransitAbstractMinElapsedMs = 20000u;
+constexpr std::uint32_t ConsecrationBaseSpellId = 20116u;
+constexpr std::uint32_t JudgementOfWisdomBaseSpellId = 20186u;
+constexpr std::uint32_t ConsecrationLifetimeMs = 8000u;
+constexpr std::uint32_t GroupCombatHandoffRefreshMs = 1500u;
+constexpr float ConsecrationRecenterDistanceYards = 10.0f;
 
 char const* ToConservationModeKey(model::BotCombatConservationMode mode)
 {
@@ -144,9 +150,11 @@ bool IsOffenseSuppressed(
     if (mode == model::BotCombatConservationMode::JitCasting)
         return true;
 
-    return conserving &&
-        (mode == model::BotCombatConservationMode::Conservative ||
-         mode == model::BotCombatConservationMode::Reserve);
+    // Reserve is intentionally not a "stop doing offense" mode. It means
+    // "stay above a floor for utility if possible," while tanks and hybrids
+    // still keep pressure/threat tools flowing and let spell costs naturally
+    // reject actions they can no longer afford.
+    return conserving && mode == model::BotCombatConservationMode::Conservative;
 }
 
 float GetUnitManaPct(Unit const* unit)
@@ -159,6 +167,24 @@ float GetUnitManaPct(Unit const* unit)
 
     return 100.0f * static_cast<float>(unit->GetPower(POWER_MANA)) /
         static_cast<float>(unit->GetMaxPower(POWER_MANA));
+}
+
+bool IsConsecrationSpell(std::uint32_t spellId)
+{
+    if (spellId == 0)
+        return false;
+
+    std::uint32_t const firstRank = sSpellMgr->GetFirstSpellInChain(spellId);
+    return (firstRank != 0 ? firstRank : spellId) == ConsecrationBaseSpellId;
+}
+
+bool IsJudgementOfWisdomSpell(std::uint32_t spellId)
+{
+    if (spellId == 0)
+        return false;
+
+    std::uint32_t const firstRank = sSpellMgr->GetFirstSpellInChain(spellId);
+    return (firstRank != 0 ? firstRank : spellId) == JudgementOfWisdomBaseSpellId;
 }
 
 struct EffectiveConservationSettings
@@ -811,6 +837,27 @@ std::string DescribeSpellForTrace(std::uint32_t spellId)
     return std::string(name) + "(" + std::to_string(spellId) + ")";
 }
 
+std::string DescribeDamageTypeForTrace(DamageEffectType damageType)
+{
+    switch (damageType)
+    {
+        case DIRECT_DAMAGE:
+            return "direct";
+        case SPELL_DIRECT_DAMAGE:
+            return "spell_direct";
+        case DOT:
+            return "dot";
+        case HEAL:
+            return "heal";
+        case NODAMAGE:
+            return "nodamage";
+        case SELF_DAMAGE:
+            return "self_damage";
+        default:
+            return "unknown";
+    }
+}
+
 std::uint32_t ComputeSyntheticCreatureGlobalCooldownMs(Unit* bot, SpellInfo const* spellInfo)
 {
     if (!bot || !spellInfo)
@@ -1249,6 +1296,7 @@ void WorldBotCreatureAI::SetIdentityAndSession(
     _lastDebugCombatManaDrainWorldMs = 0;
     _debugCombatManaGemObserved = false;
     _syntheticGlobalCooldownRemainingMs = 0;
+    _consecrationSnapshot = {};
     _pendingCorpseRecovery = false;
     _corpseRecoveryCount = 0;
     _usedSimulatedItemsThisCombat.clear();
@@ -1650,6 +1698,12 @@ void WorldBotCreatureAI::UpdateAI(uint32 diff)
 
     if (_combatInterrupt.active)
     {
+        if (TryAdoptGroupedCombatTarget("group_target_request_idle"))
+        {
+            TickCombat(TickIntervalMs);
+            return;
+        }
+
         if (TrySustainAmbientCombat("combat_resume_from_nearby_ally"))
         {
             TickCombat(TickIntervalMs);
@@ -1973,6 +2027,11 @@ bool WorldBotCreatureAI::BuildRuntimeSnapshot(RuntimeSnapshot& out) const
     out.identity = _identity;
     out.session = _session;
     out.worldOnlineMs = _worldOnlineMs;
+    out.inCombat = me->IsInCombat();
+    out.isEngaged = me->IsEngaged();
+    out.hasVictim = me->GetVictim() != nullptr;
+    out.hasAttackers = !me->getAttackers().empty();
+    out.combatInterruptActive = _combatInterrupt.active;
     out.progress.currentStep = _currentStep;
     out.progress.stepStartKnown = true;
     out.progress.stepStartMapId = static_cast<std::uint16_t>(me->GetMapId());
@@ -2769,6 +2828,8 @@ void WorldBotCreatureAI::JustRespawned()
     _combatInterrupt = {};
     _syntheticGlobalCooldownRemainingMs = 0;
     _combatDisengageGraceMs = 0;
+    _judgementOfWisdomSnapshot.Reset();
+    _lastIncomingDamageSnapshot = {};
     _usedSimulatedItemsThisCombat.clear();
     service::ResetSharedHazardEvaluationState(_hazardEvaluationState);
     ClearVisibleTravelMode();
@@ -2783,6 +2844,38 @@ void WorldBotCreatureAI::JustRespawned()
         "status_change",
         "Recovered after corpse run simulation; resuming session.");
     PersistRuntimeLedgerState("Recovered after corpse run simulation");
+}
+
+void WorldBotCreatureAI::DamageTaken(
+    Unit* attacker,
+    uint32& damage,
+    DamageEffectType damageType,
+    SpellSchoolMask damageSchoolMask)
+{
+    if (damage == 0)
+        return;
+
+    CaptureIncomingDamageSnapshot(attacker, damage, damageType, damageSchoolMask);
+}
+
+void WorldBotCreatureAI::SpellHit(Unit* caster, SpellInfo const* spellInfo)
+{
+    if (!caster || !spellInfo || !me)
+        return;
+
+    if (me->IsFriendlyTo(caster) || spellInfo->IsPositive())
+        return;
+
+    char const* spellName = spellInfo->SpellName[DEFAULT_LOCALE];
+    if (!spellName || !*spellName)
+        spellName = spellInfo->SpellName[0];
+
+    CaptureIncomingDamageSnapshot(
+        caster,
+        0,
+        SPELL_DIRECT_DAMAGE,
+        spellInfo->GetSchoolMask(),
+        spellName);
 }
 
 void WorldBotCreatureAI::CorpseRemoved(uint32& respawnDelay)
@@ -3048,6 +3141,7 @@ void WorldBotCreatureAI::MaybeStartDebugForcedCombat()
         + " target_guid=" + std::to_string(target->GetGUID().GetCounter())
         + " distance=" + std::to_string(me->GetDistance(target)));
 
+    SuspendCurrentStepForCombat(target);
     me->EngageWithTarget(target);
     target->EngageWithTarget(me);
     me->AddThreat(target, 1.0f);
@@ -3186,6 +3280,24 @@ void WorldBotCreatureAI::ResumeSuspendedStepAfterCombat()
     if (!_combatInterrupt.active)
         return;
 
+    if (_identity.ambientGroupId != 0)
+    {
+        std::vector<Unit*> friendlyAllies = CollectNearbyFriendlyAmbientWorldBots(me, AmbientCombatAssistRadius, false);
+        for (Unit* ally : friendlyAllies)
+        {
+            if (!IsAmbientGroupedWith(ally))
+                continue;
+
+            if (!(ally->IsInCombat() || ally->GetVictim() || !ally->getAttackers().empty()))
+                continue;
+
+            if (TrySustainAmbientCombat("group_leader_still_engaged"))
+                return;
+
+            break;
+        }
+    }
+
     RecordCombatSummary("combat_exit");
     _combatInterrupt = {};
     _combatDisengageGraceMs = 0;
@@ -3193,9 +3305,13 @@ void WorldBotCreatureAI::ResumeSuspendedStepAfterCombat()
     ClearVisibleTravelMode();
     ClearActiveRouteTravelPlan();
     ClearActiveTaxiTravel();
+    _judgementOfWisdomSnapshot.Reset();
+    _groupCombatHandoffSnapshot.Reset();
+    _debugJudgementAuraObservation.Reset();
     service::ResetSharedHazardEvaluationState(_hazardEvaluationState);
     _lastDebugCombatManaDrainWorldMs = 0;
     _debugCombatManaGemObserved = false;
+    _lastIncomingDamageSnapshot = {};
     _usedSimulatedItemsThisCombat.clear();
     ResetTravelWatchdog(_travelWatchdog);
 
@@ -3210,6 +3326,65 @@ void WorldBotCreatureAI::ResumeSuspendedStepAfterCombat()
 void WorldBotCreatureAI::ResetCombatMetricsSegment()
 {
     _combatMetricsCurrent = {};
+}
+
+void WorldBotCreatureAI::CaptureIncomingDamageSnapshot(
+    Unit* attacker,
+    std::uint32_t damage,
+    DamageEffectType damageType,
+    SpellSchoolMask schoolMask,
+    char const* moveName)
+{
+    if (!attacker)
+        return;
+
+    std::uint32_t const nowMs = GameTime::GetGameTimeMS().count();
+    bool const hasExplicitMoveName = moveName && *moveName;
+    bool const sameSourceRecentSpell =
+        _lastIncomingDamageSnapshot.sourceGuid == attacker->GetGUID()
+        && !_lastIncomingDamageSnapshot.moveName.empty()
+        && _lastIncomingDamageSnapshot.amount == 0
+        && (nowMs - _lastIncomingDamageSnapshot.capturedAtMs) <= 1500;
+
+    _lastIncomingDamageSnapshot.sourceGuid = attacker->GetGUID();
+    _lastIncomingDamageSnapshot.sourceName = attacker->GetName();
+    _lastIncomingDamageSnapshot.amount = damage;
+    _lastIncomingDamageSnapshot.schoolMask = schoolMask;
+    _lastIncomingDamageSnapshot.damageType = damageType;
+    _lastIncomingDamageSnapshot.capturedAtMs = nowMs;
+
+    if (hasExplicitMoveName)
+        _lastIncomingDamageSnapshot.moveName = moveName;
+    else if (!sameSourceRecentSpell)
+        _lastIncomingDamageSnapshot.moveName.clear();
+}
+
+std::string WorldBotCreatureAI::BuildCombatSummaryReason(char const* fallbackReason, Unit* killer) const
+{
+    if (_lastIncomingDamageSnapshot.valid())
+    {
+        std::ostringstream oss;
+        oss << "move='"
+            << (!_lastIncomingDamageSnapshot.moveName.empty()
+                    ? _lastIncomingDamageSnapshot.moveName
+                    : DescribeDamageTypeForTrace(_lastIncomingDamageSnapshot.damageType))
+            << "' amount=" << _lastIncomingDamageSnapshot.amount
+            << " source='" << _lastIncomingDamageSnapshot.sourceName << "'"
+            << " source_guid=" << _lastIncomingDamageSnapshot.sourceGuid.GetCounter();
+        return oss.str();
+    }
+
+    if (killer)
+    {
+        std::ostringstream oss;
+        oss << "source='" << killer->GetName() << "'"
+            << " source_guid=" << killer->GetGUID().GetCounter();
+        if (fallbackReason && *fallbackReason)
+            oss << " reason='" << fallbackReason << "'";
+        return oss.str();
+    }
+
+    return std::string(fallbackReason && *fallbackReason ? fallbackReason : "unknown");
 }
 
 void WorldBotCreatureAI::RecordCombatDamageDone(std::uint32_t amount)
@@ -3678,6 +3853,229 @@ Unit* WorldBotCreatureAI::FindNearbyAmbientCombatTarget(float radius) const
     return considerClosest(candidates);
 }
 
+Unit* WorldBotCreatureAI::FindNearbyCreatureCombatTarget(float radius) const
+{
+    if (!me)
+        return nullptr;
+
+    auto const isViableCreatureTarget =
+        [&](Unit* candidate) -> bool
+        {
+            if (!candidate || !candidate->IsAlive() || candidate == me)
+                return false;
+            if (me->IsFriendlyTo(candidate) || !candidate->isTargetableForAttack(false, me))
+                return false;
+
+            Creature* creature = candidate->ToCreature();
+            if (!creature)
+                return false;
+
+            return creature->GetEntry() != WorldBotEntry;
+        };
+
+    std::vector<Unit*> groupedAllies;
+    groupedAllies.push_back(me);
+    for (Unit* ally : CollectNearbyFriendlyAmbientWorldBots(me, radius, false))
+    {
+        if (IsAmbientGroupedWith(ally))
+            groupedAllies.push_back(ally);
+    }
+
+    std::vector<Unit*> candidates;
+    for (Unit* ally : groupedAllies)
+    {
+        if (!ally)
+            continue;
+
+        for (Unit* attacker : ally->getAttackers())
+        {
+            if (isViableCreatureTarget(attacker))
+                candidates.push_back(attacker);
+        }
+
+        if (Unit* victim = ally->GetVictim())
+        {
+            if (isViableCreatureTarget(victim))
+                candidates.push_back(victim);
+        }
+    }
+
+    Acore::AnyUnfriendlyUnitInObjectRangeCheck check(me, me, radius);
+    Acore::UnitListSearcher<Acore::AnyUnfriendlyUnitInObjectRangeCheck> searcher(me, candidates, check);
+    Cell::VisitObjects(me, searcher, radius);
+
+    candidates.erase(
+        std::remove_if(
+            candidates.begin(),
+            candidates.end(),
+            [&](Unit* candidate)
+            {
+                if (!isViableCreatureTarget(candidate))
+                    return true;
+                return !candidate->IsInCombat()
+                    && !candidate->GetVictim()
+                    && candidate->getAttackers().empty();
+            }),
+        candidates.end());
+
+    std::sort(candidates.begin(), candidates.end());
+    candidates.erase(std::unique(candidates.begin(), candidates.end()), candidates.end());
+
+    Unit* best = nullptr;
+    float bestScore = std::numeric_limits<float>::lowest();
+    for (Unit* candidate : candidates)
+    {
+        float score = 0.0f;
+        float const distance = me->GetDistance(candidate);
+        score -= distance * 4.0f;
+        score += std::clamp(100.0f - candidate->GetHealthPct(), 0.0f, 100.0f);
+
+        if (candidate == me->GetVictim())
+            score += 120.0f;
+
+        Unit* victim = candidate->GetVictim();
+        if (victim)
+        {
+            if (victim == me)
+                score += 250.0f;
+            else if (std::find(groupedAllies.begin(), groupedAllies.end(), victim) != groupedAllies.end())
+                score += 180.0f;
+        }
+
+        if (!best || score > bestScore)
+        {
+            best = candidate;
+            bestScore = score;
+        }
+    }
+
+    return best;
+}
+
+WorldBotCreatureAI::GroupCombatTargetReply WorldBotCreatureAI::RequestGroupedCombatTarget(float radius) const
+{
+    if (!me || _identity.ambientGroupId == 0)
+        return {};
+
+    auto const isViableTarget =
+        [&](Unit* candidate) -> bool
+        {
+            if (!candidate || candidate == me || !candidate->IsAlive() || !candidate->IsInWorld())
+                return false;
+            if (me->IsFriendlyTo(candidate) || !candidate->isTargetableForAttack(false, me))
+                return false;
+            return true;
+        };
+
+    std::vector<Unit*> groupedAllies = CollectNearbyFriendlyAmbientWorldBots(me, radius, false);
+    groupedAllies.erase(
+        std::remove_if(
+            groupedAllies.begin(),
+            groupedAllies.end(),
+            [&](Unit* ally)
+            {
+                return !IsAmbientGroupedWith(ally);
+            }),
+        groupedAllies.end());
+    groupedAllies.push_back(me);
+
+    Unit* best = nullptr;
+    float bestScore = std::numeric_limits<float>::lowest();
+    char const* bestSource = "none";
+    auto const consider =
+        [&](Unit* candidate, Unit* ownerAlly, float baseScore, char const* source)
+        {
+            if (!isViableTarget(candidate))
+                return;
+
+            float score = baseScore;
+            score -= me->GetDistance(candidate) * 3.0f;
+
+            if (ownerAlly)
+            {
+                score += 40.0f;
+                if (ownerAlly == me)
+                    score += 20.0f;
+
+                if (Creature* allyCreature = ownerAlly->ToCreature())
+                {
+                    if (allyCreature->GetEntry() == WorldBotEntry && allyCreature->AI())
+                    {
+                        auto const* allyAi = static_cast<WorldBotCreatureAI const*>(allyCreature->AI());
+                        if (_identity.ambientGroupLeaderIdentityId != 0
+                            && allyAi->_identity.id == _identity.ambientGroupLeaderIdentityId)
+                        {
+                            score += 200.0f;
+                        }
+                    }
+                }
+
+                if (candidate->GetVictim() == ownerAlly)
+                    score += 120.0f;
+            }
+
+            if (candidate == me->GetVictim())
+                score += 150.0f;
+
+            if (!best || score > bestScore)
+            {
+                best = candidate;
+                bestScore = score;
+                bestSource = source ? source : "none";
+            }
+        };
+
+    for (Unit* ally : groupedAllies)
+    {
+        if (!ally)
+            continue;
+
+        if (Unit* victim = ally->GetVictim())
+        {
+            char const* source = "ally_victim";
+            if (ally == me)
+                source = "self_victim";
+            else if (Creature* allyCreature = ally->ToCreature())
+            {
+                if (allyCreature->GetEntry() == WorldBotEntry && allyCreature->AI())
+                {
+                    auto const* allyAi = static_cast<WorldBotCreatureAI const*>(allyCreature->AI());
+                    if (_identity.ambientGroupLeaderIdentityId != 0
+                        && allyAi->_identity.id == _identity.ambientGroupLeaderIdentityId)
+                    {
+                        source = "leader_victim";
+                    }
+                }
+            }
+
+            consider(victim, ally, 300.0f, source);
+        }
+
+        for (Unit* attacker : ally->getAttackers())
+        {
+            char const* source = "ally_attacker";
+            if (ally == me)
+                source = "self_attacker";
+            else if (Creature* allyCreature = ally->ToCreature())
+            {
+                if (allyCreature->GetEntry() == WorldBotEntry && allyCreature->AI())
+                {
+                    auto const* allyAi = static_cast<WorldBotCreatureAI const*>(allyCreature->AI());
+                    if (_identity.ambientGroupLeaderIdentityId != 0
+                        && allyAi->_identity.id == _identity.ambientGroupLeaderIdentityId)
+                    {
+                        source = "leader_attacker";
+                    }
+                }
+            }
+
+            consider(attacker, ally, 260.0f, source);
+        }
+    }
+
+    return { best, bestSource };
+}
+
 bool WorldBotCreatureAI::IsAmbientGroupedWith(Unit const* ally) const
 {
     if (!me || !ally || ally == me)
@@ -3694,6 +4092,74 @@ bool WorldBotCreatureAI::IsAmbientGroupedWith(Unit const* ally) const
     return _identity.ambientGroupId == allyAi->_identity.ambientGroupId;
 }
 
+bool WorldBotCreatureAI::TryAdoptGroupedCombatTarget(char const* reason)
+{
+    if (!me || !_combatInterrupt.active || _identity.ambientGroupId == 0)
+        return false;
+
+    GroupCombatTargetReply const reply = RequestGroupedCombatTarget(AmbientCombatAssistRadius);
+    Unit* target = reply.target;
+    if (!target)
+        return false;
+
+    std::uint32_t const nowMs = GameTime::GetGameTimeMS().count();
+    bool const sameTargetRecent =
+        !_groupCombatHandoffSnapshot.targetGuid.IsEmpty()
+        && _groupCombatHandoffSnapshot.targetGuid == target->GetGUID()
+        && (nowMs - _groupCombatHandoffSnapshot.adoptedAtMs) < GroupCombatHandoffRefreshMs;
+
+    _combatDisengageGraceMs = 0;
+    _combatInterrupt.allClearElapsedMs = 0;
+
+    if (!sameTargetRecent)
+    {
+        me->EngageWithTarget(target);
+        target->EngageWithTarget(me);
+        AttackStart(target);
+        me->AddThreat(target, 1.0f);
+        target->AddThreat(me, 1.0f);
+        EnsureMutualThreatEngagement(me, target);
+
+        if (target->IsCreature() && target->ToCreature()->IsAIEnabled)
+            target->ToCreature()->AI()->AttackStart(me);
+
+        _groupCombatHandoffSnapshot.targetGuid = target->GetGUID();
+        _groupCombatHandoffSnapshot.adoptedAtMs = nowMs;
+
+        integration::BotActivityLog::Record(
+            me,
+            _identity.name,
+            _identity.id,
+            "combat_handoff",
+            std::string("reason='") + (reason ? reason : "unknown")
+                + "' request_source='" + (reply.source ? reply.source : "none")
+                + "' target_guid=" + std::to_string(target->GetGUID().GetCounter())
+                + " target='" + target->GetName() + "'");
+
+        if (IsDebugForcedCombatIdentity())
+        {
+            std::ostringstream handoffTrace;
+            handoffTrace << "phase='combat' decision='party_target_adopt' "
+                         << "reason='" << (reason ? reason : "unknown") << "' "
+                         << "request_source='" << (reply.source ? reply.source : "none") << "' "
+                         << "target=" << DescribeTraceUnit(target);
+            RecordCombatTrace(handoffTrace.str());
+            RecordCombatTrace(BuildCombatMovementTraceDetail("party_target_adopt", target));
+        }
+    }
+    else if (!me->IsInCombat() || !me->GetVictim())
+    {
+        // Keep the grouped target "sticky" for a short grace window so we do
+        // not re-announce the same handoff every tick while the rest of the
+        // party is still clearly on that target.
+        me->EngageWithTarget(target);
+        target->EngageWithTarget(me);
+        EnsureMutualThreatEngagement(me, target);
+    }
+
+    return true;
+}
+
 bool WorldBotCreatureAI::IsCombatAreaStep(service::AmbientStep const& step) const
 {
     return step.type == service::AmbientStepType::Grind;
@@ -3707,6 +4173,65 @@ std::uint32_t WorldBotCreatureAI::ResolveCombatResumeDelayMs() const
     return _combatInterrupt.reason == CombatInterruptionReason::AuthoredGrind
         ? AuthoredCombatResumeDelayMs
         : ReactiveCombatResumeDelayMs;
+}
+
+std::uint32_t WorldBotCreatureAI::GetCustomSpellWaitMs(std::uint32_t spellId) const
+{
+    if (IsJudgementOfWisdomSpell(spellId)
+        && _judgementOfWisdomSnapshot.castWorldMs > 0
+        && me
+        && me->GetVictim()
+        && _judgementOfWisdomSnapshot.targetGuid == me->GetVictim()->GetGUID())
+    {
+        if (_worldOnlineMs < (_judgementOfWisdomSnapshot.castWorldMs + JudgementOfWisdomCooldownMs))
+        {
+            std::uint64_t const remainingMs64 =
+                (_judgementOfWisdomSnapshot.castWorldMs + JudgementOfWisdomCooldownMs) - _worldOnlineMs;
+            return static_cast<std::uint32_t>(
+                std::min<std::uint64_t>(remainingMs64, std::numeric_limits<std::uint32_t>::max()));
+        }
+    }
+
+    if (!IsConsecrationSpell(spellId) || !_consecrationSnapshot.active)
+        return 0;
+
+    if (_consecrationSnapshot.mapId != me->GetMapId())
+        return 0;
+
+    float const movedDistance = me->GetDistance(
+        _consecrationSnapshot.x,
+        _consecrationSnapshot.y,
+        _consecrationSnapshot.z);
+    if (movedDistance >= ConsecrationRecenterDistanceYards)
+        return 0;
+
+    if (_worldOnlineMs >= (_consecrationSnapshot.castWorldMs + ConsecrationLifetimeMs))
+        return 0;
+
+    std::uint64_t const remainingMs64 =
+        (_consecrationSnapshot.castWorldMs + ConsecrationLifetimeMs) - _worldOnlineMs;
+    return static_cast<std::uint32_t>(
+        std::min<std::uint64_t>(remainingMs64, std::numeric_limits<std::uint32_t>::max()));
+}
+
+void WorldBotCreatureAI::NoteSuccessfulSpellCast(std::uint32_t spellId, Unit* target)
+{
+    if (IsJudgementOfWisdomSpell(spellId))
+    {
+        _judgementOfWisdomSnapshot.castWorldMs = _worldOnlineMs;
+        _judgementOfWisdomSnapshot.targetGuid = target ? target->GetGUID() : ObjectGuid();
+    }
+
+    if (!IsConsecrationSpell(spellId))
+        return;
+
+    _consecrationSnapshot.active = true;
+    _consecrationSnapshot.spellId = spellId;
+    _consecrationSnapshot.castWorldMs = _worldOnlineMs;
+    _consecrationSnapshot.mapId = me->GetMapId();
+    _consecrationSnapshot.x = me->GetPositionX();
+    _consecrationSnapshot.y = me->GetPositionY();
+    _consecrationSnapshot.z = me->GetPositionZ();
 }
 
 bool WorldBotCreatureAI::CanInterruptCurrentStepForCombat() const
@@ -3886,7 +4411,51 @@ bool WorldBotCreatureAI::TrySustainAmbientCombat(char const* reason)
     if (!me || !_combatInterrupt.active)
         return false;
 
-    Unit* target = FindNearbyAmbientCombatTarget(AmbientCombatAssistRadius);
+    Unit* target = nullptr;
+    if (_identity.ambientGroupLeaderIdentityId != 0)
+    {
+        std::vector<Unit*> friendlyAllies = CollectNearbyFriendlyAmbientWorldBots(me, AmbientCombatAssistRadius, false);
+        for (Unit* ally : friendlyAllies)
+        {
+            if (!IsAmbientGroupedWith(ally))
+                continue;
+
+            Creature* allyCreature = ally->ToCreature();
+            if (!allyCreature || allyCreature->GetEntry() != WorldBotEntry || !allyCreature->AI())
+                continue;
+
+            auto const* allyAi = static_cast<WorldBotCreatureAI const*>(allyCreature->AI());
+            if (allyAi->_identity.id == _identity.ambientGroupLeaderIdentityId
+                && ally->GetVictim()
+                && ally->GetVictim()->IsAlive()
+                && ally->GetVictim()->IsInWorld()
+                && !me->IsFriendlyTo(ally->GetVictim())
+                && ally->GetVictim()->isTargetableForAttack(false, me))
+            {
+                target = ally->GetVictim();
+                break;
+            }
+        }
+    }
+
+    if (!target)
+    {
+        for (Unit* attacker : me->getAttackers())
+        {
+            if (!attacker || !attacker->IsAlive() || !attacker->IsInWorld())
+                continue;
+            if (me->IsFriendlyTo(attacker) || !attacker->isTargetableForAttack(false, me))
+                continue;
+
+            target = attacker;
+            break;
+        }
+    }
+
+    if (!target)
+        target = FindNearbyCreatureCombatTarget(AmbientCombatAssistRadius);
+    if (!target)
+        target = FindNearbyAmbientCombatTarget(AmbientCombatAssistRadius);
     if (!target)
         return false;
 
@@ -4178,6 +4747,10 @@ void WorldBotCreatureAI::TickCombat(uint32 diff)
     if (!me)
         return;
 
+    Unit* const preTickVictim = me->GetVictim();
+    bool const preTickInCombat = me->IsInCombat();
+    bool const preTickEngaged = me->IsEngaged();
+
     if (_syntheticGlobalCooldownRemainingMs > 0)
         _syntheticGlobalCooldownRemainingMs =
             (_syntheticGlobalCooldownRemainingMs > diff)
@@ -4198,6 +4771,14 @@ void WorldBotCreatureAI::TickCombat(uint32 diff)
                 << "bot_in_combat=" << (me->IsInCombat() ? 1 : 0) << " "
                 << "bot_is_engaged=" << (me->IsEngaged() ? 1 : 0) << " "
                 << "bot_casting=" << (me->IsNonMeleeSpellCast(false) ? 1 : 0) << " "
+                << "bot_attackers=" << me->getAttackers().size() << " "
+                << "combat_interrupt=" << (_combatInterrupt.active ? 1 : 0) << " "
+                << "pre_tick_in_combat=" << (preTickInCombat ? 1 : 0) << " "
+                << "pre_tick_engaged=" << (preTickEngaged ? 1 : 0) << " "
+                << "pre_tick_victim=" << DescribeTraceUnit(preTickVictim) << " "
+                << "pre_tick_victim_alive=" << ((preTickVictim && preTickVictim->IsAlive()) ? 1 : 0) << " "
+                << "pre_tick_victim_evade=" << ((preTickVictim && preTickVictim->ToCreature() && preTickVictim->ToCreature()->IsInEvadeMode()) ? 1 : 0) << " "
+                << "pre_tick_distance=" << ((preTickVictim && me) ? me->GetDistance(preTickVictim) : 0.0f) << " "
                 << "victim=" << DescribeTraceUnit(targetForTrace) << " "
                 << "threat_victim=" << DescribeTraceUnit(threatVictim) << " "
                 << "threat_list_size=" << (me->CanHaveThreatList() ? me->GetThreatMgr().GetThreatListSize() : 0);
@@ -4208,6 +4789,9 @@ void WorldBotCreatureAI::TickCombat(uint32 diff)
 
     if (!UpdateVictim())
     {
+        if (TryAdoptGroupedCombatTarget("group_target_request_update_victim_false"))
+            return;
+
         if (TrySustainAmbientCombat("update_victim_false_reassist"))
             return;
 
@@ -4219,6 +4803,9 @@ void WorldBotCreatureAI::TickCombat(uint32 diff)
     Unit* target = me->GetVictim();
     if (!target)
     {
+        if (TryAdoptGroupedCombatTarget("group_target_request_missing_victim"))
+            return;
+
         if (TrySustainAmbientCombat("missing_victim_reassist"))
             return;
 
@@ -4228,6 +4815,30 @@ void WorldBotCreatureAI::TickCombat(uint32 diff)
     }
 
     _combatDisengageGraceMs = 0;
+
+    if (IsDebugForcedCombatIdentity())
+    {
+        bool const hasAura = target->HasAura(JudgementOfWisdomBaseSpellId);
+        bool const targetChanged = _debugJudgementAuraObservation.targetGuid != target->GetGUID();
+        bool const stateChanged =
+            !_debugJudgementAuraObservation.initialized
+            || targetChanged
+            || _debugJudgementAuraObservation.hasAura != hasAura;
+        if (stateChanged)
+        {
+            std::ostringstream auraTrace;
+            auraTrace << "phase='debug' decision='target_aura_edge' "
+                      << "aura='Judgement of Wisdom(20186)' "
+                      << "target=" << DescribeTraceUnit(target) << " "
+                      << "state='" << (hasAura ? "gained_or_present" : "missing_or_lost") << "' "
+                      << "target_changed=" << (targetChanged ? 1 : 0);
+            RecordCombatTrace(auraTrace.str());
+
+            _debugJudgementAuraObservation.targetGuid = target->GetGUID();
+            _debugJudgementAuraObservation.hasAura = hasAura;
+            _debugJudgementAuraObservation.initialized = true;
+        }
+    }
 
     model::WorldBotHazardSnapshot const hazard = BuildWorldBotHazardSnapshot(me, _hazardEvaluationState);
     std::vector<service::WorldBotNearbyHostileSnapshot> const nearbyHostiles =
@@ -4380,6 +4991,12 @@ void WorldBotCreatureAI::TickCombat(uint32 diff)
         context.conservationMode = effectiveConservation.mode;
         context.conserving = _combatConserving;
         context.offenseSuppressed = offenseSuppressed;
+        context.enableDownRank = _combatPreparedProfile.resolution.profile.settings.enableDownRank;
+        context.downRankFloor = _combatPreparedProfile.resolution.profile.settings.downRankFloor;
+        context.customSpellWaitResolver = [this](std::uint32_t spellId)
+        {
+            return GetCustomSpellWaitMs(spellId);
+        };
         context.availableSpells = _combatPreparedProfile.availableSpells;
 
         auto const tryResult =
@@ -4417,6 +5034,8 @@ void WorldBotCreatureAI::TickCombat(uint32 diff)
 
                 if (casted && action.actionType == model::BotCombatActionType::Spell)
                 {
+                    NoteSuccessfulSpellCast(action.spellId, action.target);
+
                     if (Creature* creature = me->ToCreature())
                     {
                         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(action.spellId))
@@ -4941,16 +5560,21 @@ void WorldBotCreatureAI::CompletSession()
     me->DespawnOrUnsummon(Milliseconds(1000));
 }
 
-void WorldBotCreatureAI::JustDied(Unit* /*killer*/)
+void WorldBotCreatureAI::JustDied(Unit* killer)
 {
     if (_combatInterrupt.active)
-        RecordCombatSummary("death");
+    {
+        std::string const reason = BuildCombatSummaryReason("death", killer);
+        RecordCombatSummary(reason.c_str());
+    }
 
     service::ResetSharedHazardEvaluationState(_hazardEvaluationState);
     ClearVisibleTravelMode();
     ClearActiveTaxiTravel();
     ClearActivePhysicalTransit();
     _syntheticGlobalCooldownRemainingMs = 0;
+    _judgementOfWisdomSnapshot.Reset();
+    _consecrationSnapshot = {};
     _combatDisengageGraceMs = 0;
     _usedSimulatedItemsThisCombat.clear();
     _pendingCorpseRecovery = _sessionReady && !_sessionDone;

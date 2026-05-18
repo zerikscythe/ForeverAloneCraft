@@ -112,6 +112,11 @@ public:
         service::AmbientSession            session;
         AbstractWorldBotProgressState      progress;
         std::uint64_t                      worldOnlineMs = 0;
+        bool                               inCombat = false;
+        bool                               isEngaged = false;
+        bool                               hasVictim = false;
+        bool                               hasAttackers = false;
+        bool                               combatInterruptActive = false;
         bool                               inTaxiTransit = false;
         bool                               inPhysicalTransit = false;
         bool                               physicalTransitReadyForAbstract = false;
@@ -120,6 +125,82 @@ public:
         float                              physicalTransitLocalY = 0.0f;
         float                              physicalTransitLocalZ = 0.0f;
         float                              physicalTransitLocalO = 0.0f;
+    };
+
+    struct GroundEffectSnapshot
+    {
+        bool active = false;
+        std::uint32_t spellId = 0;
+        std::uint64_t castWorldMs = 0;
+        std::uint32_t mapId = 0;
+        float x = 0.0f;
+        float y = 0.0f;
+        float z = 0.0f;
+    };
+
+    struct LastIncomingDamageSnapshot
+    {
+        ObjectGuid sourceGuid;
+        std::string sourceName;
+        std::string moveName;
+        std::uint32_t amount = 0;
+        SpellSchoolMask schoolMask = SPELL_SCHOOL_MASK_NORMAL;
+        DamageEffectType damageType = NODAMAGE;
+        std::uint32_t capturedAtMs = 0;
+
+        [[nodiscard]] bool valid() const
+        {
+            return amount > 0 && !sourceGuid.IsEmpty();
+        }
+    };
+
+    struct GroupCombatHandoffSnapshot
+    {
+        ObjectGuid targetGuid;
+        std::uint32_t adoptedAtMs = 0;
+
+        void Reset()
+        {
+            targetGuid.Clear();
+            adoptedAtMs = 0;
+        }
+    };
+
+    struct DebugAuraObservationSnapshot
+    {
+        ObjectGuid targetGuid;
+        bool hasAura = false;
+        bool initialized = false;
+
+        void Reset()
+        {
+            targetGuid.Clear();
+            hasAura = false;
+            initialized = false;
+        }
+    };
+
+    struct JudgementOfWisdomSnapshot
+    {
+        ObjectGuid targetGuid;
+        std::uint64_t castWorldMs = 0;
+
+        void Reset()
+        {
+            targetGuid.Clear();
+            castWorldMs = 0;
+        }
+    };
+
+    struct GroupCombatTargetReply
+    {
+        Unit* target = nullptr;
+        char const* source = "none";
+
+        [[nodiscard]] bool HasTarget() const
+        {
+            return target != nullptr;
+        }
     };
 
     explicit WorldBotCreatureAI(Creature* creature);
@@ -142,10 +223,13 @@ public:
     void JustReachedHome() override;
     void JustRespawned() override;
     void CorpseRemoved(uint32& respawnDelay) override;
+    void DamageTaken(Unit* attacker, uint32& damage, DamageEffectType damagetype, SpellSchoolMask damageSchoolMask) override;
+    void SpellHit(Unit* caster, SpellInfo const* spellInfo) override;
 
     bool BuildRuntimeSnapshot(RuntimeSnapshot& out) const;
     [[nodiscard]] bool HasShieldBaseline() const { return _hasShieldBaseline; }
     [[nodiscard]] model::WorldBotAssignedGearSummary const& GetAssignedGearSummary() const { return _preparedBuild.assignedGearSummary; }
+    [[nodiscard]] integration::BotIdentityRecord const& GetIdentityRecord() const { return _identity; }
     void RecordCombatDamageDone(std::uint32_t amount);
     void RecordCombatDamageTaken(std::uint32_t amount);
     void RecordCombatHealingDone(std::uint32_t amount);
@@ -214,7 +298,10 @@ private:
     void ResetCombatMetricsSegment();
     void RecordCombatSummary(char const* reason);
     [[nodiscard]] Unit* FindNearbyAmbientCombatTarget(float radius) const;
+    [[nodiscard]] Unit* FindNearbyCreatureCombatTarget(float radius) const;
+    [[nodiscard]] GroupCombatTargetReply RequestGroupedCombatTarget(float radius) const;
     [[nodiscard]] bool IsAmbientGroupedWith(Unit const* ally) const;
+    bool TryAdoptGroupedCombatTarget(char const* reason);
     bool TryJoinNearbyAmbientCombat(char const* reason);
     bool TrySustainAmbientCombat(char const* reason);
     [[nodiscard]] Creature* FindNearestGrindTarget(service::AmbientStep const& step) const;
@@ -222,6 +309,15 @@ private:
     bool IsCombatAreaStep(service::AmbientStep const& step) const;
     std::uint32_t ResolveCombatResumeDelayMs() const;
     bool CanInterruptCurrentStepForCombat() const;
+    [[nodiscard]] std::uint32_t GetCustomSpellWaitMs(std::uint32_t spellId) const;
+    void NoteSuccessfulSpellCast(std::uint32_t spellId, Unit* target);
+    void CaptureIncomingDamageSnapshot(
+        Unit* attacker,
+        std::uint32_t damage,
+        DamageEffectType damageType,
+        SpellSchoolMask schoolMask,
+        char const* moveName = nullptr);
+    [[nodiscard]] std::string BuildCombatSummaryReason(char const* fallbackReason, Unit* killer = nullptr) const;
 
     // Apply identity fields (level, display_id) to the creature.
     void ApplyIdentityToCreature();
@@ -251,6 +347,10 @@ private:
     bool           _debugCombatManaGemObserved = false;
     bool           _debugForcedCombatProbeLogged = false;
     bool           _hasShieldBaseline = false;
+    LastIncomingDamageSnapshot _lastIncomingDamageSnapshot;
+    GroupCombatHandoffSnapshot _groupCombatHandoffSnapshot;
+    DebugAuraObservationSnapshot _debugJudgementAuraObservation;
+    GroundEffectSnapshot _consecrationSnapshot;
     ActiveTravelExecutionPhase _activeTravelExecutionPhase = ActiveTravelExecutionPhase::None;
     service::WorldBotTravelOptionMode _activeTravelOptionMode = service::WorldBotTravelOptionMode::Ground;
     std::uint32_t  _activeTaxiTransitElapsedMs = 0;
@@ -264,6 +364,7 @@ private:
     std::uint32_t  _routeTravelLastZoneId = 0;
     std::uint64_t  _routeTravelLastReanchorWorldMs = 0;
     std::uint32_t  _syntheticGlobalCooldownRemainingMs = 0;
+    JudgementOfWisdomSnapshot _judgementOfWisdomSnapshot;
     bool           _combatConserving = false;
     std::uint32_t  _combatDisengageGraceMs = 0;
     bool           _pendingCorpseRecovery = false;
@@ -293,6 +394,7 @@ private:
     static constexpr std::uint32_t CombatDisengageGraceMs = 3000;
     static constexpr std::uint32_t ReactiveCombatResumeDelayMs = 3000;
     static constexpr std::uint32_t AuthoredCombatResumeDelayMs = 1000;
+    static constexpr std::uint32_t JudgementOfWisdomCooldownMs = 20000;
     static constexpr float AmbientCombatAssistRadius = 60.0f;
 };
 

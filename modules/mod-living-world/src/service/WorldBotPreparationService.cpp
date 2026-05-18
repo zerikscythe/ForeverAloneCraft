@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <string_view>
+#include <vector>
 
 namespace living_world
 {
@@ -266,7 +267,9 @@ std::uint32_t ResolvePreferredGroundMobilitySpell(
 void AddKnownSpellForAction(
     std::unordered_set<std::uint32_t>& knownSpells,
     model::BotCombatActionDefinition const& action,
-    std::uint8_t level)
+    std::uint8_t level,
+    bool enableDownRank,
+    std::uint8_t downRankFloor)
 {
     if (action.actionType != model::BotCombatActionType::Spell || action.spellBaseId == 0)
         return;
@@ -304,21 +307,34 @@ void AddKnownSpellForAction(
 
         case model::BotCombatRankMode::BestKnown:
         {
-            std::uint32_t candidate = sSpellMgr->GetLastSpellInChain(action.spellBaseId);
+            std::vector<std::pair<std::uint32_t, std::uint8_t>> usableRanks;
+            std::uint32_t candidate = sSpellMgr->GetFirstSpellInChain(action.spellBaseId);
             if (!candidate)
                 candidate = action.spellBaseId;
 
-            while (candidate)
+            for (std::uint8_t rank = 1; candidate; ++rank)
             {
                 if (IsSpellUsableForLevel(candidate, level))
                 {
-                    knownSpells.insert(candidate);
-                    return;
+                    usableRanks.emplace_back(candidate, rank);
                 }
 
-                candidate = sSpellMgr->GetPrevSpellInChain(candidate);
+                candidate = sSpellMgr->GetNextSpellInChain(candidate);
             }
 
+            if (usableRanks.empty())
+                return;
+
+            knownSpells.insert(usableRanks.back().first);
+            if (!enableDownRank)
+                return;
+
+            std::uint8_t const floorRank = std::max<std::uint8_t>(1u, downRankFloor);
+            for (auto const& [spellId, rank] : usableRanks)
+            {
+                if (rank >= floorRank)
+                    knownSpells.insert(spellId);
+            }
             return;
         }
     }
@@ -334,9 +350,21 @@ void AddProfileSpells(
         {
             for (model::BotCombatEntryDefinition const& entry : entries)
             {
-                AddKnownSpellForAction(knownSpells, entry.primaryAction, level);
+                AddKnownSpellForAction(
+                    knownSpells,
+                    entry.primaryAction,
+                    level,
+                    defaultProfile.settings.enableDownRank,
+                    defaultProfile.settings.downRankFloor);
                 if (entry.secondaryAction)
-                    AddKnownSpellForAction(knownSpells, *entry.secondaryAction, level);
+                {
+                    AddKnownSpellForAction(
+                        knownSpells,
+                        *entry.secondaryAction,
+                        level,
+                        defaultProfile.settings.enableDownRank,
+                        defaultProfile.settings.downRankFloor);
+                }
             }
         };
 

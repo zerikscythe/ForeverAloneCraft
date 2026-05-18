@@ -500,6 +500,9 @@ bool TryExecuteProfileRotation(Unit* bot, Player* owner, Unit* primaryTarget)
     context.defaultAoEMode = preparedProfile.resolution.profile.settings.defaultAoEMode;
     context.defaultAoEMinTargets = preparedProfile.resolution.profile.settings.defaultAoEMinTargets;
     context.defaultAoEScanRadius = preparedProfile.resolution.profile.settings.defaultAoEScanRadius;
+    context.conservationMode = preparedProfile.resolution.profile.settings.conservationMode;
+    context.enableDownRank = preparedProfile.resolution.profile.settings.enableDownRank;
+    context.downRankFloor = preparedProfile.resolution.profile.settings.downRankFloor;
     context.availableSpells = preparedProfile.availableSpells;
 
     auto const handleEvaluationResult =

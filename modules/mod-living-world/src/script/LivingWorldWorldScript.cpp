@@ -3268,6 +3268,16 @@ private:
                 continue;
             }
 
+            if (snapshot.inCombat
+                || snapshot.isEngaged
+                || snapshot.hasVictim
+                || snapshot.hasAttackers
+                || snapshot.combatInterruptActive)
+            {
+                ++itr;
+                continue;
+            }
+
             std::uint32_t const zoneId = ResolveStepZoneId(snapshot.session, snapshot.progress.currentStep);
             std::uint32_t const mapId = snapshot.progress.stepStartKnown
                 ? snapshot.progress.stepStartMapId
