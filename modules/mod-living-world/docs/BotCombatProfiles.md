@@ -342,6 +342,26 @@ The same machinery should later scale into:
 - raid icon tactical overrides
 - tank/off-tank swap rules on stacking debuff fights
 
+One small but valuable world-behavior note should stay separate from committed
+party combat:
+
+- ambient parties should be allowed very occasional "drive-by kindness"
+- example: a healer notices a same-faction ambient bot on the road at low HP,
+  throws one quick heal or buff, then immediately resumes travel
+
+This is intentionally **not** the same as joining that bot's fight. It should
+be:
+
+- brief
+- low-probability
+- non-binding
+- disabled while the party is already busy or threatened
+
+It is the social mirror of opportunistic road PvP:
+
+- aggressive bots may sometimes halt travel to start trouble
+- supportive bots may sometimes offer one small act of help and move on
+
 The intended stack becomes:
 
 ```text
