@@ -314,6 +314,45 @@ Encounter / raid-icon override
 So if there is no icon, bots fall back to normal targeting policy. If there is
 an icon, the icon supplies the tactical assignment and the profile still
 governs how the bot behaves around that assignment.
+
+### 5.5 Shared party combat awareness
+
+Small-group PvE, open-world party travel, dungeon pulls, and later raid
+encounters all need a layer above per-bot targeting weights.
+
+This should not be implemented as literal "bot chat." The right runtime shape is
+a shared party combat coordination layer or blackboard that every grouped bot in
+the fight can read and write.
+
+First useful examples:
+
+- tank has a primary target and the rest of the party should know it
+- a nearby hostile healer or warlock starts a dangerous cast
+- one party member should claim the interrupt so three bots do not all spend it
+- tank may temporarily break rotation to stop a dangerous cast, then decide
+  whether to return to the original target or stay on the new one
+- healer should know who the real frontline anchor is, not just "lowest nearby
+  ally"
+
+The same machinery should later scale into:
+
+- dungeon add pickup / peel requests
+- crowd-control assignments
+- boss interrupt rotations
+- raid icon tactical overrides
+- tank/off-tank swap rules on stacking debuff fights
+
+The intended stack becomes:
+
+```text
+Encounter / party coordination layer
+  -> target-selection policy
+  -> movement/posture doctrine
+  -> spell rotation / interrupts
+```
+
+This means the individual profile remains useful, but grouped bots stop acting
+like isolated duelists when party-wide context matters.
 - example doctrine:
   - if mana falls below low-water threshold, stop offensive magic
   - if mana rises above high-water threshold, resume offensive magic
@@ -452,6 +491,17 @@ Useful condition keys supported by the current runtime include:
 - `nearby_enemies` (`numericValue` = enemy count threshold, `stringValue` = scan radius)
 - `runes_ready` / `runes_available` (`numericValue` = ready-rune threshold, `stringValue` = `blood|frost|unholy|death|any`)
 
+Important next-wave condition vocabulary still needed for party-aware tanking
+and coordination:
+
+- nearby hostile count not currently focused on the tank
+- nearby hostile count currently attacking healer / ally
+- nearby dangerous casts, not only the primary target's cast
+- "can someone else in my party interrupt this?" style shared-claim state
+- persistent friendly ground-effect cadence checks (for example, not refreshing
+  `Consecration` too early)
+- tank/off-tank assignment state for raid and boss-swap encounters
+
 ### 7.1 Smart profile adjustments inside one spec/profile
 
 The current model is already capable of handling a large class of
@@ -519,6 +569,30 @@ all, but whether we later want explicit authoring affordances such as:
 - named rotation branches (`SingleTarget`, `AoE`, `Execute`, `EmergencyHeal`)
 - branch-level debugging/telemetry
 - branch-level editor grouping in the addon/UI
+
+### 7.3 Pack and tank awareness is still incomplete
+
+The current runtime can already reason about:
+
+- current-target threat percent
+- whether the subject is the current aggro holder
+- nearby enemy count
+- row-based interrupt actions
+
+That is enough for basic single-target or loose skirmish behavior, but not yet
+enough for a convincing dungeon-style tank.
+
+The next quality jump for tank doctrine should include:
+
+- pack-level threat awareness instead of only primary-target threat
+- recognition of hostile casters or strays breaking off the tank
+- interrupt triage for nearby dangerous casts such as heals or CC, not only the
+  current target
+- mana-aware AoE discipline so spells like `Consecration` are not refreshed too
+  early or too often
+
+This should be treated as a tank-awareness and party-coordination milestone,
+not just a Paladin-specific tweak.
 
 Those would be ergonomics improvements, not proof that separate profiles are
 required.

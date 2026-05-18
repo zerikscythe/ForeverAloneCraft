@@ -186,12 +186,25 @@ What exists:
 - world bots already share a lot of player-like stats/loadout prep
 - combat profile design direction exists
 - movement doctrine roadmap exists
+- ambient group scaffolding now exists for leader/follower party metadata
+- creature-backed ambient bots can now suspend travel for ground combat and
+  resume afterward
+- ambient grouped followers can now join nearby creature fights instead of
+  leaving the tank completely alone
 
 What is still incomplete:
 
 - many class/spec combat runtimes are still shallow
 - doctrine/profile system is not yet the main runtime truth
 - world PvP/nemesis/guild-war behavior is not implemented
+- party-wide combat coordination is still missing:
+  - no shared interrupt claim system
+  - no party blackboard / shared danger state
+  - no true tank/off-tank assignment model yet
+- tank awareness is still weaker than it needs to be for creature packs:
+  - primary-target threat exists
+  - pack-level threat and nearby dangerous-cast awareness do not
+- healer/tank/DPS cooperation is improving, but still not yet "dungeon smart"
 
 ---
 
@@ -258,6 +271,35 @@ Build local fake-work loops:
 Why:
 
 - this is the missing bridge between destination choice and believable presence
+
+### Next major combat milestone after the current creature-pack stabilization
+
+Build shared party combat coordination:
+
+1. add a shared party combat awareness layer / blackboard
+2. let grouped bots publish:
+   - primary target
+   - danger casts
+   - interrupt claims
+   - tank/healer/distress state
+3. let roles consume that shared state differently:
+   - DPS interrupt first
+   - healer heal/escape first
+   - tank fallback interrupts and peel decisions
+4. extend the same layer later into:
+   - raid icon orchestration
+   - tank/off-tank swap rules
+   - encounter-specific tactical assignments
+
+Why:
+
+- current single-bot combat improvements are finally good enough that the next
+  realism jump comes from coordination, not only rotation cleanup
+- the same layer will be needed for:
+  - 2-3 bot quest parties
+  - dungeon pulls
+  - raid tank swaps
+  - coordinated interrupts and crowd control
 
 ### Lower-priority but important parallel tracks
 

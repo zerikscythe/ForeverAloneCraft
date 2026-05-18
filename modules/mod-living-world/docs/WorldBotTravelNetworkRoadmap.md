@@ -345,6 +345,36 @@ So route following must support:
 The runtime should not assume that once a route is chosen it can be followed to
 completion uninterrupted.
 
+Important runtime rule:
+
+- **ground / mount travel** should be interruptible by combat
+- **taxi travel** should not be interrupted into free-roam combat
+- **boat / zeppelin / physical transit legs** should not be interrupted into
+  free-roam combat while the bot is committed to the transport
+
+This keeps normal road travel believable while avoiding nonsense such as bots
+trying to abandon a zeppelin or taxi mid-leg because a target briefly became
+interesting.
+
+### 6.0.1 Opportunistic world interruptions
+
+Interruptible ground travel is not only for reactive defense.
+
+The design should also allow personality-driven open-world behavior such as:
+
+- one road traveler is uninterested and keeps moving
+- another road traveler is aggressive/opportunistic and chooses to halt travel
+  and start a fight
+- after the fight, the aggressor either resumes the same route or abandons it
+  if the wider session logic says to do so
+
+That means travel interruption should preserve enough runtime context to answer:
+
+- was this reactive self-defense?
+- was this an authored grind/combat area?
+- was this an opportunistic PvP/world-ambush decision?
+- when the area is clear, should the bot resume the route or not?
+
 ### 6.1 Respect the hot-zone materialization model
 
 The travel/runtime design must fit the existing world-bot population model:
