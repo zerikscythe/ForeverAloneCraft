@@ -1,5 +1,20 @@
 # World Bot Player-Stat Parity Checklist
 
+Historical framing note:
+
+This checklist was written for the `Creature`-backed visible world-bot phase.
+That work is still useful, but the project is now pivoting visible/materialized
+ambient bots toward leased `Player` shells rebuilt from ledger truth.
+
+So this document should now be read as:
+
+- a map of what still matters for any remaining creature-backed compatibility
+  lane
+- a record of which player-like combat/stat assumptions were already solved in
+  module code
+- not the long-term plan for how every visible ambient bot should express
+  inventory, auras, procs, or equipment visuals
+
 This checklist tracks how close `Creature`-backed `world bots` are to real
 player stat behavior, and what files should be touched for each remaining
 parity slice.
@@ -938,21 +953,21 @@ New helper / hook?
   - `OnCalculateHealthRegen(...)`
 - This is the prerequisite data-model work for many unchecked slices above.
 
-## Recommended Order From Here
+## Current Read
 
-If the goal is "feel as close to a real player sheet as possible" while staying
-Creature-safe and B-style, the best next order is:
+For stat-sheet parity, the major planned slices in this checklist are now
+landed closely enough for the current Creature-backed world-bot architecture.
 
-1. `Defense skill / defense rating / crit suppression`
-2. `Melee hit`
-3. `Expertise`
-4. `Spell hit`
-5. `Spell power / healing done`
-6. `Haste`
-7. `Mana regen`
-8. `Block value`
-9. `Armor penetration`
-10. `Resilience`
+The biggest remaining gameplay-fidelity gaps are no longer the primary stat
+sheet. They are:
 
-That order keeps the biggest combat-authenticity gaps ahead of the more niche or
-PvP-specific ones.
+1. permanent-pet ownership and owner-to-pet bonus propagation for world-bot
+   Hunter/Warlock depth polish
+2. broader on-use / weird-proc item validation beyond the already-landed
+   passive, reactive-enchant, and common proc paths
+3. richer command/stance parity and higher-order combat coordination
+4. true equipment-state edge cases where player semantics depend on real bag or
+   weapon-state details instead of the current synthetic loadout model
+
+So this checklist should now be read as a mostly-complete parity ledger rather
+than the main next-work queue.

@@ -203,17 +203,29 @@ foreach(SOURCE_MODULE ${MODULES_MODULE_LIST})
           ${MODULE_SOURCE_PATH}/integration/BotActivityLog.cpp
           ${MODULE_SOURCE_PATH}/integration/SqlActivityLibraryRepository.cpp
           ${MODULE_SOURCE_PATH}/integration/SqlBotGlobalConfigRepository.cpp
+          ${MODULE_SOURCE_PATH}/integration/SqlBotGlyphTemplateRepository.cpp
           ${MODULE_SOURCE_PATH}/integration/SqlBotHazardConfigRepository.cpp
+          ${MODULE_SOURCE_PATH}/integration/SqlBotDisplayLoadoutRepository.cpp
           ${MODULE_SOURCE_PATH}/integration/SqlBotOocConfigRepository.cpp
+          ${MODULE_SOURCE_PATH}/integration/SqlBotRebuildLogRepository.cpp
+          ${MODULE_SOURCE_PATH}/integration/SqlBotRuntimeSnapshotRepository.cpp
+          ${MODULE_SOURCE_PATH}/integration/SqlBotShellRuntimeRepository.cpp
           ${MODULE_SOURCE_PATH}/integration/SqlBotTalentPreferenceRepository.cpp
           ${MODULE_SOURCE_PATH}/integration/SqlBotTalentTemplateRepository.cpp
+          ${MODULE_SOURCE_PATH}/integration/SqlTaskPointLinkRepository.cpp
           ${MODULE_SOURCE_PATH}/integration/SqlZoneIndexRepository.cpp
           ${MODULE_SOURCE_PATH}/service/BotActivitySessionComposer.cpp
+          ${MODULE_SOURCE_PATH}/service/BotAppearanceResolver.cpp
           ${MODULE_SOURCE_PATH}/service/BotContextService.cpp
           ${MODULE_SOURCE_PATH}/service/BotGlobalConfigService.cpp
           ${MODULE_SOURCE_PATH}/service/BotHazardConfigService.cpp
+          ${MODULE_SOURCE_PATH}/service/BotLedgerShellConsumableService.cpp
+          ${MODULE_SOURCE_PATH}/service/BotLedgerShellHydratorService.cpp
+          ${MODULE_SOURCE_PATH}/service/BotLedgerShellSanitizerService.cpp
           ${MODULE_SOURCE_PATH}/service/BotOocConfigService.cpp
           ${MODULE_SOURCE_PATH}/service/BotTalentApplicator.cpp)
+        list(APPEND PRIVATE_SOURCES_MODULES
+          ${MODULE_SOURCE_PATH}/service/WorldBotQuestHubRepository.cpp)
       endif()
 
       # Skip deprecated api loaders

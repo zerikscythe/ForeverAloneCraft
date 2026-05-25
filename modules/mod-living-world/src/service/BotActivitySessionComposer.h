@@ -38,6 +38,8 @@ struct AmbientStep
     std::string     subjectKey;
     std::string     returnAnchorRole;
     std::uint8_t    cycleCount  = 1;
+    std::string     targetPointKey;
+    std::string     targetPointType;
     std::string     transitType;
     std::string     transitRouteKey;
     std::string     transitSourcePointKey;
@@ -56,6 +58,8 @@ struct AmbientSessionTask
     std::string   activityType;
     std::string   taskFamily;
     std::uint32_t targetZoneId = 0;
+    std::string   targetPointKey;
+    std::string   targetPointType;
 };
 
 struct AmbientSession
@@ -77,6 +81,9 @@ struct AmbientSessionResumeHint
     std::string   lastSessionSourceKey;
     std::string   lastTaskFamily;
     std::uint32_t lastTaskTargetZoneId = 0;
+    std::string   lastStepSubjectKind;
+    std::string   lastStepSubjectKey;
+    std::uint64_t lastQuestHubElapsedMs = 0;
 };
 
 struct AmbientSessionComposeBias
@@ -102,7 +109,21 @@ public:
         std::string const& homeBindPointKey = "",
         std::unordered_set<std::uint32_t> const* exploredZoneIds = nullptr,
         AmbientSessionResumeHint const* resumeHint = nullptr,
-        AmbientSessionComposeBias const* composeBias = nullptr) const;
+        AmbientSessionComposeBias const* composeBias = nullptr,
+        std::string const& sessionPersonalityKey = "") const;
+
+    std::optional<AmbientSession> ComposeForcedSourceKey(
+        std::string const& sourceKey,
+        std::uint8_t faction,
+        std::uint8_t level,
+        bool hasHerbalism,
+        bool hasMining,
+        bool hasFishing,
+        std::uint32_t startZoneId = 0,
+        std::uint32_t homeZoneId = 0,
+        std::string const& homeAnchorPointKey = "",
+        std::string const& homeBindPointKey = "",
+        std::unordered_set<std::uint32_t> const* exploredZoneIds = nullptr) const;
 };
 
 } // namespace service

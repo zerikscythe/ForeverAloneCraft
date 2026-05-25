@@ -91,6 +91,14 @@ LivingWorld.AmbientForceSpawnZ = 0.0
 #        This is intended for deterministic headless sandboxing.
 #        Example: 33,17,18,61,26
 #
+#    LivingWorld.DebugForceIdentityMinLevel
+#    LivingWorld.DebugForceIdentityMaxLevel
+#        Optional inclusive level filter applied to the ambient identity picker
+#        when DebugForceIdentityIds is empty. This is useful for lowbie soak
+#        tests such as "spawn a bunch of level 5s in Stormwind and let them
+#        cook". Leave both at 0 to disable the filter.
+#        Defaults: 0 / 0
+#
 #    LivingWorld.DebugForceSessionZoneId
 #        Optional zone id that the debug sandbox should force as the opening
 #        target zone when composing sessions. The population tick will retry
@@ -98,10 +106,25 @@ LivingWorld.AmbientForceSpawnZ = 0.0
 #        DebugForceSessionComposeAttempts is exhausted.
 #        Default: 0 (disabled)
 #
+#    LivingWorld.DebugForceSessionSourceKey
+#        Optional exact authored task-template key or playlist key to force for
+#        the debug sandbox. When set, the ambient population tick will try to
+#        compose that exact source for the selected identities instead of
+#        rolling normally. Pair this with DebugForceSessionZoneId when you want
+#        a deterministic materialized test in a specific zone.
+#        Default: "" (disabled)
+#
 #    LivingWorld.DebugForceSessionComposeAttempts
 #        Maximum number of composition retries when DebugForceSessionZoneId is
 #        enabled.
 #        Default: 24
+#
+#    LivingWorld.DebugDisableActivationExtension
+#        Test-only toggle that prevents bots from rolling into a fresh shift
+#        after their current session budget expires or they clock out early.
+#        This is useful for server-health soak runs where each activation should
+#        end after its first shift instead of chaining more work.
+#        Default: 0
 #
 #    LivingWorld.DebugCombatManaDrainIdentityId
 #        Optional world-bot identity id that should have its mana forcibly
@@ -160,6 +183,43 @@ LivingWorld.AmbientForceSpawnZ = 0.0
 #        How long the harness bot should remain alive in an idle hold step after
 #        arriving at the destination so traces can be observed before despawn.
 #        Default: 30
+#
+#    LivingWorld.DebugRouteHarnessArrivalThresholdYards
+#        Harness-only arrival threshold for proving local travel links and
+#        authoring checkpoints without changing the normal in-game tolerance.
+#        Default: 3.0
+#
+#    LivingWorld.TravelArrivalThresholdServiceYards
+#        Arrival threshold for true service/destination PoIs such as bankers,
+#        auctioneers, trainers, portals, and mailboxes.
+#        Default: 5.0
+#
+#    LivingWorld.TravelArrivalThresholdConnectorYards
+#        Arrival threshold for connector/bounce anchors such as *_access points
+#        and broader plaza/poi routing helpers.
+#        Default: 15.0
+#
+#    LivingWorld.DebugIdleWatchdogEnabled
+#        Test-only watchdog for long unattended live runs. When enabled,
+#        materialized world bots emit warning traces if they remain on the same
+#        spot too long during active non-idle work. This is meant to catch bots
+#        that quietly wedge during quest/gather/city sessions.
+#        Default: 0 (disabled)
+#
+#    LivingWorld.DebugIdleWatchdogNoMovementMs
+#        Milliseconds of no meaningful movement before the watchdog fires.
+#        Default: 300000 (5 minutes)
+#
+#    LivingWorld.DebugIdleWatchdogProgressThreshold
+#        Minimum world-position movement in yards required to count as progress
+#        for the idle watchdog.
+#        Default: 2.0
+#
+#    LivingWorld.DebugIdleWatchdogAbortProcess
+#        When enabled, a watchdog strike logs the current session/runtime state
+#        and then requests a worldserver error-exit so the process dies and the
+#        logs can be inspected immediately.
+#        Default: 0 (log only)
 ###################################################################################################
 
 LivingWorld.DebugSyntheticInterestEnabled = 0
@@ -171,8 +231,16 @@ LivingWorld.DebugSyntheticInterestSwitchMs = 0
 LivingWorld.DebugSyntheticInterestClearMs = 0
 LivingWorld.DebugHotZoneCooldownMs = 0
 LivingWorld.DebugForceIdentityIds = ""
+LivingWorld.DebugForceIdentityMinLevel = 0
+LivingWorld.DebugForceIdentityMaxLevel = 0
 LivingWorld.DebugForceSessionZoneId = 0
+LivingWorld.DebugForceSessionSourceKey = ""
 LivingWorld.DebugForceSessionComposeAttempts = 24
+LivingWorld.DebugDisableActivationExtension = 0
+LivingWorld.DebugForceCombatTargetIdentityId = 0
+LivingWorld.DebugForceBotModeIdentityId = 0
+LivingWorld.DebugForceTravelStateIdentityId = 0
+LivingWorld.DebugSuppressTravelStateIdentityId = 0
 LivingWorld.DebugCombatManaDrainIdentityId = 0
 LivingWorld.DebugCombatManaDrainTargetManaPct = 60
 LivingWorld.DebugCombatManaDrainIntervalMs = 1500
@@ -189,8 +257,18 @@ LivingWorld.DebugRouteHarnessDestZoneId = 40
 LivingWorld.DebugRouteHarnessDestX = -10053.198
 LivingWorld.DebugRouteHarnessDestY = 1455.3373
 LivingWorld.DebugRouteHarnessDestZ = 44.6324
+LivingWorld.DebugRouteHarnessTargetPointKey = ""
+LivingWorld.DebugRouteHarnessMode = "route"
+LivingWorld.DebugRouteHarnessSpacingYards = 3.0
+LivingWorld.DebugRouteHarnessArrivalThresholdYards = 3.0
+LivingWorld.TravelArrivalThresholdServiceYards = 5.0
+LivingWorld.TravelArrivalThresholdConnectorYards = 15.0
 LivingWorld.DebugRouteHarnessExploredZones = ""
 LivingWorld.DebugRouteHarnessIdleDurationSec = 30
+LivingWorld.DebugIdleWatchdogEnabled = 0
+LivingWorld.DebugIdleWatchdogNoMovementMs = 300000
+LivingWorld.DebugIdleWatchdogProgressThreshold = 2.0
+LivingWorld.DebugIdleWatchdogAbortProcess = 0
 
 ###################################################################################################
 # ACCOUNT-ALT ITEM RECOVERY POLICY
@@ -224,6 +302,14 @@ LivingWorld.AccountAlt.EnableBankSync = 1
 #        directory, with additional fallbacks for local dev/editor layouts.
 #
 #        Default: "data/worldbot_routes"
+#
+#    LivingWorld.QuestHubExportDir
+#        Filesystem path to the compact quest-hub JSON exports generated by the
+#        lw zone editor tooling. This is used by quest_auto / quest_zone
+#        session composition so world bots can work real quest hubs and follow
+#        weighted branch destinations instead of only broad zone anchors.
+#
+#        Default: "data/quest_hubs"
 #
 #    LivingWorld.RouteTravel.FootYardsPerSecond
 #        Base on-foot travel speed used when estimating route ETA for bots
@@ -273,6 +359,7 @@ LivingWorld.AccountAlt.EnableBankSync = 1
 ###################################################################################################
 
 LivingWorld.RouteExportDir = "data/worldbot_routes"
+LivingWorld.QuestHubExportDir = "data/quest_hubs"
 LivingWorld.RouteExportBakeZOnStartup = 1
 LivingWorld.RouteTravel.FootYardsPerSecond = 4.5
 LivingWorld.RouteTravel.GroundBasicMultiplier = 1.6

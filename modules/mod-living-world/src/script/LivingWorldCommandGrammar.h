@@ -11,6 +11,7 @@
 //   .lwbot roster list
 //   .lwbot roster request <rosterEntryId>
 //   .lwbot roster dismiss <rosterEntryId>
+//   .lwbot admin on|off
 //   .lwbot combat strict|smart
 //   .lwbot <position|name> profile <1-10>
 //   .lwbot <position|name> cast <Ability Name> [on <target>]
@@ -43,6 +44,20 @@ using BotRef = std::variant<std::uint32_t, std::string>;
 // requesting player. No arguments.
 struct RosterListCommand
 {
+    enum class Scope : std::uint8_t
+    {
+        Roster,
+        Party,
+        Raid,
+        Zone,
+        World
+    };
+
+    Scope scope = Scope::Roster;
+    std::optional<std::uint8_t> classId;
+    std::optional<std::string> specKey;
+    std::optional<std::uint8_t> minLevel;
+    std::optional<std::uint8_t> maxLevel;
 };
 
 // "request" — ask the service to dispatch a roster request.
@@ -324,6 +339,16 @@ struct BotCombatControlModeSetCommand
     model::BotCombatControlMode mode = model::BotCombatControlMode::Strict;
 };
 
+// "admin on|off"
+//
+// Enables or disables GM-only expanded bot targeting outside the player's
+// normal local-control scope. This is an in-memory command-surface toggle,
+// not a persistent account setting.
+struct BotAdminModeSetCommand
+{
+    bool enabled = false;
+};
+
 // "<position|name> info" — request the bot's current config state pushed back
 // as a LWBT:BINFO system message so the Bot-Tune addon can render it.
 struct BotInfoCommand
@@ -383,6 +408,7 @@ using ParsedCommand = std::variant<
     BotRewardChoiceCommand,
     BotModeSetCommand,
     BotCombatControlModeSetCommand,
+    BotAdminModeSetCommand,
     BotInfoCommand,
     BotAddTalentCommand,
     BotResetTalentsCommand,

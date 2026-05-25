@@ -1,6 +1,8 @@
 #include "service/BotActivitySessionComposer.h"
 #include "service/AmbientTaskEligibility.h"
+#include "service/WorldBotQuestHubRepository.h"
 #include "service/WorldBotTaxiPlanning.h"
+#include "Config.h"
 #include "integration/SqlActivityLibraryRepository.h"
 #include "integration/SqlTaskPointRepository.h"
 #include "integration/SqlTaskTemplateRepository.h"
@@ -9,6 +11,8 @@
 #include <algorithm>
 #include <cctype>
 #include <chrono>
+#include <cmath>
+#include <filesystem>
 #include <numeric>
 #include <random>
 
@@ -52,6 +56,263 @@ bool IsQuestingTaskFamily(std::string const& taskFamily)
 {
     std::string const normalized = NormalizeLower(taskFamily);
     return normalized == "questing" || normalized == "quest";
+}
+
+std::filesystem::path ResolveWorldBotQuestHubExportRoot()
+{
+    return std::filesystem::path(sConfigMgr->GetOption<std::string>(
+        "LivingWorld.QuestHubExportDir",
+        "data/quest_hubs"));
+}
+
+WorldBotQuestHubRepository const& GetSessionComposerQuestHubRepository()
+{
+    static WorldBotQuestHubRepository repository(ResolveWorldBotQuestHubExportRoot());
+    return repository;
+}
+
+bool IsQuestHubSubjectKey(std::string const& subjectKey)
+{
+    return subjectKey.starts_with("quest_hub:");
+}
+
+std::string ExtractQuestHubId(std::string const& subjectKey)
+{
+    if (!IsQuestHubSubjectKey(subjectKey))
+        return {};
+    std::string const tail = subjectKey.substr(std::string("quest_hub:").size());
+    std::size_t const commaPos = tail.find(',');
+    return commaPos == std::string::npos ? tail : tail.substr(0, commaPos);
+}
+
+bool IsQuestHubEligibleForLevel(
+    std::uint8_t level,
+    WorldBotQuestHub const& hub)
+{
+    std::int32_t const currentLevel = static_cast<std::int32_t>(level);
+    std::int32_t const minAllowed = std::max<std::int32_t>(1, static_cast<std::int32_t>(hub.minLevel) - 3);
+    std::int32_t const maxAllowed = std::min<std::int32_t>(80, static_cast<std::int32_t>(hub.maxLevel) + 3);
+    return currentLevel >= minAllowed && currentLevel <= maxAllowed;
+}
+
+std::optional<WorldBotQuestHub> ResolveQuestHubDefinition(
+    std::optional<std::uint32_t> zoneFilter,
+    std::mt19937& rng,
+    std::uint8_t faction,
+    std::uint8_t level,
+    std::uint32_t currentZoneId,
+    std::uint32_t homeZoneId,
+    std::string const& excludedHubId = {})
+{
+    std::vector<WorldBotQuestHub> hubs = zoneFilter.has_value()
+        ? GetSessionComposerQuestHubRepository().LoadEligibleHubsForZone(*zoneFilter, faction, level)
+        : GetSessionComposerQuestHubRepository().LoadEligibleHubs(faction, level);
+
+    if (!excludedHubId.empty())
+    {
+        hubs.erase(
+            std::remove_if(
+                hubs.begin(),
+                hubs.end(),
+                [&](WorldBotQuestHub const& hub) { return hub.hubId == excludedHubId; }),
+            hubs.end());
+    }
+
+    if (hubs.empty())
+        return std::nullopt;
+
+    std::stable_sort(
+        hubs.begin(),
+        hubs.end(),
+        [&](WorldBotQuestHub const& lhs, WorldBotQuestHub const& rhs)
+        {
+            bool const lhsCurrentZone = currentZoneId != 0 && lhs.zoneId == currentZoneId;
+            bool const rhsCurrentZone = currentZoneId != 0 && rhs.zoneId == currentZoneId;
+            if (lhsCurrentZone != rhsCurrentZone)
+                return lhsCurrentZone > rhsCurrentZone;
+
+            std::uint32_t const lhsWeight = std::max<std::uint32_t>(1u, lhs.totalQuests);
+            std::uint32_t const rhsWeight = std::max<std::uint32_t>(1u, rhs.totalQuests);
+            return lhsWeight > rhsWeight;
+        });
+
+    std::vector<WorldBotQuestHub> preferred;
+    if (currentZoneId != 0)
+    {
+        for (WorldBotQuestHub const& hub : hubs)
+        {
+            if (hub.zoneId == currentZoneId)
+                preferred.push_back(hub);
+        }
+    }
+
+    std::vector<WorldBotQuestHub> homePreferred;
+    if (!zoneFilter.has_value() && preferred.empty() && level <= 15u && homeZoneId != 0)
+    {
+        for (WorldBotQuestHub const& hub : hubs)
+        {
+            if (hub.zoneId == homeZoneId)
+                homePreferred.push_back(hub);
+        }
+    }
+
+    std::vector<WorldBotQuestHub> const& candidatePool =
+        !preferred.empty() ? preferred :
+        !homePreferred.empty() ? homePreferred :
+        hubs;
+    if (candidatePool.empty())
+        return std::nullopt;
+
+    std::uint32_t const totalWeight = std::accumulate(
+        candidatePool.begin(), candidatePool.end(), std::uint32_t{0},
+        [&](std::uint32_t sum, WorldBotQuestHub const& hub)
+        {
+            std::uint32_t const levelDelta = static_cast<std::uint32_t>(
+                std::abs(static_cast<int>(hub.avgLevel) - static_cast<int>(level)));
+            std::uint32_t const levelBias = std::max<std::uint32_t>(1u, 6u - std::min<std::uint32_t>(5u, levelDelta));
+            return sum + (std::max<std::uint32_t>(1u, hub.totalQuests) * levelBias);
+        });
+
+    std::uniform_int_distribution<std::uint32_t> dist(1, totalWeight);
+    std::uint32_t roll = dist(rng);
+    for (WorldBotQuestHub const& hub : candidatePool)
+    {
+        std::uint32_t const levelDelta = static_cast<std::uint32_t>(
+            std::abs(static_cast<int>(hub.avgLevel) - static_cast<int>(level)));
+        std::uint32_t const levelBias = std::max<std::uint32_t>(1u, 6u - std::min<std::uint32_t>(5u, levelDelta));
+        std::uint32_t const effectiveWeight = std::max<std::uint32_t>(1u, hub.totalQuests) * levelBias;
+        if (roll <= effectiveWeight)
+            return hub;
+        roll -= effectiveWeight;
+    }
+
+    return candidatePool.back();
+}
+
+AmbientSessionResumeHint BuildChainedResumeHint(AmbientSession const& session)
+{
+    AmbientSessionResumeHint hint;
+    hint.lastSessionSourceKind = session.sourceKind;
+    hint.lastSessionSourceKey = session.sourceKey;
+    if (session.steps.empty())
+        return hint;
+
+    std::size_t stepIndex = session.steps.size() - 1u;
+    AmbientStep const& activeStep = session.steps[stepIndex];
+    hint.lastStepSubjectKind = activeStep.subjectKind;
+    hint.lastStepSubjectKey = activeStep.subjectKey;
+    if (activeStep.taskIndex >= 0)
+    {
+        std::size_t const taskIndex = static_cast<std::size_t>(activeStep.taskIndex);
+        if (taskIndex < session.tasks.size())
+        {
+            hint.lastTaskFamily = session.tasks[taskIndex].taskFamily;
+            hint.lastTaskTargetZoneId = session.tasks[taskIndex].targetZoneId;
+        }
+    }
+
+    std::string const activeHubId = ExtractQuestHubId(activeStep.subjectKey);
+    if (activeHubId.empty())
+        return hint;
+
+    hint.lastQuestHubElapsedMs = static_cast<std::uint64_t>(activeStep.durationSec) * 1000ull;
+    while (stepIndex > 0u)
+    {
+        std::size_t const previousIndex = stepIndex - 1u;
+        AmbientStep const& previousStep = session.steps[previousIndex];
+        if (ExtractQuestHubId(previousStep.subjectKey) != activeHubId)
+            break;
+
+        hint.lastQuestHubElapsedMs += static_cast<std::uint64_t>(previousStep.durationSec) * 1000ull;
+        stepIndex = previousIndex;
+    }
+
+    return hint;
+}
+
+WorldBotQuestHubTaskArea const* WeightedPickQuestHubTaskArea(
+    std::vector<WorldBotQuestHubTaskArea> const& taskAreas,
+    std::mt19937& rng)
+{
+    if (taskAreas.empty())
+        return nullptr;
+
+    std::uint32_t const totalWeight = std::accumulate(
+        taskAreas.begin(), taskAreas.end(), std::uint32_t{0},
+        [](std::uint32_t sum, WorldBotQuestHubTaskArea const& area)
+        {
+            return sum + std::max<std::uint32_t>(1u, area.weight);
+        });
+
+    std::uniform_int_distribution<std::uint32_t> dist(1, totalWeight);
+    std::uint32_t roll = dist(rng);
+    for (WorldBotQuestHubTaskArea const& area : taskAreas)
+    {
+        std::uint32_t const effectiveWeight = std::max<std::uint32_t>(1u, area.weight);
+        if (roll <= effectiveWeight)
+            return &area;
+        roll -= effectiveWeight;
+    }
+
+    return &taskAreas.back();
+}
+
+WorldBotQuestHubBranch const* WeightedPickQuestHubBranch(
+    std::vector<WorldBotQuestHubBranch> const& branches,
+    std::mt19937& rng)
+{
+    if (branches.empty())
+        return nullptr;
+
+    std::uint32_t const totalWeight = std::accumulate(
+        branches.begin(), branches.end(), std::uint32_t{0},
+        [](std::uint32_t sum, WorldBotQuestHubBranch const& branch)
+        {
+            return sum + std::max<std::uint32_t>(1u, branch.weight);
+        });
+
+    std::uniform_int_distribution<std::uint32_t> dist(1, totalWeight);
+    std::uint32_t roll = dist(rng);
+    for (WorldBotQuestHubBranch const& branch : branches)
+    {
+        std::uint32_t const effectiveWeight = std::max<std::uint32_t>(1u, branch.weight);
+        if (roll <= effectiveWeight)
+            return &branch;
+        roll -= effectiveWeight;
+    }
+
+    return &branches.back();
+}
+
+std::string BuildQuestHubSubjectKey(
+    WorldBotQuestHub const& hub,
+    WorldBotQuestHubTaskArea const* area)
+{
+    std::string key = "quest_hub:" + hub.hubId;
+    if (!area || area->targetEntries.empty())
+        return key;
+
+    for (std::uint32_t entry : area->targetEntries)
+    {
+        key += ",";
+        key += std::to_string(entry);
+    }
+
+    return key;
+}
+
+std::uint32_t ChooseQuestHubSliceDurationSec(std::uint32_t remainingSec, std::mt19937& rng)
+{
+    if (remainingSec <= 45u)
+        return remainingSec;
+
+    std::uint32_t const minSlice = std::min<std::uint32_t>(45u, remainingSec);
+    std::uint32_t const maxSlice = std::min<std::uint32_t>(90u, remainingSec);
+    if (minSlice >= maxSlice)
+        return maxSlice;
+
+    std::uniform_int_distribution<std::uint32_t> dist(minSlice, maxSlice);
+    return dist(rng);
 }
 
 bool IsQuestResumeLevelAppropriate(
@@ -146,6 +407,26 @@ bool ActivityMatchesComposeBias(
         return true;
 
     return activity.targetZoneId == 0 || activity.targetZoneId == composeBias->preferredZoneId;
+}
+
+bool IsWorldPvPTaskFamily(std::string const& taskFamily)
+{
+    std::string const normalized = NormalizeLower(taskFamily);
+    return normalized == "pvp"
+        || normalized == "world_pvp"
+        || normalized.starts_with("pvp_")
+        || normalized.starts_with("world_pvp")
+        || normalized.find("_pvp") != std::string::npos;
+}
+
+bool SessionPersonalityAllowsTaskFamily(
+    std::string const& sessionPersonalityKey,
+    std::string const& taskFamily)
+{
+    if (!IsWorldPvPTaskFamily(taskFamily))
+        return true;
+
+    return NormalizeLower(sessionPersonalityKey) == "aggressive";
 }
 
 // Weighted random selection — picks an activity proportional to its weight.
@@ -373,6 +654,74 @@ bool ResolvePointTarget(
     return true;
 }
 
+struct ResolvedTemplateStepTarget
+{
+    std::uint16_t mapId = 0;
+    float targetX = 0.0f;
+    float targetY = 0.0f;
+    float targetZ = 0.0f;
+    std::uint32_t targetZoneId = 0;
+    std::string resolvedPointKey;
+    std::string resolvedPointType;
+    std::uint32_t resolvedSubjectId = 0;
+    std::string resolvedSubjectKey;
+    std::string resolvedReturnAnchorRole;
+    std::string resolvedLabel;
+    std::uint32_t durationOverrideSec = 0;
+};
+
+model::ZoneContentEntry const* WeightedPickZoneContentEntry(
+    std::vector<model::ZoneContentEntry> const& content,
+    std::mt19937& rng)
+{
+    if (content.empty())
+        return nullptr;
+
+    std::uint32_t const totalWeight = std::accumulate(
+        content.begin(), content.end(), std::uint32_t{0},
+        [](std::uint32_t sum, model::ZoneContentEntry const& entry)
+        {
+            return sum + std::max<std::uint32_t>(1u, entry.weight);
+        });
+
+    std::uniform_int_distribution<std::uint32_t> dist(1, totalWeight);
+    std::uint32_t roll = dist(rng);
+    for (model::ZoneContentEntry const& entry : content)
+    {
+        std::uint32_t const effectiveWeight = std::max<std::uint32_t>(1u, entry.weight);
+        if (roll <= effectiveWeight)
+            return &entry;
+        roll -= effectiveWeight;
+    }
+
+    return &content.back();
+}
+
+std::vector<model::ZoneContentEntry> PreferAnchoredZoneContent(
+    std::vector<model::ZoneContentEntry> const& content)
+{
+    bool const hasAnchored = std::any_of(
+        content.begin(),
+        content.end(),
+        [](model::ZoneContentEntry const& entry)
+        {
+            return !entry.anchorPointKey.empty();
+        });
+
+    if (!hasAnchored)
+        return content;
+
+    std::vector<model::ZoneContentEntry> filtered;
+    filtered.reserve(content.size());
+    for (model::ZoneContentEntry const& entry : content)
+    {
+        if (!entry.anchorPointKey.empty())
+            filtered.push_back(entry);
+    }
+
+    return filtered;
+}
+
 bool ResolveZoneTarget(
     integration::SqlZoneIndexRepository& zoneRepo,
     std::uint32_t zoneId,
@@ -394,6 +743,189 @@ bool ResolveZoneTarget(
     return true;
 }
 
+bool ResolveQuestHubTarget(
+    std::optional<std::uint32_t> zoneFilter,
+    std::mt19937& rng,
+    std::uint8_t faction,
+    std::uint8_t level,
+    std::uint32_t currentZoneId,
+    std::uint32_t homeZoneId,
+    ResolvedTemplateStepTarget& resolved)
+{
+    std::optional<WorldBotQuestHub> pickedHub = ResolveQuestHubDefinition(
+        zoneFilter,
+        rng,
+        faction,
+        level,
+        currentZoneId,
+        homeZoneId);
+    if (!pickedHub)
+        return false;
+
+    WorldBotQuestHubTaskArea const* pickedArea = WeightedPickQuestHubTaskArea(pickedHub->taskAreas, rng);
+    resolved.mapId = pickedArea ? pickedArea->mapId : pickedHub->mapId;
+    resolved.targetX = pickedArea ? pickedArea->x : pickedHub->x;
+    resolved.targetY = pickedArea ? pickedArea->y : pickedHub->y;
+    resolved.targetZ = pickedArea ? pickedArea->z : pickedHub->z;
+    resolved.targetZoneId = pickedHub->zoneId;
+    resolved.resolvedSubjectKey = "quest_hub:" + pickedHub->hubId;
+    resolved.resolvedLabel = pickedHub->zoneName + " Quest Hub";
+    resolved.durationOverrideSec = std::max<std::uint32_t>(300u, pickedHub->estimatedMinutes * 60u);
+    return true;
+}
+
+std::optional<WorldBotQuestHub> ResolveQuestHubBranchOrFallback(
+    WorldBotQuestHub const& previousHub,
+    std::optional<std::uint32_t> zoneFilter,
+    std::mt19937& rng,
+    std::uint8_t faction,
+    std::uint8_t level,
+    std::uint32_t homeZoneId)
+{
+    std::vector<WorldBotQuestHubBranch> eligibleBranches;
+    eligibleBranches.reserve(previousHub.nextHubs.size());
+    for (WorldBotQuestHubBranch const& branch : previousHub.nextHubs)
+    {
+        auto const candidateHub = GetSessionComposerQuestHubRepository().FindHubById(branch.hubId);
+        if (!candidateHub)
+            continue;
+        if (candidateHub->requiredFaction != 0 && faction != 0 && candidateHub->requiredFaction != faction)
+            continue;
+        if (!IsQuestHubEligibleForLevel(level, *candidateHub))
+            continue;
+        eligibleBranches.push_back(branch);
+    }
+
+    if (!eligibleBranches.empty())
+    {
+        if (WorldBotQuestHubBranch const* pickedBranch = WeightedPickQuestHubBranch(eligibleBranches, rng))
+            return GetSessionComposerQuestHubRepository().FindHubById(pickedBranch->hubId);
+    }
+
+    return ResolveQuestHubDefinition(
+        zoneFilter,
+        rng,
+        faction,
+        level,
+        previousHub.zoneId,
+        homeZoneId,
+        previousHub.hubId);
+}
+
+bool AppendBudgetedQuestHubSteps(
+    AmbientSession& session,
+    std::int32_t taskIndex,
+    std::string const& displayName,
+    std::optional<std::uint32_t> zoneFilter,
+    std::mt19937& rng,
+    std::uint8_t faction,
+    std::uint8_t level,
+    std::uint32_t homeZoneId,
+    std::uint32_t taskBudgetSec,
+    WorldBotQuestHub initialHub,
+    std::uint64_t initialHubElapsedMs,
+    bool prependInitialTravel,
+    std::uint32_t& currentZoneId,
+    std::uint16_t& currentMapId,
+    float& currentX,
+    float& currentY,
+    float& currentZ,
+    bool& currentLocationResolved)
+{
+    if (taskBudgetSec == 0)
+        return false;
+
+    WorldBotQuestHub currentHub = std::move(initialHub);
+    std::uint32_t currentHubElapsedSec = static_cast<std::uint32_t>(initialHubElapsedMs / 1000ull);
+    bool addedAnySteps = false;
+    std::string lastTaskAreaId;
+    bool needTravel = prependInitialTravel;
+
+    while (taskBudgetSec > 0u)
+    {
+        std::uint32_t const hubBudgetSec = std::max<std::uint32_t>(300u, currentHub.estimatedMinutes * 60u);
+        if (currentHubElapsedSec >= hubBudgetSec)
+        {
+            auto nextHub = ResolveQuestHubBranchOrFallback(
+                currentHub,
+                zoneFilter,
+                rng,
+                faction,
+                level,
+                homeZoneId);
+            if (!nextHub)
+                break;
+
+            currentHub = *nextHub;
+            currentHubElapsedSec = 0u;
+            lastTaskAreaId.clear();
+            needTravel = true;
+        }
+
+        if (needTravel)
+        {
+            AppendTravelStep(
+                session,
+                taskIndex,
+                currentHub.mapId,
+                currentHub.x,
+                currentHub.y,
+                currentHub.z,
+                "Travel to " + currentHub.zoneName + " quest hub");
+            addedAnySteps = true;
+            needTravel = false;
+        }
+
+        std::uint32_t remainingThisHubSec = std::min<std::uint32_t>(
+            taskBudgetSec,
+            hubBudgetSec - currentHubElapsedSec);
+
+        while (remainingThisHubSec > 0u)
+        {
+            WorldBotQuestHubTaskArea const* area = WeightedPickQuestHubTaskArea(currentHub.taskAreas, rng);
+            if (area && currentHub.taskAreas.size() > 1u && area->taskAreaId == lastTaskAreaId)
+            {
+                for (WorldBotQuestHubTaskArea const& candidate : currentHub.taskAreas)
+                {
+                    if (candidate.taskAreaId != lastTaskAreaId)
+                    {
+                        area = &candidate;
+                        break;
+                    }
+                }
+            }
+
+            AmbientStep questStep;
+            questStep.type = AmbientStepType::Grind;
+            questStep.mapId = area ? area->mapId : currentHub.mapId;
+            questStep.x = area ? area->x : currentHub.x;
+            questStep.y = area ? area->y : currentHub.y;
+            questStep.z = area ? area->z : currentHub.z;
+            questStep.durationSec = ChooseQuestHubSliceDurationSec(remainingThisHubSec, rng);
+            questStep.taskIndex = taskIndex;
+            questStep.subjectKind = "quest";
+            questStep.subjectKey = BuildQuestHubSubjectKey(currentHub, area);
+            questStep.combatRadius = area ? std::max(25.0f, area->radius) : 45.0f;
+            questStep.label = displayName;
+            session.steps.push_back(questStep);
+            addedAnySteps = true;
+
+            remainingThisHubSec -= questStep.durationSec;
+            taskBudgetSec -= questStep.durationSec;
+            currentHubElapsedSec += questStep.durationSec;
+            currentZoneId = currentHub.zoneId;
+            currentMapId = questStep.mapId;
+            currentX = questStep.x;
+            currentY = questStep.y;
+            currentZ = questStep.z;
+            currentLocationResolved = true;
+            lastTaskAreaId = area ? area->taskAreaId : std::string{};
+        }
+    }
+
+    return addedAnySteps;
+}
+
 bool ResolveTemplateStepTarget(
     model::TaskTemplateStepEntry const& templateStep,
     integration::SqlZoneIndexRepository& zoneRepo,
@@ -405,33 +937,73 @@ bool ResolveTemplateStepTarget(
     std::uint32_t homeZoneId,
     std::string const& homeAnchorPointKey,
     std::string const& homeBindPointKey,
-    std::uint16_t& mapId,
-    float& targetX,
-    float& targetY,
-    float& targetZ,
-    std::uint32_t& targetZoneId)
+    ResolvedTemplateStepTarget& resolved)
 {
-    targetZoneId = templateStep.targetZoneId;
+    resolved.targetZoneId = templateStep.targetZoneId;
     std::string const resolverKind = EffectiveResolverKind(templateStep);
     std::string const subjectKind = EffectiveSubjectKind(templateStep);
 
     if (!templateStep.targetPointKey.empty() || resolverKind == "point")
-        return ResolvePointTarget(pointRepo, templateStep.targetPointKey, mapId, targetX, targetY, targetZ, targetZoneId);
+    {
+        if (!ResolvePointTarget(
+                pointRepo,
+                templateStep.targetPointKey,
+                resolved.mapId,
+                resolved.targetX,
+                resolved.targetY,
+                resolved.targetZ,
+                resolved.targetZoneId))
+        {
+            return false;
+        }
+
+        resolved.resolvedPointKey = templateStep.targetPointKey;
+        if (auto const point = pointRepo.FindByKey(templateStep.targetPointKey))
+            resolved.resolvedPointType = point->pointType;
+        return true;
+    }
 
     if (resolverKind == "zone")
-        return ResolveZoneTarget(zoneRepo, templateStep.targetZoneId, mapId, targetX, targetY, targetZ, targetZoneId);
+        return ResolveZoneTarget(
+            zoneRepo,
+            templateStep.targetZoneId,
+            resolved.mapId,
+            resolved.targetX,
+            resolved.targetY,
+            resolved.targetZ,
+            resolved.targetZoneId);
 
     if (resolverKind == "home_city")
     {
         if (!homeAnchorPointKey.empty()
-            && ResolvePointTarget(pointRepo, homeAnchorPointKey, mapId, targetX, targetY, targetZ, targetZoneId))
+            && ResolvePointTarget(
+                pointRepo,
+                homeAnchorPointKey,
+                resolved.mapId,
+                resolved.targetX,
+                resolved.targetY,
+                resolved.targetZ,
+                resolved.targetZoneId))
         {
+            resolved.resolvedPointKey = homeAnchorPointKey;
+            if (auto const point = pointRepo.FindByKey(homeAnchorPointKey))
+                resolved.resolvedPointType = point->pointType;
             return true;
         }
 
         if (!homeBindPointKey.empty()
-            && ResolvePointTarget(pointRepo, homeBindPointKey, mapId, targetX, targetY, targetZ, targetZoneId))
+            && ResolvePointTarget(
+                pointRepo,
+                homeBindPointKey,
+                resolved.mapId,
+                resolved.targetX,
+                resolved.targetY,
+                resolved.targetZ,
+                resolved.targetZoneId))
         {
+            resolved.resolvedPointKey = homeBindPointKey;
+            if (auto const point = pointRepo.FindByKey(homeBindPointKey))
+                resolved.resolvedPointType = point->pointType;
             return true;
         }
 
@@ -439,91 +1011,182 @@ bool ResolveTemplateStepTarget(
         {
             if (auto const anchor = pointRepo.FindZoneAnchor(homeZoneId, "home", faction, level))
             {
-                if (ResolvePointTarget(pointRepo, anchor->pointKey, mapId, targetX, targetY, targetZ, targetZoneId))
+                if (ResolvePointTarget(
+                        pointRepo,
+                        anchor->pointKey,
+                        resolved.mapId,
+                        resolved.targetX,
+                        resolved.targetY,
+                        resolved.targetZ,
+                        resolved.targetZoneId))
+                {
+                    resolved.resolvedPointKey = anchor->pointKey;
+                    if (auto const point = pointRepo.FindByKey(anchor->pointKey))
+                        resolved.resolvedPointType = point->pointType;
                     return true;
+                }
             }
 
-            return ResolveZoneTarget(zoneRepo, homeZoneId, mapId, targetX, targetY, targetZ, targetZoneId);
+            return ResolveZoneTarget(
+                zoneRepo,
+                homeZoneId,
+                resolved.mapId,
+                resolved.targetX,
+                resolved.targetY,
+                resolved.targetZ,
+                resolved.targetZoneId);
         }
 
         return false;
     }
 
-    if (resolverKind == "resource_zone" || resolverKind == "quest_zone" || resolverKind == "creature_zone")
+    if (resolverKind == "quest_zone")
+    {
+        if (templateStep.targetZoneId == 0)
+            return false;
+
+        if (ResolveQuestHubTarget(templateStep.targetZoneId, rng, faction, level, currentZoneId, homeZoneId, resolved))
+            return true;
+
+        return ResolveZoneTarget(
+            zoneRepo,
+            templateStep.targetZoneId,
+            resolved.mapId,
+            resolved.targetX,
+            resolved.targetY,
+            resolved.targetZ,
+            resolved.targetZoneId);
+    }
+
+    if (resolverKind == "quest_auto")
+    {
+        if (ResolveQuestHubTarget(std::nullopt, rng, faction, level, currentZoneId, homeZoneId, resolved))
+            return true;
+
+        return false;
+    }
+
+    if (resolverKind == "resource_zone" || resolverKind == "creature_zone")
     {
         if (templateStep.targetZoneId == 0)
             return false;
 
         if (!subjectKind.empty())
         {
-            std::vector<model::ZoneContentEntry> const content = pointRepo.LoadZoneContentByZoneAndKind(
+            std::vector<model::ZoneContentEntry> content = pointRepo.LoadZoneContentByZoneAndKind(
                 templateStep.targetZoneId,
                 subjectKind,
                 faction,
                 level);
-            if (!content.empty() && !content.front().anchorPointKey.empty())
-                return ResolvePointTarget(pointRepo, content.front().anchorPointKey, mapId, targetX, targetY, targetZ, targetZoneId);
+            content = PreferAnchoredZoneContent(content);
+            if (model::ZoneContentEntry const* picked = WeightedPickZoneContentEntry(content, rng))
+            {
+                resolved.resolvedSubjectId = picked->subjectId;
+                resolved.resolvedSubjectKey = picked->subjectKey;
+                resolved.resolvedReturnAnchorRole = picked->returnAnchorRole;
+                resolved.targetZoneId = picked->zoneId;
+
+                if (!picked->anchorPointKey.empty()
+                    && ResolvePointTarget(
+                        pointRepo,
+                        picked->anchorPointKey,
+                        resolved.mapId,
+                        resolved.targetX,
+                        resolved.targetY,
+                        resolved.targetZ,
+                        resolved.targetZoneId))
+                {
+                    resolved.resolvedPointKey = picked->anchorPointKey;
+                    if (auto const point = pointRepo.FindByKey(picked->anchorPointKey))
+                        resolved.resolvedPointType = point->pointType;
+                    return true;
+                }
+            }
         }
 
-        return ResolveZoneTarget(zoneRepo, templateStep.targetZoneId, mapId, targetX, targetY, targetZ, targetZoneId);
+        return ResolveZoneTarget(
+            zoneRepo,
+            templateStep.targetZoneId,
+            resolved.mapId,
+            resolved.targetX,
+            resolved.targetY,
+            resolved.targetZ,
+            resolved.targetZoneId);
     }
 
-    if (resolverKind == "resource_auto" || resolverKind == "quest_auto" || resolverKind == "creature_auto")
+    if (resolverKind == "resource_auto" || resolverKind == "creature_auto")
     {
         if (subjectKind.empty())
             return false;
 
         std::vector<model::ZoneContentEntry> content = pointRepo.LoadZoneContentByKind(subjectKind, faction, level);
+        content = PreferAnchoredZoneContent(content);
         if (content.empty())
             return false;
 
-        auto currentItr = std::find_if(content.begin(), content.end(),
-            [&](model::ZoneContentEntry const& entry)
-            {
-                return currentZoneId != 0 && entry.zoneId == currentZoneId;
-            });
-
         model::ZoneContentEntry const* picked = nullptr;
-        if (currentItr != content.end())
+        std::vector<model::ZoneContentEntry> currentZoneContent;
+        if (currentZoneId != 0)
         {
-            picked = &(*currentItr);
+            for (model::ZoneContentEntry const& entry : content)
+            {
+                if (entry.zoneId == currentZoneId)
+                    currentZoneContent.push_back(entry);
+            }
+            currentZoneContent = PreferAnchoredZoneContent(currentZoneContent);
+        }
+
+        if (!currentZoneContent.empty())
+        {
+            picked = WeightedPickZoneContentEntry(currentZoneContent, rng);
         }
         else
         {
-            std::uint32_t const totalWeight = std::accumulate(
-                content.begin(), content.end(), std::uint32_t{0},
-                [](std::uint32_t sum, model::ZoneContentEntry const& entry)
-                {
-                    return sum + std::max<std::uint32_t>(1u, entry.weight);
-                });
-
-            std::uniform_int_distribution<std::uint32_t> dist(1, totalWeight);
-            std::uint32_t roll = dist(rng);
-            for (model::ZoneContentEntry const& entry : content)
-            {
-                std::uint32_t const effectiveWeight = std::max<std::uint32_t>(1u, entry.weight);
-                if (roll <= effectiveWeight)
-                {
-                    picked = &entry;
-                    break;
-                }
-                roll -= effectiveWeight;
-            }
-
-            if (!picked)
-                picked = &content.back();
+            picked = WeightedPickZoneContentEntry(content, rng);
         }
 
+        if (!picked)
+            return false;
+
+        resolved.resolvedSubjectId = picked->subjectId;
+        resolved.resolvedSubjectKey = picked->subjectKey;
+        resolved.resolvedReturnAnchorRole = picked->returnAnchorRole;
+        resolved.targetZoneId = picked->zoneId;
+
         if (!picked->anchorPointKey.empty()
-            && ResolvePointTarget(pointRepo, picked->anchorPointKey, mapId, targetX, targetY, targetZ, targetZoneId))
+            && ResolvePointTarget(
+                pointRepo,
+                picked->anchorPointKey,
+                resolved.mapId,
+                resolved.targetX,
+                resolved.targetY,
+                resolved.targetZ,
+                resolved.targetZoneId))
         {
+            resolved.resolvedPointKey = picked->anchorPointKey;
+            if (auto const point = pointRepo.FindByKey(picked->anchorPointKey))
+                resolved.resolvedPointType = point->pointType;
             return true;
         }
 
-        return ResolveZoneTarget(zoneRepo, picked->zoneId, mapId, targetX, targetY, targetZ, targetZoneId);
+        return ResolveZoneTarget(
+            zoneRepo,
+            picked->zoneId,
+            resolved.mapId,
+            resolved.targetX,
+            resolved.targetY,
+            resolved.targetZ,
+            resolved.targetZoneId);
     }
 
-    return ResolveZoneTarget(zoneRepo, templateStep.targetZoneId, mapId, targetX, targetY, targetZ, targetZoneId);
+    return ResolveZoneTarget(
+        zoneRepo,
+        templateStep.targetZoneId,
+        resolved.mapId,
+        resolved.targetX,
+        resolved.targetY,
+        resolved.targetZ,
+        resolved.targetZoneId);
 }
 
 std::optional<AmbientSession> BuildSessionFromTemplate(
@@ -536,7 +1199,8 @@ std::optional<AmbientSession> BuildSessionFromTemplate(
     std::uint32_t homeZoneId,
     std::string const& homeAnchorPointKey,
     std::string const& homeBindPointKey,
-    std::unordered_set<std::uint32_t> const* exploredZoneIds)
+    std::unordered_set<std::uint32_t> const* exploredZoneIds,
+    AmbientSessionResumeHint const* resumeHint = nullptr)
 {
     AmbientSession session;
     integration::SqlTaskPointRepository pointRepo;
@@ -555,11 +1219,7 @@ std::optional<AmbientSession> BuildSessionFromTemplate(
 
     for (model::TaskTemplateStepEntry const& templateStep : tmpl.steps)
     {
-        std::uint16_t mapId = 0;
-        float targetX = 0.f;
-        float targetY = 0.f;
-        float targetZ = 0.f;
-        std::uint32_t targetZoneId = templateStep.targetZoneId;
+        ResolvedTemplateStepTarget resolvedTarget;
 
         if (!ResolveTemplateStepTarget(
                 templateStep,
@@ -572,11 +1232,7 @@ std::optional<AmbientSession> BuildSessionFromTemplate(
                 homeZoneId,
                 homeAnchorPointKey,
                 homeBindPointKey,
-                mapId,
-                targetX,
-                targetY,
-                targetZ,
-                targetZoneId))
+                resolvedTarget))
         {
             return std::nullopt;
         }
@@ -584,20 +1240,32 @@ std::optional<AmbientSession> BuildSessionFromTemplate(
         AmbientSessionTask task;
         task.activityId   = 0;
         task.activityKey  = tmpl.templateKey + ":" + templateStep.stepType;
-        task.displayName  = templateStep.label;
+        task.displayName  = !resolvedTarget.resolvedLabel.empty()
+            ? resolvedTarget.resolvedLabel
+            : templateStep.label;
         task.activityType = templateStep.stepType;
         task.taskFamily   = tmpl.taskFamily;
-        task.targetZoneId = targetZoneId;
+        task.targetZoneId = resolvedTarget.targetZoneId;
+        task.targetPointKey = !resolvedTarget.resolvedPointKey.empty()
+            ? resolvedTarget.resolvedPointKey
+            : templateStep.targetPointKey;
+        if (!task.targetPointKey.empty())
+        {
+            if (!resolvedTarget.resolvedPointType.empty())
+                task.targetPointType = resolvedTarget.resolvedPointType;
+            else if (auto const point = pointRepo.FindByKey(task.targetPointKey))
+                task.targetPointType = point->pointType;
+        }
 
         std::int32_t const taskIndex = static_cast<std::int32_t>(session.tasks.size());
         session.tasks.push_back(std::move(task));
 
         bool addedTransitRoute = false;
-        if (currentZoneId != 0 && currentZoneId != targetZoneId)
+        if (currentZoneId != 0 && currentZoneId != resolvedTarget.targetZoneId)
         {
             std::vector<model::TaskTransitRouteEntry> const transitPath = pointRepo.FindTransitPathForZones(
                 currentZoneId,
-                targetZoneId,
+                resolvedTarget.targetZoneId,
                 tmpl.requiredFaction,
                 tmpl.minLevel);
             if (!transitPath.empty())
@@ -622,11 +1290,11 @@ std::optional<AmbientSession> BuildSessionFromTemplate(
                         currentX,
                         currentY,
                         currentZ,
-                        mapId,
-                        targetX,
-                        targetY,
-                        targetZ,
-                        templateStep.label))
+                        resolvedTarget.mapId,
+                            resolvedTarget.targetX,
+                            resolvedTarget.targetY,
+                            resolvedTarget.targetZ,
+                            task.displayName))
                 {
                     addedTransitRoute = true;
                 }
@@ -659,16 +1327,16 @@ std::optional<AmbientSession> BuildSessionFromTemplate(
                             route.destPointName);
                     }
 
-                    if (transitPath.back().destPointKey != templateStep.targetPointKey)
+                    if (transitPath.back().destPointKey != task.targetPointKey)
                     {
                         AppendTravelStep(
                             session,
                             taskIndex,
-                            mapId,
-                            targetX,
-                            targetY,
-                            targetZ,
-                            "Travel to " + templateStep.label);
+                            resolvedTarget.mapId,
+                            resolvedTarget.targetX,
+                            resolvedTarget.targetY,
+                            resolvedTarget.targetZ,
+                            "Travel to " + task.displayName);
                     }
 
                     addedTransitRoute = true;
@@ -685,11 +1353,11 @@ std::optional<AmbientSession> BuildSessionFromTemplate(
                 currentX,
                 currentY,
                 currentZ,
-                mapId,
-                targetX,
-                targetY,
-                targetZ,
-                templateStep.label))
+                resolvedTarget.mapId,
+                resolvedTarget.targetX,
+                resolvedTarget.targetY,
+                resolvedTarget.targetZ,
+                task.displayName))
             {
                 addedTransitRoute = true;
             }
@@ -697,45 +1365,110 @@ std::optional<AmbientSession> BuildSessionFromTemplate(
 
         if (!addedTransitRoute)
         {
-            AppendTravelStep(session, taskIndex, mapId, targetX, targetY, targetZ, "Travel to " + templateStep.label);
+            AppendTravelStep(
+                session,
+                taskIndex,
+                resolvedTarget.mapId,
+                resolvedTarget.targetX,
+                resolvedTarget.targetY,
+                resolvedTarget.targetZ,
+                "Travel to " + task.displayName);
         }
 
-        AmbientStep activityStep;
-        activityStep.type      = ActivityTypeToStepType(templateStep.stepType);
-        activityStep.mapId     = mapId;
-        activityStep.x         = targetX;
-        activityStep.y         = targetY;
-        activityStep.z         = targetZ;
-        activityStep.taskIndex = taskIndex;
-        activityStep.subjectKind = templateStep.subjectKind;
-        activityStep.subjectId = templateStep.subjectId;
-        activityStep.subjectKey = templateStep.subjectKey;
-        activityStep.returnAnchorRole = templateStep.returnAnchorRole;
-        activityStep.cycleCount = std::max<std::uint8_t>(1u, templateStep.cycleCount);
-        activityStep.combatRadius = 30.f;
-        activityStep.label     = templateStep.label;
-
-        if (templateStep.durationMinSec == 0 && templateStep.durationMaxSec == 0)
-        {
-            activityStep.durationSec = 600;
-        }
-        else
+        std::uint32_t activityDurationSec = 600u;
+        if (templateStep.durationMinSec != 0 || templateStep.durationMaxSec != 0)
         {
             std::uniform_int_distribution<std::uint32_t> durDist(
                 templateStep.durationMinSec,
                 std::max(templateStep.durationMinSec, templateStep.durationMaxSec));
-            activityStep.durationSec = durDist(rng);
+            activityDurationSec = durDist(rng);
+        }
+        else if (resolvedTarget.durationOverrideSec != 0)
+        {
+            activityDurationSec = resolvedTarget.durationOverrideSec;
+        }
+        activityDurationSec *= std::max<std::uint32_t>(1u, templateStep.cycleCount);
+
+        std::string const resolverKind = EffectiveResolverKind(templateStep);
+        bool const questResolver = resolverKind == "quest_auto" || resolverKind == "quest_zone";
+        if (questResolver && ActivityTypeToStepType(templateStep.stepType) == AmbientStepType::Grind)
+        {
+            std::string const startingHubId = ExtractQuestHubId(resolvedTarget.resolvedSubjectKey);
+            auto startingHub = startingHubId.empty()
+                ? std::optional<WorldBotQuestHub>{}
+                : GetSessionComposerQuestHubRepository().FindHubById(startingHubId);
+            if (!startingHub)
+                return std::nullopt;
+
+            std::uint64_t initialHubElapsedMs = 0;
+            if (resumeHint
+                && IsQuestingTaskFamily(resumeHint->lastTaskFamily)
+                && ExtractQuestHubId(resumeHint->lastStepSubjectKey) == startingHub->hubId
+                && IsQuestHubEligibleForLevel(level, *startingHub))
+            {
+                initialHubElapsedMs = resumeHint->lastQuestHubElapsedMs;
+            }
+
+            if (!AppendBudgetedQuestHubSteps(
+                    session,
+                    taskIndex,
+                    task.displayName,
+                    resolverKind == "quest_zone"
+                        ? std::optional<std::uint32_t>(templateStep.targetZoneId)
+                        : std::nullopt,
+                    rng,
+                    faction,
+                    level,
+                    homeZoneId,
+                    activityDurationSec,
+                    *startingHub,
+                    initialHubElapsedMs,
+                    false,
+                    currentZoneId,
+                    currentMapId,
+                    currentX,
+                    currentY,
+                    currentZ,
+                    currentLocationResolved))
+            {
+                return std::nullopt;
+            }
+
+            continue;
         }
 
-        activityStep.durationSec *= std::max<std::uint32_t>(1u, templateStep.cycleCount);
+        AmbientStep activityStep;
+        activityStep.type      = ActivityTypeToStepType(templateStep.stepType);
+        activityStep.mapId     = resolvedTarget.mapId;
+        activityStep.x         = resolvedTarget.targetX;
+        activityStep.y         = resolvedTarget.targetY;
+        activityStep.z         = resolvedTarget.targetZ;
+        activityStep.taskIndex = taskIndex;
+        activityStep.subjectKind = EffectiveSubjectKind(templateStep);
+        activityStep.subjectId = resolvedTarget.resolvedSubjectId != 0
+            ? resolvedTarget.resolvedSubjectId
+            : templateStep.subjectId;
+        activityStep.subjectKey = !resolvedTarget.resolvedSubjectKey.empty()
+            ? resolvedTarget.resolvedSubjectKey
+            : templateStep.subjectKey;
+        activityStep.returnAnchorRole = !resolvedTarget.resolvedReturnAnchorRole.empty()
+            ? resolvedTarget.resolvedReturnAnchorRole
+            : templateStep.returnAnchorRole;
+        activityStep.cycleCount = std::max<std::uint8_t>(1u, templateStep.cycleCount);
+        activityStep.targetPointKey = task.targetPointKey;
+        if (taskIndex >= 0 && static_cast<std::size_t>(taskIndex) < session.tasks.size())
+            activityStep.targetPointType = session.tasks[taskIndex].targetPointType;
+        activityStep.combatRadius = 30.f;
+        activityStep.label     = task.displayName;
+        activityStep.durationSec = activityDurationSec;
 
         session.steps.push_back(activityStep);
 
-        currentZoneId = targetZoneId;
-        currentMapId = mapId;
-        currentX = targetX;
-        currentY = targetY;
-        currentZ = targetZ;
+        currentZoneId = resolvedTarget.targetZoneId;
+        currentMapId = resolvedTarget.mapId;
+        currentX = resolvedTarget.targetX;
+        currentY = resolvedTarget.targetY;
+        currentZ = resolvedTarget.targetZ;
         currentLocationResolved = true;
     }
 
@@ -780,6 +1513,7 @@ std::optional<AmbientSession> BuildSessionFromPlaylist(
 {
     AmbientSession session;
     std::uint32_t currentZoneId = startZoneId;
+    std::optional<AmbientSessionResumeHint> chainedResumeHint;
 
     for (model::PlaylistEntryRef const& entry : playlist.entries)
     {
@@ -800,7 +1534,8 @@ std::optional<AmbientSession> BuildSessionFromPlaylist(
                 homeZoneId,
                 homeAnchorPointKey,
                 homeBindPointKey,
-                exploredZoneIds);
+                exploredZoneIds,
+                chainedResumeHint ? &*chainedResumeHint : nullptr);
             if (!subSession)
                 return std::nullopt;
 
@@ -817,6 +1552,10 @@ std::optional<AmbientSession> BuildSessionFromPlaylist(
 
             if (!subSession->tasks.empty())
                 currentZoneId = subSession->tasks.back().targetZoneId;
+
+            AmbientSessionResumeHint nextHint = BuildChainedResumeHint(*subSession);
+            if (!chainedResumeHint || IsQuestingTaskFamily(nextHint.lastTaskFamily))
+                chainedResumeHint = std::move(nextHint);
         }
     }
 
@@ -851,9 +1590,19 @@ std::optional<AmbientSession> TryBuildQuestResumeSession(
         return std::nullopt;
     }
 
-    auto const zone = zoneRepo.Find(resumeHint->lastTaskTargetZoneId);
-    if (!zone || !IsQuestResumeLevelAppropriate(level, *zone))
-        return std::nullopt;
+    std::string const lastHubId = ExtractQuestHubId(resumeHint->lastStepSubjectKey);
+    if (!lastHubId.empty())
+    {
+        auto const hub = GetSessionComposerQuestHubRepository().FindHubById(lastHubId);
+        if (!hub || !IsQuestHubEligibleForLevel(level, *hub))
+            return std::nullopt;
+    }
+    else
+    {
+        auto const zone = zoneRepo.Find(resumeHint->lastTaskTargetZoneId);
+        if (!zone || !IsQuestResumeLevelAppropriate(level, *zone))
+            return std::nullopt;
+    }
 
     std::vector<model::TaskTemplateEntry const*> candidates;
     for (model::TaskTemplateEntry const& tmpl : templates)
@@ -889,7 +1638,8 @@ std::optional<AmbientSession> TryBuildQuestResumeSession(
                 homeZoneId,
                 homeAnchorPointKey,
                 homeBindPointKey,
-                exploredZoneIds);
+                exploredZoneIds,
+                resumeHint);
             if (!session)
                 return std::nullopt;
 
@@ -909,6 +1659,101 @@ std::optional<AmbientSession> TryBuildQuestResumeSession(
     }
 
     return std::nullopt;
+}
+
+std::optional<AmbientSession> BuildDirectQuestHubSession(
+    WorldBotQuestHub const& hub,
+    std::mt19937& rng)
+{
+    AmbientSession session;
+    std::string const displayName = hub.zoneName + " Questing";
+
+    AmbientSessionTask task;
+    task.activityId = 0;
+    task.activityKey = "quest_hub:" + hub.hubId;
+    task.displayName = displayName;
+    task.activityType = "grind";
+    task.taskFamily = "questing";
+    task.targetZoneId = hub.zoneId;
+    std::int32_t const taskIndex = static_cast<std::int32_t>(session.tasks.size());
+    session.tasks.push_back(std::move(task));
+
+    std::uint32_t currentZoneId = 0;
+    std::uint16_t currentMapId = 0;
+    float currentX = 0.0f;
+    float currentY = 0.0f;
+    float currentZ = 0.0f;
+    bool currentLocationResolved = false;
+    if (!AppendBudgetedQuestHubSteps(
+            session,
+            taskIndex,
+            displayName,
+            std::optional<std::uint32_t>(hub.zoneId),
+            rng,
+            hub.requiredFaction,
+            static_cast<std::uint8_t>(hub.avgLevel == 0 ? hub.minLevel : hub.avgLevel),
+            hub.zoneId,
+            std::max<std::uint32_t>(300u, hub.estimatedMinutes * 60u),
+            hub,
+            0u,
+            true,
+            currentZoneId,
+            currentMapId,
+            currentX,
+            currentY,
+            currentZ,
+            currentLocationResolved))
+    {
+        return std::nullopt;
+    }
+
+    session.activityId = 0;
+    session.activityKey = "quest_hub:" + hub.hubId;
+    session.displayName = displayName;
+    session.sourceKind = "quest_hub";
+    session.sourceKey = "quest_hub:" + hub.hubId;
+    return session;
+}
+
+std::optional<AmbientSession> TryBuildQuestHubFollowupSession(
+    std::mt19937& rng,
+    std::uint8_t faction,
+    std::uint8_t level,
+    AmbientSessionResumeHint const* resumeHint)
+{
+    if (!resumeHint
+        || !IsQuestingTaskFamily(resumeHint->lastTaskFamily)
+        || !IsQuestHubSubjectKey(resumeHint->lastStepSubjectKey))
+    {
+        return std::nullopt;
+    }
+
+    std::string const previousHubId = ExtractQuestHubId(resumeHint->lastStepSubjectKey);
+    if (previousHubId.empty())
+        return std::nullopt;
+
+    auto const previousHub = GetSessionComposerQuestHubRepository().FindHubById(previousHubId);
+    if (!previousHub)
+        return std::nullopt;
+
+    std::uint64_t const previousHubBudgetMs =
+        static_cast<std::uint64_t>(std::max<std::uint32_t>(300u, previousHub->estimatedMinutes * 60u)) * 1000ull;
+    bool const hubExhausted = resumeHint->lastQuestHubElapsedMs >= previousHubBudgetMs;
+    bool const hubStillAppropriate = IsQuestHubEligibleForLevel(level, *previousHub);
+    if (!hubExhausted && hubStillAppropriate)
+        return std::nullopt;
+
+    auto const nextHub = ResolveQuestHubBranchOrFallback(
+        *previousHub,
+        std::nullopt,
+        rng,
+        faction,
+        level,
+        previousHub->zoneId);
+    if (!nextHub)
+        return std::nullopt;
+
+    return BuildDirectQuestHubSession(*nextHub, rng);
 }
 
 // First realignment slice:
@@ -1048,7 +1893,8 @@ std::optional<AmbientSession> BotActivitySessionComposer::Compose(
     std::string const& homeBindPointKey,
     std::unordered_set<std::uint32_t> const* exploredZoneIds,
     AmbientSessionResumeHint const* resumeHint,
-    AmbientSessionComposeBias const* composeBias) const
+    AmbientSessionComposeBias const* composeBias,
+    std::string const& sessionPersonalityKey) const
 {
     AmbientProfessionCapabilities const professionCapabilities{
         hasHerbalism,
@@ -1066,7 +1912,8 @@ std::optional<AmbientSession> BotActivitySessionComposer::Compose(
             eligible.end(),
             [&](model::ActivityEntry const& entry)
             {
-                return !MeetsProfessionRequirements(entry, professionCapabilities);
+                return !MeetsProfessionRequirements(entry, professionCapabilities)
+                    || !SessionPersonalityAllowsTaskFamily(sessionPersonalityKey, entry.taskFamily);
             }),
         eligible.end());
 
@@ -1087,7 +1934,8 @@ std::optional<AmbientSession> BotActivitySessionComposer::Compose(
             templates.end(),
             [&](model::TaskTemplateEntry const& entry)
             {
-                return !MeetsProfessionRequirements(entry, professionCapabilities);
+                return !MeetsProfessionRequirements(entry, professionCapabilities)
+                    || !SessionPersonalityAllowsTaskFamily(sessionPersonalityKey, entry.taskFamily);
             }),
         templates.end());
 
@@ -1097,7 +1945,8 @@ std::optional<AmbientSession> BotActivitySessionComposer::Compose(
             playlists.end(),
             [&](model::PlaylistEntrySet const& entry)
             {
-                return !MeetsProfessionRequirements(entry, professionCapabilities);
+                return !MeetsProfessionRequirements(entry, professionCapabilities)
+                    || !SessionPersonalityAllowsTaskFamily(sessionPersonalityKey, entry.taskFamily);
             }),
         playlists.end());
 
@@ -1132,6 +1981,15 @@ std::optional<AmbientSession> BotActivitySessionComposer::Compose(
 
     std::mt19937 rng(static_cast<std::uint32_t>(
         std::chrono::steady_clock::now().time_since_epoch().count()));
+
+    if (auto session = TryBuildQuestHubFollowupSession(
+            rng,
+            faction,
+            level,
+            resumeHint))
+    {
+        return session;
+    }
 
     if (!templates.empty())
     {
@@ -1408,6 +2266,87 @@ std::optional<AmbientSession> BotActivitySessionComposer::Compose(
     session.sourceKey = session.activityKey;
 
     return session;
+}
+
+std::optional<AmbientSession> BotActivitySessionComposer::ComposeForcedSourceKey(
+    std::string const& sourceKey,
+    std::uint8_t faction,
+    std::uint8_t level,
+    bool hasHerbalism,
+    bool hasMining,
+    bool hasFishing,
+    std::uint32_t startZoneId,
+    std::uint32_t homeZoneId,
+    std::string const& homeAnchorPointKey,
+    std::string const& homeBindPointKey,
+    std::unordered_set<std::uint32_t> const* exploredZoneIds) const
+{
+    if (sourceKey.empty())
+        return std::nullopt;
+
+    integration::SqlZoneIndexRepository zoneRepo;
+    integration::SqlTaskTemplateRepository taskTemplateRepo;
+
+    auto templates = taskTemplateRepo.LoadEligible(
+        faction, level, hasHerbalism, hasMining, hasFishing);
+    auto playlists = taskTemplateRepo.LoadEligiblePlaylists(
+        faction, level, hasHerbalism, hasMining, hasFishing);
+
+    std::mt19937 rng(static_cast<std::uint32_t>(
+        std::chrono::steady_clock::now().time_since_epoch().count()));
+
+    if (IsQuestHubSubjectKey(sourceKey))
+    {
+        if (auto const hub = GetSessionComposerQuestHubRepository().FindHubById(ExtractQuestHubId(sourceKey)))
+            return BuildDirectQuestHubSession(*hub, rng);
+    }
+
+    if (auto const templateItr = std::find_if(
+            templates.begin(),
+            templates.end(),
+            [&](model::TaskTemplateEntry const& tmpl)
+            {
+                return tmpl.templateKey == sourceKey;
+            });
+        templateItr != templates.end())
+    {
+        return BuildSessionFromTemplate(
+            *templateItr,
+            zoneRepo,
+            rng,
+            faction,
+            level,
+            startZoneId,
+            homeZoneId,
+            homeAnchorPointKey,
+            homeBindPointKey,
+            exploredZoneIds);
+    }
+
+    if (auto const playlistItr = std::find_if(
+            playlists.begin(),
+            playlists.end(),
+            [&](model::PlaylistEntrySet const& playlist)
+            {
+                return playlist.playlistKey == sourceKey;
+            });
+        playlistItr != playlists.end())
+    {
+        return BuildSessionFromPlaylist(
+            *playlistItr,
+            templates,
+            zoneRepo,
+            rng,
+            faction,
+            level,
+            startZoneId,
+            homeZoneId,
+            homeAnchorPointKey,
+            homeBindPointKey,
+            exploredZoneIds);
+    }
+
+    return std::nullopt;
 }
 
 } // namespace service

@@ -1,6 +1,9 @@
 #pragma once
 
+#include "model/BotGlyphTemplate.h"
+#include "model/BotCombatProfile.h"
 #include "model/WorldBotAssignedGear.h"
+#include "model/WorldBotSelfState.h"
 #include "model/WorldBotVirtualLoadout.h"
 
 #include <cstdint>
@@ -47,6 +50,7 @@ struct WorldBotPreparedBuild
     std::string defaultCombatProfileName;
     std::string defaultCombatProfileVariantKey;
     std::string defaultCombatProfileDescription;
+    BotOocBehavior oocBehavior;
 
     std::uint64_t talentTemplateId = 0;
     std::string talentTemplateName;
@@ -57,6 +61,8 @@ struct WorldBotPreparedBuild
     std::uint8_t allocatedTalentPoints = 0;
     std::vector<WorldBotPreparedTalentEntry> allocatedTalents;
     std::unordered_set<std::uint32_t> knownSpellIds;
+    std::vector<WorldBotPreparedGlyphEntry> glyphs;
+    WorldBotPreparedSelfStates selfStates;
     std::optional<WorldBotVirtualLoadout> virtualLoadout;
     std::vector<WorldBotAssignedGearEntry> assignedGear;
     WorldBotAssignedGearSummary assignedGearSummary;

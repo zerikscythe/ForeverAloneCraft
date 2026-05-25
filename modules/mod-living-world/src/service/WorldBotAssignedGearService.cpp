@@ -1,5 +1,6 @@
 #include "service/WorldBotAssignedGearService.h"
 
+#include "integration/BotAssignedGearTemplateRepository.h"
 #include "DataStores/DBCStores.h"
 #include "Globals/ObjectMgr.h"
 #include "Item.h"
@@ -36,6 +37,36 @@ struct SlotRule
     std::size_t inventoryTypeCount = 0;
 };
 
+struct AssignedGearQualityOdds
+{
+    int rareOrBetterChance = 30;
+    int epicChance = 0;
+    int luckyEpicSlotChance = 0;
+};
+
+std::vector<model::WorldBotAssignedGearEntry> FinalizeAssignedGearEntries(
+    std::vector<model::WorldBotAssignedGearEntry> entries)
+{
+    std::vector<model::WorldBotAssignedGearEntry> finalized;
+    finalized.reserve(entries.size());
+
+    for (model::WorldBotAssignedGearEntry& entry : entries)
+    {
+        if (entry.itemId == 0)
+            continue;
+
+        ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(entry.itemId);
+        if (!itemTemplate)
+            continue;
+
+        entry.itemLevel = itemTemplate->ItemLevel;
+        entry.quality = static_cast<std::uint8_t>(itemTemplate->Quality);
+        finalized.push_back(std::move(entry));
+    }
+
+    return finalized;
+}
+
 constexpr std::array<SlotRule, 17> SlotRules = {{
     { EQUIPMENT_SLOT_HEAD,      { INVTYPE_HEAD }, 1 },
     { EQUIPMENT_SLOT_NECK,      { INVTYPE_NECK }, 1 },
@@ -52,9 +83,42 @@ constexpr std::array<SlotRule, 17> SlotRules = {{
     { EQUIPMENT_SLOT_TRINKET1,  { INVTYPE_TRINKET }, 1 },
     { EQUIPMENT_SLOT_TRINKET2,  { INVTYPE_TRINKET }, 1 },
     { EQUIPMENT_SLOT_MAINHAND,  { INVTYPE_WEAPON, INVTYPE_WEAPONMAINHAND, INVTYPE_2HWEAPON }, 3 },
-    { EQUIPMENT_SLOT_OFFHAND,   { INVTYPE_SHIELD, INVTYPE_HOLDABLE, INVTYPE_WEAPONOFFHAND }, 3 },
+    { EQUIPMENT_SLOT_OFFHAND,   { INVTYPE_SHIELD, INVTYPE_HOLDABLE, INVTYPE_WEAPONOFFHAND, INVTYPE_WEAPON }, 4 },
     { EQUIPMENT_SLOT_RANGED,    { INVTYPE_RANGED, INVTYPE_RANGEDRIGHT, INVTYPE_THROWN, INVTYPE_RELIC }, 4 }
 }};
+
+AssignedGearQualityOdds GetAssignedGearQualityOdds(
+    std::uint8_t level,
+    std::uint8_t endgameStage)
+{
+    if (level >= 80)
+    {
+        switch (endgameStage)
+        {
+            case 0: return { 100, 15, 20 };
+            case 1: return { 100, 25, 30 };
+            case 2: return { 100, 40, 45 };
+            case 3: return { 100, 60, 60 };
+            case 4: return { 100, 80, 80 };
+            default: return { 100, 15, 20 };
+        }
+    }
+
+    if (level >= 70)
+        return { 95, 8, 10 };
+    if (level >= 60)
+        return { 85, 2, 5 };
+    if (level >= 50)
+        return { 75, 0, 0 };
+    if (level >= 40)
+        return { 60, 0, 0 };
+    if (level >= 30)
+        return { 25, 0, 0 };
+    if (level >= 20)
+        return { 10, 0, 0 };
+
+    return { 0, 0, 0 };
+}
 
 bool IsAllowedForClass(ItemTemplate const* itemTemplate, std::uint8_t classId)
 {
@@ -66,6 +130,32 @@ bool IsAllowedForClass(ItemTemplate const* itemTemplate, std::uint8_t classId)
 
     std::uint32_t const classMask = (1u << (classId - 1u));
     return (itemTemplate->AllowableClass & classMask) != 0;
+}
+
+bool IsAllowedForRace(ItemTemplate const* itemTemplate, std::uint8_t raceId)
+{
+    if (!itemTemplate || raceId == 0)
+        return false;
+
+    if (itemTemplate->AllowableRace == std::numeric_limits<std::uint32_t>::max())
+        return true;
+
+    std::uint32_t const raceMask = (1u << (raceId - 1u));
+    return (itemTemplate->AllowableRace & raceMask) != 0;
+}
+
+bool HasUnsupportedWorldBotRequirement(ItemTemplate const* itemTemplate)
+{
+    if (!itemTemplate)
+        return true;
+
+    return itemTemplate->RequiredSkill != 0
+        || itemTemplate->RequiredSkillRank != 0
+        || itemTemplate->RequiredSpell != 0
+        || itemTemplate->RequiredHonorRank != 0
+        || itemTemplate->RequiredCityRank != 0
+        || itemTemplate->RequiredReputationFaction != 0
+        || itemTemplate->RequiredReputationRank != 0;
 }
 
 std::optional<std::uint32_t> GetPreferredArmorSubclass(std::uint8_t classId)
@@ -106,10 +196,26 @@ bool IsAllowedArmorForSlot(
         return false;
 
     if (itemTemplate->InventoryType == INVTYPE_SHIELD
-        || itemTemplate->InventoryType == INVTYPE_HOLDABLE
-        || itemTemplate->InventoryType == INVTYPE_RELIC)
+        || itemTemplate->InventoryType == INVTYPE_HOLDABLE)
     {
         return true;
+    }
+
+    if (itemTemplate->InventoryType == INVTYPE_RELIC)
+    {
+        switch (itemTemplate->SubClass)
+        {
+            case ITEM_SUBCLASS_ARMOR_LIBRAM:
+                return classId == CLASS_PALADIN;
+            case ITEM_SUBCLASS_ARMOR_IDOL:
+                return classId == CLASS_DRUID;
+            case ITEM_SUBCLASS_ARMOR_TOTEM:
+                return classId == CLASS_SHAMAN;
+            case ITEM_SUBCLASS_ARMOR_SIGIL:
+                return classId == CLASS_DEATH_KNIGHT;
+            default:
+                return false;
+        }
     }
 
     std::optional<std::uint32_t> preferredArmor = GetPreferredArmorSubclass(classId);
@@ -323,10 +429,140 @@ float GetStatWeight(
     }
 }
 
+float ScoreRogueWeaponPreference(
+    std::string const& canonicalSpecKey,
+    std::uint8_t slot,
+    ItemTemplate const* itemTemplate)
+{
+    if (!itemTemplate || itemTemplate->Class != ITEM_CLASS_WEAPON)
+        return 0.0f;
+
+    float bonus = 0.0f;
+    std::uint32_t const subClass = itemTemplate->SubClass;
+    std::uint32_t const delay = itemTemplate->Delay;
+
+    if (canonicalSpecKey == "Assassination")
+    {
+        if (slot == EQUIPMENT_SLOT_RANGED)
+        {
+            if (subClass == ITEM_SUBCLASS_WEAPON_THROWN)
+                bonus += 180.0f;
+            else if (subClass == ITEM_SUBCLASS_WEAPON_CROSSBOW)
+                bonus += 70.0f;
+            else
+                bonus += 20.0f;
+            return bonus;
+        }
+
+        if (subClass == ITEM_SUBCLASS_WEAPON_DAGGER)
+            bonus += 260.0f;
+        else
+            bonus -= 320.0f;
+
+        if (slot == EQUIPMENT_SLOT_MAINHAND)
+        {
+            if (delay >= 1700)
+                bonus += 50.0f;
+        }
+        else if (slot == EQUIPMENT_SLOT_OFFHAND)
+        {
+            if (delay > 0 && delay <= 1600)
+                bonus += 80.0f;
+        }
+
+        return bonus;
+    }
+
+    if (canonicalSpecKey == "Combat")
+    {
+        if (slot == EQUIPMENT_SLOT_RANGED)
+        {
+            if (subClass == ITEM_SUBCLASS_WEAPON_GUN)
+                bonus += 180.0f;
+            else if (subClass == ITEM_SUBCLASS_WEAPON_CROSSBOW)
+                bonus += 120.0f;
+            else
+                bonus += 40.0f;
+            return bonus;
+        }
+
+        if (slot == EQUIPMENT_SLOT_MAINHAND)
+        {
+            if (subClass == ITEM_SUBCLASS_WEAPON_FIST)
+                bonus += 260.0f;
+            else if (subClass == ITEM_SUBCLASS_WEAPON_DAGGER)
+                bonus += 180.0f;
+            else
+                bonus += 25.0f;
+
+            if (delay >= 2400)
+                bonus += 140.0f;
+            else if (delay >= 2000)
+                bonus += 70.0f;
+            else
+                bonus -= 80.0f;
+        }
+        else if (slot == EQUIPMENT_SLOT_OFFHAND)
+        {
+            if (subClass == ITEM_SUBCLASS_WEAPON_DAGGER
+                || subClass == ITEM_SUBCLASS_WEAPON_FIST)
+            {
+                bonus += 220.0f;
+            }
+            else
+            {
+                bonus += 40.0f;
+            }
+
+            if (delay > 0 && delay <= 1600)
+                bonus += 120.0f;
+            else if (delay <= 1900)
+                bonus += 50.0f;
+            else
+                bonus -= 60.0f;
+        }
+
+        return bonus;
+    }
+
+    if (canonicalSpecKey == "Subtlety")
+    {
+        if (slot == EQUIPMENT_SLOT_RANGED)
+        {
+            if (subClass == ITEM_SUBCLASS_WEAPON_BOW)
+                bonus += 180.0f;
+            else if (subClass == ITEM_SUBCLASS_WEAPON_THROWN)
+                bonus += 100.0f;
+            else
+                bonus += 30.0f;
+            return bonus;
+        }
+
+        if (slot == EQUIPMENT_SLOT_MAINHAND)
+        {
+            if (subClass == ITEM_SUBCLASS_WEAPON_DAGGER)
+                bonus += 140.0f;
+            else if (subClass == ITEM_SUBCLASS_WEAPON_FIST
+                || subClass == ITEM_SUBCLASS_WEAPON_SWORD)
+            {
+                bonus += 80.0f;
+            }
+        }
+        else if (slot == EQUIPMENT_SLOT_OFFHAND)
+        {
+            if (delay > 0 && delay <= 1800)
+                bonus += 70.0f;
+        }
+    }
+
+    return bonus;
+}
+
 float ScoreItemForIdentity(
     integration::BotIdentityRecord const& identity,
     std::string const& canonicalSpecKey,
     std::string const& roleKey,
+    std::uint8_t slot,
     ItemTemplate const* itemTemplate)
 {
     if (!itemTemplate)
@@ -355,6 +591,9 @@ float ScoreItemForIdentity(
             score += dps * 2.0f;
         else
             score += dps * 6.0f;
+
+        if (identity.classId == CLASS_ROGUE)
+            score += ScoreRogueWeaponPreference(canonicalSpecKey, slot, itemTemplate);
     }
 
     return score;
@@ -443,6 +682,12 @@ std::vector<ItemTemplate const*> CollectCandidates(
             continue;
 
         if (!IsAllowedForClass(itemTemplate, identity.classId))
+            continue;
+
+        if (!IsAllowedForRace(itemTemplate, identity.raceId))
+            continue;
+
+        if (HasUnsupportedWorldBotRequirement(itemTemplate))
             continue;
 
         if (itemTemplate->RequiredLevel > identity.level)
@@ -534,8 +779,8 @@ std::vector<ItemTemplate const*> CollectCandidates(
         candidates.end(),
         [&](ItemTemplate const* left, ItemTemplate const* right)
         {
-            return ScoreItemForIdentity(identity, canonicalSpecKey, roleKey, left)
-                > ScoreItemForIdentity(identity, canonicalSpecKey, roleKey, right);
+            return ScoreItemForIdentity(identity, canonicalSpecKey, roleKey, rule.slot, left)
+                > ScoreItemForIdentity(identity, canonicalSpecKey, roleKey, rule.slot, right);
         });
 
     if (candidates.size() > 12)
@@ -698,8 +943,10 @@ void AccumulateWorldBotEntryEnchantments(
 } // namespace
 
 WorldBotAssignedGearService::WorldBotAssignedGearService(
-    integration::BotAssignedGearRepository const& assignedGearRepository)
+    integration::BotAssignedGearRepository const& assignedGearRepository,
+    integration::BotAssignedGearTemplateRepository const& assignedGearTemplateRepository)
     : _assignedGearRepository(assignedGearRepository)
+    , _assignedGearTemplateRepository(assignedGearTemplateRepository)
 {
 }
 
@@ -709,7 +956,7 @@ WorldBotAssignedGearResult WorldBotAssignedGearService::EnsureAssignedGear(
     std::string const& roleKey) const
 {
     WorldBotAssignedGearResult result;
-    result.refreshBand = ComputeWorldBotGearRefreshBand(identity.level);
+    result.refreshBand = ComputeWorldBotGearRefreshBand(identity.level, identity.postMaxWorldOnlineMs);
 
     std::vector<model::WorldBotAssignedGearEntry> entries =
         _assignedGearRepository.LoadAssignments(identity.id);
@@ -729,9 +976,36 @@ WorldBotAssignedGearResult WorldBotAssignedGearService::EnsureAssignedGear(
         std::string const resolvedRoleKey = roleKey.empty()
             ? WorldBotPreparationService::ResolveRoleKey(identity.classId, resolvedSpecKey)
             : roleKey;
+        std::uint8_t const endgameStage =
+            ComputeWorldBotEndgameProgressionStage(identity.level, identity.postMaxWorldOnlineMs);
+        if (identity.level >= 80)
+        {
+            std::vector<model::WorldBotAssignedGearEntry> curatedEntries =
+                FinalizeAssignedGearEntries(_assignedGearTemplateRepository.LoadEndgameStageTemplate(
+                    identity.classId,
+                    resolvedSpecKey,
+                    identity.loadoutKey,
+                    endgameStage,
+                    identity.raceId));
+            if (!curatedEntries.empty())
+            {
+                _assignedGearRepository.ReplaceAssignments(identity.id, result.refreshBand, curatedEntries);
+                identity.gearRefreshPending = false;
+                identity.lastGearRefreshBand = result.refreshBand;
+                result.entries = curatedEntries;
+                result.summary = SummarizeAssignedGear(result.entries);
+                result.refreshed = true;
+                return result;
+            }
+        }
+
+        AssignedGearQualityOdds const qualityOdds =
+            GetAssignedGearQualityOdds(identity.level, endgameStage);
 
         std::unordered_set<std::uint32_t> usedItemIds;
-        bool const luckyRoll = std::uniform_int_distribution<int>(1, 100)(rng) <= 15;
+        bool const luckyRoll =
+            qualityOdds.luckyEpicSlotChance > 0
+            && std::uniform_int_distribution<int>(1, 100)(rng) <= qualityOdds.luckyEpicSlotChance;
         std::optional<model::WorldBotAssignedGearEntry> luckyEpicEntry;
         if (luckyRoll)
         {
@@ -789,7 +1063,13 @@ WorldBotAssignedGearResult WorldBotAssignedGearService::EnsureAssignedGear(
 
             std::uint8_t minQuality = ITEM_QUALITY_UNCOMMON;
             std::uint8_t maxQuality = ITEM_QUALITY_UNCOMMON;
-            if (std::uniform_int_distribution<int>(1, 100)(rng) <= 30)
+            int const qualityRoll = std::uniform_int_distribution<int>(1, 100)(rng);
+            if (qualityOdds.epicChance > 0 && qualityRoll <= qualityOdds.epicChance)
+            {
+                minQuality = ITEM_QUALITY_EPIC;
+                maxQuality = ITEM_QUALITY_EPIC;
+            }
+            else if (qualityRoll <= qualityOdds.rareOrBetterChance)
             {
                 minQuality = ITEM_QUALITY_RARE;
                 maxQuality = ITEM_QUALITY_RARE;
@@ -814,6 +1094,7 @@ WorldBotAssignedGearResult WorldBotAssignedGearService::EnsureAssignedGear(
 
         if (!generated.empty())
         {
+            generated = FinalizeAssignedGearEntries(std::move(generated));
             _assignedGearRepository.ReplaceAssignments(identity.id, result.refreshBand, generated);
             identity.gearRefreshPending = false;
             identity.lastGearRefreshBand = result.refreshBand;

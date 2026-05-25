@@ -160,16 +160,65 @@ def wait_for_forced_identity_activity(
     deadline = time.time() + timeout_seconds
     placeholders = ",".join(str(identity_id) for identity_id in identity_ids)
     sql = (
-        "SELECT COUNT(*) FROM living_world_bot_activity_log "
+        "SELECT COUNT(DISTINCT bot_guid) FROM living_world_bot_activity_log "
         f"WHERE id > {baseline_id} AND bot_guid IN ({placeholders})"
     )
+    required_count = len(identity_ids)
 
     while time.time() < deadline:
-        if query_scalar(settings, str(settings["characters_db"]), sql) > 0:
+        if query_scalar(settings, str(settings["characters_db"]), sql) >= required_count:
             return
         time.sleep(1)
 
-    raise TimeoutError("Timed out waiting for Paladin sandbox activity rows after startup")
+    raise TimeoutError(
+        f"Timed out waiting for all forced Paladin sandbox identities to log activity after startup ({required_count} required)"
+    )
+
+
+def wait_for_combat_summary_flush(
+    settings: dict[str, str | int],
+    baseline_id: int,
+    identity_ids: list[int],
+    bot_names: list[str],
+    timeout_seconds: int = 12,
+) -> None:
+    placeholders = ",".join(str(identity_id) for identity_id in identity_ids)
+    # Shell combat summaries are currently recorded against the live player GUID lane,
+    # so bot names are the stable join key here.
+    name_placeholders = ",".join(f"'{name}'" for name in bot_names)
+    if not name_placeholders:
+        name_placeholders = "''"
+    summary_sql = (
+        "SELECT COUNT(*) FROM living_world_bot_activity_log "
+        f"WHERE id > {baseline_id} AND (bot_guid IN ({placeholders}) OR bot_name IN ({name_placeholders})) "
+        "AND event_type = 'combat_summary'"
+    )
+    max_id_sql = (
+        "SELECT COALESCE(MAX(id), 0) FROM living_world_bot_activity_log "
+        f"WHERE id > {baseline_id} AND (bot_guid IN ({placeholders}) OR bot_name IN ({name_placeholders}))"
+    )
+
+    deadline = time.time() + timeout_seconds
+    last_max_id = -1
+    stable_polls = 0
+
+    while time.time() < deadline:
+        summary_count = query_scalar(settings, str(settings["characters_db"]), summary_sql)
+        current_max_id = query_scalar(settings, str(settings["characters_db"]), max_id_sql)
+
+        if current_max_id == last_max_id:
+            stable_polls += 1
+        else:
+            stable_polls = 0
+            last_max_id = current_max_id
+
+        if summary_count > 0 and stable_polls >= 2:
+            return
+
+        time.sleep(1)
+
+    # Best effort only; the report can still be built with partial data.
+    return
 
 
 def ensure_team_identities(
@@ -200,6 +249,7 @@ def ensure_team_identities(
             settings,
             name=str(entry["name"]),
             spec_key=str(entry["spec_key"]),
+            loadout_key=str(entry["loadout_key"]),
             level=level,
             faction=int(entry["faction"]),
             race_id=int(entry["race_id"]),
@@ -210,12 +260,15 @@ def ensure_team_identities(
             home_bind_point_key=home_anchor,
             last_seen_zone=last_seen_zone,
         )
-        loadout = seed_reference_loadout(settings, identity_id, level, str(entry["loadout_key"]))
         seeded.append(
             {
                 **entry,
                 "identity_id": identity_id,
-                "seeded_loadout": loadout,
+                "seeded_loadout": {
+                    "key": "ledger",
+                    "display_name": "Ledger-assigned gear",
+                    "notes": "Assigned gear comes from the ledger/template path.",
+                },
             }
         )
     return seeded
@@ -231,13 +284,19 @@ def build_report(
 ) -> None:
     identity_ids = [int(entry["identity_id"]) for entry in team]
     placeholders = ",".join(str(identity_id) for identity_id in identity_ids)
+    name_placeholders = ",".join(f"'{str(entry['name'])}'" for entry in team)
+    if not name_placeholders:
+        name_placeholders = "''"
+    where_clause = (
+        f"id > {baseline_id} AND (bot_guid IN ({placeholders}) OR bot_name IN ({name_placeholders}))"
+    )
 
     counts = run_mysql_query(
         settings,
         str(settings["characters_db"]),
         (
             "SELECT event_type, COUNT(*) FROM living_world_bot_activity_log "
-            f"WHERE id > {baseline_id} AND bot_guid IN ({placeholders}) "
+            f"WHERE {where_clause} "
             "GROUP BY event_type ORDER BY COUNT(*) DESC, event_type ASC"
         ),
     )
@@ -247,7 +306,7 @@ def build_report(
         (
             "SELECT id, bot_name, event_type, zone_id, detail "
             "FROM living_world_bot_activity_log "
-            f"WHERE id > {baseline_id} AND bot_guid IN ({placeholders}) "
+            f"WHERE {where_clause} "
             "AND event_type IN ('build_prepared', 'build_prepare_failed', 'combat_enter', 'combat_exit', 'session_complete') "
             "ORDER BY id DESC LIMIT 180"
         ),
@@ -258,7 +317,7 @@ def build_report(
         (
             "SELECT id, bot_name, event_type, zone_id, detail "
             "FROM living_world_bot_activity_log "
-            f"WHERE id > {baseline_id} AND bot_guid IN ({placeholders}) "
+            f"WHERE {where_clause} "
             "AND event_type = 'combat_trace' "
             "ORDER BY id DESC LIMIT 300"
         ),
@@ -269,7 +328,7 @@ def build_report(
         (
             "SELECT id, bot_name, event_type, zone_id, detail "
             "FROM living_world_bot_activity_log "
-            f"WHERE id > {baseline_id} AND bot_guid IN ({placeholders}) "
+            f"WHERE {where_clause} "
             "AND event_type = 'combat_summary' "
             "ORDER BY id DESC LIMIT 180"
         ),
@@ -289,6 +348,7 @@ def build_report(
         1: {"outgoing_damage": 0, "incoming_damage": 0, "outgoing_healing": 0, "incoming_healing": 0},
         2: {"outgoing_damage": 0, "incoming_damage": 0, "outgoing_healing": 0, "incoming_healing": 0},
     }
+    best_summary_by_bot: dict[str, tuple[int, tuple[object, ...], dict[str, int]]] = {}
     for row in combat_summary_rows:
         if len(row) < 5:
             continue
@@ -297,11 +357,21 @@ def build_report(
         match = COMBAT_SUMMARY_RE.search(detail)
         if not match:
             continue
+        metrics = {key: int(value) for key, value in match.groupdict().items()}
+        score = sum(metrics.values())
+        if "reason=leave_combat" in detail:
+            score += 1_000_000_000
+        current = best_summary_by_bot.get(bot_name)
+        if current is not None and current[0] >= score:
+            continue
+        best_summary_by_bot[bot_name] = (score, row, metrics)
+
+    for bot_name, (_, _, metrics) in best_summary_by_bot.items():
         faction = faction_by_name.get(bot_name)
         if faction not in side_totals:
             continue
-        for key, value in match.groupdict().items():
-            side_totals[faction][key] += int(value)
+        for key, value in metrics.items():
+            side_totals[faction][key] += value
 
     with report_path.open("w", encoding="utf-8") as handle:
         handle.write("=== CONFIG ===\n")
@@ -352,7 +422,7 @@ def build_report(
         handle.write("\n")
 
         handle.write("=== COMBAT_SUMMARY_ROWS ===\n")
-        for row in combat_summary_rows:
+        for _, row, _ in sorted(best_summary_by_bot.values(), key=lambda entry: entry[1][0], reverse=True):
             handle.write("\t".join(str(value) for value in row) + "\n")
         handle.write("\n")
 
@@ -400,6 +470,7 @@ def main() -> int:
         "LivingWorld.DebugForceIdentityIds": f"\"{','.join(str(v) for v in identity_ids)}\"",
         "LivingWorld.DebugForceSessionZoneId": str(args.zone_id),
         "LivingWorld.DebugForceSessionComposeAttempts": "128",
+        "LivingWorld.DebugHostileAcquireRadius": "60",
     }
 
     baseline_id = query_scalar(
@@ -408,10 +479,10 @@ def main() -> int:
         "SELECT COALESCE(MAX(id), 0) FROM living_world_bot_activity_log",
     )
 
-    original_config = MODULE_CONF.read_text(encoding="utf-8")
+    original_config = MODULE_CONF.read_text(encoding="utf-8-sig")
     process: subprocess.Popen[bytes] | None = None
     try:
-        MODULE_CONF.write_text(rewrite_module_config(original_config, updates), encoding="utf-8")
+        MODULE_CONF.write_text(rewrite_module_config(original_config, updates), encoding="utf-8-sig")
         with stdout_path.open("wb") as stdout_handle, stderr_path.open("wb") as stderr_handle:
             process = subprocess.Popen(
                 [str(WORLD_EXE)],
@@ -430,8 +501,14 @@ def main() -> int:
     finally:
         if process is not None:
             stop_worldserver(process)
-        MODULE_CONF.write_text(original_config, encoding="utf-8")
+        MODULE_CONF.write_text(original_config, encoding="utf-8-sig")
 
+    wait_for_combat_summary_flush(
+        settings,
+        baseline_id,
+        identity_ids,
+        [str(entry["name"]) for entry in team],
+    )
     build_report(settings, baseline_id, team, stdout_path, stderr_path, report_path)
     print(report_path)
     return 0

@@ -3,11 +3,14 @@
 #include "Globals/ObjectMgr.h"
 #include "Log.h"
 #include "Player.h"
+#include "Trainer.h"
 #include "SharedDefines.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
+#include "UnitDefines.h"
 #include "DataStores/DBCStores.h"
 #include "integration/BotCombatDefaultProfileRepository.h"
+#include "integration/BotGlyphTemplateRepository.h"
 #include "integration/BotTalentTemplateRepository.h"
 #include "integration/BotVirtualLoadoutRepository.h"
 #include "model/BotCombatProfile.h"
@@ -26,6 +29,20 @@ namespace service
 namespace
 {
 constexpr std::uint32_t SPELL_TRAVEL_FORM = 783;
+constexpr std::uint32_t SPELL_CAT_FORM = 768;
+constexpr std::uint32_t SPELL_BEAR_FORM = 5487;
+constexpr std::uint32_t SPELL_DIRE_BEAR_FORM = 9634;
+constexpr std::uint32_t SPELL_MOONKIN_FORM = 24858;
+constexpr std::uint32_t SPELL_TREE_OF_LIFE = 33891;
+constexpr std::uint32_t SPELL_BLOOD_PRESENCE = 48266;
+constexpr std::uint32_t SPELL_FROST_PRESENCE = 48263;
+constexpr std::uint32_t SPELL_UNHOLY_PRESENCE = 48265;
+constexpr std::uint32_t SPELL_ASPECT_OF_THE_DRAGONHAWK = 61846;
+constexpr std::uint32_t SPELL_GHOST_WOLF = 2645;
+constexpr std::uint32_t SPELL_FEL_ARMOR = 28176;
+constexpr std::uint32_t SPELL_DEMON_ARMOR = 706;
+constexpr std::uint32_t SPELL_DEMON_SKIN = 687;
+
 constexpr std::uint32_t SPELL_SUMMON_WARHORSE = 13819;
 constexpr std::uint32_t SPELL_SUMMON_CHARGER = 23214;
 constexpr std::uint32_t SPELL_SUMMON_THALASSIAN_WARHORSE = 34769;
@@ -91,6 +108,309 @@ void AddMobilitySpellIfUsable(
 {
     if (spellId != 0 && IsSpellUsableForLevel(spellId, level))
         knownSpells.insert(spellId);
+}
+
+void AddBestUsableRankForSpellFamily(
+    std::unordered_set<std::uint32_t>& knownSpells,
+    std::uint32_t spellId,
+    std::uint8_t level)
+{
+    if (spellId == 0)
+        return;
+
+    std::uint32_t candidate = sSpellMgr->GetFirstSpellInChain(spellId);
+    if (!candidate)
+        candidate = spellId;
+
+    std::uint32_t bestUsableSpellId = 0;
+    for (; candidate != 0; candidate = sSpellMgr->GetNextSpellInChain(candidate))
+    {
+        if (IsSpellUsableForLevel(candidate, level))
+            bestUsableSpellId = candidate;
+    }
+
+    if (bestUsableSpellId != 0)
+        knownSpells.insert(bestUsableSpellId);
+}
+
+void AddPreparedSelfState(
+    model::WorldBotPreparedBuild& prepared,
+    model::WorldBotSelfStateCategory category,
+    std::string key,
+    std::uint32_t spellId,
+    std::uint32_t activeAuraSpellId,
+    std::uint8_t shapeshiftForm,
+    bool preferredInCombat,
+    bool preferredOutOfCombat,
+    bool preferredWhileTraveling)
+{
+    if (spellId == 0)
+        return;
+
+    model::WorldBotPreparedSelfState state;
+    state.category = category;
+    state.key = std::move(key);
+    state.spellId = spellId;
+    state.activeAuraSpellId = activeAuraSpellId;
+    state.shapeshiftForm = shapeshiftForm;
+    state.preferredInCombat = preferredInCombat;
+    state.preferredOutOfCombat = preferredOutOfCombat;
+    state.preferredWhileTraveling = preferredWhileTraveling;
+    prepared.selfStates.push_back(std::move(state));
+}
+
+std::uint32_t ResolveBestKnownSpellInChain(
+    std::unordered_set<std::uint32_t> const& knownSpells,
+    std::uint32_t spellId)
+{
+    if (spellId == 0)
+        return 0;
+
+    std::uint32_t const firstRank = sSpellMgr->GetFirstSpellInChain(spellId);
+    std::uint32_t const familyBaseId = firstRank != 0 ? firstRank : spellId;
+
+    std::uint32_t bestKnownSpellId = 0;
+    std::uint8_t bestKnownRank = 0;
+    for (std::uint32_t const knownSpellId : knownSpells)
+    {
+        std::uint32_t const knownFirstRank = sSpellMgr->GetFirstSpellInChain(knownSpellId);
+        std::uint32_t const knownFamilyBaseId = knownFirstRank != 0 ? knownFirstRank : knownSpellId;
+        if (knownFamilyBaseId != familyBaseId)
+            continue;
+
+        std::uint8_t const knownRank = sSpellMgr->GetSpellRank(knownSpellId);
+        if (bestKnownSpellId == 0 || knownRank >= bestKnownRank)
+        {
+            bestKnownSpellId = knownSpellId;
+            bestKnownRank = knownRank;
+        }
+    }
+
+    return bestKnownSpellId;
+}
+
+void PopulatePreparedSelfStates(model::WorldBotPreparedBuild& prepared)
+{
+    auto const resolveSpell = [&](std::uint32_t spellId) -> std::uint32_t
+    {
+        return ResolveBestKnownSpellInChain(prepared.knownSpellIds, spellId);
+    };
+
+    switch (prepared.classId)
+    {
+        case CLASS_DRUID:
+        {
+            if (prepared.canonicalSpecKey == "Balance")
+            {
+                std::uint32_t const moonkinSpellId = resolveSpell(SPELL_MOONKIN_FORM);
+                AddPreparedSelfState(
+                    prepared,
+                    model::WorldBotSelfStateCategory::Form,
+                    "Moonkin",
+                    moonkinSpellId,
+                    moonkinSpellId,
+                    static_cast<std::uint8_t>(FORM_MOONKIN),
+                    true,
+                    true,
+                    false);
+            }
+            else if (prepared.canonicalSpecKey == "Restoration")
+            {
+                std::uint32_t const treeSpellId = resolveSpell(SPELL_TREE_OF_LIFE);
+                AddPreparedSelfState(
+                    prepared,
+                    model::WorldBotSelfStateCategory::Form,
+                    "Tree",
+                    treeSpellId,
+                    treeSpellId,
+                    static_cast<std::uint8_t>(FORM_TREE),
+                    true,
+                    true,
+                    false);
+            }
+            else if (prepared.canonicalSpecKey == "Feral")
+            {
+                std::uint32_t const combatSpellId =
+                    prepared.resolvedRoleKey == "TANK"
+                    ? ([&]()
+                        {
+                            std::uint32_t const direBearSpellId = resolveSpell(SPELL_DIRE_BEAR_FORM);
+                            return direBearSpellId != 0 ? direBearSpellId : resolveSpell(SPELL_BEAR_FORM);
+                        }())
+                    : resolveSpell(SPELL_CAT_FORM);
+
+                std::uint8_t const combatForm =
+                    prepared.resolvedRoleKey == "TANK"
+                    ? static_cast<std::uint8_t>(FORM_BEAR)
+                    : static_cast<std::uint8_t>(FORM_CAT);
+
+                AddPreparedSelfState(
+                    prepared,
+                    model::WorldBotSelfStateCategory::Form,
+                    prepared.resolvedRoleKey == "TANK" ? "Bear" : "Cat",
+                    combatSpellId,
+                    combatSpellId,
+                    combatForm,
+                    true,
+                    true,
+                    false);
+            }
+
+            {
+                std::uint32_t const travelSpellId = resolveSpell(SPELL_TRAVEL_FORM);
+                AddPreparedSelfState(
+                    prepared,
+                    model::WorldBotSelfStateCategory::Form,
+                    "Travel",
+                    travelSpellId,
+                    travelSpellId,
+                    static_cast<std::uint8_t>(FORM_TRAVEL),
+                    false,
+                    false,
+                    true);
+            }
+
+            break;
+        }
+
+        case CLASS_DEATH_KNIGHT:
+        {
+            std::uint32_t const presenceSpellId =
+                prepared.canonicalSpecKey == "Blood"
+                ? resolveSpell(SPELL_BLOOD_PRESENCE)
+                : (prepared.resolvedRoleKey == "TANK"
+                    ? resolveSpell(SPELL_FROST_PRESENCE)
+                    : ([&]()
+                        {
+                            std::uint32_t const unholyPresenceSpellId = resolveSpell(SPELL_UNHOLY_PRESENCE);
+                            return unholyPresenceSpellId != 0 ? unholyPresenceSpellId : resolveSpell(SPELL_BLOOD_PRESENCE);
+                        }()));
+
+            AddPreparedSelfState(
+                prepared,
+                model::WorldBotSelfStateCategory::Presence,
+                prepared.canonicalSpecKey == "Blood"
+                    ? "Blood"
+                    : (prepared.resolvedRoleKey == "TANK" ? "Frost" : "Unholy"),
+                presenceSpellId,
+                presenceSpellId,
+                0,
+                true,
+                true,
+                false);
+            break;
+        }
+
+        case CLASS_HUNTER:
+        {
+            std::uint32_t const dragonhawkSpellId = resolveSpell(SPELL_ASPECT_OF_THE_DRAGONHAWK);
+            AddPreparedSelfState(
+                prepared,
+                model::WorldBotSelfStateCategory::Aspect,
+                "Dragonhawk",
+                dragonhawkSpellId,
+                dragonhawkSpellId,
+                0,
+                true,
+                true,
+                false);
+            break;
+        }
+
+        case CLASS_SHAMAN:
+        {
+            std::uint32_t const ghostWolfSpellId = resolveSpell(SPELL_GHOST_WOLF);
+            AddPreparedSelfState(
+                prepared,
+                model::WorldBotSelfStateCategory::Form,
+                "GhostWolf",
+                ghostWolfSpellId,
+                ghostWolfSpellId,
+                static_cast<std::uint8_t>(FORM_GHOSTWOLF),
+                false,
+                false,
+                true);
+            break;
+        }
+
+        case CLASS_WARLOCK:
+        {
+            std::uint32_t const armorSpellId =
+                [&]()
+                {
+                    std::uint32_t const felArmorSpellId = resolveSpell(SPELL_FEL_ARMOR);
+                    if (felArmorSpellId != 0)
+                        return felArmorSpellId;
+
+                    std::uint32_t const demonArmorSpellId = resolveSpell(SPELL_DEMON_ARMOR);
+                    if (demonArmorSpellId != 0)
+                        return demonArmorSpellId;
+
+                    return resolveSpell(SPELL_DEMON_SKIN);
+                }();
+
+            std::uint32_t const armorFamilyBaseId =
+                armorSpellId != 0
+                    ? (sSpellMgr->GetFirstSpellInChain(armorSpellId) != 0
+                        ? sSpellMgr->GetFirstSpellInChain(armorSpellId)
+                        : armorSpellId)
+                    : 0;
+
+            AddPreparedSelfState(
+                prepared,
+                model::WorldBotSelfStateCategory::Armor,
+                armorFamilyBaseId == SPELL_FEL_ARMOR ? "FelArmor"
+                    : (armorFamilyBaseId == SPELL_DEMON_ARMOR ? "DemonArmor" : "DemonSkin"),
+                armorSpellId,
+                armorSpellId,
+                0,
+                true,
+                true,
+                false);
+            break;
+        }
+
+        default:
+            break;
+    }
+}
+
+void EnsurePreparedSelfStateUtilitySpells(model::WorldBotPreparedBuild& prepared)
+{
+    switch (prepared.classId)
+    {
+        case CLASS_DRUID:
+            AddBestUsableRankForSpellFamily(prepared.knownSpellIds, SPELL_TRAVEL_FORM, prepared.level);
+            AddBestUsableRankForSpellFamily(prepared.knownSpellIds, SPELL_CAT_FORM, prepared.level);
+            AddBestUsableRankForSpellFamily(prepared.knownSpellIds, SPELL_BEAR_FORM, prepared.level);
+            AddBestUsableRankForSpellFamily(prepared.knownSpellIds, SPELL_DIRE_BEAR_FORM, prepared.level);
+            AddBestUsableRankForSpellFamily(prepared.knownSpellIds, SPELL_MOONKIN_FORM, prepared.level);
+            AddBestUsableRankForSpellFamily(prepared.knownSpellIds, SPELL_TREE_OF_LIFE, prepared.level);
+            return;
+
+        case CLASS_DEATH_KNIGHT:
+            AddBestUsableRankForSpellFamily(prepared.knownSpellIds, SPELL_BLOOD_PRESENCE, prepared.level);
+            AddBestUsableRankForSpellFamily(prepared.knownSpellIds, SPELL_FROST_PRESENCE, prepared.level);
+            AddBestUsableRankForSpellFamily(prepared.knownSpellIds, SPELL_UNHOLY_PRESENCE, prepared.level);
+            return;
+
+        case CLASS_HUNTER:
+            AddBestUsableRankForSpellFamily(prepared.knownSpellIds, SPELL_ASPECT_OF_THE_DRAGONHAWK, prepared.level);
+            return;
+
+        case CLASS_SHAMAN:
+            AddBestUsableRankForSpellFamily(prepared.knownSpellIds, SPELL_GHOST_WOLF, prepared.level);
+            return;
+
+        case CLASS_WARLOCK:
+            AddBestUsableRankForSpellFamily(prepared.knownSpellIds, SPELL_FEL_ARMOR, prepared.level);
+            AddBestUsableRankForSpellFamily(prepared.knownSpellIds, SPELL_DEMON_ARMOR, prepared.level);
+            AddBestUsableRankForSpellFamily(prepared.knownSpellIds, SPELL_DEMON_SKIN, prepared.level);
+            return;
+
+        default:
+            return;
+    }
 }
 
 void AddRacialGroundMountSpell(
@@ -345,25 +665,47 @@ void AddProfileSpells(
     model::BotCombatDefaultProfileRecord const& defaultProfile,
     std::uint8_t level)
 {
+    auto canSeedActionSpellFromProfile =
+        [&](model::BotCombatActionDefinition const& action) -> bool
+        {
+            if (action.actionType != model::BotCombatActionType::Spell || action.spellBaseId == 0)
+                return true;
+
+            if (GetTalentSpellCost(action.spellBaseId) == 0
+                && !sSpellMgr->IsAdditionalTalentSpell(action.spellBaseId))
+            {
+                return true;
+            }
+
+            return ResolveBestKnownSpellInChain(knownSpells, action.spellBaseId) != 0;
+        };
+
     auto addEntries =
         [&](std::vector<model::BotCombatEntryDefinition> const& entries)
         {
             for (model::BotCombatEntryDefinition const& entry : entries)
             {
-                AddKnownSpellForAction(
-                    knownSpells,
-                    entry.primaryAction,
-                    level,
-                    defaultProfile.settings.enableDownRank,
-                    defaultProfile.settings.downRankFloor);
-                if (entry.secondaryAction)
+                if (canSeedActionSpellFromProfile(entry.primaryAction))
                 {
                     AddKnownSpellForAction(
                         knownSpells,
-                        *entry.secondaryAction,
+                        entry.primaryAction,
                         level,
                         defaultProfile.settings.enableDownRank,
                         defaultProfile.settings.downRankFloor);
+                }
+
+                if (entry.secondaryAction)
+                {
+                    if (canSeedActionSpellFromProfile(*entry.secondaryAction))
+                    {
+                        AddKnownSpellForAction(
+                            knownSpells,
+                            *entry.secondaryAction,
+                            level,
+                            defaultProfile.settings.enableDownRank,
+                            defaultProfile.settings.downRankFloor);
+                    }
                 }
             }
         };
@@ -412,6 +754,158 @@ void AddClassSkillLineSpells(
                 knownSpells.insert(ability->Spell);
         }
     }
+}
+
+bool IsSpellFitByClassAndRace(
+    std::uint32_t spellId,
+    std::uint8_t raceId,
+    std::uint8_t classId)
+{
+    std::uint32_t const raceMask = raceId == 0
+        ? 0u
+        : (1u << (static_cast<std::uint32_t>(raceId) - 1u));
+    std::uint32_t const classMask = classId == 0
+        ? 0u
+        : (1u << (static_cast<std::uint32_t>(classId) - 1u));
+
+    SkillLineAbilityMapBounds bounds = sSpellMgr->GetSkillLineAbilityMapBounds(spellId);
+    if (bounds.first == bounds.second)
+        return true;
+
+    for (SkillLineAbilityMap::const_iterator itr = bounds.first; itr != bounds.second; ++itr)
+    {
+        if (itr->second->RaceMask && (itr->second->RaceMask & raceMask) == 0)
+            continue;
+
+        if (itr->second->ClassMask && (itr->second->ClassMask & classMask) == 0)
+            continue;
+
+        if (!GetSkillRaceClassInfo(itr->second->SkillLine, raceId, classId))
+            continue;
+
+        return true;
+    }
+
+    return false;
+}
+
+bool AppendTrainerLearnedSpells(
+    std::unordered_set<std::uint32_t>& knownSpells,
+    Trainer::Spell const& trainerSpell,
+    std::uint8_t raceId,
+    std::uint8_t classId,
+    std::uint8_t level,
+    std::uint16_t approximatedSkillValue)
+{
+    if (level < trainerSpell.ReqLevel)
+        return false;
+
+    if (trainerSpell.ReqSkillLine && trainerSpell.ReqSkillRank > approximatedSkillValue)
+        return false;
+
+    if (!IsSpellFitByClassAndRace(trainerSpell.SpellId, raceId, classId))
+        return false;
+
+    for (int32 reqAbility : trainerSpell.ReqAbility)
+    {
+        if (reqAbility != 0 && knownSpells.find(static_cast<std::uint32_t>(reqAbility)) == knownSpells.end())
+            return false;
+    }
+
+    for (auto const& requirePair : sSpellMgr->GetSpellsRequiredForSpellBounds(trainerSpell.SpellId))
+    {
+        if (knownSpells.find(requirePair.second) == knownSpells.end())
+            return false;
+    }
+
+    SpellInfo const* trainerSpellInfo = sSpellMgr->GetSpellInfo(trainerSpell.SpellId);
+    if (!trainerSpellInfo)
+        return false;
+
+    bool hasLearnSpellEffect = false;
+    bool knowsAllLearnedSpells = true;
+    std::vector<std::uint32_t> taughtSpells;
+
+    for (SpellEffectInfo const& spellEffectInfo : trainerSpellInfo->GetEffects())
+    {
+        if (!spellEffectInfo.IsEffect(SPELL_EFFECT_LEARN_SPELL) || !spellEffectInfo.TriggerSpell)
+            continue;
+
+        hasLearnSpellEffect = true;
+        taughtSpells.push_back(spellEffectInfo.TriggerSpell);
+
+        if (knownSpells.find(spellEffectInfo.TriggerSpell) == knownSpells.end())
+            knowsAllLearnedSpells = false;
+
+        if (std::uint32_t previousRankSpellId = sSpellMgr->GetPrevSpellInChain(spellEffectInfo.TriggerSpell))
+        {
+            if (knownSpells.find(previousRankSpellId) == knownSpells.end())
+                return false;
+        }
+    }
+
+    if (!hasLearnSpellEffect)
+    {
+        if (knownSpells.find(trainerSpell.SpellId) != knownSpells.end())
+            return false;
+
+        if (std::uint32_t previousRankSpellId = sSpellMgr->GetPrevSpellInChain(trainerSpell.SpellId))
+        {
+            if (knownSpells.find(previousRankSpellId) == knownSpells.end())
+                return false;
+        }
+
+        taughtSpells.push_back(trainerSpell.SpellId);
+    }
+    else if (knowsAllLearnedSpells)
+    {
+        return false;
+    }
+
+    bool learnedAny = false;
+    for (std::uint32_t taughtSpellId : taughtSpells)
+    {
+        if (!IsSpellUsableForLevel(taughtSpellId, level))
+            continue;
+
+        learnedAny = knownSpells.insert(taughtSpellId).second || learnedAny;
+    }
+
+    return learnedAny;
+}
+
+void AddClassTrainerSpells(
+    std::unordered_set<std::uint32_t>& knownSpells,
+    std::uint8_t raceId,
+    std::uint8_t classId,
+    std::uint8_t level)
+{
+    std::vector<Trainer::Trainer const*> const& trainers = sObjectMgr->GetClassTrainers(classId);
+    if (trainers.empty())
+        return;
+
+    std::uint16_t const approximatedSkillValue = static_cast<std::uint16_t>(level) * 5u;
+    bool learnedAny = false;
+    do
+    {
+        learnedAny = false;
+        for (Trainer::Trainer const* trainer : trainers)
+        {
+            if (!trainer)
+                continue;
+
+            for (Trainer::Spell const& trainerSpell : trainer->GetSpells())
+            {
+                learnedAny = AppendTrainerLearnedSpells(
+                    knownSpells,
+                    trainerSpell,
+                    raceId,
+                    classId,
+                    level,
+                    approximatedSkillValue) || learnedAny;
+            }
+        }
+    } while (learnedAny);
 }
 
 std::uint32_t GetPlayerClassMask(std::uint8_t classId)
@@ -498,9 +992,11 @@ void AddAllocatedTalentSpells(
 
 WorldBotPreparationService::WorldBotPreparationService(
     integration::BotCombatDefaultProfileRepository const& defaultProfileRepository,
+    integration::BotGlyphTemplateRepository const& glyphTemplateRepository,
     integration::BotTalentTemplateRepository const& talentTemplateRepository,
     integration::BotVirtualLoadoutRepository const& virtualLoadoutRepository)
     : _defaultProfileRepository(defaultProfileRepository)
+    , _glyphTemplateRepository(glyphTemplateRepository)
     , _talentTemplateRepository(talentTemplateRepository)
     , _virtualLoadoutRepository(virtualLoadoutRepository)
 {
@@ -570,6 +1066,7 @@ model::WorldBotPreparedBuild WorldBotPreparationService::Prepare(
     prepared.defaultCombatProfileName = defaultProfile->displayName;
     prepared.defaultCombatProfileVariantKey = defaultProfile->variantKey;
     prepared.defaultCombatProfileDescription = defaultProfile->description;
+    prepared.oocBehavior = defaultProfile->oocBehavior;
     prepared.resolvedRoleKey = defaultProfile->roleKey;
     LOG_INFO("server.worldserver",
         "[LivingWorld] WorldBotPreparation identity={} default_profile_id={} profile='{}' variant='{}' context='{}'",
@@ -653,16 +1150,42 @@ model::WorldBotPreparedBuild WorldBotPreparationService::Prepare(
 
     AddPlayerCreateInfoSpells(prepared.knownSpellIds, *playerInfo, identity.level);
     AddClassSkillLineSpells(prepared.knownSpellIds, *playerInfo, identity.level);
+    AddClassTrainerSpells(prepared.knownSpellIds, identity.raceId, identity.classId, identity.level);
     AddAllocatedTalentSpells(prepared.knownSpellIds, prepared.allocatedTalents, identity.level);
     AddProfileSpells(prepared.knownSpellIds, *defaultProfile, identity.level);
     for (std::uint32_t spellId : CollectTravelMobilitySpellIds(identity))
         prepared.knownSpellIds.insert(spellId);
 
+    EnsurePreparedSelfStateUtilitySpells(prepared);
+    PopulatePreparedSelfStates(prepared);
+
+    for (model::BotGlyphTemplateEntry const& glyphTemplate :
+        _glyphTemplateRepository.LoadTemplate(
+            identity.classId,
+            prepared.canonicalSpecKey,
+            prepared.requestedLoadoutKey))
+    {
+        if (glyphTemplate.glyphSpellId == 0)
+            continue;
+
+        SpellInfo const* glyphSpellInfo = sSpellMgr->GetSpellInfo(glyphTemplate.glyphSpellId);
+        if (!glyphSpellInfo)
+            continue;
+
+        model::WorldBotPreparedGlyphEntry preparedGlyph;
+        preparedGlyph.slotIndex = glyphTemplate.slotIndex;
+        preparedGlyph.glyphId = 0;
+        preparedGlyph.spellId = glyphTemplate.glyphSpellId;
+        prepared.glyphs.push_back(preparedGlyph);
+    }
+
     prepared.status = model::WorldBotPreparationStatus::Ready;
     LOG_INFO("server.worldserver",
-        "[LivingWorld] WorldBotPreparation identity={} known_spells={} virtual_loadout={} gear_tier={} ready=1",
+        "[LivingWorld] WorldBotPreparation identity={} known_spells={} glyphs={} self_states={} virtual_loadout={} gear_tier={} ready=1",
         prepared.identityId,
         prepared.knownSpellIds.size(),
+        prepared.glyphs.size(),
+        prepared.selfStates.size(),
         prepared.virtualLoadout ? prepared.virtualLoadout->displayName : "none",
         static_cast<std::uint32_t>(std::max<std::uint8_t>(identity.gearTier, 1u)));
     return prepared;

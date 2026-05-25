@@ -14,7 +14,9 @@ enum class BotSessionSpawnStatus
     SpawnQueued,
     NoAvailableBotAccount,
     BotAccountNotFound,
-    InvalidCharacterGuid
+    InvalidCharacterGuid,
+    NoAssignedShell,
+    PreparationFailed
 };
 
 struct BotSessionSpawnResult
@@ -41,6 +43,11 @@ public:
     static BotSessionSpawnResult SpawnHostileBotPlayerOnAccount(
         std::uint32_t botAccountId,
         ObjectGuid characterGuid);
+
+    // Rebuild one leased player shell from ledger truth, then queue an
+    // ownerless bot session on that exact shell.
+    static BotSessionSpawnResult SpawnLedgerShellIdentity(
+        std::uint32_t identityId);
 };
 } // namespace integration
 } // namespace living_world

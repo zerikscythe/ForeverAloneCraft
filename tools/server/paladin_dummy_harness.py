@@ -123,7 +123,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dummy-entry", type=int, default=31144, help="Grandmaster's Training Dummy by default")
     parser.add_argument("--dummy-radius", type=float, default=30.0)
     parser.add_argument("--force-spawn-count", type=int, default=1)
-    parser.add_argument("--reference-loadout", choices=["none", *REFERENCE_LOADOUTS.keys()], default="ret_toc")
+    parser.add_argument("--reference-loadout", choices=["none", *REFERENCE_LOADOUTS.keys()], default="none")
+    parser.add_argument("--loadout-key", default="", help="Optional ledger loadout key override")
     return parser.parse_args()
 
 
@@ -246,7 +247,9 @@ def ensure_identity_record(
     settings: dict[str, str | int],
     *,
     name: str,
+    class_id: int = 2,
     spec_key: str,
+    loadout_key: str | None = None,
     level: int,
     faction: int,
     race_id: int,
@@ -265,23 +268,28 @@ def ensure_identity_record(
 
     if rows:
         identity_id = int(rows[0][0])
+        update_sql = (
+            "UPDATE living_world_bot_identity SET "
+            f"race_id={race_id}, class_id={class_id}, spec_key={sql_quote(spec_key)}, "
+        )
+        if loadout_key is not None:
+            update_sql += f"loadout_key={sql_quote(loadout_key)}, "
+        update_sql += (
+            f"faction={faction}, display_id={display_id}, gender={gender}, level={level}, gear_tier=3, "
+            f"population_role='world', reserve_city_zone_id=NULL, home_zone_id={home_zone_id}, "
+            f"home_anchor_point_key={sql_quote(home_anchor_point_key)}, home_bind_point_key={sql_quote(home_bind_point_key)}, "
+            "is_available=1, session_count=0, total_world_online_ms=0, "
+            "world_online_ms_since_level=0, post_max_world_online_ms=0, active_world_session_ms=0, "
+            "runtime_state='', runtime_detail='', last_session_source_kind='', last_session_source_key='', "
+            "last_task_family='', last_task_target_zone=NULL, gear_refresh_pending=1, last_gear_refresh_band=0, "
+            "active_world_session_start=NULL, is_retired=0, successor_spawned=0, retired_at=NULL, "
+            f"last_seen_zone={last_seen_zone}, last_seen_at=NULL "
+            f"WHERE id={identity_id}"
+        )
         run_mysql_query(
             settings,
             str(settings["characters_db"]),
-            (
-                "UPDATE living_world_bot_identity SET "
-                f"race_id={race_id}, class_id=2, spec_key={sql_quote(spec_key)}, loadout_key='', "
-                f"faction={faction}, display_id={display_id}, gender={gender}, level={level}, gear_tier=3, "
-                f"population_role='world', reserve_city_zone_id=NULL, home_zone_id={home_zone_id}, "
-                f"home_anchor_point_key={sql_quote(home_anchor_point_key)}, home_bind_point_key={sql_quote(home_bind_point_key)}, "
-                "is_available=1, session_count=0, total_world_online_ms=0, "
-                "world_online_ms_since_level=0, post_max_world_online_ms=0, active_world_session_ms=0, "
-                "runtime_state='', runtime_detail='', last_session_source_kind='', last_session_source_key='', "
-                "last_task_family='', last_task_target_zone=NULL, gear_refresh_pending=1, last_gear_refresh_band=0, "
-                "active_world_session_start=NULL, is_retired=0, successor_spawned=0, retired_at=NULL, "
-                f"last_seen_zone={last_seen_zone}, last_seen_at=NULL "
-                f"WHERE id={identity_id}"
-            ),
+            update_sql,
         )
         return identity_id
 
@@ -292,7 +300,7 @@ def ensure_identity_record(
             "INSERT INTO living_world_bot_identity "
             "(name, race_id, class_id, spec_key, loadout_key, faction, display_id, gender, level, gear_tier, "
             "population_role, home_zone_id, home_anchor_point_key, home_bind_point_key, is_available, is_retired, last_seen_zone) VALUES "
-            f"({sql_quote(name)}, {race_id}, 2, {sql_quote(spec_key)}, '', {faction}, {display_id}, {gender}, {level}, 3, "
+            f"({sql_quote(name)}, {race_id}, {class_id}, {sql_quote(spec_key)}, {sql_quote(loadout_key or '')}, {faction}, {display_id}, {gender}, {level}, 3, "
             f"'world', {home_zone_id}, {sql_quote(home_anchor_point_key)}, {sql_quote(home_bind_point_key)}, 1, 0, {last_seen_zone})"
         ),
     )
@@ -311,6 +319,7 @@ def ensure_identity(settings: dict[str, str | int], args: argparse.Namespace) ->
         settings,
         name=args.name,
         spec_key=args.spec,
+        loadout_key=args.loadout_key or None,
         level=args.level,
         faction=1,
         race_id=1,

@@ -107,6 +107,16 @@ struct WorldBotTravelPositionSample
     float         z = 0.0f;
 };
 
+enum class WorldBotRoutePathKind : std::uint8_t
+{
+    MainRoute = 1,
+    SubRoute = 2,
+    Area = 3,
+};
+
+std::string ToString(WorldBotRoutePathKind kind);
+std::optional<WorldBotRoutePathKind> TryParseWorldBotRoutePathKind(std::string const& value);
+
 WorldBotTravelPositionSample SampleWorldBotTravelPlanPosition(
     WorldBotResolvedTravelPlan const& plan,
     float startX,
@@ -183,10 +193,25 @@ public:
     struct RoutePath
     {
         std::string routeKey;
+        WorldBotRoutePathKind kind = WorldBotRoutePathKind::MainRoute;
+        bool closedLoop = false;
+        std::vector<std::string> resourceKinds;
+        std::vector<std::string> resourceItems;
+        std::string assistKind;
+        std::vector<std::string> lowerContextKeys;
+        std::vector<std::string> upperContextKeys;
+        std::vector<std::string> destinationKeys;
+        std::string lowerLabel;
+        std::string upperLabel;
         std::vector<RouteAnchor> anchors;
         std::vector<RoutePoint> points;
         std::optional<RouteConnectionRef> startConnection;
         std::optional<RouteConnectionRef> endConnection;
+
+        [[nodiscard]] bool SupportsResourceKind(std::string const& resourceKind) const;
+        [[nodiscard]] bool SupportsLowerContextKey(std::string const& destinationKey) const;
+        [[nodiscard]] bool SupportsUpperContextKey(std::string const& destinationKey) const;
+        [[nodiscard]] bool SupportsDestinationKey(std::string const& destinationKey) const;
     };
 
     struct GraphNode
@@ -219,6 +244,11 @@ public:
         float toZ = 0.0f;
         bool bidirectional = true;
     };
+
+    [[nodiscard]] std::vector<RoutePath> LoadZonePaths(
+        std::uint16_t mapId,
+        std::uint32_t zoneId,
+        std::optional<WorldBotRoutePathKind> kindFilter = std::nullopt) const;
 
 private:
     [[nodiscard]] std::optional<ZoneRouteGraph> LoadZoneGraph(

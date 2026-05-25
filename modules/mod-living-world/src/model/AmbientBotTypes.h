@@ -137,6 +137,20 @@ struct TaskTransitRouteEntry
     float         destZ             = 0.f;
 };
 
+struct TaskPointLinkEntry
+{
+    std::string   fromPointKey;
+    std::string   toPointKey;
+    std::string   linkKind;
+    bool          manualVerified    = false;
+    std::uint32_t successCount      = 0;
+    std::uint32_t failureCount      = 0;
+    std::string   source;
+    std::string   notes;
+    TaskPointEntry fromPoint;
+    TaskPointEntry toPoint;
+};
+
 struct TaskTemplateEntry
 {
     std::uint32_t templateId        = 0;

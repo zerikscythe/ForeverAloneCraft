@@ -23,6 +23,12 @@ struct BotCombatRuntimeContext
     bool allowHardCasts = true;
     std::uint32_t syntheticGlobalCooldownRemainingMs = 0;
     std::unordered_set<std::uint32_t> const* usedSimulatedItemsThisCombat = nullptr;
+    std::unordered_set<std::uint32_t> const* equippedWorldBotItemIds = nullptr;
+    std::uint8_t const* simulatedPotionUsesThisSession = nullptr;
+    std::uint8_t const* genericPotionCharges = nullptr;
+    std::uint8_t simulatedPotionUseLimit = 0;
+    std::uint32_t equippedTrinket1ItemId = 0;
+    std::uint32_t equippedTrinket2ItemId = 0;
     std::uint32_t rotationWaitMs = 500;
     model::BotCombatAoEMode defaultAoEMode = model::BotCombatAoEMode::Centroid;
     std::uint8_t defaultAoEMinTargets = 2;
@@ -55,6 +61,8 @@ struct BotCombatEvaluatedAction
     model::BotCombatActionType actionType = model::BotCombatActionType::Spell;
     std::uint32_t spellId = 0;
     std::uint32_t itemId = 0;
+    std::string itemSelector;
+    std::uint8_t equippedSlot = 255;
     bool simulatedItemUse = false;
     Unit* target = nullptr;
     std::string targetKey;

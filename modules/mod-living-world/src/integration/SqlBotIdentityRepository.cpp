@@ -64,6 +64,50 @@ bool IsPvPLoadoutKey(std::string const& loadoutKey)
         || normalized.starts_with("PVP_");
 }
 
+std::string RollWorldBotSessionPersonalityKey(std::uint8_t level)
+{
+    // Session-scoped mood mix for active world bots:
+    // - 65% uninterested
+    // - 20% opportunistic/cautious
+    // - 10% aggressive
+    // -  5% coward
+    //
+    // Level 75+ bots never roll coward. We shift that 5% into uninterested so
+    // high-end populations skew more toward non-PvP priorities unless a
+    // specific task family later opts them into trouble.
+    static thread_local std::mt19937 rng{ std::random_device{}() };
+    std::uniform_int_distribution<int> dist(1, 100);
+    int const roll = dist(rng);
+
+    if (level >= 75)
+    {
+        if (roll <= 70)
+            return "uninterested";
+        if (roll <= 90)
+            return "opportunistic";
+        return "aggressive";
+    }
+
+    if (roll <= 65)
+        return "uninterested";
+    if (roll <= 85)
+        return "opportunistic";
+    if (roll <= 95)
+        return "aggressive";
+    return "coward";
+}
+
+std::uint64_t RollWorldBotSessionBudgetMs()
+{
+    static thread_local std::mt19937 rng{ std::random_device{}() };
+    // Session chunks run from 30 minutes up to 3 hours. Bots can still clock
+    // out early if they run out of sensible chores before the budget expires.
+    std::uniform_int_distribution<std::uint32_t> dist(
+        30u * 60u * 1000u,
+        3u * 60u * 60u * 1000u);
+    return dist(rng);
+}
+
 double GetLoadoutPersonalityWeight(living_world::integration::BotIdentityRecord const& rec)
 {
     if (!IsPvPLoadoutKey(rec.loadoutKey))
@@ -223,11 +267,11 @@ bool CreateLevelOneSuccessor(
     CharacterDatabase.Execute(
         "INSERT INTO living_world_bot_identity "
         "(name, race_id, class_id, spec_key, loadout_key, faction, display_id, gender, level, gear_tier, personality_key, "
-        "has_herbalism, has_mining, has_fishing, home_zone_id, home_anchor_point_key, home_bind_point_key, "
+        "has_herbalism, has_mining, has_fishing, home_zone_id, home_anchor_point_key, home_bind_point_key, generic_potion_charges, "
         "is_available, session_count, total_world_online_ms, "
-        "world_online_ms_since_level, post_max_world_online_ms, active_world_session_ms, "
+        "world_online_ms_since_level, post_max_world_online_ms, active_world_session_ms, active_world_session_budget_ms, "
         "active_world_session_start, is_retired, successor_spawned, retired_at, last_seen_zone, last_seen_at) "
-        "VALUES ({}, {}, {}, {}, {}, {}, {}, {}, 1, 1, {}, 0, 0, 0, {}, {}, {}, 1, 0, 0, 0, 0, 0, NULL, 0, 0, NULL, NULL, NULL)",
+        "VALUES ({}, {}, {}, {}, {}, {}, {}, {}, 1, 1, {}, 0, 0, 0, 0, {}, {}, {}, 1, 0, 0, 0, 0, 0, NULL, 0, 0, NULL, NULL, NULL)",
         QuoteCharactersString(successorName),
         raceId,
         successorClassId,
@@ -260,6 +304,21 @@ std::string NormalizeRuntimeLedgerText(std::string value, std::size_t maxLength)
     return value;
 }
 
+char const* GetBotIdentitySelectColumns()
+{
+    return
+        "id, name, race_id, class_id, spec_key, loadout_key, faction, display_id, "
+        "gender, display_loadout_key, doctrine_profile_key, level, gear_tier, personality_key, "
+        "has_herbalism, has_mining, has_fishing, population_role, reserve_city_zone_id, ambient_group_id, "
+        "ambient_group_leader_identity_id, ambient_group_role, home_zone_id, home_anchor_point_key, home_bind_point_key, "
+        "generic_potion_charges, session_count, total_world_online_ms, world_online_ms_since_level, "
+        "post_max_world_online_ms, active_world_session_ms, active_world_session_budget_ms, runtime_state, runtime_detail, "
+        "shell_account_id, shell_character_guid, shell_state_version, pending_rebuild_reason, last_rehydrate_at, "
+        "last_session_source_kind, last_session_source_key, last_task_family, last_task_activity_key, last_task_target_zone, "
+        "last_quest_hub_key, last_quest_hub_elapsed_ms, gear_refresh_pending, last_gear_refresh_band, last_seen_zone, "
+        "is_retired, is_available, skin, face, hair_style, hair_color, facial_style, appearance_resolved ";
+}
+
 living_world::integration::BotIdentityRecord ReadBotIdentityRecord(Field const* f)
 {
     living_world::integration::BotIdentityRecord rec;
@@ -272,36 +331,54 @@ living_world::integration::BotIdentityRecord ReadBotIdentityRecord(Field const* 
     rec.faction      = f[6].Get<std::uint8_t>();
     rec.displayId    = f[7].Get<std::uint32_t>();
     rec.gender       = f[8].Get<std::uint8_t>();
-    rec.level        = f[9].Get<std::uint8_t>();
-    rec.gearTier     = f[10].Get<std::uint8_t>();
-    rec.personalityKey = f[11].IsNull() ? "uninterested" : CanonicalizeWorldBotPersonalityKey(f[11].Get<std::string>());
-    rec.hasHerbalism = f[12].Get<bool>();
-    rec.hasMining    = f[13].Get<bool>();
-    rec.hasFishing   = f[14].Get<bool>();
-    rec.populationRole = f[15].IsNull() ? "world" : CanonicalizePopulationRole(f[15].Get<std::string>());
-    rec.reserveCityZoneId = f[16].IsNull() ? 0u : f[16].Get<std::uint32_t>();
-    rec.ambientGroupId = f[17].IsNull() ? 0u : f[17].Get<std::uint32_t>();
-    rec.ambientGroupLeaderIdentityId = f[18].IsNull() ? 0u : f[18].Get<std::uint32_t>();
-    rec.ambientGroupRole = f[19].IsNull() ? "" : f[19].Get<std::string>();
-    rec.homeZoneId   = f[20].IsNull() ? 0u : f[20].Get<std::uint32_t>();
-    rec.homeAnchorPointKey = f[21].IsNull() ? "" : f[21].Get<std::string>();
-    rec.homeBindPointKey   = f[22].IsNull() ? "" : f[22].Get<std::string>();
-    rec.sessionCount = f[23].Get<std::uint32_t>();
-    rec.totalWorldOnlineMs = f[24].Get<std::uint64_t>();
-    rec.worldOnlineMsSinceLevel = f[25].Get<std::uint64_t>();
-    rec.postMaxWorldOnlineMs = f[26].Get<std::uint64_t>();
-    rec.activeWorldSessionMs = f[27].Get<std::uint64_t>();
-    rec.runtimeState = f[28].IsNull() ? "" : f[28].Get<std::string>();
-    rec.runtimeDetail = f[29].IsNull() ? "" : f[29].Get<std::string>();
-    rec.lastSessionSourceKind = f[30].IsNull() ? "" : f[30].Get<std::string>();
-    rec.lastSessionSourceKey = f[31].IsNull() ? "" : f[31].Get<std::string>();
-    rec.lastTaskFamily = f[32].IsNull() ? "" : f[32].Get<std::string>();
-    rec.lastTaskTargetZoneId = f[33].IsNull() ? 0u : f[33].Get<std::uint32_t>();
-    rec.gearRefreshPending = f[34].Get<bool>();
-    rec.lastGearRefreshBand = f[35].Get<std::uint8_t>();
-    rec.lastSeenZoneId = f[36].IsNull() ? 0u : f[36].Get<std::uint32_t>();
-    rec.isRetired    = f[37].Get<bool>();
-    rec.isAvailable  = f[38].Get<bool>();
+    rec.displayLoadoutKey = f[9].IsNull() ? "" : f[9].Get<std::string>();
+    rec.doctrineProfileKey = f[10].IsNull() ? "" : f[10].Get<std::string>();
+    rec.level        = f[11].Get<std::uint8_t>();
+    rec.gearTier     = f[12].Get<std::uint8_t>();
+    rec.personalityKey = f[13].IsNull() ? "uninterested" : CanonicalizeWorldBotPersonalityKey(f[13].Get<std::string>());
+    rec.hasHerbalism = f[14].Get<bool>();
+    rec.hasMining    = f[15].Get<bool>();
+    rec.hasFishing   = f[16].Get<bool>();
+    rec.populationRole = f[17].IsNull() ? "world" : CanonicalizePopulationRole(f[17].Get<std::string>());
+    rec.reserveCityZoneId = f[18].IsNull() ? 0u : f[18].Get<std::uint32_t>();
+    rec.ambientGroupId = f[19].IsNull() ? 0u : f[19].Get<std::uint32_t>();
+    rec.ambientGroupLeaderIdentityId = f[20].IsNull() ? 0u : f[20].Get<std::uint32_t>();
+    rec.ambientGroupRole = f[21].IsNull() ? "" : f[21].Get<std::string>();
+    rec.homeZoneId   = f[22].IsNull() ? 0u : f[22].Get<std::uint32_t>();
+    rec.homeAnchorPointKey = f[23].IsNull() ? "" : f[23].Get<std::string>();
+    rec.homeBindPointKey   = f[24].IsNull() ? "" : f[24].Get<std::string>();
+    rec.genericPotionCharges = f[25].Get<std::uint8_t>();
+    rec.sessionCount = f[26].Get<std::uint32_t>();
+    rec.totalWorldOnlineMs = f[27].Get<std::uint64_t>();
+    rec.worldOnlineMsSinceLevel = f[28].Get<std::uint64_t>();
+    rec.postMaxWorldOnlineMs = f[29].Get<std::uint64_t>();
+    rec.activeWorldSessionMs = f[30].Get<std::uint64_t>();
+    rec.activeWorldSessionBudgetMs = f[31].Get<std::uint64_t>();
+    rec.runtimeState = f[32].IsNull() ? "" : f[32].Get<std::string>();
+    rec.runtimeDetail = f[33].IsNull() ? "" : f[33].Get<std::string>();
+    rec.shellAccountId = f[34].IsNull() ? 0u : f[34].Get<std::uint32_t>();
+    rec.shellCharacterGuid = f[35].IsNull() ? 0u : f[35].Get<std::uint64_t>();
+    rec.shellStateVersion = f[36].IsNull() ? 0u : f[36].Get<std::uint32_t>();
+    rec.pendingRebuildReason = f[37].IsNull() ? "" : f[37].Get<std::string>();
+    rec.lastRehydrateAt = f[38].IsNull() ? "" : f[38].Get<std::string>();
+    rec.lastSessionSourceKind = f[39].IsNull() ? "" : f[39].Get<std::string>();
+    rec.lastSessionSourceKey = f[40].IsNull() ? "" : f[40].Get<std::string>();
+    rec.lastTaskFamily = f[41].IsNull() ? "" : f[41].Get<std::string>();
+    rec.lastTaskActivityKey = f[42].IsNull() ? "" : f[42].Get<std::string>();
+    rec.lastTaskTargetZoneId = f[43].IsNull() ? 0u : f[43].Get<std::uint32_t>();
+    rec.lastQuestHubKey = f[44].IsNull() ? "" : f[44].Get<std::string>();
+    rec.lastQuestHubElapsedMs = f[45].Get<std::uint64_t>();
+    rec.gearRefreshPending = f[46].Get<bool>();
+    rec.lastGearRefreshBand = f[47].Get<std::uint8_t>();
+    rec.lastSeenZoneId = f[48].IsNull() ? 0u : f[48].Get<std::uint32_t>();
+    rec.isRetired    = f[49].Get<bool>();
+    rec.isAvailable  = f[50].Get<bool>();
+    rec.skin         = f[51].IsNull() ? 0u : f[51].Get<std::uint8_t>();
+    rec.face         = f[52].IsNull() ? 0u : f[52].Get<std::uint8_t>();
+    rec.hairStyle    = f[53].IsNull() ? 0u : f[53].Get<std::uint8_t>();
+    rec.hairColor    = f[54].IsNull() ? 0u : f[54].Get<std::uint8_t>();
+    rec.facialStyle  = f[55].IsNull() ? 0u : f[55].Get<std::uint8_t>();
+    rec.appearanceResolved = f[56].Get<bool>();
     return rec;
 }
 } // namespace
@@ -354,11 +431,83 @@ void SqlBotIdentityRepository::EnsureSchema() const
     }
 
     if (!CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_identity LIKE 'skin'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD COLUMN skin TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER gender");
+    }
+
+    if (!CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_identity LIKE 'face'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD COLUMN face TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER skin");
+    }
+
+    if (!CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_identity LIKE 'hair_style'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD COLUMN hair_style TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER face");
+    }
+
+    if (!CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_identity LIKE 'hair_color'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD COLUMN hair_color TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER hair_style");
+    }
+
+    if (!CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_identity LIKE 'facial_style'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD COLUMN facial_style TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER hair_color");
+    }
+
+    if (!CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_identity LIKE 'appearance_resolved'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD COLUMN appearance_resolved TINYINT(1) NOT NULL DEFAULT 0 AFTER facial_style");
+    }
+
+    if (!CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_identity LIKE 'display_loadout_key'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD COLUMN display_loadout_key VARCHAR(64) NOT NULL DEFAULT '' AFTER gender");
+    }
+
+    if (!CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_identity LIKE 'doctrine_profile_key'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD COLUMN doctrine_profile_key VARCHAR(64) NOT NULL DEFAULT '' AFTER display_loadout_key");
+    }
+
+    if (!CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_identity LIKE 'active_world_session_budget_ms'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD COLUMN active_world_session_budget_ms BIGINT UNSIGNED NOT NULL DEFAULT 0 AFTER active_world_session_ms");
+    }
+
+    if (!CharacterDatabase.Query(
         "SHOW COLUMNS FROM living_world_bot_identity LIKE 'runtime_state'"))
     {
         CharacterDatabase.Execute(
             "ALTER TABLE living_world_bot_identity "
-            "ADD COLUMN runtime_state VARCHAR(64) NOT NULL DEFAULT '' AFTER active_world_session_ms");
+            "ADD COLUMN runtime_state VARCHAR(64) NOT NULL DEFAULT '' AFTER active_world_session_budget_ms");
     }
 
     if (!CharacterDatabase.Query(
@@ -367,6 +516,46 @@ void SqlBotIdentityRepository::EnsureSchema() const
         CharacterDatabase.Execute(
             "ALTER TABLE living_world_bot_identity "
             "ADD COLUMN runtime_detail VARCHAR(255) NOT NULL DEFAULT '' AFTER runtime_state");
+    }
+
+    if (!CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_identity LIKE 'shell_account_id'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD COLUMN shell_account_id INT UNSIGNED NULL AFTER runtime_detail");
+    }
+
+    if (!CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_identity LIKE 'shell_character_guid'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD COLUMN shell_character_guid BIGINT UNSIGNED NULL AFTER shell_account_id");
+    }
+
+    if (!CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_identity LIKE 'shell_state_version'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD COLUMN shell_state_version INT UNSIGNED NOT NULL DEFAULT 0 AFTER shell_character_guid");
+    }
+
+    if (!CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_identity LIKE 'pending_rebuild_reason'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD COLUMN pending_rebuild_reason VARCHAR(64) NOT NULL DEFAULT '' AFTER shell_state_version");
+    }
+
+    if (!CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_identity LIKE 'last_rehydrate_at'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD COLUMN last_rehydrate_at DATETIME NULL AFTER pending_rebuild_reason");
     }
 
     if (!CharacterDatabase.Query(
@@ -394,11 +583,35 @@ void SqlBotIdentityRepository::EnsureSchema() const
     }
 
     if (!CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_identity LIKE 'last_task_activity_key'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD COLUMN last_task_activity_key VARCHAR(128) NOT NULL DEFAULT '' AFTER last_task_family");
+    }
+
+    if (!CharacterDatabase.Query(
         "SHOW COLUMNS FROM living_world_bot_identity LIKE 'last_task_target_zone'"))
     {
         CharacterDatabase.Execute(
             "ALTER TABLE living_world_bot_identity "
-            "ADD COLUMN last_task_target_zone INT UNSIGNED NULL AFTER last_task_family");
+            "ADD COLUMN last_task_target_zone INT UNSIGNED NULL AFTER last_task_activity_key");
+    }
+
+    if (!CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_identity LIKE 'last_quest_hub_key'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD COLUMN last_quest_hub_key VARCHAR(128) NOT NULL DEFAULT '' AFTER last_task_target_zone");
+    }
+
+    if (!CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_identity LIKE 'last_quest_hub_elapsed_ms'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD COLUMN last_quest_hub_elapsed_ms BIGINT UNSIGNED NOT NULL DEFAULT 0 AFTER last_quest_hub_key");
     }
 
     if (!CharacterDatabase.Query(
@@ -415,6 +628,14 @@ void SqlBotIdentityRepository::EnsureSchema() const
         CharacterDatabase.Execute(
             "ALTER TABLE living_world_bot_identity "
             "ADD COLUMN last_gear_refresh_band TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER gear_refresh_pending");
+    }
+
+    if (!CharacterDatabase.Query(
+        "SHOW COLUMNS FROM living_world_bot_identity LIKE 'generic_potion_charges'"))
+    {
+        CharacterDatabase.Execute(
+            "ALTER TABLE living_world_bot_identity "
+            "ADD COLUMN generic_potion_charges TINYINT UNSIGNED NOT NULL DEFAULT 5 AFTER home_bind_point_key");
     }
 
     if (!CharacterDatabase.Query(
@@ -437,16 +658,10 @@ void SqlBotIdentityRepository::EnsureSchema() const
 std::optional<BotIdentityRecord> SqlBotIdentityRepository::FindById(std::uint32_t id) const
 {
     QueryResult result = CharacterDatabase.Query(
-        "SELECT id, name, race_id, class_id, spec_key, loadout_key, faction, display_id, "
-        "gender, level, gear_tier, personality_key, has_herbalism, has_mining, has_fishing, "
-        "population_role, reserve_city_zone_id, ambient_group_id, ambient_group_leader_identity_id, ambient_group_role, "
-        "home_zone_id, home_anchor_point_key, home_bind_point_key, "
-        "session_count, total_world_online_ms, world_online_ms_since_level, "
-        "post_max_world_online_ms, active_world_session_ms, runtime_state, runtime_detail, "
-        "last_session_source_kind, last_session_source_key, last_task_family, last_task_target_zone, "
-        "gear_refresh_pending, last_gear_refresh_band, last_seen_zone, is_retired, is_available "
+        "SELECT {} "
         "FROM living_world_bot_identity "
         "WHERE id = {}",
+        GetBotIdentitySelectColumns(),
         id);
 
     if (!result)
@@ -458,16 +673,10 @@ std::optional<BotIdentityRecord> SqlBotIdentityRepository::FindById(std::uint32_
 std::optional<BotIdentityRecord> SqlBotIdentityRepository::FindByName(std::string const& name) const
 {
     QueryResult result = CharacterDatabase.Query(
-        "SELECT id, name, race_id, class_id, spec_key, loadout_key, faction, display_id, "
-        "gender, level, gear_tier, personality_key, has_herbalism, has_mining, has_fishing, "
-        "population_role, reserve_city_zone_id, ambient_group_id, ambient_group_leader_identity_id, ambient_group_role, "
-        "home_zone_id, home_anchor_point_key, home_bind_point_key, "
-        "session_count, total_world_online_ms, world_online_ms_since_level, "
-        "post_max_world_online_ms, active_world_session_ms, runtime_state, runtime_detail, "
-        "last_session_source_kind, last_session_source_key, last_task_family, last_task_target_zone, "
-        "gear_refresh_pending, last_gear_refresh_band, last_seen_zone, is_retired, is_available "
+        "SELECT {} "
         "FROM living_world_bot_identity "
         "WHERE name = {}",
+        GetBotIdentitySelectColumns(),
         QuoteCharactersString(name));
 
     if (!result)
@@ -478,7 +687,9 @@ std::optional<BotIdentityRecord> SqlBotIdentityRepository::FindByName(std::strin
 
 std::vector<BotIdentityRecord> SqlBotIdentityRepository::LoadAvailable(
     std::uint8_t  faction,
-    std::uint32_t limit) const
+    std::uint32_t limit,
+    std::uint8_t minLevel,
+    std::uint8_t maxLevel) const
 {
     std::vector<BotIdentityRecord> results;
     if (limit == 0)
@@ -489,39 +700,36 @@ std::vector<BotIdentityRecord> SqlBotIdentityRepository::LoadAvailable(
         256u);
 
     QueryResult result;
+    std::string levelFilter;
+    if (minLevel != 0)
+        levelFilter += " AND level >= " + std::to_string(minLevel);
+    if (maxLevel != 0)
+        levelFilter += " AND level <= " + std::to_string(maxLevel);
+
     if (faction == 0)
     {
         result = CharacterDatabase.Query(
-            "SELECT id, name, race_id, class_id, spec_key, loadout_key, faction, display_id, "
-            "gender, level, gear_tier, personality_key, has_herbalism, has_mining, has_fishing, "
-            "population_role, reserve_city_zone_id, ambient_group_id, ambient_group_leader_identity_id, ambient_group_role, "
-            "home_zone_id, home_anchor_point_key, home_bind_point_key, "
-            "session_count, total_world_online_ms, world_online_ms_since_level, "
-            "post_max_world_online_ms, active_world_session_ms, runtime_state, runtime_detail, "
-            "last_session_source_kind, last_session_source_key, last_task_family, last_task_target_zone, "
-            "gear_refresh_pending, last_gear_refresh_band, last_seen_zone, is_retired, is_available "
+            "SELECT {} "
             "FROM living_world_bot_identity "
             "WHERE is_available = 1 AND is_retired = 0 "
             "AND population_role = 'world' "
+            "{} "
             "ORDER BY RAND() LIMIT {}",
+            GetBotIdentitySelectColumns(),
+            levelFilter,
             candidateLimit);
     }
     else
     {
         result = CharacterDatabase.Query(
-            "SELECT id, name, race_id, class_id, spec_key, loadout_key, faction, display_id, "
-            "gender, level, gear_tier, personality_key, has_herbalism, has_mining, has_fishing, "
-            "population_role, reserve_city_zone_id, ambient_group_id, ambient_group_leader_identity_id, ambient_group_role, "
-            "home_zone_id, home_anchor_point_key, home_bind_point_key, "
-            "session_count, total_world_online_ms, world_online_ms_since_level, "
-            "post_max_world_online_ms, active_world_session_ms, runtime_state, runtime_detail, "
-            "last_session_source_kind, last_session_source_key, last_task_family, last_task_target_zone, "
-            "gear_refresh_pending, last_gear_refresh_band, last_seen_zone, is_retired, is_available "
+            "SELECT {} "
             "FROM living_world_bot_identity "
             "WHERE is_available = 1 AND is_retired = 0 AND faction = {} "
             "AND population_role = 'world' "
+            "{} "
             "ORDER BY RAND() LIMIT {}",
-            faction, candidateLimit);
+            GetBotIdentitySelectColumns(),
+            faction, levelFilter, candidateLimit);
     }
 
     if (!result)
@@ -555,35 +763,23 @@ std::vector<BotIdentityRecord> SqlBotIdentityRepository::LoadAvailableReserveFor
     if (faction == 0)
     {
         result = CharacterDatabase.Query(
-            "SELECT id, name, race_id, class_id, spec_key, loadout_key, faction, display_id, "
-            "gender, level, gear_tier, personality_key, has_herbalism, has_mining, has_fishing, "
-            "population_role, reserve_city_zone_id, ambient_group_id, ambient_group_leader_identity_id, ambient_group_role, "
-            "home_zone_id, home_anchor_point_key, home_bind_point_key, "
-            "session_count, total_world_online_ms, world_online_ms_since_level, "
-            "post_max_world_online_ms, active_world_session_ms, runtime_state, runtime_detail, "
-            "last_session_source_kind, last_session_source_key, last_task_family, last_task_target_zone, "
-            "gear_refresh_pending, last_gear_refresh_band, last_seen_zone, is_retired, is_available "
+            "SELECT {} "
             "FROM living_world_bot_identity "
             "WHERE is_available = 1 AND is_retired = 0 "
             "AND population_role = 'city_reserve' AND reserve_city_zone_id = {} "
             "ORDER BY RAND() LIMIT {}",
+            GetBotIdentitySelectColumns(),
             reserveCityZoneId, candidateLimit);
     }
     else
     {
         result = CharacterDatabase.Query(
-            "SELECT id, name, race_id, class_id, spec_key, loadout_key, faction, display_id, "
-            "gender, level, gear_tier, personality_key, has_herbalism, has_mining, has_fishing, "
-            "population_role, reserve_city_zone_id, ambient_group_id, ambient_group_leader_identity_id, ambient_group_role, "
-            "home_zone_id, home_anchor_point_key, home_bind_point_key, "
-            "session_count, total_world_online_ms, world_online_ms_since_level, "
-            "post_max_world_online_ms, active_world_session_ms, runtime_state, runtime_detail, "
-            "last_session_source_kind, last_session_source_key, last_task_family, last_task_target_zone, "
-            "gear_refresh_pending, last_gear_refresh_band, last_seen_zone, is_retired, is_available "
+            "SELECT {} "
             "FROM living_world_bot_identity "
             "WHERE is_available = 1 AND is_retired = 0 AND faction = {} "
             "AND population_role = 'city_reserve' AND reserve_city_zone_id = {} "
             "ORDER BY RAND() LIMIT {}",
+            GetBotIdentitySelectColumns(),
             faction, reserveCityZoneId, candidateLimit);
     }
 
@@ -609,14 +805,7 @@ std::vector<BotIdentityRecord> SqlBotIdentityRepository::LoadAvailableAmbientGro
         return results;
 
     QueryResult result = CharacterDatabase.Query(
-        "SELECT id, name, race_id, class_id, spec_key, loadout_key, faction, display_id, "
-        "gender, level, gear_tier, personality_key, has_herbalism, has_mining, has_fishing, "
-        "population_role, reserve_city_zone_id, ambient_group_id, ambient_group_leader_identity_id, ambient_group_role, "
-        "home_zone_id, home_anchor_point_key, home_bind_point_key, "
-        "session_count, total_world_online_ms, world_online_ms_since_level, "
-        "post_max_world_online_ms, active_world_session_ms, runtime_state, runtime_detail, "
-        "last_session_source_kind, last_session_source_key, last_task_family, last_task_target_zone, "
-        "gear_refresh_pending, last_gear_refresh_band, last_seen_zone, is_retired, is_available "
+        "SELECT {} "
         "FROM living_world_bot_identity "
         "WHERE ambient_group_id = {} AND is_available = 1 AND is_retired = 0 "
         "ORDER BY "
@@ -625,6 +814,7 @@ std::vector<BotIdentityRecord> SqlBotIdentityRepository::LoadAvailableAmbientGro
         "  ELSE 1 "
         "END ASC, "
         "id ASC",
+        GetBotIdentitySelectColumns(),
         ambientGroupId);
 
     if (!result)
@@ -640,12 +830,28 @@ std::vector<BotIdentityRecord> SqlBotIdentityRepository::LoadAvailableAmbientGro
 
 void SqlBotIdentityRepository::MarkActive(std::uint32_t id) const
 {
+    std::uint8_t level = 1;
+    if (QueryResult result = CharacterDatabase.Query(
+            "SELECT level FROM living_world_bot_identity WHERE id = {}",
+            id))
+    {
+        level = result->Fetch()[0].Get<std::uint8_t>();
+    }
+
+    std::string const sessionPersonalityKey =
+        QuoteCharactersString(RollWorldBotSessionPersonalityKey(level));
+    std::uint64_t const sessionBudgetMs = RollWorldBotSessionBudgetMs();
+
     CharacterDatabase.Execute(
         "UPDATE living_world_bot_identity "
         "SET is_available = 0, session_count = session_count + 1, "
-        "active_world_session_ms = 0, active_world_session_start = NOW(), "
-        "runtime_state = '', runtime_detail = '' "
+        "personality_key = {}, "
+        "active_world_session_ms = 0, active_world_session_budget_ms = {}, active_world_session_start = NOW(), "
+        "runtime_state = '', runtime_detail = '', "
+        "last_task_activity_key = '', last_quest_hub_key = '', last_quest_hub_elapsed_ms = 0 "
         "WHERE id = {}",
+        sessionPersonalityKey,
+        sessionBudgetMs,
         id);
 }
 
@@ -656,7 +862,8 @@ void SqlBotIdentityRepository::MarkAvailable(
     CharacterDatabase.Execute(
         "UPDATE living_world_bot_identity "
         "SET is_available = 1, last_seen_zone = {}, last_seen_at = NOW(), "
-        "active_world_session_ms = 0, active_world_session_start = NULL, "
+        "personality_key = 'uninterested', "
+        "active_world_session_ms = 0, active_world_session_budget_ms = 0, active_world_session_start = NULL, "
         "runtime_state = '', runtime_detail = '' "
         "WHERE id = {}",
         lastSeenZoneId, id);
@@ -676,27 +883,133 @@ void SqlBotIdentityRepository::UpdateGearRefreshState(
         id);
 }
 
+std::vector<BotIdentityRecord> SqlBotIdentityRepository::LoadAppearanceUnresolved(
+    std::uint32_t limit) const
+{
+    std::vector<BotIdentityRecord> results;
+    std::string limitClause;
+    if (limit > 0)
+        limitClause = " LIMIT " + std::to_string(limit);
+
+    QueryResult result = CharacterDatabase.Query(
+        "SELECT {} "
+        "FROM living_world_bot_identity "
+        "WHERE appearance_resolved = 0 "
+        "ORDER BY id ASC{}",
+        GetBotIdentitySelectColumns(),
+        limitClause);
+
+    if (!result)
+        return results;
+
+    do
+    {
+        results.push_back(ReadBotIdentityRecord(result->Fetch()));
+    } while (result->NextRow());
+
+    return results;
+}
+
+void SqlBotIdentityRepository::UpdateAppearance(
+    std::uint32_t id,
+    std::uint8_t skin,
+    std::uint8_t face,
+    std::uint8_t hairStyle,
+    std::uint8_t hairColor,
+    std::uint8_t facialStyle,
+    bool appearanceResolved) const
+{
+    CharacterDatabase.Execute(
+        "UPDATE living_world_bot_identity "
+        "SET skin = {}, face = {}, hair_style = {}, hair_color = {}, facial_style = {}, appearance_resolved = {} "
+        "WHERE id = {}",
+        static_cast<std::uint32_t>(skin),
+        static_cast<std::uint32_t>(face),
+        static_cast<std::uint32_t>(hairStyle),
+        static_cast<std::uint32_t>(hairColor),
+        static_cast<std::uint32_t>(facialStyle),
+        appearanceResolved ? 1u : 0u,
+        id);
+}
+
+void SqlBotIdentityRepository::UpdateShellState(
+    std::uint32_t id,
+    std::uint32_t shellAccountId,
+    std::uint64_t shellCharacterGuid,
+    std::uint32_t shellStateVersion,
+    std::string const& pendingRebuildReason) const
+{
+    std::string const normalizedReason =
+        QuoteCharactersString(NormalizeRuntimeLedgerText(pendingRebuildReason, 64));
+
+    CharacterDatabase.Execute(
+        "UPDATE living_world_bot_identity "
+        "SET shell_account_id = {}, shell_character_guid = {}, shell_state_version = {}, "
+        "pending_rebuild_reason = {} "
+        "WHERE id = {}",
+        shellAccountId == 0 ? std::string("NULL") : std::to_string(shellAccountId),
+        shellCharacterGuid == 0 ? std::string("NULL") : std::to_string(shellCharacterGuid),
+        shellStateVersion,
+        normalizedReason,
+        id);
+}
+
+void SqlBotIdentityRepository::MarkShellRehydrated(
+    std::uint32_t id,
+    std::uint32_t shellStateVersion) const
+{
+    CharacterDatabase.Execute(
+        "UPDATE living_world_bot_identity "
+        "SET shell_state_version = {}, pending_rebuild_reason = '', last_rehydrate_at = NOW() "
+        "WHERE id = {}",
+        shellStateVersion,
+        id);
+}
+
 void SqlBotIdentityRepository::UpdateActiveRuntimeState(
     std::uint32_t id,
     std::uint32_t zoneId,
     std::uint64_t activeWorldSessionMs,
     std::string const& runtimeState,
-    std::string const& runtimeDetail) const
+    std::string const& runtimeDetail,
+    std::string const& currentTaskActivityKey,
+    std::string const& currentQuestHubKey,
+    std::uint64_t currentQuestHubElapsedMs) const
 {
     std::string const normalizedState =
         QuoteCharactersString(NormalizeRuntimeLedgerText(runtimeState, 64));
     std::string const normalizedDetail =
         QuoteCharactersString(NormalizeRuntimeLedgerText(runtimeDetail, 255));
+    std::string const normalizedTaskActivityKey =
+        QuoteCharactersString(NormalizeRuntimeLedgerText(currentTaskActivityKey, 128));
+    std::string const normalizedQuestHubKey =
+        QuoteCharactersString(NormalizeRuntimeLedgerText(currentQuestHubKey, 128));
 
     CharacterDatabase.Execute(
         "UPDATE living_world_bot_identity "
         "SET active_world_session_ms = {}, last_seen_zone = {}, "
-        "runtime_state = {}, runtime_detail = {} "
+        "runtime_state = {}, runtime_detail = {}, "
+        "last_task_activity_key = {}, last_quest_hub_key = {}, last_quest_hub_elapsed_ms = {} "
         "WHERE id = {} AND is_available = 0",
         activeWorldSessionMs,
         zoneId == 0 ? std::string("NULL") : std::to_string(zoneId),
         normalizedState,
         normalizedDetail,
+        normalizedTaskActivityKey,
+        normalizedQuestHubKey,
+        currentQuestHubElapsedMs,
+        id);
+}
+
+void SqlBotIdentityRepository::UpdateGenericPotionCharges(
+    std::uint32_t id,
+    std::uint8_t genericPotionCharges) const
+{
+    CharacterDatabase.Execute(
+        "UPDATE living_world_bot_identity "
+        "SET generic_potion_charges = {} "
+        "WHERE id = {}",
+        std::min<std::uint32_t>(5u, genericPotionCharges),
         id);
 }
 
@@ -707,7 +1020,10 @@ void SqlBotIdentityRepository::CompleteWorldSession(
     std::string const& lastSessionSourceKind,
     std::string const& lastSessionSourceKey,
     std::string const& lastTaskFamily,
-    std::uint32_t lastTaskTargetZoneId) const
+    std::uint32_t lastTaskTargetZoneId,
+    std::string const& lastTaskActivityKey,
+    std::string const& lastQuestHubKey,
+    std::uint64_t lastQuestHubElapsedMs) const
 {
     if (sessionWorldOnlineMs == 0)
     {
@@ -722,7 +1038,7 @@ void SqlBotIdentityRepository::CompleteWorldSession(
     QueryResult result = CharacterDatabase.Query(
         "SELECT name, level, total_world_online_ms, world_online_ms_since_level, "
         "post_max_world_online_ms, is_retired, successor_spawned, race_id, class_id, spec_key, loadout_key, personality_key, faction, display_id, gender, gear_refresh_pending, "
-        "home_zone_id, home_anchor_point_key, home_bind_point_key, population_role "
+        "home_zone_id, home_anchor_point_key, home_bind_point_key, generic_potion_charges, population_role "
         "FROM living_world_bot_identity WHERE id = {}",
         id);
 
@@ -749,14 +1065,14 @@ void SqlBotIdentityRepository::CompleteWorldSession(
     std::uint32_t homeZoneId = f[16].IsNull() ? 0u : f[16].Get<std::uint32_t>();
     std::string homeAnchorPointKey = f[17].IsNull() ? "" : f[17].Get<std::string>();
     std::string homeBindPointKey = f[18].IsNull() ? "" : f[18].Get<std::string>();
-    std::string const populationRole = f[19].IsNull() ? "world" : CanonicalizePopulationRole(f[19].Get<std::string>());
+    std::string const populationRole = f[20].IsNull() ? "world" : CanonicalizePopulationRole(f[20].Get<std::string>());
 
     if (isRetired)
     {
         CharacterDatabase.Execute(
             "UPDATE living_world_bot_identity "
             "SET is_available = 0, last_seen_zone = {}, last_seen_at = NOW(), "
-            "active_world_session_ms = 0, active_world_session_start = NULL, "
+            "active_world_session_ms = 0, active_world_session_budget_ms = 0, active_world_session_start = NULL, "
             "runtime_state = '', runtime_detail = '' "
             "WHERE id = {}",
             lastSeenZoneId, id);
@@ -771,20 +1087,29 @@ void SqlBotIdentityRepository::CompleteWorldSession(
             QuoteCharactersString(NormalizeRuntimeLedgerText(lastSessionSourceKey, 128));
         std::string const normalizedTaskFamily =
             QuoteCharactersString(NormalizeRuntimeLedgerText(lastTaskFamily, 32));
+        std::string const normalizedTaskActivityKey =
+            QuoteCharactersString(NormalizeRuntimeLedgerText(lastTaskActivityKey, 128));
+        std::string const normalizedQuestHubKey =
+            QuoteCharactersString(NormalizeRuntimeLedgerText(lastQuestHubKey, 128));
 
         CharacterDatabase.Execute(
             "UPDATE living_world_bot_identity "
             "SET is_available = 1, last_seen_zone = {}, last_seen_at = NOW(), "
             "last_session_source_kind = {}, last_session_source_key = {}, "
-            "last_task_family = {}, last_task_target_zone = {}, "
-            "active_world_session_ms = 0, active_world_session_start = NULL, "
+            "last_task_family = {}, last_task_activity_key = {}, last_task_target_zone = {}, "
+            "last_quest_hub_key = {}, last_quest_hub_elapsed_ms = {}, "
+            "personality_key = 'uninterested', "
+            "active_world_session_ms = 0, active_world_session_budget_ms = 0, active_world_session_start = NULL, "
             "runtime_state = '', runtime_detail = '' "
             "WHERE id = {}",
             lastSeenZoneId,
             normalizedSourceKind,
             normalizedSourceKey,
             normalizedTaskFamily,
+            normalizedTaskActivityKey,
             lastTaskTargetZoneId == 0 ? std::string("NULL") : std::to_string(lastTaskTargetZoneId),
+            normalizedQuestHubKey,
+            lastQuestHubElapsedMs,
             id);
         return;
     }
@@ -833,8 +1158,10 @@ void SqlBotIdentityRepository::CompleteWorldSession(
         newPostMax += sessionWorldOnlineMs;
     }
 
-    std::uint8_t const oldGearBand = service::ComputeWorldBotGearRefreshBand(level);
-    std::uint8_t const newGearBand = service::ComputeWorldBotGearRefreshBand(newLevel);
+    std::uint8_t const oldGearBand =
+        service::ComputeWorldBotGearRefreshBand(level, postMaxWorldOnlineMs);
+    std::uint8_t const newGearBand =
+        service::ComputeWorldBotGearRefreshBand(newLevel, newPostMax);
     bool const crossedGearBand = newGearBand != oldGearBand;
     bool const newGearRefreshPending = gearRefreshPending || crossedGearBand;
     bool retireNow = newLevel >= MaxBotLevel && newPostMax >= RetirementGraceMs;
@@ -844,6 +1171,10 @@ void SqlBotIdentityRepository::CompleteWorldSession(
         NormalizeRuntimeLedgerText(lastSessionSourceKey, 128);
     std::string const normalizedTaskFamily =
         NormalizeRuntimeLedgerText(lastTaskFamily, 32);
+    std::string const normalizedTaskActivityKey =
+        NormalizeRuntimeLedgerText(lastTaskActivityKey, 128);
+    std::string const normalizedQuestHubKey =
+        NormalizeRuntimeLedgerText(lastQuestHubKey, 128);
 
     std::string const progressDetail =
         "personality='" + personalityKey
@@ -911,8 +1242,10 @@ void SqlBotIdentityRepository::CompleteWorldSession(
             "world_online_ms_since_level = {}, post_max_world_online_ms = {}, successor_spawned = {}, gear_refresh_pending = {}, "
             "is_available = 0, is_retired = 1, retired_at = NOW(), "
             "last_seen_zone = {}, last_seen_at = NOW(), "
-            "last_session_source_kind = {}, last_session_source_key = {}, last_task_family = {}, last_task_target_zone = {}, "
-            "active_world_session_ms = 0, active_world_session_start = NULL, "
+            "last_session_source_kind = {}, last_session_source_key = {}, last_task_family = {}, last_task_activity_key = {}, last_task_target_zone = {}, "
+            "last_quest_hub_key = {}, last_quest_hub_elapsed_ms = {}, "
+            "personality_key = 'uninterested', "
+            "active_world_session_ms = 0, active_world_session_budget_ms = 0, active_world_session_start = NULL, "
             "runtime_state = '', runtime_detail = '' "
             "WHERE id = {}",
             newLevel, newTotal, newSinceLevel, newPostMax, newSuccessorSpawned, newGearRefreshPending,
@@ -920,7 +1253,10 @@ void SqlBotIdentityRepository::CompleteWorldSession(
             QuoteCharactersString(normalizedSourceKind),
             QuoteCharactersString(normalizedSourceKey),
             QuoteCharactersString(normalizedTaskFamily),
+            QuoteCharactersString(normalizedTaskActivityKey),
             lastTaskTargetZoneId == 0 ? std::string("NULL") : std::to_string(lastTaskTargetZoneId),
+            QuoteCharactersString(normalizedQuestHubKey),
+            lastQuestHubElapsedMs,
             id);
         return;
     }
@@ -931,8 +1267,10 @@ void SqlBotIdentityRepository::CompleteWorldSession(
         "world_online_ms_since_level = {}, post_max_world_online_ms = {}, successor_spawned = {}, gear_refresh_pending = {}, "
         "is_available = 1, is_retired = 0, retired_at = NULL, "
         "last_seen_zone = {}, last_seen_at = NOW(), "
-        "last_session_source_kind = {}, last_session_source_key = {}, last_task_family = {}, last_task_target_zone = {}, "
-        "active_world_session_ms = 0, active_world_session_start = NULL, "
+        "last_session_source_kind = {}, last_session_source_key = {}, last_task_family = {}, last_task_activity_key = {}, last_task_target_zone = {}, "
+        "last_quest_hub_key = {}, last_quest_hub_elapsed_ms = {}, "
+        "personality_key = 'uninterested', "
+        "active_world_session_ms = 0, active_world_session_budget_ms = 0, active_world_session_start = NULL, "
         "runtime_state = '', runtime_detail = '' "
         "WHERE id = {}",
         newLevel, newTotal, newSinceLevel, newPostMax, newSuccessorSpawned, newGearRefreshPending,
@@ -940,7 +1278,10 @@ void SqlBotIdentityRepository::CompleteWorldSession(
         QuoteCharactersString(normalizedSourceKind),
         QuoteCharactersString(normalizedSourceKey),
         QuoteCharactersString(normalizedTaskFamily),
+        QuoteCharactersString(normalizedTaskActivityKey),
         lastTaskTargetZoneId == 0 ? std::string("NULL") : std::to_string(lastTaskTargetZoneId),
+        QuoteCharactersString(normalizedQuestHubKey),
+        lastQuestHubElapsedMs,
         id);
 }
 
@@ -960,7 +1301,8 @@ std::uint32_t SqlBotIdentityRepository::RecoverStaleActiveSessions() const
     CharacterDatabase.Execute(
         "UPDATE living_world_bot_identity "
         "SET is_available = 1, "
-        "active_world_session_ms = 0, active_world_session_start = NULL, "
+        "personality_key = 'uninterested', "
+        "active_world_session_ms = 0, active_world_session_budget_ms = 0, active_world_session_start = NULL, "
         "runtime_state = '', runtime_detail = '' "
         "WHERE is_available = 0 AND is_retired = 0");
 

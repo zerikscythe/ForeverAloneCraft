@@ -1,14 +1,13 @@
 -- living_world_bot_identity (acore_characters)
 --
--- Persistent identity ledger for creature-based world bots.
+-- Persistent identity ledger for abstract living-world bots.
 -- Each row is a named individual who may appear in the world more than once.
 -- Creatures are spawned from this table instead of an anonymous template pool,
 -- giving the server population a sense of recurring faces.
 --
--- The bot is a Creature, not a Player session. No account, no character guid.
--- Identity fields drive the creature's display model, name, combat profile, and
--- activity eligibility. Session tracking fields let the system (and future GM
--- tools) show "last seen in Stranglethorn, 3 sessions total."
+-- This row is the canonical truth even when a bot is later materialized through
+-- a leased player shell. Derived player-table state should be rebuilt from this
+-- ledger plus sidecar tables rather than treated as permanent truth.
 
 CREATE TABLE IF NOT EXISTS living_world_bot_identity (
     id              INT UNSIGNED     NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -22,6 +21,14 @@ CREATE TABLE IF NOT EXISTS living_world_bot_identity (
     faction         TINYINT UNSIGNED NOT NULL,           -- 1=Alliance  2=Horde
     display_id      INT UNSIGNED     NOT NULL,           -- creature_template displayid for visual
     gender          TINYINT UNSIGNED NOT NULL DEFAULT 0, -- 0=male 1=female
+    skin            TINYINT UNSIGNED NOT NULL DEFAULT 0, -- player shell appearance (0 means unresolved until appearance_resolved=1)
+    face            TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    hair_style      TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    hair_color      TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    facial_style    TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    appearance_resolved TINYINT(1)   NOT NULL DEFAULT 0, -- once set, zero can be a legitimate appearance value
+    display_loadout_key VARCHAR(64)  NOT NULL DEFAULT '', -- visual equipment/profile package for shell rebuilds
+    doctrine_profile_key VARCHAR(64) NOT NULL DEFAULT '', -- resolved combat doctrine bundle for shell rebuilds
 
     -- Capability
     level           TINYINT UNSIGNED NOT NULL,
@@ -50,6 +57,11 @@ CREATE TABLE IF NOT EXISTS living_world_bot_identity (
     active_world_session_ms     BIGINT UNSIGNED NOT NULL DEFAULT 0,
     runtime_state               VARCHAR(64)     NOT NULL DEFAULT '',
     runtime_detail              VARCHAR(255)    NOT NULL DEFAULT '',
+    shell_account_id            INT UNSIGNED     NULL,               -- currently leased shell account id when materialized
+    shell_character_guid        BIGINT UNSIGNED  NULL,               -- currently leased shell character guid when materialized
+    shell_state_version         INT UNSIGNED     NOT NULL DEFAULT 0, -- increment when shell-relevant rebuild data changes
+    pending_rebuild_reason      VARCHAR(64)      NOT NULL DEFAULT '',
+    last_rehydrate_at           DATETIME         NULL,
     active_world_session_start  DATETIME        NULL,
     is_retired     TINYINT UNSIGNED NOT NULL DEFAULT 0,
     successor_spawned TINYINT UNSIGNED NOT NULL DEFAULT 0,
@@ -66,4 +78,4 @@ CREATE TABLE IF NOT EXISTS living_world_bot_identity (
     KEY idx_active       (is_available, is_retired),
     KEY idx_retired      (is_retired, retired_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-  COMMENT='Persistent identity ledger for creature-based world bots';
+  COMMENT='Persistent identity ledger for abstract bots and leased player shells';

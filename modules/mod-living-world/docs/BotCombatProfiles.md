@@ -10,25 +10,37 @@ reconstructing the plan from chat history.
 
 ## Current status
 
-This is still primarily a design-direction document, not a "fully landed live
-system" description.
+This is now a mixed document:
 
-Today the broader world-bot stack already has:
+- the core shared doctrine/runtime stack is real and live
+- the per-bot editable profile/addon-facing authoring surface is still partly a
+  design/handoff topic
+- the visible ambient runtime is pivoting toward leased `Player` shells, so the
+  doctrine stack should increasingly be thought of as:
+  - shared across account/session bots
+  - shared across ledger-shell ambient bots
+  - only secondarily adapted to the older creature-backed ambient fallback path
+
+Today the broader living-world combat stack already has:
 
 - persistent identity
 - virtual/assigned loadouts
 - player-like stat baseline work
 - growing travel realism
+- class-family doctrine modernizations for every non-Druid default family
+- live world-bot glyph materialization
+- live stage-0 curated pre-raid gear templates for the modernized families
+- first-pass class-pet support for Frost Mage, Unholy DK, Hunter, Warlock, and
+  Shaman summon cases
 
-But combat depth is still behind travel/system depth.
+But combat depth is still behind the strongest travel/system work.
 
 In practice that means:
 
-- many world-bot class/spec behaviors remain shallow
-- this combat-profile/doctrine direction is still one of the largest future
-  realism tracks
-- it is important, but it is not currently the nearest shipping slice compared
-  with city-presence and quest-hub runtime work
+- the doctrine/runtime path is already one of the main truths for modernized
+  world-bot combat
+- deeper coordination, combo timing, pet/autocast polish, and player-editable
+  authoring still remain future realism tracks
 
 ---
 
@@ -123,22 +135,21 @@ Runtime uses:
 
 ### 2.5 Start small
 
-V1 default coverage is **one baked-in starter doctrine per class**.
+The project originally started with one baked-in starter doctrine per class.
 
-Recommended initial defaults:
+Live default coverage is now much broader:
 
-- Warrior -> Arms:DPS
-- Paladin -> Retribution:DPS
-- Hunter -> BeastMastery:DPS
-- Rogue -> Combat:DPS
-- Priest -> Shadow:DPS
-- DeathKnight -> Unholy:DPS
-- Shaman -> Elemental:DPS
-- Mage -> Frost:DPS
-- Warlock -> Affliction:DPS
-- Druid -> Balance:DPS
+- Death Knight -> Blood / Frost / Unholy
+- Hunter -> Beast Mastery / Marksmanship / Survival
+- Mage -> Arcane / Fire / Frost
+- Paladin -> Holy / Protection / Retribution
+- Priest -> Discipline / Holy / Shadow
+- Rogue -> Assassination / Combat / Subtlety
+- Shaman -> Elemental / Enhancement / Restoration
+- Warlock -> Affliction / Demonology / Destruction
+- Warrior -> Arms / Fury / Protection
 
-Later work can add healer/tank/specialized variants.
+Druid remains the last default family waiting on the same style of rewrite.
 
 ---
 
@@ -183,12 +194,16 @@ Otherwise it attempts the fallback.
 The combat runtime is intentionally **shared** between:
 
 - account/session bots backed by real `Player` objects
-- non-account/world bots backed by `Creature` objects
+- ledger-shell ambient bots backed by leased real `Player` objects
+- older non-account/world bots still backed by `Creature` objects where that
+  compatibility lane remains in use
 
 The important split is **not** the doctrine or row executor. The split is in how
 the bot arrives at the runtime:
 
 - session/account bots build their known-spell set from `Player::GetSpellMap()`
+- ledger-shell ambient bots rebuild a real player spellbook/talent/action-bar
+  package from ledger truth before entering the shared runtime
 - world bots build a synthetic player-like known-spell set from:
   - creature spell slots
   - doctrine/profile action spells
@@ -201,10 +216,11 @@ After that, both paths converge on the same layers:
 - `BotCombatProfilePreparationService`
 - `BotCombatRuntimeEvaluator`
 
-So world bots should be thought of as using a **modified Player-style combat
-preparation flow**, not as a wholly separate combat engine. Creature-specific
-helpers such as `Creature::CanCastSpell(...)` are only one final feasibility
-check inside that broader shared runtime path.
+So the doctrine stack should be thought of as **Player-first shared combat
+runtime** plus a legacy creature-compatibility lane, not as a wholly separate
+world-bot combat engine. Creature-specific helpers such as
+`Creature::CanCastSpell(...)` are only one final feasibility check inside that
+broader shared runtime path.
 
 ---
 
@@ -342,6 +358,45 @@ The same machinery should later scale into:
 - raid icon tactical overrides
 - tank/off-tank swap rules on stacking debuff fights
 
+Build order matters here:
+
+1. make the shared combat layer solid for fully AI-owned world-bot parties
+2. reuse that same runtime shape for companion/account bots in smart mode
+3. add player-intent inference on top
+4. add explicit addon or UI controls only where inference is not reliable enough
+
+That means the first version should not depend on a player addon to function.
+It should already know how to:
+
+- stabilize chaotic pulls
+- hold party primary target state
+- arbitrate interrupt ownership
+- assign peel / add rescue
+
+Later, player-led groups can feed the same layer through two extra channels:
+
+- inferred "body language" signals from player combat state
+- optional explicit player commands / addon inputs
+
+The important design rule is that these are **inputs to the same shared combat
+state**, not separate parallel combat brains.
+
+Examples of high-confidence body-language signals worth inferring later:
+
+- healer player takes damage from a fresh attacker -> `healer_under_pressure`
+- tank player moves into hostile commit range with target selected ->
+  `leader_pull_phase=committed`
+- player swaps target to a hostile hitting the back line -> likely
+  `focus_shift` / peel interest
+- player gets hit unexpectedly -> `distressed_ally_guid=player`
+
+This keeps the player path incremental:
+
+- AI parties prove the combat layer first
+- smart companions reuse it
+- player inference rides on top of it
+- addon buttons become optional precision tools, not mandatory life support
+
 One small but valuable world-behavior note should stay separate from committed
 party combat:
 
@@ -370,6 +425,210 @@ Encounter / party coordination layer
   -> movement/posture doctrine
   -> spell rotation / interrupts
 ```
+
+For the current ambient world-bot runtime, the clean insertion point is between:
+
+- "I have entered or noticed combat"
+- and "run my personal target and spell evaluation"
+
+That means the shared layer should not replace the movement doctrine or the
+class profile. It should sit above them and answer a small number of questions
+that the current solo logic keeps answering locally:
+
+- who is the party anchor right now?
+- is this fight still in stabilization or is it safe to free-DPS?
+- which hostile is the party-primary target?
+- is one ally currently distressed and asking for peel/help?
+- has someone already claimed the interrupt or aggro handoff?
+
+The initial world-bot version should stay deliberately small and event-driven.
+The requester model is still the right one:
+
+- the bot that needs help asks
+- the shared state replies
+- one bot claims the action
+
+Avoid a design where every bot broadcasts every tick. The useful first state is:
+
+- `party_primary_target_guid`
+- `tank_anchor_target_guid`
+- `stabilization_active`
+- `distressed_ally_guid`
+- `aggro_claimed_by_guid`
+- `danger_cast_target_guid`
+- `interrupt_claimed_by_guid`
+- `leader_pull_phase`
+- per-field timestamps / expiry windows
+
+The first expansion after basic primary-target / interrupt ownership should be
+**peel and add-rescue coordination**.
+
+World and dungeon fights will not stay single-target forever:
+
+- a healer may pull threat from a fresh add
+- a patrol may join mid-fight
+- scripted trash may spawn on the back line
+
+The group needs shared state for:
+
+- `new_add_detected`
+- `healer_under_pressure`
+- `peel_request_target_guid`
+- `peel_claimed_by_guid`
+- `add_rescue_role`
+- `tank_locked_on_anchor`
+
+The intended policy is role-shaped:
+
+- tank normally stays on anchor duty and does not pivot away from the main pack
+- DPS roles arbitrate who is free enough to peel the add off the healer
+- first suitable claimant wins and the rest stand down
+- ranged-control exceptions are allowed for classes that can rescue without
+  abandoning anchor positioning
+
+Distress should not be modeled as "publish every hit." It should be a small
+state machine keyed by `(distressed ally, attacker)` with escalation over time.
+
+Recommended first rule ladder:
+
+- if a **DPS** is attacked:
+  - tick 1: `alert`
+    - publish once
+    - let the DPS try to handle it alone first
+  - tick 5-6: `assist_requested`
+    - if attacker HP is still `> 50%`, do a DPS helper roll call
+    - allow one suitable DPS helper to claim assist
+  - tick 8-10: `urgent_assist`
+    - if attacker HP is still `> 50%`, allow additional free DPS help
+    - tank still stays anchored unless a remote rescue tool exists
+
+- if a **healer** is attacked:
+  - tick 1: `healer_distress`
+    - immediate role call for help
+    - no attacker-HP gate
+  - tick 5-6: `healer_urgent`
+    - stronger peel priority
+    - fallback tank rescue tools may be used if they do not break anchor
+  - tick 8-10: `healer_critical`
+    - maximum urgency
+    - normal free-DPS behavior is subordinate to healer rescue
+
+- if no damage from that same attacker arrives for roughly 3 ticks:
+  - clear the distress state
+  - likely meanings:
+    - add died
+    - add swapped off
+    - tank anchored it
+    - peel succeeded
+
+This gives the party useful asymmetry:
+
+- tank pressure is usually normal tanking, not distress
+- DPS pressure starts as "probably manageable"
+- healer pressure is a party problem immediately
+
+The implementation implication is:
+
+- publish on first meaningful state entry
+- republish only on tier change, attacker change, or clear
+- do not spam the same alert every tick
+
+### Future combo-block expansion
+
+One future expansion worth keeping visible, but **not** pulling into the
+current critical path, is a small **combo block** / **action chain** system.
+
+The motivation is that some specs have meaningful multi-action timing that
+plain priority rows do not capture very well. A good example is Frost Mage
+burst timing where a bot may want to:
+
+1. cast `Frostbolt`
+2. wait a short tuned delay
+3. cast `Ice Lance`
+
+The intended design boundary is:
+
+- do **not** turn doctrine into a full scripting language
+- do allow a small linear multi-step sequence for niche cases where timing
+  matters more than raw priority
+
+If implemented later, the first version should stay narrow:
+
+- 2-4 ordered steps
+- optional per-step delay
+- normal top-level entry conditions still apply
+- optional recheck between steps:
+  - target still valid
+  - proc/aura still active
+  - distance still in band
+
+Distance should preferably reuse the existing condition language instead of
+inventing a special range field. For example:
+
+- `distance >= 18`
+- `distance <= 28`
+
+That lets a combo only start from a useful distance band without adding a
+parallel targeting/range system.
+
+This should remain a **future capability** for burst/setup specs and should be
+revisited after the current higher-priority work is steadier:
+
+- profile variants
+- pet control
+- staged endgame gear sets
+- item-use plumbing
+- broader class doctrine modernization
+
+For the first implementation, "who peels?" should stay simple:
+
+1. healer or shared state marks distress
+2. eligible DPS asks "is a peel claim open?"
+3. highest-priority valid DPS claims the add
+4. tank only becomes fallback if no suitable peel claimant exists
+
+One important tactical rule should be explicit:
+
+- not every tank should break anchor to chase back-line adds
+- if a class can pull, grip, taunt, stun, or otherwise redirect the add without
+  walking away from the main line, that is a separate allowed rescue path
+
+For ambient parties, the first read/write hooks should be:
+
+- combat start / assist / reactive aggro:
+  - `JustEngagedWith(...)`
+  - `DamageTaken(...)`
+  - `TryJoinNearbyAmbientCombat(...)`
+  - `SuspendCurrentStepForCombat(...)`
+- grouped target handoff:
+  - `RequestGroupedCombatTarget(...)`
+  - `TryAdoptGroupedCombatTarget(...)`
+  - `TrySustainAmbientCombat(...)`
+- live combat loop:
+  - `TickCombat(...)`
+
+The rule of thumb is:
+
+- current code is good at "notice nearby fight"
+- current code is only passable at "behave like one party once the fight turns
+  chaotic"
+
+So the first job of this layer is not perfect raid scripting. It is
+stabilization:
+
+- DPS or healer gets jumped first
+- tank receives an SOS / distress signal
+- tank claims anchor target
+- group flips into stabilize mode
+- once aggro is really established, DPS is released to go all-in
+
+That same machinery can later scale into:
+
+- dungeon peel requests
+- interrupt claims
+- off-target caster stops
+- tank/off-tank swaps
+- encounter-specific assignment rules
 
 This means the individual profile remains useful, but grouped bots stop acting
 like isolated duelists when party-wide context matters.
@@ -776,3 +1035,19 @@ These are known but intentionally left open while groundwork lands:
 5. how much runtime preview/debug state should be returned to the addon
 
 Those decisions should be made in implementation docs / PR notes as they land.
+
+---
+
+## 14. Secondary Action Hygiene
+
+Doctrine entries share one condition block across both the primary and
+secondary action. That makes secondary actions useful only when they are truly
+the same job.
+
+- Keep primary and secondary actions close in geometry and intent.
+- Good pairs are same-target, same-range substitutes.
+- Bad pairs are mixed shapes like ranged target-centered AoE and point-blank
+  self-centered AoE.
+
+If a fallback spell needs different positioning or range assumptions, split it
+into its own entry so it can own the right condition block.

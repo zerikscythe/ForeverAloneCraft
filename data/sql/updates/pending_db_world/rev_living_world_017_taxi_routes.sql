@@ -19,6 +19,7 @@ INSERT INTO living_world_task_point
 VALUES
     ('stormwind_taxi',   1519, 0,   'taxi', 'Stormwind Flight Master',   -8834.1, 493.5, 109.6),
     ('ironforge_taxi',   1537, 0,   'taxi', 'Ironforge Flight Master',   -4821.5, -1152.3, 502.2),
+    ('exodar_taxi',      3557, 530, 'taxi', 'Exodar Flight Master',      -4057.2, -11788.6,   8.9),
     ('orgrimmar_taxi',   1637, 1,   'taxi', 'Orgrimmar Flight Master',   1676.3, -4315.7, 61.8),
     ('thunderbluff_taxi',1638, 1,   'taxi', 'Thunder Bluff Flight Master', -1196.1, 26.1, 176.9)
 ON DUPLICATE KEY UPDATE

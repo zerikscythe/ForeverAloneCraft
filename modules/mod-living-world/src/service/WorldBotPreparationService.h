@@ -13,6 +13,7 @@ namespace living_world
 namespace integration
 {
 class BotCombatDefaultProfileRepository;
+class BotGlyphTemplateRepository;
 class BotTalentTemplateRepository;
 class BotVirtualLoadoutRepository;
 } // namespace integration
@@ -24,6 +25,7 @@ class WorldBotPreparationService
 public:
     WorldBotPreparationService(
         integration::BotCombatDefaultProfileRepository const& defaultProfileRepository,
+        integration::BotGlyphTemplateRepository const& glyphTemplateRepository,
         integration::BotTalentTemplateRepository const& talentTemplateRepository,
         integration::BotVirtualLoadoutRepository const& virtualLoadoutRepository);
 
@@ -48,6 +50,7 @@ public:
 
 private:
     integration::BotCombatDefaultProfileRepository const& _defaultProfileRepository;
+    integration::BotGlyphTemplateRepository const& _glyphTemplateRepository;
     integration::BotTalentTemplateRepository const& _talentTemplateRepository;
     integration::BotVirtualLoadoutRepository const& _virtualLoadoutRepository;
 };

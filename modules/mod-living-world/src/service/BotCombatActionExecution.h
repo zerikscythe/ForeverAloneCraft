@@ -73,7 +73,11 @@ inline BotCombatActionDispatchResult DispatchEvaluatedAction(Unit* bot, BotComba
         if (!player || action.itemId == 0)
             return { false, "missing_player_or_item", 0 };
 
-        Item* item = player->GetItemByEntry(action.itemId);
+        Item* item = nullptr;
+        if (action.equippedSlot != 255)
+            item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, action.equippedSlot);
+        else
+            item = player->GetItemByEntry(action.itemId);
         if (!item)
             return { false, "item_not_found", 0 };
 

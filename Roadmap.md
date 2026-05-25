@@ -12,8 +12,6 @@
 > SQL compatibility rule: write and review all project SQL to remain compatible
 > with the deployed MySQL 8.0 target. Do not assume newer or variant-specific
 > DDL syntax is accepted without verification in the actual runtime environment.
-'rg' is not recognized as an internal or external command,
-operable program or batch file.
 
 ## Project Scope
 
@@ -36,87 +34,202 @@ details have been intentionally removed here rather than copied forward.
 
 ## Recent Progress Snapshot
 
-The latest completed gameplay slice is ambient/world-bot runtime
-observability, live-validation support, and first-pass travel recovery.
+The project has moved well past the earlier scaffolding-only phase.
 
-Newly started architecture slice:
+Visible ambient population is also in the middle of an important architecture
+pivot:
 
-- world-bot virtual loadout stats v1 is now the active foundation for gear-like
-  world-bot scaling without real bags or equipped item instances
-- the agreed V1 boundary is deliberately narrow and Creature-safe:
-  - resolved from DB by `class_id` / `spec_key` / `loadout_key` / `gear_tier`
-  - applied as primary stat fields plus health/mana/armor/physical attack power
-  - explicit deferral of player-only item semantics such as resilience rating,
-    spell-power pipeline fidelity, trinket procs, gems, enchants, and set bonuses
-- the next live refinement on top of that foundation is **persistent invisible
-  assigned gear** for world bots:
-  - item IDs are assigned per slot from real `item_template` candidates
-  - the assignment is regenerated on **5-level gear refresh bands**
-  - refresh is deferred until the bot's **next spawn/materialization** rather
-    than mutating active bots in place
-  - assigned items are aggregated back into the same Creature-safe stat subset
-    already supported by the virtual loadout runtime
-- the next follow-up refinement after assigned-gear filtering is **player-like
-  stat baselines** for world bots:
-  - base health from player class+level data
-  - base mana from player class+level data for mana users
-  - primary stats from player race+class+level data
-  - armor baseline from agility like a fresh player baseline
-  - resistances reset away from arbitrary creature-template leftovers
-  - virtual loadout + assigned gear remain additive layers on top of that base
-- the next follow-up after player-like stat baselines is **prepared passive
-  spell application** for world bots:
-  - derive known spells exactly as preparation already does today
-  - auto-cast only the safe passive/self-aura subset at spawn
-  - primarily intended to make talent/class passive effects actually live on
-    the spawned creature-backed bot
-- the next follow-up after passive application is **player-valid talent
-  allocation** during world-bot preparation:
-  - spend template-authored talent points using player-like row/prerequisite/class
-    gating instead of raw template order alone
-  - fill talent ranks progressively across passes so prepared builds stay closer
-    to legal player trees
-  - include additional talent-learned spells in `knownSpellIds` when the learned
-    talent rank teaches them through AzerothCore's additional-talent-spell path
-- the next follow-up after legal talent allocation is **player-like attack power
-  baselines** for world bots:
-  - derive melee attack power from player-style class/level/stat formulas
-  - derive ranged attack power from player-style class/level/agility formulas
-  - keep virtual loadout and assigned-gear AP bonuses as additive layers above
-    that baseline
-- the next follow-up after attack power baselines is **player-like power-pool
-  spawn defaults**:
-  - mana and energy start full
-  - rage and runic power start at `0` instead of incorrectly spawning full
-- the next follow-up after power-pool spawn defaults is **player-like physical
-  damage baselines**:
-  - replace the leftover generic creature-template weapon damage seed with a
-    player-like baseline
-  - preserve the existing player-like attack power baseline through the normal
-    Creature damage recalculation path
-- the next follow-up after physical damage baselines is **player-like defensive
-  combat baselines**:
-  - replace generic creature dodge/parry/block chances for world bots with
-    player-like class/level/agility and shield-aware approximations
-  - inject those values at melee-outcome roll time so the implementation stays
-    Creature-backed and avoids player-only percentage fields
-- the next follow-up after defensive combat baselines is **player-like critical
-  strike baselines**:
-  - replace the leftover generic creature crit baseline for world-bot melee
-    attacks with player-like class/level/agility-derived values
-  - preserve victim-side resilience, defense-skill, and other runtime modifiers
-    already handled by AzerothCore
-- the next follow-up after melee critical strike baselines is **player-like spell
-  critical strike baselines**:
-  - bypass the default creature "no spell crit" behavior for world bots only
-  - replace the generic non-player spell-crit base with a player-like
-    class/level/intellect-derived caster baseline
-  - preserve downstream spell-taken crit suppression and existing aura-based
-    modifiers already handled by AzerothCore
-- this is also the first groundwork for eventual **cross-family PUG
-  survivability**, because account bots, guild bots, and world bots may all
-  eventually be used to fill dungeon/raid groups and therefore need a shared
-  higher-level loadout/build vocabulary even if their runtime item mechanics differ
+- offscreen / abstract world-bot identity, progression, routing, and task state
+  remain ledger-driven
+- on-screen materialization is now pivoting away from long-term
+  `Creature`-backed fake-player bodies and toward leased `Player` shells rebuilt
+  from ledger truth on demand
+- the older creature-backed lane is now best understood as:
+  - a legacy compatibility path
+  - a temporary host for behavior that still needs to be extracted into shared
+    doctrine/runtime services
+- account-alt clone bots remain a separate runtime family and should not be
+  collapsed into the new ledger-shell pool
+
+Most important recently completed work:
+
+- world-bot combat doctrine families are modernized for every non-Druid default
+  class family
+- level-80 stage-0 curated pre-raid assigned-gear templates are seeded for
+  every modernized default spec
+- world-bot stat-sheet parity is materially stronger across the major
+  combat-relevant baseline, rating, and throughput lanes
+- world-bot glyph materialization is live and relinked from the local Icy Veins
+  mirror
+- the hardest early glyph/pet proofs are green:
+  - Frost Mage `Glyph of Eternal Water`
+  - Unholy DK `Glyph of the Ghoul`
+- class-pet first-pass support is proven for:
+  - Frost Mage Water Elemental
+  - Unholy DK ghoul
+  - Hunter permanent pet maintenance
+  - Warlock demon maintenance
+  - Shaman summon cases such as Feral Spirit and Fire Elemental
+- parked-owner / active-pet behavior is proven in forced hold-mode harnesses
+- a shared world-bot self-state substrate now exists for background form /
+  presence / aspect / armor / travel-state maintenance, with harness proof on:
+  - Hunter aspect maintenance
+  - Warlock armor maintenance
+  - DK presence maintenance
+  - Shaman `Ghost Wolf` travel switching
+- active world sessions now roll a fresh world-bot mood mix:
+  - `65%` uninterested
+  - `20%` opportunistic
+  - `10%` aggressive
+  - `5%` coward
+  - level `75+` bots instead use:
+    - `70%` uninterested
+    - `20%` opportunistic
+    - `10%` aggressive
+- future `pvp` / `world_pvp` task families are gated by session mood and only
+  offered to bots that rolled `aggressive`
+- doctrine item actions can now carry symbolic selectors like `hp` / `mp`
+  instead of only concrete item ids:
+  - ledger shells can resolve those selectors against real inventory when
+    materialized as `Player` bodies
+  - abstract/offscreen world bots still track session-budgeted potion stock in
+    the ledger so that materialization can seed the corresponding real items
+  - account/companion bots can now resolve the same selector shape against real
+    inventory
+- the lw zone editor and runtime route format now carry explicit route kinds:
+  - `main_route` for world travel graph lanes
+  - `sub_route` for future gather/patrol/grind local loops
+  - `area` for closed work pockets with exported polygon/centroid/bounds data
+  - `resource_kinds` / `resource_items` metadata for item-aware gather route selection
+  - one local gather route can intentionally advertise multiple items, which is
+    useful for mixed-node paths and normal/rich variants of the same resource family
+  - the route planner now keeps non-main paths out of long-distance travel
+    while still loading them for future local-work consumers
+- world-bot faction-contact behavior now has a first live runtime pass:
+  - `aggressive` attacks
+  - `opportunistic` level-weighted attack rolls
+  - `uninterested` ignores
+  - `coward` avoidance
+- world bots now carry a small generic potion budget in the ledger:
+  - starts/caps at `5`
+  - can be projected into real player inventory for materialized ledger shells
+    or spent through the simulated item-use lane by older creature-backed
+    ambient bots
+  - only refills through authored city mailbox / auction-house errand stops
+- named neutral hub bubbles now suppress new aggression in:
+  - Gadgetzan
+  - Booty Bay
+  - Shattrath
+  - Dalaran
+  while preserving already-active combat that gets dragged into town
+- world-bot activations now roll a real `30 min - 3 hour` session budget in
+  the ledger and keep working until that shift is spent or they simply run out
+  of sensible chores:
+  - progress is preserved across abstract/materialized handoff within the same
+    activation
+  - active quest/gather/city bundles can stop mid-playlist when the shift ends
+    instead of waiting for the full bundle to finish
+  - if the scheduler has nothing worthwhile left before the budget is gone, the
+    bot can clock out early or roll for a fresh shift immediately
+  - when a shift ends, bots can roll for another fresh `30 min - 3 hour` shift
+    using diminishing return chances:
+    - `25%` after the first finished shift
+    - `15%` after the second
+    - `5%` thereafter
+  - runtime now persists resume breadcrumbs for:
+    - last immediate task/activity key
+    - last quest hub key
+    - elapsed time already spent in that hub
+  - low-level `quest_auto` now strongly prefers home-turf quest hubs for
+    levels `1-15` before loosening into the broader faction pool
+  - a config-gated debug idle watchdog can now warn when a materialized bot
+    sits on the same spot too long during active non-idle work, and can
+    optionally force a worldserver error-exit after logging full session/runtime
+    breadcrumbs for unattended long-run investigation
+  - if a bot leveled into a new gear band, the existing assigned-gear refresh
+    flag is now honored at new session assignment time instead of waiting only
+    for a later spawn cycle
+- quest-hub orchestration is no longer only a tooling export:
+  - runtime now loads the compact `quest_hubs_*.json` graph
+  - `quest_auto` / `quest_zone` can resolve to real hub/task-area targets
+  - completed quest sessions can chain into weighted `nextHubs` follow-ons
+    through the normal session-composer resume path
+  - quest task duration and quest-hub duration are now treated separately:
+    - scheduler/templates decide how long a single quest task lasts
+    - hubs track cumulative time spent there across multiple quest chunks and
+      later activations
+    - if a resumed quest chunk outlives the current hub, the remaining task
+      time can branch into the next eligible hub instead of forcing a brand-new
+      unrelated pick
+  - quest task areas can now feed explicit creature-entry hunt targets into the
+    active `grind` lane, with short meander slices inside the hub timer instead
+    of a single static wait pin
+  - if a bot resumes questing after outgrowing the prior hub/zone, the
+    composer can fall forward to a new level-appropriate quest area instead of
+    forcing stale content
+
+The broad current picture is:
+
+- travel/network infrastructure is real
+- world-bot combat foundation is real
+- modern class doctrine coverage is broad
+- world-bot gearing/glyph/pet substrate is no longer the main missing system
+
+## Breakout Documents
+
+Use these focused docs instead of trying to infer detailed upgrade status from
+the master roadmap alone:
+
+- overall Living World system snapshot:
+  - [modules/mod-living-world/docs/WorldBotSystemAssessment.md](D:/src/azerothcore-wotlk/modules/mod-living-world/docs/WorldBotSystemAssessment.md)
+- travel/network planning and route-followed movement:
+  - [modules/mod-living-world/docs/WorldBotTravelNetworkRoadmap.md](D:/src/azerothcore-wotlk/modules/mod-living-world/docs/WorldBotTravelNetworkRoadmap.md)
+- layered local-vs-macro navigation policy and assist-route direction:
+  - [modules/mod-living-world/docs/WorldBotNavigationLayersRoadmap.md](D:/src/azerothcore-wotlk/modules/mod-living-world/docs/WorldBotNavigationLayersRoadmap.md)
+- local tactical combat movement:
+  - [modules/mod-living-world/docs/WorldBotMovementDoctrineRoadmap.md](D:/src/azerothcore-wotlk/modules/mod-living-world/docs/WorldBotMovementDoctrineRoadmap.md)
+- quest-hub progression and post-arrival quest flow:
+  - [modules/mod-living-world/docs/WorldBotQuestHubProgressionDesign.md](D:/src/azerothcore-wotlk/modules/mod-living-world/docs/WorldBotQuestHubProgressionDesign.md)
+- city reserve population behavior:
+  - [modules/mod-living-world/docs/WorldBotCityReservePopulationDesign.md](D:/src/azerothcore-wotlk/modules/mod-living-world/docs/WorldBotCityReservePopulationDesign.md)
+- combat doctrine/profile design and editable profile direction:
+  - [modules/mod-living-world/docs/BotCombatProfiles.md](D:/src/azerothcore-wotlk/modules/mod-living-world/docs/BotCombatProfiles.md)
+- modernized class-family doctrine coverage:
+  - [modules/mod-living-world/docs/WotlkDoctrineModernizationBacklog.md](D:/src/azerothcore-wotlk/modules/mod-living-world/docs/WotlkDoctrineModernizationBacklog.md)
+- world-bot gear/loadout direction:
+  - [modules/mod-living-world/docs/WorldBotVirtualLoadouts.md](D:/src/azerothcore-wotlk/modules/mod-living-world/docs/WorldBotVirtualLoadouts.md)
+- world-bot stat parity ledger:
+  - [modules/mod-living-world/docs/WorldBotPlayerStatParityChecklist.md](D:/src/azerothcore-wotlk/modules/mod-living-world/docs/WorldBotPlayerStatParityChecklist.md)
+- curated stage-0 pre-raid gear coverage:
+  - [modules/mod-living-world/docs/PreraidGearAudit.md](D:/src/azerothcore-wotlk/modules/mod-living-world/docs/PreraidGearAudit.md)
+- glyph relink/materialization and special-case audit:
+  - [modules/mod-living-world/docs/GlyphAudit.md](D:/src/azerothcore-wotlk/modules/mod-living-world/docs/GlyphAudit.md)
+- class-pet and summon roadmap:
+  - [modules/mod-living-world/docs/WorldBotClassPetRoadmap.md](D:/src/azerothcore-wotlk/modules/mod-living-world/docs/WorldBotClassPetRoadmap.md)
+- shared self-state / stance / form substrate:
+  - [modules/mod-living-world/docs/WorldBotSelfStateRoadmap.md](D:/src/azerothcore-wotlk/modules/mod-living-world/docs/WorldBotSelfStateRoadmap.md)
+
+## Roadmap Maintenance Rule
+
+When a new breakout roadmap/design/status markdown is created for a Living World
+workstream:
+
+1. link it from this master roadmap under **Breakout Documents**
+2. make it clear which upgrade lane or subsystem it owns
+
+When a meaningful milestone is finished:
+
+1. update this master roadmap's high-level snapshot if that milestone changes
+   the broad project picture
+2. update the relevant active breakout markdown so its status, remaining work,
+   and proof notes match reality
+
+In short:
+
+- new breakout docs should be discoverable from here
+- milestone completion should update both:
+  - the master roadmap
+  - the active subsystem markdown that owns the detailed truth
 
 Completed recently:
 
@@ -1517,7 +1630,16 @@ that loads specific characters by ID with no materialization overhead.
   with account-alt pool slots
 11.2 Rival group size/composition policy — **Not Started**
 11.3 Alert / engaged / disengage group states — **Not Started**
-11.4 Personality-driven caution/aggression rules — **Not Started**
+11.4 Personality-driven caution/aggression rules — **Partial**
+- Session mood rolls are live for active world bots.
+- `aggressive`, `opportunistic`, `uninterested`, and `coward` now have a
+  first-pass runtime effect on player-like opposing-faction encounters.
+- Named neutral hub bubbles block new aggression in shared hubs without
+  forgiving combat already dragged inside.
+- Still missing:
+  - richer coward/evasion behavior
+  - authored world-PvP task families that consume the aggressive-only gate
+  - data-driven truce-bubble authoring instead of hardcoded hub circles
 11.5 Encounter continuity/history tracking — **Not Started**
 11.6 Pre-built rival character creation workflow (editor tool support) — **Not Started**
 
@@ -3291,3 +3413,4 @@ E.12 Cross-continent travel support (world-port ack for headless sessions) —
 - [ ] Expose profile CRUD/edit/reset/apply operations through the server API /
       message layer for addon consumption.
 - [ ] Build the first addon-side combat profile editor against that API.
+

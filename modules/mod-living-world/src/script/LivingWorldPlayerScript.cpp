@@ -7,6 +7,7 @@
 #include "ai/CompanionAI.h"
 #include "integration/BotActivityLog.h"
 #include "script/LivingWorldChatConfig.h"
+#include "script/LivingWorldPathTrace.h"
 #include "script/WorldBotHotZoneTracker.h"
 #include "integration/SqlAccountAltRuntimeRepository.h"
 #include "integration/SqlCharacterAchievementSyncRepository.h"
@@ -21,14 +22,25 @@
 #include "integration/SqlCharacterReputationSyncRepository.h"
 #include "integration/SqlCharacterSkillSyncRepository.h"
 #include "integration/SqlCharacterSpellSyncRepository.h"
+#include "integration/SqlBotIdentityRepository.h"
+#include "integration/SqlBotCombatDefaultProfileRepository.h"
+#include "integration/SqlBotGlyphTemplateRepository.h"
+#include "integration/SqlBotRuntimeSnapshotRepository.h"
+#include "integration/SqlBotShellRuntimeRepository.h"
+#include "model/BotRuntimeKind.h"
 #include "service/AccountAltDismissalService.h"
 #include "service/AccountAltRecoveryService.h"
 #include "service/AccountAltStartupRecoveryService.h"
+#include "service/BotLedgerShellConsumableService.h"
+#include "service/BotLedgerShellSanitizerService.h"
+#include "service/BotCombatSimulatedItemUse.h"
 #include "service/BotQuestRewardService.h"
 #include "service/BotPlayerRegistry.h"
 #include "service/BotTalentApplicator.h"
+#include "service/WorldBotPreparationService.h"
 #include "integration/SqlBotTalentTemplateRepository.h"
 #include "integration/SqlBotTalentPreferenceRepository.h"
+#include "integration/SqlBotVirtualLoadoutRepository.h"
 
 #include "DatabaseEnv.h"
 #include "Group.h"
@@ -43,8 +55,12 @@
 #include "TradeData.h"
 #include "WorldSession.h"
 #include "Log.h"
+#include "UnitScript.h"
 
+#include <mutex>
 #include <optional>
+#include <sstream>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -54,6 +70,147 @@ namespace living_world { extern float g_economyScale; extern void ApplyEconomySc
 namespace
 {
 std::unordered_set<std::uint64_t> s_openedControlledTradeWindows;
+
+struct LedgerShellCombatMetrics
+{
+    std::uint64_t outgoingDamage = 0;
+    std::uint64_t incomingDamage = 0;
+    std::uint64_t outgoingHealing = 0;
+    std::uint64_t incomingHealing = 0;
+    std::uint32_t summaryAccumulatorMs = 0;
+    bool combatActive = false;
+};
+
+std::mutex s_ledgerShellCombatMutex;
+std::unordered_map<std::uint64_t, LedgerShellCombatMetrics> s_ledgerShellCombatByGuid;
+
+bool IsLedgerShellPlayer(Player* player)
+{
+    return player
+        && player->GetSession()
+        && player->GetSession()->IsBotSession()
+        && living_world::service::BotPlayerRegistry::Instance().GetBotRuntimeKind(player->GetGUID())
+            == living_world::model::BotRuntimeKind::LedgerShell;
+}
+
+Player* ToLedgerShellPlayer(Unit* unit)
+{
+    Player* player = unit ? unit->ToPlayer() : nullptr;
+    return IsLedgerShellPlayer(player) ? player : nullptr;
+}
+
+bool HasCombatMetrics(LedgerShellCombatMetrics const& metrics)
+{
+    return metrics.outgoingDamage != 0
+        || metrics.incomingDamage != 0
+        || metrics.outgoingHealing != 0
+        || metrics.incomingHealing != 0;
+}
+
+std::string BuildCombatSummaryDetail(
+    LedgerShellCombatMetrics const& metrics,
+    std::string_view reason)
+{
+    std::ostringstream detail;
+    detail << "outgoing_damage=" << metrics.outgoingDamage
+           << " incoming_damage=" << metrics.incomingDamage
+           << " outgoing_healing=" << metrics.outgoingHealing
+           << " incoming_healing=" << metrics.incomingHealing
+           << " reason=" << reason;
+    return detail.str();
+}
+
+void ResetLedgerShellCombatMetrics(std::uint64_t guid)
+{
+    std::lock_guard<std::mutex> lock(s_ledgerShellCombatMutex);
+    s_ledgerShellCombatByGuid[guid] = LedgerShellCombatMetrics{};
+}
+
+void ClearLedgerShellCombatMetrics(std::uint64_t guid)
+{
+    std::lock_guard<std::mutex> lock(s_ledgerShellCombatMutex);
+    s_ledgerShellCombatByGuid.erase(guid);
+}
+
+void MarkLedgerShellCombatActive(std::uint64_t guid, bool active)
+{
+    std::lock_guard<std::mutex> lock(s_ledgerShellCombatMutex);
+    LedgerShellCombatMetrics& metrics = s_ledgerShellCombatByGuid[guid];
+    metrics.combatActive = active;
+    if (active)
+        metrics.summaryAccumulatorMs = 0;
+}
+
+void AccumulateLedgerShellOutgoingDamage(std::uint64_t guid, std::uint32_t amount)
+{
+    std::lock_guard<std::mutex> lock(s_ledgerShellCombatMutex);
+    s_ledgerShellCombatByGuid[guid].outgoingDamage += amount;
+}
+
+void AccumulateLedgerShellIncomingDamage(std::uint64_t guid, std::uint32_t amount)
+{
+    std::lock_guard<std::mutex> lock(s_ledgerShellCombatMutex);
+    s_ledgerShellCombatByGuid[guid].incomingDamage += amount;
+}
+
+void AccumulateLedgerShellOutgoingHealing(std::uint64_t guid, std::uint32_t amount)
+{
+    std::lock_guard<std::mutex> lock(s_ledgerShellCombatMutex);
+    s_ledgerShellCombatByGuid[guid].outgoingHealing += amount;
+}
+
+void AccumulateLedgerShellIncomingHealing(std::uint64_t guid, std::uint32_t amount)
+{
+    std::lock_guard<std::mutex> lock(s_ledgerShellCombatMutex);
+    s_ledgerShellCombatByGuid[guid].incomingHealing += amount;
+}
+
+void RecordLedgerShellCombatSummary(Player* player, std::string_view reason)
+{
+    if (!IsLedgerShellPlayer(player))
+        return;
+
+    LedgerShellCombatMetrics metrics;
+    {
+        std::lock_guard<std::mutex> lock(s_ledgerShellCombatMutex);
+        auto itr = s_ledgerShellCombatByGuid.find(player->GetGUID().GetCounter());
+        if (itr == s_ledgerShellCombatByGuid.end())
+            return;
+        metrics = itr->second;
+    }
+
+    if (!HasCombatMetrics(metrics))
+        return;
+
+    living_world::integration::BotActivityLog::Record(
+        player,
+        "combat_summary",
+        BuildCombatSummaryDetail(metrics, reason));
+}
+
+void MaybeRecordPeriodicLedgerShellCombatSummary(Player* player, std::uint32_t diff)
+{
+    if (!IsLedgerShellPlayer(player))
+        return;
+
+    bool shouldRecord = false;
+    {
+        std::lock_guard<std::mutex> lock(s_ledgerShellCombatMutex);
+        LedgerShellCombatMetrics& metrics = s_ledgerShellCombatByGuid[player->GetGUID().GetCounter()];
+        if (!metrics.combatActive)
+            return;
+
+        metrics.summaryAccumulatorMs += diff;
+        if (metrics.summaryAccumulatorMs < 3000)
+            return;
+
+        metrics.summaryAccumulatorMs = 0;
+        shouldRecord = HasCombatMetrics(metrics);
+    }
+
+    if (shouldRecord)
+        RecordLedgerShellCombatSummary(player, "tick");
+}
 
 // Returns true if the spell summons a mount (applies SPELL_AURA_MOUNTED).
 bool IsMountSummonSpell(uint32 spellId)
@@ -200,6 +357,114 @@ void SendQuestRewardsAddonState(Player* player)
     }
 
     SendLWBotAddonMessage(player, "QEND");
+}
+
+std::uint8_t EstimateLedgerShellPotionCharges(
+    Player* player,
+    living_world::integration::BotIdentityRecord const& identity)
+{
+    if (!player)
+        return identity.genericPotionCharges;
+
+    std::uint32_t remaining = 0;
+    if (std::uint32_t healingPotionId =
+            living_world::service::ResolveGenericHealingPotionItemIdForLevel(identity.level);
+        healingPotionId != 0)
+    {
+        remaining += player->GetItemCount(healingPotionId, false);
+    }
+
+    if (std::uint32_t manaPotionId =
+            living_world::service::ResolveGenericManaPotionItemIdForLevel(identity.level);
+        manaPotionId != 0)
+    {
+        remaining += player->GetItemCount(manaPotionId, false);
+    }
+
+    return static_cast<std::uint8_t>(std::min<std::uint32_t>(5u, remaining));
+}
+
+living_world::service::WorldBotPreparationService& GetLedgerShellPreparationService()
+{
+    static living_world::integration::SqlBotCombatDefaultProfileRepository defaultProfileRepository;
+    static living_world::integration::SqlBotGlyphTemplateRepository glyphTemplateRepository;
+    static living_world::integration::SqlBotTalentTemplateRepository talentTemplateRepository;
+    static living_world::integration::SqlBotVirtualLoadoutRepository virtualLoadoutRepository;
+    static living_world::service::WorldBotPreparationService preparationService(
+        defaultProfileRepository,
+        glyphTemplateRepository,
+        talentTemplateRepository,
+        virtualLoadoutRepository);
+    return preparationService;
+}
+
+void WriteBackLedgerShellSnapshot(Player* player)
+{
+    if (!player || !player->GetSession())
+        return;
+
+    living_world::integration::SqlBotShellRuntimeRepository shellRuntimeRepository;
+    std::optional<living_world::model::BotShellRuntimeRecord> shellRuntime =
+        shellRuntimeRepository.FindByShell(
+            player->GetSession()->GetAccountId(),
+            player->GetGUID().GetCounter());
+    if (!shellRuntime)
+        return;
+
+    living_world::integration::SqlBotIdentityRepository identityRepository;
+    std::optional<living_world::integration::BotIdentityRecord> identity =
+        identityRepository.FindById(shellRuntime->identityId);
+    if (!identity)
+        return;
+
+    living_world::integration::SqlBotRuntimeSnapshotRepository snapshotRepository;
+    std::optional<living_world::model::BotRuntimeSnapshotRecord> snapshot =
+        snapshotRepository.LoadByIdentity(shellRuntime->identityId);
+
+    living_world::model::BotRuntimeSnapshotRecord record =
+        snapshot.value_or(living_world::model::BotRuntimeSnapshotRecord{});
+    record.identityId = shellRuntime->identityId;
+    record.mapId = player->GetMapId();
+    record.zoneId = player->GetZoneId();
+    record.x = player->GetPositionX();
+    record.y = player->GetPositionY();
+    record.z = player->GetPositionZ();
+    record.o = player->GetOrientation();
+    record.runtimeState = player->IsInCombat() ? "combat" : "idle";
+    record.genericPotionCharges = EstimateLedgerShellPotionCharges(player, *identity);
+    if (record.homeBindPointKey.empty())
+        record.homeBindPointKey = identity->homeBindPointKey;
+    snapshotRepository.Upsert(record);
+    identityRepository.UpdateGenericPotionCharges(shellRuntime->identityId, record.genericPotionCharges);
+
+    CharacterDatabase.Execute(
+        "UPDATE living_world_bot_shell_runtime "
+        "SET is_materialized = 0, last_sync_at = NOW(), last_dismissed_at = NOW() "
+        "WHERE identity_id = {}",
+        shellRuntime->identityId);
+}
+
+void ReleaseLedgerShellBinding(
+    std::uint32_t shellAccountId,
+    std::uint64_t shellCharacterGuid)
+{
+    if (shellAccountId == 0 || shellCharacterGuid == 0)
+        return;
+
+    living_world::integration::SqlBotShellRuntimeRepository shellRuntimeRepository;
+    std::optional<living_world::model::BotShellRuntimeRecord> shellRuntime =
+        shellRuntimeRepository.FindByShell(shellAccountId, shellCharacterGuid);
+    if (!shellRuntime)
+        return;
+
+    living_world::integration::SqlBotIdentityRepository identityRepository;
+    identityRepository.UpdateShellState(
+        shellRuntime->identityId,
+        0,
+        0,
+        shellRuntime->shellStateVersion,
+        "");
+    shellRuntimeRepository.RemoveByIdentity(shellRuntime->identityId);
 }
 
 struct StartupRuntimeRecoverySummary
@@ -605,6 +870,120 @@ void AddBotToOwnerGroup(Player* bot, Player* owner)
         group->GetGUID().GetCounter());
 }
 
+std::vector<Player*> CollectNearbyFriendlyLedgerShells(Player* shell, float radius)
+{
+    std::vector<Player*> result;
+    if (!shell || !shell->IsInWorld() || !shell->GetMap() || radius <= 0.0f)
+        return result;
+
+    for (Map::PlayerList::const_iterator itr = shell->GetMap()->GetPlayers().begin();
+         itr != shell->GetMap()->GetPlayers().end();
+         ++itr)
+    {
+        Player* candidate = itr->GetSource();
+        if (!candidate || candidate == shell || !candidate->IsInWorld() || !candidate->IsAlive())
+            continue;
+        if (!candidate->GetSession() || !candidate->GetSession()->IsBotSession())
+            continue;
+        if (!shell->IsFriendlyTo(candidate) || !shell->IsWithinDistInMap(candidate, radius, false))
+            continue;
+        if (living_world::service::BotPlayerRegistry::Instance().GetBotRuntimeKind(candidate->GetGUID())
+            != living_world::model::BotRuntimeKind::LedgerShell)
+        {
+            continue;
+        }
+
+        result.push_back(candidate);
+    }
+
+    return result;
+}
+
+void AddLedgerShellToFactionGroup(Player* shell)
+{
+    if (!shell || !shell->GetSession() || !shell->GetSession()->IsBotSession())
+        return;
+
+    if (shell->GetGroup())
+        return;
+
+    std::vector<Player*> nearbyShells = CollectNearbyFriendlyLedgerShells(shell, 80.0f);
+    if (nearbyShells.empty())
+        return;
+
+    for (Player* candidate : nearbyShells)
+    {
+        Group* group = candidate ? candidate->GetGroup() : nullptr;
+        if (!group || group->IsFull() || !group->IsMember(candidate->GetGUID()))
+            continue;
+
+        if (group->IsMember(shell->GetGUID()))
+            return;
+
+        if (group->AddMember(shell))
+        {
+            LOG_INFO(
+                "server.worldserver",
+                "[LivingWorldDebug] AddLedgerShellToFactionGroup added shell guid={} ('{}') to existing faction group guid={} via candidate guid={} ('{}').",
+                shell->GetGUID().GetCounter(),
+                shell->GetName(),
+                group->GetGUID().GetCounter(),
+                candidate->GetGUID().GetCounter(),
+                candidate->GetName());
+        }
+        else
+        {
+            LOG_WARN(
+                "server.worldserver",
+                "[LivingWorldDebug] AddLedgerShellToFactionGroup failed to add shell guid={} ('{}') to existing faction group guid={}.",
+                shell->GetGUID().GetCounter(),
+                shell->GetName(),
+                group->GetGUID().GetCounter());
+        }
+        return;
+    }
+
+    Player* leader = nearbyShells.front();
+    if (!leader || leader->GetGroup())
+        return;
+
+    Group* group = new Group();
+    if (!group->Create(leader))
+    {
+        LOG_ERROR(
+            "server.worldserver",
+            "[LivingWorldDebug] AddLedgerShellToFactionGroup failed to create faction group for leader guid={} ('{}').",
+            leader->GetGUID().GetCounter(),
+            leader->GetName());
+        delete group;
+        return;
+    }
+
+    sGroupMgr->AddGroup(group);
+
+    if (!group->AddMember(shell))
+    {
+        LOG_ERROR(
+            "server.worldserver",
+            "[LivingWorldDebug] AddLedgerShellToFactionGroup failed AddMember for shell guid={} ('{}') into new faction group guid={} led by guid={} ('{}').",
+            shell->GetGUID().GetCounter(),
+            shell->GetName(),
+            group->GetGUID().GetCounter(),
+            leader->GetGUID().GetCounter(),
+            leader->GetName());
+        return;
+    }
+
+    LOG_INFO(
+        "server.worldserver",
+        "[LivingWorldDebug] AddLedgerShellToFactionGroup created faction group guid={} leader guid={} ('{}') and added shell guid={} ('{}').",
+        group->GetGUID().GetCounter(),
+        leader->GetGUID().GetCounter(),
+        leader->GetName(),
+        shell->GetGUID().GetCounter(),
+        shell->GetName());
+}
+
 Player* FindOwnerControlledTradeBot(Player* owner)
 {
     if (!owner)
@@ -833,11 +1212,176 @@ public:
         if (ownerGuid->GetCounter() == 0)
         {
             std::uint64_t const guid = player->GetGUID().GetCounter();
+            living_world::integration::SqlBotShellRuntimeRepository shellRuntimeRepository;
+            std::optional<living_world::model::BotShellRuntimeRecord> shellRuntime =
+                shellRuntimeRepository.FindByShell(
+                    player->GetSession()->GetAccountId(),
+                    guid);
             QueryResult ambientRow = CharacterDatabase.Query(
                 "SELECT 1 FROM living_world_ambient_bot WHERE character_guid = {}",
                 guid);
-            if (ambientRow)
+            if (shellRuntime)
             {
+                living_world::integration::SqlBotIdentityRepository identityRepository;
+                std::optional<living_world::integration::BotIdentityRecord> identity =
+                    identityRepository.FindById(shellRuntime->identityId);
+                if (!identity)
+                {
+                    LOG_ERROR(
+                        "server.worldserver",
+                        "[LivingWorldDebug] LedgerShellLogin bot='{}' guid={} identityId={} accountId={} blocked: missing ledger identity.",
+                        player->GetName(),
+                        guid,
+                        shellRuntime->identityId,
+                        player->GetSession()->GetAccountId());
+                    return;
+                }
+
+                if (!identity->pendingRebuildReason.empty())
+                {
+                    bool const transientRehydratePending =
+                        identity->pendingRebuildReason == "rehydrate"
+                        && identity->shellAccountId == player->GetSession()->GetAccountId()
+                        && identity->shellCharacterGuid == guid;
+                    if (transientRehydratePending)
+                    {
+                        identityRepository.MarkShellRehydrated(
+                            shellRuntime->identityId,
+                            identity->shellStateVersion);
+                        identity->pendingRebuildReason.clear();
+                        LOG_INFO(
+                            "server.worldserver",
+                            "[LivingWorldDebug] LedgerShellLogin bot='{}' guid={} identityId={} accountId={} allowing transient pending rebuild '{}'.",
+                            player->GetName(),
+                            guid,
+                            shellRuntime->identityId,
+                            player->GetSession()->GetAccountId(),
+                            "rehydrate");
+                    }
+                    else
+                    {
+                        LOG_WARN(
+                            "server.worldserver",
+                            "[LivingWorldDebug] LedgerShellLogin bot='{}' guid={} identityId={} accountId={} blocked: pending rebuild '{}'.",
+                            player->GetName(),
+                            guid,
+                            shellRuntime->identityId,
+                            player->GetSession()->GetAccountId(),
+                            identity->pendingRebuildReason);
+                        return;
+                    }
+                }
+
+                std::string compatibilityReason;
+                living_world::service::BotLedgerShellSanitizerService sanitizer;
+                if (!sanitizer.IsCompatibleShell(player, *identity, &compatibilityReason))
+                {
+                    LOG_ERROR(
+                        "server.worldserver",
+                        "[LivingWorldDebug] LedgerShellLogin bot='{}' guid={} identityId={} accountId={} blocked: {}.",
+                        player->GetName(),
+                        guid,
+                        shellRuntime->identityId,
+                        player->GetSession()->GetAccountId(),
+                        compatibilityReason);
+                    return;
+                }
+
+                std::string sanitizeFailureReason;
+                if (!sanitizer.SanitizeForIdentity(player, *identity, &sanitizeFailureReason))
+                {
+                    LOG_ERROR(
+                        "server.worldserver",
+                        "[LivingWorldDebug] LedgerShellLogin bot='{}' guid={} identityId={} accountId={} blocked during sanitize: {}.",
+                        player->GetName(),
+                        guid,
+                        shellRuntime->identityId,
+                        player->GetSession()->GetAccountId(),
+                        sanitizeFailureReason);
+                    return;
+                }
+
+                living_world::ai::SetBotContext(player->GetGUID(), "PvP");
+                living_world::ai::InvalidateBotCombatCaches(player->GetGUID());
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] LedgerShellPvP bot='{}' guid={} identityId={} accountId={} isPvP={} context='{}'",
+                    player->GetName(),
+                    guid,
+                    shellRuntime->identityId,
+                    player->GetSession()->GetAccountId(),
+                    player->IsPvP() ? 1 : 0,
+                    living_world::ai::GetBotContext(player->GetGUID()));
+
+                living_world::model::WorldBotPreparedBuild const preparedBuild =
+                    GetLedgerShellPreparationService().Prepare(*identity, "PvP");
+                if (!preparedBuild.IsReady())
+                {
+                    LOG_ERROR(
+                        "server.worldserver",
+                        "[LivingWorldDebug] LedgerShellLogin bot='{}' guid={} identityId={} accountId={} blocked during preparation: {}.",
+                        player->GetName(),
+                        guid,
+                        shellRuntime->identityId,
+                        player->GetSession()->GetAccountId(),
+                        preparedBuild.failureReason);
+                    return;
+                }
+
+                for (std::uint32_t spellId : preparedBuild.knownSpellIds)
+                {
+                    if (spellId == 0)
+                        continue;
+                    if (!player->HasSpell(spellId))
+                        player->learnSpell(spellId, false);
+                }
+
+                living_world::integration::SqlBotTalentTemplateRepository templateRepo;
+                std::optional<living_world::model::BotTalentTemplateRecord> talentTemplate =
+                    templateRepo.FindTemplateForSpec(identity->specKey, player->getClass());
+                if (talentTemplate)
+                {
+                    living_world::integration::SqlBotTalentPreferenceRepository preferenceRepo;
+                    living_world::integration::SqlAccountAltRuntimeRepository altRuntimeRepo;
+                    living_world::service::BotTalentApplicator applicator(
+                        templateRepo, preferenceRepo, altRuntimeRepo);
+                    applicator.ApplyTemplate(player, *talentTemplate);
+                }
+
+                shellRuntime->isMaterialized = true;
+                shellRuntimeRepository.Upsert(*shellRuntime);
+
+                player->SetPvP(true);
+                player->UpdatePvP(true, true);
+
+                living_world::service::BotPlayerRegistry::Instance().SetBotRuntimeKind(
+                    player->GetGUID(),
+                    living_world::model::BotRuntimeKind::LedgerShell);
+                ResetLedgerShellCombatMetrics(guid);
+                AddLedgerShellToFactionGroup(player);
+                living_world::ai::InvalidateBotCombatCaches(player->GetGUID());
+                LOG_INFO(
+                    "server.worldserver",
+                    "[LivingWorldDebug] LedgerShellLogin bot='{}' guid={} identityId={} accountId={} — scheduling hostile shell AI for now.",
+                    player->GetName(),
+                    guid,
+                    shellRuntime->identityId,
+                    player->GetSession()->GetAccountId());
+                living_world::integration::BotActivityLog::Record(
+                    player,
+                    player->GetName(),
+                    shellRuntime->identityId,
+                    "spawned_ledger_shell",
+                    "");
+                living_world::service::BotLedgerShellConsumableService()
+                    .PrimeLedgerShellConsumables(player);
+                living_world::ai::ScheduleHostileCompanionAI(player);
+            }
+            else if (ambientRow)
+            {
+                living_world::service::BotPlayerRegistry::Instance().SetBotRuntimeKind(
+                    player->GetGUID(),
+                    living_world::model::BotRuntimeKind::Ambient);
                 LOG_INFO(
                     "server.worldserver",
                     "[LivingWorldDebug] AmbientBotLogin bot='{}' guid={} — "
@@ -849,6 +1393,9 @@ public:
             }
             else
             {
+                living_world::service::BotPlayerRegistry::Instance().SetBotRuntimeKind(
+                    player->GetGUID(),
+                    living_world::model::BotRuntimeKind::Hostile);
                 LOG_INFO(
                     "server.worldserver",
                     "[LivingWorldDebug] HostileBotLogin bot='{}' guid={} — "
@@ -900,6 +1447,11 @@ public:
             return;
         }
 
+        if (!player->GetSession()->IsBotSession())
+        {
+            living_world::script::pathtrace::FlushAndStop(player, "logout");
+        }
+
         s_openedControlledTradeWindows.erase(player->GetGUID().GetCounter());
         if (!player->GetSession()->IsBotSession())
         {
@@ -913,6 +1465,9 @@ public:
             player->GetName(),
             player->GetGUID().GetCounter());
 
+        RecordLedgerShellCombatSummary(player, "logout");
+        ClearLedgerShellCombatMetrics(player->GetGUID().GetCounter());
+
         if (Group* group = player->GetGroup())
             group->RemoveMember(player->GetGUID(), GROUP_REMOVEMETHOD_LEAVE);
 
@@ -921,6 +1476,10 @@ public:
         // OnPlayerLogout fires before the normal SaveToDB in the logout path,
         // so we must save explicitly here.
         player->SaveToDB(false, false);
+        WriteBackLedgerShellSnapshot(player);
+        ReleaseLedgerShellBinding(
+            player->GetSession()->GetAccountId(),
+            player->GetGUID().GetCounter());
 
         RunBotDismissalRecovery(player);
 
@@ -1224,12 +1783,18 @@ public:
         }
     }
 
-    void OnPlayerUpdate(Player* player, uint32 /*diff*/) override
+    void OnPlayerUpdate(Player* player, uint32 diff) override
     {
         MaybeAutoAcceptControlledBotTrade(player);
 
+        if (player && player->GetSession() && player->GetSession()->IsBotSession())
+            MaybeRecordPeriodicLedgerShellCombatSummary(player, diff);
+
         if (player && player->GetSession() && !player->GetSession()->IsBotSession())
+        {
+            living_world::script::pathtrace::Update(player, diff);
             living_world::script::ObserveWorldBotPlayerInterest(player);
+        }
     }
 
     void OnPlayerUpdateZone(Player* player, uint32 /*newZone*/, uint32 /*newArea*/) override
@@ -1253,6 +1818,8 @@ public:
         {
             return;
         }
+
+        living_world::script::pathtrace::FlushAndStop(player, "before_logout");
 
         LOG_INFO(
             "server.worldserver",
@@ -1282,6 +1849,57 @@ public:
         living_world::service::BotTalentApplicator applicator(
             templateRepo, preferenceRepo, altRuntimeRepo);
         applicator.ApplyPreferredTemplate(player, sourceCharGuid);
+    }
+
+    void OnPlayerEnterCombat(Player* player, Unit* /*enemy*/) override
+    {
+        if (!IsLedgerShellPlayer(player))
+            return;
+
+        ResetLedgerShellCombatMetrics(player->GetGUID().GetCounter());
+        MarkLedgerShellCombatActive(player->GetGUID().GetCounter(), true);
+    }
+
+    void OnPlayerLeaveCombat(Player* player) override
+    {
+        if (!IsLedgerShellPlayer(player))
+            return;
+
+        MarkLedgerShellCombatActive(player->GetGUID().GetCounter(), false);
+        RecordLedgerShellCombatSummary(player, "leave_combat");
+    }
+};
+
+class LivingWorldLedgerShellCombatUnitScript final : public UnitScript
+{
+public:
+    LivingWorldLedgerShellCombatUnitScript()
+        : UnitScript("LivingWorldLedgerShellCombatUnitScript")
+    {
+    }
+
+    void OnHeal(Unit* healer, Unit* receiver, uint32& gain) override
+    {
+        if (gain == 0)
+            return;
+
+        if (Player* healerPlayer = ToLedgerShellPlayer(healer))
+            AccumulateLedgerShellOutgoingHealing(healerPlayer->GetGUID().GetCounter(), gain);
+
+        if (Player* receiverPlayer = ToLedgerShellPlayer(receiver))
+            AccumulateLedgerShellIncomingHealing(receiverPlayer->GetGUID().GetCounter(), gain);
+    }
+
+    void OnDamage(Unit* attacker, Unit* victim, uint32& damage) override
+    {
+        if (damage == 0)
+            return;
+
+        if (Player* attackerPlayer = ToLedgerShellPlayer(attacker))
+            AccumulateLedgerShellOutgoingDamage(attackerPlayer->GetGUID().GetCounter(), damage);
+
+        if (Player* victimPlayer = ToLedgerShellPlayer(victim))
+            AccumulateLedgerShellIncomingDamage(victimPlayer->GetGUID().GetCounter(), damage);
     }
 };
 
@@ -1325,4 +1943,5 @@ void AddSC_LivingWorldPlayerScript()
 {
     new LivingWorldPlayerScript();
     new LivingWorldAccountScript();
+    new LivingWorldLedgerShellCombatUnitScript();
 }

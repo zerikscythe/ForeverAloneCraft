@@ -80,7 +80,8 @@ public:
         std::uint8_t botClassId,
         std::string const& specKey,
         std::string const& roleKey,
-        std::string const& contextKey = "PvE") const;
+        std::string const& contextKey = "PvE",
+        std::string const& variantKey = "") const;
 
 private:
     integration::AccountAltRuntimeRepository const& _runtimeRepository;

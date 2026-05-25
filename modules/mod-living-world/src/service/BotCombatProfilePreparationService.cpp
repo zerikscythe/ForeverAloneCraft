@@ -3,6 +3,7 @@
 #include "Log.h"
 #include "Player.h"
 #include "SpellMgr.h"
+#include "service/BotCombatSimulatedItemUse.h"
 #include "Unit.h"
 
 namespace living_world
@@ -88,7 +89,8 @@ BotCombatPreparedProfile BotCombatProfilePreparationService::PrepareForWorldBot(
     std::unordered_set<std::uint32_t> const& knownSpells,
     std::string const& specKey,
     std::string const& roleKey,
-    std::string const& contextKey) const
+    std::string const& contextKey,
+    std::string const& variantKey) const
 {
     BotCombatPreparedProfile prepared;
     if (!unit)
@@ -99,7 +101,8 @@ BotCombatPreparedProfile BotCombatProfilePreparationService::PrepareForWorldBot(
         unit->getClass(),
         specKey,
         roleKey,
-        contextKey);
+        contextKey,
+        variantKey);
     prepared.availableSpells = knownSpells;
     prepared.interruptEntries = FilterEntriesForKnownActions(
         knownSpells,
@@ -160,7 +163,7 @@ bool BotCombatProfilePreparationService::IsActionUsableByBot(
         case model::BotCombatActionType::Spell:
             return ResolveKnownSpellForAction(knownSpells, action) != 0;
         case model::BotCombatActionType::Item:
-            return action.itemId != 0;
+            return action.itemId != 0 || !NormalizeCombatItemSelector(action.itemSelector).empty();
     }
     return false;
 }

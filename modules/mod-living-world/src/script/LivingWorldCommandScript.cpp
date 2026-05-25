@@ -1,5 +1,6 @@
 #include "script/LivingWorldCommandGrammar.h"
 #include "script/LivingWorldChatConfig.h"
+#include "script/LivingWorldPathTrace.h"
 #include "ai/CompanionAI.h"
 #include "service/WorldBotTaxiPlanning.h"
 #include "Trainer.h"
@@ -78,6 +79,7 @@
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <mutex>
 #include <unordered_map>
 #include <variant>
 #include <vector>
@@ -86,6 +88,13 @@ using namespace Acore::ChatCommands;
 
 // Economy scale global defined in LivingWorldWorldScript.cpp.
 namespace living_world { extern float g_economyScale; extern void ApplyEconomyScale(float, bool); }
+namespace living_world::script
+{
+std::filesystem::path ResolveNamedDebugRunDirectory();
+std::vector<std::string> ListNamedDebugRuns();
+bool StopNamedDebugRun(std::string const& runName, std::string& status);
+bool TryRunNamedDebugScenario(Player* observer, std::string const& runName, std::string& status);
+}
 
 namespace living_world
 {
@@ -168,6 +177,8 @@ struct CommitExecutionSummary
 };
 
 std::unordered_map<std::uint64_t, ObjectGuid> SpawnedRosterBodies;
+std::unordered_map<std::uint64_t, bool> BotAdminControlByPlayer;
+std::mutex BotAdminControlMutex;
 
 struct AccountAltSummary
 {
@@ -293,6 +304,7 @@ void RenderUsage(ChatHandler* handler)
 {
     handler->PSendSysMessage("LivingWorld usage:");
     handler->PSendSysMessage("  .lw loglevel <1-4>");
+    handler->PSendSysMessage("  .lw run <name>|list|stop [name|all]");
     handler->PSendSysMessage("  .lw routeplan <destZoneId> <destX> <destY> <destZ> [level] [auto|foot|ground_basic|ground_fast|flight_basic|flight_fast|taxi]");
     handler->PSendSysMessage("  .lw routecompare <destZoneId> <destX> <destY> <destZ> <levelA> <levelB> [tierA] [tierB]");
     handler->PSendSysMessage("  .lw routeoption <destZoneId> <destX> <destY> <destZ> [level] [alliance|horde|neutral] [exploredZoneCsv]");
@@ -303,6 +315,7 @@ void RenderUsage(ChatHandler* handler)
     handler->PSendSysMessage("  .lwbot roster list");
     handler->PSendSysMessage("  .lwbot roster request <rosterEntryId>");
     handler->PSendSysMessage("  .lwbot roster dismiss <rosterEntryId>");
+    handler->PSendSysMessage("  .lwbot admin on|off  (GM-only expanded control)");
     handler->PSendSysMessage("  .lwbot <#|name> profile <1-10>");
     handler->PSendSysMessage("  .lwbot <#|name> cast <Ability Name> [on yourself|me|mytarget|focus|<name>]");
     handler->PSendSysMessage("  .lwbot <#|name> attack [<name>]");
@@ -322,6 +335,28 @@ void RenderUsage(ChatHandler* handler)
     handler->PSendSysMessage("  .lwbot <#|name> reward <questId> <choiceNumber>");
     handler->PSendSysMessage("  .lwbot <#|name> mode assist|passive|hold|stay|guard");
     handler->PSendSysMessage("  .lwbot combat strict|smart");
+}
+
+bool GetBotAdminControlEnabled(Player const* player)
+{
+    if (!player)
+        return false;
+
+    std::lock_guard<std::mutex> guard(BotAdminControlMutex);
+    auto const itr = BotAdminControlByPlayer.find(player->GetGUID().GetCounter());
+    return itr != BotAdminControlByPlayer.end() && itr->second;
+}
+
+void SetBotAdminControlEnabled(Player const* player, bool enabled)
+{
+    if (!player)
+        return;
+
+    std::lock_guard<std::mutex> guard(BotAdminControlMutex);
+    if (enabled)
+        BotAdminControlByPlayer[player->GetGUID().GetCounter()] = true;
+    else
+        BotAdminControlByPlayer.erase(player->GetGUID().GetCounter());
 }
 
 std::optional<std::uint32_t> TryParseMapIdFromRouteFilename(std::string const& filename)
@@ -433,8 +468,30 @@ std::optional<bool> TryExtractJsonBoolean(std::string const& line, char const* k
     return match[1].str() == "true";
 }
 
+std::optional<std::string> TryExtractJsonString(std::string const& line, char const* key)
+{
+    std::regex const pattern(
+        std::string("^\\s*\"") + key + "\"\\s*:\\s*\"([^\"]+)\"(?:\\s*,\\s*)?$");
+    std::smatch match;
+    if (!std::regex_match(line, match, pattern))
+        return std::nullopt;
+
+    return match[1].str();
+}
+
+double ResolveGroundedRouteZ(Map* map, float x, float y, float fallbackZ, bool* resolvedFromGeometry);
+
 double ResolveGroundedRouteZ(Map* map, float x, float y, float fallbackZ)
 {
+    bool ignored = false;
+    return ResolveGroundedRouteZ(map, x, y, fallbackZ, &ignored);
+}
+
+double ResolveGroundedRouteZ(Map* map, float x, float y, float fallbackZ, bool* resolvedFromGeometry)
+{
+    if (resolvedFromGeometry)
+        *resolvedFromGeometry = false;
+
     if (!map)
         return fallbackZ;
 
@@ -444,22 +501,123 @@ double ResolveGroundedRouteZ(Map* map, float x, float y, float fallbackZ)
         hintedGround = map->GetHeight(x, y, fallbackZ, true, 50.0f);
 
     if (hintedGround > INVALID_HEIGHT)
+    {
         resolved = hintedGround;
+        if (resolvedFromGeometry)
+            *resolvedFromGeometry = true;
+    }
     else
     {
         float const skyGround = map->GetHeight(x, y, MAX_HEIGHT);
         if (skyGround > INVALID_HEIGHT)
+        {
             resolved = skyGround;
+            if (resolvedFromGeometry)
+                *resolvedFromGeometry = true;
+        }
     }
 
     if (resolved <= INVALID_HEIGHT)
     {
         float const water = map->GetWaterLevel(x, y);
         if (water > INVALID_HEIGHT)
+        {
             resolved = water;
+            if (resolvedFromGeometry)
+                *resolvedFromGeometry = true;
+        }
     }
 
     return resolved;
+}
+
+struct RouteBakePoint
+{
+    std::size_t zLineIndex = 0;
+    float x = 0.0f;
+    float y = 0.0f;
+    double bakedZ = 0.0;
+};
+
+using RouteBakeSegment = std::vector<RouteBakePoint>;
+
+void ApplyRouteBakeNeighborHeuristics(
+    Map* map,
+    std::vector<std::string>& rebuiltLines,
+    std::vector<RouteBakeSegment> const& segments,
+    std::uint32_t& updatedHere)
+{
+    if (!map)
+        return;
+
+    for (RouteBakeSegment const& segment : segments)
+    {
+        if (segment.size() < 3u)
+            continue;
+
+        std::vector<double> adjusted;
+        adjusted.reserve(segment.size());
+        for (RouteBakePoint const& point : segment)
+            adjusted.push_back(point.bakedZ);
+
+        for (int pass = 0; pass < 2; ++pass)
+        {
+            for (std::size_t index = 0; index < segment.size(); ++index)
+            {
+                std::vector<double> neighbors;
+                neighbors.reserve(4u);
+                std::size_t const start = index > 2u ? index - 2u : 0u;
+                std::size_t const end = std::min(segment.size() - 1u, index + 2u);
+                for (std::size_t neighborIndex = start; neighborIndex <= end; ++neighborIndex)
+                {
+                    if (neighborIndex == index)
+                        continue;
+                    neighbors.push_back(adjusted[neighborIndex]);
+                }
+
+                if (neighbors.empty())
+                    continue;
+
+                std::sort(neighbors.begin(), neighbors.end());
+                double const expected =
+                    neighbors.size() % 2u == 0u
+                        ? (neighbors[(neighbors.size() / 2u) - 1u] + neighbors[neighbors.size() / 2u]) * 0.5
+                        : neighbors[neighbors.size() / 2u];
+                double const spread = neighbors.back() - neighbors.front();
+                double const tolerance = std::max(8.0, spread + 4.0);
+                double const currentDelta = std::fabs(adjusted[index] - expected);
+                if (currentDelta <= tolerance)
+                    continue;
+
+                bool resolvedFromGeometry = false;
+                double const candidate = ResolveGroundedRouteZ(
+                    map,
+                    segment[index].x,
+                    segment[index].y,
+                    static_cast<float>(expected),
+                    &resolvedFromGeometry);
+                if (!resolvedFromGeometry)
+                    continue;
+
+                double const candidateDelta = std::fabs(candidate - expected);
+                if (candidateDelta + 0.5 >= currentDelta || candidateDelta > tolerance)
+                    continue;
+
+                adjusted[index] = candidate;
+            }
+        }
+
+        for (std::size_t index = 0; index < segment.size(); ++index)
+        {
+            if (std::fabs(adjusted[index] - segment[index].bakedZ) <= 0.01)
+                continue;
+            std::size_t const lineIndex = segment[index].zLineIndex;
+            if (lineIndex >= rebuiltLines.size())
+                continue;
+            rebuiltLines[lineIndex] = ReplaceJsonNumber(rebuiltLines[lineIndex], "world_z", adjusted[index]);
+            ++updatedHere;
+        }
+    }
 }
 
 struct RouteBakeResult
@@ -495,6 +653,11 @@ bool BakeRouteFileZHeights(
     rebuiltLines.reserve(lines.size() + 128u);
     bool sawBakedFlag = false;
     bool alreadyBaked = false;
+    bool currentPathManualZ = false;
+    bool inAnchors = false;
+    bool inMovementPoints = false;
+    std::vector<RouteBakeSegment> routeSegments;
+    RouteBakeSegment* currentSegment = nullptr;
 
     for (std::string& currentLine : lines)
     {
@@ -506,28 +669,96 @@ bool BakeRouteFileZHeights(
             continue;
         }
 
+        if (currentLine.find("\"path_index\"") != std::string::npos)
+        {
+            currentPathManualZ = false;
+            inAnchors = false;
+            inMovementPoints = false;
+            currentSegment = nullptr;
+        }
+
+        if (auto const zMode = TryExtractJsonString(currentLine, "z_mode"))
+            currentPathManualZ = *zMode == "manual";
+
+        if (currentLine.find("\"anchors\"") != std::string::npos)
+        {
+            inAnchors = true;
+            inMovementPoints = false;
+            if (!currentPathManualZ)
+            {
+                routeSegments.emplace_back();
+                currentSegment = &routeSegments.back();
+            }
+        }
+        else if (currentLine.find("\"movement_points\"") != std::string::npos)
+        {
+            inAnchors = false;
+            inMovementPoints = true;
+            if (!currentPathManualZ)
+            {
+                routeSegments.emplace_back();
+                currentSegment = &routeSegments.back();
+            }
+        }
+        else if (currentLine.find("\"area\"") != std::string::npos)
+        {
+            inAnchors = false;
+            inMovementPoints = false;
+            currentSegment = nullptr;
+        }
+
         if (auto const x = TryExtractJsonNumber(currentLine, "world_x"))
             pendingX = *x;
         if (auto const y = TryExtractJsonNumber(currentLine, "world_y"))
             pendingY = *y;
 
-        if (pendingX && pendingY &&
-            currentLine.find("\"distance_from_start_yards\"") != std::string::npos)
+        if (!currentPathManualZ && pendingX && pendingY)
         {
-            double const bakedZ = ResolveGroundedRouteZ(
-                map,
-                static_cast<float>(*pendingX),
-                static_cast<float>(*pendingY),
-                0.0f);
-            rebuiltLines.push_back(BuildJsonNumberLine(currentLine, "world_z", bakedZ));
-            ++updatedHere;
-            pendingX.reset();
-            pendingY.reset();
+            if (inMovementPoints &&
+                currentLine.find("\"distance_from_start_yards\"") != std::string::npos)
+            {
+                double const bakedZ = ResolveGroundedRouteZ(
+                    map,
+                    static_cast<float>(*pendingX),
+                    static_cast<float>(*pendingY),
+                    0.0f);
+                std::size_t const zLineIndex = rebuiltLines.size();
+                rebuiltLines.push_back(BuildJsonNumberLine(currentLine, "world_z", bakedZ));
+                if (currentSegment)
+                    currentSegment->push_back(RouteBakePoint{ zLineIndex, static_cast<float>(*pendingX), static_cast<float>(*pendingY), bakedZ });
+                ++updatedHere;
+                pendingX.reset();
+                pendingY.reset();
+            }
+            else if (inAnchors &&
+                currentLine.find("\"handle_in\"") != std::string::npos)
+            {
+                double const bakedZ = ResolveGroundedRouteZ(
+                    map,
+                    static_cast<float>(*pendingX),
+                    static_cast<float>(*pendingY),
+                    0.0f);
+                std::size_t const zLineIndex = rebuiltLines.size();
+                rebuiltLines.push_back(BuildJsonNumberLine(currentLine, "world_z", bakedZ));
+                if (currentSegment)
+                    currentSegment->push_back(RouteBakePoint{ zLineIndex, static_cast<float>(*pendingX), static_cast<float>(*pendingY), bakedZ });
+                ++updatedHere;
+                pendingX.reset();
+                pendingY.reset();
+            }
         }
 
         auto const currentZ = TryExtractJsonNumber(currentLine, "world_z");
         if (!currentZ)
         {
+            rebuiltLines.push_back(currentLine);
+            continue;
+        }
+
+        if (currentPathManualZ)
+        {
+            pendingX.reset();
+            pendingY.reset();
             rebuiltLines.push_back(currentLine);
             continue;
         }
@@ -544,12 +775,16 @@ bool BakeRouteFileZHeights(
                 currentLine = ReplaceJsonNumber(currentLine, "world_z", bakedZ);
                 ++updatedHere;
             }
+            if (currentSegment)
+                currentSegment->push_back(RouteBakePoint{ rebuiltLines.size(), static_cast<float>(*pendingX), static_cast<float>(*pendingY), bakedZ });
         }
 
         pendingX.reset();
         pendingY.reset();
         rebuiltLines.push_back(currentLine);
     }
+
+    ApplyRouteBakeNeighborHeuristics(map, rebuiltLines, routeSegments, updatedHere);
 
     if (updatedHere == 0 && alreadyBaked)
         return true;
@@ -2667,6 +2902,21 @@ std::vector<Player*> ResolvePartyBotsForOwner(Player* owner)
     return service::BotPlayerRegistry::Instance().FindBotsForOwner(owner->GetGUID());
 }
 
+Player* ResolveActiveBotByNameGlobal(std::string const& botName)
+{
+    if (botName.empty())
+        return nullptr;
+
+    Player* candidate = ObjectAccessor::FindPlayerByName(botName, true);
+    if (!candidate)
+        return nullptr;
+
+    if (!service::BotPlayerRegistry::Instance().FindOwnerForBot(candidate->GetGUID()))
+        return nullptr;
+
+    return candidate;
+}
+
 // Resolve the active bot Player* for a given botRef (index or name).
 // Returns null if the bot is not in the roster or not currently online.
 Player* ResolveActiveBotForOwner(
@@ -2695,8 +2945,26 @@ Player* ResolveActiveBotForOwner(
 
     ObjectGuid const activeGuid =
         ObjectGuid::Create<HighGuid::Player>(activeGuidLow);
-    return service::BotPlayerRegistry::Instance().FindBotForOwnerByGuid(
-        owner->GetGUID(), activeGuid);
+    if (Player* bot = service::BotPlayerRegistry::Instance().FindBotForOwnerByGuid(
+            owner->GetGUID(),
+            activeGuid))
+    {
+        return bot;
+    }
+
+    if (!owner->GetSession() ||
+        owner->GetSession()->GetSecurity() < SEC_GAMEMASTER ||
+        !GetBotAdminControlEnabled(owner) ||
+        IsPartyBotRef(botRef))
+    {
+        return nullptr;
+    }
+
+    std::string const* botName = std::get_if<std::string>(&botRef);
+    if (!botName)
+        return nullptr;
+
+    return ResolveActiveBotByNameGlobal(*botName);
 }
 
 std::vector<Player*> ResolveSelectedBotsForOwner(
@@ -2881,6 +3149,30 @@ void HandleBotCombatControlModeSet(
     handler->PSendSysMessage(
         "LivingWorld combat control set to %s.",
         BotCombatControlModeToString(command.mode).data());
+}
+
+void HandleBotAdminModeSet(
+    ChatHandler* handler,
+    BotAdminModeSetCommand const& command)
+{
+    WorldSession* session = handler->GetSession();
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !player)
+    {
+        handler->SendErrorMessage("LivingWorld bot admin commands require an in-game player.");
+        return;
+    }
+
+    if (session->GetSecurity() < SEC_GAMEMASTER)
+    {
+        handler->SendErrorMessage("LivingWorld bot admin mode requires GM access.");
+        return;
+    }
+
+    SetBotAdminControlEnabled(player, command.enabled);
+    handler->PSendSysMessage(
+        "LivingWorld bot admin control %s.",
+        command.enabled ? "enabled" : "disabled");
 }
 
 void HandleBotAddTalent(
@@ -5646,6 +5938,13 @@ bool HandleParsedCommand(
         return true;
     }
 
+    if (BotAdminModeSetCommand const* command =
+        std::get_if<BotAdminModeSetCommand>(&parsed))
+    {
+        HandleBotAdminModeSet(handler, *command);
+        return true;
+    }
+
     if (BotAddTalentCommand const* command =
         std::get_if<BotAddTalentCommand>(&parsed))
     {
@@ -5723,6 +6022,8 @@ private:
 
         constexpr std::string_view loglevelToken = "loglevel";
         constexpr std::string_view economyToken = "economy";
+        constexpr std::string_view runToken = "run";
+        constexpr std::string_view pathTraceToken = "pathtrace";
         constexpr std::string_view routePlanToken = "routeplan";
         constexpr std::string_view routeCompareToken = "routecompare";
         constexpr std::string_view routeOptionToken = "routeoption";
@@ -5758,6 +6059,164 @@ private:
                 "Repairs and trainer costs updated immediately. "
                 "Vendor prices take effect after the next restart.",
                 scale);
+            return true;
+        }
+
+        if (arguments.starts_with(runToken))
+        {
+            WorldSession* session = handler ? handler->GetSession() : nullptr;
+            Player* player = session ? session->GetPlayer() : nullptr;
+            if (!session || !player)
+            {
+                if (handler)
+                    handler->SendErrorMessage("LivingWorld run requires an in-game player session.");
+                return true;
+            }
+
+            if (session->GetSecurity() < SEC_GAMEMASTER)
+            {
+                handler->SendErrorMessage("LivingWorld run requires GM access.");
+                return true;
+            }
+
+            arguments.remove_prefix(runToken.size());
+            arguments = living_world::script::TrimRootWhitespace(arguments);
+            if (arguments.starts_with("stop"))
+            {
+                std::string_view stopArgs = living_world::script::TrimRootWhitespace(arguments.substr(4));
+                std::string const runName = stopArgs.empty() ? "all" : std::string(stopArgs);
+                std::string status;
+                if (!living_world::script::StopNamedDebugRun(runName, status))
+                {
+                    handler->SendErrorMessage("LivingWorld run stop: {}", status);
+                    return true;
+                }
+
+                handler->PSendSysMessage("LivingWorld run stop: {}", status);
+                return true;
+            }
+
+            if (arguments.empty() || arguments == "list")
+            {
+                auto const runs = living_world::script::ListNamedDebugRuns();
+                std::filesystem::path const root = living_world::script::ResolveNamedDebugRunDirectory();
+                if (runs.empty())
+                {
+                    handler->PSendSysMessage(
+                        "LivingWorld run: no named runs found under {}",
+                        root.string());
+                    return true;
+                }
+
+                handler->PSendSysMessage(
+                    "LivingWorld run files under {}:",
+                    root.string());
+                for (std::string const& runName : runs)
+                    handler->PSendSysMessage("  {}", runName);
+                return true;
+            }
+
+            std::string const runName(arguments);
+            std::string status;
+            if (!living_world::script::TryRunNamedDebugScenario(player, runName, status))
+            {
+                handler->SendErrorMessage("LivingWorld run failed: {}", status);
+                return true;
+            }
+
+            handler->PSendSysMessage("LivingWorld run: {}", status);
+            return true;
+        }
+
+        if (arguments.starts_with(pathTraceToken))
+        {
+            WorldSession* session = handler ? handler->GetSession() : nullptr;
+            Player* player = session ? session->GetPlayer() : nullptr;
+            if (!session || !player)
+            {
+                if (handler)
+                    handler->SendErrorMessage("LivingWorld pathtrace requires an in-game player session.");
+                return true;
+            }
+
+            if (session->GetSecurity() < SEC_GAMEMASTER)
+            {
+                handler->SendErrorMessage("LivingWorld pathtrace requires GM access.");
+                return true;
+            }
+
+            arguments.remove_prefix(pathTraceToken.size());
+            arguments = living_world::script::TrimRootWhitespace(arguments);
+            if (arguments.empty())
+            {
+                handler->PSendSysMessage(
+                    "LivingWorld pathtrace usage: .lw pathtrace on [label]|off  (polls every 4 player updates)");
+                return true;
+            }
+
+            if (arguments.starts_with("on"))
+            {
+                std::string_view label;
+                if (arguments.size() == 2)
+                {
+                    label = {};
+                }
+                else
+                {
+                    if (!std::isspace(static_cast<unsigned char>(arguments[2])))
+                    {
+                        handler->PSendSysMessage(
+                            "LivingWorld pathtrace usage: .lw pathtrace on [label]|off");
+                        return true;
+                    }
+                    label = living_world::script::TrimRootWhitespace(arguments.substr(2));
+                }
+
+                living_world::script::pathtrace::Session const traceSession =
+                    living_world::script::pathtrace::Start(player, 4, label);
+                std::filesystem::path const outputDir =
+                    living_world::script::pathtrace::ResolveOutputDirectory();
+                if (!traceSession.traceLabel.empty())
+                {
+                    handler->PSendSysMessage(
+                        "LivingWorld pathtrace started for '{}' with label '{}' (poll every {} updates). JSON will be written under {} when you turn it off or log out.",
+                        player->GetName(),
+                        traceSession.traceLabel,
+                        traceSession.pollEveryUpdates,
+                        outputDir.string());
+                }
+                else
+                {
+                    handler->PSendSysMessage(
+                        "LivingWorld pathtrace started for '{}' (poll every {} updates). JSON will be written under {} when you turn it off or log out.",
+                        player->GetName(),
+                        traceSession.pollEveryUpdates,
+                        outputDir.string());
+                }
+                return true;
+            }
+
+            if (arguments == "off")
+            {
+                living_world::script::pathtrace::StopResult const stopResult =
+                    living_world::script::pathtrace::FlushAndStop(player, "manual_off");
+                if (!stopResult.hadActiveTrace)
+                {
+                    handler->PSendSysMessage(
+                        "LivingWorld pathtrace was not active for '{}'.",
+                        player->GetName());
+                    return true;
+                }
+
+                handler->PSendSysMessage(
+                    "LivingWorld pathtrace saved {} samples to {}",
+                    static_cast<std::uint32_t>(stopResult.sampleCount),
+                    stopResult.outputPath.string());
+                return true;
+            }
+
+            handler->PSendSysMessage(
+                "LivingWorld pathtrace usage: .lw pathtrace on [label]|off");
             return true;
         }
 

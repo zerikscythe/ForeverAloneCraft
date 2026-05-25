@@ -1,8 +1,20 @@
-# World Bot Virtual Loadouts - V1 Design Notes
+# World Bot Virtual Loadouts - Evolved Design Notes
 
 ## Purpose
 
-This document records the agreed first slice for world-bot gear support.
+This document started as the agreed first slice for world-bot gear support. It
+now also records how that first slice evolved into the current staged,
+bagless-but-item-grounded world-bot gearing model.
+
+It also now needs to be read with a newer pivot in mind:
+
+- abstract/offscreen world bots still use the ledger + assigned-gear model as
+  canonical truth
+- visible/materialized ambient bots are pivoting toward leased `Player` shells
+  rebuilt from that ledger truth
+- the older `Creature`-backed runtime described throughout this document is
+  still relevant historically and as a compatibility lane, but it is no longer
+  the intended long-term visible body for ambient bots
 
 World bots are `Creature`-backed actors, not real `Player` inventory owners. They
 should still be able to scale in survivability and power like geared players,
@@ -11,12 +23,21 @@ honestly support today.
 
 ## Decision Summary
 
-For V1 we are **not** implementing real inventory, equipped item instances,
-enchants, gems, trinket procs, or player-only secondary rating pipelines for
-world bots.
+Historical note: the original decision summary below explains why virtual
+loadouts and invisible assigned gear were the right answer for the
+`Creature`-backed phase. That work still matters because the ledger and
+assigned-gear tables now feed player-shell rebuilds too.
 
-Instead, we introduce a **DB-backed virtual loadout package** resolved during
-world-bot preparation and applied at spawn time.
+We still are **not** implementing real inventory ownership or true visible
+equipped item instances for world bots.
+
+Instead, the live model is now:
+
+- DB-backed virtual loadout packages
+- persistent invisible assigned gear
+- curated staged level-80 templates
+- materialized stat/rating/passive item effects
+- common reactive proc support where the current runtime can honestly carry it
 
 ## Cross-family implication
 
@@ -28,10 +49,12 @@ shared dungeon/raid/PUG contexts. That means survivability and throughput tuning
 must ultimately converge on a shared build/loadout direction even if the runtime
 delivery differs by bot family.
 
-Near-term interpretation:
+Current interpretation:
 
-- **world bots** use virtual loadout packages first because they are
-  Creature-backed and bagless
+- **ledger-shell ambient bots** use the same assigned-gear truth, but project it
+  into real player inventory/equipment at rebuild time
+- **older creature-backed ambient bots** still use virtual-loadout +
+  aggregate-stat projection because they are bagless and compatibility-oriented
 - **account bots** and **guild bots** already have a real inventory/equipment
   path, but should eventually share the same higher-level build/loadout
   selection vocabulary for PUG readiness
@@ -46,11 +69,12 @@ progression.
 
 - level progression should stop at `80`
 - endgame **gear progression should continue after 80**
-- a newly capped bot should start near **pre-raid** effective gear
+- a newly capped bot now starts at the curated stage-0 **pre-raid** rung when a
+  staged template exists
 - continuing counted world-online time should move that bot through stronger
-  endgame survivability / throughput packages
-- the final `10 hours` before retirement should correspond to the bot's
-  **full endgame gear** phase
+  endgame survivability / throughput packages as later stages are seeded
+- the final hours before retirement are still intended to represent the bot's
+  near-BiS / fully maxed phase once stages `1-4` are fully authored
 
 This keeps long-lived level-80 bots from freezing at one power band and better
 matches the way a real endgame player keeps progressing after the leveling game
@@ -65,7 +89,7 @@ ends.
 - avoids pretending that `Creature` units already support the full player item
   stat model
 
-## Safe V1 stat boundary
+## Current safe stat boundary
 
 The current AzerothCore `Creature` stat system can safely honor:
 
@@ -86,16 +110,23 @@ These are applied explicitly and then `UpdateAllStats()` is run again.
 
 ## Explicitly deferred from V1
 
-The following are intentionally deferred because the world-bot runtime is still
-`Creature`-based and does not yet share the full player item bonus pipeline:
+The following were originally deferred because the world-bot runtime is still
+`Creature`-based and does not yet share the full player item bonus pipeline.
+Many of them are now live in a bagless/materialized form:
 
-- spell power as a true player-item stat pipeline
-- resilience rating / PvP rating semantics
-- hit / crit / haste rating pipelines
-- armor penetration rating
-- proc auras and trinket effects
-- gem/enchant/set-bonus modeling
+- spell power / healing power
+- resilience / PvP durability semantics
+- hit / crit / haste / expertise / armor penetration rating pipelines
+- gem / enchant / armor-kit / set-bonus modeling
+- glyph aura materialization
+- common equip-aura and landed-hit reactive proc support
+
+The still-deliberate deferrals are now narrower:
+
 - visible equipment / true inventory ownership
+- full player item-slot lifecycle semantics
+- exhaustive weird-item / strange on-use script fidelity
+- full player pet/inventory interactions for every item edge case
 
 If we need those later, the next slice should either:
 
@@ -131,6 +162,13 @@ works elsewhere in the module.
   bonuses at spawn.
 - `build_prepared` activity logging includes the resolved virtual loadout name
   and bonus summary.
+
+For the newer ledger-shell lane:
+
+- the same assigned-gear truth is rebuilt into real equipped player items
+- display loadouts and appearance bytes ride alongside that rebuild
+- the creature-side aggregate application path should now be treated as a
+  fallback/legacy consumer of the same canonical gear data
 
 ## Current seed shape
 
@@ -170,9 +208,11 @@ virtual stat packages and full item ownership:
   - weapon subclass compatibility
   - required level
   - quality band
-- the default band is mostly **green-quality** gear
-- each refresh also does a small **lucky roll** so a minority of bots receive a
-  few blue upgrades, and a rarer subset may receive a single epic-quality piece
+- sub-80 refreshes still use filtered/scored real item candidates with a level
+  and quality curve
+- level-80 bots now prefer **curated staged templates** when present, starting
+  from stage-0 pre-raid and later falling back to generated gear only where
+  staged content is still missing
 
 ### Why this exists
 
@@ -275,8 +315,8 @@ that affect throughput, survivability, or mana economy.
 ### Scope boundary for this slice
 
 This slice still intentionally avoids pretending the world bot has a full player
-spellbook/runtime lifecycle. It only applies the safe passive/self-aura subset
-at spawn time; it does not attempt to fully emulate:
+spellbook/runtime lifecycle. It applies the safe passive/self-aura subset at
+spawn time; it does not attempt to fully emulate:
 
 - form-gated aura lifecycle beyond simple safe checks
 - full proc systems
@@ -288,9 +328,14 @@ at spawn time; it does not attempt to fully emulate:
 This live slice still does **not** model:
 
 - real visible equipment on the creature model
-- enchantments, gems, or set bonuses
-- full rating-to-combat pipeline fidelity
 - actual bag ownership or lootable personal inventory
+
+Those older gaps have otherwise narrowed substantially:
+
+- enchantments, gems, armor kits, and set bonuses are now materially applied
+- full rating-to-combat pipeline fidelity is no longer a blanket missing slice;
+  most major combat-relevant rating lanes are now implemented through the
+  current Creature-safe hooks
 
 So the assigned gear is currently best understood as:
 

@@ -965,7 +965,7 @@ World.RealmAvailability = 1
 #                     16 - (FFA_PVP, Free for all PvP mode like arena PvP in all zones except rest
 #                          activated places and sanctuaries)
 
-GameType = 0
+GameType = 1
 
 #
 #    RealmZone

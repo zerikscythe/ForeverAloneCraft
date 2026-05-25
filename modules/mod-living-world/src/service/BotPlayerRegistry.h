@@ -3,6 +3,7 @@
 #include "ObjectGuid.h"
 #include "model/BotCombatControlMode.h"
 #include "model/BotCombatMode.h"
+#include "model/BotRuntimeKind.h"
 
 #include <cstdint>
 #include <mutex>
@@ -21,12 +22,18 @@ class BotPlayerRegistry
 public:
     static BotPlayerRegistry& Instance();
 
+    void RegisterPendingBot(
+        ObjectGuid botCharacterGuid,
+        ObjectGuid ownerCharacterGuid,
+        model::BotRuntimeKind kind);
     void RegisterPendingOwner(ObjectGuid botCharacterGuid, ObjectGuid ownerCharacterGuid);
     std::optional<ObjectGuid> RegisterBotPlayer(Player* botPlayer);
     void UnregisterBotPlayer(Player* botPlayer);
 
     // Returns all active bots registered for this owner.
     std::vector<Player*> FindBotsForOwner(ObjectGuid ownerCharacterGuid) const;
+    // Returns all active registered bots.
+    std::vector<Player*> FindAllBots() const;
     // Returns the specific bot by character guid, if owned by ownerCharacterGuid.
     Player* FindBotForOwnerByGuid(ObjectGuid ownerCharacterGuid, ObjectGuid botCharacterGuid) const;
 
@@ -53,10 +60,15 @@ public:
         ObjectGuid ownerCharacterGuid) const;
     void ClearBotControlMode(ObjectGuid ownerCharacterGuid);
 
+    model::BotRuntimeKind GetBotRuntimeKind(ObjectGuid botCharacterGuid) const;
+    void SetBotRuntimeKind(ObjectGuid botCharacterGuid, model::BotRuntimeKind kind);
+
 private:
     mutable std::mutex _mutex;
     std::unordered_map<std::uint64_t, std::uint64_t> _pendingOwnersByBot;
+    std::unordered_map<std::uint64_t, model::BotRuntimeKind> _pendingKindsByBot;
     std::unordered_map<std::uint64_t, std::uint64_t> _ownersByBot;
+    std::unordered_map<std::uint64_t, model::BotRuntimeKind> _botKinds;
     // owner guid -> list of bot guids
     std::unordered_map<std::uint64_t, std::vector<ObjectGuid>> _botsByOwner;
     std::unordered_map<std::uint64_t, model::BotCombatMode> _botModes;

@@ -130,7 +130,10 @@ ParsedCommand ParseRosterVerb(
     std::string_view verb, std::string_view remaining)
 {
     if (verb == "list")
-        return RosterListCommand{};
+    {
+        RosterListCommand cmd;
+        return cmd;
+    }
 
     if (verb == "request" || verb == "dismiss")
     {
@@ -157,6 +160,120 @@ ParsedCommand ParseRosterVerb(
     return MakeError(
         CommandParseErrorKind::UnknownVerb,
         std::string("unknown roster verb: ") + std::string(verb));
+}
+
+std::string ToLowerCopy(std::string_view value)
+{
+    std::string out(value);
+    for (char& c : out)
+        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    return out;
+}
+
+bool TryParseLevelRangeToken(
+    std::string_view token,
+    std::uint8_t& minLevel,
+    std::uint8_t& maxLevel)
+{
+    if (token.empty())
+        return false;
+
+    std::size_t const colon = token.find(':');
+    if (colon == std::string_view::npos)
+    {
+        std::uint64_t levelRaw = 0;
+        if (!ParseUInt64(token, levelRaw) || levelRaw < 1 || levelRaw > 80)
+            return false;
+        minLevel = static_cast<std::uint8_t>(levelRaw);
+        maxLevel = static_cast<std::uint8_t>(levelRaw);
+        return true;
+    }
+
+    std::string_view left = token.substr(0, colon);
+    std::string_view right = token.substr(colon + 1);
+    std::uint64_t minRaw = 0;
+    std::uint64_t maxRaw = 0;
+    if (left.empty() || right.empty() ||
+        !ParseUInt64(left, minRaw) ||
+        !ParseUInt64(right, maxRaw) ||
+        minRaw < 1 || minRaw > 80 ||
+        maxRaw < 1 || maxRaw > 80 ||
+        minRaw > maxRaw)
+    {
+        return false;
+    }
+
+    minLevel = static_cast<std::uint8_t>(minRaw);
+    maxLevel = static_cast<std::uint8_t>(maxRaw);
+    return true;
+}
+
+ParsedCommand ParseListScope(std::string_view remaining)
+{
+    RosterListCommand cmd;
+
+    std::string_view scopeToken = ConsumeToken(remaining);
+    if (scopeToken.empty())
+        return cmd;
+
+    std::string const scope = ToLowerCopy(scopeToken);
+    if (scope == "party")
+        cmd.scope = RosterListCommand::Scope::Party;
+    else if (scope == "raid")
+        cmd.scope = RosterListCommand::Scope::Raid;
+    else if (scope == "zone")
+        cmd.scope = RosterListCommand::Scope::Zone;
+    else if (scope == "world")
+        cmd.scope = RosterListCommand::Scope::World;
+    else
+    {
+        return MakeError(
+            CommandParseErrorKind::InvalidArgument,
+            "list scope must be party, raid, zone, or world");
+    }
+
+    while (true)
+    {
+        std::string_view token = ConsumeToken(remaining);
+        if (token.empty())
+            break;
+
+        std::string const lowered = ToLowerCopy(token);
+        std::uint8_t rangeMin = 0;
+        std::uint8_t rangeMax = 0;
+        if (TryParseLevelRangeToken(token, rangeMin, rangeMax))
+        {
+            cmd.minLevel = rangeMin;
+            cmd.maxLevel = rangeMax;
+            continue;
+        }
+
+        auto const classTokenToId = [](std::string_view name) -> std::uint8_t
+        {
+            if (name == "warrior")                       return 1;
+            if (name == "paladin")                       return 2;
+            if (name == "hunter")                        return 3;
+            if (name == "rogue")                         return 4;
+            if (name == "priest")                        return 5;
+            if (name == "dk" || name == "deathknight")   return 6;
+            if (name == "shaman")                        return 7;
+            if (name == "mage")                          return 8;
+            if (name == "warlock")                       return 9;
+            if (name == "druid")                         return 11;
+            return 0;
+        };
+
+        std::uint8_t const classId = classTokenToId(lowered);
+        if (classId != 0)
+        {
+            cmd.classId = classId;
+            continue;
+        }
+
+        cmd.specKey = lowered;
+    }
+
+    return cmd;
 }
 
 // Dispatches on the second token after a resolved bot reference:
@@ -788,8 +905,12 @@ ParsedCommand ParseLivingWorldCommand(std::string_view arguments)
     // the original `.lwbot roster ...` grammar. This matches how the command
     // is being used in game and keeps the parser addon-friendly by treating
     // `roster` as an optional first subsystem marker for now.
-    if (firstToken == "list" ||
-        firstToken == "request" ||
+    if (firstToken == "list")
+    {
+        return ParseListScope(remaining);
+    }
+
+    if (firstToken == "request" ||
         firstToken == "dismiss")
     {
         return ParseRosterVerb(firstToken, remaining);
@@ -798,6 +919,35 @@ ParsedCommand ParseLivingWorldCommand(std::string_view arguments)
     if (firstToken == "questactions")
     {
         return QuestActionsCommand{};
+    }
+
+    if (firstToken == "admin")
+    {
+        std::string_view stateToken = ConsumeToken(remaining);
+        if (stateToken.empty())
+        {
+            return MakeError(
+                CommandParseErrorKind::MissingArgument,
+                "admin requires 'on' or 'off'");
+        }
+
+        if (stateToken == "on")
+        {
+            BotAdminModeSetCommand cmd;
+            cmd.enabled = true;
+            return cmd;
+        }
+
+        if (stateToken == "off")
+        {
+            BotAdminModeSetCommand cmd;
+            cmd.enabled = false;
+            return cmd;
+        }
+
+        return MakeError(
+            CommandParseErrorKind::InvalidArgument,
+            "admin must be 'on' or 'off'");
     }
 
     if (firstToken == "trainactions")

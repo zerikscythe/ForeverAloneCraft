@@ -15,13 +15,25 @@ BotPlayerRegistry& BotPlayerRegistry::Instance()
     return registry;
 }
 
+void BotPlayerRegistry::RegisterPendingBot(
+    ObjectGuid botCharacterGuid,
+    ObjectGuid ownerCharacterGuid,
+    model::BotRuntimeKind kind)
+{
+    std::lock_guard<std::mutex> guard(_mutex);
+    std::uint64_t const botGuid = botCharacterGuid.GetCounter();
+    _pendingOwnersByBot[botGuid] = ownerCharacterGuid.GetCounter();
+    _pendingKindsByBot[botGuid] = kind;
+}
+
 void BotPlayerRegistry::RegisterPendingOwner(
     ObjectGuid botCharacterGuid,
     ObjectGuid ownerCharacterGuid)
 {
-    std::lock_guard<std::mutex> guard(_mutex);
-    _pendingOwnersByBot[botCharacterGuid.GetCounter()] =
-        ownerCharacterGuid.GetCounter();
+    model::BotRuntimeKind const kind = ownerCharacterGuid.IsEmpty()
+        ? model::BotRuntimeKind::Hostile
+        : model::BotRuntimeKind::Companion;
+    RegisterPendingBot(botCharacterGuid, ownerCharacterGuid, kind);
 }
 
 std::optional<ObjectGuid> BotPlayerRegistry::RegisterBotPlayer(Player* botPlayer)
@@ -42,6 +54,11 @@ std::optional<ObjectGuid> BotPlayerRegistry::RegisterBotPlayer(Player* botPlayer
     std::uint64_t const ownerGuidLow = pending->second;
     ObjectGuid ownerGuid = ObjectGuid::Create<HighGuid::Player>(ownerGuidLow);
     _ownersByBot[botGuid] = ownerGuidLow;
+    auto const pendingKind = _pendingKindsByBot.find(botGuid);
+    _botKinds[botGuid] = pendingKind != _pendingKindsByBot.end()
+        ? pendingKind->second
+        : (ownerGuidLow == 0 ? model::BotRuntimeKind::Hostile
+                             : model::BotRuntimeKind::Companion);
 
     auto& bots = _botsByOwner[ownerGuidLow];
     // Avoid duplicate registration.
@@ -52,6 +69,7 @@ std::optional<ObjectGuid> BotPlayerRegistry::RegisterBotPlayer(Player* botPlayer
         bots.push_back(botPlayer->GetGUID());
 
     _pendingOwnersByBot.erase(pending);
+    _pendingKindsByBot.erase(botGuid);
     return ownerGuid;
 }
 
@@ -87,6 +105,8 @@ void BotPlayerRegistry::UnregisterBotPlayer(Player* botPlayer)
     }
 
     _pendingOwnersByBot.erase(botGuid);
+    _pendingKindsByBot.erase(botGuid);
+    _botKinds.erase(botGuid);
 }
 
 std::vector<Player*> BotPlayerRegistry::FindBotsForOwner(ObjectGuid ownerCharacterGuid) const
@@ -222,6 +242,24 @@ void BotPlayerRegistry::ClearBotControlMode(ObjectGuid ownerCharacterGuid)
 {
     std::lock_guard<std::mutex> guard(_mutex);
     _botControlModes.erase(ownerCharacterGuid.GetCounter());
+}
+
+model::BotRuntimeKind BotPlayerRegistry::GetBotRuntimeKind(
+    ObjectGuid botCharacterGuid) const
+{
+    std::lock_guard<std::mutex> guard(_mutex);
+    auto const itr = _botKinds.find(botCharacterGuid.GetCounter());
+    if (itr == _botKinds.end())
+        return model::BotRuntimeKind::Companion;
+    return itr->second;
+}
+
+void BotPlayerRegistry::SetBotRuntimeKind(
+    ObjectGuid botCharacterGuid,
+    model::BotRuntimeKind kind)
+{
+    std::lock_guard<std::mutex> guard(_mutex);
+    _botKinds[botCharacterGuid.GetCounter()] = kind;
 }
 } // namespace service
 } // namespace living_world

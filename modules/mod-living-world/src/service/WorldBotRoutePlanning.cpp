@@ -18,6 +18,111 @@ namespace living_world
 {
 namespace service
 {
+
+bool WorldBotRoutePlanner::RoutePath::SupportsResourceKind(std::string const& resourceKind) const
+{
+    if (resourceKind.empty() || resourceKinds.empty())
+        return true;
+
+    std::string normalized;
+    normalized.reserve(resourceKind.size());
+    for (char const ch : resourceKind)
+        normalized.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(ch))));
+
+    return std::any_of(
+        resourceKinds.begin(),
+        resourceKinds.end(),
+        [&](std::string const& candidate)
+        {
+            std::string candidateNormalized;
+            candidateNormalized.reserve(candidate.size());
+            for (char const ch : candidate)
+                candidateNormalized.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(ch))));
+            return candidateNormalized == normalized;
+        });
+}
+
+namespace
+{
+bool StringListContainsNormalized(
+    std::vector<std::string> const& candidates,
+    std::string const& value)
+{
+    if (value.empty() || candidates.empty())
+        return false;
+
+    std::string normalized;
+    normalized.reserve(value.size());
+    for (char const ch : value)
+        normalized.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(ch))));
+
+    return std::any_of(
+        candidates.begin(),
+        candidates.end(),
+        [&](std::string const& candidate)
+        {
+            std::string candidateNormalized;
+            candidateNormalized.reserve(candidate.size());
+            for (char const ch : candidate)
+                candidateNormalized.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(ch))));
+            return candidateNormalized == normalized;
+        });
+}
+}
+
+bool WorldBotRoutePlanner::RoutePath::SupportsLowerContextKey(std::string const& destinationKey) const
+{
+    return StringListContainsNormalized(lowerContextKeys, destinationKey);
+}
+
+bool WorldBotRoutePlanner::RoutePath::SupportsUpperContextKey(std::string const& destinationKey) const
+{
+    return StringListContainsNormalized(upperContextKeys, destinationKey);
+}
+
+bool WorldBotRoutePlanner::RoutePath::SupportsDestinationKey(std::string const& destinationKey) const
+{
+    return SupportsLowerContextKey(destinationKey)
+        || SupportsUpperContextKey(destinationKey)
+        || StringListContainsNormalized(destinationKeys, destinationKey);
+}
+
+std::string ToString(WorldBotRoutePathKind const kind)
+{
+    switch (kind)
+    {
+        case WorldBotRoutePathKind::MainRoute:
+            return "main_route";
+        case WorldBotRoutePathKind::SubRoute:
+            return "sub_route";
+        case WorldBotRoutePathKind::Area:
+            return "area";
+    }
+
+    return "main_route";
+}
+
+std::optional<WorldBotRoutePathKind> TryParseWorldBotRoutePathKind(std::string const& value)
+{
+    std::string normalized;
+    normalized.reserve(value.size());
+    for (char const ch : value)
+    {
+        if (ch == ' ' || ch == '-')
+            normalized.push_back('_');
+        else
+            normalized.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(ch))));
+    }
+
+    if (normalized.empty() || normalized == "main_route")
+        return WorldBotRoutePathKind::MainRoute;
+    if (normalized == "sub_route")
+        return WorldBotRoutePathKind::SubRoute;
+    if (normalized == "area")
+        return WorldBotRoutePathKind::Area;
+    return std::nullopt;
+}
+
 namespace
 {
 
@@ -317,6 +422,24 @@ bool GetBoolOrDefault(JsonValue const& object, std::string const& key, bool fall
     return value->boolValue;
 }
 
+std::vector<std::string> GetStringArrayOrDefault(JsonValue const& object, std::string const& key)
+{
+    std::vector<std::string> result;
+    JsonValue const* value = TryGetObjectMember(object, key);
+    if (!value || !value->IsArray())
+        return result;
+
+    result.reserve(value->arrayValue.size());
+    for (JsonValue const& entry : value->arrayValue)
+    {
+        if (!entry.IsString())
+            continue;
+        result.push_back(entry.stringValue);
+    }
+
+    return result;
+}
+
 std::optional<WorldBotRoutePlanner::RouteConnectionRef> ParseConnection(JsonValue const* connectionValue)
 {
     if (!connectionValue || connectionValue->IsNull())
@@ -427,6 +550,21 @@ std::optional<WorldBotRoutePlanner::ZoneRouteGraph> ParseZoneRouteGraph(
 
         WorldBotRoutePlanner::RoutePath path;
         path.routeKey = GetStringOrDefault(pathValue, "path_key");
+        path.kind = TryParseWorldBotRoutePathKind(GetStringOrDefault(pathValue, "path_kind"))
+            .value_or(WorldBotRoutePathKind::MainRoute);
+        path.closedLoop = GetBoolOrDefault(pathValue, "closed_loop", false);
+        path.resourceKinds = GetStringArrayOrDefault(pathValue, "resource_kinds");
+        path.resourceItems = GetStringArrayOrDefault(pathValue, "resource_items");
+        path.assistKind = GetStringOrDefault(pathValue, "assist_kind");
+        path.lowerContextKeys = GetStringArrayOrDefault(pathValue, "lower_context_keys");
+        path.upperContextKeys = GetStringArrayOrDefault(pathValue, "upper_context_keys");
+        path.destinationKeys = GetStringArrayOrDefault(pathValue, "destination_keys");
+        if (path.lowerContextKeys.empty())
+            path.lowerContextKeys = path.destinationKeys;
+        if (path.upperContextKeys.empty())
+            path.upperContextKeys = path.destinationKeys;
+        path.lowerLabel = GetStringOrDefault(pathValue, "lower_label");
+        path.upperLabel = GetStringOrDefault(pathValue, "upper_label");
         path.startConnection = ParseConnection(TryGetObjectMember(pathValue, "start_connection"));
         path.endConnection = ParseConnection(TryGetObjectMember(pathValue, "end_connection"));
 
@@ -451,7 +589,8 @@ std::optional<WorldBotRoutePlanner::ZoneRouteGraph> ParseZoneRouteGraph(
             pointsValue && pointsValue->IsArray())
         {
             path.points.reserve(pointsValue->arrayValue.size());
-            nodeIds.reserve(pointsValue->arrayValue.size());
+            if (path.kind == WorldBotRoutePathKind::MainRoute)
+                nodeIds.reserve(pointsValue->arrayValue.size());
 
             for (std::size_t pointIndex = 0; pointIndex < pointsValue->arrayValue.size(); ++pointIndex)
             {
@@ -466,6 +605,9 @@ std::optional<WorldBotRoutePlanner::ZoneRouteGraph> ParseZoneRouteGraph(
                 point.z = static_cast<float>(GetNumberOrDefault(pointValue, "world_z"));
                 point.distanceFromStartYards = static_cast<float>(GetNumberOrDefault(pointValue, "distance_from_start_yards"));
                 path.points.push_back(point);
+
+                if (path.kind != WorldBotRoutePathKind::MainRoute)
+                    continue;
 
                 WorldBotRoutePlanner::GraphNode node;
                 node.waypoint.mapId = point.mapId;
@@ -490,6 +632,8 @@ std::optional<WorldBotRoutePlanner::ZoneRouteGraph> ParseZoneRouteGraph(
     {
         auto const& path = graph.paths[pathIndex];
         auto const& nodeIds = graph.pathNodeIds[pathIndex];
+        if (path.kind != WorldBotRoutePathKind::MainRoute)
+            continue;
         for (std::size_t pointIndex = 1; pointIndex < nodeIds.size(); ++pointIndex)
         {
             std::size_t const prevId = nodeIds[pointIndex - 1];
@@ -555,6 +699,8 @@ std::optional<WorldBotRoutePlanner::ZoneRouteGraph> ParseZoneRouteGraph(
     {
         auto const& path = graph.paths[pathIndex];
         auto const& nodeIds = graph.pathNodeIds[pathIndex];
+        if (path.kind != WorldBotRoutePathKind::MainRoute)
+            continue;
         if (nodeIds.empty())
             continue;
 
@@ -1296,6 +1442,29 @@ std::optional<WorldBotRoutePlanner::ZoneRouteGraph> WorldBotRoutePlanner::LoadZo
 
     _graphCache.emplace(cacheKey, parsed);
     return parsed;
+}
+
+std::vector<WorldBotRoutePlanner::RoutePath> WorldBotRoutePlanner::LoadZonePaths(
+    std::uint16_t mapId,
+    std::uint32_t zoneId,
+    std::optional<WorldBotRoutePathKind> kindFilter) const
+{
+    auto const graph = LoadZoneGraph(mapId, zoneId);
+    if (!graph)
+        return {};
+
+    if (!kindFilter.has_value())
+        return graph->paths;
+
+    std::vector<RoutePath> filtered;
+    filtered.reserve(graph->paths.size());
+    for (RoutePath const& path : graph->paths)
+    {
+        if (path.kind == *kindFilter)
+            filtered.push_back(path);
+    }
+
+    return filtered;
 }
 
 std::optional<WorldBotResolvedTravelPlan> WorldBotRoutePlanner::ResolveSameZoneTravelPlan(

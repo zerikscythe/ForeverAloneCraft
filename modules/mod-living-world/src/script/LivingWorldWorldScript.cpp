@@ -9,24 +9,40 @@
 #include "Transport.h"
 #include "WorldSession.h"
 #include "ai/AbstractWorldBotProgressor.h"
+#include "ai/CompanionFollowFormation.h"
 #include "ai/WorldBotCreatureAI.h"
 #include "script/AmbientSpawnOverride.h"
 #include "script/WorldBotMaterializationIdentity.h"
 #include "script/WorldBotHotZoneTracker.h"
 #include "integration/BotActivityLog.h"
+#include "integration/BotSessionFactory.h"
 #include "integration/SqlActivityLibraryRepository.h"
 #include "integration/SqlBotIdentityRepository.h"
 #include "integration/SqlBotExploredZoneRepository.h"
 #include "integration/SqlBotGlobalConfigRepository.h"
 #include "integration/SqlBotHazardConfigRepository.h"
 #include "integration/SqlBotAssignedGearRepository.h"
+#include "integration/SqlBotAssignedGearTemplateRepository.h"
+#include "integration/SqlBotCombatDefaultProfileRepository.h"
+#include "integration/SqlBotDisplayLoadoutRepository.h"
+#include "integration/SqlBotGlyphTemplateRepository.h"
 #include "integration/SqlBotOocConfigRepository.h"
+#include "integration/SqlBotRebuildLogRepository.h"
+#include "integration/SqlBotRuntimeSnapshotRepository.h"
+#include "integration/SqlBotShellRuntimeRepository.h"
+#include "integration/SqlBotTalentTemplateRepository.h"
 #include "integration/SqlBotTalentPreferenceRepository.h"
+#include "integration/SqlBotVirtualLoadoutRepository.h"
 #include "integration/SqlTaskPointRepository.h"
 #include "integration/SqlZoneIndexRepository.h"
+#include "model/BotSpecKey.h"
 #include "QueryResult.h"
 #include "service/BotActivitySessionComposer.h"
+#include "service/BotAppearanceResolver.h"
+#include "service/BotCombatSimulatedItemUse.h"
 #include "service/BotQuestRewardService.h"
+#include "service/WorldBotAssignedGearService.h"
+#include "service/WorldBotPreparationService.h"
 #include "service/WorldBotRoutePlanning.h"
 #include "service/WorldBotTaxiPlanning.h"
 
@@ -38,6 +54,7 @@
 #include <iomanip>
 #include <map>
 #include <optional>
+#include <random>
 #include <regex>
 #include <shared_mutex>
 #include <sstream>
@@ -125,12 +142,189 @@ living_world::service::WorldBotTaxiNetwork& GetWorldBotTaxiNetwork()
     return network;
 }
 
+living_world::service::WorldBotPreparationService& GetWorldBotPreparationService()
+{
+    static living_world::integration::SqlBotCombatDefaultProfileRepository defaultProfileRepository;
+    static living_world::integration::SqlBotGlyphTemplateRepository glyphTemplateRepository;
+    static living_world::integration::SqlBotTalentTemplateRepository talentTemplateRepository;
+    static living_world::integration::SqlBotVirtualLoadoutRepository virtualLoadoutRepository;
+    static living_world::service::WorldBotPreparationService preparationService(
+        defaultProfileRepository,
+        glyphTemplateRepository,
+        talentTemplateRepository,
+        virtualLoadoutRepository);
+    return preparationService;
+}
+
+living_world::service::WorldBotAssignedGearService& GetWorldBotAssignedGearService()
+{
+    static living_world::integration::SqlBotAssignedGearRepository assignedGearRepository;
+    static living_world::integration::SqlBotAssignedGearTemplateRepository assignedGearTemplateRepository;
+    static living_world::service::WorldBotAssignedGearService assignedGearService(
+        assignedGearRepository,
+        assignedGearTemplateRepository);
+    return assignedGearService;
+}
+
+void EnsureAbstractIdentityAssignedGearCurrent(living_world::integration::BotIdentityRecord& identity)
+{
+    if (!identity.gearRefreshPending)
+        return;
+
+    bool const originalPending = identity.gearRefreshPending;
+    std::uint8_t const originalBand = identity.lastGearRefreshBand;
+    living_world::model::WorldBotPreparedBuild const preparedBuild =
+        GetWorldBotPreparationService().Prepare(identity, "PvE");
+    std::string const canonicalSpecKey = preparedBuild.canonicalSpecKey.empty()
+        ? living_world::model::CanonicalizeBotSpecKey(identity.specKey)
+        : preparedBuild.canonicalSpecKey;
+    std::string const resolvedRoleKey = preparedBuild.resolvedRoleKey.empty()
+        ? living_world::service::WorldBotPreparationService::ResolveRoleKey(
+            identity.classId,
+            canonicalSpecKey)
+        : preparedBuild.resolvedRoleKey;
+
+    (void)GetWorldBotAssignedGearService().EnsureAssignedGear(
+        identity,
+        canonicalSpecKey,
+        resolvedRoleKey);
+
+    if (identity.gearRefreshPending != originalPending
+        || identity.lastGearRefreshBand != originalBand)
+    {
+        living_world::integration::SqlBotIdentityRepository().UpdateGearRefreshState(
+            identity.id,
+            identity.gearRefreshPending,
+            identity.lastGearRefreshBand);
+    }
+}
+
+std::uint8_t EstimateOfflineLedgerShellPotionCharges(
+    std::uint64_t characterGuid,
+    living_world::integration::BotIdentityRecord const& identity)
+{
+    std::uint32_t remaining = 0;
+
+    auto countItem = [&](std::uint32_t itemId)
+    {
+        if (itemId == 0)
+            return;
+
+        QueryResult result = CharacterDatabase.Query(
+            "SELECT COALESCE(SUM(ii.count), 0) "
+            "FROM character_inventory ci "
+            "INNER JOIN item_instance ii ON ii.guid = ci.item "
+            "WHERE ci.guid = {} AND ii.itemEntry = {}",
+            characterGuid,
+            itemId);
+        if (!result)
+            return;
+
+        remaining += result->Fetch()[0].Get<std::uint32_t>();
+    };
+
+    countItem(living_world::service::ResolveGenericHealingPotionItemIdForLevel(identity.level));
+    countItem(living_world::service::ResolveGenericManaPotionItemIdForLevel(identity.level));
+    return static_cast<std::uint8_t>(std::min<std::uint32_t>(5u, remaining));
+}
+
+std::uint32_t RecoverStaleMaterializedLedgerShells()
+{
+    living_world::integration::SqlBotIdentityRepository identityRepo;
+    living_world::integration::SqlBotRuntimeSnapshotRepository snapshotRepo;
+
+    QueryResult result = CharacterDatabase.Query(
+        "SELECT identity_id, shell_account_id, shell_character_guid "
+        "FROM living_world_bot_shell_runtime");
+    if (!result)
+        return 0;
+
+    std::uint32_t recovered = 0;
+    do
+    {
+        Field const* fields = result->Fetch();
+        std::uint32_t const identityId = fields[0].Get<std::uint32_t>();
+        std::uint32_t const shellAccountId = fields[1].Get<std::uint32_t>();
+        std::uint64_t const shellCharacterGuid = fields[2].Get<std::uint64_t>();
+
+        std::optional<living_world::integration::BotIdentityRecord> identity =
+            identityRepo.FindById(identityId);
+        if (!identity)
+        {
+            CharacterDatabase.Execute(
+                "UPDATE living_world_bot_shell_runtime "
+                "SET is_materialized = 0, last_sync_at = NOW(), last_dismissed_at = NOW() "
+                "WHERE identity_id = {}",
+                identityId);
+            living_world::integration::SqlBotShellRuntimeRepository().RemoveByIdentity(identityId);
+            LoginDatabase.Execute(
+                "UPDATE living_world_bot_account_pool "
+                "SET is_available = 1, reserved_for = NULL WHERE account_id = {}",
+                shellAccountId);
+            ++recovered;
+            continue;
+        }
+
+        QueryResult charRow = CharacterDatabase.Query(
+            "SELECT map, zone, position_x, position_y, position_z, orientation "
+            "FROM characters WHERE guid = {} LIMIT 1",
+            shellCharacterGuid);
+
+        living_world::model::BotRuntimeSnapshotRecord snapshot =
+            snapshotRepo.LoadByIdentity(identityId).value_or(
+                living_world::model::BotRuntimeSnapshotRecord{});
+        snapshot.identityId = identityId;
+        snapshot.runtimeState = "recovered";
+        snapshot.homeBindPointKey = snapshot.homeBindPointKey.empty()
+            ? identity->homeBindPointKey
+            : snapshot.homeBindPointKey;
+        snapshot.genericPotionCharges =
+            EstimateOfflineLedgerShellPotionCharges(shellCharacterGuid, *identity);
+
+        if (charRow)
+        {
+            Field const* cf = charRow->Fetch();
+            snapshot.mapId = cf[0].Get<std::uint16_t>();
+            snapshot.zoneId = cf[1].Get<std::uint32_t>();
+            snapshot.x = cf[2].Get<float>();
+            snapshot.y = cf[3].Get<float>();
+            snapshot.z = cf[4].Get<float>();
+            snapshot.o = cf[5].Get<float>();
+        }
+
+        snapshotRepo.Upsert(snapshot);
+        identityRepo.UpdateGenericPotionCharges(identityId, snapshot.genericPotionCharges);
+        identityRepo.UpdateShellState(
+            identityId,
+            0,
+            0,
+            identity->shellStateVersion,
+            "");
+
+        CharacterDatabase.Execute(
+            "UPDATE living_world_bot_shell_runtime "
+            "SET is_materialized = 0, last_sync_at = NOW(), last_dismissed_at = NOW() "
+            "WHERE identity_id = {}",
+            identityId);
+        living_world::integration::SqlBotShellRuntimeRepository().RemoveByIdentity(identityId);
+        LoginDatabase.Execute(
+            "UPDATE living_world_bot_account_pool "
+            "SET is_available = 1, reserved_for = NULL WHERE account_id = {}",
+            shellAccountId);
+        ++recovered;
+    } while (result->NextRow());
+
+    return recovered;
+}
+
 struct SessionCompletionMetadata
 {
     std::string   sourceKind;
     std::string   sourceKey;
     std::string   taskFamily;
     std::uint32_t targetZoneId = 0;
+    std::string   subjectKind;
+    std::string   subjectKey;
 };
 
 SessionCompletionMetadata BuildSessionCompletionMetadata(
@@ -159,6 +353,8 @@ SessionCompletionMetadata BuildSessionCompletionMetadata(
                 auto const& task = session.tasks[taskIndex];
                 metadata.taskFamily = task.taskFamily;
                 metadata.targetZoneId = task.targetZoneId;
+                metadata.subjectKind = step.subjectKind;
+                metadata.subjectKey = step.subjectKey;
                 break;
             }
         }
@@ -171,7 +367,160 @@ SessionCompletionMetadata BuildSessionCompletionMetadata(
     return metadata;
 }
 
+struct RuntimeLedgerBreadcrumbs
+{
+    std::string taskActivityKey;
+    std::string questHubKey;
+    std::uint64_t questHubElapsedMs = 0;
+};
+
+bool IsQuestHubSubjectKeyLocal(std::string const& subjectKey)
+{
+    return subjectKey.starts_with("quest_hub:");
+}
+
+std::string ExtractQuestHubIdLocal(std::string const& subjectKey)
+{
+    if (!IsQuestHubSubjectKeyLocal(subjectKey))
+        return {};
+
+    std::string const tail = subjectKey.substr(std::string("quest_hub:").size());
+    std::size_t const comma = tail.find(',');
+    return comma == std::string::npos ? tail : tail.substr(0, comma);
+}
+
+RuntimeLedgerBreadcrumbs BuildRuntimeLedgerBreadcrumbs(
+    living_world::service::AmbientSession const& session,
+    std::size_t currentStep,
+    std::uint32_t stepElapsedMs)
+{
+    RuntimeLedgerBreadcrumbs breadcrumbs;
+    if (session.steps.empty())
+        return breadcrumbs;
+
+    std::size_t stepIndex = session.steps.size() - 1u;
+    std::uint64_t effectiveStepElapsedMs = stepElapsedMs;
+    if (currentStep < session.steps.size())
+        stepIndex = currentStep;
+    else
+        effectiveStepElapsedMs = static_cast<std::uint64_t>(session.steps[stepIndex].durationSec) * 1000ull;
+
+    living_world::service::AmbientStep const& activeStep = session.steps[stepIndex];
+    if (activeStep.taskIndex >= 0)
+    {
+        std::size_t const taskIndex = static_cast<std::size_t>(activeStep.taskIndex);
+        if (taskIndex < session.tasks.size())
+            breadcrumbs.taskActivityKey = session.tasks[taskIndex].activityKey;
+    }
+
+    breadcrumbs.questHubKey = ExtractQuestHubIdLocal(activeStep.subjectKey);
+    if (breadcrumbs.questHubKey.empty())
+        return breadcrumbs;
+
+    breadcrumbs.questHubElapsedMs = effectiveStepElapsedMs;
+    while (stepIndex > 0u)
+    {
+        std::size_t const previousIndex = stepIndex - 1u;
+        living_world::service::AmbientStep const& previousStep = session.steps[previousIndex];
+        if (ExtractQuestHubIdLocal(previousStep.subjectKey) != breadcrumbs.questHubKey)
+            break;
+
+        breadcrumbs.questHubElapsedMs += static_cast<std::uint64_t>(previousStep.durationSec) * 1000ull;
+        stepIndex = previousIndex;
+    }
+
+    return breadcrumbs;
+}
+
+bool SessionSourceAllowsFollowup(std::string const& sourceKind, std::string const& sourceKey)
+{
+    return !sourceKind.starts_with("debug_")
+        && !sourceKey.starts_with("debug_");
+}
+
+std::string DescribeSessionProfile(living_world::service::AmbientSession const& session)
+{
+    std::uint64_t totalWorkSec = 0;
+    std::uint64_t totalQuestWorkSec = 0;
+    std::uint64_t totalTransitSec = 0;
+    std::uint64_t totalTravelSec = 0;
+    std::vector<std::string> families;
+
+    for (living_world::service::AmbientSessionTask const& task : session.tasks)
+    {
+        if (!task.taskFamily.empty()
+            && std::find(families.begin(), families.end(), task.taskFamily) == families.end())
+        {
+            families.push_back(task.taskFamily);
+        }
+    }
+
+    for (living_world::service::AmbientStep const& step : session.steps)
+    {
+        switch (step.type)
+        {
+            case living_world::service::AmbientStepType::Travel:
+                totalTravelSec += step.durationSec;
+                break;
+            case living_world::service::AmbientStepType::Transit:
+                totalTransitSec += step.durationSec;
+                break;
+            default:
+            {
+                totalWorkSec += step.durationSec;
+                if (step.taskIndex >= 0)
+                {
+                    std::size_t const taskIndex = static_cast<std::size_t>(step.taskIndex);
+                    if (taskIndex < session.tasks.size())
+                    {
+                        std::string family = session.tasks[taskIndex].taskFamily;
+                        std::transform(
+                            family.begin(),
+                            family.end(),
+                            family.begin(),
+                            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+                        if (family == "quest" || family == "questing")
+                            totalQuestWorkSec += step.durationSec;
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    std::ostringstream oss;
+    oss << "families='";
+    for (std::size_t i = 0; i < families.size(); ++i)
+    {
+        if (i != 0)
+            oss << ",";
+        oss << families[i];
+    }
+    oss << "' work_sec=" << totalWorkSec
+        << " quest_work_sec=" << totalQuestWorkSec
+        << " travel_sec=" << totalTravelSec
+        << " transit_sec=" << totalTransitSec;
+    return oss.str();
+}
+
 std::vector<std::uint32_t> ParseDebugIdentityIdList(std::string const& value);
+
+bool IdentityMatchesDebugLevelBand(
+    living_world::integration::BotIdentityRecord const& identity,
+    std::uint8_t minLevel,
+    std::uint8_t maxLevel)
+{
+    if (minLevel == 0 && maxLevel == 0)
+        return true;
+
+    if (minLevel != 0 && identity.level < minLevel)
+        return false;
+
+    if (maxLevel != 0 && identity.level > maxLevel)
+        return false;
+
+    return true;
+}
 
 struct SimpleJsonValue
 {
@@ -1013,6 +1362,16 @@ std::optional<double> TryExtractJsonNumber(std::string const& line, char const* 
     }
 }
 
+std::optional<std::string> TryExtractJsonString(std::string const& line, char const* key)
+{
+    std::regex const pattern(
+        std::string("^\\s*\"") + key + "\"\\s*:\\s*\"([^\"]+)\"(?:\\s*,\\s*)?$");
+    std::smatch match;
+    if (!std::regex_match(line, match, pattern))
+        return std::nullopt;
+    return match[1].str();
+}
+
 std::string ReplaceJsonNumber(std::string const& line, char const* key, double value)
 {
     std::regex const pattern(
@@ -1070,8 +1429,19 @@ std::optional<bool> TryExtractJsonBoolean(std::string const& line, char const* k
     return match[1].str() == "true";
 }
 
+double ResolveGroundedRouteZ(Map* map, float x, float y, float fallbackZ, bool* resolvedFromGeometry);
+
 double ResolveGroundedRouteZ(Map* map, float x, float y, float fallbackZ)
 {
+    bool ignored = false;
+    return ResolveGroundedRouteZ(map, x, y, fallbackZ, &ignored);
+}
+
+double ResolveGroundedRouteZ(Map* map, float x, float y, float fallbackZ, bool* resolvedFromGeometry)
+{
+    if (resolvedFromGeometry)
+        *resolvedFromGeometry = false;
+
     if (!map)
         return fallbackZ;
 
@@ -1081,22 +1451,123 @@ double ResolveGroundedRouteZ(Map* map, float x, float y, float fallbackZ)
         hintedGround = map->GetHeight(x, y, fallbackZ, true, 50.0f);
 
     if (hintedGround > INVALID_HEIGHT)
+    {
         resolved = hintedGround;
+        if (resolvedFromGeometry)
+            *resolvedFromGeometry = true;
+    }
     else
     {
         float const skyGround = map->GetHeight(x, y, MAX_HEIGHT);
         if (skyGround > INVALID_HEIGHT)
+        {
             resolved = skyGround;
+            if (resolvedFromGeometry)
+                *resolvedFromGeometry = true;
+        }
     }
 
     if (resolved <= INVALID_HEIGHT)
     {
         float const water = map->GetWaterLevel(x, y);
         if (water > INVALID_HEIGHT)
+        {
             resolved = water;
+            if (resolvedFromGeometry)
+                *resolvedFromGeometry = true;
+        }
     }
 
     return resolved;
+}
+
+struct RouteBakePoint
+{
+    std::size_t zLineIndex = 0;
+    float x = 0.0f;
+    float y = 0.0f;
+    double bakedZ = 0.0;
+};
+
+using RouteBakeSegment = std::vector<RouteBakePoint>;
+
+void ApplyRouteBakeNeighborHeuristics(
+    Map* map,
+    std::vector<std::string>& rebuiltLines,
+    std::vector<RouteBakeSegment> const& segments,
+    bool& touched)
+{
+    if (!map)
+        return;
+
+    for (RouteBakeSegment const& segment : segments)
+    {
+        if (segment.size() < 3u)
+            continue;
+
+        std::vector<double> adjusted;
+        adjusted.reserve(segment.size());
+        for (RouteBakePoint const& point : segment)
+            adjusted.push_back(point.bakedZ);
+
+        for (int pass = 0; pass < 2; ++pass)
+        {
+            for (std::size_t index = 0; index < segment.size(); ++index)
+            {
+                std::vector<double> neighbors;
+                neighbors.reserve(4u);
+                std::size_t const start = index > 2u ? index - 2u : 0u;
+                std::size_t const end = std::min(segment.size() - 1u, index + 2u);
+                for (std::size_t neighborIndex = start; neighborIndex <= end; ++neighborIndex)
+                {
+                    if (neighborIndex == index)
+                        continue;
+                    neighbors.push_back(adjusted[neighborIndex]);
+                }
+
+                if (neighbors.empty())
+                    continue;
+
+                std::sort(neighbors.begin(), neighbors.end());
+                double const expected =
+                    neighbors.size() % 2u == 0u
+                        ? (neighbors[(neighbors.size() / 2u) - 1u] + neighbors[neighbors.size() / 2u]) * 0.5
+                        : neighbors[neighbors.size() / 2u];
+                double const spread = neighbors.back() - neighbors.front();
+                double const tolerance = std::max(8.0, spread + 4.0);
+                double const currentDelta = std::fabs(adjusted[index] - expected);
+                if (currentDelta <= tolerance)
+                    continue;
+
+                bool resolvedFromGeometry = false;
+                double const candidate = ResolveGroundedRouteZ(
+                    map,
+                    segment[index].x,
+                    segment[index].y,
+                    static_cast<float>(expected),
+                    &resolvedFromGeometry);
+                if (!resolvedFromGeometry)
+                    continue;
+
+                double const candidateDelta = std::fabs(candidate - expected);
+                if (candidateDelta + 0.5 >= currentDelta || candidateDelta > tolerance)
+                    continue;
+
+                adjusted[index] = candidate;
+            }
+        }
+
+        for (std::size_t index = 0; index < segment.size(); ++index)
+        {
+            if (std::fabs(adjusted[index] - segment[index].bakedZ) <= 0.01)
+                continue;
+            std::size_t const lineIndex = segment[index].zLineIndex;
+            if (lineIndex >= rebuiltLines.size())
+                continue;
+            rebuiltLines[lineIndex] = ReplaceJsonNumber(rebuiltLines[lineIndex], "world_z", adjusted[index]);
+            touched = true;
+        }
+    }
 }
 
 bool BakeRouteFileZHeights(std::filesystem::path const& path, std::uint32_t mapId)
@@ -1122,6 +1593,11 @@ bool BakeRouteFileZHeights(std::filesystem::path const& path, std::uint32_t mapI
     rebuiltLines.reserve(lines.size() + 128u);
     bool sawBakedFlag = false;
     bool alreadyBaked = false;
+    bool currentPathManualZ = false;
+    bool inAnchors = false;
+    bool inMovementPoints = false;
+    std::vector<RouteBakeSegment> routeSegments;
+    RouteBakeSegment* currentSegment = nullptr;
 
     for (std::string& currentLine : lines)
     {
@@ -1133,28 +1609,96 @@ bool BakeRouteFileZHeights(std::filesystem::path const& path, std::uint32_t mapI
             continue;
         }
 
+        if (currentLine.find("\"path_index\"") != std::string::npos)
+        {
+            currentPathManualZ = false;
+            inAnchors = false;
+            inMovementPoints = false;
+            currentSegment = nullptr;
+        }
+
+        if (auto const zMode = TryExtractJsonString(currentLine, "z_mode"))
+            currentPathManualZ = *zMode == "manual";
+
+        if (currentLine.find("\"anchors\"") != std::string::npos)
+        {
+            inAnchors = true;
+            inMovementPoints = false;
+            if (!currentPathManualZ)
+            {
+                routeSegments.emplace_back();
+                currentSegment = &routeSegments.back();
+            }
+        }
+        else if (currentLine.find("\"movement_points\"") != std::string::npos)
+        {
+            inAnchors = false;
+            inMovementPoints = true;
+            if (!currentPathManualZ)
+            {
+                routeSegments.emplace_back();
+                currentSegment = &routeSegments.back();
+            }
+        }
+        else if (currentLine.find("\"area\"") != std::string::npos)
+        {
+            inAnchors = false;
+            inMovementPoints = false;
+            currentSegment = nullptr;
+        }
+
         if (auto const x = TryExtractJsonNumber(currentLine, "world_x"))
             pendingX = *x;
         if (auto const y = TryExtractJsonNumber(currentLine, "world_y"))
             pendingY = *y;
 
-        if (pendingX && pendingY &&
-            currentLine.find("\"distance_from_start_yards\"") != std::string::npos)
+        if (!currentPathManualZ && pendingX && pendingY)
         {
-            double const bakedZ = ResolveGroundedRouteZ(
-                map,
-                static_cast<float>(*pendingX),
-                static_cast<float>(*pendingY),
-                0.0f);
-            rebuiltLines.push_back(BuildJsonNumberLine(currentLine, "world_z", bakedZ));
-            touched = true;
-            pendingX.reset();
-            pendingY.reset();
+            if (inMovementPoints &&
+                currentLine.find("\"distance_from_start_yards\"") != std::string::npos)
+            {
+                double const bakedZ = ResolveGroundedRouteZ(
+                    map,
+                    static_cast<float>(*pendingX),
+                    static_cast<float>(*pendingY),
+                    0.0f);
+                std::size_t const zLineIndex = rebuiltLines.size();
+                rebuiltLines.push_back(BuildJsonNumberLine(currentLine, "world_z", bakedZ));
+                if (currentSegment)
+                    currentSegment->push_back(RouteBakePoint{ zLineIndex, static_cast<float>(*pendingX), static_cast<float>(*pendingY), bakedZ });
+                touched = true;
+                pendingX.reset();
+                pendingY.reset();
+            }
+            else if (inAnchors &&
+                currentLine.find("\"handle_in\"") != std::string::npos)
+            {
+                double const bakedZ = ResolveGroundedRouteZ(
+                    map,
+                    static_cast<float>(*pendingX),
+                    static_cast<float>(*pendingY),
+                    0.0f);
+                std::size_t const zLineIndex = rebuiltLines.size();
+                rebuiltLines.push_back(BuildJsonNumberLine(currentLine, "world_z", bakedZ));
+                if (currentSegment)
+                    currentSegment->push_back(RouteBakePoint{ zLineIndex, static_cast<float>(*pendingX), static_cast<float>(*pendingY), bakedZ });
+                touched = true;
+                pendingX.reset();
+                pendingY.reset();
+            }
         }
 
         auto const currentZ = TryExtractJsonNumber(currentLine, "world_z");
         if (!currentZ)
         {
+            rebuiltLines.push_back(currentLine);
+            continue;
+        }
+
+        if (currentPathManualZ)
+        {
+            pendingX.reset();
+            pendingY.reset();
             rebuiltLines.push_back(currentLine);
             continue;
         }
@@ -1171,6 +1715,8 @@ bool BakeRouteFileZHeights(std::filesystem::path const& path, std::uint32_t mapI
                 currentLine = ReplaceJsonNumber(currentLine, "world_z", bakedZ);
                 touched = true;
             }
+            if (currentSegment)
+                currentSegment->push_back(RouteBakePoint{ rebuiltLines.size(), static_cast<float>(*pendingX), static_cast<float>(*pendingY), bakedZ });
         }
 
         pendingX.reset();
@@ -1178,8 +1724,10 @@ bool BakeRouteFileZHeights(std::filesystem::path const& path, std::uint32_t mapI
         rebuiltLines.push_back(currentLine);
     }
 
+    ApplyRouteBakeNeighborHeuristics(map, rebuiltLines, routeSegments, touched);
+
     if (!touched && alreadyBaked)
-        return true;
+        return false;
 
     if (sawBakedFlag)
     {
@@ -1270,11 +1818,7 @@ RouteBakeScanResult BakeRouteBundleZHeights(
             stream << input.rdbuf();
             fileText = stream.str();
         }
-        if (fileText.find("\"z_baked\": true") != std::string::npos)
-        {
-            ++result.skippedAlreadyBaked;
-            continue;
-        }
+        bool const alreadyBaked = fileText.find("\"z_baked\": true") != std::string::npos;
 
         std::optional<std::uint32_t> const mapId = TryParseMapIdFromRouteFilename(filename);
         if (!mapId)
@@ -1283,6 +1827,8 @@ RouteBakeScanResult BakeRouteBundleZHeights(
         ++result.scannedFiles;
         if (BakeRouteFileZHeights(entry.path(), *mapId))
             ++result.bakedFiles;
+        else if (alreadyBaked)
+            ++result.skippedAlreadyBaked;
     }
 
     return result;
@@ -1412,14 +1958,17 @@ std::optional<living_world::integration::BotIdentityRecord> BuildDebugRouteHarne
     std::uint8_t level,
     std::uint8_t raceId,
     std::uint8_t classId,
-    std::uint8_t gender)
+    std::uint8_t gender,
+    std::string const& nameOverride = {})
 {
     PlayerInfo const* playerInfo = sObjectMgr->GetPlayerInfo(raceId, classId);
     if (!playerInfo)
         return std::nullopt;
 
     living_world::integration::BotIdentityRecord identity;
-    identity.name = "RouteHarnessL" + std::to_string(level);
+    identity.name = nameOverride.empty()
+        ? ("RouteHarnessL" + std::to_string(level))
+        : nameOverride;
     identity.raceId = raceId;
     identity.classId = classId;
     identity.specKey = ResolveDefaultSpecKeyForClass(classId);
@@ -1437,9 +1986,10 @@ std::optional<living_world::integration::BotIdentityRecord> EnsureDebugRouteHarn
     std::uint8_t level,
     std::uint8_t raceId,
     std::uint8_t classId,
-    std::uint8_t gender)
+    std::uint8_t gender,
+    std::string const& nameOverride = {})
 {
-    auto const identityTemplate = BuildDebugRouteHarnessIdentityTemplate(level, raceId, classId, gender);
+    auto const identityTemplate = BuildDebugRouteHarnessIdentityTemplate(level, raceId, classId, gender, nameOverride);
     if (!identityTemplate)
         return std::nullopt;
 
@@ -1493,16 +2043,103 @@ std::optional<living_world::integration::BotIdentityRecord> EnsureDebugRouteHarn
     return identity;
 }
 
+void ApplyNamedDebugRunVisualShell(Creature* bot)
+{
+    if (!bot)
+        return;
+
+    static constexpr std::uint32_t kTaskmasterDisplayId = 17246u; // Caregiver Breel (female draenei)
+
+    bot->SetName("Taskmaster");
+    bot->SetDisplayId(kTaskmasterDisplayId);
+    bot->SetNativeDisplayId(kTaskmasterDisplayId);
+
+    bot->LoadEquipment(0, true);
+    for (uint32 slot = 0; slot < MAX_EQUIPMENT_ITEMS; ++slot)
+        bot->SetVirtualItem(slot, 0);
+
+    bot->SetFaction(35u);
+    bot->SetReactState(REACT_PASSIVE);
+    bot->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_IMMUNE_TO_NPC);
+}
+
 living_world::service::AmbientSession BuildDebugRouteHarnessSession(
+    std::string const& mode,
     std::uint32_t mapId,
     std::uint32_t destZoneId,
     float destX,
     float destY,
     float destZ,
     std::uint32_t idleDurationSec,
-    std::string const& transitRouteKey = "")
+    std::string const& targetPointKey = "",
+    std::string const& transitRouteKey = "",
+    std::vector<std::string> const& waypointKeys = {})
 {
     living_world::service::AmbientSession session;
+    bool const pathScoutMode = mode == "path_scout";
+    std::string const activityKey = pathScoutMode ? "debug_path_scout" : "debug_route_harness";
+    std::string const displayName = pathScoutMode ? "Debug Path Scout" : "Debug Route Harness";
+    std::string const sourceKind = pathScoutMode ? "debug_path_scout" : "debug_route_harness";
+
+    if (!waypointKeys.empty())
+    {
+        living_world::integration::SqlTaskPointRepository pointRepo;
+        std::size_t taskIndex = 0;
+
+        for (std::string const& pointKey : waypointKeys)
+        {
+            auto const point = pointRepo.FindByKey(pointKey);
+            if (!point)
+                continue;
+
+            living_world::service::AmbientSessionTask task;
+            task.activityId = 0;
+            task.activityKey = activityKey + "_" + point->pointKey;
+            task.displayName = point->pointName.empty() ? point->pointKey : point->pointName;
+            task.activityType = "travel_debug";
+            task.taskFamily = "debug";
+            task.targetZoneId = point->zoneId;
+            task.targetPointKey = point->pointKey;
+            session.tasks.push_back(std::move(task));
+
+            living_world::service::AmbientStep travelStep;
+            travelStep.type = living_world::service::AmbientStepType::Travel;
+            travelStep.mapId = point->mapId;
+            travelStep.x = point->x;
+            travelStep.y = point->y;
+            travelStep.z = point->z;
+            travelStep.durationSec = 0;
+            travelStep.taskIndex = taskIndex;
+            travelStep.targetPointKey = point->pointKey;
+            travelStep.label = "Travel to " + (point->pointName.empty() ? point->pointKey : point->pointName);
+            session.steps.push_back(std::move(travelStep));
+
+            ++taskIndex;
+        }
+
+        if (!session.steps.empty())
+        {
+            living_world::service::AmbientStep const& finalTravel = session.steps.back();
+
+            living_world::service::AmbientStep idleStep;
+            idleStep.type = living_world::service::AmbientStepType::Idle;
+            idleStep.mapId = finalTravel.mapId;
+            idleStep.x = finalTravel.x;
+            idleStep.y = finalTravel.y;
+            idleStep.z = finalTravel.z;
+            idleStep.durationSec = std::max<std::uint32_t>(idleDurationSec, 5u);
+            idleStep.taskIndex = finalTravel.taskIndex;
+            idleStep.label = "Debug route arrival hold";
+            session.steps.push_back(std::move(idleStep));
+
+            session.activityId = 0;
+            session.activityKey = activityKey;
+            session.displayName = displayName;
+            session.sourceKind = sourceKind;
+            session.sourceKey = activityKey;
+            return session;
+        }
+    }
 
     if (!transitRouteKey.empty())
     {
@@ -1517,6 +2154,7 @@ living_world::service::AmbientSession BuildDebugRouteHarnessSession(
             embarkTask.activityType = "travel_debug";
             embarkTask.taskFamily = "debug";
             embarkTask.targetZoneId = transitRoute->sourceZoneId;
+            embarkTask.targetPointKey = transitRoute->sourcePointKey;
             session.tasks.push_back(std::move(embarkTask));
 
             living_world::service::AmbientStep travelStep;
@@ -1527,6 +2165,7 @@ living_world::service::AmbientSession BuildDebugRouteHarnessSession(
             travelStep.z = transitRoute->sourceZ;
             travelStep.durationSec = 0;
             travelStep.taskIndex = 0;
+            travelStep.targetPointKey = transitRoute->sourcePointKey;
             travelStep.label = "Travel to " + transitRoute->sourcePointName;
             session.steps.push_back(std::move(travelStep));
 
@@ -1570,21 +2209,22 @@ living_world::service::AmbientSession BuildDebugRouteHarnessSession(
             session.steps.push_back(std::move(idleStep));
 
             session.activityId = 0;
-            session.activityKey = "debug_route_harness";
-            session.displayName = "Debug Route Harness";
-            session.sourceKind = "debug_route_harness";
-            session.sourceKey = "debug_route_harness";
+            session.activityKey = activityKey;
+            session.displayName = displayName;
+            session.sourceKind = sourceKind;
+            session.sourceKey = activityKey;
             return session;
         }
     }
 
     living_world::service::AmbientSessionTask task;
     task.activityId = 0;
-    task.activityKey = "debug_route_harness";
-    task.displayName = "Debug Route Harness";
+    task.activityKey = activityKey;
+    task.displayName = displayName;
     task.activityType = "travel_debug";
     task.taskFamily = "debug";
     task.targetZoneId = destZoneId;
+    task.targetPointKey = targetPointKey;
     session.tasks.push_back(std::move(task));
 
     living_world::service::AmbientStep travelStep;
@@ -1595,6 +2235,7 @@ living_world::service::AmbientSession BuildDebugRouteHarnessSession(
     travelStep.z = destZ;
     travelStep.durationSec = 0;
     travelStep.taskIndex = 0;
+    travelStep.targetPointKey = targetPointKey;
     travelStep.label = "Debug travel route";
     session.steps.push_back(std::move(travelStep));
 
@@ -1610,11 +2251,264 @@ living_world::service::AmbientSession BuildDebugRouteHarnessSession(
     session.steps.push_back(std::move(idleStep));
 
     session.activityId = 0;
-    session.activityKey = "debug_route_harness";
-    session.displayName = "Debug Route Harness";
-    session.sourceKind = "debug_route_harness";
-    session.sourceKey = "debug_route_harness";
+    session.activityKey = activityKey;
+    session.displayName = displayName;
+    session.sourceKind = sourceKind;
+    session.sourceKey = activityKey;
     return session;
+}
+
+struct NamedDebugRunDefinition
+{
+    std::string name;
+    std::string displayName;
+    std::string botName;
+    std::string mode = "route";
+    bool spawnFromObserver = false;
+    std::uint8_t level = 10;
+    std::uint8_t raceId = RACE_HUMAN;
+    std::uint8_t classId = CLASS_WARRIOR;
+    std::uint8_t gender = GENDER_MALE;
+    std::uint32_t spawnMapId = 0;
+    float spawnX = 0.0f;
+    float spawnY = 0.0f;
+    float spawnZ = 0.0f;
+    std::uint32_t destZoneId = 0;
+    float destX = 0.0f;
+    float destY = 0.0f;
+    float destZ = 0.0f;
+    std::string targetPointKey;
+    std::string transitRouteKey;
+    std::uint32_t preStartIdleSec = 0;
+    std::uint32_t idleDurationSec = 30;
+    std::vector<std::uint32_t> exploredZones;
+};
+
+struct ActiveNamedDebugRun
+{
+    std::uint32_t mapId = 0;
+    ObjectGuid guid;
+};
+
+std::vector<std::string> ParseDebugStringList(std::string const& csv)
+{
+    std::vector<std::string> result;
+    std::stringstream stream(csv);
+    std::string token;
+    while (std::getline(stream, token, ','))
+    {
+        token.erase(token.begin(), std::find_if(token.begin(), token.end(), [](unsigned char ch) { return !std::isspace(ch); }));
+        token.erase(std::find_if(token.rbegin(), token.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), token.end());
+        if (token.empty())
+            continue;
+        result.push_back(token);
+    }
+
+    return result;
+}
+
+std::string JoinDebugStringList(std::vector<std::string> const& values)
+{
+    std::ostringstream oss;
+    for (std::size_t i = 0; i < values.size(); ++i)
+    {
+        if (i != 0)
+            oss << ',';
+        oss << values[i];
+    }
+
+    return oss.str();
+}
+
+std::vector<std::string> BuildDebugRouteHarnessWaypointsForBot(
+    std::vector<std::string> const& sharedWaypointKeys,
+    std::size_t waypointCount,
+    std::uint32_t shuffleSeed,
+    std::uint32_t botIndex,
+    std::uint8_t level)
+{
+    if (sharedWaypointKeys.empty())
+        return {};
+
+    std::vector<std::string> result = sharedWaypointKeys;
+    if (result.size() > 1u)
+    {
+        std::mt19937 rng(static_cast<std::uint32_t>(0x5A17u + shuffleSeed * 977u + botIndex * 131u + level * 17u));
+        std::shuffle(result.begin(), result.end(), rng);
+    }
+
+    if (waypointCount > 0u && waypointCount < result.size())
+        result.resize(waypointCount);
+
+    return result;
+}
+
+std::unordered_map<std::string, ActiveNamedDebugRun> g_namedDebugRunBotGuids;
+
+bool IsSafeNamedDebugRunToken(std::string_view value)
+{
+    if (value.empty())
+        return false;
+
+    return std::all_of(
+        value.begin(),
+        value.end(),
+        [](unsigned char ch)
+        {
+            return std::isalnum(ch) || ch == '_' || ch == '-' || ch == '.';
+        });
+}
+
+std::filesystem::path ResolveNamedDebugRunRoot()
+{
+    std::vector<std::filesystem::path> candidates =
+    {
+        std::filesystem::path("data") / "debug_runs",
+        std::filesystem::path("..") / "data" / "debug_runs",
+        std::filesystem::path("..") / ".." / "data" / "debug_runs",
+        std::filesystem::path("..") / ".." / ".." / "data" / "debug_runs",
+        std::filesystem::path("modules") / "mod-living-world" / "data" / "debug_runs",
+        std::filesystem::path("..") / "modules" / "mod-living-world" / "data" / "debug_runs",
+        std::filesystem::path("..") / ".." / "modules" / "mod-living-world" / "data" / "debug_runs",
+        std::filesystem::path("..") / ".." / ".." / "modules" / "mod-living-world" / "data" / "debug_runs",
+        std::filesystem::path("..") / ".." / ".." / ".." / "modules" / "mod-living-world" / "data" / "debug_runs",
+    };
+
+    for (std::filesystem::path const& candidate : candidates)
+    {
+        std::error_code ec;
+        if (std::filesystem::exists(candidate, ec) && std::filesystem::is_directory(candidate, ec))
+            return candidate;
+    }
+
+    return candidates.front();
+}
+
+std::optional<NamedDebugRunDefinition> LoadNamedDebugRunDefinition(
+    std::string const& runName,
+    std::string& error)
+{
+    if (!IsSafeNamedDebugRunToken(runName))
+    {
+        error = "run name may only use letters, numbers, '_', '-', or '.'.";
+        return std::nullopt;
+    }
+
+    std::filesystem::path const root = ResolveNamedDebugRunRoot();
+    std::filesystem::path const filePath = root / (runName + ".json");
+    std::error_code ec;
+    if (!std::filesystem::exists(filePath, ec))
+    {
+        error = "run file not found: " + filePath.string();
+        return std::nullopt;
+    }
+
+    std::ifstream input(filePath);
+    if (!input.is_open())
+    {
+        error = "failed to open run file: " + filePath.string();
+        return std::nullopt;
+    }
+
+    std::ostringstream buffer;
+    buffer << input.rdbuf();
+
+    SimpleJsonValue rootValue;
+    try
+    {
+        rootValue = SimpleJsonParser(buffer.str()).Parse();
+    }
+    catch (std::exception const& ex)
+    {
+        error = "invalid JSON in " + filePath.string() + ": " + ex.what();
+        return std::nullopt;
+    }
+
+    if (!rootValue.IsObject())
+    {
+        error = "run file root must be a JSON object: " + filePath.string();
+        return std::nullopt;
+    }
+
+    NamedDebugRunDefinition definition;
+    definition.name = GetJsonStringOrDefault(rootValue, "name");
+    if (definition.name.empty())
+        definition.name = runName;
+    definition.displayName = GetJsonStringOrDefault(rootValue, "display_name");
+    if (definition.displayName.empty())
+        definition.displayName = definition.name;
+    definition.botName = GetJsonStringOrDefault(rootValue, "bot_name");
+    definition.mode = GetJsonStringOrDefault(rootValue, "mode");
+    if (definition.mode.empty())
+        definition.mode = "route";
+    if (SimpleJsonValue const* spawnFromObserverValue = TryGetJsonObjectMember(rootValue, "spawn_from_observer");
+        spawnFromObserverValue && spawnFromObserverValue->type == SimpleJsonValue::Type::Boolean)
+    {
+        definition.spawnFromObserver = spawnFromObserverValue->boolValue;
+    }
+
+    if (SimpleJsonValue const* identityValue = TryGetJsonObjectMember(rootValue, "identity");
+        identityValue && identityValue->IsObject())
+    {
+        definition.level = static_cast<std::uint8_t>(
+            std::clamp<std::uint32_t>(
+                static_cast<std::uint32_t>(GetJsonNumberOrDefault(*identityValue, "level", definition.level)),
+                1u,
+                80u));
+        definition.raceId = static_cast<std::uint8_t>(GetJsonNumberOrDefault(*identityValue, "race_id", definition.raceId));
+        definition.classId = static_cast<std::uint8_t>(GetJsonNumberOrDefault(*identityValue, "class_id", definition.classId));
+        definition.gender = static_cast<std::uint8_t>(GetJsonNumberOrDefault(*identityValue, "gender", definition.gender));
+    }
+
+    if (SimpleJsonValue const* spawnValue = TryGetJsonObjectMember(rootValue, "spawn");
+        spawnValue && spawnValue->IsObject())
+    {
+        definition.spawnMapId = static_cast<std::uint32_t>(GetJsonNumberOrDefault(*spawnValue, "map_id"));
+        definition.spawnX = static_cast<float>(GetJsonNumberOrDefault(*spawnValue, "x"));
+        definition.spawnY = static_cast<float>(GetJsonNumberOrDefault(*spawnValue, "y"));
+        definition.spawnZ = static_cast<float>(GetJsonNumberOrDefault(*spawnValue, "z"));
+    }
+    else
+    {
+        error = "run file is missing a valid 'spawn' object: " + filePath.string();
+        return std::nullopt;
+    }
+
+    if (SimpleJsonValue const* destinationValue = TryGetJsonObjectMember(rootValue, "destination");
+        destinationValue && destinationValue->IsObject())
+    {
+        definition.destZoneId = static_cast<std::uint32_t>(GetJsonNumberOrDefault(*destinationValue, "zone_id"));
+        definition.destX = static_cast<float>(GetJsonNumberOrDefault(*destinationValue, "x"));
+        definition.destY = static_cast<float>(GetJsonNumberOrDefault(*destinationValue, "y"));
+        definition.destZ = static_cast<float>(GetJsonNumberOrDefault(*destinationValue, "z"));
+        definition.targetPointKey = GetJsonStringOrDefault(*destinationValue, "target_point_key");
+    }
+    else
+    {
+        error = "run file is missing a valid 'destination' object: " + filePath.string();
+        return std::nullopt;
+    }
+
+    definition.transitRouteKey = GetJsonStringOrDefault(rootValue, "transit_route_key");
+    definition.preStartIdleSec = static_cast<std::uint32_t>(std::max<double>(
+        0.0,
+        GetJsonNumberOrDefault(rootValue, "pre_start_idle_sec", definition.preStartIdleSec)));
+    definition.idleDurationSec = static_cast<std::uint32_t>(std::max<double>(
+        5.0,
+        GetJsonNumberOrDefault(rootValue, "idle_duration_sec", definition.idleDurationSec)));
+
+    if (SimpleJsonValue const* exploredZonesValue = TryGetJsonObjectMember(rootValue, "explored_zones");
+        exploredZonesValue && exploredZonesValue->IsArray())
+    {
+        for (SimpleJsonValue const& zoneValue : exploredZonesValue->arrayValue)
+        {
+            if (!zoneValue.IsNumber())
+                continue;
+            definition.exploredZones.push_back(static_cast<std::uint32_t>(zoneValue.numberValue));
+        }
+    }
+
+    return definition;
 }
 
 bool SessionStartsInZone(
@@ -1840,10 +2734,18 @@ public:
         _debugSyntheticInterestCleared = false;
         _debugForcedIdentityIds = ParseDebugIdentityIdList(
             sConfigMgr->GetOption<std::string>("LivingWorld.DebugForceIdentityIds", ""));
+        _debugForceIdentityMinLevel = static_cast<std::uint8_t>(sConfigMgr->GetOption<std::uint32_t>(
+            "LivingWorld.DebugForceIdentityMinLevel", 0));
+        _debugForceIdentityMaxLevel = static_cast<std::uint8_t>(sConfigMgr->GetOption<std::uint32_t>(
+            "LivingWorld.DebugForceIdentityMaxLevel", 0));
         _debugForcedSessionZoneId = sConfigMgr->GetOption<std::uint32_t>(
             "LivingWorld.DebugForceSessionZoneId", 0);
+        _debugForcedSessionSourceKey = sConfigMgr->GetOption<std::string>(
+            "LivingWorld.DebugForceSessionSourceKey", "");
         _debugForcedSessionComposeAttempts = sConfigMgr->GetOption<std::uint32_t>(
             "LivingWorld.DebugForceSessionComposeAttempts", 24);
+        _debugDisableActivationExtension = sConfigMgr->GetOption<bool>(
+            "LivingWorld.DebugDisableActivationExtension", false);
         _debugRouteHarnessEnabled = sConfigMgr->GetOption<bool>(
             "LivingWorld.DebugRouteHarnessEnabled", false);
         _debugRouteHarnessSpawned = false;
@@ -1871,8 +2773,20 @@ public:
             "LivingWorld.DebugRouteHarnessDestY", 1455.3373f);
         _debugRouteHarnessDestZ = sConfigMgr->GetOption<float>(
             "LivingWorld.DebugRouteHarnessDestZ", 0.0f);
+        _debugRouteHarnessTargetPointKey = sConfigMgr->GetOption<std::string>(
+            "LivingWorld.DebugRouteHarnessTargetPointKey", "");
+        _debugRouteHarnessWaypointKeys = ParseDebugStringList(
+            sConfigMgr->GetOption<std::string>("LivingWorld.DebugRouteHarnessWaypointKeys", ""));
+        _debugRouteHarnessWaypointCount = static_cast<std::size_t>(sConfigMgr->GetOption<std::uint32_t>(
+            "LivingWorld.DebugRouteHarnessWaypointCount", 0));
+        _debugRouteHarnessShuffleSeed = sConfigMgr->GetOption<std::uint32_t>(
+            "LivingWorld.DebugRouteHarnessShuffleSeed", 0);
+        _debugRouteHarnessMode = sConfigMgr->GetOption<std::string>(
+            "LivingWorld.DebugRouteHarnessMode", "route");
         _debugRouteHarnessTransitRouteKey = sConfigMgr->GetOption<std::string>(
             "LivingWorld.DebugRouteHarnessTransitRouteKey", "");
+        _debugRouteHarnessSpacingYards = sConfigMgr->GetOption<float>(
+            "LivingWorld.DebugRouteHarnessSpacingYards", 3.0f);
         _debugRouteHarnessExploredZones = ParseDebugIdentityIdList(
             sConfigMgr->GetOption<std::string>("LivingWorld.DebugRouteHarnessExploredZones", ""));
         _debugRouteHarnessIdleDurationSec = sConfigMgr->GetOption<std::uint32_t>(
@@ -1888,7 +2802,7 @@ public:
                 _debugSyntheticInterestMapId,
                 _debugSyntheticInterestZoneId);
             LOG_INFO("server.worldserver",
-                "[LivingWorldDebug] SyntheticInterest enabled map={} zone={} switch_ms={} switch_map={} switch_zone={} hot_cooldown_override_ms={}",
+                "[LivingWorldDebug] SyntheticInterest enabled map={} zone={} switch_ms={} switch_map={} switch_zone={} clear_ms={} hot_cooldown_override_ms={}",
                 _debugSyntheticInterestMapId,
                 _debugSyntheticInterestZoneId,
                 _debugSyntheticInterestSwitchMs,
@@ -1902,7 +2816,11 @@ public:
             living_world::script::ClearSyntheticWorldBotInterest();
         }
 
-        if (!_debugForcedIdentityIds.empty() || _debugForcedSessionZoneId != 0)
+        if (!_debugForcedIdentityIds.empty()
+            || _debugForceIdentityMinLevel != 0
+            || _debugForceIdentityMaxLevel != 0
+            || _debugForcedSessionZoneId != 0
+            || !_debugForcedSessionSourceKey.empty())
         {
             std::ostringstream oss;
             for (std::size_t i = 0; i < _debugForcedIdentityIds.size(); ++i)
@@ -1913,10 +2831,14 @@ public:
             }
 
             LOG_INFO("server.worldserver",
-                "[LivingWorldDebug] ForcedSandbox identities='{}' forced_session_zone={} compose_attempts={}",
+                "[LivingWorldDebug] ForcedSandbox identities='{}' min_level={} max_level={} forced_session_zone={} forced_source='{}' compose_attempts={} disable_activation_extension={}",
                 oss.str(),
+                _debugForceIdentityMinLevel,
+                _debugForceIdentityMaxLevel,
                 _debugForcedSessionZoneId,
-                _debugForcedSessionComposeAttempts);
+                _debugForcedSessionSourceKey,
+                _debugForcedSessionComposeAttempts,
+                _debugDisableActivationExtension ? 1 : 0);
         }
 
         if (_debugRouteHarnessEnabled)
@@ -1930,7 +2852,8 @@ public:
             }
 
             LOG_INFO("server.worldserver",
-                "[LivingWorldDebug] RouteHarness enabled levels='{}' race={} class={} gender={} map={} start=({:.1f},{:.1f},{:.1f}) dest_zone={} dest=({:.1f},{:.1f},{:.1f}) explored_zones='{}' idle_sec={}",
+                "[LivingWorldDebug] RouteHarness enabled mode='{}' levels='{}' race={} class={} gender={} map={} start=({:.1f},{:.1f},{:.1f}) dest_zone={} dest=({:.1f},{:.1f},{:.1f}) spacing_yd={:.1f} waypoint_keys='{}' waypoint_count={} explored_zones='{}' idle_sec={}",
+                _debugRouteHarnessMode,
                 oss.str(),
                 _debugRouteHarnessRaceId,
                 _debugRouteHarnessClassId,
@@ -1943,6 +2866,9 @@ public:
                 _debugRouteHarnessDestX,
                 _debugRouteHarnessDestY,
                 _debugRouteHarnessDestZ,
+                _debugRouteHarnessSpacingYards,
+                JoinDebugStringList(_debugRouteHarnessWaypointKeys),
+                _debugRouteHarnessWaypointCount,
                 JoinZoneIdCsv(_debugRouteHarnessExploredZones),
                 _debugRouteHarnessIdleDurationSec);
         }
@@ -1962,16 +2888,37 @@ public:
         living_world::integration::SqlBotOocConfigRepository().EnsureSchema();
         living_world::integration::SqlBotTalentPreferenceRepository().EnsureSchema();
         living_world::integration::SqlBotAssignedGearRepository().EnsureSchema();
+        living_world::integration::SqlBotAssignedGearTemplateRepository().EnsureSchema();
+        living_world::integration::SqlBotDisplayLoadoutRepository().EnsureSchema();
+        living_world::integration::SqlBotGlyphTemplateRepository().EnsureSchema();
         living_world::integration::SqlBotExploredZoneRepository().EnsureSchema();
+        living_world::integration::SqlBotRuntimeSnapshotRepository().EnsureSchema();
+        living_world::integration::SqlBotShellRuntimeRepository().EnsureSchema();
+        living_world::integration::SqlBotRebuildLogRepository().EnsureSchema();
 
         living_world::integration::SqlBotIdentityRepository identityRepo;
         identityRepo.EnsureSchema();
+        std::uint32_t const resolvedAppearances =
+            living_world::service::BotAppearanceResolver().ResolveMissingLedgerAppearances(identityRepo);
+        if (resolvedAppearances > 0)
+        {
+            LOG_INFO("server.worldserver",
+                "[LivingWorld] Resolved {} missing bot ledger appearance records on startup.",
+                resolvedAppearances);
+        }
         std::uint32_t const recovered = identityRepo.RecoverStaleActiveSessions();
         if (recovered > 0)
         {
             LOG_INFO("server.worldserver",
                 "[LivingWorld] Recovered {} stale active world-bot identities on startup.",
                 recovered);
+        }
+        std::uint32_t const recoveredShells = RecoverStaleMaterializedLedgerShells();
+        if (recoveredShells > 0)
+        {
+            LOG_INFO("server.worldserver",
+                "[LivingWorld] Recovered {} stale materialized ledger shells on startup.",
+                recoveredShells);
         }
 
         MaybeBakeRouteBundleOnStartup();
@@ -2015,6 +2962,7 @@ private:
             living_world::ai::AbstractWorldBotTravelPhaseKind::None;
         std::unordered_set<std::uint32_t> exploredZoneIds;
         std::uint64_t worldOnlineMs = 0;
+        std::uint32_t completedSessionsThisActivation = 0;
         std::uint64_t lastRuntimeLedgerSyncMs = 0;
         std::string lastRuntimeState;
         std::string lastRuntimeDetail;
@@ -2029,6 +2977,7 @@ private:
     {
         std::uint32_t mapId = 0;
         ObjectGuid guid;
+        std::uint64_t lastHotOrInterestedWorldMs = 0;
     };
 
     struct CityReservePolicy
@@ -2055,8 +3004,12 @@ private:
     std::uint32_t _debugSyntheticInterestClearMs = 0;
     std::uint32_t _debugSyntheticInterestElapsedMs = 0;
     std::vector<std::uint32_t> _debugForcedIdentityIds;
+    std::uint8_t _debugForceIdentityMinLevel = 0;
+    std::uint8_t _debugForceIdentityMaxLevel = 0;
     std::uint32_t _debugForcedSessionZoneId = 0;
+    std::string _debugForcedSessionSourceKey;
     std::uint32_t _debugForcedSessionComposeAttempts = 24;
+    bool _debugDisableActivationExtension = false;
     bool _debugRouteHarnessEnabled = false;
     bool _debugRouteHarnessSpawned = false;
     std::vector<std::uint32_t> _debugRouteHarnessLevels;
@@ -2071,7 +3024,13 @@ private:
     float _debugRouteHarnessDestX = 0.0f;
     float _debugRouteHarnessDestY = 0.0f;
     float _debugRouteHarnessDestZ = 0.0f;
+    std::string _debugRouteHarnessTargetPointKey;
+    std::vector<std::string> _debugRouteHarnessWaypointKeys;
+    std::size_t _debugRouteHarnessWaypointCount = 0;
+    std::uint32_t _debugRouteHarnessShuffleSeed = 0;
+    std::string _debugRouteHarnessMode = "route";
     std::string _debugRouteHarnessTransitRouteKey;
+    float _debugRouteHarnessSpacingYards = 3.0f;
     std::vector<std::uint32_t> _debugRouteHarnessExploredZones;
     std::uint32_t _debugRouteHarnessIdleDurationSec = 30;
     SpawnPoint _forcedSpawnPoint { 0u, 0.0f, 0.0f, 0.0f };
@@ -2813,6 +3772,169 @@ private:
             zoneId};
     }
 
+    static constexpr std::uint64_t MaterializedColdZoneGraceMs = 90000ull;
+    static constexpr std::uint32_t MaterializationPreWarmMs = 90000u;
+
+    static std::optional<std::uint32_t> EstimateRemainingMsUntilHotWaypoint(
+        living_world::service::WorldBotResolvedTravelPlan const& plan,
+        float traveledDistanceYards)
+    {
+        if (plan.empty() || plan.speedYardsPerSecond <= 0.0f)
+            return std::nullopt;
+
+        float const clampedTraveled =
+            std::clamp(traveledDistanceYards, 0.0f, std::max(0.0f, plan.totalDistanceYards));
+        for (living_world::service::WorldBotRouteWaypoint const& waypoint : plan.waypoints)
+        {
+            std::uint32_t const waypointZoneId = ResolveZoneIdAtPosition(
+                waypoint.mapId,
+                waypoint.x,
+                waypoint.y,
+                waypoint.z);
+            if (!IsZoneHotOrInterested(waypoint.mapId, waypointZoneId))
+                continue;
+
+            float const remainingDistanceYards =
+                std::max(0.0f, waypoint.cumulativeDistanceYards - clampedTraveled);
+            return static_cast<std::uint32_t>(
+                std::max(0.0f, (remainingDistanceYards / plan.speedYardsPerSecond) * 1000.0f));
+        }
+
+        return std::nullopt;
+    }
+
+    static std::optional<std::uint32_t> EstimateRemainingMsUntilHotSeam(
+        living_world::service::WorldBotResolvedTravelPlan const& plan,
+        float traveledDistanceYards,
+        std::uint16_t currentMapId,
+        std::uint32_t currentZoneId)
+    {
+        if (plan.empty() || plan.speedYardsPerSecond <= 0.0f)
+            return std::nullopt;
+
+        float const clampedTraveled =
+            std::clamp(traveledDistanceYards, 0.0f, std::max(0.0f, plan.totalDistanceYards));
+        bool previousHot = IsZoneHotOrInterested(currentMapId, currentZoneId);
+
+        for (living_world::service::WorldBotRouteWaypoint const& waypoint : plan.waypoints)
+        {
+            if (waypoint.cumulativeDistanceYards + 0.1f < clampedTraveled)
+                continue;
+
+            std::uint32_t const waypointZoneId = ResolveZoneIdAtPosition(
+                waypoint.mapId,
+                waypoint.x,
+                waypoint.y,
+                waypoint.z);
+            bool const waypointHot = IsZoneHotOrInterested(waypoint.mapId, waypointZoneId);
+            if (!previousHot && waypointHot)
+            {
+                float const remainingDistanceYards =
+                    std::max(0.0f, waypoint.cumulativeDistanceYards - clampedTraveled);
+                return static_cast<std::uint32_t>(
+                    std::max(0.0f, (remainingDistanceYards / plan.speedYardsPerSecond) * 1000.0f));
+            }
+
+            previousHot = waypointHot;
+        }
+
+        return std::nullopt;
+    }
+
+    static std::optional<std::uint32_t> EstimateRemainingMsUntilHotZoneOnTravel(
+        AbstractWorldBotRuntime const& runtime,
+        living_world::ai::AbstractWorldBotProgressConfig const& progressConfig,
+        std::uint16_t currentMapId,
+        std::uint32_t currentZoneId)
+    {
+        if (runtime.progress.currentStep >= runtime.session.steps.size())
+            return std::nullopt;
+
+        living_world::service::AmbientStep const& step = runtime.session.steps[runtime.progress.currentStep];
+        auto const option =
+            living_world::ai::ResolveAbstractWorldBotTravelOption(step, runtime.progress, progressConfig);
+        if (!option)
+            return std::nullopt;
+
+        if (option->usesTaxi() && option->taxiJourney.has_value() && !option->taxiJourney->empty())
+        {
+            living_world::service::WorldBotResolvedTaxiJourney const& journey = *option->taxiJourney;
+            std::uint32_t const sourceMs = journey.sourceGroundPlan.etaMs;
+            std::uint32_t const taxiMs = journey.taxiCandidate.route.totalEtaMs;
+
+            if (sourceMs > 0 && runtime.progress.stepElapsedMs < sourceMs)
+            {
+                float const progress =
+                    std::clamp(static_cast<float>(runtime.progress.stepElapsedMs) / static_cast<float>(sourceMs), 0.0f, 1.0f);
+                float const traveledDistanceYards = journey.sourceGroundPlan.totalDistanceYards * progress;
+                if (auto const seamMs = EstimateRemainingMsUntilHotSeam(
+                    journey.sourceGroundPlan,
+                    traveledDistanceYards,
+                    currentMapId,
+                    currentZoneId))
+                {
+                    return seamMs;
+                }
+                return EstimateRemainingMsUntilHotWaypoint(
+                    journey.sourceGroundPlan,
+                    traveledDistanceYards);
+            }
+
+            if (taxiMs > 0 && runtime.progress.stepElapsedMs < (sourceMs + taxiMs))
+                return std::nullopt;
+
+            if (journey.destinationGroundPlan.etaMs > 0)
+            {
+                std::uint32_t const destinationElapsedMs =
+                    runtime.progress.stepElapsedMs > (sourceMs + taxiMs)
+                        ? (runtime.progress.stepElapsedMs - sourceMs - taxiMs)
+                        : 0u;
+                float const progress =
+                    std::clamp(
+                        static_cast<float>(destinationElapsedMs) / static_cast<float>(journey.destinationGroundPlan.etaMs),
+                        0.0f,
+                        1.0f);
+                float const traveledDistanceYards = journey.destinationGroundPlan.totalDistanceYards * progress;
+                if (auto const seamMs = EstimateRemainingMsUntilHotSeam(
+                    journey.destinationGroundPlan,
+                    traveledDistanceYards,
+                    currentMapId,
+                    currentZoneId))
+                {
+                    return seamMs;
+                }
+                return EstimateRemainingMsUntilHotWaypoint(
+                    journey.destinationGroundPlan,
+                    traveledDistanceYards);
+            }
+
+            return std::nullopt;
+        }
+
+        if (option->groundPlan.has_value() && !option->groundPlan->empty() && option->groundPlan->etaMs > 0)
+        {
+            float const progress =
+                std::clamp(
+                    static_cast<float>(runtime.progress.stepElapsedMs) / static_cast<float>(option->groundPlan->etaMs),
+                    0.0f,
+                    1.0f);
+            float const traveledDistanceYards = option->groundPlan->totalDistanceYards * progress;
+            if (auto const seamMs = EstimateRemainingMsUntilHotSeam(
+                *option->groundPlan,
+                traveledDistanceYards,
+                currentMapId,
+                currentZoneId))
+            {
+                return seamMs;
+            }
+            return EstimateRemainingMsUntilHotWaypoint(
+                *option->groundPlan,
+                traveledDistanceYards);
+        }
+
+        return std::nullopt;
+    }
+
     static bool CanMaterializeAbstractRuntime(
         AbstractWorldBotRuntime const& runtime,
         living_world::ai::AbstractWorldBotProgressConfig const& progressConfig)
@@ -2840,7 +3962,28 @@ private:
             if (phase->kind == living_world::ai::AbstractWorldBotTravelPhaseKind::TaxiFlight)
                 return false;
 
-            return IsZoneHotOrInterested(phase->position.mapId, phase->zoneId);
+            std::uint32_t actualZoneId = ResolveZoneIdAtPosition(
+                phase->position.mapId,
+                phase->position.x,
+                phase->position.y,
+                phase->position.z);
+            if (actualZoneId == 0)
+                actualZoneId = phase->zoneId;
+
+            if (IsZoneHotOrInterested(phase->position.mapId, actualZoneId))
+                return true;
+
+            if (auto const remainingMsUntilHotZone =
+                EstimateRemainingMsUntilHotZoneOnTravel(
+                    runtime,
+                    progressConfig,
+                    phase->position.mapId,
+                    actualZoneId))
+            {
+                return *remainingMsUntilHotZone <= MaterializationPreWarmMs;
+            }
+
+            return false;
         }
 
         std::uint32_t const zoneId = ResolveStepZoneId(runtime.session, runtime.progress.currentStep);
@@ -3011,13 +4154,20 @@ private:
         runtime.lastRuntimeLedgerSyncMs = runtime.worldOnlineMs;
         runtime.lastRuntimeState = state;
         runtime.lastRuntimeDetail = detail;
+        RuntimeLedgerBreadcrumbs const breadcrumbs = BuildRuntimeLedgerBreadcrumbs(
+            runtime.session,
+            runtime.progress.currentStep,
+            runtime.progress.stepElapsedMs);
 
         living_world::integration::SqlBotIdentityRepository().UpdateActiveRuntimeState(
             runtime.identity.id,
             ResolveZoneIdAtPosition(position.mapId, position.x, position.y, position.z),
             runtime.worldOnlineMs,
             state,
-            detail);
+            detail,
+            breadcrumbs.taskActivityKey,
+            breadcrumbs.questHubKey,
+            breadcrumbs.questHubElapsedMs);
     }
 
     static std::string DescribeAbstractResumeState(
@@ -3070,6 +4220,32 @@ private:
                     runtime.progress,
                     progressConfig);
 
+        std::string materializeReason = "hot_zone_entry";
+        if (auto const phase = ResolveAbstractRuntimeTravelPhase(runtime, progressConfig))
+        {
+            std::uint32_t actualZoneId = ResolveZoneIdAtPosition(
+                phase->position.mapId,
+                phase->position.x,
+                phase->position.y,
+                phase->position.z);
+            if (actualZoneId == 0)
+                actualZoneId = phase->zoneId;
+
+            if (!IsZoneHotOrInterested(phase->position.mapId, actualZoneId))
+            {
+                if (auto const remainingMsUntilHotZone =
+                    EstimateRemainingMsUntilHotZoneOnTravel(
+                        runtime,
+                        progressConfig,
+                        phase->position.mapId,
+                        actualZoneId))
+                {
+                    if (*remainingMsUntilHotZone <= MaterializationPreWarmMs)
+                        materializeReason = "prewarm_eta_ms=" + std::to_string(*remainingMsUntilHotZone);
+                }
+            }
+        }
+
         living_world::integration::SqlBotIdentityRepository identityRepository;
         auto const refreshedIdentity = identityRepository.FindById(runtime.identity.id);
         living_world::integration::BotIdentityRecord const identity =
@@ -3090,7 +4266,7 @@ private:
             identity.name,
             identity.id,
             "status_change",
-            "materializing_from_abstract -> " + DescribeAbstractRuntime(runtime),
+            "materializing_from_abstract reason='" + materializeReason + "' -> " + DescribeAbstractRuntime(runtime),
             pos.mapId,
             ResolveStepZoneId(runtime.session, runtime.progress.currentStep),
             pos.x,
@@ -3130,10 +4306,12 @@ private:
                 resumeElapsedMs,
                 runtime.worldOnlineMs,
                 true,
-                true);
+                true,
+                runtime.completedSessionsThisActivation);
             _materializedWorldBots[identity.id] = MaterializedWorldBotHandle{
                 pos.mapId,
-                bot->GetGUID()
+                bot->GetGUID(),
+                runtime.worldOnlineMs
             };
             return true;
         }
@@ -3150,15 +4328,6 @@ private:
         Map* map = sMapMgr->FindMap(_debugRouteHarnessMapId, 0);
         if (!map)
             return;
-
-        living_world::service::AmbientSession const session = BuildDebugRouteHarnessSession(
-            _debugRouteHarnessMapId,
-            _debugRouteHarnessDestZoneId,
-            _debugRouteHarnessDestX,
-            _debugRouteHarnessDestY,
-            _debugRouteHarnessDestZ,
-            _debugRouteHarnessIdleDurationSec,
-            _debugRouteHarnessTransitRouteKey);
 
         std::uint32_t spawned = 0;
         for (std::size_t i = 0; i < _debugRouteHarnessLevels.size(); ++i)
@@ -3178,12 +4347,31 @@ private:
                 _debugRouteHarnessExploredZones);
 
             Position spawnPos;
-            float const lateralOffset = static_cast<float>(i) * 3.0f;
+            float const lateralOffset = static_cast<float>(i) * _debugRouteHarnessSpacingYards;
             spawnPos.Relocate(
                 _debugRouteHarnessStartX + lateralOffset,
                 _debugRouteHarnessStartY,
                 _debugRouteHarnessStartZ,
                 0.0f);
+
+            std::vector<std::string> const waypointKeys = BuildDebugRouteHarnessWaypointsForBot(
+                _debugRouteHarnessWaypointKeys,
+                _debugRouteHarnessWaypointCount,
+                _debugRouteHarnessShuffleSeed,
+                static_cast<std::uint32_t>(i),
+                level);
+
+            living_world::service::AmbientSession const session = BuildDebugRouteHarnessSession(
+                _debugRouteHarnessMode,
+                _debugRouteHarnessMapId,
+                _debugRouteHarnessDestZoneId,
+                _debugRouteHarnessDestX,
+                _debugRouteHarnessDestY,
+                _debugRouteHarnessDestZ,
+                _debugRouteHarnessIdleDurationSec,
+                _debugRouteHarnessTargetPointKey,
+                _debugRouteHarnessTransitRouteKey,
+                waypointKeys);
 
             Creature* bot = map->SummonCreature(WorldBotEntry, spawnPos);
             if (!bot)
@@ -3193,16 +4381,18 @@ private:
 
             if (auto* ai = dynamic_cast<living_world::ai::WorldBotCreatureAI*>(bot->AI()))
             {
-                ai->SetIdentityAndSession(*identity, session, 0, 0, 0, false, false);
+                ai->SetIdentityAndSession(*identity, session, 0, 0, 0, false, false, 0);
                 _materializedWorldBots[identity->id] = MaterializedWorldBotHandle{
                     _debugRouteHarnessMapId,
-                    bot->GetGUID()
+                    bot->GetGUID(),
+                    0
                 };
                 ++spawned;
 
                 LOG_INFO("server.worldserver",
-                    "[LivingWorldDebug] RouteHarness spawned '{}' identity={} level={} class={} race={} start=({:.1f},{:.1f},{:.1f}) dest_zone={} dest=({:.1f},{:.1f},{:.1f}) explored_zones='{}'",
+                    "[LivingWorldDebug] RouteHarness spawned '{}' mode='{}' identity={} level={} class={} race={} start=({:.1f},{:.1f},{:.1f}) dest_zone={} dest=({:.1f},{:.1f},{:.1f}) explored_zones='{}' waypoint_count={} waypoint_keys='{}'",
                     identity->name,
+                    _debugRouteHarnessMode,
                     identity->id,
                     identity->level,
                     identity->classId,
@@ -3214,7 +4404,9 @@ private:
                     _debugRouteHarnessDestX,
                     _debugRouteHarnessDestY,
                     _debugRouteHarnessDestZ,
-                    JoinZoneIdCsv(_debugRouteHarnessExploredZones));
+                    JoinZoneIdCsv(_debugRouteHarnessExploredZones),
+                    waypointKeys.size(),
+                    JoinDebugStringList(waypointKeys));
             }
             else
             {
@@ -3233,7 +4425,7 @@ private:
 
         for (auto itr = _materializedWorldBots.begin(); itr != _materializedWorldBots.end(); )
         {
-            MaterializedWorldBotHandle const& handle = itr->second;
+            MaterializedWorldBotHandle& handle = itr->second;
             Map* map = sMapMgr->FindMap(handle.mapId, 0);
             if (!map)
             {
@@ -3284,8 +4476,19 @@ private:
                 : (snapshot.progress.currentStep < snapshot.session.steps.size()
                     ? snapshot.session.steps[snapshot.progress.currentStep].mapId
                     : 0u);
-            if ((!snapshot.inTaxiTransit && !snapshot.inPhysicalTransit)
-                && IsZoneHotOrInterested(mapId, zoneId))
+            bool const zoneCurrentlyHotOrInterested =
+                (!snapshot.inTaxiTransit && !snapshot.inPhysicalTransit)
+                && IsZoneHotOrInterested(mapId, zoneId);
+            if (zoneCurrentlyHotOrInterested)
+            {
+                handle.lastHotOrInterestedWorldMs = snapshot.worldOnlineMs;
+                ++itr;
+                continue;
+            }
+
+            if (!snapshot.inTaxiTransit
+                && !snapshot.inPhysicalTransit
+                && snapshot.worldOnlineMs < (handle.lastHotOrInterestedWorldMs + MaterializedColdZoneGraceMs))
             {
                 ++itr;
                 continue;
@@ -3303,6 +4506,7 @@ private:
             runtime.progress = snapshot.progress;
             runtime.exploredZoneIds = LoadExploredZoneSet(runtime.identity.id);
             runtime.worldOnlineMs = snapshot.worldOnlineMs;
+            runtime.completedSessionsThisActivation = snapshot.completedSessionsThisActivation;
             runtime.physicalTransitTransportEntry = snapshot.physicalTransitTransportEntry;
             runtime.physicalTransitLocalX = snapshot.physicalTransitLocalX;
             runtime.physicalTransitLocalY = snapshot.physicalTransitLocalY;
@@ -3365,6 +4569,9 @@ private:
                 runtime.progress,
                 diff,
                 progressConfig);
+            bool const budgetElapsed =
+                runtime.identity.activeWorldSessionBudgetMs != 0
+                && runtime.worldOnlineMs >= runtime.identity.activeWorldSessionBudgetMs;
             auto const position = living_world::ai::ComputeAbstractWorldBotInterpolatedPosition(
                 runtime.session,
                 runtime.progress,
@@ -3415,13 +4622,304 @@ private:
                     runtime.progress.stepStartZ);
             }
 
-            if (outcome.sessionComplete)
+            if (outcome.sessionComplete || budgetElapsed)
             {
+                if (budgetElapsed && !outcome.sessionComplete)
+                {
+                    living_world::integration::BotActivityLog::RecordAbstract(
+                        runtime.identity.name,
+                        runtime.identity.id,
+                        "session_budget_elapsed",
+                        "world_online_ms=" + std::to_string(runtime.worldOnlineMs)
+                            + " budget_ms=" + std::to_string(runtime.identity.activeWorldSessionBudgetMs)
+                            + " current_step=" + std::to_string(runtime.progress.currentStep),
+                        runtime.progress.stepStartMapId,
+                        ResolveStepZoneId(runtime.session, std::min(runtime.progress.currentStep, runtime.session.steps.empty() ? std::size_t{0} : runtime.session.steps.size() - 1)),
+                        runtime.progress.stepStartX,
+                        runtime.progress.stepStartY,
+                        runtime.progress.stepStartZ);
+                }
+
+                if (!budgetElapsed && SessionSourceAllowsFollowup(runtime.session.sourceKind, runtime.session.sourceKey))
+                {
+                    std::uint64_t const sessionBudgetMs =
+                        runtime.identity.activeWorldSessionBudgetMs;
+
+                    living_world::integration::BotActivityLog::RecordAbstract(
+                        runtime.identity.name,
+                        runtime.identity.id,
+                        "session_chain_continue",
+                        "world_online_ms=" + std::to_string(runtime.worldOnlineMs)
+                            + " world_online_ms=" + std::to_string(runtime.worldOnlineMs)
+                            + " budget_ms=" + std::to_string(sessionBudgetMs)
+                            + " remaining_ms=" + std::to_string(
+                                sessionBudgetMs > runtime.worldOnlineMs
+                                    ? (sessionBudgetMs - runtime.worldOnlineMs)
+                                    : 0ull),
+                        runtime.progress.stepStartMapId,
+                        ResolveStepZoneId(runtime.session, std::min(runtime.progress.currentStep, runtime.session.steps.empty() ? std::size_t{0} : runtime.session.steps.size() - 1)),
+                        runtime.progress.stepStartX,
+                        runtime.progress.stepStartY,
+                        runtime.progress.stepStartZ);
+
+                    if (sessionBudgetMs == 0 || runtime.worldOnlineMs < sessionBudgetMs)
+                    {
+                        SessionCompletionMetadata const previousMetadata =
+                            BuildSessionCompletionMetadata(runtime.session, runtime.progress.currentStep);
+                        RuntimeLedgerBreadcrumbs const breadcrumbs = BuildRuntimeLedgerBreadcrumbs(
+                            runtime.session,
+                            runtime.progress.currentStep,
+                            runtime.progress.stepElapsedMs);
+                        living_world::service::AmbientSessionResumeHint const resumeHint{
+                            runtime.session.sourceKind,
+                            runtime.session.sourceKey.empty() ? runtime.session.activityKey : runtime.session.sourceKey,
+                            previousMetadata.taskFamily,
+                            previousMetadata.targetZoneId,
+                            previousMetadata.subjectKind,
+                            previousMetadata.subjectKey,
+                            breadcrumbs.questHubElapsedMs
+                        };
+
+                        std::uint32_t const reserveCityZoneId =
+                            runtime.identity.populationRole == "city_reserve"
+                                ? runtime.identity.reserveCityZoneId
+                                : 0u;
+                        living_world::service::AmbientSessionComposeBias const composeBias{
+                            reserveCityZoneId != 0 ? std::string("city_errand") : std::string{},
+                            reserveCityZoneId
+                        };
+
+                        living_world::service::BotActivitySessionComposer composer;
+                        auto nextSession = composer.Compose(
+                            runtime.identity.faction,
+                            runtime.identity.level,
+                            runtime.identity.hasHerbalism,
+                            runtime.identity.hasMining,
+                            runtime.identity.hasFishing,
+                            reserveCityZoneId != 0
+                                ? reserveCityZoneId
+                                : ResolveStepZoneId(runtime.session, std::min(runtime.progress.currentStep, runtime.session.steps.empty() ? std::size_t{0} : runtime.session.steps.size() - 1)),
+                            reserveCityZoneId != 0 ? reserveCityZoneId : runtime.identity.homeZoneId,
+                            reserveCityZoneId != 0 ? std::string{} : runtime.identity.homeAnchorPointKey,
+                            reserveCityZoneId != 0 ? std::string{} : runtime.identity.homeBindPointKey,
+                            &runtime.exploredZoneIds,
+                            &resumeHint,
+                            reserveCityZoneId != 0 ? &composeBias : nullptr,
+                            runtime.identity.personalityKey);
+
+                        if (nextSession)
+                        {
+                            runtime.session = *nextSession;
+                            runtime.progress.currentStep = 0;
+                            runtime.progress.stepElapsedMs = 0;
+                            runtime.progress.stepStartKnown = true;
+                            runtime.progress.stepStartMapId = position.mapId;
+                            runtime.progress.stepStartX = position.x;
+                            runtime.progress.stepStartY = position.y;
+                            runtime.progress.stepStartZ = position.z;
+                            runtime.lastTravelPhase = living_world::ai::AbstractWorldBotTravelPhaseKind::None;
+
+                            living_world::integration::BotActivityLog::RecordAbstract(
+                                runtime.identity.name,
+                                runtime.identity.id,
+                                "session_chain_continue",
+                                "next_source_kind='" + (runtime.session.sourceKind.empty() ? std::string("unknown") : runtime.session.sourceKind)
+                                    + "' next_source_key='" + (runtime.session.sourceKey.empty() ? runtime.session.activityKey : runtime.session.sourceKey) + "'",
+                                runtime.progress.stepStartMapId,
+                                ResolveStepZoneId(runtime.session, 0),
+                                runtime.progress.stepStartX,
+                                runtime.progress.stepStartY,
+                                runtime.progress.stepStartZ);
+
+                            ++itr;
+                            continue;
+                        }
+                    }
+                }
+
                 std::uint32_t const lastSeenZoneId = runtime.session.steps.empty()
                     ? runtime.identity.lastSeenZoneId
                     : ResolveStepZoneId(runtime.session, runtime.session.steps.size() - 1);
                 SessionCompletionMetadata const completionMetadata =
                     BuildSessionCompletionMetadata(runtime.session, runtime.progress.currentStep);
+                RuntimeLedgerBreadcrumbs const breadcrumbs = BuildRuntimeLedgerBreadcrumbs(
+                    runtime.session,
+                    runtime.progress.currentStep,
+                    runtime.progress.stepElapsedMs);
+                bool const canRequestFreshShift =
+                    SessionSourceAllowsFollowup(runtime.session.sourceKind, runtime.session.sourceKey);
+
+                if (!budgetElapsed)
+                {
+                    std::uint64_t const remainingMs =
+                        runtime.identity.activeWorldSessionBudgetMs > runtime.worldOnlineMs
+                            ? (runtime.identity.activeWorldSessionBudgetMs - runtime.worldOnlineMs)
+                            : 0ull;
+                    living_world::integration::BotActivityLog::RecordAbstract(
+                        runtime.identity.name,
+                        runtime.identity.id,
+                        "session_clockout_early",
+                        "world_online_ms=" + std::to_string(runtime.worldOnlineMs)
+                            + " budget_ms=" + std::to_string(runtime.identity.activeWorldSessionBudgetMs)
+                            + " remaining_ms=" + std::to_string(remainingMs)
+                            + " last_task='" + breadcrumbs.taskActivityKey + "'"
+                            + " last_hub='" + breadcrumbs.questHubKey + "'",
+                        runtime.progress.stepStartMapId,
+                        lastSeenZoneId,
+                        runtime.progress.stepStartX,
+                        runtime.progress.stepStartY,
+                        runtime.progress.stepStartZ);
+                }
+
+                if (canRequestFreshShift && _debugDisableActivationExtension)
+                {
+                    living_world::integration::BotActivityLog::RecordAbstract(
+                        runtime.identity.name,
+                        runtime.identity.id,
+                        "activation_extension_skipped",
+                        "reason='debug_disabled'"
+                            + std::string(" completed_activations=")
+                            + std::to_string(runtime.completedSessionsThisActivation + 1u),
+                        runtime.progress.stepStartMapId,
+                        lastSeenZoneId,
+                        runtime.progress.stepStartX,
+                        runtime.progress.stepStartY,
+                        runtime.progress.stepStartZ);
+                }
+
+                if (canRequestFreshShift && !_debugDisableActivationExtension)
+                {
+                    std::uint32_t const completedActivations =
+                        runtime.completedSessionsThisActivation + 1u;
+                    std::uint32_t chance = 5u;
+                    if (completedActivations <= 1u)
+                        chance = 25u;
+                    else if (completedActivations == 2u)
+                        chance = 15u;
+                    std::uint32_t const roll = urand(1u, 100u);
+
+                    living_world::integration::BotActivityLog::RecordAbstract(
+                        runtime.identity.name,
+                        runtime.identity.id,
+                        "activation_extension_roll",
+                        "completed_activations=" + std::to_string(completedActivations)
+                            + " chance=" + std::to_string(chance)
+                            + " roll=" + std::to_string(roll),
+                        runtime.progress.stepStartMapId,
+                        lastSeenZoneId,
+                        runtime.progress.stepStartX,
+                        runtime.progress.stepStartY,
+                        runtime.progress.stepStartZ);
+
+                    if (roll <= chance)
+                    {
+                        living_world::integration::SqlBotIdentityRepository().CompleteWorldSession(
+                            runtime.identity.id,
+                            lastSeenZoneId,
+                            runtime.worldOnlineMs,
+                            completionMetadata.sourceKind,
+                            completionMetadata.sourceKey,
+                            completionMetadata.taskFamily,
+                            completionMetadata.targetZoneId,
+                            breadcrumbs.taskActivityKey,
+                            breadcrumbs.questHubKey,
+                            breadcrumbs.questHubElapsedMs);
+
+                        auto refreshedIdentity =
+                            living_world::integration::SqlBotIdentityRepository().FindById(runtime.identity.id);
+                        if (!refreshedIdentity || refreshedIdentity->isRetired)
+                        {
+                            itr = _abstractWorldBots.erase(itr);
+                            continue;
+                        }
+
+                        living_world::integration::SqlBotIdentityRepository().MarkActive(runtime.identity.id);
+                        refreshedIdentity =
+                            living_world::integration::SqlBotIdentityRepository().FindById(runtime.identity.id);
+                        if (!refreshedIdentity)
+                        {
+                            itr = _abstractWorldBots.erase(itr);
+                            continue;
+                        }
+                        EnsureAbstractIdentityAssignedGearCurrent(*refreshedIdentity);
+
+                        living_world::service::AmbientSessionResumeHint const resumeHint{
+                            refreshedIdentity->lastSessionSourceKind,
+                            refreshedIdentity->lastSessionSourceKey,
+                            refreshedIdentity->lastTaskFamily,
+                            refreshedIdentity->lastTaskTargetZoneId,
+                            refreshedIdentity->lastQuestHubKey.empty() ? std::string{} : std::string("quest"),
+                            refreshedIdentity->lastQuestHubKey.empty() ? std::string{} : std::string("quest_hub:") + refreshedIdentity->lastQuestHubKey,
+                            refreshedIdentity->lastQuestHubElapsedMs
+                        };
+
+                        std::uint32_t const reserveCityZoneId =
+                            refreshedIdentity->populationRole == "city_reserve"
+                                ? refreshedIdentity->reserveCityZoneId
+                                : 0u;
+                        living_world::service::AmbientSessionComposeBias const composeBias{
+                            reserveCityZoneId != 0 ? std::string("city_errand") : std::string{},
+                            reserveCityZoneId
+                        };
+
+                        living_world::service::BotActivitySessionComposer composer;
+                        auto nextSession = composer.Compose(
+                            refreshedIdentity->faction,
+                            refreshedIdentity->level,
+                            refreshedIdentity->hasHerbalism,
+                            refreshedIdentity->hasMining,
+                            refreshedIdentity->hasFishing,
+                            reserveCityZoneId != 0 ? reserveCityZoneId : lastSeenZoneId,
+                            reserveCityZoneId != 0 ? reserveCityZoneId : refreshedIdentity->homeZoneId,
+                            reserveCityZoneId != 0 ? std::string{} : refreshedIdentity->homeAnchorPointKey,
+                            reserveCityZoneId != 0 ? std::string{} : refreshedIdentity->homeBindPointKey,
+                            &runtime.exploredZoneIds,
+                            &resumeHint,
+                            reserveCityZoneId != 0 ? &composeBias : nullptr,
+                            refreshedIdentity->personalityKey);
+
+                        if (!nextSession)
+                        {
+                            living_world::integration::SqlBotIdentityRepository().MarkAvailable(
+                                runtime.identity.id,
+                                lastSeenZoneId);
+                            itr = _abstractWorldBots.erase(itr);
+                            continue;
+                        }
+
+                        runtime.identity = *refreshedIdentity;
+                        runtime.session = *nextSession;
+                        runtime.progress.currentStep = 0;
+                        runtime.progress.stepElapsedMs = 0;
+                        runtime.progress.stepStartKnown = true;
+                        runtime.progress.stepStartMapId = position.mapId;
+                        runtime.progress.stepStartX = position.x;
+                        runtime.progress.stepStartY = position.y;
+                        runtime.progress.stepStartZ = position.z;
+                        runtime.lastTravelPhase = living_world::ai::AbstractWorldBotTravelPhaseKind::None;
+                        runtime.worldOnlineMs = 0;
+                        runtime.completedSessionsThisActivation = completedActivations;
+                        runtime.lastRuntimeLedgerSyncMs = 0;
+                        runtime.lastRuntimeState.clear();
+                        runtime.lastRuntimeDetail.clear();
+
+                        living_world::integration::BotActivityLog::RecordAbstract(
+                            runtime.identity.name,
+                            runtime.identity.id,
+                            "activation_extension_continue",
+                            "completed_activations=" + std::to_string(completedActivations)
+                                + " next_source_kind='" + (runtime.session.sourceKind.empty() ? std::string("unknown") : runtime.session.sourceKind)
+                                + "' next_source_key='" + (runtime.session.sourceKey.empty() ? runtime.session.activityKey : runtime.session.sourceKey) + "'",
+                            runtime.progress.stepStartMapId,
+                            ResolveStepZoneId(runtime.session, 0),
+                            runtime.progress.stepStartX,
+                            runtime.progress.stepStartY,
+                            runtime.progress.stepStartZ);
+
+                        ++itr;
+                        continue;
+                    }
+                }
 
                 living_world::integration::BotActivityLog::RecordAbstract(
                     runtime.identity.name,
@@ -3441,7 +4939,10 @@ private:
                     completionMetadata.sourceKind,
                     completionMetadata.sourceKey,
                     completionMetadata.taskFamily,
-                    completionMetadata.targetZoneId);
+                    completionMetadata.targetZoneId,
+                    breadcrumbs.taskActivityKey,
+                    breadcrumbs.questHubKey,
+                    breadcrumbs.questHubElapsedMs);
                 itr = _abstractWorldBots.erase(itr);
                 continue;
             }
@@ -3490,6 +4991,7 @@ private:
 
         // Load available identities — mix of factions.
         living_world::integration::SqlBotIdentityRepository identityRepo;
+        living_world::integration::SqlBotShellRuntimeRepository shellRuntimeRepo;
         std::vector<living_world::integration::BotIdentityRecord> identities;
         if (!_debugForcedIdentityIds.empty())
         {
@@ -3499,6 +5001,12 @@ private:
                 auto const identity = identityRepo.FindById(id);
                 if (!identity || identity->isRetired || !identity->isAvailable)
                     continue;
+
+                if (auto const shellRuntime = shellRuntimeRepo.FindByIdentity(id);
+                    shellRuntime && shellRuntime->isMaterialized)
+                {
+                    continue;
+                }
 
                 identities.push_back(*identity);
                 if (identities.size() >= toSpawn)
@@ -3513,7 +5021,9 @@ private:
             {
                 auto general = identityRepo.LoadAvailable(
                     0,
-                    generalToSpawn);
+                    generalToSpawn,
+                    _debugForceIdentityMinLevel,
+                    _debugForceIdentityMaxLevel);
                 for (auto& record : general)
                     identities.push_back(std::move(record));
             }
@@ -3526,11 +5036,40 @@ private:
             return;
         }
 
+        if ((_debugForceIdentityMinLevel != 0 || _debugForceIdentityMaxLevel != 0)
+            && _debugForcedIdentityIds.empty())
+        {
+            identities.erase(
+                std::remove_if(
+                    identities.begin(),
+                    identities.end(),
+                    [&](living_world::integration::BotIdentityRecord const& record)
+                    {
+                        return !IdentityMatchesDebugLevelBand(
+                            record,
+                            _debugForceIdentityMinLevel,
+                            _debugForceIdentityMaxLevel);
+                    }),
+                identities.end());
+        }
+
+        if (identities.empty())
+        {
+            LOG_INFO("server.worldserver",
+                "[LivingWorld] AmbientPopulationTick: no available bot identities after debug level filter min={} max={}.",
+                _debugForceIdentityMinLevel,
+                _debugForceIdentityMaxLevel);
+            return;
+        }
+
         LOG_INFO("server.worldserver",
             "[LivingWorld] AmbientPopulationTick: selected {} candidate identities.",
             identities.size());
 
         living_world::service::BotActivitySessionComposer composer;
+        living_world::model::BotGlobalConfig const globalConfig =
+            living_world::integration::SqlBotGlobalConfigRepository().Load();
+        std::unordered_map<std::uint32_t, std::vector<living_world::integration::BotIdentityRecord>> ambientGroupRosterCache;
         std::uint32_t forcedSpawnedThisTick = 0;
 
         for (auto const& identity : identities)
@@ -3562,7 +5101,10 @@ private:
                 identity.lastSessionSourceKind,
                 identity.lastSessionSourceKey,
                 identity.lastTaskFamily,
-                identity.lastTaskTargetZoneId
+                identity.lastTaskTargetZoneId,
+                identity.lastQuestHubKey.empty() ? std::string{} : std::string("quest"),
+                identity.lastQuestHubKey.empty() ? std::string{} : std::string("quest_hub:") + identity.lastQuestHubKey,
+                identity.lastQuestHubElapsedMs
             };
             living_world::service::AmbientSessionComposeBias const composeBias{
                 reserveCityZoneId != 0 ? std::string("city_errand") : std::string{},
@@ -3570,9 +5112,10 @@ private:
             };
 
             std::uint32_t const composeAttempts = std::max<std::uint32_t>(1u, _debugForcedSessionComposeAttempts);
-            for (std::uint32_t attempt = 0; attempt < composeAttempts; ++attempt)
+            if (!_debugForcedSessionSourceKey.empty())
             {
-                auto candidate = composer.Compose(
+                session = composer.ComposeForcedSourceKey(
+                    _debugForcedSessionSourceKey,
                     identity.faction,
                     identity.level,
                     identity.hasHerbalism,
@@ -3582,17 +5125,38 @@ private:
                     composeHomeZoneId,
                     composeHomeAnchorPointKey,
                     composeHomeBindPointKey,
-                    &composeExploredZones,
-                    &resumeHint,
-                    reserveCityZoneId != 0 ? &composeBias : nullptr);
-                if (!candidate)
-                    continue;
+                    &composeExploredZones);
+                if (session && !SessionStartsInZone(*session, _debugForcedSessionZoneId))
+                    session.reset();
+            }
 
-                if (!SessionStartsInZone(*candidate, _debugForcedSessionZoneId))
-                    continue;
+            if (!session)
+            {
+                for (std::uint32_t attempt = 0; attempt < composeAttempts; ++attempt)
+                {
+                    auto candidate = composer.Compose(
+                        identity.faction,
+                        identity.level,
+                        identity.hasHerbalism,
+                        identity.hasMining,
+                        identity.hasFishing,
+                        composeStartZoneId,
+                        composeHomeZoneId,
+                        composeHomeAnchorPointKey,
+                        composeHomeBindPointKey,
+                        &composeExploredZones,
+                        &resumeHint,
+                        reserveCityZoneId != 0 ? &composeBias : nullptr,
+                        identity.personalityKey);
+                    if (!candidate)
+                        continue;
 
-                session = std::move(candidate);
-                break;
+                    if (!SessionStartsInZone(*candidate, _debugForcedSessionZoneId))
+                        continue;
+
+                    session = std::move(candidate);
+                    break;
+                }
             }
 
             if (!session && _debugForcedSessionZoneId != 0)
@@ -3638,6 +5202,130 @@ private:
                 continue;
             }
 
+            bool const shouldUseLedgerShellDebugSpawn =
+                !_debugForcedIdentityIds.empty();
+
+            if (shouldUseLedgerShellDebugSpawn)
+            {
+                living_world::integration::SqlBotRuntimeSnapshotRepository snapshotRepo;
+                living_world::model::BotRuntimeSnapshotRecord snapshot =
+                    snapshotRepo.LoadByIdentity(identity.id).value_or(
+                        living_world::model::BotRuntimeSnapshotRecord{});
+                snapshot.identityId = identity.id;
+                snapshot.mapId = static_cast<std::uint16_t>(sp->mapId);
+                snapshot.zoneId = ResolveZoneIdAtPosition(
+                    static_cast<std::uint16_t>(sp->mapId),
+                    sp->x,
+                    sp->y,
+                    sp->z);
+                snapshot.x = sp->x;
+                snapshot.y = sp->y;
+                snapshot.z = sp->z;
+                snapshot.o = 0.0f;
+                snapshot.runtimeState = "forced_shell_spawn";
+                if (snapshot.homeBindPointKey.empty())
+                    snapshot.homeBindPointKey = identity.homeBindPointKey;
+                snapshot.genericPotionCharges = identity.genericPotionCharges;
+                snapshotRepo.Upsert(snapshot);
+
+                auto const spawnResult =
+                    living_world::integration::BotSessionFactory::SpawnLedgerShellIdentity(identity.id);
+                if (spawnResult.status == living_world::integration::BotSessionSpawnStatus::SpawnQueued)
+                {
+                    if (usedForcedSpawn)
+                        ++forcedSpawnedThisTick;
+
+                    LOG_INFO("server.worldserver",
+                        "[LivingWorld] AmbientPopulationTick: queued ledger shell '{}' identity={} account={} map={} pos=({:.1f},{:.1f},{:.1f}){}",
+                        identity.name,
+                        identity.id,
+                        spawnResult.botAccountId,
+                        sp->mapId,
+                        sp->x,
+                        sp->y,
+                        sp->z,
+                        usedForcedSpawn ? " forced_spawn_override" : "");
+                }
+                else
+                {
+                    LOG_WARN("server.worldserver",
+                        "[LivingWorld] AmbientPopulationTick: failed to queue ledger shell '{}' identity={} status={}",
+                        identity.name,
+                        identity.id,
+                        static_cast<std::uint32_t>(spawnResult.status));
+                }
+
+                continue;
+            }
+
+            auto const applyAmbientGroupSpawnFormation =
+                [&](living_world::integration::BotIdentityRecord const& groupedIdentity,
+                    living_world::service::AmbientSession const& groupedSession,
+                    SpawnPoint& spawnPoint)
+                {
+                    if (groupedIdentity.ambientGroupId == 0)
+                        return;
+
+                    bool const isLeader =
+                        groupedIdentity.ambientGroupLeaderIdentityId == 0
+                        || groupedIdentity.ambientGroupLeaderIdentityId == groupedIdentity.id;
+                    if (isLeader)
+                        return;
+
+                    auto cacheIt = ambientGroupRosterCache.find(groupedIdentity.ambientGroupId);
+                    if (cacheIt == ambientGroupRosterCache.end())
+                    {
+                        cacheIt = ambientGroupRosterCache.emplace(
+                            groupedIdentity.ambientGroupId,
+                            identityRepo.LoadAvailableAmbientGroup(groupedIdentity.ambientGroupId)).first;
+                    }
+
+                    std::vector<std::uint64_t> followerIds;
+                    followerIds.reserve(cacheIt->second.size());
+                    for (auto const& member : cacheIt->second)
+                    {
+                        bool const memberIsLeader =
+                            member.ambientGroupLeaderIdentityId == 0
+                            || member.ambientGroupLeaderIdentityId == member.id;
+                        if (!memberIsLeader)
+                            followerIds.push_back(member.id);
+                    }
+
+                    if (followerIds.empty())
+                        return;
+
+                    float baseDistance = globalConfig.followDistanceFallback;
+                    if (groupedIdentity.ambientGroupRole == "tank" || groupedIdentity.ambientGroupRole == "melee_dps")
+                        baseDistance = globalConfig.followDistanceMelee;
+                    else if (groupedIdentity.ambientGroupRole == "healer" || groupedIdentity.ambientGroupRole == "support")
+                        baseDistance = globalConfig.followDistanceHealer;
+                    else if (groupedIdentity.ambientGroupRole == "ranged_dps")
+                        baseDistance = std::min(2.0f, globalConfig.followDistanceRanged);
+
+                    living_world::ai::CompanionFollowFormationResult const formation =
+                        living_world::ai::ResolveCompanionFollowFormation(
+                            { globalConfig.followFormation,
+                              baseDistance,
+                              globalConfig.followSlotCount,
+                              groupedIdentity.id,
+                              std::move(followerIds) });
+
+                    float heading = 0.0f;
+                    if (!groupedSession.steps.empty()
+                        && groupedSession.steps.front().type == living_world::service::AmbientStepType::Travel)
+                    {
+                        heading = std::atan2(
+                            groupedSession.steps.front().y - spawnPoint.y,
+                            groupedSession.steps.front().x - spawnPoint.x);
+                    }
+
+                    float const worldAngle = heading + formation.angle;
+                    spawnPoint.x += std::cos(worldAngle) * formation.distance;
+                    spawnPoint.y += std::sin(worldAngle) * formation.distance;
+                };
+
+            applyAmbientGroupSpawnFormation(identity, *session, *sp);
+
             AbstractWorldBotRuntime abstractRuntime;
             abstractRuntime.identity = identity;
             abstractRuntime.session = *session;
@@ -3648,6 +5336,7 @@ private:
             abstractRuntime.progress.stepStartX = sp->x;
             abstractRuntime.progress.stepStartY = sp->y;
             abstractRuntime.progress.stepStartZ = sp->z;
+            abstractRuntime.completedSessionsThisActivation = 0;
             abstractRuntime.exploredZoneIds = LoadExploredZoneSet(identity.id);
             ObserveAbstractRuntimeExploration(
                 abstractRuntime,
@@ -3663,13 +5352,19 @@ private:
             if (!CanMaterializeAbstractRuntime(abstractRuntime, initialProgressConfig))
             {
                 identityRepo.MarkActive(identity.id);
+                if (auto refreshedIdentity = identityRepo.FindById(identity.id))
+                {
+                    EnsureAbstractIdentityAssignedGearCurrent(*refreshedIdentity);
+                    abstractRuntime.identity = *refreshedIdentity;
+                }
                 _abstractWorldBots[identity.id] = abstractRuntime;
 
                 living_world::integration::BotActivityLog::RecordAbstract(
                     identity.name,
                     identity.id,
                     "session_start",
-                    "abstract_offscreen " + DescribeAbstractRuntime(abstractRuntime),
+                    "abstract_offscreen " + DescribeAbstractRuntime(abstractRuntime)
+                        + " " + DescribeSessionProfile(abstractRuntime.session),
                     abstractRuntime.progress.stepStartMapId,
                     ResolveStepZoneId(abstractRuntime.session, 0),
                     abstractRuntime.progress.stepStartX,
@@ -3730,10 +5425,11 @@ private:
             // Give the AI its identity and session.
             if (auto* ai = dynamic_cast<living_world::ai::WorldBotCreatureAI*>(bot->AI()))
             {
-                ai->SetIdentityAndSession(identity, *session);
+                ai->SetIdentityAndSession(identity, *session, 0, 0, 0, false, false, 0);
                 _materializedWorldBots[identity.id] = MaterializedWorldBotHandle{
                     sp->mapId,
-                    bot->GetGUID()
+                    bot->GetGUID(),
+                    0
                 };
                 if (usedForcedSpawn)
                     ++forcedSpawnedThisTick;
@@ -3762,6 +5458,249 @@ private:
         }
     }
 };
+
+namespace living_world::script
+{
+std::filesystem::path ResolveNamedDebugRunDirectory()
+{
+    return ResolveNamedDebugRunRoot();
+}
+
+std::vector<std::string> ListNamedDebugRuns()
+{
+    std::vector<std::string> names;
+    std::filesystem::path const root = ResolveNamedDebugRunRoot();
+    std::error_code ec;
+    if (!std::filesystem::exists(root, ec) || !std::filesystem::is_directory(root, ec))
+        return names;
+
+    for (std::filesystem::directory_entry const& entry : std::filesystem::directory_iterator(root, ec))
+    {
+        if (ec || !entry.is_regular_file())
+            continue;
+        std::filesystem::path const path = entry.path();
+        if (!path.has_extension())
+            continue;
+        std::string extension = path.extension().string();
+        std::transform(
+            extension.begin(),
+            extension.end(),
+            extension.begin(),
+            [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+        if (extension != ".json")
+            continue;
+        names.push_back(path.stem().string());
+    }
+
+    std::sort(names.begin(), names.end());
+    return names;
+}
+
+bool StopNamedDebugRun(std::string const& runName, std::string& status)
+{
+    auto const stopOne = [&](std::string const& key) -> bool
+    {
+        auto const itr = g_namedDebugRunBotGuids.find(key);
+        if (itr == g_namedDebugRunBotGuids.end())
+            return false;
+
+        if (Map* map = sMapMgr->FindMap(itr->second.mapId, 0))
+        {
+            if (Creature* creature = map->GetCreature(itr->second.guid))
+                creature->DespawnOrUnsummon(Milliseconds(0));
+        }
+        g_namedDebugRunBotGuids.erase(itr);
+        return true;
+    };
+
+    if (runName == "all")
+    {
+        std::size_t stopped = 0;
+        std::vector<std::string> names;
+        names.reserve(g_namedDebugRunBotGuids.size());
+        for (auto const& [key, _] : g_namedDebugRunBotGuids)
+            names.push_back(key);
+        for (std::string const& key : names)
+            stopped += stopOne(key) ? 1u : 0u;
+
+        status = stopped == 0
+            ? "no active named runs were found."
+            : ("stopped " + std::to_string(stopped) + " named run(s).");
+        return stopped != 0;
+    }
+
+    if (!stopOne(runName))
+    {
+        status = "run '" + runName + "' was not active.";
+        return false;
+    }
+
+    status = "stopped run '" + runName + "'.";
+    return true;
+}
+
+bool TryRunNamedDebugScenario(Player* observer, std::string const& runName, std::string& status)
+{
+    if (!observer)
+    {
+        status = "Named debug runs require an in-game player observer.";
+        return false;
+    }
+
+    std::string error;
+    auto const definition = LoadNamedDebugRunDefinition(runName, error);
+    if (!definition)
+    {
+        status = error;
+        return false;
+    }
+
+    std::string ignoredStatus;
+    (void)StopNamedDebugRun(definition->name, ignoredStatus);
+
+    std::uint32_t spawnMapId = definition->spawnMapId;
+    float spawnX = definition->spawnX;
+    float spawnY = definition->spawnY;
+    float spawnZ = definition->spawnZ;
+    if (definition->spawnFromObserver)
+    {
+        spawnMapId = observer->GetMapId();
+        spawnX = observer->GetPositionX();
+        spawnY = observer->GetPositionY();
+        spawnZ = observer->GetPositionZ();
+    }
+
+    Map* map = sMapMgr->FindMap(spawnMapId, 0);
+    if (!map)
+    {
+        status = "spawn map is not loaded for run '" + runName + "'.";
+        return false;
+    }
+
+    living_world::service::AmbientSession session = BuildDebugRouteHarnessSession(
+        definition->mode,
+        spawnMapId,
+        definition->destZoneId,
+        definition->destX,
+        definition->destY,
+        definition->destZ,
+        definition->idleDurationSec,
+        definition->targetPointKey,
+        definition->transitRouteKey);
+    session.activityKey = "debug_named_run";
+    session.displayName = definition->displayName;
+    session.sourceKind = "debug_named_run";
+    session.sourceKey = definition->name;
+    if (definition->preStartIdleSec > 0)
+    {
+        living_world::service::AmbientStep stagingStep;
+        stagingStep.type = living_world::service::AmbientStepType::Idle;
+        stagingStep.mapId = spawnMapId;
+        stagingStep.x = spawnX;
+        stagingStep.y = spawnY;
+        stagingStep.z = spawnZ;
+        stagingStep.durationSec = definition->preStartIdleSec;
+        stagingStep.taskIndex = 0;
+        stagingStep.label = "Debug run staging hold";
+        session.steps.insert(session.steps.begin(), std::move(stagingStep));
+    }
+
+    auto identity = EnsureDebugRouteHarnessIdentity(
+        definition->level,
+        definition->raceId,
+        definition->classId,
+        definition->gender,
+        definition->botName);
+    if (!identity)
+    {
+        status = "failed to prepare debug bot identity for run '" + runName
+            + "' (bot_name='" + definition->botName
+            + "', level=" + std::to_string(definition->level)
+            + ", race=" + std::to_string(definition->raceId)
+            + ", class=" + std::to_string(definition->classId)
+            + ", gender=" + std::to_string(definition->gender) + ").";
+        LOG_ERROR("module", "[LivingWorldDebug] {}", status);
+        return false;
+    }
+
+    if (!definition->exploredZones.empty())
+    {
+        living_world::integration::SqlBotExploredZoneRepository().ReplaceExploredZones(
+            identity->id,
+            definition->exploredZones);
+    }
+
+    Position spawnPos;
+    spawnPos.Relocate(spawnX, spawnY, spawnZ, 0.0f);
+    static constexpr std::uint32_t NamedDebugRunBotEntry = 9900002u;
+    Creature* bot = map->SummonCreature(NamedDebugRunBotEntry, spawnPos);
+    if (!bot)
+    {
+        status = "failed to summon the debug bot for run '" + runName + "'.";
+        return false;
+    }
+
+    bot->setActive(true);
+
+    auto* ai = dynamic_cast<living_world::ai::WorldBotCreatureAI*>(bot->AI());
+    if (!ai)
+    {
+        bot->DespawnOrUnsummon(Milliseconds(0));
+        status = "summoned creature did not get WorldBotCreatureAI for run '" + runName + "'.";
+        return false;
+    }
+
+    ai->SetIdentityAndSession(*identity, session, 0, 0, 0, false, false, 0);
+    ApplyNamedDebugRunVisualShell(bot);
+    {
+        std::string announce = "Debug run " + definition->name + " ready";
+        if (!definition->displayName.empty())
+            announce += ": " + definition->displayName;
+        bot->Yell(announce.c_str(), LANG_UNIVERSAL);
+    }
+    g_namedDebugRunBotGuids[definition->name] = ActiveNamedDebugRun{
+        spawnMapId,
+        bot->GetGUID()
+    };
+
+    LOG_INFO("server.worldserver",
+        "[LivingWorldDebug] NamedRun spawned '{}' run='{}' observer='{}' identity={} level={} class={} race={} mode='{}' start=({:.1f},{:.1f},{:.1f}) spawn_from_observer={} pre_start_idle={} dest_zone={} dest=({:.1f},{:.1f},{:.1f}) target='{}' transit='{}'",
+        identity->name,
+        definition->name,
+        observer->GetName(),
+        identity->id,
+        identity->level,
+        identity->classId,
+        identity->raceId,
+        definition->mode,
+        spawnX,
+        spawnY,
+        spawnZ,
+        definition->spawnFromObserver ? 1 : 0,
+        definition->preStartIdleSec,
+        definition->destZoneId,
+        definition->destX,
+        definition->destY,
+        definition->destZ,
+        definition->targetPointKey,
+        definition->transitRouteKey);
+
+    std::ostringstream oss;
+    oss << "started run '" << definition->name
+        << "' using bot '" << identity->name
+        << "' from (" << std::fixed << std::setprecision(1)
+        << spawnX << ", " << spawnY << ", " << spawnZ
+        << ")";
+    if (definition->preStartIdleSec > 0)
+        oss << " with " << definition->preStartIdleSec << "s staging idle";
+    if (!definition->targetPointKey.empty())
+        oss << " toward '" << definition->targetPointKey << "'";
+    if (!definition->transitRouteKey.empty())
+        oss << " via transit '" << definition->transitRouteKey << "'";
+    status = oss.str();
+    return true;
+}
+} // namespace living_world::script
 
 void AddSC_LivingWorldWorldScript()
 {

@@ -7,9 +7,14 @@
 #include "Log.h"
 #include "WorldSession.h"
 #include "WorldSessionMgr.h"
+#include "integration/SqlBotIdentityRepository.h"
+#include "integration/SqlBotShellRuntimeRepository.h"
+#include "model/BotRuntimeKind.h"
+#include "service/BotLedgerShellHydratorService.h"
 #include "service/BotPlayerRegistry.h"
 
 #include <cmath>
+#include <algorithm>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -33,6 +38,13 @@ struct BotAccountInfo
     std::uint32_t totalTime = 0;
 };
 
+struct LedgerShellBinding
+{
+    std::uint32_t accountId = 0;
+    std::uint64_t characterGuid = 0;
+    bool leasedThisCall = false;
+};
+
 std::optional<std::uint32_t> ReserveBotAccount(ObjectGuid ownerCharacterGuid)
 {
     QueryResult result = LoginDatabase.Query(
@@ -50,6 +62,23 @@ std::optional<std::uint32_t> ReserveBotAccount(ObjectGuid ownerCharacterGuid)
         ownerCharacterGuid.GetCounter(),
         accountId);
     return accountId;
+}
+
+void MarkBotAccountReserved(std::uint32_t accountId, std::uint64_t reservedFor)
+{
+    LoginDatabase.Execute(
+        "UPDATE living_world_bot_account_pool "
+        "SET is_available = 0, reserved_for = {} WHERE account_id = {};",
+        reservedFor,
+        accountId);
+}
+
+void ReleaseBotAccountReservation(std::uint32_t accountId)
+{
+    LoginDatabase.Execute(
+        "UPDATE living_world_bot_account_pool "
+        "SET is_available = 1, reserved_for = NULL WHERE account_id = {};",
+        accountId);
 }
 
 std::optional<BotAccountInfo> LoadBotAccountInfo(std::uint32_t accountId)
@@ -80,6 +109,122 @@ std::optional<BotAccountInfo> LoadBotAccountInfo(std::uint32_t accountId)
     info.totalTime = fields[7].Get<std::uint32_t>();
     info.security = AccountTypes(fields[8].Get<std::uint8_t>());
     return info;
+}
+
+std::optional<std::uint64_t> LoadShellCharacterGuidForAccount(std::uint32_t accountId)
+{
+    QueryResult result = CharacterDatabase.Query(
+        "SELECT guid FROM characters WHERE account = {} ORDER BY guid ASC LIMIT 1",
+        accountId);
+    if (!result)
+        return std::nullopt;
+    return (*result)[0].Get<std::uint64_t>();
+}
+
+std::optional<LedgerShellBinding> ResolveLedgerShellBinding(
+    std::uint32_t identityId)
+{
+    integration::SqlBotShellRuntimeRepository shellRuntimeRepo;
+    if (std::optional<model::BotShellRuntimeRecord> runtime =
+            shellRuntimeRepo.FindByIdentity(identityId))
+    {
+        if (runtime->shellAccountId != 0 && runtime->shellCharacterGuid != 0)
+            return LedgerShellBinding{
+                runtime->shellAccountId,
+                runtime->shellCharacterGuid,
+                false };
+    }
+
+    integration::SqlBotIdentityRepository identityRepo;
+    std::optional<integration::BotIdentityRecord> identity =
+        identityRepo.FindById(identityId);
+    if (!identity || identity->shellAccountId == 0 || identity->shellCharacterGuid == 0)
+        return std::nullopt;
+
+    return LedgerShellBinding{
+        identity->shellAccountId,
+        identity->shellCharacterGuid,
+        false };
+}
+
+std::optional<LedgerShellBinding> LeaseLedgerShellBinding(std::uint32_t identityId)
+{
+    integration::SqlBotIdentityRepository identityRepo;
+    std::optional<integration::BotIdentityRecord> identity = identityRepo.FindById(identityId);
+    if (!identity)
+        return std::nullopt;
+
+    integration::SqlBotShellRuntimeRepository shellRuntimeRepo;
+    QueryResult availableAccounts = LoginDatabase.Query(
+        "SELECT p.account_id "
+        "FROM living_world_bot_account_pool p "
+        "LEFT JOIN account a ON a.id = p.account_id "
+        "WHERE p.is_enabled = 1 AND p.is_available = 1 "
+        "AND a.username LIKE 'LedRes\\_%' ESCAPE '\\' "
+        "ORDER BY p.account_id ASC");
+    if (!availableAccounts)
+        return std::nullopt;
+
+    do
+    {
+        Field const* fields = availableAccounts->Fetch();
+        if (!fields)
+            continue;
+        std::uint32_t const accountId = fields[0].Get<std::uint32_t>();
+        std::optional<std::uint64_t> characterGuid = LoadShellCharacterGuidForAccount(accountId);
+        if (!characterGuid || *characterGuid == 0)
+            continue;
+
+        if (shellRuntimeRepo.FindByShell(accountId, *characterGuid))
+            continue;
+
+        if (CharacterDatabase.Query(
+                "SELECT id FROM living_world_bot_identity "
+                "WHERE shell_account_id = {} AND shell_character_guid = {} LIMIT 1",
+                accountId,
+                *characterGuid))
+        {
+            continue;
+        }
+
+        std::uint32_t const nextShellStateVersion =
+            std::max<std::uint32_t>(1u, identity->shellStateVersion + 1u);
+        MarkBotAccountReserved(accountId, identityId);
+        identityRepo.UpdateShellState(
+            identityId,
+            accountId,
+            *characterGuid,
+            nextShellStateVersion,
+            "rehydrate");
+
+        model::BotShellRuntimeRecord runtimeRecord;
+        runtimeRecord.identityId = identityId;
+        runtimeRecord.shellAccountId = accountId;
+        runtimeRecord.shellCharacterGuid = *characterGuid;
+        runtimeRecord.isMaterialized = false;
+        runtimeRecord.shellStateVersion = nextShellStateVersion;
+        shellRuntimeRepo.Upsert(runtimeRecord);
+        CharacterDatabase.Execute(
+            "UPDATE living_world_bot_shell_runtime "
+            "SET leased_at = NOW(), last_sync_at = NULL, last_dismissed_at = NULL "
+            "WHERE identity_id = {}",
+            identityId);
+
+        return LedgerShellBinding{ accountId, *characterGuid, true };
+    } while (availableAccounts->NextRow());
+
+    return std::nullopt;
+}
+
+void ReleaseLedgerShellBinding(std::uint32_t identityId, LedgerShellBinding const& binding)
+{
+    integration::SqlBotIdentityRepository identityRepo;
+    integration::SqlBotShellRuntimeRepository shellRuntimeRepo;
+
+    identityRepo.UpdateShellState(identityId, 0, 0, 0, "");
+    shellRuntimeRepo.RemoveByIdentity(identityId);
+    if (binding.accountId != 0)
+        ReleaseBotAccountReservation(binding.accountId);
 }
 } // namespace
 
@@ -277,9 +422,10 @@ BotSessionSpawnResult BotSessionFactory::SpawnHostileBotPlayerOnAccount(
 
     // Register with ObjectGuid::Empty as the owner sentinel so OnPlayerLogin
     // recognises this as an ownerless hostile bot and schedules HostileCompanionAI.
-    service::BotPlayerRegistry::Instance().RegisterPendingOwner(
+    service::BotPlayerRegistry::Instance().RegisterPendingBot(
         characterGuid,
-        ObjectGuid::Empty);
+        ObjectGuid::Empty,
+        model::BotRuntimeKind::Hostile);
 
     // No DB position seeding — hostile bots spawn wherever their character
     // record currently places them (set up by the admin at bot creation time).
@@ -291,6 +437,105 @@ BotSessionSpawnResult BotSessionFactory::SpawnHostileBotPlayerOnAccount(
         "server.worldserver",
         "[LivingWorld] SpawnHostileBotPlayerOnAccount queuing session "
         "botAccountId={} botAccountName='{}' characterGuid={}",
+        account->id,
+        accountName,
+        characterGuid.GetCounter());
+    sWorldSessionMgr->AddSession(session);
+    return result;
+}
+
+BotSessionSpawnResult BotSessionFactory::SpawnLedgerShellIdentity(
+    std::uint32_t identityId)
+{
+    BotSessionSpawnResult result;
+
+    std::optional<LedgerShellBinding> binding =
+        ResolveLedgerShellBinding(identityId);
+    if (!binding)
+    {
+        binding = LeaseLedgerShellBinding(identityId);
+        if (!binding)
+        {
+            result.status = BotSessionSpawnStatus::NoAssignedShell;
+            LOG_ERROR(
+                "server.worldserver",
+                "[LivingWorldDebug] SpawnLedgerShellIdentity identityId={} failed: no available shell lease.",
+                identityId);
+            return result;
+        }
+    }
+
+    std::string hydrateFailureReason;
+    service::BotLedgerShellHydratorService hydrator;
+    if (!hydrator.RehydrateIdentity(
+            identityId,
+            binding->accountId,
+            binding->characterGuid,
+            &hydrateFailureReason))
+    {
+        result.status = BotSessionSpawnStatus::PreparationFailed;
+        LOG_ERROR(
+            "server.worldserver",
+            "[LivingWorldDebug] SpawnLedgerShellIdentity identityId={} failed during rehydrate: {}.",
+            identityId,
+            hydrateFailureReason);
+        if (binding->leasedThisCall)
+            ReleaseLedgerShellBinding(identityId, *binding);
+        return result;
+    }
+
+    std::uint32_t const botAccountId = binding->accountId;
+    ObjectGuid const characterGuid =
+        ObjectGuid::Create<HighGuid::Player>(binding->characterGuid);
+    if (!characterGuid.IsPlayer())
+    {
+        result.status = BotSessionSpawnStatus::InvalidCharacterGuid;
+        if (binding->leasedThisCall)
+            ReleaseLedgerShellBinding(identityId, *binding);
+        return result;
+    }
+
+    std::optional<BotAccountInfo> account = LoadBotAccountInfo(botAccountId);
+    if (!account)
+    {
+        result.status = BotSessionSpawnStatus::BotAccountNotFound;
+        result.botAccountId = botAccountId;
+        if (binding->leasedThisCall)
+            ReleaseLedgerShellBinding(identityId, *binding);
+        return result;
+    }
+
+    MarkBotAccountReserved(botAccountId, identityId);
+
+    std::string accountName = account->name;
+    auto session = new WorldSession(
+        account->id,
+        std::move(account->name),
+        account->flags,
+        nullptr,
+        account->security,
+        account->expansion,
+        account->muteTime,
+        account->locale,
+        account->recruiter,
+        false,
+        true,
+        account->totalTime);
+    session->EnableBotMode();
+    session->SetBotLoginTarget(characterGuid);
+
+    service::BotPlayerRegistry::Instance().RegisterPendingBot(
+        characterGuid,
+        ObjectGuid::Empty,
+        model::BotRuntimeKind::LedgerShell);
+
+    result.status = BotSessionSpawnStatus::SpawnQueued;
+    result.botAccountId = account->id;
+    result.botAccountName = accountName;
+    LOG_INFO(
+        "server.worldserver",
+        "[LivingWorldDebug] SpawnLedgerShellIdentity queued identityId={} botAccountId={} botAccountName='{}' characterGuid={}",
+        identityId,
         account->id,
         accountName,
         characterGuid.GetCounter());

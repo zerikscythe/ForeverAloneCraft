@@ -1,6 +1,7 @@
 #include "ai/WorldBotCreatureAI.h"
 #include "service/BotCombatRuntimeEvaluator.h"
 
+#include "service/BotPlayerRegistry.h"
 #include "service/BotCombatSimulatedItemUse.h"
 
 #include "CellImpl.h"
@@ -62,6 +63,29 @@ struct BestAoEPointResult
 
 static constexpr std::uint32_t WorldBotEntry = 9900001;
 static constexpr float AmbientSupportScanRadius = 45.0f;
+
+bool IsFriendlySupportBot(Unit* referenceBot, Unit* candidate)
+{
+    if (!referenceBot || !candidate || !candidate->IsAlive() || !candidate->IsInWorld())
+        return false;
+
+    if (!referenceBot->IsFriendlyTo(candidate))
+        return false;
+
+    if (Creature* creature = candidate->ToCreature())
+        return creature->GetEntry() == WorldBotEntry;
+
+    if (Player* player = candidate->ToPlayer())
+    {
+        model::BotRuntimeKind const kind =
+            BotPlayerRegistry::Instance().GetBotRuntimeKind(player->GetGUID());
+        return kind == model::BotRuntimeKind::LedgerShell
+            || kind == model::BotRuntimeKind::Ambient
+            || kind == model::BotRuntimeKind::Companion;
+    }
+
+    return false;
+}
 
 char const* CombatEnvironmentToKey(model::WorldBotCombatEnvironment environment)
 {
@@ -805,12 +829,6 @@ std::uint32_t CountPartyMembersBelowHealthPctImpl(
     consider(owner);
     consider(bot);
 
-    auto isAmbientWorldBot = [](Unit* unit) -> bool
-    {
-        Creature* creature = unit ? unit->ToCreature() : nullptr;
-        return creature && creature->GetEntry() == WorldBotEntry;
-    };
-
     auto collectNearbyAmbientAllies = [&](bool includeSelf) -> std::vector<Unit*>
     {
         std::vector<Unit*> allies;
@@ -834,9 +852,7 @@ std::uint32_t CountPartyMembersBelowHealthPctImpl(
                         return true;
                     if (candidate == bot)
                         return !includeSelf;
-                    if (!isAmbientWorldBot(candidate))
-                        return true;
-                    return !bot->IsFriendlyTo(candidate);
+                    return !IsFriendlySupportBot(bot, candidate);
                 }),
             allies.end());
         std::sort(allies.begin(), allies.end());
@@ -858,7 +874,7 @@ std::uint32_t CountPartyMembersBelowHealthPctImpl(
             }
         }
     }
-    else if (bot && bot->ToCreature() && isAmbientWorldBot(bot))
+    else if (bot && IsFriendlySupportBot(bot, bot))
     {
         for (Unit* ally : collectNearbyAmbientAllies(false))
             consider(ally);
@@ -891,11 +907,7 @@ std::vector<Unit*> CollectNearbyFriendlyAmbientWorldBots(Unit* bot, float radius
                 if (candidate == bot)
                     return !includeSelf;
 
-                Creature* creature = candidate->ToCreature();
-                if (!creature || creature->GetEntry() != WorldBotEntry)
-                    return true;
-
-                return !bot->IsFriendlyTo(candidate);
+                return !IsFriendlySupportBot(bot, candidate);
             }),
         allies.end());
 
@@ -1064,6 +1076,82 @@ Item* ResolveUsableCombatItem(Player* player, std::uint32_t itemId)
 
     return item;
 }
+
+Item* ResolveUsableEquippedCombatItem(Player* player, std::uint8_t slot)
+{
+    if (!player)
+        return nullptr;
+
+    Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+    if (!item)
+        return nullptr;
+
+    if (player->CanUseItem(item) != EQUIP_ERR_OK)
+        return nullptr;
+
+    return item;
+}
+
+template <std::size_t N>
+Item* ResolveBestUsablePotionItem(
+    Player* player,
+    std::array<std::uint32_t, N> const& familyDescending)
+{
+    if (!player)
+        return nullptr;
+
+    for (std::uint32_t itemId : familyDescending)
+    {
+        if (Item* item = ResolveUsableCombatItem(player, itemId))
+            return item;
+    }
+
+    return nullptr;
+}
+
+Item* ResolveUsableCombatItemFromSelector(Player* player, std::string const& selector)
+{
+    if (IsGenericHealingPotionSelector(selector))
+        return ResolveBestUsablePotionItem(player, GenericHealingPotionFamilyDescending);
+
+    if (IsGenericManaPotionSelector(selector))
+        return ResolveBestUsablePotionItem(player, GenericManaPotionFamilyDescending);
+
+    if (IsManaGemSelector(selector))
+        return ResolveBestUsablePotionItem(player, GenericManaGemFamilyDescending);
+
+    if (IsHealthstoneSelector(selector))
+        return ResolveBestUsablePotionItem(player, GenericHealthstoneFamilyDescending);
+
+    if (IsTrinket1Selector(selector))
+        return ResolveUsableEquippedCombatItem(player, EQUIPMENT_SLOT_TRINKET1);
+
+    if (IsTrinket2Selector(selector))
+        return ResolveUsableEquippedCombatItem(player, EQUIPMENT_SLOT_TRINKET2);
+
+    return nullptr;
+}
+
+std::uint32_t ResolveWorldBotCombatItemIdFromSelector(Unit* bot, std::string const& selector)
+{
+    if (!bot)
+        return 0;
+
+    return ResolveGenericPotionItemIdForLevel(bot->GetLevel(), selector);
+}
+
+std::uint32_t ResolveWorldBotEquippedItemIdFromSelector(
+    BotCombatRuntimeContext const& context,
+    std::string const& selector)
+{
+    if (IsTrinket1Selector(selector))
+        return context.equippedTrinket1ItemId;
+
+    if (IsTrinket2Selector(selector))
+        return context.equippedTrinket2ItemId;
+
+    return 0;
+}
 } // namespace
 
 std::uint32_t BotCombatRuntimeEvaluator::CountPartyMembersBelowHealthPct(
@@ -1113,6 +1201,8 @@ BotCombatEvaluationResult BotCombatRuntimeEvaluator::EvaluateEntries(
             return left.priority < right.priority;
         });
 
+    std::optional<BotCombatEvaluationResult> bestWaitResult;
+
     for (model::BotCombatEntryDefinition const& entry : entries)
     {
         if (context.offenseSuppressed && IsOffensiveEntry(entry))
@@ -1157,7 +1247,8 @@ BotCombatEvaluationResult BotCombatRuntimeEvaluator::EvaluateEntries(
             result.traceEntryLabel = entry.label;
             result.traceTargetKey = entry.primaryAction.targetKey;
             result.traceReason = "cooldown_or_gcd";
-            return result;
+            if (!bestWaitResult || primaryWaitMs < bestWaitResult->waitMs)
+                bestWaitResult = std::move(result);
         }
 
         if (entry.secondaryAction)
@@ -1198,10 +1289,14 @@ BotCombatEvaluationResult BotCombatRuntimeEvaluator::EvaluateEntries(
                 result.traceEntryLabel = entry.label;
                 result.traceTargetKey = entry.secondaryAction->targetKey;
                 result.traceReason = "cooldown_or_gcd";
-                return result;
+                if (!bestWaitResult || secondaryWaitMs < bestWaitResult->waitMs)
+                    bestWaitResult = std::move(result);
             }
         }
     }
+
+    if (bestWaitResult)
+        return *bestWaitResult;
 
     return {};
 }
@@ -1557,42 +1652,77 @@ std::optional<BotCombatEvaluatedAction> BotCombatRuntimeEvaluator::EvaluateActio
 
     if (action.actionType == model::BotCombatActionType::Item)
     {
-        if (action.itemId == 0)
-            return std::nullopt;
-
-        // First pass scope: self-use item actions only.
-        if (target != context.bot)
-            return std::nullopt;
+        std::string const itemSelector = NormalizeCombatItemSelector(action.itemSelector);
+        std::uint32_t resolvedItemId = action.itemId;
 
         BotCombatEvaluatedAction evaluated;
         evaluated.entryId = entry.entryId;
         evaluated.actionId = action.actionId;
         evaluated.actionType = action.actionType;
-        evaluated.itemId = action.itemId;
         evaluated.target = target;
         evaluated.targetKey = action.targetKey;
         evaluated.entryLabel = entry.label;
         evaluated.isInterrupt = entry.isInterrupt;
         evaluated.actionSlot = action.slot;
         evaluated.breaksCurrentCast = entry.breaksCurrentCast;
+        evaluated.itemSelector = itemSelector;
 
         if (Player* player = context.bot->ToPlayer())
         {
-            if (!ResolveUsableCombatItem(player, action.itemId))
+            Item* item = nullptr;
+            if (resolvedItemId != 0)
+                item = ResolveUsableCombatItem(player, resolvedItemId);
+            else if (!itemSelector.empty())
+                item = ResolveUsableCombatItemFromSelector(player, itemSelector);
+
+            if (!item)
                 return std::nullopt;
+
+            resolvedItemId = item->GetEntry();
+            if (IsTrinket1Selector(itemSelector))
+                evaluated.equippedSlot = EQUIPMENT_SLOT_TRINKET1;
+            else if (IsTrinket2Selector(itemSelector))
+                evaluated.equippedSlot = EQUIPMENT_SLOT_TRINKET2;
         }
         else
         {
+            if (resolvedItemId == 0 && !itemSelector.empty())
+            {
+                resolvedItemId = ResolveWorldBotCombatItemIdFromSelector(context.bot, itemSelector);
+                if (resolvedItemId == 0)
+                    resolvedItemId = ResolveWorldBotEquippedItemIdFromSelector(context, itemSelector);
+            }
+
+            if (resolvedItemId == 0)
+                return std::nullopt;
+
+            if ((IsGenericHealingPotionSelector(itemSelector)
+                    || IsGenericManaPotionSelector(itemSelector))
+                && context.genericPotionCharges
+                && *context.genericPotionCharges == 0)
+            {
+                return std::nullopt;
+            }
+
             if (!CanUseSimulatedCombatItem(
                     context.bot,
                     target,
-                    action.itemId,
-                    context.usedSimulatedItemsThisCombat))
+                    resolvedItemId,
+                    context.usedSimulatedItemsThisCombat,
+                    context.equippedWorldBotItemIds,
+                    context.simulatedPotionUsesThisSession,
+                    context.simulatedPotionUseLimit,
+                    context.syntheticGlobalCooldownRemainingMs))
             {
                 return std::nullopt;
             }
             evaluated.simulatedItemUse = true;
         }
+
+        if (resolvedItemId == 0)
+            return std::nullopt;
+
+        evaluated.itemId = resolvedItemId;
 
         if (!CanBreakCurrentCast(context.bot, evaluated))
             return std::nullopt;
@@ -1794,6 +1924,10 @@ bool BotCombatRuntimeEvaluator::CanExecuteSpell(
 
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
     if (!spellInfo)
+        return false;
+
+    std::uint32_t const requiredLevel = std::max(spellInfo->SpellLevel, spellInfo->BaseLevel);
+    if (requiredLevel != 0 && bot->GetLevel() < requiredLevel)
         return false;
 
     if (!allowHardCasts && spellInfo->CalcCastTime(bot) > 0)

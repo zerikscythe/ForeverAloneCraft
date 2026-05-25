@@ -1,5 +1,6 @@
 #pragma once
 
+#include "integration/BotAssignedGearTemplateRepository.h"
 #include "integration/BotAssignedGearRepository.h"
 #include "integration/SqlBotIdentityRepository.h"
 #include "model/WorldBotAssignedGear.h"
@@ -24,7 +25,8 @@ class WorldBotAssignedGearService
 {
 public:
     explicit WorldBotAssignedGearService(
-        integration::BotAssignedGearRepository const& assignedGearRepository);
+        integration::BotAssignedGearRepository const& assignedGearRepository,
+        integration::BotAssignedGearTemplateRepository const& assignedGearTemplateRepository);
 
     [[nodiscard]] WorldBotAssignedGearResult EnsureAssignedGear(
         integration::BotIdentityRecord& identity,
@@ -36,6 +38,7 @@ public:
 
 private:
     integration::BotAssignedGearRepository const& _assignedGearRepository;
+    integration::BotAssignedGearTemplateRepository const& _assignedGearTemplateRepository;
 };
 } // namespace service
 } // namespace living_world

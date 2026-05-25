@@ -3,8 +3,12 @@
 #include "ai/CompanionFollowFormation.h"
 
 #include "Chat.h"
+#include "CellImpl.h"
+#include "Config.h"
 #include "Duration.h"
 #include "EventProcessor.h"
+#include "GridNotifiers.h"
+#include "GridNotifiersImpl.h"
 #include "Log.h"
 #include "MotionMaster.h"
 #include "Group.h"
@@ -12,9 +16,13 @@
 #include "Player.h"
 #include "SharedDefines.h"
 #include "SpellMgr.h"
+#include "Item.h"
+#include "ItemTemplate.h"
 #include "Unit.h"
 #include "WorldPacket.h"
+#include "integration/BotActivityLog.h"
 #include "integration/SqlAccountAltRuntimeRepository.h"
+#include "integration/SqlBotShellRuntimeRepository.h"
 #include "integration/SqlBotCombatDefaultProfileRepository.h"
 #include "integration/SqlBotCombatProfileRepository.h"
 #include "integration/SqlBotCombatProfileSelectionRepository.h"
@@ -55,6 +63,59 @@ service::BotContextService& GetSharedContextService()
     return service;
 }
 
+bool IsFriendlySupportBotCandidate(Player* bot, Unit* candidate)
+{
+    if (!bot || !candidate || !candidate->IsAlive() || !candidate->IsInWorld())
+        return false;
+
+    if (!bot->IsFriendlyTo(candidate))
+        return false;
+
+    if (candidate == bot)
+        return true;
+
+    if (Player* player = candidate->ToPlayer())
+    {
+        model::BotRuntimeKind const kind =
+            service::BotPlayerRegistry::Instance().GetBotRuntimeKind(player->GetGUID());
+        return kind == model::BotRuntimeKind::LedgerShell
+            || kind == model::BotRuntimeKind::Ambient
+            || kind == model::BotRuntimeKind::Companion;
+    }
+
+    return false;
+}
+
+std::vector<Player*> CollectNearbyFriendlySupportPlayers(Player* bot, float radius, bool includeSelf)
+{
+    std::vector<Player*> players;
+    if (!bot || radius <= 0.0f)
+        return players;
+
+    std::vector<Unit*> allies;
+    if (includeSelf)
+        allies.push_back(bot);
+
+    Acore::AnyFriendlyUnitInObjectRangeCheck check(bot, bot, radius);
+    Acore::UnitListSearcher<Acore::AnyFriendlyUnitInObjectRangeCheck> searcher(bot, allies, check);
+    Cell::VisitObjects(bot, searcher, radius);
+
+    std::sort(allies.begin(), allies.end());
+    allies.erase(std::unique(allies.begin(), allies.end()), allies.end());
+
+    for (Unit* ally : allies)
+    {
+        if (ally == bot && !includeSelf)
+            continue;
+        if (!IsFriendlySupportBotCandidate(bot, ally))
+            continue;
+        if (Player* player = ally->ToPlayer())
+            players.push_back(player);
+    }
+
+    return players;
+}
+
 // ---------------------------------------------------------------
 // Per-bot command override state
 // ---------------------------------------------------------------
@@ -85,6 +146,7 @@ struct FollowDiagnosticSnapshot
 
 static std::mutex s_followDiagnosticMutex;
 static std::unordered_map<std::uint64_t, FollowDiagnosticSnapshot> s_lastFollowDiagnostics;
+static std::unordered_map<std::uint64_t, std::uint32_t> s_lastCompanionPetSummonAttemptMs;
 
 static BotOverride GetOverride(ObjectGuid botGuid)
 {
@@ -135,6 +197,7 @@ void ClearBotOverride(ObjectGuid botGuid)
 {
     std::lock_guard<std::mutex> lock(s_overrideMutex);
     s_overrides.erase(botGuid);
+    s_lastCompanionPetSummonAttemptMs.erase(botGuid.GetCounter());
     BotHazardSensor::ClearHazardState(botGuid);
     GetSharedContextService().Clear(botGuid.GetCounter());
 }
@@ -181,6 +244,8 @@ namespace
 // --- Follow / reposition constants ---
 constexpr float FollowDistance        = 2.0f;
 constexpr float FollowAngle           = 3.14159265358979323846f;
+constexpr std::uint32_t SummonWaterElementalSpellId = 31687u;
+constexpr std::uint32_t CompanionPetSummonRetryMs = 5000u;
 // --- Heal thresholds ---
 
 // --- Priest Weakened Soul debuff: prevents re-shielding for 15 seconds ---
@@ -544,7 +609,7 @@ bool TryExecuteProfileRotation(Unit* bot, Player* owner, Unit* primaryTarget)
 
             LOG_INFO(
                 "server.worldserver",
-                "[LivingWorldDebug] ProfileActionCast bot='{}' guid={} phase={} entryId={} actionId={} actionType={} spellId={} itemId={} simulatedItemUse={} targetKey='{}' targetGuid={} aoeMode={} useDestination={} dest=({:.2f},{:.2f},{:.2f}) breaksCurrentCast={}",
+                "[LivingWorldDebug] ProfileActionCast bot='{}' guid={} phase={} entryId={} actionId={} actionType={} spellId={} itemId={} itemSelector='{}' simulatedItemUse={} targetKey='{}' targetGuid={} aoeMode={} useDestination={} dest=({:.2f},{:.2f},{:.2f}) breaksCurrentCast={}",
                 bot->GetName(),
                 bot->GetGUID().GetCounter(),
                 phase,
@@ -553,6 +618,7 @@ bool TryExecuteProfileRotation(Unit* bot, Player* owner, Unit* primaryTarget)
                 static_cast<std::uint32_t>(evaluatedAction.actionType),
                 evaluatedAction.spellId,
                 evaluatedAction.itemId,
+                evaluatedAction.itemSelector,
                 evaluatedAction.simulatedItemUse,
                 evaluatedAction.targetKey,
                 evaluatedAction.target ? evaluatedAction.target->GetGUID().GetCounter() : 0,
@@ -620,7 +686,12 @@ std::uint32_t FindBestKnownSpellInChain(Player* bot, std::uint32_t baseSpellId)
     std::uint32_t candidate = sSpellMgr->GetLastSpellInChain(baseSpellId);
     while (candidate)
     {
-        if (bot->HasSpell(candidate))
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(candidate);
+        std::uint32_t const requiredLevel = spellInfo
+            ? std::max<std::uint32_t>(spellInfo->BaseLevel, spellInfo->SpellLevel)
+            : 0u;
+        if (bot->HasSpell(candidate)
+            && (requiredLevel == 0u || requiredLevel <= bot->GetLevel()))
             return candidate;
         candidate = sSpellMgr->GetPrevSpellInChain(candidate);
     }
@@ -666,6 +737,40 @@ bool AuraNeedsRefresh(Unit const* target, std::uint32_t baseSpellId,
     if (remainingMs == 0)
         return true;
     return remainingMs < static_cast<int32>(thresholdSecs) * 1000;
+}
+
+bool TryMaintainBasicCompanionPet(Player* bot, Player* owner)
+{
+    if (!bot || !owner || !bot->IsAlive())
+        return false;
+
+    Guardian* guardianPet = bot->GetGuardianPet();
+    if (guardianPet && guardianPet->IsAlive())
+    {
+        guardianPet->SetReactState(REACT_DEFENSIVE);
+        return false;
+    }
+
+    if (bot->getClass() != CLASS_MAGE || !bot->HasSpell(SummonWaterElementalSpellId))
+        return false;
+
+    if (bot->IsInCombat() || bot->GetVictim() || bot->IsNonMeleeSpellCast(false))
+        return false;
+
+    std::uint32_t const nowMs = getMSTime();
+    std::uint32_t& lastAttemptMs = s_lastCompanionPetSummonAttemptMs[bot->GetGUID().GetCounter()];
+    if (lastAttemptMs != 0 && getMSTimeDiff(lastAttemptMs, nowMs) < CompanionPetSummonRetryMs)
+        return false;
+
+    if (bot->HasSpellCooldown(SummonWaterElementalSpellId))
+        return false;
+
+    lastAttemptMs = nowMs;
+    SpellCastResult const result = bot->CastSpell(bot, SummonWaterElementalSpellId, false);
+    if (result != SPELL_CAST_OK)
+        return false;
+
+    return true;
 }
 
 // Returns true when this bot can still fire mana-based spells. Non-mana
@@ -760,6 +865,204 @@ bool HasSealActive(Player const* bot)
     return false;
 }
 
+constexpr std::uint32_t SpellCategoryFood  = 11;
+constexpr std::uint32_t SpellCategoryDrink = 59;
+
+bool InventoryHasConjuredFamilyItem(
+    Player* bot,
+    std::initializer_list<std::uint32_t> itemIds)
+{
+    if (!bot)
+        return false;
+
+    for (std::uint32_t itemId : itemIds)
+    {
+        if (itemId != 0 && bot->HasItemCount(itemId, 1))
+            return true;
+    }
+
+    return false;
+}
+
+bool InventoryHasConsumableCategory(Player* bot, std::uint32_t spellCategory)
+{
+    if (!bot)
+        return false;
+
+    auto matches = [&](Item* item) -> bool
+    {
+        if (!item)
+            return false;
+
+        ItemTemplate const* proto = item->GetTemplate();
+        if (!proto || proto->Class != ITEM_CLASS_CONSUMABLE)
+            return false;
+
+        for (std::uint8_t i = 0; i < MAX_ITEM_PROTO_SPELLS; ++i)
+        {
+            if (static_cast<std::uint32_t>(proto->Spells[i].SpellCategory) == spellCategory)
+                return true;
+        }
+
+        return false;
+    };
+
+    for (std::uint8_t slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
+    {
+        if (Item* item = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot); matches(item))
+            return true;
+    }
+
+    for (std::uint8_t bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
+    {
+        if (Bag* pBag = bot->GetBagByPos(bag))
+        {
+            for (std::uint32_t slot = 0; slot < pBag->GetBagSize(); ++slot)
+            {
+                if (Item* item = pBag->GetItemByPos(slot); matches(item))
+                    return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool IsLedgerShellRuntime(Player* bot)
+{
+    if (!bot)
+        return false;
+
+    return service::BotPlayerRegistry::Instance().GetBotRuntimeKind(bot->GetGUID())
+        == model::BotRuntimeKind::LedgerShell;
+}
+
+std::optional<std::uint32_t> ResolveLedgerShellIdentityId(Player* bot)
+{
+    if (!bot || !bot->GetSession())
+        return std::nullopt;
+
+    living_world::integration::SqlBotShellRuntimeRepository repository;
+    std::optional<living_world::model::BotShellRuntimeRecord> shellRuntime =
+        repository.FindByShell(
+            bot->GetSession()->GetAccountId(),
+            bot->GetGUID().GetCounter());
+    if (!shellRuntime)
+        return std::nullopt;
+
+    return shellRuntime->identityId;
+}
+
+Unit* TryAcquireHostileDebugTarget(Player* bot)
+{
+    if (!bot || !bot->IsAlive())
+        return nullptr;
+
+    std::uint32_t const forcedEntry =
+        sConfigMgr->GetOption<std::uint32_t>("LivingWorld.DebugForceCombatTargetEntry", 0);
+    float const forcedRadius =
+        sConfigMgr->GetOption<float>("LivingWorld.DebugForceCombatTargetSearchRadius", 40.0f);
+
+    if (forcedEntry != 0)
+    {
+        if (Creature* creature = bot->FindNearestCreature(forcedEntry, forcedRadius, true))
+        {
+            if (bot->IsValidAttackTarget(creature))
+                return creature;
+        }
+    }
+
+    float const hostileAcquireRadius =
+        sConfigMgr->GetOption<float>("LivingWorld.DebugHostileAcquireRadius", 0.0f);
+    if (hostileAcquireRadius <= 0.0f || !bot->GetMap())
+        return nullptr;
+
+    Player* bestTarget = nullptr;
+    float bestDistance = hostileAcquireRadius;
+    bot->GetMap()->DoForAllPlayers([&](Player* candidate)
+    {
+        if (!candidate || candidate == bot || !candidate->IsAlive())
+            return;
+
+        if (!bot->IsWithinDistInMap(candidate, hostileAcquireRadius))
+            return;
+
+        if (!bot->IsValidAttackTarget(candidate))
+            return;
+
+        float const distance = bot->GetDistance(candidate);
+        if (!bestTarget || distance < bestDistance)
+        {
+            bestTarget = candidate;
+            bestDistance = distance;
+        }
+    });
+
+    return bestTarget;
+}
+
+bool TryCastLedgerShellStartupSpell(
+    Player* bot,
+    std::uint32_t baseSpellId,
+    char const* label)
+{
+    if (!bot)
+        return false;
+
+    std::uint32_t const spellId = FindBestKnownSpellInChain(bot, baseSpellId);
+    if (!spellId || bot->HasSpellCooldown(spellId))
+        return false;
+
+    SpellCastResult const result = bot->CastSpell(bot, spellId, false);
+    if (result != SPELL_CAST_OK)
+        return false;
+
+    LOG_INFO(
+        "server.worldserver",
+        "[LivingWorldDebug] LedgerShellStartup bot='{}' guid={} step={} spellId={}",
+        bot->GetName(),
+        bot->GetGUID().GetCounter(),
+        label,
+        spellId);
+    return true;
+}
+
+void ApplyBotBuff(Player* bot, Player* owner, model::BotOocBehavior const& ooc);
+
+bool TryRunLedgerShellStartupPrep(Player* bot, model::BotOocBehavior const& ooc)
+{
+    if (!bot || !IsLedgerShellRuntime(bot) || bot->IsInCombat() || !bot->IsAlive())
+        return false;
+
+    if (bot->IsNonMeleeSpellCast(false))
+        return true;
+
+    if (bot->getClass() == CLASS_MAGE)
+    {
+        if (!InventoryHasConjuredFamilyItem(bot, { 5514u, 5513u, 8007u, 8008u, 22044u, 33312u })
+            && TryCastLedgerShellStartupSpell(bot, 759u, "conjure_mana_gem"))
+            return true;
+
+        if (!InventoryHasConsumableCategory(bot, SpellCategoryFood)
+            && TryCastLedgerShellStartupSpell(bot, 587u, "conjure_food"))
+            return true;
+
+        if (!InventoryHasConsumableCategory(bot, SpellCategoryDrink)
+            && TryCastLedgerShellStartupSpell(bot, 5504u, "conjure_water"))
+            return true;
+    }
+
+    if (ooc.buffScope != model::BotBuffScope::Off)
+    {
+        bool const wasCasting = bot->IsNonMeleeSpellCast(false);
+        ApplyBotBuff(bot, nullptr, ooc);
+        if (!wasCasting && bot->IsNonMeleeSpellCast(false))
+            return true;
+    }
+
+    return false;
+}
+
 // ---------------------------------------------------------------
 // Out-of-combat maintenance
 // ---------------------------------------------------------------
@@ -793,6 +1096,13 @@ void ApplyBotBuff(Player* bot, Player* owner, model::BotOocBehavior const& ooc)
                 if (t && t->IsAlive() && t->IsInWorld())
                     targets.push_back(t);
             }
+        }
+        else
+        {
+            targets = CollectNearbyFriendlySupportPlayers(
+                bot,
+                40.0f,
+                true);
         }
         if (targets.empty())
             targets.push_back(bot);
@@ -856,6 +1166,24 @@ void ApplyBotBuff(Player* bot, Player* owner, model::BotOocBehavior const& ooc)
 
         case CLASS_MAGE:
         {
+            bool const usePartyBuff =
+                ooc.buffScope == model::BotBuffScope::Party
+                && buildTargets().size() > 1;
+            std::uint32_t const brilliance = usePartyBuff
+                ? FindBestKnownSpellInChain(bot, 23028)
+                : 0;
+            if (brilliance)
+            {
+                for (Player* t : buildTargets())
+                {
+                    if (AuraNeedsRefresh(t, 1459, thresh))
+                    {
+                        bot->CastSpell(bot, brilliance, false);
+                        return;
+                    }
+                }
+            }
+
             std::uint32_t const ai = FindBestKnownSpellInChain(bot, 1459);
             if (!ai) break;
             for (Player* t : buildTargets())
@@ -882,7 +1210,7 @@ void ApplyBotBuff(Player* bot, Player* owner, model::BotOocBehavior const& ooc)
 void TryApplyOutOfCombatBuff(Player* bot, Player* owner,
                               model::BotOocBehavior const& ooc)
 {
-    if (bot->IsInCombat() || owner->IsInCombat())
+    if (bot->IsInCombat() || (owner && owner->IsInCombat()))
         return;
     ApplyBotBuff(bot, owner, ooc);
 }
@@ -1622,6 +1950,8 @@ Unit* ResolveSmartAssistTarget(Player* bot, Player* owner, BotCombatDoctrine con
 
 void Tick(Player* bot, Player* owner, float& retreatHpPct, bool& conserving)
 {
+    TryMaintainBasicCompanionPet(bot, owner);
+
     model::BotCombatMode const mode =
         service::BotPlayerRegistry::Instance().GetBotMode(owner->GetGUID());
     model::BotCombatControlMode const controlMode =
@@ -1954,6 +2284,8 @@ void TickHostile(Player* bot, float& retreatHpPct, bool& conserving)
 {
     BotCombatDoctrine const doctrine = GetCombatDoctrine(bot, nullptr);
     UpdateConservationState(doctrine.settings, bot, conserving);
+    model::BotOocBehavior const oocBehavior =
+        GetOocConfigService().Get(bot->GetGUID().GetCounter());
 
     Unit* target = bot->GetVictim();
     if (!target)
@@ -1970,7 +2302,31 @@ void TickHostile(Player* bot, float& retreatHpPct, bool& conserving)
     }
 
     if (!target)
+    {
+        if (Unit* acquired = TryAcquireHostileDebugTarget(bot))
+        {
+            target = acquired;
+            if (bot->GetVictim() != target)
+                bot->Attack(target, true);
+
+            if (std::optional<std::uint32_t> identityId = ResolveLedgerShellIdentityId(bot))
+            {
+                living_world::integration::BotActivityLog::Record(
+                    bot,
+                    bot->GetName(),
+                    *identityId,
+                    "combat_enter",
+                    std::string("acquired_target=") + target->GetName());
+            }
+        }
+    }
+
+    if (!target)
+    {
+        if (TryRunLedgerShellStartupPrep(bot, oocBehavior))
+            return;
         return; // No combat context — stand idle.
+    }
 
     if (bot->GetVictim() != target)
         bot->Attack(target, true);

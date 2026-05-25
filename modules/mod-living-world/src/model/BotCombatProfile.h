@@ -184,6 +184,7 @@ struct BotCombatActionDefinition
     BotCombatActionType actionType = BotCombatActionType::Spell;
     std::uint32_t spellBaseId = 0;
     std::uint32_t itemId = 0;
+    std::string itemSelector;
     BotCombatRankMode rankMode = BotCombatRankMode::BestKnown;
     std::uint8_t rankValue = 0;
     std::string targetKey = "enemy";
@@ -267,6 +268,7 @@ struct BotCombatDefaultProfileRecord
     std::string variantKey;
     std::string description;
     BotCombatProfileSettings settings;
+    BotOocBehavior oocBehavior;
     std::vector<BotCombatEntryDefinition> interruptEntries;
     std::vector<BotCombatEntryDefinition> rotationEntries;
 };

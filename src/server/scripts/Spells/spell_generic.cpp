@@ -4009,8 +4009,15 @@ public:
     {
         if (GetCaster())
             if (Unit* owner = GetCaster()->GetOwner())
-                if (owner->IsPlayer()) /// @todo this check is maybe wrong
+                if (owner->IsPlayer())
                     owner->ToPlayer()->RemovePet(nullptr, PET_SAVE_NOT_IN_SLOT, true);
+                else if (Guardian* pet = owner->GetGuardianPet())
+                {
+                    if (TempSummon* summon = pet->ToTempSummon())
+                        summon->UnSummon();
+                    else
+                        pet->DespawnOrUnsummon();
+                }
     }
 
     void Register() override

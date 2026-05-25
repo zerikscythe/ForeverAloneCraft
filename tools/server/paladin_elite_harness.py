@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""Spawn a level-80 Alliance Paladin trio beside a real hostile creature or pack and log the fight.
+"""Spawn a level-80 Alliance Paladin party beside a real hostile creature or pack and log the fight.
 
 This harness is meant to answer the "real tank" questions that bot-vs-bot
 skirmishes blur together:
 - does Protection become the one getting hit?
 - does Holy keep the tank alive instead of playing tourist?
-- does Retribution add pressure without turning the pull into chaos?
+- do multiple Retribution paladins add pressure without turning the pull into chaos?
 
 It intentionally uses an existing hostile world elite rather than a synthetic
- bot-only duel target, so we exercise the normal creature combat path.
+bot-only duel target, so we exercise the normal creature combat path.
 """
 
 from __future__ import annotations
@@ -38,7 +38,7 @@ from paladin_dummy_harness import (
 from paladin_teamfight_harness import build_report, wait_for_forced_identity_activity
 
 
-ALLIANCE_TEAM = [
+BASE_ALLIANCE_TEAM = [
     {
         "name": "Aldricseal",
         "spec_key": "paladin_ret",
@@ -68,6 +68,44 @@ ALLIANCE_TEAM = [
     },
 ]
 
+EXTRA_DPS_POOL = [
+    {
+        "name": "Sergehilt",
+        "spec_key": "paladin_ret",
+        "loadout_key": "ret_toc",
+        "faction": 1,
+        "race_id": 1,
+        "display_id": 49,
+        "gender": 0,
+    },
+    {
+        "name": "Maribright",
+        "spec_key": "paladin_ret",
+        "loadout_key": "ret_toc",
+        "faction": 1,
+        "race_id": 11,
+        "display_id": 16126,
+        "gender": 1,
+    },
+    {
+        "name": "Torvanguard",
+        "spec_key": "paladin_ret",
+        "loadout_key": "ret_toc",
+        "faction": 1,
+        "race_id": 3,
+        "display_id": 132,
+        "gender": 0,
+    },
+]
+
+
+def build_alliance_team(extra_dps: int) -> list[dict[str, object]]:
+    team = [dict(entry) for entry in BASE_ALLIANCE_TEAM]
+    extra_count = max(0, min(extra_dps, len(EXTRA_DPS_POOL)))
+    for index in range(extra_count):
+        team.append(dict(EXTRA_DPS_POOL[index]))
+    return team
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -79,18 +117,24 @@ def parse_args() -> argparse.Namespace:
         "--session-zone-id",
         type=int,
         default=67,
-        help="Forced session compose zone id; defaults to the local sandbox zone so the trio materializes into the combat test instead of staying abstract on a distant travel route",
+        help="Forced session compose zone id; defaults to the local sandbox zone so the party materializes into the combat test instead of staying abstract on a distant travel route",
     )
     parser.add_argument("--map-id", type=int, default=571, help="Sandbox map id")
     parser.add_argument(
         "--spawn-x",
         type=float,
         default=8428.5,
-        help="Harness trio + temp-pack sandbox X. Defaults away from the native elite so the forced pull only sees the controlled pack.",
+        help="Harness party + temp-pack sandbox X. Defaults away from the native elite so the forced pull only sees the controlled pack.",
     )
     parser.add_argument("--spawn-y", type=float, default=-1189.1)
     parser.add_argument("--spawn-z", type=float, default=927.5)
-    parser.add_argument("--force-spawn-count", type=int, default=3)
+    parser.add_argument("--force-spawn-count", type=int, default=5)
+    parser.add_argument(
+        "--extra-dps",
+        type=int,
+        default=2,
+        help="How many extra Retribution paladins to add beyond the core tank/healer/one-DPS trio. Default 2 gives a 5-bot party for future peel arbitration tests.",
+    )
     parser.add_argument("--elite-guid", type=int, default=98455, help="Existing hostile creature guid used as the source/template for the controlled pack")
     parser.add_argument("--elite-entry", type=int, default=29724, help="Creature entry for report context")
     parser.add_argument("--elite-name", default="Library Guardian")
@@ -107,10 +151,22 @@ def parse_args() -> argparse.Namespace:
         help="How many temporary extra pack members to create from the source guid (2 means a 3-mob total pack)",
     )
     parser.add_argument(
+        "--temp-pack-anchor",
+        choices=["source", "spawn"],
+        default="source",
+        help="Where temporary cloned pack members should be placed: around the original source creature or around the harness sandbox spawn point.",
+    )
+    parser.add_argument(
         "--target-search-radius",
         type=float,
         default=22.0,
         help="Forced combat search radius. Keep this tight so the harness prefers the temporary controlled pack over native nearby spawns.",
+    )
+    parser.add_argument(
+        "--pull-role",
+        choices=["tank", "healer", "melee_dps"],
+        default="tank",
+        help="Which ambient group role should be forced into first contact. Use healer/melee_dps to exercise distress -> tank anchor stabilization.",
     )
     return parser.parse_args()
 
@@ -119,9 +175,10 @@ def ensure_alliance_team(
     settings: dict[str, str | int],
     level: int,
     last_seen_zone: int,
+    extra_dps: int,
 ) -> list[dict[str, object]]:
     seeded: list[dict[str, object]] = []
-    for entry in ALLIANCE_TEAM:
+    for entry in build_alliance_team(extra_dps):
         identity_id = ensure_identity_record(
             settings,
             name=str(entry["name"]),
@@ -181,9 +238,26 @@ def spawn_temp_pack(
     spawn_y: float,
     spawn_z: float,
     count: int,
+    anchor: str = "source",
 ) -> list[int]:
     if source_guid <= 0 or count <= 0:
         return []
+
+    if anchor == "source":
+        source_position_rows = run_mysql_query(
+            settings,
+            "acore_world",
+            (
+                "SELECT position_x, position_y, position_z "
+                "FROM creature "
+                f"WHERE guid = {source_guid} "
+                "LIMIT 1"
+            ),
+        )
+        if source_position_rows:
+            spawn_x = float(source_position_rows[0][0])
+            spawn_y = float(source_position_rows[0][1])
+            spawn_z = float(source_position_rows[0][2])
 
     next_guid = query_scalar(
         settings,
@@ -192,7 +266,7 @@ def spawn_temp_pack(
     )
 
     offsets = [
-        (8.0, 0.0, 0.0),
+        (24.0, 0.0, 0.0),
         (-8.0, 6.0, 0.0),
         (-6.0, -7.0, 0.0),
         (11.0, 5.0, 0.0),
@@ -296,10 +370,16 @@ def main() -> int:
         args.temp_pack_source_guid = args.elite_guid
     ensure_paths()
     settings = load_db_settings()
-    team = ensure_alliance_team(settings, args.level, args.zone_id)
+    team = ensure_alliance_team(settings, args.level, args.zone_id, args.extra_dps)
     identity_ids = [int(entry["identity_id"]) for entry in team]
     pull_identity_id = next(
-        int(entry["identity_id"]) for entry in team if str(entry["spec_key"]) == "paladin_prot"
+        int(entry["identity_id"])
+        for entry in team
+        if (
+            (args.pull_role == "tank" and str(entry["spec_key"]) == "paladin_prot")
+            or (args.pull_role == "healer" and str(entry["spec_key"]) == "paladin_holy")
+            or (args.pull_role == "melee_dps" and str(entry["spec_key"]) == "paladin_ret")
+        )
     )
     temp_pack_guids = spawn_temp_pack(
         settings,
@@ -309,6 +389,7 @@ def main() -> int:
         args.spawn_y,
         args.spawn_z,
         args.temp_pack_count,
+        args.temp_pack_anchor,
     )
 
     timestamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -350,10 +431,10 @@ def main() -> int:
         "SELECT COALESCE(MAX(id), 0) FROM living_world_bot_activity_log",
     )
 
-    original_config = MODULE_CONF.read_text(encoding="utf-8")
+    original_config = MODULE_CONF.read_text(encoding="utf-8-sig")
     process: subprocess.Popen[bytes] | None = None
     try:
-        MODULE_CONF.write_text(rewrite_module_config(original_config, updates), encoding="utf-8")
+        MODULE_CONF.write_text(rewrite_module_config(original_config, updates), encoding="utf-8-sig")
         with stdout_path.open("wb") as stdout_handle, stderr_path.open("wb") as stderr_handle:
             process = subprocess.Popen(
                 [str(WORLD_EXE)],
@@ -372,7 +453,7 @@ def main() -> int:
     finally:
         if process is not None:
             stop_worldserver(process)
-        MODULE_CONF.write_text(original_config, encoding="utf-8")
+        MODULE_CONF.write_text(original_config, encoding="utf-8-sig")
         delete_temp_pack(settings, temp_pack_guids)
 
     build_elite_report(

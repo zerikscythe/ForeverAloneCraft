@@ -1,5 +1,17 @@
 # World Bot Travel Network Roadmap
 
+Pivot note:
+
+The travel network remains ledger-first and bot-family agnostic. The recent
+runtime pivot is about the visible body, not the route brain:
+
+- abstract/offscreen travel state still lives in the world-bot ledger/runtime
+  model
+- visible/materialized ambient bots are now pivoting toward leased `Player`
+  shells rebuilt from that ledger truth
+- older creature-backed ambient bots remain a compatibility consumer of the same
+  travel plan until the player-shell lane fully replaces them
+
 This document tracks the planned work to move LivingWorld travel from mostly
 straight-line point-to-point movement toward an authored travel-network system
 that bots can follow across zones and, later, across the world.
@@ -17,21 +29,26 @@ It is intentionally written as a **cross-agent working plan**:
 Current world-bot travel can already:
 
 - execute authored task/session travel steps
-- use some transit/taxi concepts
+- attach to authored route corridors and follow same-zone route graphs
+- use dynamic taxi planning/execution
+- use explicit connector seams
+- use first proven physical boat and zeppelin seams
 - recover from same-map stuck/no-progress cases with watchdog teleport recovery
 
 But it still lacks a strong **macro-navigation layer**.
 
-Today bots do **not** yet have a reliable authored understanding of:
+The remaining travel gaps are now more about:
 
-- roads
-- preferred route corridors
-- mount-friendly travel lanes
-- attach-to-nearest-route behavior
-- following a route toward a distant task instead of cutting through open terrain
+- broader content coverage
+- richer quest-hub runtime use of the travel layer
+- local task/work loops after arrival
+- stronger combat/travel resume boundaries
+- teaching authored local-work geometry such as gather sub-routes and closed
+  patrol/gather areas to downstream task systems
 
-That means travel can still look too direct, too terrain-blind, and too unlike a
-real player moving through the world.
+That means the problem has shifted from "no route brain" toward "make the
+existing route brain cover more of the world and hand off more naturally into
+live activity."
 
 ---
 
@@ -93,6 +110,21 @@ Execution principle:
 - **LivingWorld adds the missing strategic route-selection and authored-network
   layer above it**
 
+Navigation-boundary note:
+
+- the authored travel network is the **macro-navigation** layer
+- it should not become the default answer for every short same-zone movement
+- ordinary nearby city/hub/work-pocket movement should prefer strict local
+  navmesh/vmap pathing first
+- after a direct local failure, runtime should prefer a short trusted PoI
+  connector chain before it reaches for hand-authored helper routes
+- authored `sub_route` assist paths should cover awkward local geometry only
+  when plain local navigation is unreliable
+- the route network should be invoked for real journey cases:
+  - zone transfers
+  - long same-zone travel
+  - explicit transit/taxi/connector travel
+
 ---
 
 ## Core design decisions
@@ -120,6 +152,24 @@ This transform is foundational. Do this early and keep it explicit.
 
 Travel corridors, roads, branches, and task-area paths should become authored
 data, not hardcoded C++ logic.
+
+Current state:
+
+- the lw zone editor export now carries explicit per-path kinds:
+  - `main_route`
+  - `sub_route`
+  - `area`
+- route exports also preserve local-work resource metadata:
+  - `resource_kinds`
+  - `resource_items`
+- one route may advertise multiple `resource_items`, which is the intended
+  shape for:
+  - normal + rich variants of the same gather family
+  - mixed-resource paths where several valid items naturally share one loop
+  - later item-aware planner lookups like "find a Kingsblood route"
+- the runtime route loader preserves those kinds
+- only `main_route` currently feeds the long-distance travel graph, so local
+  gather/patrol authoring can grow without distorting macro travel
 
 ### 3.2 Keep one authoritative travel source per zone
 
@@ -1300,6 +1350,7 @@ Current implementation note:
   - richer travel-mode choice
   - explored-zone taxi eligibility
   - broader multi-zone graph routing
+  - stronger bot-polled resume semantics at the combat/travel boundary
 
 ### Slice 6 — Route-followed session travel integration
 
@@ -1324,7 +1375,40 @@ Definition of done:
   a hot zone at an approximate in-progress route position instead of a blank
   fresh start
 
+Clarification:
+
+- "prefer route network traversal" here refers to macro travel/session travel
+  once the runtime policy has already classified the movement as a real travel
+  problem
+- it does not mean every short same-city or same-hub A->B movement should
+  attach to the world travel graph
+- the local runtime hierarchy is now:
+  1. strict direct local nav
+  2. trusted PoI connector fallback
+  3. authored local helper `sub_route`
+  4. macro travel/network
+
 Status: `In Progress`
+
+Important follow-up hardening:
+
+- route/session resume after combat should be biased toward a **bot-polled**
+  model, not an immediate manager-pushed one
+- practical target behavior:
+  - session layer records the next valid step / pending resume
+  - interrupted bot asks for that next step only after:
+    - combat is truly over
+    - engagement state is clear
+    - post-combat grace/all-clear window passed
+- important split:
+  - abstract/offscreen route progress can still be ledger-driven
+  - materialized bots should use the stricter ask-when-ready model, because
+    they are the ones that can get tugged between live combat, local movement,
+    and strategic travel
+- this should reduce the class of bugs where a brief combat-state flicker makes
+  travel/task logic resume too early and then get re-interrupted a moment later
+- the manager may still mark assignments dirty/invalid, but should avoid
+  force-driving movement on a bot that has not yet declared itself ready
 
 ### Slice 6.1 - Quest-derived activity composition
 
@@ -1800,6 +1884,10 @@ Future agents should preserve these boundaries:
 - do **not** write replacement local pathfinding logic unless AzerothCore's
   existing movement/pathfinding has a proven gap that cannot be solved more
   cheaply through authored routing or micro-route fallback
+- do **not** let task/session planners push materialized bots through combat or
+  route resumes before the bot is actually ready to ask for the next step
+- do **not** build a separate player-only combat coordination brain if the
+  shared party combat state can be reused with different signal sources
 
 Preferred implementation order remains:
 
@@ -1832,17 +1920,21 @@ Preferred implementation order remains:
   - quest-hub runtime integration
   - local task-area behavior after hub arrival
 - current active implementation focus:
-  - `city reserve population scaffolding -> linger/release behavior`
+  - `quest-hub runtime loading and local post-arrival activity loops`
 - next recommended engineering slice:
-  - finish city reserve linger/cooldown behavior
-  - validate Stormwind / Orgrimmar reserve fill
-  - keep reserve bots biased toward believable city errands
+  - load/exported quest-hub runtime data server-side
+  - drive `quest_auto` from hub anchors instead of only broad zone picks
+  - use hub/task-area pockets for believable local work after arrival
 - next major realism slice after that:
-  - server-side quest-hub runtime loading
-  - hub-driven `quest_auto`
-  - weighted hub continuation
-  - local task-area loops
+  - gathering/skinning/resource local loops
+  - stronger bot-polled resume semantics at the combat/travel boundary
+  - broader route/connector content coverage in unfinished zones
 
 Related status note:
 
 - see `WorldBotSystemAssessment.md`
+- future smart-companion / player-led combat coordination should layer on top of
+  the same shared combat-state runtime:
+  1. AI-owned world-bot signals first
+  2. player body-language inference second
+  3. explicit addon/UI signals last, only where inference is not precise enough

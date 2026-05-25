@@ -236,7 +236,8 @@ inline bool IsAssignedGearOffhandCompatible(
         return false;
     }
 
-    if (offhandTemplate->InventoryType == INVTYPE_WEAPONOFFHAND
+    if ((offhandTemplate->InventoryType == INVTYPE_WEAPONOFFHAND
+            || offhandTemplate->InventoryType == INVTYPE_WEAPON)
         && !SupportsAssignedGearWeaponOffhand(classId, specKey))
     {
         return false;

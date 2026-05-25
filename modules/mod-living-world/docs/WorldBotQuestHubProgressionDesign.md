@@ -45,7 +45,7 @@ That is the missing layer.
 Status today:
 
 - the export/tooling side is real
-- the runtime/server side is only partially integrated
+- the runtime/server side is now in an early but real integration phase
 
 What already exists:
 
@@ -53,18 +53,51 @@ What already exists:
 - per-zone compact quest-hub JSON export
 - filtering of event/holiday/daily/weekly/monthly quest noise
 - quest resume memory in the bot ledger/session composer
+- runtime loading of the exported quest-hub JSON graph
+- direct `quest_auto` / `quest_zone` resolution against eligible hub entries
+- low-level `quest_auto` now strongly prefers home-turf quest hubs for levels
+  `1-15` before falling back to the broader faction pool
+- local hub `taskAreas` as real session targets instead of only broad zone
+  anchors
+- weighted hub-to-hub continuation in the normal follow-up session path when a
+  completed quest step came from a quest hub
+- quest-hub task areas can pass creature target entries into the authored
+  `grind` behavior, so hunt-and-kill quest pockets proactively pull nearby
+  wolves/bears/etc. instead of only reacting when attacked
+- hub sessions are now sliced into smaller task-area chunks so bots can bounce
+  between local work pockets during the larger hub timer
+- active world-bot shifts now persist quest resume breadcrumbs back into the
+  ledger:
+  - last immediate task/activity key
+  - last quest hub key
+  - elapsed hub time so far
+- quest task budgets and quest-hub budgets are now treated separately:
+  - the scheduler says how long a given `quest_auto` / `quest_zone` task lasts
+  - the hub estimate says how much cumulative time a bot can plausibly spend in
+    that hub before branching
+  - resume can therefore keep building time in the same hub across multiple
+    quest tasks and later activations until the hub budget is spent
+- if a resumed quest task has more time left than the current hub can absorb,
+  the composer now spends down the remaining hub budget first, then branches
+  into the next eligible hub and keeps spending the rest of the task budget
+- questing can stop mid-bundle when a bot's `30 min - 3 hour` session budget
+  expires, or earlier if it runs out of worthwhile follow-up chores, then
+  resume from the last relevant hub/zone on a later activation
 
 What does **not** yet fully exist:
 
-- runtime loading of the exported quest-hub JSON graph
-- direct `quest_auto` resolution against hub entries
-- local hub `taskAreas` driving "go here and look busy" loops
-- weighted hub-to-hub continuation as the default quest flow
+- richer local task-area behavior than the current first-pass "work this spot"
+  simulation
+- item/objective-aware hub task selection inside a hub
+- deeper playlist-aware resume semantics beyond the current "preserve the last
+  quest hub and spend it down naturally" behavior
+- broader authored validation across many zone chains
 
 So today the project is in a good transition state:
 
-- broad quest-zone travel is live
-- hub-derived runtime quest flow is the next major questing slice
+- broad quest-zone travel is still the safety net
+- hub-derived runtime quest flow is now live enough to build on, and the next
+  work is depth/polish rather than first enablement
 
 ---
 

@@ -35,7 +35,7 @@ VALUES
     ('ratchet_boat',                392,  1,   'boat',     'Ratchet Boat',                    -995.5, -3823.4, 5.5),
     ('orgrimmar_zeppelin_tirisfal', 1637, 1,   'zeppelin', 'Orgrimmar Zeppelin Tower',        1337.1, -4633.9, 54.1),
     ('undercity_zeppelin_durotar',  1497, 0,   'zeppelin', 'Undercity Zeppelin Tower',        2067.6, 274.9, 97.0),
-    ('stormwind_portal_outland',    1519, 0,   'portal',   'Stormwind Portal to Outland',    -8960.4, 517.1, 96.3),
+    ('stormwind_portal_outland',    1519, 0,   'portal',   'Stormwind Portal to Outland',    -9006.0, 868.9, 129.7),
     ('orgrimmar_portal_outland',    1637, 1,   'portal',   'Orgrimmar Portal to Outland',     1818.4, -4416.2, -18.8),
     ('shattrath_arrival',           3703, 530, 'portal',   'Shattrath Arrival',               -1887.5, 5359.7, -12.4),
     ('stormwind_ship_northrend',    1519, 0,   'boat',     'Stormwind Northrend Ship',       -8645.0, 1038.2, 95.2),

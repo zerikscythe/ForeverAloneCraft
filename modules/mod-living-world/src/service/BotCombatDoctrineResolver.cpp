@@ -176,7 +176,8 @@ BotCombatDoctrineResolution BotCombatDoctrineResolver::ResolveForWorldBot(
     std::uint8_t  botClassId,
     std::string const& specKey,
     std::string const& roleKey,
-    std::string const& contextKey) const
+    std::string const& contextKey,
+    std::string const& variantKey) const
 {
     BotCombatDoctrineResolution resolution;
     resolution.botCharacterGuid    = botCharacterGuid;
@@ -188,13 +189,13 @@ BotCombatDoctrineResolution BotCombatDoctrineResolver::ResolveForWorldBot(
     resolution.effectiveRoleKey    = roleKey;
 
     auto defaultProfile = _defaultProfileRepository.FindDefaultProfile(
-        specKey, roleKey, std::string(ToDoctrineClassKey(botClassId)), contextKey);
+        specKey, roleKey, std::string(ToDoctrineClassKey(botClassId)), contextKey, variantKey);
     if (!defaultProfile)
     {
         // Fallback: try PvE profile if the requested context has no profile yet.
         if (contextKey != "PvE")
             defaultProfile = _defaultProfileRepository.FindDefaultProfile(
-                specKey, roleKey, std::string(ToDoctrineClassKey(botClassId)), "PvE");
+                specKey, roleKey, std::string(ToDoctrineClassKey(botClassId)), "PvE", variantKey);
     }
 
     if (defaultProfile)

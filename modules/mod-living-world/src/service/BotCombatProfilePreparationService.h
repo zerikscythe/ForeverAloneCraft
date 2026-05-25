@@ -50,7 +50,8 @@ public:
         std::unordered_set<std::uint32_t> const& knownSpells,
         std::string const& specKey,
         std::string const& roleKey,
-        std::string const& contextKey = "PvE") const;
+        std::string const& contextKey = "PvE",
+        std::string const& variantKey = "") const;
 
     // Backwards-compat alias for Player session bots.
     [[nodiscard]] BotCombatPreparedProfile PrepareForBot(

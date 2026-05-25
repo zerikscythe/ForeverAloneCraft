@@ -18,8 +18,10 @@ import csv
 import datetime as dt
 import io
 import pathlib
+import re
 import signal
 import subprocess
+import tempfile
 import time
 
 
@@ -45,6 +47,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dest-x", type=float, default=-10053.198)
     parser.add_argument("--dest-y", type=float, default=1455.3373)
     parser.add_argument("--dest-z", type=float, default=44.6324)
+    parser.add_argument("--target-point-key", default="", help="Optional living_world_task_point key to attach to the debug travel task/step")
+    parser.add_argument("--waypoint-keys", default="", help="Optional comma-separated living_world_task_point keys for a sequential in-zone gauntlet")
+    parser.add_argument("--waypoint-count", type=int, default=0, help="Optional per-bot cap for shuffled waypoint keys; 0 uses the full list")
+    parser.add_argument("--shuffle-seed", type=int, default=0, help="Batch seed for per-bot waypoint shuffling")
+    parser.add_argument("--arrival-threshold-yards", type=float, default=3.0, help="Harness-only arrival threshold used for proving local links")
+    parser.add_argument("--persist-links", action="store_true", help="Persist local link outcomes into living_world_task_point_link")
+    parser.add_argument("--mode", choices=("route", "path_scout"), default="route")
+    parser.add_argument("--spacing-yards", type=float, default=3.0)
     parser.add_argument("--transit-route-key", default="", help="Optional authored transit route key for a Travel -> Transit -> Hold harness run")
     parser.add_argument("--interest-zone-id", type=int, default=0, help="Optional synthetic-interest zone override; defaults to destination zone")
     parser.add_argument("--interest-switch-map-id", type=int, default=0, help="Optional synthetic-interest switch map id")
@@ -89,6 +99,7 @@ def load_db_settings() -> dict[str, str | int]:
         "port": parser.getint("database", "port"),
         "user": parser.get("database", "user"),
         "password": parser.get("database", "password"),
+        "world_db": parser.get("database", "database", fallback="acore_world"),
         "characters_db": "acore_characters",
     }
 
@@ -288,6 +299,7 @@ def wait_for_progress_rows(
         "travel_transit_board",
         "travel_transit_arrive",
         "travel_arrive",
+        "travel_scout_rejected",
         "activity_complete",
         "session_complete",
         "travel_stuck",
@@ -355,6 +367,103 @@ def clear_prior_rows(settings: dict[str, str | int], names: list[str]) -> None:
     )
 
 
+def sql_quote(value: str) -> str:
+    return "'" + value.replace("\\", "\\\\").replace("'", "''") + "'"
+
+
+def parse_waypoint_orders(stdout_path: pathlib.Path) -> dict[str, list[str]]:
+    if not stdout_path.exists():
+        return {}
+
+    pattern = re.compile(r"RouteHarness spawned '([^']+)'.*waypoint_keys='([^']*)'")
+    orders: dict[str, list[str]] = {}
+    for line in stdout_path.read_text(encoding="utf-8", errors="ignore").splitlines():
+        match = pattern.search(line)
+        if not match:
+            continue
+        bot_name = match.group(1)
+        waypoint_keys = [token.strip() for token in match.group(2).split(",") if token.strip()]
+        orders[bot_name] = waypoint_keys
+    return orders
+
+
+def persist_local_link_rows(
+    settings: dict[str, str | int],
+    names: list[str],
+    stdout_path: pathlib.Path,
+    rows: list[tuple[str, ...]],
+) -> int:
+    orders = parse_waypoint_orders(stdout_path)
+    outcomes_by_bot: dict[str, list[str]] = {name: [] for name in names}
+    for row in rows:
+        bot_name, event_type = row[0], row[1]
+        if bot_name not in outcomes_by_bot:
+            continue
+        if event_type == "travel_arrive":
+            outcomes_by_bot[bot_name].append("ok")
+        elif event_type == "travel_no_path":
+            outcomes_by_bot[bot_name].append("fail")
+
+    statements: list[str] = []
+    persisted = 0
+    for bot_name in names:
+        waypoint_keys = orders.get(bot_name, [])
+        outcomes = outcomes_by_bot.get(bot_name, [])
+        current_anchor: str | None = None
+        for waypoint_key, outcome in zip(waypoint_keys, outcomes):
+            if current_anchor:
+                success_delta = 1 if outcome == "ok" else 0
+                failure_delta = 1 if outcome == "fail" else 0
+                statements.append(
+                    "INSERT INTO living_world_task_point_link "
+                    "(from_point_key, to_point_key, link_kind, manual_verified, success_count, failure_count, "
+                    "first_seen_at, last_seen_at, last_success_at, last_failure_at, source, notes) "
+                    f"VALUES ({sql_quote(current_anchor)}, {sql_quote(waypoint_key)}, 'local_nav', 0, "
+                    f"{success_delta}, {failure_delta}, NOW(), NOW(), "
+                    f"{'NOW()' if success_delta else 'NULL'}, {'NOW()' if failure_delta else 'NULL'}, "
+                    "'debug_route_harness', '') "
+                    "ON DUPLICATE KEY UPDATE "
+                    f"success_count = success_count + {success_delta}, "
+                    f"failure_count = failure_count + {failure_delta}, "
+                    "last_seen_at = NOW(), "
+                    f"last_success_at = {'NOW()' if success_delta else 'last_success_at'}, "
+                    f"last_failure_at = {'NOW()' if failure_delta else 'last_failure_at'}, "
+                    "source = 'debug_route_harness'"
+                )
+                persisted += 1
+
+            if outcome == "ok":
+                current_anchor = waypoint_key
+
+    if not statements:
+        return 0
+
+    sql_path = pathlib.Path(tempfile.gettempdir()) / "lw_task_point_link_persist.sql"
+    sql_path.write_text(";\n".join(statements) + ";\n", encoding="utf-8")
+    try:
+        command = [
+            "mysql",
+            "-h", str(settings["host"]),
+            "-P", str(settings["port"]),
+            "-u", str(settings["user"]),
+            f"-p{settings['password']}",
+            str(settings["world_db"]),
+            "--execute",
+            f"source {sql_path.as_posix()}",
+        ]
+        result = subprocess.run(command, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"mysql query failed for {settings['world_db']}:\n{result.stdout}{result.stderr}"
+            )
+    finally:
+        try:
+            sql_path.unlink()
+        except OSError:
+            pass
+    return persisted
+
+
 def build_report(
     identity_rows: list[tuple[str, ...]],
     rows: list[tuple[str, ...]],
@@ -404,8 +513,10 @@ def build_report(
             "travel_transit_timeout",
             "travel_transit_arrive",
             "travel_arrive",
+            "travel_scout_rejected",
             "travel_timeout",
             "travel_stuck",
+            "travel_skip",
             "session_abort",
             "position_tick",
             "status_change",
@@ -472,6 +583,13 @@ def main() -> int:
         "LivingWorld.DebugRouteHarnessDestX": str(args.dest_x),
         "LivingWorld.DebugRouteHarnessDestY": str(args.dest_y),
         "LivingWorld.DebugRouteHarnessDestZ": str(args.dest_z),
+        "LivingWorld.DebugRouteHarnessTargetPointKey": f"\"{args.target_point_key}\"",
+        "LivingWorld.DebugRouteHarnessWaypointKeys": f"\"{args.waypoint_keys}\"",
+        "LivingWorld.DebugRouteHarnessWaypointCount": str(args.waypoint_count),
+        "LivingWorld.DebugRouteHarnessShuffleSeed": str(args.shuffle_seed),
+        "LivingWorld.DebugRouteHarnessArrivalThresholdYards": str(args.arrival_threshold_yards),
+        "LivingWorld.DebugRouteHarnessMode": f"\"{args.mode}\"",
+        "LivingWorld.DebugRouteHarnessSpacingYards": str(args.spacing_yards),
         "LivingWorld.DebugRouteHarnessTransitRouteKey": f"\"{args.transit_route_key}\"",
         "LivingWorld.DebugRouteHarnessExploredZones": f"\"{args.explored_zone_ids}\"",
         "LivingWorld.DebugRouteHarnessBakeRouteZ": "1" if args.bake_zone_ids else "0",
@@ -562,7 +680,12 @@ def main() -> int:
         time.sleep(args.seconds)
         identity_rows = fetch_identity_rows(settings, names)
         rows = fetch_activity_rows(settings, names)
+        persisted_links = 0
+        if args.persist_links:
+            persisted_links = persist_local_link_rows(settings, names, stdout_path, rows)
         build_report(identity_rows, rows, stdout_path, stderr_path, report_path)
+        if args.persist_links:
+            print(f"Persisted local link rows: {persisted_links}")
         print(report_path)
         return 0
     finally:

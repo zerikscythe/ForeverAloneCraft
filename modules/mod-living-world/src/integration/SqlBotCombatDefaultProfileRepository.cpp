@@ -145,15 +145,16 @@ model::BotCombatActionDefinition BuildAction(Field const* fields)
     action.actionType = FromDbActionType(fields[2].Get<std::uint8_t>());
     action.spellBaseId = fields[3].Get<std::uint32_t>();
     action.itemId = fields[4].Get<std::uint32_t>();
-    action.rankMode = FromDbRankMode(fields[5].Get<std::uint8_t>());
-    action.rankValue = fields[6].Get<std::uint8_t>();
-    action.targetKey = fields[7].Get<std::string>();
-    if (!fields[8].IsNull())
-        action.aoeMode = FromDbAoEMode(fields[8].Get<std::uint8_t>());
+    action.itemSelector = fields[5].Get<std::string>();
+    action.rankMode = FromDbRankMode(fields[6].Get<std::uint8_t>());
+    action.rankValue = fields[7].Get<std::uint8_t>();
+    action.targetKey = fields[8].Get<std::string>();
     if (!fields[9].IsNull())
-        action.aoeMinTargets = fields[9].Get<std::uint8_t>();
+        action.aoeMode = FromDbAoEMode(fields[9].Get<std::uint8_t>());
     if (!fields[10].IsNull())
-        action.aoeRadius = fields[10].Get<float>();
+        action.aoeMinTargets = fields[10].Get<std::uint8_t>();
+    if (!fields[11].IsNull())
+        action.aoeRadius = fields[11].Get<float>();
     return action;
 }
 
@@ -219,7 +220,7 @@ void LoadDefaultProfileChildren(model::BotCombatDefaultProfileRecord& profile)
     };
 
     QueryResult actionResult = WorldDatabase.Query(
-        "SELECT action_id, slot, action_type, spell_base_id, item_id, "
+        "SELECT action_id, slot, action_type, spell_base_id, item_id, item_selector, "
         "rank_mode, rank_value, target_key, aoe_mode, aoe_min_targets, aoe_radius, entry_id "
         "FROM living_world_bot_combat_default_action "
         "WHERE entry_id IN ("
@@ -233,7 +234,7 @@ void LoadDefaultProfileChildren(model::BotCombatDefaultProfileRecord& profile)
         {
             Field const* fields = actionResult->Fetch();
             model::BotCombatActionDefinition action = BuildAction(fields);
-            if (model::BotCombatEntryDefinition* entry = findEntry(fields[11].Get<std::uint64_t>()))
+            if (model::BotCombatEntryDefinition* entry = findEntry(fields[12].Get<std::uint64_t>()))
             {
                 if (action.slot == 0)
                     entry->primaryAction = std::move(action);

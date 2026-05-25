@@ -21,6 +21,14 @@ struct BotIdentityRecord
     std::uint8_t  faction      = 0;
     std::uint32_t displayId    = 0;
     std::uint8_t  gender       = 0;
+    std::uint8_t  skin         = 0;
+    std::uint8_t  face         = 0;
+    std::uint8_t  hairStyle    = 0;
+    std::uint8_t  hairColor    = 0;
+    std::uint8_t  facialStyle  = 0;
+    bool          appearanceResolved = false;
+    std::string   displayLoadoutKey;
+    std::string   doctrineProfileKey;
     std::uint8_t  level        = 1;
     std::uint8_t  gearTier     = 1;
     std::string   personalityKey = "uninterested";
@@ -35,17 +43,27 @@ struct BotIdentityRecord
     std::uint32_t homeZoneId   = 0;
     std::string   homeAnchorPointKey;
     std::string   homeBindPointKey;
+    std::uint8_t  genericPotionCharges = 5;
     std::uint32_t sessionCount = 0;
     std::uint64_t totalWorldOnlineMs = 0;
     std::uint64_t worldOnlineMsSinceLevel = 0;
     std::uint64_t postMaxWorldOnlineMs = 0;
     std::uint64_t activeWorldSessionMs = 0;
+    std::uint64_t activeWorldSessionBudgetMs = 0;
     std::string   runtimeState;
     std::string   runtimeDetail;
+    std::uint32_t shellAccountId = 0;
+    std::uint64_t shellCharacterGuid = 0;
+    std::uint32_t shellStateVersion = 0;
+    std::string   pendingRebuildReason;
+    std::string   lastRehydrateAt;
     std::string   lastSessionSourceKind;
     std::string   lastSessionSourceKey;
     std::string   lastTaskFamily;
+    std::string   lastTaskActivityKey;
     std::uint32_t lastTaskTargetZoneId = 0;
+    std::string   lastQuestHubKey;
+    std::uint64_t lastQuestHubElapsedMs = 0;
     bool          gearRefreshPending = false;
     std::uint8_t  lastGearRefreshBand = 0;
     std::uint32_t lastSeenZoneId = 0;
@@ -69,7 +87,9 @@ public:
     // populations such as city-only reserve pools.
     std::vector<BotIdentityRecord> LoadAvailable(
         std::uint8_t faction,
-        std::uint32_t limit) const;
+        std::uint32_t limit,
+        std::uint8_t minLevel = 0,
+        std::uint8_t maxLevel = 0) const;
 
     // Returns up to `limit` available city-reserve identities for the given
     // city zone and faction. faction=0 returns any faction.
@@ -98,6 +118,29 @@ public:
         bool gearRefreshPending,
         std::uint8_t lastGearRefreshBand) const;
 
+    std::vector<BotIdentityRecord> LoadAppearanceUnresolved(
+        std::uint32_t limit = 0) const;
+
+    void UpdateAppearance(
+        std::uint32_t id,
+        std::uint8_t skin,
+        std::uint8_t face,
+        std::uint8_t hairStyle,
+        std::uint8_t hairColor,
+        std::uint8_t facialStyle,
+        bool appearanceResolved) const;
+
+    void UpdateShellState(
+        std::uint32_t id,
+        std::uint32_t shellAccountId,
+        std::uint64_t shellCharacterGuid,
+        std::uint32_t shellStateVersion,
+        std::string const& pendingRebuildReason = "") const;
+
+    void MarkShellRehydrated(
+        std::uint32_t id,
+        std::uint32_t shellStateVersion) const;
+
     // Updates a currently active world bot's lightweight runtime ledger fields
     // so external tools can observe session duration and last active zone.
     void UpdateActiveRuntimeState(
@@ -105,7 +148,15 @@ public:
         std::uint32_t zoneId,
         std::uint64_t activeWorldSessionMs,
         std::string const& runtimeState,
-        std::string const& runtimeDetail) const;
+        std::string const& runtimeDetail,
+        std::string const& currentTaskActivityKey = "",
+        std::string const& currentQuestHubKey = "",
+        std::uint64_t currentQuestHubElapsedMs = 0) const;
+
+    // Persists a world bot's fake generic potion stock for session carryover.
+    void UpdateGenericPotionCharges(
+        std::uint32_t id,
+        std::uint8_t genericPotionCharges) const;
 
     // Finalizes one counted world session, applying online-time progression and
     // retirement rules before returning the identity to the available pool.
@@ -116,7 +167,10 @@ public:
         std::string const& lastSessionSourceKind = "",
         std::string const& lastSessionSourceKey = "",
         std::string const& lastTaskFamily = "",
-        std::uint32_t lastTaskTargetZoneId = 0) const;
+        std::uint32_t lastTaskTargetZoneId = 0,
+        std::string const& lastTaskActivityKey = "",
+        std::string const& lastQuestHubKey = "",
+        std::uint64_t lastQuestHubElapsedMs = 0) const;
 
     // On worldserver startup, reset any stale active creature-bot sessions that
     // were left marked active by a prior shutdown/crash.
